@@ -8,8 +8,11 @@ class GCEProvider(CloudProvider):
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
 
-    def __init__(self, name=None, project=None, zone=None, region=None, credentials=None, key=None):
-        super(GCEProvider, self).__init__(name=name, zone=zone, key=key, credentials=credentials)
+    def __init__(
+            self, name=None, project=None, zone=None, region=None, credentials=None, key=None,
+            appliance=None):
+        super(GCEProvider, self).__init__(
+            name=name, zone=zone, key=key, credentials=credentials, appliance=appliance)
         self.region = region
         self.project = project
 
@@ -20,7 +23,7 @@ class GCEProvider(CloudProvider):
                 'google_project_text': kwargs.get('project')}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         ser_acc_creds = cls.get_credentials_from_config(
             prov_config['credentials'], cred_type='service_account')
         return cls(name=prov_config['name'],
@@ -28,7 +31,8 @@ class GCEProvider(CloudProvider):
             zone=prov_config['zone'],
             region=prov_config['region'],
             credentials={'default': ser_acc_creds},
-            key=prov_key)
+            key=prov_key,
+            appliance=appliance)
 
     @classmethod
     def get_credentials(cls, credential_dict, cred_type=None):

@@ -20,10 +20,10 @@ class OpenshiftProvider(ContainersProvider):
     mgmt_class = Openshift
 
     def __init__(self, name=None, credentials=None, key=None,
-                 zone=None, hostname=None, port=None, provider_data=None):
+                 zone=None, hostname=None, port=None, provider_data=None, appliance=None):
         super(OpenshiftProvider, self).__init__(
             name=name, credentials=credentials, key=key, zone=zone, hostname=hostname, port=port,
-            provider_data=provider_data)
+            provider_data=provider_data, appliance=appliance)
 
     def create(self, validate_credentials=True, **kwargs):
         # Workaround - randomly fails on 5.5.0.8 with no validation
@@ -58,7 +58,7 @@ class OpenshiftProvider(ContainersProvider):
         return int(self.get_detail("Relationships", "Container Templates"))
 
     @staticmethod
-    def from_config(prov_config, prov_key):
+    def from_config(prov_config, prov_key, appliance=None):
         token_creds = OpenshiftProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
         return OpenshiftProvider(
@@ -68,7 +68,8 @@ class OpenshiftProvider(ContainersProvider):
             zone=prov_config['server_zone'],
             hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
             port=prov_config['port'],
-            provider_data=prov_config)
+            provider_data=prov_config,
+            appliance=appliance)
 
     def custom_attributes(self):
         """returns custom attributes"""
