@@ -51,6 +51,7 @@ def gen_events(test_vm):
 
 def count_events(target, vm):
     timelines_view = navigate_to(target, 'Timelines')
+    timelines_view.filter.time_position.select_by_visible_text('centered')
     timelines_view.filter.apply.click()
     events = [evt for evt in timelines_view.chart.get_events() if evt.source_vm == vm.name]
     logger.info("found events: {evt}".format(evt="\n".join(events)))

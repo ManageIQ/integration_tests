@@ -1391,6 +1391,7 @@ class TimelinesFilter(View):
     time_range = BootstrapSelect(id='tl_range')
     time_position = BootstrapSelect(id='tl_timepivot')
     # date_picker = Calendar()
+    # todo: implement correct switch between management/policy views when switchable views done
     apply = Text(locator='.//div[contains(@class, "timeline-apply")]')
     # management controls
     detailed_events = Checkbox(name='showDetailedEvents')
@@ -1403,7 +1404,7 @@ class TimelinesChart(View):
     """represents Chart part of Timelines View
 
     # currently only event collection is available
-    # todo: to add widgets for all controls
+    # todo: to add widgets for all controls and add chart objects interaction functionality
     """
     ROOT = '//div[contains(@class, "timeline-container")]'
     CATEGORIES = './/*[name()="g" and contains(@class, "timeline-pf-labels")]' \
@@ -1416,15 +1417,21 @@ class TimelinesChart(View):
     legend = Table(locator='//div[@id="legend"]/table')
     zoom = TimelinesZoomSlider(locator='//input[@id="timeline-pf-slider"]')
 
+    class TimelinesEvent(object):
+        def __repr__(self):
+            attrs = [attr for attr in self.__dict__.keys() if not attr.startswith('_')]
+            params = ", ".join(["{}={}".format(attr, getattr(self, attr)) for attr in attrs])
+            return "TimelinesEvent({})".format(params)
+
     def __init__(self, parent, logger=None):
-        TimelinesChart.__init__(parent=parent, logger=logger)
+        super(TimelinesChart, self).__init__(parent=parent, logger=logger)
 
     def get_categories(self, *categories):
         br = self.browser
         prepared_categories = []
         for num, element in enumerate(br.elements(self.CATEGORIES), start=1):
             # categories have number of events inside them
-            mo = re.search('^(.*?)(\s\(\s*\d+\s*\)\s*)*$', element.text)
+            mo = re.search('^(.*?)(\s\(\s*\d+\s*\)\s*)*$', br.text(element))
             category_name = mo.groups()[0]
 
             if len(categories) == 0 or (len(categories) > 0 and category_name in categories):
@@ -1435,19 +1442,13 @@ class TimelinesChart(View):
         return 'timeline-pf-event-group' in self.browser.classes(evt)
 
     def _prepare_event(self, evt, category):
-        class TimelinesEvent(object):
-            def __repr__(self):
-                attrs = [attr for attr in self.__dict__.keys() if not attr.startswith('_')]
-                params = ", ".join(["{}={}".format(attr, getattr(self, attr)) for attr in attrs])
-                return "TimelinesEvent({})".format(params)
-
         node = document_fromstring(evt)
         # lxml doesn't replace <br> with \n in this case. so this has to be done by us
         for br in node.xpath("*//br"):
             br.tail = "\n" + br.tail if br.tail else "\n"
 
         # parsing event and preparing its attributes
-        event = TimelinesEvent()
+        event = self.TimelinesEvent()
         for line in node.text_content().split('\n'):
             attr_name, attr_val = re.search('^(.*?):(.*)$', line).groups()
             attr_name = attr_name.strip().lower().replace(' ', '_')
@@ -1455,32 +1456,13 @@ class TimelinesChart(View):
         event.category = category
         return event
 
-    def _move_to_origin_point(self):
-        """
-        since move_to_offset works taking into account current mouse position
-        mouse position has to be changed to (0, 0) before every operation
-        """
-        # static element always present in cfme
-        el = self.browser.element('//button[@class="navbar-toggle"]')
-        self.browser.move_to_element(el)
-        # obtaining current mouse position
-        y = el.location['y'] + el.size['height'] / 2
-        x = el.location['x'] + el.size['width'] / 2
-        ActionChains(self.browser.selenium).move_by_offset(-x, -y).perform()
-
-    def _click_event_group(self, group):
-        # todo: implement event group as separate class
-
-        # moving to 0, 0
-        self._move_to_origin_point()
-        # svg elements have incorrect coordinates in selenium, js, etc.
-        # as as result move_to_element operations are broken for svg elements
-        # this is only good way to obtain correct coordinates if svg canvas hasn't been scaled/moved
-        # todo: need to consider transformation and handle it correctly
-        coord = self.browser.execute_script("return arguments[0].getBoundingClientRect();", group)
-        x = coord['left'] + (coord['right'] - coord['left']) / 2
-        y = coord['top'] + (coord['bottom'] - coord['top']) / 2
-        ActionChains(self.browser.selenium).move_by_offset(x, y).click().perform()
+    def _click_group(self, group):
+        self.browser.execute_script("""jQuery.fn.art_click = function () {
+                                    this.each(function (i, e) {
+                                    var evt = new MouseEvent("click");
+                                    e.dispatchEvent(evt);
+                                    });};
+                                    $(arguments[0]).art_click();""", group)
 
     def get_events(self, *categories):
         # todo: to teach this code drag svg to hidden events and click them
@@ -1496,7 +1478,7 @@ class TimelinesChart(View):
                     events.append(self._prepare_event(event_text, cat_name))
                 else:
                     # if event group
-                    self._click_event_group(raw_event)
+                    self._click_group(raw_event)
                     self.legend.clear_cache()
                     for row in self.legend.rows():
                         events.append(self._prepare_event(row['Event'].text, cat_name))
@@ -1504,8 +1486,7 @@ class TimelinesChart(View):
 
 
 class TimelinesView(View):
-    """
-    represents Timelines page
+    """represents Timelines page
     """
     title = Text(locator='//h1')
     breadcrumb = BreadCrumb()
