@@ -446,7 +446,7 @@ class CheckboxSelect(Widget):
     def checkboxes(self):
         """All checkboxes."""
         return {Checkbox(self, id=el.get_attribute("id")) for el in self.browser.elements(
-            ".//input[@type='checkbox']")}
+            ".//input[@type='checkbox']", parent=self)}
 
     @property
     def selected_checkboxes(self):
