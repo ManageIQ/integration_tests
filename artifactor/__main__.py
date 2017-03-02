@@ -44,7 +44,7 @@ def run(port, run_id=None):
     # log.logger.info('artifactor listening on port %d', art_config['server_port'])
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--run-id', default=None)
     parser.add_argument('--port')
@@ -58,3 +58,6 @@ if __name__ == "__main__":
             f.write(str(e))
             for line in traceback.format_tb(sys.exc_traceback):
                 f.write(line)
+
+if __name__ == '__main__':
+    main()
