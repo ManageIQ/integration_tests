@@ -17,11 +17,6 @@ from cfme.web_ui import Quadicon, mixins, toolbar as tb
 from utils.appliance.implementations.ui import navigate_to
 
 
-@pytest.fixture(scope="module")
-def cloud_and_infra_provider(cloud_provider, infra_provider):
-    pass
-
-
 param_classes = {
     'Infra Providers': InfraProvider,
     'Infra VMs': Vm,
@@ -39,18 +34,17 @@ param_classes = {
 
 pytestmark = [
     pytest.mark.parametrize("location", param_classes),
-    pytest.mark.usefixtures("cloud_and_infra_provider"),
     pytest.mark.tier(3)
 ]
 
 
-def navigate_and_check(location):
+def _navigate_and_check(location):
     navigate_to(param_classes[location], 'All')
     tb.select('Grid View')
     return Quadicon.any_present()
 
 
-def test_tag_item_through_selecting(request, location, tag):
+def _tag_item_through_selecting(request, location, tag):
     """Add a tag to an item with going through the details page.
 
     Prerequisities:
@@ -64,13 +58,13 @@ def test_tag_item_through_selecting(request, location, tag):
         * Go back to the quadicon view and select ``Policy/Edit Tags`` and remove the tag.
         * Click on the quadicon and verify the tag is not present. (TODO)
     """
-    if not navigate_and_check(location):
+    if not _navigate_and_check(location):
         pytest.skip("No Quadicon present, cannot test.")
     Quadicon.select_first_quad()
 
     def _delete():
         # Ignoring the result of the check here
-        navigate_and_check(location)
+        _navigate_and_check(location)
         Quadicon.select_first_quad()
         mixins.remove_tag(tag)
     request.addfinalizer(lambda: diaper(_delete))
@@ -78,7 +72,7 @@ def test_tag_item_through_selecting(request, location, tag):
     _delete()
 
 
-def test_tag_item_through_details(request, location, tag):
+def _tag_item_through_details(request, location, tag):
     """Add a tag to an item with going through the details page.
 
     Prerequisities:
@@ -92,9 +86,29 @@ def test_tag_item_through_details(request, location, tag):
         * Select ``Policy/Edit Tags`` and remove the tag.
         * Verify the tag is not present. (TODO)
     """
-    if not navigate_and_check(location):
+    if not _navigate_and_check(location):
         pytest.skip("No Quadicon present, cannot test.")
     pytest.sel.click(Quadicon.first())
     request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))
     mixins.add_tag(tag)
     mixins.remove_tag(tag)
+
+
+@pytest.mark.usefixtures('has_no_providers', scope='class')
+class TestCloudTagVisibility():
+
+    def test_cloud_tag_item_through_selecting(request, cloud_provider, location, tag):
+        _tag_item_through_selecting(request, location, tag)
+
+    def test_cloud_tag_item_through_details(request, cloud_provider, location, tag):
+        _tag_item_through_details(request, location, tag)
+
+
+@pytest.mark.usefixtures('has_no_providers', scope='class')
+class TestInfraTagVisibility():
+
+    def test_infra_tag_item_through_selecting(request, infra_provider, location, tag):
+        _tag_item_through_selecting(request, location, tag)
+
+    def test_infra_tag_item_through_details(request, infra_provider, location, tag):
+        _tag_item_through_details(request, location, tag)
