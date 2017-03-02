@@ -4,7 +4,6 @@ from mgmtsystem.openstack import OpenstackSystem
 from . import CloudProvider
 
 
-@CloudProvider.add_provider_type
 class OpenStackProvider(CloudProvider):
     type_name = "openstack"
     mgmt_class = OpenstackSystem

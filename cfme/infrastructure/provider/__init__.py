@@ -13,7 +13,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cached_property import cached_property
-from cfme.common.provider import CloudInfraProvider, import_all_modules_of
+from cfme.common.provider import CloudInfraProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
@@ -107,7 +107,6 @@ pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
 
-@CloudInfraProvider.add_base_type
 class InfraProvider(Pretty, CloudInfraProvider):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
@@ -451,6 +450,3 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
-
-
-import_all_modules_of('cfme.infrastructure.provider')

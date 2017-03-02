@@ -3,7 +3,7 @@ from random import sample
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common.provider import BaseProvider, import_all_modules_of
+from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
@@ -66,7 +66,6 @@ match_page = partial(match_location, controller='ems_container',
                      title='Containers Providers')
 
 
-@BaseProvider.add_base_type
 class ContainersProvider(BaseProvider, Pretty):
     provider_types = {}
     in_version = ('5.5', version.LATEST)
@@ -313,11 +312,7 @@ class TopologyFromDetails(CFMENavigateStep):
         sel.click(InfoBlock('Overview', 'Topology'))
 
 
-import_all_modules_of('cfme.containers.provider')
-
-
 # Common methods:
-
 def navigate_and_get_rows(provider, obj, table, count):
     """Get <count> random rows from the obj list table,
     if <count> is greater that the number of rows, return number of rows.
