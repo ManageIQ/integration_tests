@@ -13,6 +13,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui import form_buttons, CFMECheckbox
@@ -27,6 +28,7 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
+from widgetastic_manageiq import TimelinesView
 
 
 # Forms
@@ -111,6 +113,14 @@ pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
 match_page = partial(match_location, controller='ems_cloud', title='Cloud Providers')
+
+
+class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and \
+            super(TimelinesView, self).is_displayed
 
 
 class CloudProvider(Pretty, CloudInfraProvider):
@@ -255,6 +265,7 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'Timelines')
 class Timelines(CFMENavigateStep):
+    VIEW = CloudProviderTimelinesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

@@ -93,12 +93,12 @@ drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::tabl
 
 
 class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
-
     @property
     def is_displayed(self):
         return self.logged_in_as_current_user and \
-               self.navigation.currently_selected == ['Compute', 'Infrastructure', '/host'] and \
-               super(TimelinesView, self).is_displayed
+            self.navigation.currently_selected == ['Compute', 'Infrastructure',
+                                                   '/vm_infra/explorer'] and \
+            super(TimelinesView, self).is_displayed
 
 
 @BaseVM.register_for_provider_type("infra")

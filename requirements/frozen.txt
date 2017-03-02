@@ -178,7 +178,7 @@ warlock==1.2.0
 wcwidth==0.1.7
 websocket-client==0.40.0
 Werkzeug==0.11.15
-widgetastic.core==0.4.1
+widgetastic.core==0.4.2
 widgetsnbextension==1.2.6
 wrapt==1.10.8
 xmltodict==0.10.2

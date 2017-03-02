@@ -113,9 +113,9 @@ class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return all((self.logged_in_as_current_user,
-                   self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'],
-                   TimelinesView.is_displayed))
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] \
+            and TimelinesView.is_displayed
 
 
 class InfraProvider(Pretty, CloudInfraProvider):

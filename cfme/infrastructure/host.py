@@ -101,8 +101,8 @@ class InfraHostTimelinesView(TimelinesView, cfme.BaseLoggedInPage):
     @property
     def is_displayed(self):
         return self.logged_in_as_current_user and \
-               self.navigation.currently_selected == ['Compute', 'Infrastructure', '/host'] and \
-               super(TimelinesView, self).is_displayed
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', '/host'] and \
+            super(TimelinesView, self).is_displayed
 
 
 class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):

@@ -3,7 +3,6 @@ import re
 from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.action_chains import ActionChains
 from lxml.html import document_fromstring
 from math import ceil
 from wait_for import wait_for
@@ -1343,8 +1342,8 @@ class TimelinesZoomSlider(View):
 
     """
     ROOT = ParametrizedLocator('{@locator}')
-    zoom_in_button = Text(locator='//button[@id="timeline-pf-zoom-in"]')  # button +
-    zoom_out_button = Text(locator='//button[@id="timeline-pf-zoom-out"]')  # button -
+    zoom_in_button = Text(locator='//button[@id="timeline-pf-zoom-in"]')  # "+" button
+    zoom_out_button = Text(locator='//button[@id="timeline-pf-zoom-out"]')  # "-" button
 
     def __init__(self, parent, locator, logger=None):
         View.__init__(self, parent, logger=logger)
@@ -1390,7 +1389,6 @@ class TimelinesFilter(View):
     time_period = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
     time_range = BootstrapSelect(id='tl_range')
     time_position = BootstrapSelect(id='tl_timepivot')
-    # date_picker = Calendar()
     # todo: implement correct switch between management/policy views when switchable views done
     apply = Text(locator='.//div[contains(@class, "timeline-apply")]')
     # management controls
@@ -1465,7 +1463,6 @@ class TimelinesChart(View):
                                     $(arguments[0]).art_click();""", group)
 
     def get_events(self, *categories):
-        # todo: to teach this code drag svg to hidden events and click them
         got_categories = self.get_categories(*categories)
         events = []
         for category in got_categories:
@@ -1478,10 +1475,13 @@ class TimelinesChart(View):
                     events.append(self._prepare_event(event_text, cat_name))
                 else:
                     # if event group
-                    self._click_group(raw_event)
+                    # todo: compare old table with new one if any issues
                     self.legend.clear_cache()
+                    self._click_group(raw_event)
+                    self.legend.wait_displayed()
                     for row in self.legend.rows():
-                        events.append(self._prepare_event(row['Event'].text, cat_name))
+                        event_text = self.browser.get_attribute('innerHTML', row['Event'])
+                        events.append(self._prepare_event(event_text, cat_name))
         return events
 
 

@@ -4,9 +4,11 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme import BaseLoggedInPage
 from cfme.web_ui import PagedTable, CheckboxTable, toolbar as tb, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from widgetastic_manageiq import TimelinesView
 
 # Page specific locators
 listview_pagetable = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -16,6 +18,14 @@ pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
 match_page = partial(match_location, controller='availability_zone', title='Availability Zones')
+
+
+class CloudAvailabilityZoneTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Availability Zones'] and \
+            super(TimelinesView, self).is_displayed
 
 
 class AvailabilityZone(Navigatable):
@@ -60,6 +70,7 @@ class AvailabilityZoneEditTags(CFMENavigateStep):
 
 @navigator.register(AvailabilityZone, 'Timelines')
 class AvailabilityZoneTimelines(CFMENavigateStep):
+    VIEW = CloudAvailabilityZoneTimelinesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

@@ -4,39 +4,31 @@ import pytest
 
 from cfme.common.vm import VM
 
-from cfme.infrastructure.host import  Host
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.host import Host
+from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
-from cfme.web_ui import InfoBlock, toolbar, jstimelines
-from utils import version
-from utils.log import logger
-from utils.providers import setup_a_provider, ProviderFilter
-from utils.wait import wait_for
+from cfme.web_ui import InfoBlock
+from utils import version, testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.generators import random_vm_name
+from utils.log import logger
+from utils.wait import wait_for
 
-pytestmark = [pytest.mark.tier(2)]
 
-
-@pytest.fixture(scope="module")
-def a_provider():
-    try:
-        pf = ProviderFilter(classes=[VMwareProvider, RHEVMProvider])
-        return setup_a_provider(filters=[pf])
-    except Exception:
-        pytest.skip("It's not possible to set up any providers, therefore skipping")
+pytestmark = [pytest.mark.tier(2),
+              pytest.mark.usefixtures("setup_provider_modscope")]
+pytest_generate_tests = testgen.generate([InfraProvider], scope='module')
 
 
 @pytest.fixture(scope="module")
-def test_vm(request, a_provider):
-    vm_name = "test_tl_" + fauxfactory.gen_alphanumeric(length=4)
-    vm = VM.factory(vm_name, a_provider)
+def test_vm(request, provider):
+    vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
 
     request.addfinalizer(vm.delete_from_provider)
 
-    if not a_provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, a_provider.key)
+    if not provider.mgmt.does_vm_exist(vm.name):
+        logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     return vm
 
@@ -53,12 +45,20 @@ def count_events(target, vm):
     timelines_view = navigate_to(target, 'Timelines')
     timelines_view.filter.time_position.select_by_visible_text('centered')
     timelines_view.filter.apply.click()
-    events = [evt for evt in timelines_view.chart.get_events() if evt.source_vm == vm.name]
-    logger.info("found events: {evt}".format(evt="\n".join(events)))
-    return len(events)
+    found_events = []
+    for evt in timelines_view.chart.get_events():
+        if not hasattr(evt, 'source_vm'):
+            # BZ(1428797)
+            logger.warn("event {evt} doesn't have source_vm field. Probably issue".format(evt=evt))
+            continue
+        elif evt.source_vm == vm.name:
+            found_events.append(evt)
+
+    logger.info("found events: {evt}".format(evt="\n".join([repr(e) for e in found_events])))
+    return len(found_events)
 
 
-@pytest.mark.meta(blockers=[1264183, 1281746])
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_provider_event(gen_events, test_vm):
     """Tests provider event on timelines
 
@@ -70,7 +70,7 @@ def test_provider_event(gen_events, test_vm):
              message="events to appear")
 
 
-@pytest.mark.meta(blockers=[1281746])
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_host_event(gen_events, test_vm):
     """Tests host event on timelines
 
@@ -84,7 +84,7 @@ def test_host_event(gen_events, test_vm):
              message="events to appear")
 
 
-@pytest.mark.meta(blockers=[1281746])
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_vm_event(gen_events, test_vm):
     """Tests vm event on timelines
 
@@ -96,14 +96,13 @@ def test_vm_event(gen_events, test_vm):
              message="events to appear")
 
 
-@pytest.mark.meta(blockers=[1281746])
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_cluster_event(gen_events, test_vm):
     """Tests cluster event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    # fixme: sometimes get_clusters doesn't return clusters
     all_clusters = test_vm.provider.get_clusters()
     cluster = next(cl for cl in all_clusters if cl.id == test_vm.cluster_id)
     wait_for(count_events, [cluster, test_vm], timeout='5m',
