@@ -917,10 +917,12 @@ class PaginationPane(View):
         self.paginator.prev_page()
 
     def first_page(self):
-        self.paginator.first_page()
+        if self.cur_page != 1:
+            self.paginator.first_page()
 
     def last_page(self):
-        self.paginator.last_page()
+        if self.cur_page != self.pages_amount:
+            self.paginator.last_page()
 
     def pages(self):
         """Generator to iterate over pages, yielding after moving to the next page"""
@@ -946,6 +948,28 @@ class PaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
+
+    def find_row_on_pages(self, table, *args, **kwargs):
+        """Find first row matching filters provided by kwargs on the given table widget
+
+        Args:
+            table: Table widget object
+            args: Filters to be passed to table.row()
+            kwargs: Filters to be passed to table.row()
+        """
+        self.first_page()
+        for _ in self.pages():
+            try:
+                row = table.row(*args, **kwargs)
+            except IndexError:
+                continue
+            if not row:
+                continue
+            else:
+                return row
+        else:
+            raise NoSuchElementException('Row matching filter {} not found on table {}'
+                                         .format(kwargs, table))
 
 
 class Stepper(View):
