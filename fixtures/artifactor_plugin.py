@@ -33,7 +33,6 @@ from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
-from utils.path import project_path
 from utils.wait import wait_for
 from utils import version
 
@@ -114,9 +113,9 @@ def pytest_configure(config):
     if not SLAVEID and not proc and isinstance(art_client, ArtifactorClient):
         import subprocess
         cmd = [
-            sys.executable, '-m', 'artifactor']
-        cmd.append('--port')
-        cmd.append(str(art_client.port))
+            sys.executable, '-m', 'artifactor',
+            '--port', str(art_client.port),
+        ]
         if config.getvalue('run_id'):
             cmd.append('--run-id')
             cmd.append(str(config.getvalue('run_id')))
