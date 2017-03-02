@@ -75,6 +75,7 @@ def test_schema_crud(request, namespace):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[1428424])
 def test_duplicate_class_disallowed(namespace):
     name = fauxfactory.gen_alphanumeric()
     namespace.classes.create(name=name)
