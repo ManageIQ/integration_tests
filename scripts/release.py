@@ -62,18 +62,23 @@ def main():
     max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
 
     now = datetime.date.today()
-    start_of_week = now - datetime.timedelta(days=15)
+    start_of_week = now - datetime.timedelta(days=30)
     string_start = start_of_week.strftime('%Y-%m-%d')
 
     headers = {'Authorization': 'token {}'.format(docker['gh_token'])}
-    r = requests.get(
+    items = []
+    result = requests.get(
         'https://api.github.com/search/issues?per_page=200&q=type:pr+repo:{}/'
         '{}+merged:>{}'.format(docker['gh_owner'], docker['gh_repo'], string_start),
         headers=headers)
+    items += result.json()['items']
+    while re.findall('\<(.*)\>; rel="next"', result.headers['Link']):
+        result = requests.get(re.findall('\<(.*)\>; rel="next"', result.headers['Link'])[0],
+                              headers=headers)
+        items += result.json()['items']
 
-    labels = defaultdict(int)
     prs = {}
-    for pr in r.json()['items']:
+    for pr in items:
         prs[pr['number']] = pr
         for label in pr['labels']:
             if label['name'] in valid_labels:
@@ -81,7 +86,6 @@ def main():
                 break
         else:
             raise Exception("PR [{}]: Does not have a label".format(pr['number']))
-        labels[pr['label']] += 1
 
     if not args.stats:
         max_len_pr = len(
@@ -117,6 +121,15 @@ def main():
                         print("")
 
     elif args.stats:
+        labels = defaultdict(int)
+
+        for commit in commits.split("\n"):
+            pr = re.match('.*[#](\d+).*', commit)
+            if pr:
+                pr_number = int(pr.groups()[0].replace("#", ''))
+                if pr_number in prs:
+                    labels[prs[pr_number]['label']] += 1
+
         for label in labels:
             print("{},{}".format(label, labels[label]))
 
