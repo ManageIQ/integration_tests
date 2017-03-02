@@ -1,7 +1,7 @@
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic_manageiq import ManageIQTree, Checkbox, AttributeValueForm
+from widgetastic_manageiq import ManageIQTree, Checkbox, AttributeValueForm, SummaryFormItem
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
 from widgetastic.widget import View, Table, Text
@@ -394,6 +394,10 @@ class DiagnosticsCollectLogsView(ServerDiagnosticsView):
             self.view.collectlogs.is_displayed and
             self.view.collectlogs.is_active)
 
+    log_depot_uri = SummaryFormItem('Basic Info', 'Log Depot URI')
+    last_log_collection = SummaryFormItem('Basic Info', 'Last Log Collection')
+    last_log_message = SummaryFormItem('Basic Info', 'Last Message')
+
 
 @navigator.register(Server)
 class DiagnosticsCollectLogs(CFMENavigateStep):
@@ -410,6 +414,18 @@ class DiagnosticsCollectLogsEdit(DiagnosticsCollectLogsView):
     @property
     def is_displayed(self):
         return super(DiagnosticsCollectLogsEdit, self).is_displayed and self.protocol.is_displayed
+
+    type = BootstrapSelect('log_protocol')
+    depot_name = Input('depot_name')
+    uri = Input('uri')
+    username = Input(name='log_userid')
+    password = Input(name='log_password')
+    confirm_password = Input(name='log_verify')
+    validate = Button(tittle='Validate the credentials by logging into the Server')
+
+    save = Button('save_enabled')
+    reset = Button('reset_enabled_disabled')
+    cancel = Button('cancel_enabled')
 
 
 @navigator.register(Server)

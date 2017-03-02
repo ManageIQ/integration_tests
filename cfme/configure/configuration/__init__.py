@@ -5,28 +5,27 @@ from navmazing import (NavigateToAttribute,
                        NavigationDestinationNotFound)
 
 from contextlib import contextmanager
-from functools import partial
-from cached_property import cached_property
-import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
+from functools import partial
 
 from cfme.base.ui import Server, Region
+from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
+import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
-    MultiFill, Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
+    Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.form_buttons import change_stored_password
+from utils import version, conf
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.base.ui import ConfigurationView
 from utils.log import logger
+from utils.pretty import Pretty
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version, conf
-from utils.pretty import Pretty
 
 
 access_tree = partial(accordion.tree, "Access Control")
@@ -305,219 +304,119 @@ class ServerLogDepot(Pretty):
         ServerLogDepot.Credentials.clear()
 
     """
-    elements = UIRegion(
-        locators={
-            "last_message": InfoBlock("Basic Info", "Last Message"),
-            "last_log_collection": InfoBlock("Basic Info", "Last Log Collection"),
-        },
-    )
 
-    class Credentials(Updateable, Pretty):
-        """ This class represents the credentials for log depots.
+    def __init__(self, p_type, depot_name=None, uri=None, username=None, password=None):
+        self.p_type = p_type
+        self.depot_name = depot_name
+        self.uri = uri
+        self.username = username
+        self.password = password
 
-        Args:
-            p_type: One of ftp, nfs, or smb.
-            uri: Hostname/IP address of the machine.
-            username: User name used for logging in (ftp, smb only).
-            password: Password used for logging in (ftp, smb only).
-
-        Usage:
-
-            log_credentials = ServerLogDepot.Credentials("nfs", "backup.acme.com")
-            log_credentials.update()
-            log_credentials = ServerLogDepot.Credentials(
-                "smb",
-                "foobar",
-                "backup.acme.com",
-                username="jdoe",
-                password="xyz",
-            )
-            log_credentials.update()
-
-        """
-        pretty_attrs = ['p_type', 'name', 'uri', 'username', 'password']
-
-        server_collect_logs = Form(
-            fields=[
-                ("type", {
-                    version.LOWEST: Select("select#log_protocol"),
-                    '5.5': AngularSelect('log_protocol')}),
-                ("name", {
-                    version.LOWEST: None,
-                    "5.4": Input("depot_name")}),
-                ("uri", Input("uri")),
-                ("user", Input("log_userid")),
-                ("password", MultiFill(Input("log_password"), Input("log_verify"))),
-            ]
+        p_types = dict(
+            anon_ftp="Anonymous FTP",
+            ftp="FTP",
+            nfs="NFS",
+            smb="Samba",
+            dropbox="Red Hat Dropbox",
         )
+        self.p_type = p_types[p_type]
 
-        validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
-        # add FormButton because of inconsistency in attributes for Save buttons in cfme
-        save_button = {
-            version.LOWEST: form_buttons.save,
-            "5.4": form_buttons.angular_save,
-            "5.6": form_buttons.FormButton("Save Changes", ng_click="btnClick()")
-        }
+    def create(self, cancel=False):
+        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
+        if self.p_type != 'Red Hat Dropbox':
+            view.fill({'type': self.p_type,
+                       'depot_name': self.depot_name,
+                       'uri': self.uri})
+        if self.p_type in ['FTP', 'Samba']:
+            view.fill({'username': self.username,
+                       'password': self.password,
+                       'confirm_password': self.password})
+            view.validate.click()
+        if cancel:
+            view.cancel.click()
+            view.flash.assert_success_message("Edit Log Depot settings was cancelled by the user")
+        else:
+            view.save.click()
+            view.flash.assert_success_message("Log Depot Settings were saved")
 
-        def __init__(self, p_type, name, uri, username=None, password=None):
-            assert p_type in self.p_types.keys(), "{} is not allowed as the protocol type!".format(
-                p_type)
-            self.p_type = p_type
-            self.uri = uri
-            self.username = username
-            self.password = password
-            self.name = name
-
-        @cached_property
-        def p_types(self):
-            return version.pick({
-                version.LOWEST: dict(
-                    anon_ftp="Anonymous FTP",
-                    ftp="FTP",
-                    nfs="NFS",
-                    smb="Samba",
-                    dropbox="Red Hat Dropbox",
-                ),
-                "5.5": dict(
-                    anon_ftp=sel.ByValue("Anonymous FTP"),
-                    ftp=sel.ByValue("FTP"),
-                    nfs=sel.ByValue("NFS"),
-                    smb=sel.ByValue("Samba"),
-                    dropbox=sel.ByValue("Red Hat Dropbox")
-                )
-            })
-
-        def update(self, validate=True, cancel=False):
-            """ Navigate to a correct page, change details and save.
-
-            Args:
-                validate: Whether validate the credentials (not for NFS)
-                cancel: If set to True, the Cancel button is clicked instead of saving.
-            """
-            navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
-            details = {
-                "type": sel.ByValue(self.p_types[self.p_type]),
-                "name": self.name,
-                "uri": self.uri,
-            }
-            if self.p_type not in {"nfs", "anon_ftp"}:
-                change_stored_password()
-                details["user"] = self.username
-                details["password"] = self.password
-
-            fill(
-                self.server_collect_logs,
-                details
-            )
-            if validate and self.p_type not in {"nfs", "anon_ftp", "dropbox"}:
-                sel.click(self.validate)
-                flash.assert_no_errors()
-
-            if cancel:
-                sel.click(form_buttons.cancel)
-                flash.assert_message_match("Edit Log Depot settings was cancelled by the user")
-                flash.assert_no_errors()
-            else:
-                sel.click(self.save_button)
-                flash.assert_message_match("Log Depot Settings were saved")
-                flash.assert_no_errors()
-
-        @classmethod
-        def clear(cls, cancel=False):
-            """ Navigate to correct page and set <No Depot>.
-
-            Args:
-                cancel: If set to True, the Cancel button is clicked instead of saving.
-            """
-            navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
-            sel.wait_for_element(cls.server_collect_logs.type)
-            sel.wait_for_ajax()
-            if cls.server_collect_logs.type.first_selected_option_text == "<No Depot>":
-                # Nothing to do here
-                sel.click(form_buttons.cancel)
-            else:
-                fill(
-                    cls.server_collect_logs,
-                    {"type": "<No Depot>"},
-                    action=form_buttons.cancel if cancel else cls.save_button
-                )
-
-    @classmethod
-    def get_last_message(cls):
-        """ Returns the Last Message that is displayed in the InfoBlock.
-
-        """
-        return cls.elements.last_message.text
-
-    @classmethod
-    def get_last_collection(cls):
-        """ Returns the Last Log Collection that is displayed in the InfoBlock.
-
-        Returns: If it is Never, returns `None`, otherwise :py:class:`utils.timeutil.parsetime`.
-        """
-        d = cls.elements.last_log_collection.text
-        if d.strip().lower() == "never":
+    @property
+    def last_collection(self):
+        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        text = view.last_log_collection.text
+        if text.lower() == "never":
             return None
         else:
             try:
-                return parsetime.from_american_with_utc(d.strip())
+                return parsetime.from_american_with_utc(text)
             except ValueError:
-                return parsetime.from_iso_with_utc(d.strip())
+                return parsetime.from_iso_with_utc(text)
 
-    @classmethod
-    def _collect(cls, selection, wait_minutes=4):
-        """ Initiate and wait for collection to finish. DRY method.
+    @property
+    def last_message(self):
+        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        return view.last_log_message.text
+
+    def clear(self):
+        """ Set depot type to "No Depot"
+
+        """
+        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
+        view.fill({'type': '<No Depot>'})
+        view.save.click()
+        view.flash.assert_success_message("Log Depot Settings were saved")
+
+    def _collect(self, selection):
+        """ Initiate and wait for collection to finish.
 
         Args:
             selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
-            wait_minutes: How many minutes should we wait for the collection process to finish?
         """
-        navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
-        last_collection = cls.get_last_collection()
+
+        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        last_collection = self.last_collection
         # Initiate the collection
         tb.select("Collect", selection)
-        flash.assert_no_errors()
+        view.flash.assert_success_message(
+            "Log collection for CFME MiqServer {} [{}] has been initiated".
+                format(current_appliance.server_name(), current_appliance.server_zone_id()))
 
         def _refresh():
             """ The page has no refresh button, so we'll switch between tabs.
 
-            Why this? Selenium's refresh() is way too slow. This is much faster.
-
             """
-            tabs.select_tab("Workers")
-            tabs.select_tab("Collect Logs")  # Serve as the refresh
+            navigate_to(current_appliance.server, 'Workers')
+            navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+
         # Wait for start
         if last_collection is not None:
             # How does this work?
             # The time is updated just after the collection has started
             # If the Text is Never, we will not wait as there is nothing in the last message.
             wait_for(
-                lambda: cls.get_last_collection() > last_collection,
+                lambda: self.last_collection > last_collection,
                 num_sec=90,
                 fail_func=_refresh,
                 message="wait_for_log_collection_start"
             )
         # Wait for finish
         wait_for(
-            lambda: "were successfully collected" in cls.get_last_message(),
-            num_sec=wait_minutes * 60,
+            lambda: "were successfully collected" in self.last_message,
+            num_sec=4 * 60,
             fail_func=_refresh,
             message="wait_for_log_collection_finish"
         )
 
-    @classmethod
-    def collect_all(cls):
+    def collect_all(self):
         """ Initiate and wait for collection of all logs to finish.
 
         """
-        cls._collect("Collect all logs")
+        self._collect("Collect all logs")
 
-    @classmethod
-    def collect_current(cls):
+    def collect_current(self):
         """ Initiate and wait for collection of the current log to finish.
 
         """
-        cls._collect("Collect current logs")
+        self._collect("Collect current logs")
 
 
 class BasicInformation(Updateable, Pretty, Navigatable):

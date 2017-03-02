@@ -11,11 +11,10 @@ import re
 
 from cfme import test_requirements
 from cfme.configure import configuration as configure
-from cfme.web_ui import toolbar
 from utils import conf, testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.ftp import FTPClient
-from utils.path import log_path
 from utils.providers import get_mgmt
 from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
@@ -93,8 +92,8 @@ def pytest_generate_tests(metafunc):
     return
 
 
-@pytest.fixture(scope="module")
-def depot_machine_ip(request):
+@pytest.yield_fixture(scope="session")
+def depot_machine_ip():
     """ Deploy vm for depot test
 
     This fixture uses for deploy vm on provider from yaml and then receive it's ip
@@ -108,15 +107,12 @@ def depot_machine_ip(request):
     deploy_template(depot_provider_key,
                     depot_machine_name,
                     template_name=depot_template_name)
-
-    def fin():
-        prov.delete_vm(depot_machine_name)
-    request.addfinalizer(fin)
-    return prov.get_ip_address(depot_machine_name)
+    yield prov.get_ip_address(depot_machine_name)
+    prov.delete_vm(depot_machine_name)
 
 
-@pytest.fixture(scope="function")
-def depot_configured(request, log_depot, depot_machine_ip):
+@pytest.yield_fixture(scope="function")
+def configured_depot(log_depot,  depot_machine_ip):
     """ Configure selected depot provider
 
     This fixture used the trick that the fixtures are cached for given function.
@@ -126,25 +122,47 @@ def depot_configured(request, log_depot, depot_machine_ip):
     It also provides a finalizer to disable the depot after test run.
     """
     log_depot.machine_ip = depot_machine_ip
-    machine = log_depot.machine_ip + log_depot.access_dir
-    if log_depot.protocol not in ["nfs", "anon_ftp"]:
-        credentials = configure.ServerLogDepot.Credentials(
-            log_depot.protocol,
-            fauxfactory.gen_alphanumeric(),
-            machine,
-            username=log_depot.credentials["username"],
-            password=log_depot.credentials["password"],
-        )
-    else:
-        credentials = configure.ServerLogDepot.Credentials(
-            log_depot.protocol,
-            fauxfactory.gen_alphanumeric(),
-            machine,
-        )
-    # Fails on upstream - BZ1108087
-    credentials.update()
-    request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
-    return credentials
+    uri = log_depot.machine_ip + log_depot.access_dir
+    log_depot = configure.ServerLogDepot(log_depot.protocol,
+                                         depot_name=fauxfactory.gen_alphanumeric(),
+                                         uri=uri,
+                                         username=log_depot.credentials["username"],
+                                         password=log_depot.credentials["password"]
+                                         )
+    log_depot.create()
+    yield log_depot
+    log_depot.clear()
+
+
+def check_ftp(ftp):
+    with ftp:
+        # Files must have been created after start
+        zip_files = ftp.filesystem.search(re.compile(r"^.*?[.]zip$"), directories=False)
+        assert zip_files, "No logs found!"
+    # Check the times of the files by names
+    datetimes = []
+    regexp = re.compile(
+        r"^.*?_(?P<y1>[0-9]{4})(?P<m1>[0-9]{2})(?P<d1>[0-9]{2})_"
+        r"(?P<h1>[0-9]{2})(?P<M1>[0-9]{2})(?P<S1>[0-9]{2})"
+        r"_(?P<y2>[0-9]{4})(?P<m2>[0-9]{2})(?P<d2>[0-9]{2})_"
+        r"(?P<h2>[0-9]{2})(?P<M2>[0-9]{2})(?P<S2>[0-9]{2})[.]zip$"
+    )
+    for file in zip_files:
+        data = regexp.match(file.name)
+        assert data, "Wrong file matching of {}".format(file.name)
+        data = {key: int(value) for key, value in data.groupdict().iteritems()}
+        date_from = parsetime(
+            data["y1"], data["m1"], data["d1"], data["h1"], data["M1"], data["S1"])
+        date_to = parsetime(data["y2"], data["m2"], data["d2"], data["h2"], data["M2"], data["S2"])
+        datetimes.append((date_from, date_to, file.name))
+
+    # Check for the gaps
+    if len(datetimes) > 1:
+        for i in range(len(datetimes) - 1):
+            dt = datetimes[i + 1][0] - datetimes[i][1]
+            assert dt.total_seconds() >= 0.0, \
+                "Negative gap between log files ({}, {})".format(
+                    datetimes[i][2], datetimes[i + 1][2])
 
 
 @pytest.mark.tier(3)
@@ -152,7 +170,7 @@ def depot_configured(request, log_depot, depot_machine_ip):
 @pytest.mark.meta(blockers=[BZ(1341502, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
                             forced_streams=["5.6", "upstream"])]
                   )
-def test_collect_log_depot(log_depot, depot_machine_ip, soft_assert, request):
+def test_collect_log_depot(log_depot,depot_configured, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
@@ -160,7 +178,7 @@ def test_collect_log_depot(log_depot, depot_machine_ip, soft_assert, request):
     # Wipe the FTP contents in the end
     @request.addfinalizer
     def _clear_ftp():
-        with log_depot.ftp() as ftp:
+        with log_depot.ftp as ftp:
             ftp.cwd(ftp.upload_dir)
             ftp.recursively_delete()
 
@@ -172,78 +190,25 @@ def test_collect_log_depot(log_depot, depot_machine_ip, soft_assert, request):
         ftp.recursively_delete()
 
     # Start the collection
-    configure.ServerLogDepot.collect_all()
+    depot_configured.collect_all()
     # Check it on FTP
-    with log_depot.ftp as ftp:
-        # Files must have been created after start
-        zip_files = ftp.filesystem.search(re.compile(r"^.*?[.]zip$"), directories=False)
-        assert zip_files, "No logs found!"
-
-        # And must be older than the start time.
-        for file in zip_files:
-            soft_assert(file.local_time < parsetime.now(), "{} is older.".format(file.name))
-
-        # No file contains 'unknown_unknown' sequence
-        # BZ: 1018578
-        bad_files = ftp.filesystem.search(re.compile(r"^.*?unknown_unknown.*?[.]zip$"),
-                                          directories=False)
-        if bad_files:
-            print_list = []
-            for file in bad_files:
-                random_name = "{}.zip".format(fauxfactory.gen_alphanumeric())
-                download_file_name = log_path.join(random_name).strpath
-                file.download(download_file_name)
-                print_list.append((file, random_name))
-
-            pytest.fail(
-                "BUG1018578: Files {} present!".format(
-                    ", ".join("{} as {}".format(f, r) for f, r in print_list)))
-
-    # Check the times of the files by names
-    datetimes = []
-    regexp = re.compile(
-        r"^.*?_(?P<y1>[0-9]{4})(?P<m1>[0-9]{2})(?P<d1>[0-9]{2})_"
-        r"(?P<h1>[0-9]{2})(?P<M1>[0-9]{2})(?P<S1>[0-9]{2})"
-        r"_(?P<y2>[0-9]{4})(?P<m2>[0-9]{2})(?P<d2>[0-9]{2})_"
-        r"(?P<h2>[0-9]{2})(?P<M2>[0-9]{2})(?P<S2>[0-9]{2})[.]zip$"
-    )
-    failed = False
-    for file in zip_files:
-        data = regexp.match(file.name)
-        if not soft_assert(data, "Wrong file matching of {}".format(file.name)):
-            failed = True
-            continue
-        data = {key: int(value) for key, value in data.groupdict().iteritems()}
-        date_from = parsetime(
-            data["y1"], data["m1"], data["d1"], data["h1"], data["M1"], data["S1"])
-        date_to = parsetime(data["y2"], data["m2"], data["d2"], data["h2"], data["M2"], data["S2"])
-        datetimes.append((date_from, date_to, file.name))
-
-    if not failed:
-        # Check for the gaps
-        if len(datetimes) > 1:
-            for i in range(len(datetimes) - 1):
-                dt = datetimes[i + 1][0] - datetimes[i][1]
-                soft_assert(
-                    dt.total_seconds() >= 0.0,
-                    "Negative gap between log files ({}, {})".format(
-                        datetimes[i][2], datetimes[i + 1][2]))
+    check_ftp(log_depot.ftp)
 
 
+@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
 @pytest.mark.tier(3)
-def test_collect_unconfigured(request, soft_assert):
+def test_collect_unconfigured(soft_assert, appliance):
     """ Test checking is collect button enable and disable after log depot was configured
 
     """
-    request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
-    log_credentials = configure.ServerLogDepot.Credentials("smb",
-                                                           "testname",
-                                                           "testhost",
-                                                           username="testusername",
-                                                           password="testpassword")
-    log_credentials.update(validate=False)
+    log_credentials = configure.ServerLogDepot("anon_ftp",
+                                               depot_name=fauxfactory.gen_alphanumeric(),
+                                               uri=fauxfactory.gen_alphanumeric())
+
+    log_credentials.create()
+    view = navigate_to(appliance.server, 'DiagnosticsCollectLogs')
     # check button is enable after adding log depot
-    soft_assert(toolbar.is_greyed("Collect", "Collect all logs") is False)
-    configure.ServerLogDepot.Credentials.clear()
+    assert view.collect.item_enabled('Collect all logs') is True
+    log_credentials.clear()
     # check button is disable after removing log depot
-    soft_assert(toolbar.is_greyed("Collect", "Collect all logs") is True)
+    assert view.collect.item_enabled('Collect all logs') is False
