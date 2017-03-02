@@ -12,7 +12,6 @@ class CustomAttribute(object):
         self.href = href
 
 
-@ContainersProvider.add_provider_type
 class OpenshiftProvider(ContainersProvider):
     num_route = ['num_route']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route

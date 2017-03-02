@@ -2,7 +2,6 @@ from . import ContainersProvider
 from mgmtsystem.kubernetes import Kubernetes
 
 
-@ContainersProvider.add_provider_type
 class KubernetesProvider(ContainersProvider):
     type_name = "kubernetes"
     mgmt_class = Kubernetes

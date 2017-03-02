@@ -16,7 +16,7 @@ from collections import Mapping, OrderedDict
 from copy import copy
 
 from fixtures.pytest_store import store
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import base_types, provider_types
 
 from cfme.containers import provider as containers_providers # NOQA
 from cfme.cloud import provider as cloud_providers # NOQA
@@ -30,6 +30,21 @@ from utils.log import logger
 providers_data = conf.cfme_data.get("management_systems", {})
 # Dict of active provider filters {name: ProviderFilter}
 global_filters = {}
+
+
+def load_setuptools_entrypoints():
+    """ Load modules from querying the specified setuptools entrypoint name."""
+    from pkg_resources import (iter_entry_points, DistributionNotFound,
+                               VersionConflict)
+    for ep in iter_entry_points('manageiq_integration_tests'):
+        # is the plugin registered or blocked?
+        try:
+            ep.load()
+        except DistributionNotFound:
+            continue
+        except VersionConflict as e:
+            raise Exception(
+                "Plugin {} could not be loaded: {}!".format(ep.name, e))
 
 
 class ProviderFilter(object):
@@ -385,9 +400,9 @@ def setup_a_provider_by_class(prov_class, validate=True, check_existing=True, ap
 
 def get_class_from_type(prov_type):
     """ Serves to translate both provider types and categories to actual classes """
-    all_classes_map = BaseProvider.base_types.copy()
-    for base_type in BaseProvider.base_types.itervalues():
-        all_classes_map.update(base_type.provider_types)
+    all_classes_map = base_types().copy()
+    for base_type in base_types().keys():
+        all_classes_map.update(provider_types(base_type))
     try:
         return all_classes_map[prov_type]
     except KeyError:

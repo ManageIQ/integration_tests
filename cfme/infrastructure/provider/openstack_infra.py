@@ -18,7 +18,6 @@ register_nodes_form = Form(
     ])
 
 
-@InfraProvider.add_provider_type
 class OpenstackInfraProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_host']
     _properties_region = prop_region

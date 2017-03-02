@@ -3,7 +3,6 @@ from . import InfraProvider, prop_region
 from mgmtsystem.rhevm import RHEVMSystem
 
 
-@InfraProvider.add_provider_type
 class RHEVMProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "rhevm"

@@ -1,6 +1,4 @@
 import datetime
-import pkgutil
-import importlib
 from functools import partial
 
 import cfme
@@ -14,17 +12,16 @@ from cfme.web_ui import (flash, Quadicon, CheckboxTree, Region, fill, FileInput,
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
+from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
-from utils.path import project_path
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
-from utils import conf, version
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
@@ -35,9 +32,21 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 details_page = Region(infoblock_type='detail')
 
 
+def base_types():
+    from pkg_resources import iter_entry_points
+    return {ep.name: ep.resolve() for ep in iter_entry_points('manageiq.provider_categories')}
+
+
+def provider_types(category):
+    from pkg_resources import iter_entry_points
+    return {
+        ep.name: ep.resolve() for ep in iter_entry_points(
+            'manageiq.provider_types.{}'.format(category))
+    }
+
+
 class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
-    base_types = {}
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""
@@ -49,16 +58,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     _properties_region = None
     add_provider_button = None
     save_button = None
-
-    @classmethod
-    def add_base_type(cls, nclass):
-        cls.base_types[nclass.category] = nclass
-        return nclass
-
-    @classmethod
-    def add_provider_type(cls, nclass):
-        cls.provider_types[nclass.type_name] = nclass
-        return nclass
 
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
@@ -768,9 +767,3 @@ def cleanup_vm(vm_name, provider):
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)
-
-
-def import_all_modules_of(loc):
-    path = project_path.join('{}'.format(loc.replace('.', '/'))).strpath
-    for _, name, _ in pkgutil.iter_modules([path]):
-        importlib.import_module('{}.{}'.format(loc, name))

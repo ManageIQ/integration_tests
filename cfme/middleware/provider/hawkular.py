@@ -11,7 +11,6 @@ from utils.appliance.implementations.ui import navigate_to
 from mgmtsystem.hawkular import Hawkular
 
 
-@MiddlewareProvider.add_provider_type
 class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, MiddlewareProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page

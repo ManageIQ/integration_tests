@@ -6,7 +6,6 @@ import os
 import re
 
 from cfme.common import Validatable, SummaryMixin
-from cfme.common.provider import import_all_modules_of
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
@@ -61,7 +60,6 @@ properties_form = Form(
     ])
 
 
-@BaseProvider.add_base_type
 class MiddlewareProvider(BaseProvider):
     in_version = ('5.7', version.LATEST)
     category = "middleware"
@@ -448,6 +446,3 @@ class Deployable(SummaryMixin):
         operations_btn("Enable", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('Enable initiated for selected deployment(s)')
-
-
-import_all_modules_of('cfme.middleware.provider')

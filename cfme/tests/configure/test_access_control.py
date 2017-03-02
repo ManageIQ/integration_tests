@@ -14,7 +14,7 @@ from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
 from cfme.infrastructure.provider import InfraProvider
 from cfme.exceptions import OptionNotAvailable
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.services.myservice import MyService
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
@@ -511,16 +511,16 @@ cat_name = "Settings"
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
-          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
+          'clouds providers': _go_to(base_types()['cloud']),
+          'infrastructure providers': _go_to(base_types()['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')}],
      [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
-          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
+          'clouds providers': _go_to(base_types()['cloud']),
+          'infrastructure providers': _go_to(base_types()['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')},
       {}]])
