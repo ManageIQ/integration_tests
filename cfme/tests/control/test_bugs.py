@@ -219,7 +219,8 @@ def test_folder_field_scope(request, virtualcenter_provider, vmware_vm):
 
     # Assign policy profile to the provider
     virtualcenter_provider.assign_policy_profiles(profile.description)
-    request.addfinalizer(lambda: virtualcenter_provider.unassign_policy_profiles(profile.description))
+    request.addfinalizer(
+        lambda: virtualcenter_provider.unassign_policy_profiles(profile.description))
 
     # Delete and rediscover the VM
     vmware_vm.delete()

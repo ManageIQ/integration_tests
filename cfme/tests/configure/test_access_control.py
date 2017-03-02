@@ -597,7 +597,7 @@ def test_permissions_vm_provisioning():
 #    # Ensure VMs exist
 #    if not vms.get_number_of_vms():
 #        logger.debug("Setting up providers")
-#        infra_provider()
+#        infra_provider
 #        logger.debug("Providers setup")
 #    single_task_permission_test(
 #        [

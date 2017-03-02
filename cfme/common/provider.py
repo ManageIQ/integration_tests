@@ -590,7 +590,6 @@ def get_paginator_value():
 class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     vm_name = ""
     template_name = ""
-    category = "core"
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"

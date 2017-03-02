@@ -174,7 +174,7 @@ def _generate_provider_fixtures():
     """
     for prov_type, prov_class in all_types().iteritems():
         def gen_setup_provider(prov_class):
-            @pytest.fixture(scope='module')
+            @pytest.fixture(scope='function')
             def _setup_provider(request):
                 """ Sets up one of the matching providers """
                 return setup_one_by_class_or_skip(request, prov_class)
@@ -183,7 +183,7 @@ def _generate_provider_fixtures():
         globals()[fn_name] = gen_setup_provider(prov_class)
 
         def gen_has_no_providers(prov_class):
-            @pytest.fixture
+            @pytest.fixture(scope='function')
             def _has_no_providers():
                 """ Clears all providers of given class from the appliance """
                 BaseProvider.clear_providers_by_class(prov_class, validate=True)
@@ -194,6 +194,16 @@ def _generate_provider_fixtures():
 
 # Let's generate all the provider setup and clear fixtures within the scope of this module
 _generate_provider_fixtures()
+
+
+@pytest.fixture(scope="function")
+def has_no_providers(request):
+    BaseProvider.clear_providers()
+
+
+@pytest.fixture(scope="function")
+def setup_only_one_provider(request, has_no_providers):
+    return setup_one_or_skip(request)
 
 
 # When we want to setup a provider provided by testgen
@@ -221,12 +231,6 @@ def setup_provider_funcscope(request, provider):
     """Function-scoped fixture to set up a provider"""
     return setup_or_skip(request, provider)
 # -----------------------------------------------
-
-
-@pytest.fixture(scope="session")
-def any_provider_session(request):
-    BaseProvider.clear_providers()
-    return setup_one_or_skip(request)
 
 
 @pytest.fixture(scope="function")
