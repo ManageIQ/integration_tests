@@ -424,3 +424,15 @@ def arbitration_profiles(request, rest_api, a_provider, num=2):
         })
 
     return _creating_skeleton(request, rest_api, 'arbitration_profiles', data)
+
+
+def arbitration_rules(request, rest_api, num=2):
+    data = []
+    for _ in range(num):
+        data.append({
+            'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
+            'operation': 'inject',
+            'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
+        })
+
+    return _creating_skeleton(request, rest_api, 'arbitration_rules', data)

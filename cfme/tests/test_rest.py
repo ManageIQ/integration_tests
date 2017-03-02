@@ -5,18 +5,17 @@ import fauxfactory
 import utils.error as error
 import multiprocessing as mp
 
-from manageiq_client.api import APIException
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import vm as _vm
+from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
 from cfme.rest.gen_data import arbitration_settings, automation_requests_data
 from utils.providers import setup_a_provider, ProviderFilter
 from utils.version import current_version
 from utils.wait import wait_for
-from utils.log import logger
 from utils.blockers import BZ
 
 
@@ -324,26 +323,13 @@ class TestArbitrationSettingsRESTAPI(object):
 
 
 class TestArbitrationRulesRESTAPI(object):
-    @pytest.yield_fixture(scope='function')
-    def arbitration_rules(self, rest_api):
+    @pytest.fixture(scope='function')
+    def arbitration_rules(self, request, rest_api):
         num_rules = 2
-        body = []
-        for _ in range(num_rules):
-            body.append({
-                'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
-                'operation': 'inject',
-                'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
-            })
-        response = rest_api.collections.arbitration_rules.action.create(*body)
+        response = _arbitration_rules(request, rest_api, num=num_rules)
+        assert rest_api.response.status_code == 200
         assert len(response) == num_rules
-
-        yield response
-
-        try:
-            rest_api.collections.arbitration_rules.action.delete(*response)
-        except APIException:
-            # rules can be deleted by tests, just log warning
-            logger.warning("Failed to delete arbitration rules.")
+        return response
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_create_arbitration_rules(self, arbitration_rules, rest_api):
@@ -354,8 +340,7 @@ class TestArbitrationRulesRESTAPI(object):
         """
         for rule in arbitration_rules:
             record = rest_api.collections.arbitration_rules.get(id=rule.id)
-            assert rest_api.response.status_code == 200
-            assert record._data == rule._data
+            assert record.description == rule.description
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
@@ -572,7 +557,7 @@ class TestRequestsRESTAPI(object):
         body = {'options': {'arbitrary_key_allowed': 'test_rest'}}
 
         if from_detail:
-            if BZ('1418331', forced_streams=['5.7', 'upstream']).blocks:
+            if BZ('1418331', forced_streams=['5.7', '5.8', 'upstream']).blocks:
                 pytest.skip("Affected by BZ1418331, cannot test.")
             for request in pending_requests:
                 request.action.edit(**body)
