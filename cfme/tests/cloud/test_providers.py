@@ -261,11 +261,11 @@ def test_password_max_character_validation():
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_name_max_character_validation(request, cloud_provider):
-    """Test to validate max character for name field"""
+    """Test to validate that provider can have up to 255 characters in name"""
     request.addfinalizer(lambda: cloud_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
-    cloud_provider.update({'name': name})
-    cloud_provider.name = name
+    with update(cloud_provider):
+        cloud_provider.name = name
     assert cloud_provider.exists
 
 
