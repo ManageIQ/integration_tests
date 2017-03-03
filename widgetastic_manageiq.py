@@ -1586,9 +1586,9 @@ class AttributeValueForm(View):
         PARAMETERS = ('id', )
 
         attribute = Input(
-            ParametrizedLocator('.//input[@id=concat({@attr_prefix|quote}, {id|quote})]'))
+            locator=ParametrizedLocator('.//input[@id=concat({@attr_prefix|quote}, {id|quote})]'))
         value = Input(
-            ParametrizedLocator('.//input[@id=concat({@val_prefix|quote}, {id|quote})]'))
+            locator=ParametrizedLocator('.//input[@id=concat({@val_prefix|quote}, {id|quote})]'))
 
         @property
         def attr_prefix(self):
@@ -1631,15 +1631,19 @@ class AttributeValueForm(View):
     def read(self):
         result = {}
         for id, attribute in self.current_attributes:
-            value = self.fields(id=id).value.read()
+            if not attribute:
+                continue
+            value = self.fields(id=str(id)).value.read()
             result[attribute] = value
         return result
 
     def clear(self):
         changed = False
         for id, attr in self.current_attributes:
-            field = self.fields(id=id)
-            if field.attribute.fill('') or field.value.fill(''):
+            field = self.fields(id=str(id))
+            if field.attribute.fill(''):
+                changed = True
+            if field.value.fill(''):
                 changed = True
         return changed
 
@@ -1652,7 +1656,7 @@ class AttributeValueForm(View):
                     self.count, len(values)))
         changed = self.clear()
         for id, (key, value) in enumerate(values, self.start):
-            field = self.fields(id=id)
+            field = self.fields(id=str(id))
             if field.fill({'attribute': key, 'value': value}):
                 changed = True
         return changed

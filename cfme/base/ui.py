@@ -989,7 +989,7 @@ class AutomateSimulationView(BaseLoggedInPage):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == automate_menu_name(
-                self.obj.appliance) + ['Simulation'])
+                self.context['object'].appliance) + ['Simulation'])
 
     instance = BootstrapSelect('instance_name')
     message = Input(name='object_message')
@@ -1000,6 +1000,8 @@ class AutomateSimulationView(BaseLoggedInPage):
     avp = AttributeValueForm('attribute_', 'value_')
 
     submit_button = Button(title='Submit Automation Simulation with the specified options')
+
+    result_tree = ManageIQTree(tree_id='ae_simulation_treebox')
 
 
 @navigator.register(Server)
