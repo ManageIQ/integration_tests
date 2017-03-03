@@ -421,11 +421,11 @@ class DiagnosticsCollectLogsEdit(DiagnosticsCollectLogsView):
     username = Input(name='log_userid')
     password = Input(name='log_password')
     confirm_password = Input(name='log_verify')
-    validate = Button(tittle='Validate the credentials by logging into the Server')
+    validate = Button('Validate')
 
-    save = Button('save_enabled')
-    reset = Button('reset_enabled_disabled')
-    cancel = Button('cancel_enabled')
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
 
 @navigator.register(Server)

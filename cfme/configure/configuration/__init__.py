@@ -322,16 +322,18 @@ class ServerLogDepot(Pretty):
         self.p_type = p_types[p_type]
 
     def create(self, cancel=False):
+        self.clear()
         view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
+        view.fill({'type': self.p_type})
         if self.p_type != 'Red Hat Dropbox':
-            view.fill({'type': self.p_type,
-                       'depot_name': self.depot_name,
+            view.fill({'depot_name': self.depot_name,
                        'uri': self.uri})
         if self.p_type in ['FTP', 'Samba']:
             view.fill({'username': self.username,
                        'password': self.password,
                        'confirm_password': self.password})
             view.validate.click()
+            view.flash.assert_success_message("Log Depot Settings were validated")
         if cancel:
             view.cancel.click()
             view.flash.assert_success_message("Edit Log Depot settings was cancelled by the user")
@@ -356,14 +358,22 @@ class ServerLogDepot(Pretty):
         view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
         return view.last_log_message.text
 
+    @property
+    def is_cleared(self):
+        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        return view.log_depot_uri.text == "N/A"
+
     def clear(self):
         """ Set depot type to "No Depot"
 
         """
-        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
-        view.fill({'type': '<No Depot>'})
-        view.save.click()
-        view.flash.assert_success_message("Log Depot Settings were saved")
+        if not self.is_cleared:
+            view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
+            # workaround for issue: "type" == "No Depot" in first second after page load
+            wait_for(lambda: view.type.selected_option != '<No Depot>', num_sec=5)
+            view.type.fill('<No Depot>')
+            view.save.click()
+            view.flash.assert_success_message("Log Depot Settings were saved")
 
     def _collect(self, selection):
         """ Initiate and wait for collection to finish.
@@ -378,7 +388,7 @@ class ServerLogDepot(Pretty):
         tb.select("Collect", selection)
         view.flash.assert_success_message(
             "Log collection for CFME MiqServer {} [{}] has been initiated".
-                format(current_appliance.server_name(), current_appliance.server_zone_id()))
+            format(current_appliance.server_name(), current_appliance.server_zone_id()))
 
         def _refresh():
             """ The page has no refresh button, so we'll switch between tabs.
