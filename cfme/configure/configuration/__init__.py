@@ -256,7 +256,7 @@ class AnalysisProfileAll(CFMENavigateStep):
     prerequisite = NavigateToObject(Server, 'Configuration')
 
     def step(self):
-        server_region = store.current_appliance.server_region_string()
+        server_region = self.obj.appliance.server_region_string()
         self.prerequisite_view.accordions.settings.tree.click_path(
             server_region, "Analysis Profiles")
 
@@ -274,7 +274,7 @@ class AnalysisProfileDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        server_region = store.current_appliance.server_region_string()
+        server_region = self.obj.appliance.server_region_string()
         self.prerequisite_view.accordions.settings.tree.click_path(
             server_region, "Analysis Profiles", str(self.obj))
 
