@@ -97,18 +97,18 @@ def _tag_item_through_details(request, location, tag):
 @pytest.mark.usefixtures('has_no_providers', scope='class')
 class TestCloudTagVisibility():
 
-    def test_cloud_tag_item_through_selecting(request, cloud_provider, location, tag):
+    def test_cloud_tag_item_through_selecting(self, request, cloud_provider, location, tag):
         _tag_item_through_selecting(request, location, tag)
 
-    def test_cloud_tag_item_through_details(request, cloud_provider, location, tag):
+    def test_cloud_tag_item_through_details(self, request, cloud_provider, location, tag):
         _tag_item_through_details(request, location, tag)
 
 
 @pytest.mark.usefixtures('has_no_providers', scope='class')
 class TestInfraTagVisibility():
 
-    def test_infra_tag_item_through_selecting(request, infra_provider, location, tag):
+    def test_infra_tag_item_through_selecting(self, request, infra_provider, location, tag):
         _tag_item_through_selecting(request, location, tag)
 
-    def test_infra_tag_item_through_details(request, infra_provider, location, tag):
+    def test_infra_tag_item_through_details(self, request, infra_provider, location, tag):
         _tag_item_through_details(request, location, tag)
