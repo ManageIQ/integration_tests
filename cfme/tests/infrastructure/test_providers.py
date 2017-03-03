@@ -133,8 +133,8 @@ def test_name_max_character_validation(request, infra_provider):
     """Test to validate max character for name field"""
     request.addfinalizer(lambda: infra_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
-    infra_provider.update({'name': name})
-    infra_provider.name = name
+    with update(infra_provider):
+        infra_provider.name = name
     assert infra_provider.exists
 
 
