@@ -209,8 +209,8 @@ def test_start_page(request, start_page):
     # assert nav.is_page_active(*steps) or nav.is_page_active(*longer_steps), "Landing Page Failed"
 
 
-def test_infraprovider_noquads(request, infra_provider, set_infra_provider_quad):
-    navigate_to(infra_provider, 'All')
+def test_infraprovider_noquads(request, set_infra_provider_quad):
+    navigate_to(InfraProvider, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 
