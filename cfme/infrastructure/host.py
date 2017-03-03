@@ -499,6 +499,7 @@ class Provision(CFMENavigateStep):
     def step(self):
         lif_btn('Provision this item')
 
+
 @fill.method((Form, Host.Credential))
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential (either ipmi or default).  Validates the

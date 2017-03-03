@@ -12,6 +12,7 @@ from utils.appliance.implementations.ui import (CFMENavigateStep, navigate_to,
                                                 navigator)
 from cfme.web_ui import (listaccordion as list_acc, match_location, Quadicon,
                          Region, toolbar as tb)
+from utils import version
 from utils.pretty import Pretty
 
 
@@ -40,6 +41,23 @@ class DeploymentRoles(Pretty, Navigatable):
                                       'for Openstack provider')
         self.name = name
         self.provider = provider
+
+    def get_detail(self, *ident):
+        """ Gets details from the details InfoBlock
+        Args:
+            *ident: An InfoBlock title, followed by the Key name,
+                e.g. "Relationships", "All VMs"
+        Returns: A string representing the contents of the InfoBlock's value.
+        """
+        navigate_to(self, 'Details')
+        return details_page.infoblock.text(*ident)
+
+    def delete(self):
+        navigate_to(self, 'Details')
+        menu_item = version.pick({version.LOWEST: 'Remove from the VMDB',
+                                  '5.7': 'Remove item'})
+        cfg_btn(menu_item, invokes_alert=True)
+        sel.handle_alert(wait=60)
 
 
 @navigator.register(DeploymentRoles, 'All')
