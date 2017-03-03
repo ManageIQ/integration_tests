@@ -847,6 +847,7 @@ class IPAppliance(object):
             msg = 'No clock servers configured in cfme_data.yaml'
             log_callback(msg)
             raise ApplianceException(msg)
+        #fixme: prepare auth for chronyc
 
         filename = '/etc/chrony.conf'
         config_file = "\n".join(server_records)
@@ -854,7 +855,7 @@ class IPAppliance(object):
         conf_file_updated = False
         if config_file != old_conf_file:
             logger.debug("chrony's config file isn't equal to prepared one, overwriting it")
-            client.run_command("echo {txt} > {f}".format(txt=config_file, f=filename))
+            client.run_command('echo "{txt}" > {f}'.format(txt=config_file, f=filename))
             conf_file_updated = True
 
         if conf_file_updated or client.run_command('systemctl status chronyd').rc != 0:
@@ -868,6 +869,7 @@ class IPAppliance(object):
         else:
             raise ApplianceException("chrony doesn't work. "
                                      "Error message: {e}".format(e=result.output))
+        #fixme: add force update 
 
     @property
     def is_miqqe_patch_candidate(self):
