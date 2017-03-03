@@ -29,7 +29,7 @@ There are two ways to request a setup provider depending on what kind of test we
    If these don't really fit your needs, you can implement your own module-local ``a_provider``
    fixture using ``setup_one_by_class_or_skip`` or more adjustable ``setup_one_or_skip``.
    These functions do exactly what their names suggest - they setup one of the providers fitting
-   given parameters or skip the test. All of these fixtures are (and should be) module scoped.
+   given parameters or skip the test. All of these fixtures are (and should be) function scoped.
    Please keep that in mind when creating your module-local substitutes.
 
 If setting up a provider fails, the issue is logged and an internal counter is incremented

@@ -200,7 +200,7 @@ def generate(*args, **kwargs):
 
     """
     # Pull out/default kwargs for this function and parametrize; any args and kwargs that are not
-    # pulled out here will be passed into gen_func withing pytest_generate_tests below
+    # pulled out here will be passed into gen_func within pytest_generate_tests below
     scope = kwargs.pop('scope', 'function')
     indirect = kwargs.pop('indirect', False)
     filter_unused = kwargs.pop('filter_unused', True)
