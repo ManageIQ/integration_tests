@@ -170,7 +170,7 @@ def setup_one_by_class_or_skip(request, prov_class, use_global_filters=True):
 def _generate_provider_fixtures():
     """ Generate provider setup and clear fixtures based on what classes are available
 
-    This will make fixtures like "cloud_provider" and "has_no_cloud_provider" available to tests.
+    This will make fixtures like "cloud_provider" and "has_no_cloud_providers" available to tests.
     """
     for prov_type, prov_class in all_types().iteritems():
         def gen_setup_provider(prov_class):
