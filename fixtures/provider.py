@@ -61,7 +61,7 @@ SETUP_FAIL_LIMIT = 3
 def _artifactor_skip_providers(request, providers, skip_msg):
     node = request.node
     name, location = get_test_idents(node)
-    skip_data = {'type': 'provider', 'reason': [p.key for p in providers].join(', ')}
+    skip_data = {'type': 'provider', 'reason': ', '.join([p.key for p in providers])}
     art_client.fire_hook('skip_test', test_location=location, test_name=name,
         skip_data=skip_data)
     pytest.skip(skip_msg)
@@ -188,7 +188,7 @@ def _generate_provider_fixtures():
                 """ Clears all providers of given class from the appliance """
                 BaseProvider.clear_providers_by_class(prov_class, validate=True)
             return _has_no_providers
-        fn_name = 'has_no_{}_provider'.format(prov_type)
+        fn_name = 'has_no_{}_providers'.format(prov_type)
         globals()[fn_name] = gen_has_no_providers(prov_class)
 
 
