@@ -84,26 +84,24 @@ def test_retire_vm_future(rest_api, vm, from_collection):
         test_flag: rest
     """
     retire_vm = rest_api.collections.vms.get(name=vm)
-    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%m/%d/%Y")
+    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%Y/%m/%d")
     future = {
         "date": date,
         "warn": "4",
     }
-    date_before = retire_vm.updated_on
     if from_collection:
         future.update(retire_vm._ref_repr())
         rest_api.collections.vms.action.retire(future)
     else:
-        retire_vm.action.retire(future)
+        retire_vm.action.retire(**future)
     assert rest_api.response.status_code == 200
 
     def _finished():
         retire_vm.reload()
-        try:
-            if retire_vm.updated_on > date_before and retire_vm.retires_on:
-                return True
-        except AttributeError:
-            pass
-        return False
+        if not hasattr(retire_vm, "retires_on"):
+            return False
+        if not hasattr(retire_vm, "retirement_warn"):
+            return False
+        return True
 
     wait_for(_finished, num_sec=1500, delay=10, message="REST vm retire future")
