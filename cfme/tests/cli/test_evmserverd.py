@@ -7,10 +7,10 @@ from utils.version import current_version
 
 @pytest.yield_fixture(scope="module")
 def start_evmserverd_after_module(appliance):
-    appliance.run_command("service evmserverd start")
+    appliance.ssh_client.run_command("service evmserverd start")
     appliance.wait_for_web_ui()
     yield
-    appliance.run_command("service evmserverd restart")
+    appliance.ssh_client.run_command("service evmserverd restart")
     appliance.wait_for_web_ui()
 
 
