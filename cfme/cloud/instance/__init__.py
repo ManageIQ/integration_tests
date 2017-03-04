@@ -84,6 +84,8 @@ class Instance(VM, Navigatable):
     REMOVE_SINGLE = {'5.6': 'Remove from the VMDB',
                      '5.7': 'Remove Instance'}
 
+    TO_OPEN_EDIT = "Edit this Instance"
+
     def __init__(self, name, provider, template_name=None, appliance=None):
         super(Instance, self).__init__(name=name, provider=provider, template_name=template_name)
         Navigatable.__init__(self, appliance=appliance)
