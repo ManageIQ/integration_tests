@@ -17,9 +17,9 @@ from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
 from utils import version
+from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
-
 
 LOCATIONS = [
     # Bottlenecks missing
@@ -49,6 +49,8 @@ pytestmark = [
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
 def test_pull_splitter_persistence(location):
+    if location[0] == Server:
+        location = (current_appliance.server, location[1])
     navigate_to(*location)
     # First we move splitter to hidden position by pulling it left twice
     pull_splitter_left()
