@@ -267,8 +267,8 @@ class CatalogBundle(Updateable, Pretty, Navigatable):
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
-                               'select_catalog': str(self.catalog),
-                               'select_dialog': str(self.dialog)})
+                               'select_catalog': self.catalog.name,
+                               'select_dialog': self.dialog.label})
         sel.click(basic_info_form.field_entry_point)
         if sel.text(basic_info_form.field_entry_point) == "":
             if version.current_version() < "5.7":
