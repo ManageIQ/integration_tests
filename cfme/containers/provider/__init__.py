@@ -262,6 +262,9 @@ class Details(CFMENavigateStep):
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
+    def resetter(self):
+        tb.select("Summary View")
+
 
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):

@@ -10,9 +10,12 @@ from cfme.containers.node import Node, list_tbl as node_list_tbl
 from cfme.containers.image import Image, list_tbl as image_list_tbl
 from cfme.containers.image_registry import ImageRegistry, list_tbl as image_registry_list_tbl
 from cfme.containers.pod import Pod, list_tbl as pod_list_tbl
+from cfme.containers.template import Template, list_tbl as template_list_tbl
 
 from utils import testgen, version
+from utils.version import current_version
 from utils.soft_get import soft_get
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -107,13 +110,21 @@ TEST_OBJECTS = [
             ], service_list_tbl, 'CMP-9890'),
     TestObj(ImageRegistry, [
             'host'
-            ], image_registry_list_tbl, 'CMP-9988')
+            ], image_registry_list_tbl, 'CMP-9988'),
+    TestObj(Template, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            ], template_list_tbl, 'CMP-10316')
 ]
 
 
 @pytest.mark.parametrize('test_obj', TEST_OBJECTS,
                          ids=[obj.obj.__name__ for obj in TEST_OBJECTS])
 def test_properties(provider, test_obj, soft_assert):
+
+    if current_version() < "5.7" and test_obj.obj == Template:
+        pytest.skip('Templates are not exist in CFME version lower than 5.7. skipping...')
 
     rows = navigate_and_get_rows(provider, test_obj.obj, test_obj.list_tbl, 2)
 
@@ -131,6 +142,7 @@ def test_properties(provider, test_obj, soft_assert):
     for name, arg in zip(names, args):
 
         instance = test_obj.obj(name, *arg)
+        navigate_to(instance, 'Details')
         if isinstance(test_obj.expected_fields, dict):
             expected_fields = version.pick(test_obj.expected_fields)
         else:
