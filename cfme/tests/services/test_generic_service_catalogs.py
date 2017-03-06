@@ -136,26 +136,32 @@ class TestServiceCatalogViaREST(object):
     def service_catalogs(self, request, rest_api):
         return _service_catalogs(request, rest_api)
 
-    def test_delete_service_catalog(self, rest_api, service_catalogs):
-        """Tests delete service catalog via rest
+    @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
+    def test_delete_service_catalog(self, rest_api, service_catalogs, method):
+        """Tests delete service catalog via rest.
 
         Metadata:
             test_flag: rest
         """
-        scl = service_catalogs[0]
-        scl.action.delete()
-        with error.expected("ActiveRecord::RecordNotFound"):
-            scl.action.delete()
+        status = 204 if method == "delete" else 200
+        for scl in service_catalogs:
+            scl.action.delete(force_method=method)
+            assert rest_api.response.status_code == status
+            with error.expected("ActiveRecord::RecordNotFound"):
+                scl.action.delete(force_method=method)
+            assert rest_api.response.status_code == 404
 
     def test_delete_service_catalogs(self, rest_api, service_catalogs):
-        """Tests delete service catalogs via rest
+        """Tests delete service catalogs via rest.
 
         Metadata:
             test_flag: rest
         """
         rest_api.collections.service_catalogs.action.delete(*service_catalogs)
+        assert rest_api.response.status_code == 200
         with error.expected("ActiveRecord::RecordNotFound"):
             rest_api.collections.service_catalogs.action.delete(*service_catalogs)
+        assert rest_api.response.status_code == 404
 
     def test_edit_service_catalog(self, rest_api, service_catalogs):
         """Tests editing a service catalog via rest.
@@ -167,14 +173,13 @@ class TestServiceCatalogViaREST(object):
         Metadata:
             test_flag: rest
         """
-        ctl = service_catalogs[0]
-        new_name = fauxfactory.gen_alphanumeric()
-        ctl.action.edit(name=new_name)
-        wait_for(
-            lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
-            num_sec=180,
-            delay=10,
-        )
+        for ctl in service_catalogs:
+            new_name = fauxfactory.gen_alphanumeric()
+            response = ctl.action.edit(name=new_name)
+            assert rest_api.response.status_code == 200
+            assert response.name == new_name
+            ctl.reload()
+            assert ctl.name == new_name
 
     def test_edit_multiple_service_catalogs(self, rest_api, service_catalogs):
         """Tests editing multiple service catalogs at time.
@@ -197,10 +202,10 @@ class TestServiceCatalogViaREST(object):
                 "href": scl.href,
                 "name": new_name,
             })
-        rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
-        for new_name in new_names:
-            wait_for(
-                lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
-                num_sec=180,
-                delay=10,
-            )
+        response = rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
+        assert rest_api.response.status_code == 200
+        for index, resource in enumerate(response):
+            assert resource.name == new_names[index]
+            scl = service_catalogs[index]
+            scl.reload()
+            assert scl.name == new_names[index]
