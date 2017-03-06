@@ -19,7 +19,7 @@ pytest_generate_tests = testgen.generate(
 @pytest.mark.polarion('CMP-10255')
 def test_cockpit_button_access(provider):
     """ The test verifies the existence of cockpit "Web Console"
-        button on each node in the cluster
+        button on each node
 
     """
     navigate_to(NodeCollection, 'All')
