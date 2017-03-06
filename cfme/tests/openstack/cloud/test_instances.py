@@ -2,9 +2,11 @@
 
 import fauxfactory
 import pytest
+import random
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
@@ -12,6 +14,39 @@ pytest_generate_tests = testgen.generate([OpenStackProvider],
                                          scope='module')
 
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
+
+
+@pytest.mark.usefixtures("setup_provider_modscope")
+@pytest.fixture(scope='module')
+def active_instance(provider):
+    instances = provider.mgmt._get_all_instances()
+    for inst in instances:
+        if inst.status == 'ACTIVE':
+            return OpenStackInstance(inst.name, provider)
+
+    inst = random.choice(instances)
+    inst = OpenStackInstance(inst.name, provider)
+    inst.power_control_from_provider(OpenStackInstance.START)
+    navigate_to(inst, 'Details')
+    inst.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
+    return inst
+
+
+@pytest.mark.usefixtures("setup_provider_modscope")
+@pytest.fixture(scope='module')
+def shelved_instance(provider):
+    instances = provider.mgmt._get_all_instances()
+    for inst in instances:
+        if inst.status == 'SHELVED':
+            return OpenStackInstance(inst.name, provider)
+
+    inst = random.choice(instances)
+    inst = OpenStackInstance(inst.name, provider)
+    inst.power_control_from_cfme()
+    inst.power_control_from_provider(OpenStackInstance.SHELVE)
+    navigate_to(inst, 'Details')
+    inst.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
+    return inst
 
 
 def test_create_instance(provider, soft_assert):
@@ -43,3 +78,104 @@ def test_create_instance(provider, soft_assert):
     for p in props:
         v = instance.get_detail(properties=('Relationships', p[0]))
         soft_assert(v == prov_data[p[1]])
+
+
+def test_stop_instance(active_instance):
+    active_instance.power_control_from_cfme(from_details=True,
+                                            option=OpenStackInstance.STOP)
+    active_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_OFF
+
+
+def test_suspend_instance(active_instance):
+    active_instance.power_control_from_cfme(from_details=True,
+                                            option=OpenStackInstance.SUSPEND)
+    active_instance.wait_for_instance_state_change(
+        OpenStackInstance.STATE_SUSPENDED)
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_SUSPENDED
+
+
+def test_pause_instance(active_instance):
+    active_instance.power_control_from_cfme(from_details=True,
+                                            option=OpenStackInstance.PAUSE)
+    active_instance.wait_for_instance_state_change(
+        OpenStackInstance.STATE_PAUSED)
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_PAUSED
+
+
+def test_shelve_instance(active_instance):
+    active_instance.power_control_from_cfme(from_details=True,
+                                            option=OpenStackInstance.SHELVE)
+    active_instance.wait_for_instance_state_change(
+        OpenStackInstance.STATE_SHELVED)
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_SHELVED
+
+
+def test_shelve_offload_instance(shelved_instance):
+    shelved_instance.power_control_from_cfme(from_details=True,
+                                             option=OpenStackInstance.SHELVE_OFFLOAD)
+    shelved_instance.wait_for_instance_state_change(
+        OpenStackInstance.STATE_SHELVED_OFFLOAD)
+    state = shelved_instance.get_detail(properties=('Power Management',
+                                                    'Power State'))
+    assert state == OpenStackInstance.STATE_SHELVED_OFFLOAD
+
+
+def test_start_instance(shelved_instance):
+    shelved_instance.power_control_from_cfme(from_details=True,
+                                             option=OpenStackInstance.START)
+    shelved_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
+    state = shelved_instance.get_detail(properties=('Power Management',
+                                                    'Power State'))
+    assert state == OpenStackInstance.STATE_ON
+
+
+def test_soft_reboot_instance(active_instance):
+    active_instance.power_control_from_cfme(from_details=True,
+                                            option=OpenStackInstance.SOFT_REBOOT)
+    active_instance.wait_for_instance_state_change(
+        OpenStackInstance.STATE_REBOOTING)
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_REBOOTING
+
+    active_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
+
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_ON
+
+
+def test_hard_reboot_instance(active_instance):
+    active_instance.power_control_from_cfme(from_details=True,
+                                            option=OpenStackInstance.HARD_REBOOT)
+    active_instance.wait_for_instance_state_change(
+        OpenStackInstance.STATE_REBOOTING)
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_REBOOTING
+
+    active_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
+
+    state = active_instance.get_detail(properties=('Power Management',
+                                                   'Power State'))
+    assert state == OpenStackInstance.STATE_ON
+
+
+def test_delete_instance(active_instance):
+    active_instance.power_control_from_cfme(from_details=True,
+                                            option=OpenStackInstance.TERMINATE)
+    active_instance.wait_for_instance_state_change(
+        OpenStackInstance.STATE_UNKNOWN)
+
+    assert active_instance.name not in active_instance.provider.mgmt.list_vm()
+    navigate_to(active_instance, 'AllForProvider')
+    assert active_instance.name not in Quadicon.all()
