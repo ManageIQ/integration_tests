@@ -7,6 +7,7 @@ from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
 from widgetastic.widget import View, Table, Text
 
 from cfme import BaseLoggedInPage
+from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
 from cfme.intelligence.rss import RSSView
 from cfme.exceptions import ZoneNotFound, DestinationNotFound
@@ -157,6 +158,7 @@ class Documentation(CFMENavigateStep):
 
 @navigator.register(Server)
 class Tasks(CFMENavigateStep):
+    VIEW = TasksView
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
