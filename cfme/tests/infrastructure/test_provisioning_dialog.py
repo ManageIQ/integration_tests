@@ -109,9 +109,6 @@ def provisioner(request, setup_provider, provider, vm_name):
     return _provisioner
 
 
-@pytest.mark.skipif(lambda provider:
-                    provider.type == 'virtualcenter' and BZ('1422953', forced_streams='5.7').blocks,
-                    reason="Affected by 1422953, cannot test for VMware")
 def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     """ Tests change RAM and CPU in provisioning dialog.
 
@@ -158,9 +155,6 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 # Special parametrization in testgen above
 @pytest.mark.meta(blockers=[1209847, 1380782])
 @pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
-@pytest.mark.skipif(lambda provider:
-                    provider.type == 'virtualcenter' and BZ('1422953', forced_streams='5.7').blocks,
-                    reason="Affected by 1422953, cannot test for VMware")
 @pytest.mark.uncollectif(lambda provider, disk_format:
                          (provider.type == "rhevm" and disk_format == "thick") or
                          (provider.type != "rhevm" and disk_format == "preallocated") or
@@ -200,9 +194,6 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
         assert not thin, "The disk format should not be Thin"
 
 
-@pytest.mark.skipif(lambda provider:
-                    provider.type == 'virtualcenter' and BZ('1422953', forced_streams='5.7').blocks,
-                    reason="Affected by 1422953, cannot test for VMware")
 @pytest.mark.parametrize("started", [True, False])
 def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.
@@ -233,9 +224,6 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     )
 
 
-@pytest.mark.skipif(lambda provider:
-                    provider.type == 'virtualcenter' and BZ('1422953', forced_streams='5.7').blocks,
-                    reason="Affected by 1422953, cannot test for VMware")
 def test_tag(provisioner, prov_data, provider, vm_name):
     """ Tests tagging VMs using provisioning dialogs.
 
@@ -263,9 +251,6 @@ def test_tag(provisioner, prov_data, provider, vm_name):
                for tag in tags), "Service Level: Gold not in tags ({})".format(str(tags))
 
 
-@pytest.mark.skipif(lambda provider:
-                    provider.type == 'virtualcenter' and BZ('1422953', forced_streams='5.7').blocks,
-                    reason="Affected by 1422953, cannot test for VMware")
 @pytest.mark.meta(blockers=[1204115])
 def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     """ Tests provision scheduling.
