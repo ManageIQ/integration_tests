@@ -461,7 +461,10 @@ class Genealogy(object):
     Args:
         o: The :py:class:`Vm` or :py:class:`Template` object.
     """
-    genealogy_tree = CheckboxTree("//div[@id='genealogy_treebox']/ul")
+    genealogy_tree = deferred_verpick({
+        version.LOWEST: CheckboxTree("//div[@id='genealogy_treebox']/ul"),
+        5.7: BootstrapTreeview('genealogy_treebox')
+    })
 
     section_comparison_tree = CheckboxTree("//div[@id='all_sections_treebox']/div/table")
     apply_button = form_buttons.FormButton("Apply sections")
