@@ -52,7 +52,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     if not isinstance(provider, AzureProvider):
         inst_args['instance_type'] = provisioning['instance_type']
         inst_args['availability_zone'] = provisioning['availability_zone']
-        inst_args['security_groups'] = [provisioning['security_group']]
+        inst_args['security_groups'] = provisioning['security_group']
         inst_args['guest_keypair'] = provisioning['guest_keypair']
 
     if isinstance(provider, OpenStackProvider):
@@ -71,6 +71,19 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         inst_args['instance_type'] = provisioning['vm_size'].lower()
         inst_args['admin_username'] = provisioning['vm_user']
         inst_args['admin_password'] = provisioning['vm_password']
+
+    auto = request.param
+    if auto:
+        inst_args['automatic_placement'] = True
+        inst_args['availability_zone'] = None
+        inst_args['virtual_private_cloud'] = None
+        inst_args['cloud_network'] = None
+        inst_args['cloud_subnet'] = None
+        inst_args['security_groups'] = None
+        inst_args['resource_groups'] = None
+        inst_args['public_ip_address'] = None
+
+    return instance, inst_args
     return instance, inst_args, image
 
 
@@ -79,6 +92,7 @@ def vm_name(request, provider):
     return random_vm_name('prov')
 
 
+@pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
 def test_provision_from_template(request, setup_provider, provider, testing_instance, soft_assert):
     """ Tests instance provision from template
 
