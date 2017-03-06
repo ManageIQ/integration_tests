@@ -2,7 +2,6 @@
 import fauxfactory
 import logging
 import os
-import random
 import re
 import socket
 import yaml
@@ -836,21 +835,21 @@ class IPAppliance(object):
             client.run_command('systemctl daemon-reload')
 
         # # deploy config and start chrony if it isn't running
-        server_template = "server {srv} iburst"
-        server_records = []
+        server_template = 'server {srv} iburst'
+        base_config = ['driftfile /var/lib/chrony/drift', 'makestep 1 3', 'rtcsync']
         try:
             logger.debug('obtaining clock servers from config file')
             clock_servers = conf.cfme_data.get('clock_servers', {})
             for clock_server in clock_servers:
-                server_records.append(server_template.format(srv=clock_server))
+                base_config.append(server_template.format(srv=clock_server))
         except IndexError:
             msg = 'No clock servers configured in cfme_data.yaml'
             log_callback(msg)
             raise ApplianceException(msg)
-        #fixme: prepare auth for chronyc
 
         filename = '/etc/chrony.conf'
-        config_file = "\n".join(server_records)
+        config_file = "\n".join(base_config)
+
         old_conf_file = client.run_command("cat {f}".format(f=filename)).output
         conf_file_updated = False
         if config_file != old_conf_file:
@@ -865,11 +864,10 @@ class IPAppliance(object):
         # check that chrony is running correctly now
         result = client.run_command('chronyc tracking')
         if result.rc == 0:
-           logger.info('chronyc is running correctly')
+            logger.info('chronyc is running correctly')
         else:
             raise ApplianceException("chrony doesn't work. "
                                      "Error message: {e}".format(e=result.output))
-        #fixme: add force update 
 
     @property
     def is_miqqe_patch_candidate(self):
