@@ -41,15 +41,13 @@ def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
                 else:
                     ip_list.append([provider_name, ip.public_ip, 'N/A'])
                     provider_mgmt.release_address(address=ip.public_ip)
-        print "  Released Addresses:\n  {}".format(ip_list)  # noqa
+        print "  Released Addresses: {}".format(ip_list)  # noqa
         with open(output, 'a+') as report:
             if ip_list:
                 # tabulate ip_list and write it
                 report.write(tabulate(tabular_data=ip_list,
                                       headers=['Provider Key', 'Public IP', 'Allocation ID'],
                                       tablefmt='orgtbl'))
-            else:
-                report.write("\n - No IPs released for {}".format(provider_name))
 
     except Exception as e:
         logger.error(e)
@@ -66,15 +64,13 @@ def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
             else:
                 volume_list.append([provider_name, volume.id])
                 volume.delete()
-        print "  Deleted Volumes:\n  {}".format(volume_list)  # noqa
+        print "  Deleted Volumes: {}".format(volume_list)  # noqa
         with open(output, 'a+') as report:
             if volume_list:
                 # tabulate volume_list and write it
                 report.write(tabulate(tabular_data=volume_list,
                                       headers=['Provider Key', 'Volume ID'],
                                       tablefmt='orgtbl'))
-            else:
-                report.write("\n - No Volumes released for {}".format(provider_name))
     except Exception as e:
         logger.error(e)
 
