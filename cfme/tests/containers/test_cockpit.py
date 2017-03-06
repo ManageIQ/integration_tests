@@ -15,9 +15,8 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     [ContainersProvider], scope='function')
 
-# CMP-10255
 
-
+@pytest.mark.polarion('CMP-10255')
 def test_cockpit_button_access(provider):
     """ The test verifies the existence of cockpit "Web Console"
         button on each node in the cluster
