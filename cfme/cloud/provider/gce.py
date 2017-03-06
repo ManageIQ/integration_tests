@@ -6,6 +6,7 @@ from mgmtsystem.google import GoogleCloudSystem
 class GCEProvider(CloudProvider):
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
+    db_types = ["Google::CloudManager"]
 
     def __init__(
             self, name=None, project=None, zone=None, region=None, credentials=None, key=None,

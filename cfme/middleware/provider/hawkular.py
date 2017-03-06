@@ -38,6 +38,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'), ('provider_type', 'Type')]
     type_name = "hawkular"
     mgmt_class = Hawkular
+    db_types = ["Hawkular::MiddlewareManager"]
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None,
             appliance=None, **kwargs):

@@ -31,7 +31,7 @@ def test_ipappliance_use_baseurl():
 
 def test_ipappliance_managed_providers(infra_provider):
     ip_a = IPAppliance()
-    assert infra_provider in ip_a.managed_providers
+    assert infra_provider in ip_a.managed_known_providers
 
 
 def test_context_hack(monkeypatch):

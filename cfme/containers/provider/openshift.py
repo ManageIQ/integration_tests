@@ -17,6 +17,7 @@ class OpenshiftProvider(ContainersProvider):
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"
     mgmt_class = Openshift
+    db_types = ["Openshift::ContainerManager"]
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None, appliance=None):

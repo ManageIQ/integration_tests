@@ -1,5 +1,6 @@
 import datetime
 from functools import partial
+from manageiq_client.api import APIException
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
@@ -65,6 +66,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     _properties_region = None
     add_provider_button = None
     save_button = None
+    db_types = ["Providers"]
 
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
@@ -443,10 +445,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def exists(self):
-        """ Checks if exists among managed providers
-
+        """ Returns ``True`` if a provider of the same name exists on the appliance
         """
-        if self in self.appliance.managed_providers:
+        if self.name in self.appliance.managed_provider_names:
             return True
         return False
 
@@ -553,30 +554,22 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             return cls.get_credentials_from_config(cred_yaml_key, cred_type=cred_type)
 
     # Move to collection
-    @staticmethod
-    def clear_providers_by_class(prov_class, validate=True):
-        """ Removes all providers that are an instance of given class or one of it's subclasses
-        """
-        from utils.providers import ProviderFilter, list_providers
-        pf = ProviderFilter(classes=[prov_class])
-        provs = list_providers(filters=[pf], use_global_filters=False)
-
-        # First, delete all
-        deleted_provs = []
-        for prov in provs:
-            existed = prov.delete_if_exists(cancel=False)
-            if existed:
-                deleted_provs.append(prov)
-        # Then, check that all were deleted
-        if validate:
-            for prov in deleted_provs:
-                prov.wait_for_delete()
-
-    # Move to collection
-    @staticmethod
-    def clear_providers():
-        """ Clear all providers on an appliance using UI """
-        BaseProvider.clear_providers_by_class(BaseProvider)
+    @classmethod
+    def clear_providers(cls):
+        """ Clear all providers of given class on the appliance """
+        from utils.appliance import current_appliance as app
+        app.rest_api.collections.providers.reload()
+        for prov in app.rest_api.collections.providers.all:
+            try:
+                if any([True for db_type in cls.db_types if db_type in prov.type]):
+                    logger.info('Deleting provider: %s', prov.name)
+                    prov.action.delete()
+                    prov.wait_not_exists()
+            except APIException as ex:
+                # Provider is already gone (usually caused by NetworkManager objs)
+                if 'RecordNotFound' not in str(ex):
+                    raise ex
+        app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
         """ Returns true if provider is an instance of any of the classes or sublasses there of"""
@@ -593,6 +586,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
+    db_types = ["CloudManager", "InfraManager"]
 
     def wait_for_creds_ok(self):
         """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""

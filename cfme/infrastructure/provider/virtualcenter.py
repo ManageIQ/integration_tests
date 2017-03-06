@@ -5,6 +5,7 @@ from mgmtsystem.virtualcenter import VMWareSystem
 class VMwareProvider(InfraProvider):
     type_name = "virtualcenter"
     mgmt_class = VMWareSystem
+    db_types = ["Vmware::InfraManager"]
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):

@@ -1415,7 +1415,7 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
     except ObjectDoesNotExist:
         return None
     try:
-        managed_providers = appliance.ipapp.managed_providers
+        managed_providers = appliance.ipapp.managed_known_providers
         appliance.managed_providers = [prov.key for prov in managed_providers]
     except Exception as e:
         # To prevent single appliance messing up whole result

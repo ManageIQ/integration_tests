@@ -85,6 +85,7 @@ class ContainersProvider(BaseProvider, Pretty):
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
     quad_name = None
+    db_types = ["ContainerManager"]
     _properties_region = prop_region  # This will get resolved in common to a real form
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Containers Provider"),

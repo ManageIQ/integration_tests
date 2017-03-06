@@ -6,6 +6,7 @@ from mgmtsystem.ec2 import EC2System
 class EC2Provider(CloudProvider):
     type_name = "ec2"
     mgmt_class = EC2System
+    db_types = ["Amazon::CloudManager"]
 
     def __init__(
             self, name=None, credentials=None, zone=None, key=None, region=None, appliance=None):

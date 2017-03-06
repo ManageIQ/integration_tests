@@ -136,6 +136,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     templates_destination_name = "Templates"
     quad_name = "infra_prov"
     _properties_region = prop_region  # This will get resolved in common to a real form
+    db_types = ["InfraManager"]
     add_provider_button = deferred_verpick({
         version.LOWEST: form_buttons.FormButton("Add this Infrastructure Provider"),
         '5.6': form_buttons.add

@@ -3,7 +3,6 @@ from itertools import combinations
 
 from utils import testgen
 from utils.providers import get_crud
-from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import discover, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -83,7 +82,7 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture(scope='function')
 def delete_providers_after_test():
     yield
-    BaseProvider.clear_providers_by_class(InfraProvider)
+    InfraProvider.clear_providers()
 
 
 @pytest.mark.tier(2)

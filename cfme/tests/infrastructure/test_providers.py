@@ -9,7 +9,6 @@ from manageiq_client.api import APIException
 import cfme.web_ui.flash as flash
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
-from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -182,7 +181,7 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(lambda: BaseProvider.clear_providers_by_class(InfraProvider))
+    request.addfinalizer(InfraProvider.clear_providers)
     wait_for_a_provider()
 
 

@@ -7,6 +7,7 @@ from . import CloudProvider
 class OpenStackProvider(CloudProvider):
     type_name = "openstack"
     mgmt_class = OpenstackSystem
+    db_types = ["Openstack::CloudManager"]
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,

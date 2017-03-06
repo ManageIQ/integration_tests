@@ -45,7 +45,8 @@ def pytest_runtest_logreport(report):
                 logger().info(
                     "Managed providers: {}".format(
                         ", ".join([
-                            prov.key for prov in pytest.store.current_appliance.managed_providers]))
+                            prov.key for prov in
+                            pytest.store.current_appliance.managed_known_providers]))
                 )
             except KeyError as ex:
                 if 'ext_management_systems' in ex.msg:

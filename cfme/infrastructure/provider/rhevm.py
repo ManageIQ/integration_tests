@@ -7,6 +7,7 @@ class RHEVMProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "rhevm"
     mgmt_class = RHEVMSystem
+    db_types = ["Redhat::InfraManager"]
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, start_ip=None, end_ip=None,

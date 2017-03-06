@@ -6,6 +6,7 @@ from mgmtsystem.azure import AzureSystem
 class AzureProvider(CloudProvider):
     type_name = "azure"
     mgmt_class = AzureSystem
+    db_types = ["Azure::CloudManager"]
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None,
                  tenant_id=None, subscription_id=None, appliance=None):

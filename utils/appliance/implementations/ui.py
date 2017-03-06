@@ -222,8 +222,9 @@ class CFMENavigateStep(NavigateStep):
             logger.debug('Top Memory consumers:')
             logger.debug(store.current_appliance.ssh_client.run_command(
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
-            logger.debug('Managed Providers:')
-            logger.debug('%r', [prov.key for prov in store.current_appliance.managed_providers])
+            logger.debug('Managed known Providers:')
+            logger.debug(
+                '%r', [prov.key for prov in store.current_appliance.managed_known_providers])
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
             self.go(_tries, *args, **go_kwargs)
