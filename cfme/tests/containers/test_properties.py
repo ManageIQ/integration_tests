@@ -2,15 +2,15 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider, navigate_and_get_rows
-from cfme.containers.route import Route, list_tbl as route_list_tbl
-from cfme.containers.project import Project, list_tbl as project_list_tbl
-from cfme.containers.service import Service, list_tbl as service_list_tbl
-from cfme.containers.container import Container, list_tbl as container_list_tbl
-from cfme.containers.node import Node, list_tbl as node_list_tbl
-from cfme.containers.image import Image, list_tbl as image_list_tbl
-from cfme.containers.image_registry import ImageRegistry, list_tbl as image_registry_list_tbl
-from cfme.containers.pod import Pod, list_tbl as pod_list_tbl
-from cfme.containers.template import Template, list_tbl as template_list_tbl
+from cfme.containers.route import Route
+from cfme.containers.project import Project
+from cfme.containers.service import Service
+from cfme.containers.container import Container
+from cfme.containers.node import Node
+from cfme.containers.image import Image
+from cfme.containers.image_registry import ImageRegistry
+from cfme.containers.pod import Pod
+from cfme.containers.template import Template
 
 from utils import testgen, version
 from utils.version import current_version
@@ -25,10 +25,9 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 class TestObj(object):
-    def __init__(self, obj, expected_fields, list_tbl, polarion_id):
+    def __init__(self, obj, expected_fields, polarion_id):
         self.obj = obj
         self.expected_fields = expected_fields
-        self.list_tbl = list_tbl
         pytest.mark.polarion(polarion_id)(self)
 
 
@@ -41,18 +40,18 @@ TEST_OBJECTS = [
             'backing_ref_container_id',
             'privileged',
             'selinux_level'
-            ], container_list_tbl, 'CMP-9945'),
+            ], 'CMP-9945'),
     TestObj(Project, [
             'name',
             'creation_timestamp',
             'resource_version',
-            ], project_list_tbl, 'CMP-10430'),
+            ], 'CMP-10430'),
     TestObj(Route, [
             'name',
             'creation_timestamp',
             'resource_version',
             'host_name'
-            ], route_list_tbl, 'CMP-9877'),
+            ], 'CMP-9877'),
     TestObj(Pod, [
             'name',
             'phase',
@@ -61,7 +60,7 @@ TEST_OBJECTS = [
             'restart_policy',
             'dns_policy',
             'ip_address'
-            ], pod_list_tbl, 'CMP-9911'),
+            ], 'CMP-9911'),
     TestObj(Node, [
             'name',
             'creation_timestamp',
@@ -77,7 +76,7 @@ TEST_OBJECTS = [
             'proxy_version',
             'operating_system_distribution',
             'kernel_version',
-            ], node_list_tbl, 'CMP-9960'),
+            ], 'CMP-9960'),
     TestObj(Image, {
             version.LOWEST:
                 [
@@ -99,7 +98,7 @@ TEST_OBJECTS = [
                     'exposed_ports',
                     'size'
                 ]
-            }, image_list_tbl, 'CMP-9978'),
+            }, 'CMP-9978'),
     TestObj(Service, [
             'name',
             'creation_timestamp',
@@ -107,15 +106,15 @@ TEST_OBJECTS = [
             'session_affinity',
             'type',
             'portal_ip'
-            ], service_list_tbl, 'CMP-9890'),
+            ], 'CMP-9890'),
     TestObj(ImageRegistry, [
             'host'
-            ], image_registry_list_tbl, 'CMP-9988'),
+            ], 'CMP-9988'),
     TestObj(Template, [
             'name',
             'creation_timestamp',
             'resource_version',
-            ], template_list_tbl, 'CMP-10316')
+            ], 'CMP-10316')
 ]
 
 
@@ -126,7 +125,7 @@ def test_properties(provider, test_obj, soft_assert):
     if current_version() < "5.7" and test_obj.obj == Template:
         pytest.skip('Templates are not exist in CFME version lower than 5.7. skipping...')
 
-    rows = navigate_and_get_rows(provider, test_obj.obj, test_obj.list_tbl, 2)
+    rows = navigate_and_get_rows(provider, test_obj.obj, 2)
 
     if not rows:
         pytest.skip('No records found for {}s. Skipping...'.format(test_obj.obj.__name__))

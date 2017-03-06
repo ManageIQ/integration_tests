@@ -6,17 +6,16 @@ from utils import testgen
 from utils.version import current_version
 from cfme.web_ui import paginator, summary_title
 
-from cfme.containers.pod import Pod, paged_tbl as pod_paged_tbl
-from cfme.containers.provider import ContainersProvider, paged_tbl as provider_paged_tbl,\
-    navigate_and_get_rows
-from cfme.containers.service import Service, paged_tbl as service_paged_tbl
-from cfme.containers.node import Node, list_tbl as node_paged_tbl
-from cfme.containers.replicator import Replicator, paged_tbl as replicator_paged_tbl
-from cfme.containers.image import Image, paged_tbl as image_paged_tbl
-from cfme.containers.project import Project, paged_tbl as project_paged_tbl
-from cfme.containers.template import Template, paged_tbl as template_paged_tbl
-from cfme.containers.container import Container, paged_tbl as container_paged_tbl
-from cfme.containers.image_registry import ImageRegistry, paged_tbl as image_registry_paged_tbl
+from cfme.containers.pod import Pod
+from cfme.containers.provider import ContainersProvider, navigate_and_get_rows
+from cfme.containers.service import Service
+from cfme.containers.node import Node
+from cfme.containers.replicator import Replicator
+from cfme.containers.image import Image
+from cfme.containers.project import Project
+from cfme.containers.template import Template
+from cfme.containers.container import Container
+from cfme.containers.image_registry import ImageRegistry
 
 
 pytestmark = [
@@ -26,23 +25,22 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 class DataSet(object):
-    def __init__(self, obj, paged_tbl, polarion_id):
+    def __init__(self, obj, polarion_id):
         self.obj = obj
-        self.paged_tbl = paged_tbl
         pytest.mark.polarion(polarion_id)(self)
 
 
 TEST_OBJECTS = [
-    DataSet(ContainersProvider, provider_paged_tbl, 'CMP-9851'),
-    DataSet(Container, container_paged_tbl, 'CMP-9947'),
-    DataSet(Pod, pod_paged_tbl, 'CMP-9929'),
-    DataSet(Service, service_paged_tbl, 'CMP-10564'),
-    DataSet(Node, node_paged_tbl, 'CMP-9962'),
-    DataSet(Replicator, replicator_paged_tbl, 'CMP-10565'),
-    DataSet(Image, image_paged_tbl, 'CMP-9980'),
-    DataSet(ImageRegistry, image_registry_paged_tbl, 'CMP-9994'),
-    DataSet(Project, project_paged_tbl, 'CMP-9868'),
-    DataSet(Template, template_paged_tbl, 'CMP-10319')
+    DataSet(ContainersProvider, 'CMP-9851'),
+    DataSet(Container, 'CMP-9947'),
+    DataSet(Pod, 'CMP-9929'),
+    DataSet(Service, 'CMP-10564'),
+    DataSet(Node, 'CMP-9962'),
+    DataSet(Replicator, 'CMP-10565'),
+    DataSet(Image, 'CMP-9980'),
+    DataSet(ImageRegistry, 'CMP-9994'),
+    DataSet(Project, 'CMP-9868'),
+    DataSet(Template, 'CMP-10319')
 ]
 
 
@@ -80,7 +78,7 @@ def test_relationships_tables(provider, data_set):
     if current_version() < "5.7" and data_set.obj == Template:
         pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
 
-    rows = navigate_and_get_rows(provider, data_set.obj, data_set.paged_tbl, 1)
+    rows = navigate_and_get_rows(provider, data_set.obj, 1)
     if not rows:
         pytest.skip('No objects to test for relationships for {}'.format(data_set.obj.__name__))
     row = rows[-1]
@@ -103,7 +101,7 @@ def test_container_status_relationships_data_integrity(provider):
         in the status summary table
         is the same number that appears in the Relationships table containers field
     """
-    rows = navigate_and_get_rows(provider, Pod, pod_paged_tbl, 3)
+    rows = navigate_and_get_rows(provider, Pod, 3)
     if not rows:
         pytest.skip('No containers found to test. skipping...')
     pod_names = [r.name.text for r in rows]

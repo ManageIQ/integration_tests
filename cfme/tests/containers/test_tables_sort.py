@@ -33,14 +33,15 @@ TEST_OBJECTS = [
     BZ(1409360, unblock=lambda cls: cls != ContainersProvider)
 ])
 @pytest.mark.parametrize('cls', TEST_OBJECTS)
-def test_containers_main_pages_sort(cls):
+def test_tables_sort(cls):
 
     pytest.skip('This test is currently skipped due to an issue in the testing framework:'
                 ' https://github.com/ManageIQ/integration_tests/issues/4052')
 
     navigate_to(cls, 'All')
     toolbar.select('List View')
-    # NOTE: We must re-instantiate here sort_tbl in order to prevent StaleElementException
+    # NOTE: We must re-instantiate here table
+    # in order to prevent StaleElementException or UsingSharedTables
     sort_tbl = SortTable(table_locator="//div[@id='list_grid']//table")
     header_texts = [header.text for header in sort_tbl.headers]
     for col, header_text in enumerate(header_texts):
