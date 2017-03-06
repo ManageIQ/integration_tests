@@ -67,7 +67,7 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
         def test_host_remove_creds():
             test_host.update(
                 updates={
-                    'credentials': host.Host.Credential(
+                    'credentials': host_obj.Host.Credential(
                         principal="",
                         secret="",
                         verify_secret=""
