@@ -1,13 +1,13 @@
 """Tests for Openstack cloud instances"""
 
 import fauxfactory
+import functools
 import pytest
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
-
 
 pytest_generate_tests = testgen.generate([OpenStackProvider],
                                          scope='module')
@@ -26,6 +26,14 @@ def test_create_instance(provider):
                     prov_data['instance_type'], False,
                     security_groups='default',
                     availability_zone=prov_data['availability_zone'],
-                    resource_groups='admin')
+                    cloud_tenant=prov_data['tenant'])
     instance.wait_to_appear()
     assert instance.get_detail('Power Management', 'Power State') == 'on'
+
+    # Assert displayed relationships
+    get_relation = functools.partial(instance.get_detail, 'Relationships')
+    assert get_relation('Availability Zone') == prov_data['availability_zone']
+    assert get_relation('Cloud Tenants') == prov_data['tenant']
+    assert get_relation('Flavor') == prov_data['instance_type']
+    assert get_relation('VM Template') == prov_data['image']['name']
+    assert get_relation('Virtual Private Cloud') == prov_data['cloud_network']
