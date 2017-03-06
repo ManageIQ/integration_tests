@@ -24,6 +24,8 @@ def test_create_instance(provider):
     instance.create(fauxfactory.gen_email(), fauxfactory.gen_alpha(),
                     fauxfactory.gen_alpha(), prov_data['cloud_network'],
                     prov_data['instance_type'], False,
-                    security_groups='default')
+                    security_groups='default',
+                    availability_zone=prov_data['availability_zone'],
+                    resource_groups='admin')
     instance.wait_to_appear()
-    assert instance.get_detail('Properties', 'Power State') == 'on'
+    assert instance.get_detail('Power Management', 'Power State') == 'on'
