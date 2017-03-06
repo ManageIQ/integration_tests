@@ -338,9 +338,9 @@ def test_alert_snmp(request, vm_name, snmp, provider):
                 "performance_field_operator": ">",
                 "performance_field_value": "0",
                 "performance_trend": "Don't Care",
-                "performance_time_threshold": "3 Minutes",
+                "performance_time_threshold": "1 Minute",
             }),
-        notification_frequency="5 Minutes",
+        notification_frequency="1 Minute",
         snmp_trap={
             "hosts": "127.0.0.1",
             "version": "v2",
