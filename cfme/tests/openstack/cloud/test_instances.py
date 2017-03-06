@@ -27,7 +27,8 @@ def test_create_instance(provider, soft_assert):
                     availability_zone=prov_data['availability_zone'],
                     cloud_tenant=prov_data['tenant'])
     instance.wait_to_appear()
-    power_state = instance.get_detail('Power Management', 'Power State')
+    power_state = instance.get_detail(properties=('Power Management',
+                                                  'Power State'))
     assert power_state == OpenStackInstance.STATE_ON
 
     vm_tmplt = instance.get_detail(properties=('Relationships', 'VM Template'))
