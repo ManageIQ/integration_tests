@@ -19,10 +19,11 @@ from . import Server, Region, Zone, ZoneCollection
 
 
 def automate_menu_name(appliance):
-    if appliance.version < '5.8':
-        return ['Automate']
-    else:
-        return ['Automation', 'Automate']
+    # It's been reverted
+    # if appliance.version < '5.8':
+    return ['Automate']
+    # else:
+    #     return ['Automation']
 
 
 # ######################## SERVER NAVS ################################
