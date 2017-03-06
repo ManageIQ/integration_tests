@@ -10,8 +10,8 @@ pytestmark = [test_requirements.rest]
 
 
 @pytest.fixture(scope="module")
-def a_provider():
-    return _a_provider()
+def a_provider(request):
+    return _a_provider(request)
 
 
 @pytest.fixture(scope="module")

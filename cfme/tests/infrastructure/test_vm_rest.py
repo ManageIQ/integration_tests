@@ -12,8 +12,8 @@ pytestmark = [test_requirements.provision]
 
 
 @pytest.fixture(scope="function")
-def a_provider():
-    return _a_provider()
+def a_provider(request):
+    return _a_provider(request)
 
 
 @pytest.fixture(scope="function")

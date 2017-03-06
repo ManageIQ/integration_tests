@@ -501,7 +501,7 @@ class IPAppliance(object):
                 unrecognized_ems_names.add(ems.name)
         if unrecognized_ems_names:
             self.log.warning(
-                "Unrecognized managed providers: {}".format(','.join(unrecognized_ems_names)))
+                "Unrecognized managed providers: {}".format(', '.join(unrecognized_ems_names)))
         return list(found_cruds)
 
     @property
