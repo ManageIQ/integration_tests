@@ -314,6 +314,12 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         pwr_btn("Kill Server", invokes_alert=True)
         sel.handle_alert()
 
+    def is_immutable(self):
+        return not (tb.exists("Power") or
+                    tb.exists("Deployments") or
+                    tb.exists("JDBC Drivers") or
+                    tb.exists("Datasources"))
+
     @classmethod
     def download(cls, extension, provider=None, server_group=None):
         _get_servers_page(provider, server_group)
