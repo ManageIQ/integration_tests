@@ -185,13 +185,15 @@ def vm_crud(provider, vm_name, full_template):
     return VM.factory(vm_name, provider, template_name=full_template["name"])
 
 
+# TODO Replace this with the appliance fixture once complete
 @pytest.yield_fixture(scope="module")
-def snmp(ssh_appliance):
-    ssh_appliance.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
-    ssh_appliance.run_command("systemctl start snmptrapd.service")
+def snmp():
+    ssh = store.current_appliance.ssh_client
+    ssh.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
+    ssh.run_command("systemctl start snmptrapd.service")
     yield
-    ssh_appliance.run_command("systemctl stop snmptrapd.service")
-    ssh_appliance.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
+    ssh.run_command("systemctl stop snmptrapd.service")
+    ssh.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
 @pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
