@@ -217,6 +217,9 @@ provisioning_form = tabstrip.TabStripForm(
             ('automatic_placement', ui.Input('environment__placement_auto')),
 
             # Cloud
+            ('cloud_tenant', {
+                version.LOWEST: ui.Select('select#environment__cloud_tenant'),
+                '5.5': AngularSelect('environment__cloud_tenant')}),
             ('availability_zone', {
                 version.LOWEST: ui.Select('select#environment__placement_availability_zone'),
                 '5.5': AngularSelect('environment__placement_availability_zone')}),
