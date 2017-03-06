@@ -836,7 +836,7 @@ class IPAppliance(object):
 
         # # deploy config and start chrony if it isn't running
         server_template = 'server {srv} iburst'
-        base_config = ['driftfile /var/lib/chrony/drift', 'makestep 1 3', 'rtcsync']
+        base_config = ['driftfile /var/lib/chrony/drift', 'makestep 10 10', 'rtcsync']
         try:
             logger.debug('obtaining clock servers from config file')
             clock_servers = conf.cfme_data.get('clock_servers', {})
