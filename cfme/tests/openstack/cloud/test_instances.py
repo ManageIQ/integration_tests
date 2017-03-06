@@ -1,7 +1,6 @@
 """Tests for Openstack cloud instances"""
 
 import fauxfactory
-import functools
 import pytest
 
 from cfme.cloud.instance.openstack import OpenStackInstance
@@ -15,7 +14,7 @@ pytest_generate_tests = testgen.generate([OpenStackProvider],
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-def test_create_instance(provider):
+def test_create_instance(provider, soft_assert):
     """Creates an instance and verifies it appears on UI"""
     prov_data = provider.get_yaml_data()['provisioning']
     instance = OpenStackInstance(fauxfactory.gen_alpha(), provider,
@@ -28,12 +27,18 @@ def test_create_instance(provider):
                     availability_zone=prov_data['availability_zone'],
                     cloud_tenant=prov_data['tenant'])
     instance.wait_to_appear()
-    assert instance.get_detail('Power Management', 'Power State') == 'on'
+    power_state = instance.get_detail('Power Management', 'Power State')
+    assert power_state == OpenStackInstance.STATE_ON
 
-    # Assert displayed relationships
-    get_relation = functools.partial(instance.get_detail, 'Relationships')
-    assert get_relation('Availability Zone') == prov_data['availability_zone']
-    assert get_relation('Cloud Tenants') == prov_data['tenant']
-    assert get_relation('Flavor') == prov_data['instance_type']
-    assert get_relation('VM Template') == prov_data['image']['name']
-    assert get_relation('Virtual Private Cloud') == prov_data['cloud_network']
+    vm_tmplt = instance.get_detail(properties=('Relationships', 'VM Template'))
+    soft_assert(vm_tmplt == prov_data['image']['name'])
+
+    # Assert other relationships in a loop
+    props = [('Availability Zone', 'availability_zone'),
+             ('Cloud Tenants', 'tenant'),
+             ('Flavor', 'instance_type'),
+             ('Virtual Private Cloud', 'cloud_network')]
+
+    for p in props:
+        v = instance.get_detail(properties=('Relationships', p[0]))
+        soft_assert(v == prov_data[p[1]])
