@@ -41,6 +41,7 @@ def vm_name():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
 def test_provision_from_template(rbac_role, setup_provider, provider, vm_name, smtp_test,
                                  request, provisioning):
     """ Tests provisioning from a template
@@ -58,14 +59,20 @@ def test_provision_from_template(rbac_role, setup_provider, provider, vm_name, s
     """
 
     # generate_tests makes sure these have values
-    template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
+    if not auto:
+        template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
+    else:
+        host = None
+        datastore = None
+        template = provisioning['template']
 
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
         'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]}
+        'host_name': {'name': [host]} if host else None,
+        'datastore_name': {'name': [datastore]} if datastore else None,
+        'automatic_placement': True if auto else None
     }
 
     # Same thing, different names. :\
