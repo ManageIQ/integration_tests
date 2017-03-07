@@ -99,12 +99,8 @@ class OpenStackInstance(Instance):
             self.provider.mgmt.stop_vm(self.name)
         elif option == OpenStackInstance.SUSPEND:
             self.provider.mgmt.suspend_vm(self.name)
-        elif option == OpenStackInstance.RESUME:
-            self.provider.mgmt.resume_vm(self.name)
         elif option == OpenStackInstance.PAUSE:
             self.provider.mgmt.pause_vm(self.name)
-        elif option == OpenStackInstance.UNPAUSE:
-            self.provider.mgmt.unpause_vm(self.name)
         elif option == OpenStackInstance.SHELVE:
             # TODO: rewrite it once mgmtsystem will get shelve
             # and shelve_offload methods
