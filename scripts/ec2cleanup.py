@@ -76,7 +76,7 @@ def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
 
 
 def ec2cleanup(exclude_volumes, exclude_eips, output):
-    with open(output, 'a+') as report:
+    with open(output, 'w') as report:
         report.write('ec2cleanup.py, Address and Volume Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
     for provider_key in list_provider_keys('ec2'):
