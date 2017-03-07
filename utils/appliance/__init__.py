@@ -2,7 +2,6 @@
 import fauxfactory
 import logging
 import os
-import random
 import re
 import socket
 import yaml
@@ -822,20 +821,53 @@ class IPAppliance(object):
         """Fixes appliance time using ntpdate on appliance"""
         log_callback('Fixing appliance clock')
         client = self.ssh_client
+
+        # checking whether chrony is installed
+        check_cmd = 'yum list installed chrony'
+        if client.run_command(check_cmd).rc != 0:
+            raise ApplianceException("Chrony isn't installed")
+
+        # # checking whether it is enabled and enable it
+        is_enabled_cmd = 'systemctl is-enabled chronyd'
+        if client.run_command(is_enabled_cmd).rc != 0:
+            logger.debug("chrony will start on system startup")
+            client.run_command('systemctl enable chronyd')
+            client.run_command('systemctl daemon-reload')
+
+        # # deploy config and start chrony if it isn't running
+        server_template = 'server {srv} iburst'
+        base_config = ['driftfile /var/lib/chrony/drift', 'makestep 10 10', 'rtcsync']
         try:
-            ntp_server = random.choice(conf.cfme_data.get('clock_servers', {}))
+            logger.debug('obtaining clock servers from config file')
+            clock_servers = conf.cfme_data.get('clock_servers', {})
+            for clock_server in clock_servers:
+                base_config.append(server_template.format(srv=clock_server))
         except IndexError:
             msg = 'No clock servers configured in cfme_data.yaml'
             log_callback(msg)
-            raise Exception(msg)
+            raise ApplianceException(msg)
 
-        status, out = client.run_command("ntpdate {}".format(ntp_server))
-        if status != 0:
-            self.log.error('ntpdate failed:')
-            self.log.error(out)
-            msg = 'Setting the time failed on appliance'
-            log_callback(msg)
-            raise Exception(msg)
+        filename = '/etc/chrony.conf'
+        config_file = "\n".join(base_config)
+
+        old_conf_file = client.run_command("cat {f}".format(f=filename)).output
+        conf_file_updated = False
+        if config_file != old_conf_file:
+            logger.debug("chrony's config file isn't equal to prepared one, overwriting it")
+            client.run_command('echo "{txt}" > {f}'.format(txt=config_file, f=filename))
+            conf_file_updated = True
+
+        if conf_file_updated or client.run_command('systemctl status chronyd').rc != 0:
+            logger.debug('restarting chronyd')
+            client.run_command('systemctl restart chronyd')
+
+        # check that chrony is running correctly now
+        result = client.run_command('chronyc tracking')
+        if result.rc == 0:
+            logger.info('chronyc is running correctly')
+        else:
+            raise ApplianceException("chrony doesn't work. "
+                                     "Error message: {e}".format(e=result.output))
 
     @property
     def is_miqqe_patch_candidate(self):
