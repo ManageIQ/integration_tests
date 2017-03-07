@@ -9,6 +9,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenStackProvider],
                                          scope='module')
@@ -71,8 +72,10 @@ def test_create_instance(provider, soft_assert):
     # Assert other relationships in a loop
     props = [('Availability Zone', 'availability_zone'),
              ('Cloud Tenants', 'tenant'),
-             ('Flavor', 'instance_type'),
-             ('Virtual Private Cloud', 'cloud_network')]
+             ('Flavor', 'instance_type')]
+
+    if current_version() >= '5.7':
+        props.append(('Virtual Private Cloud', 'cloud_network'))
 
     for p in props:
         v = instance.get_detail(properties=('Relationships', p[0]))
@@ -146,7 +149,8 @@ def test_soft_reboot_instance(active_instance):
 
     state = active_instance.get_detail(properties=('Power Management',
                                                    'Power State'))
-    assert state == OpenStackInstance.STATE_ON
+    assert state in (OpenStackInstance.STATE_ON,
+                     OpenStackInstance.STATE_REBOOTING)
 
 
 def test_hard_reboot_instance(active_instance):
@@ -157,7 +161,8 @@ def test_hard_reboot_instance(active_instance):
 
     state = active_instance.get_detail(properties=('Power Management',
                                                    'Power State'))
-    assert state == OpenStackInstance.STATE_ON
+    assert state in (OpenStackInstance.STATE_ON,
+                     OpenStackInstance.STATE_REBOOTING)
 
 
 def test_delete_instance(active_instance):
