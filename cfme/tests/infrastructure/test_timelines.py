@@ -120,20 +120,34 @@ class TestVmEventRESTAPI(object):
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_vm_add_event(self, rest_api, vm, from_detail, appliance):
+        """Test that checks whether adding a event using the REST API works.
+        Prerequisities:
+            * A VM
+        Steps:
+            * Find the VM's id
+            * Prepare the event data
+            * Call either:
+                * POST /api/vms/<id> (method ``add_event``) <- the event data
+                * POST /api/vms (method ``add_lifecycle_event``) <- the event data
+                    and resources field specifying list of dicts containing hrefs to the VMs,
+                    in this case only one.
+            * Verify that appliance's database contains such entries in table ``event_streams``
+        Metadata:
+            test_flag: rest
+        """
         event = {
             "event_type": "BadUserNameSessionEvent",
             "event_message": "Cannot login user@test.domain {}".format(from_detail)
         }
         rest_vm = rest_api.collections.vms.get(name=vm)
         if from_detail:
-            assert rest_vm.action.add_event(**event)["success"], "Could not add event"
+            responses = [rest_vm.action.add_event(**event)]
         else:
-            response = rest_api.collections.vms.action.add_event(rest_vm, **event)
-            assert len(response) > 0, "Could not add event"
+            responses = rest_api.collections.vms.action.add_event(rest_vm, **event)
+        assert rest_api.response.status_code == 200
+        for response in responses:
+            assert response["success"] is True, "Could not add event"
 
-        # DB check, doesn't work on 5.4
-        if version.current_version() < '5.5':
-            return True
         events = appliance.db["event_streams"]
         events_list = list(appliance.db.session.query(events).filter(
             events.vm_name == vm,
@@ -159,8 +173,6 @@ class TestVmEventRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        if "add_lifecycle_event" not in rest_api.collections.vms.action.all:
-            pytest.skip("add_lifecycle_event action is not implemented in this version")
         rest_vm = rest_api.collections.vms.get(name=vm)
         event = dict(
             status=fauxfactory.gen_alphanumeric(),
@@ -168,14 +180,18 @@ class TestVmEventRESTAPI(object):
             event=fauxfactory.gen_alphanumeric(),
         )
         if from_detail:
-            assert rest_vm.action.add_lifecycle_event(**event)["success"], "Could not add event"
+            responses = [rest_vm.action.add_lifecycle_event(**event)]
         else:
-            assert len(rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)) > 0,\
-                "Could not add event"
+            responses = rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)
+        assert rest_api.response.status_code == 200
+        for response in responses:
+            assert response["success"] is True, "Could not add event"
+
         # DB check
         lifecycle_events = appliance.db["lifecycle_events"]
-        assert len(list(appliance.db.session.query(lifecycle_events).filter(
+        events_list = list(appliance.db.session.query(lifecycle_events).filter(
             lifecycle_events.message == event["message"],
             lifecycle_events.status == event["status"],
             lifecycle_events.event == event["event"],
-        ))) == 1, "Could not find the lifecycle event in the database"
+        ))
+        assert len(events_list) == 1, "Could not find the lifecycle event in the database"
