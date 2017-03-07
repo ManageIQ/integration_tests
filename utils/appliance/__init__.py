@@ -479,7 +479,7 @@ class IPAppliance(object):
                 yield ipaddress, hostname
 
     @property
-    def managed_providers(self):
+    def managed_known_providers(self):
         """Returns a set of provider crud objects of known providers managed by this appliance
 
         Note:
@@ -505,7 +505,12 @@ class IPAppliance(object):
 
     @property
     def managed_provider_names(self):
-        """Returns a list of names for all providers configured on the appliance"""
+        """Returns a list of names for all providers configured on the appliance
+
+        Note:
+            Unlike ``managed_known_providers``, this will also return names of providers that were
+            not recognized, but are present.
+        """
         return [ems.name for ems in self._list_ems()]
 
     def check_no_conflicting_providers(self):
@@ -555,10 +560,10 @@ class IPAppliance(object):
             return False
 
         prov_cruds = list_providers(use_global_filters=False)
-        managed_providers_names = [prov.name for prov in self.managed_providers]
+        managed_known_providers_names = [prov.name for prov in self.managed_known_providers]
         for ems in self._list_ems():
-            # EMS found among managed providers can be safely ignored; they are not conflicting
-            if ems.name in managed_providers_names:
+            # EMS found among managed known providers can be ignored; they are not conflicting
+            if ems.name in managed_known_providers_names:
                 continue
             # Otherwise, if the EMS matches a provider in our yamls by IP or credentials
             # but isn't among managed providers -> same provider with a different name

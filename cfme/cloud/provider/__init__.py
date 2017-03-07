@@ -143,6 +143,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     vm_name = "Instances"
     template_name = "Images"
     _properties_region = prop_region  # This will get resolved in common to a real form
+    db_types = ["CloudManager"]
     # Specific Add button
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Cloud Provider"),

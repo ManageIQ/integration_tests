@@ -23,6 +23,7 @@ class OpenstackInfraProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "openstack_infra"
     mgmt_class = OpenstackInfraSystem
+    db_types = ["Openstack::InfraManager"]
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None,

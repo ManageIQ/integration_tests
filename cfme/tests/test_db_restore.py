@@ -87,7 +87,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
         ec2_provider_crud.setup()
         cloud_provider.wait_for_a_provider()
 
-        providers_appl1 = appl1.ipapp.managed_providers
+        providers_appl1 = appl1.ipapp.managed_known_providers
         appl1.ipapp.backup_database()
 
     # Fetch v2_key and DB backup from the first appliance
@@ -113,7 +113,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
         cloud_provider.wait_for_a_provider()
 
         # Assert providers on the second appliance
-        providers_appl2 = appl2.ipapp.managed_providers
+        providers_appl2 = appl2.ipapp.managed_known_providers
         assert set(providers_appl2).issubset(providers_appl1),\
             'Restored DB is missing some providers'
 

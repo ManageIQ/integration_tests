@@ -76,6 +76,7 @@ class MiddlewareProvider(BaseProvider):
     add_provider_button = form_buttons.FormButton("Add")
     save_button = form_buttons.FormButton("Save changes")
     taggable_type = 'ExtManagementSystem'
+    db_types = ["MiddlewareManager"]
 
 
 @navigator.register(MiddlewareProvider, 'All')

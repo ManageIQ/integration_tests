@@ -186,7 +186,7 @@ def _generate_provider_fixtures():
             @pytest.fixture(scope='function')
             def _has_no_providers():
                 """ Clears all providers of given class from the appliance """
-                BaseProvider.clear_providers_by_class(prov_class, validate=True)
+                prov_class.clear_providers()
             return _has_no_providers
         fn_name = 'has_no_{}_providers'.format(prov_type)
         globals()[fn_name] = gen_has_no_providers(prov_class)

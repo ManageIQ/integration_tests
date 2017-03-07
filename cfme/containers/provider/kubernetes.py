@@ -5,6 +5,7 @@ from mgmtsystem.kubernetes import Kubernetes
 class KubernetesProvider(ContainersProvider):
     type_name = "kubernetes"
     mgmt_class = Kubernetes
+    db_types = ["Kubernetes::ContainerManager"]
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None, appliance=None):
