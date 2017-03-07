@@ -115,7 +115,8 @@ def test_shelve_instance(active_instance):
         OpenStackInstance.STATE_SHELVED)
     state = active_instance.get_detail(properties=('Power Management',
                                                    'Power State'))
-    assert state == OpenStackInstance.STATE_SHELVED_OFFLOAD
+    assert state in (OpenStackInstance.STATE_SHELVED_OFFLOAD,
+                     OpenStackInstance.STATE_SHELVED)
 
 
 def test_shelve_offload_instance(shelved_instance):
