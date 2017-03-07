@@ -15,14 +15,13 @@ from utils.log import logger
 from utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [CloudProvider],
-        required_fields=[('test_power_control', True)])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
+pytest_generate_tests = testgen.generate([CloudProvider],
+                                         scope='function',
+                                         required_fields=['test_power_control'])
 
-
-pytestmark = [pytest.mark.tier(2), pytest.mark.long_running, test_requirements.power]
+pytestmark = [pytest.mark.tier(2),
+              pytest.mark.long_running,
+              test_requirements.power]
 
 
 @pytest.yield_fixture(scope="function")
@@ -37,9 +36,7 @@ def testing_instance(request, setup_provider, provider):
         provider.mgmt.set_name(
             instance.name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
-
     provider.refresh_provider_relationships()
-    instance.wait_to_appear()
 
     yield instance
 

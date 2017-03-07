@@ -56,20 +56,18 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
 
     recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
 
-    # Provider specific
     if not isinstance(provider, AzureProvider):
         recursive_update(inst_args, {
             'properties': {
                 'instance_type': provisioning['instance_type'],
-                'guest_keypair': provisioning['guest_keypair']
-            },
+                'guest_keypair': provisioning['guest_keypair']},
             'environment': {
                 'availability_zone': provisioning['availability_zone'],
                 # security group can be a list
-                'security_groups': [provisioning['security_group']]
-            }
+                'security_groups': [provisioning['security_group']]}
         })
 
+    # Provider specific
     if isinstance(provider, OpenStackProvider):
         recursive_update(inst_args, {
             'environment': {
@@ -91,19 +89,15 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         # Azure uses different provisioning keys for some reason
         recursive_update(inst_args, {
             'environment': {
-                'cloud_network': provisioning['virtual_net'],
-                'cloud_subnet': provisioning['subnet_range'],
-                'security_groups': [provisioning['network_nsg']],
-                'resource_groups': provisioning['resource_group']
-            },
+                'cloud_network': provisioning['cloud_network'],
+                'cloud_subnet': provisioning['cloud_subnet'],
+                'security_groups': [provisioning['cloud_security_group']],
+                'resource_groups': provisioning['resource_group']},
             'properties': {
-                'instance_type': provisioning['vm_size'].lower()
-            },
+                'instance_type': provisioning['vm_size'].lower()},
             'customize': {
                 'admin_username': provisioning['vm_user'],
-                'admin_password': provisioning['vm_password']
-            }
-        })
+                'admin_password': provisioning['vm_password']}})
 
     yield instance, inst_args
 
