@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def active_instance(provider):
     instances = provider.mgmt._get_all_instances()
     for inst in instances:
@@ -33,7 +33,7 @@ def active_instance(provider):
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def shelved_instance(provider):
     instances = provider.mgmt._get_all_instances()
     for inst in instances:
@@ -42,7 +42,6 @@ def shelved_instance(provider):
 
     inst = random.choice(instances)
     inst = OpenStackInstance(inst.name, provider)
-    inst.power_control_from_cfme()
     inst.power_control_from_provider(OpenStackInstance.SHELVE)
     navigate_to(inst, 'Details')
     inst.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
@@ -116,7 +115,7 @@ def test_shelve_instance(active_instance):
         OpenStackInstance.STATE_SHELVED)
     state = active_instance.get_detail(properties=('Power Management',
                                                    'Power State'))
-    assert state == OpenStackInstance.STATE_SHELVED
+    assert state == OpenStackInstance.STATE_SHELVED_OFFLOAD
 
 
 def test_shelve_offload_instance(shelved_instance):
@@ -143,11 +142,6 @@ def test_soft_reboot_instance(active_instance):
                                             option=OpenStackInstance.SOFT_REBOOT)
     active_instance.wait_for_instance_state_change(
         OpenStackInstance.STATE_REBOOTING)
-    state = active_instance.get_detail(properties=('Power Management',
-                                                   'Power State'))
-    assert state == OpenStackInstance.STATE_REBOOTING
-
-    active_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
 
     state = active_instance.get_detail(properties=('Power Management',
                                                    'Power State'))
@@ -159,11 +153,6 @@ def test_hard_reboot_instance(active_instance):
                                             option=OpenStackInstance.HARD_REBOOT)
     active_instance.wait_for_instance_state_change(
         OpenStackInstance.STATE_REBOOTING)
-    state = active_instance.get_detail(properties=('Power Management',
-                                                   'Power State'))
-    assert state == OpenStackInstance.STATE_REBOOTING
-
-    active_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
 
     state = active_instance.get_detail(properties=('Power Management',
                                                    'Power State'))
