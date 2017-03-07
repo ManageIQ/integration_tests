@@ -12,7 +12,6 @@ from utils import testgen
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
-from utils.version import appliance_is_downstream, current_version
 
 pytestmark = [
     pytest.mark.long_running,
@@ -363,22 +362,3 @@ def test_guest_os_shutdown(testing_vm_tools, verify_vm_running, soft_assert):
         properties=("Power Management", "Last Boot Time"))
     soft_assert(new_last_boot_time == last_boot_time,
                 "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
-
-
-@pytest.mark.usefixtures("testing_vm")
-@pytest.mark.usefixtures("setup_provider_clsscope")
-@pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
-class TestDeleteViaREST(object):
-    # TODO: Put it somewhere else?
-    @pytest.fixture(scope="function")
-    def vm(self, rest_api, testing_vm):
-        result = rest_api.collections.vms.get(name=testing_vm.name)
-        assert result.name == testing_vm.name
-        return result
-
-    def test_delete(self, verify_vm_stopped, vm, testing_vm, rest_api):
-        assert "delete" in vm.action
-        vm.action.delete()
-        wait_for(
-            lambda: not rest_api.collections.vms.find_by(name=testing_vm.name),
-            num_sec=240, delay=5)
