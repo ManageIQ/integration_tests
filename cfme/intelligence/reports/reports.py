@@ -203,7 +203,7 @@ class CustomReport(Updateable, Navigatable):
         view = self.create_view(AllReportsView)
         assert view.is_displayed
         view.flash.assert_no_error()
-        view.flash.assert_message('Report "{}" was added'.format("testing report"))
+        view.flash.assert_message('Report "{}" was added'.format(self.menu_name))
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
@@ -219,7 +219,7 @@ class CustomReport(Updateable, Navigatable):
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
-                'Report "{}" was saved'.format("testing report"))
+                'Report "{}" was saved'.format(self.menu_name))
         else:
             view.flash.assert_message(
                 'Edit of Report "{}" was cancelled by the user'.format(self.menu_name))
@@ -227,7 +227,7 @@ class CustomReport(Updateable, Navigatable):
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
         node = view.reports.tree.expand_path("All Reports", "My Company (All EVM Groups)", "Custom")
-        all_custom_reports = view.reports.tree.child_items(node)
+        custom_reports_number = len(view.reports.tree.child_items(node))
         view.configuration.item_select("Delete this Report from the Database",
             handle_alert=not cancel)
         if cancel:
@@ -236,12 +236,12 @@ class CustomReport(Updateable, Navigatable):
         else:
             # This check needs because after deleting the last custom report
             # whole "My Company (All EVM Groups)" branch in the tree will be removed.
-            if len(all_custom_reports) > 1:
+            if custom_reports_number > 1:
                 view = self.create_view(AllCustomReportsView)
                 assert view.is_displayed
             view.flash.assert_no_error()
             view.flash.assert_message(
-                'Report "{}": Delete successful'.format("testing report"))
+                'Report "{}": Delete successful'.format(self.menu_name))
 
     def get_saved_reports(self):
         view = navigate_to(self, "Details")
@@ -341,14 +341,11 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
         self.run_datetime = run_datetime
         self.queued_datetime_in_title = parsetime.from_american_with_utc(
             queued_datetime).to_saved_report_title_format()
-        self.candu = candu
-
-    @property
-    def datetime_in_tree(self):
-        return version.pick({
+        self.datetime_in_tree = version.pick({
             "5.6": self.run_datetime,
             "5.7": parsetime.from_american_with_utc(self.run_datetime).to_iso_with_utc()
         })
+        self.candu = candu
 
     # @property
     # def _table(self):
@@ -383,7 +380,7 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
 
     def download(self, extension):
         view = navigate_to(self, "Details")
-        extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
+        extensions_mapping = {"txt": "Text", "csv": "CSV", "pdf": "PDF"}
         try:
             view.download("Download as {}".format(extensions_mapping[extension]))
         except:
@@ -422,6 +419,37 @@ class SavedReportData(Pretty):
             return None
 
 
+class CannedReportView(CustomReportDetailsView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.report_info.is_active() and
+            self.reports.tree.currently_selected == (["All Reports"] +
+                self.context["object"].path) and
+            self.title.text == 'Report "{}"'.format(self.context["object"].path[-1])
+        )
+
+
+class CannedSavedReportView(CustomSavedReportDetailsView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.reports.tree.currently_selected == (
+                ["All Reports"] + self.context["object"].path
+            ) and
+            self.title.text == 'Saved Report "{} - {}"'.format(
+                self.context["object"].path[-1],
+                self.context["object"].queued_datetime_in_title
+            )
+        )
+
+
 class CannedSavedReport(CustomSavedReport, Navigatable):
     """As we cannot create or edit canned reports, we don't know their titles and so, so we
     need to change the navigation a little bit for it to work correctly.
@@ -432,25 +460,91 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
             returns.
     """
 
-    def __init__(self, path_to_report, datetime, candu=False, appliance=None):
+    def __init__(self, path_to_report, run_datetime, queued_datetime, candu=False, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
+        self.path = path_to_report
+        self.datetime = run_datetime
+        self.candu = candu
+        self.queued_datetime_in_title = parsetime.from_american_with_utc(
+            queued_datetime).to_saved_report_title_format()
+        self.datetime_in_tree = version.pick({
+            "5.6": self.datetime,
+            "5.7": parsetime.from_american_with_utc(self.datetime).to_iso_with_utc()
+        })
 
     def navigate(self):
-        pass
+        navigate_to(self, "Info")
 
     @classmethod
     def new(cls, path):
-        pass
+        return cls(path, *cls.queue_canned_report(path))
 
     @classmethod
     def queue_canned_report(cls, path):
-        pass
+        """Queue report from selection of pre-prepared reports.
+
+        Args:
+            *path: Path in tree after All Reports
+        Returns: Value of Run At in the table so the run can be then checked.
+        """
+        cls.path = path
+        view = navigate_to(cls, "Info")
+        assert view.is_displayed
+        view.report_info.queue_button.click()
+        view.flash.assert_no_error()
+        view.flash.assert_message("Report has been successfully queued to run")
+        queued_at = view.saved_reports.table[0]["Queued At"].text
+
+        def _get_state():
+            row = view.saved_reports.table.row(queued_at=queued_at)
+            status = row.status.text.strip().lower()
+            assert status != "error"
+            return status == version.pick({
+                "5.6": "finished",
+                "5.7": "complete"
+            })
+
+        wait_for(
+            _get_state,
+            delay=1,
+            message="wait for report generation finished",
+            fail_func=view.reload_button.click,
+            num_sec=300,
+        )
+        first_row = view.saved_reports.table[0]
+        return first_row.run_at.text, first_row.queued_at.text
 
     def get_saved_canned_reports(self, *path):
-        pass
+        view = navigate_to(self, "Info")
+        results = []
+        try:
+            for page in view.saved_reports.paginator.pages():
+                for row in view.saved_reports.table.rows():
+                    results.append(
+                        CannedSavedReport(
+                            path,
+                            row.run_at.text.encode("utf-8"),
+                            row.queued_at.text.encode("utf-8")
+                        )
+                    )
+        except NoSuchElementException:
+            pass
+        return results
 
-    def delete(self):
-        pass
+    def delete(self, cancel=False):
+        view = navigate_to(self, "Info")
+        cell = view.saved_reports.table.row(run_at=self.datetime)[0]
+        cell.check()
+        view.configuration.item_select(
+            "Delete this Saved Report from the Database",
+            handle_alert=not cancel
+        )
+        if cancel:
+            assert view.is_displayed
+            view.flash.assert_no_error()
+        else:
+            view.flash.assert_no_error()
+            view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
 
 
 @navigator.register(CustomReport, "Add")
@@ -498,5 +592,24 @@ class CustomSavedReportDetails(CFMENavigateStep):
             "My Company (All EVM Groups)",
             "Custom",
             self.obj.report.menu_name,
-            self.obj.datetime_in_tree,
-        )
+            self.obj.datetime_in_tree
+       )
+
+
+@navigator.register(CannedSavedReport, "Details")
+class CannedSavedReportDetails(CFMENavigateStep):
+    VIEW = CannedSavedReportView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        path = self.obj.path + [self.obj.datetime_in_tree]
+        self.view.reports.tree.click_path("All Reports", *path)
+
+
+@navigator.register(CannedSavedReport, "Info")
+class CannedReportInfo(CFMENavigateStep):
+    VIEW = CannedReportView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.reports.tree.click_path("All Reports", *self.obj.path)
