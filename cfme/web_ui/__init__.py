@@ -3381,7 +3381,7 @@ class DriftGrid(Pretty):
     """ Class representing the table (grid) specific to host drift analysis comparison page
     """
 
-    def __init__(self, loc="//div[@id='drift_grid_div']"):
+    def __init__(self, loc="//div[@id='compare-grid']"):
         self.loc = loc
 
     def get_cell(self, row_text, col_index):
@@ -3399,7 +3399,8 @@ class DriftGrid(Pretty):
             Selenium element of the cell.
         """
         self.expand_all_sections()
-        cell_loc = ".//div/div[1][contains(., '{}')]/../div[{}]".format(row_text, col_index + 2)
+        cell_loc = ".//div/div[1][contains(., '{}')]//tbody/tr[{}]/td".format(
+            row_text, col_index + 2)
         cell = sel.element(cell_loc, root=self.loc)
         return cell
 
@@ -3442,7 +3443,8 @@ class DriftGrid(Pretty):
             # We need to do this one by one because the DOM changes on every expansion
             try:
                 el = sel.element(
-                    './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
+                    './/span[contains(@class, "expand-icon") \
+                    and contains(@class, "fa-angle-right")]',
                     root=self.loc)
                 sel.click(el)
             except NoSuchElementException:
