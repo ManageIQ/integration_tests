@@ -10,8 +10,7 @@ from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.middleware.provider import MiddlewareProvider
-from cfme.exceptions import FlashMessageException
-from utils import providers
+from fixtures.provider import setup_or_skip
 from utils import testgen
 from utils import conf
 from utils.log import logger
@@ -44,24 +43,18 @@ def enable_candu():
         candu.disable_all()
 
 
-# Blow away all providers when done - collecting metrics for all of them is
-# too much
+# Blow away all providers when done - collecting metrics for all of them is too much
 @pytest.yield_fixture
-def handle_provider(provider):
-    try:
-        BaseProvider.clear_providers()
-        providers.setup_provider(provider.key)
-    except FlashMessageException as e:
-        e.skip_and_log("Provider failed to set up")
-    else:
-        yield
-    finally:
-        BaseProvider.clear_providers()
+def clean_setup_provider(request, provider):
+    BaseProvider.clear_providers()
+    setup_or_skip(provider)
+    yield
+    BaseProvider.clear_providers()
 
 
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.7" and provider.type == 'gce')
-def test_metrics_collection(handle_provider, provider, enable_candu):
+def test_metrics_collection(clean_setup_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider
 
     Metadata:

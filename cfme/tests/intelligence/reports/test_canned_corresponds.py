@@ -6,21 +6,16 @@ from cfme.infrastructure.provider import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
-from utils.providers import get_crud_by_name, setup_a_provider_by_class
+from utils.providers import get_crud_by_name
 from utils import version
 from cfme import test_requirements
 
 provider_props = partial(details_page.infoblock.text, "Properties")
 
 
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    setup_a_provider_by_class(InfraProvider)
-
-
 @pytest.mark.tier(3)
 @test_requirements.report
-def test_providers_summary(soft_assert, setup_a_provider):
+def test_providers_summary(soft_assert, infra_provider):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
     path = ["Configuration Management", "Providers", "Providers Summary"]
@@ -53,7 +48,7 @@ def test_providers_summary(soft_assert, setup_a_provider):
 
 @pytest.mark.tier(3)
 @test_requirements.report
-def test_cluster_relationships(soft_assert, setup_a_provider):
+def test_cluster_relationships(soft_assert, infra_provider):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)
     for relation in report.data.rows:

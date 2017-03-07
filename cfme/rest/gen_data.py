@@ -7,7 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
-from utils.providers import setup_a_provider_by_class
+from fixtures.provider import setup_one_by_class_or_skip
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils.log import logger
@@ -178,8 +178,8 @@ def rates(request, rest_api, num=3):
     return _creating_skeleton(request, rest_api, 'rates', data)
 
 
-def a_provider():
-    return setup_a_provider_by_class(InfraProvider)
+def a_provider(request):
+    return setup_one_by_class_or_skip(request, InfraProvider)
 
 
 def vm(request, a_provider, rest_api):

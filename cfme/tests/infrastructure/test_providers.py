@@ -14,17 +14,12 @@ from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen, providers, version
+from utils import testgen, version
 from utils.update import update
 from utils.log import logger
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
-
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    return providers.setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.mark.tier(3)
@@ -134,14 +129,13 @@ def test_ip_required_validation():
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
-def test_name_max_character_validation(request, setup_a_provider):
+def test_name_max_character_validation(request, infra_provider):
     """Test to validate max character for name field"""
-    provider = setup_a_provider
-    request.addfinalizer(lambda: provider.delete_if_exists(cancel=False))
+    request.addfinalizer(lambda: infra_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
-    provider.update({'name': name})
-    provider.name = name
-    assert provider.exists
+    with update(infra_provider):
+        infra_provider.name = name
+    assert infra_provider.exists
 
 
 @pytest.mark.tier(3)
@@ -248,8 +242,8 @@ def test_provider_crud(provider):
 
 class TestProvidersRESTAPI(object):
     @pytest.yield_fixture(scope="function")
-    def custom_attributes(self, rest_api, setup_a_provider):
-        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+    def custom_attributes(self, rest_api, infra_provider):
+        provider = rest_api.collections.providers.get(name=infra_provider.name)
         body = []
         attrs_num = 2
         for _ in range(attrs_num):
@@ -406,14 +400,14 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_add_custom_attributes_bad_section(self, rest_api, setup_a_provider):
+    def test_add_custom_attributes_bad_section(self, rest_api, infra_provider):
         """Test that adding custom attributes with invalid section
         to provider using REST API fails.
 
         Metadata:
             test_flag: rest
         """
-        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+        provider = rest_api.collections.providers.get(name=infra_provider.name)
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
             'name': 'ca_name_{}'.format(uid),

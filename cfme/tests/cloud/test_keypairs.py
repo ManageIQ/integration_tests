@@ -4,16 +4,10 @@ from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.version import current_version
-from utils.providers import setup_a_provider_by_class
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() > '5.7')
 ]
-
-
-@pytest.fixture(scope="module")
-def a_provider():
-    return setup_a_provider_by_class(OpenStackProvider)
 
 
 def pytest_generate_tests(metafunc):
@@ -23,7 +17,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud(a_provider):
+def test_keypair_crud(openstack_provider):
     """ This will test whether it will create new Keypair and then deletes it.
 
     Prerequisites:
@@ -34,6 +28,6 @@ def test_keypair_crud(a_provider):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=a_provider)
+    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
     keypair.create()
     keypair.delete()

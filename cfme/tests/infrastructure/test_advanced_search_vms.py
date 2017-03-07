@@ -9,23 +9,20 @@ from cfme.infrastructure import virtual_machines
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import search
+from fixtures.provider import setup_one_or_skip
 from utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
-from utils.providers import setup_a_provider as _setup_a_provider, ProviderFilter
+from utils.providers import ProviderFilter
+
+
+def a_provider(request):
+    pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
+    setup_one_or_skip(request, filters=[pf])
 
 
 @pytest.fixture(scope="module")
-def setup_a_provider():
-    try:
-        pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
-        _setup_a_provider(filters=[pf])
-    except Exception:
-        pytest.skip("It's not possible to set up any providers, therefore skipping")
-
-
-@pytest.fixture(scope="module")
-def vms(setup_a_provider):
+def vms(a_provider):
     """Ensure the infra providers are set up and get list of vms"""
     navigate_to(Vm, 'VMsOnly')
     search.ensure_no_filter_applied()

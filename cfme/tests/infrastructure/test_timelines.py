@@ -165,8 +165,8 @@ def test_cluster_event(provider, gen_events, test_vm):
 
 class TestVmEventRESTAPI(object):
     @pytest.fixture(scope="module")
-    def a_provider(self):
-        return _a_provider()
+    def a_provider(self, request):
+        return _a_provider(request)
 
     @pytest.fixture(scope="module")
     def vm(self, request, a_provider, rest_api_modscope):

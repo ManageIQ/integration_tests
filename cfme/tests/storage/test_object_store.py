@@ -3,21 +3,13 @@ import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage import object_store
 from cfme.web_ui import mixins
-from utils.providers import setup_a_provider_by_class
 from utils import testgen
 
-pytestmark = [pytest.mark.usefixtures("setup_a_provider")]
+
+pytestmark = pytest.mark.usefixtures("setup_provider")
 
 
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    setup_a_provider_by_class(OpenStackProvider)
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [OpenStackProvider])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
+pytest_generate_tests = testgen.generate([OpenStackProvider], scope="module")
 
 
 @pytest.mark.tier(3)

@@ -500,7 +500,7 @@ class IPAppliance(object):
                 unrecognized_ems_names.add(ems.name)
         if unrecognized_ems_names:
             self.log.warning(
-                "Unrecognized managed providers: {}".format(','.join(unrecognized_ems_names)))
+                "Unrecognized managed providers: {}".format(', '.join(unrecognized_ems_names)))
         return list(found_cruds)
 
     @property
@@ -2207,7 +2207,6 @@ class Appliance(IPAppliance):
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
         from cfme.configure.configuration import set_server_roles, get_server_roles
-        from utils.providers import setup_provider
         with self(browser_steal=True):
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
@@ -2231,7 +2230,7 @@ class Appliance(IPAppliance):
 
             # add provider
             log_callback('Setting up provider...')
-            setup_provider(self._provider_key)
+            self.provider.setup()
 
             # credential hosts
             log_callback('Credentialing hosts...')

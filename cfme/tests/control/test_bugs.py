@@ -10,13 +10,10 @@ from cfme.control.explorer.actions import Action
 from cfme.control.explorer.alerts import Alert
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
-from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 from utils.log import logger
-from utils.providers import setup_a_provider_by_class
 from utils.wait import wait_for
 from cfme import test_requirements
 from utils.generators import random_vm_name
@@ -130,25 +127,15 @@ items = [
 
 
 @pytest.fixture(scope="module")
-def setup_a_provider():
-    return setup_a_provider_by_class(InfraProvider)
-
-
-@pytest.fixture(scope="module")
-def vmware_provider():
-    return setup_a_provider_by_class(VMwareProvider)
-
-
-@pytest.fixture(scope="module")
-def vmware_vm(request, vmware_provider):
-    vm = VM.factory(random_vm_name("control"), vmware_provider)
+def vmware_vm(request, virtualcenter_provider):
+    vm = VM.factory(random_vm_name("control"), virtualcenter_provider)
     vm.create_on_provider(find_in_cfme=True)
     request.addfinalizer(vm.delete_from_provider)
     return vm
 
 
 @pytest.mark.meta(blockers=[1155284])
-def test_scope_windows_registry_stuck(request, setup_a_provider):
+def test_scope_windows_registry_stuck(request, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
     policy = VMCompliancePolicy(
         "Windows registry scope glitch testing Compliance Policy",
@@ -165,7 +152,7 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     request.addfinalizer(lambda: profile.delete() if profile.exists else None)
     profile.create()
     # Now assign this malformed profile to a VM
-    vm = VM.factory(Vm.get_first_vm_title(provider=setup_a_provider), setup_a_provider)
+    vm = VM.factory(Vm.get_first_vm_title(provider=infra_provider), infra_provider)
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     navigate_to(Server, 'Dashboard')
@@ -176,7 +163,7 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
 
 @pytest.mark.meta(blockers=[1209538], automates=[1209538])
 @pytest.mark.skipif(current_version() > "5.5", reason="requires cfme 5.5 and lower")
-def test_folder_field_scope(request, vmware_provider, vmware_vm):
+def test_folder_field_scope(request, virtualcenter_provider, vmware_vm):
     """This test tests the bug that makes the folder filter in expression not work.
 
     Prerequisities:
@@ -231,13 +218,14 @@ def test_folder_field_scope(request, vmware_provider, vmware_vm):
     request.addfinalizer(profile.delete)
 
     # Assign policy profile to the provider
-    vmware_provider.assign_policy_profiles(profile.description)
-    request.addfinalizer(lambda: vmware_provider.unassign_policy_profiles(profile.description))
+    virtualcenter_provider.assign_policy_profiles(profile.description)
+    request.addfinalizer(
+        lambda: virtualcenter_provider.unassign_policy_profiles(profile.description))
 
     # Delete and rediscover the VM
     vmware_vm.delete()
     vmware_vm.wait_for_delete()
-    vmware_provider.refresh_provider_relationships()
+    virtualcenter_provider.refresh_provider_relationships()
     vmware_vm.wait_to_appear()
 
     # Wait for the tag to appear
@@ -284,7 +272,7 @@ def test_invoke_custom_automation(request):
 
 
 @pytest.mark.meta(blockers=[1375093], automates=[1375093])
-def test_check_compliance_history(request, vmware_provider, vmware_vm):
+def test_check_compliance_history(request, virtualcenter_provider, vmware_vm):
     """This test checks if compliance history link in a VM details screen work.
 
     Steps:
@@ -311,8 +299,8 @@ def test_check_compliance_history(request, vmware_provider, vmware_vm):
     )
     request.addfinalizer(lambda: policy_profile.delete() if policy_profile.exists else None)
     policy_profile.create()
-    vmware_provider.assign_policy_profiles(policy_profile.description)
-    request.addfinalizer(lambda: vmware_provider.unassign_policy_profiles(
+    virtualcenter_provider.assign_policy_profiles(policy_profile.description)
+    request.addfinalizer(lambda: virtualcenter_provider.unassign_policy_profiles(
         policy_profile.description))
     vmware_vm.check_compliance()
     vmware_vm.open_details(["Compliance", "History"])

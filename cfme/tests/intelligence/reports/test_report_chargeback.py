@@ -3,17 +3,10 @@ import fauxfactory
 import pytest
 import cfme.web_ui.flash as flash
 
-from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CustomReport
-from utils.providers import setup_a_provider_by_class
 from utils.log import logger
 
 pytestmark = [pytest.mark.tier(3)]
-
-
-@pytest.fixture(scope="module")
-def setup_first_provider():
-    setup_a_provider_by_class(InfraProvider)
 
 
 def _cleanup_report(report):
@@ -25,7 +18,7 @@ def _cleanup_report(report):
 
 
 # These tests are meant to catch issues such as BZ 1203022
-def test_charge_report_filter_owner(setup_first_provider, request):
+def test_charge_report_filter_owner(infra_provider, request):
     """Tests creation of chargeback report that is filtered by owner
 
     """
@@ -58,7 +51,7 @@ def test_charge_report_filter_owner(setup_first_provider, request):
     report.queue(wait_for_finish=True)
 
 
-def test_charge_report_filter_tag(setup_first_provider, request):
+def test_charge_report_filter_tag(infra_provider, request):
     """Tests creation of chargeback report that is filtered by tag
 
     """

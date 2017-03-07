@@ -4,20 +4,14 @@ import pytest
 from random import sample
 
 import utils
-from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CustomReport
-from utils.providers import get_crud_by_name, setup_a_provider_by_class
+from utils.providers import get_crud_by_name
 from utils.version import since_date_or_version
 from cfme import test_requirements
 
 
-@pytest.fixture(scope="module")
-def setup_first_provider():
-    setup_a_provider_by_class(InfraProvider)
-
-
 @pytest.yield_fixture(scope="function")
-def report_vms(setup_first_provider):
+def report_vms(infra_provider):
     report = CustomReport(
         menu_name=fauxfactory.gen_alphanumeric(),
         title=fauxfactory.gen_alphanumeric(),

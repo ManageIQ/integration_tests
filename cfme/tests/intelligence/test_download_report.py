@@ -2,9 +2,7 @@
 import pytest
 import os
 import shutil
-from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils.providers import setup_a_provider_by_class
 from utils.wait import wait_for
 from utils import browser
 
@@ -18,11 +16,6 @@ def clean_temp_directory():
             os.unlink(os.path.join(root, f))
         for d in dirs:
             shutil.rmtree(os.path.join(root, d))
-
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.fixture
@@ -46,7 +39,7 @@ def report():
 # Files download is unsolved, since the browser runs in a separate container
 @pytest.mark.skip
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
-def test_download_report_firefox(needs_firefox, setup_a_provider, report, filetype):
+def test_download_report_firefox(needs_firefox, infra_provider, report, filetype):
     """ Download the report as a file and check whether it was downloaded. """
     extension = "." + filetype
     clean_temp_directory()

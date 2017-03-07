@@ -64,8 +64,8 @@ class TestTagsViaREST(object):
         return _tenants(request, rest_api_modscope, num=1)
 
     @pytest.fixture(scope="module")
-    def a_provider(self):
-        return _a_provider()
+    def a_provider(self, request):
+        return _a_provider(request)
 
     @pytest.fixture(scope="module")
     def dialog(self):
