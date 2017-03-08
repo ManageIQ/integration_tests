@@ -168,7 +168,7 @@ def vm_name(request, initialize_provider, full_template):
         initialize_provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
     if initialize_provider.type in CANDU_PROVIDER_TYPES:
-        vm_obj.wait_candu_data_available(timeout=60 * 60)
+        vm_obj.wait_candu_data_available(timeout=60 * 20)
     return name
 
 
