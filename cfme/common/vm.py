@@ -569,7 +569,7 @@ class VM(BaseVM):
         wait_for(
             lambda: not toolbar.is_greyed('Monitoring', 'Utilization'),
             delay=10, handle_exception=True, num_sec=timeout,
-            fail_func=lambda: toolbar.select("Reload"))
+            fail_func=lambda: toolbar.refresh())
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
                                  with_relationship_refresh=True):
