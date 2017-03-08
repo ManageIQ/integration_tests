@@ -16,6 +16,7 @@ from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
 from utils.providers import ProviderFilter
 
 
+@pytest.fixture(scope="module")
 def a_provider(request):
     pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
     setup_one_or_skip(request, filters=[pf])
