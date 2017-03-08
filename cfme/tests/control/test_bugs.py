@@ -12,9 +12,6 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
-from utils.log import logger
-from utils.wait import wait_for
 from cfme import test_requirements
 from utils.generators import random_vm_name
 from widgetastic.widget import Text
@@ -159,82 +156,6 @@ def test_scope_windows_registry_stuck(request, infra_provider):
     navigate_to(Vm, 'All')
     assert "except" not in pytest.sel.title().lower()
     vm.unassign_policy_profiles(profile.description)
-
-
-@pytest.mark.meta(blockers=[1209538], automates=[1209538])
-@pytest.mark.uncollectif(current_version() > "5.5", reason="requires cfme 5.5 and lower")
-def test_folder_field_scope(request, vmware_provider, vmware_vm):
-    """This test tests the bug that makes the folder filter in expression not work.
-
-    Prerequisities:
-        * A VMware provider.
-        * A VM on the provider.
-        * A tag to assign.
-
-    Steps:
-        * Read the VM's 'Parent Folder Path (VMs & Templates)' from its summary page.
-        * Create an action for assigning the tag to the VM.
-        * Create a policy, for scope use ``Field``, field name
-            ``VM and Instance : Parent Folder Path (VMs & Templates)``, ``INCLUDES`` and the
-            folder name as stated on the VM's summary page.
-        * Assign the ``VM Discovery`` event to the policy.
-        * Assign the action to the ``VM Discovery`` event.
-        * Create a policy profile and assign the policy to it.
-        * Assign the policy profile to the provider.
-        * Delete the VM from the CFME database.
-        * Initiate provider refresh and wait for VM to appear again.
-        * Assert that the VM gets tagged by the tag.
-    """
-    # Retrieve folder location
-    folder = None
-    tags = vmware_vm.get_tags()
-    if any(tag.category.display_name == "Parent Folder Path (VMs & Templates)" for tag in tags):
-        folder = ', '.join(
-            item.display_name for item in
-            [tag for tag in tags
-             if tag.category.display_name == "Parent Folder Path (VMs & Templates)"])
-        logger.info("Detected folder: %s", folder)
-    else:
-        pytest.fail("Could not read the folder from the tags:\n{}".format(repr(tags)))
-
-    # Create Control stuff
-    action = Action(
-        fauxfactory.gen_alpha(),
-        "Tag", dict(tag=("My Company Tags", "Service Level", "Platinum")))
-    action.create()
-    request.addfinalizer(action.delete)
-    policy = VMControlPolicy(
-        fauxfactory.gen_alpha(),
-        scope=(
-            "fill_field(VM and Instance : Parent Folder Path (VMs & Templates), "
-            "INCLUDES, {})".format(folder)))
-    policy.create()
-    request.addfinalizer(policy.delete)
-    policy.assign_events("VM Discovery")
-    request.addfinalizer(policy.assign_events)  # Unassigns
-    policy.assign_actions_to_event("VM Discovery", action)
-    profile = PolicyProfile(fauxfactory.gen_alpha(), policies=[policy])
-    profile.create()
-    request.addfinalizer(profile.delete)
-
-    # Assign policy profile to the provider
-    virtualcenter_provider.assign_policy_profiles(profile.description)
-    request.addfinalizer(
-        lambda: virtualcenter_provider.unassign_policy_profiles(profile.description))
-
-    # Delete and rediscover the VM
-    vmware_vm.delete()
-    vmware_vm.wait_for_delete()
-    virtualcenter_provider.refresh_provider_relationships()
-    vmware_vm.wait_to_appear()
-
-    # Wait for the tag to appear
-    wait_for(
-        vmware_vm.get_tags, num_sec=600, delay=15,
-        fail_condition=lambda tags: not any(
-            tag.category.display_name == "Service Level" and tag.display_name == "Platinum"
-            for tag in tags),
-        message="vm be tagged")
 
 
 @pytest.mark.meta(blockers=[1243357], automates=[1243357])
