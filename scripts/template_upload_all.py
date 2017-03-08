@@ -245,7 +245,7 @@ def browse_directory(dir_url):
         print("Skipping: {}".format(dir_url))
         return None
 
-    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm|ovirt)[^"\'>]*)')
+    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm\.ova|ovirt)[^"\'>]*)')
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
     rhos_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhos|openstack|rhelosp)[^"\'>]*)')
     rhos_image_name = rhos_pattern.findall(string_from_url)
