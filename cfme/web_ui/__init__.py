@@ -73,7 +73,7 @@ from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
-from utils import attributize_string, castmap, normalize_space, version
+from utils import attributize_string, castmap, normalize_space, version, deferred_verpick
 from utils.log import logger
 from utils.pretty import Pretty
 from wait_for import TimedOutError, wait_for
@@ -1578,6 +1578,7 @@ class Input(Pretty):
     def __init__(self, *names, **kwargs):
         self._names = names
         self._use_id = kwargs.pop("use_id", False)
+        self._use_title = kwargs.pop("use_title", False)
 
     @property
     def names(self):
@@ -1587,7 +1588,12 @@ class Input(Pretty):
             return self._names
 
     def _generate_attr(self, name):
-        return "@{}={}".format("id" if self._use_id else "name", quoteattr(name))
+        use = "name"
+        if self._use_id:
+            use = "id"
+        elif self._use_title:
+            use = "title"
+        return "@{}={}".format(use, quoteattr(name))
 
     def locate(self):
         # If the end of the locator is changed, modify also the choice in Radio!!!
@@ -2713,7 +2719,7 @@ class Quadicon(Pretty):
         "cloud_prov": {
             "no_vm": ("a", 'txt'),
             "no_image": ("b", 'txt'),
-            "vendor": ("b", 'img'),
+            "vendor": ("c", 'img'),
             "creds": ("d", 'img'),
         },
         "instance": {
@@ -2748,6 +2754,15 @@ class Quadicon(Pretty):
         "object_store": {},
         None: {},  # If you just want to find the quad and not mess with data
     }
+    ALL_QUADS = deferred_verpick({
+        version.LOWEST: "//div[contains(@id, 'quadicon')]/../../../tr/td/a",
+        '5.8': ('//div[@class="card-view-pf"]'
+                '/div[contains(@class, "card")]//div[@class="miq-tile-head"]/a')
+    })
+    QUADRANT = deferred_verpick({
+        version.LOWEST: "//div[contains(@class, {}) and ../../../..//a[{}]]",
+        '5.8': "//div[contains(@class, {}) and ../../../../..//a[{}]]"
+    })
 
     def __init__(self, name, qtype=None):
         self._name = name
@@ -2768,7 +2783,13 @@ class Quadicon(Pretty):
 
     def checkbox(self):
         """ Returns:  a locator for the internal checkbox for the quadicon"""
-        return "//input[@type='checkbox' and ../../..//a[{}]]".format(self.a_cond)
+        # angular.element(
+        #    $x('//input[@type=\'checkbox\' and ../..//a[@title="hawkular-01"]]')[0]).trigger(
+        #        'click')
+        if version.current_version() >= '5.8':
+            return "//input[@type='checkbox' and ../..//a[{}]]".format(self.a_cond)
+        else:
+            return "//input[@type='checkbox' and ../../..//a[{}]]".format(self.a_cond)
 
     @property
     def exists(self):
@@ -2780,20 +2801,32 @@ class Quadicon(Pretty):
 
     @property
     def a_cond(self):
-        if self.qtype == "middleware":
-            return "contains(normalize-space(@title), {name})"\
-                .format(name=quoteattr('Name: {}'.format(self._name)))
+        if version.current_version() >= '5.8':
+            return "@title={name}".format(name=quoteattr(self._name))
         else:
-            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+            if self.qtype == "middleware":
+                return "contains(normalize-space(@title), {name})"\
+                    .format(name=quoteattr('Name: {}'.format(self._name)))
+            else:
+                return "@title={name} or @data-original-title={name}".format(
+                    name=quoteattr(self._name))
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
+        if version.current_version() >= '5.8':
+            def move_to():
+                return sel.move_to_element('//div[@class="card-view-pf"]'
+                '/div[contains(@class, "card")]//a[{}]'.format(self.a_cond))
+        else:
+            def move_to():
+                return sel.move_to_element(
+                    'div/a',
+                    root="//div[contains(@id, 'quadicon') and ../../..//a[{}]]".format(self.a_cond)
+                )
         try:
-            return sel.move_to_element(
-                'div/a',
-                root="//div[contains(@id, 'quadicon') and ../../..//a[{}]]".format(self.a_cond))
+            return move_to()
         except sel.NoSuchElementException:
-            quads = sel.elements("//div[contains(@id, 'quadicon')]/../../../tr/td/a")
+            quads = sel.elements(self.ALL_QUADS)
             if not quads:
                 raise sel.NoSuchElementException("Quadicon {} not found. No quads present".format(
                     self._name))
@@ -2805,8 +2838,7 @@ class Quadicon(Pretty):
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
-        return "//div[contains(@class, {}) and ../../../..//a[{}]]".format(
-            quoteattr("{}72".format(corner)), self.a_cond)
+        return self.QUADRANT.format(quoteattr("{}72".format(corner)), self.a_cond)
 
     def __getattr__(self, name):
         """ Queries the quadrants by name
@@ -2862,25 +2894,26 @@ class Quadicon(Pretty):
         else:
             pages = paginator.pages()
         for page in pages:
-            for href in sel.elements("//div[contains(@id, 'quadicon')]/../../../tr/td/a"):
+            for href in sel.elements(cls.ALL_QUADS):
                 yield cls(cls._get_title(href), qtype)
 
     @classmethod
     def first(cls, qtype=None):
         return cls(cls.get_first_quad_title(), qtype=qtype)
 
-    @staticmethod
-    def select_first_quad():
-        fill("//div[contains(@id, 'quadicon')]/../..//input", True)
+    @classmethod
+    def select_first_quad(cls, qtype=None):
+        qa = cls.all(qtype).next()
+        fill(qa.checkbox(), True)
 
-    @staticmethod
-    def get_first_quad_title():
-        first_quad = "//div[contains(@id, 'quadicon')]/../../../tr/td/a"
-        title = sel.get_attribute(first_quad, "title")
+    @classmethod
+    def get_first_quad_title(cls, qtype=None):
+        qa = cls.all(qtype).next()
+        title = qa._get_title(qa.locate())
         if title:
             return title
         else:
-            return sel.get_attribute(first_quad, "data-original-title") or ""  # To ensure str
+            return sel.get_attribute(qa.locate(), "data-original-title") or ""  # To ensure str
 
     @classmethod
     def any_present(cls):
@@ -2909,10 +2942,6 @@ class Quadicon(Pretty):
             if sel.is_displayed(self._locate_quadrant(quadrant_id)):
                 return False
         return sel.is_displayed(self._locate_quadrant("e"))  # Image has only 'e'
-
-    @property
-    def href(self):
-        return self.locate().get_attribute('href')
 
 
 class DHTMLSelect(Select):

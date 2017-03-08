@@ -9,8 +9,10 @@ from cfme.exceptions import PaginatorException
 
 
 def _locator():
-    return version.pick({version.LOWEST: '(//div[@id="paging_div"]//div[@id="pc_div_1"])',
-        '5.5': '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'})
+    return version.pick({
+        '5.5': '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])',
+        '5.8': '//div[contains(@class, "miq-pagination")]'
+    })
 
 
 _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
@@ -21,6 +23,7 @@ _num_results = '//select[@id="ppsetting" or @id="perpage_setting1"]'
 _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
 _check_all = Input("masterToggle")
+_check_all = Input("Select All", use_title=True)
 
 _prefix = r"(?:Items?|Rows?|Showing)?\s*"
 _regexp = r"{}(?P<first>\d+)-?(?P<last>\d+)? of (?P<total>\d+)\s*(?:items?)?".format(_prefix)

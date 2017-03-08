@@ -88,8 +88,9 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
 
 
 @navigator.register(MiddlewareProvider, 'Add')
