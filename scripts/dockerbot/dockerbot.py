@@ -240,7 +240,7 @@ class DockerBot(object):
                             if filen['filename'].startswith('cfme/tests') or \
                                filen['filename'].startswith('utils/tests'):
                                 files.append(filen['filename'])
-                        if filen['filename'] == 'requirements.txt':
+                        if filen['filename'].endswith('requirements/frozen.txt'):
                             self.requirements_update = True
                 except:
                     return None
