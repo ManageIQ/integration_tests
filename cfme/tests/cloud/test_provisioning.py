@@ -207,6 +207,107 @@ def test_provision_from_template_using_rest(
         num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
+@pytest.mark.uncollectif(lambda provider: provider.type != 'ec2' or current_version() < "5.7")
+def test_ec2_manual_placement_using_rest(
+        request, setup_provider, provider, vm_name, rest_api, provisioning):
+    """ Tests provisioning ec2 instance with manual placement using the REST API.
+
+    Metadata:
+        test_flag: provision
+    """
+    image_guid = rest_api.collections.templates.get(name=provisioning['image']['name']).guid
+    provider_id = rest_api.collections.providers.get(name=provider.name).id
+    instance_type = provisioning['instance_type'].split(':')[0].strip()
+
+    flavors = rest_api.collections.flavors.find_by(name=instance_type)
+    assert len(flavors) > 0
+    flavor = None
+    for flavor in flavors:
+        if flavor.ems_id == provider_id:
+            break
+    else:
+        pytest.fail("Cannot find flavour.")
+
+    cloud_networks = rest_api.collections.cloud_networks.find_by(
+        type='ManageIQ::Providers::Amazon::NetworkManager::CloudNetwork')
+    assert len(cloud_networks) > 0
+    cloud_network = None
+    for cloud_network in cloud_networks:
+        if cloud_network.ems.parent_ems_id == provider_id:
+            break
+    else:
+        pytest.fail("Cannot find cloud network.")
+
+    response = rest_api.get(cloud_network._href + '?attributes=security_groups,cloud_subnets')
+
+    default_group = provisioning['security_group'].split(':')[0].strip()
+    assert len(response['security_groups']) > 0
+    security_group = None
+    for security_group in response['security_groups']:
+        if security_group['name'] == default_group:
+            break
+    else:
+        pytest.fail("Cannot find security group.")
+
+    assert len(response['cloud_subnets']) > 0
+    cloud_subnet = None
+    for cloud_subnet in response['cloud_subnets']:
+        if cloud_subnet['status'] == 'available':
+            break
+    else:
+        pytest.fail("Cannot find cloud subnet.")
+
+    provision_data = {
+        "version": "1.1",
+        "template_fields": {
+            "guid": image_guid
+        },
+        "vm_fields": {
+            "vm_name": vm_name,
+            "instance_type": flavor.id,
+            "request_type": "template",
+            "placement_auto": False,
+            "cloud_network": cloud_network.id,
+            "cloud_subnet": cloud_subnet['id'],
+            "placement_availability_zone": cloud_subnet['availability_zone_id'],
+            "security_groups": security_group['id'],
+            "monitoring": "basic"
+        },
+        "requester": {
+            "user_name": "admin",
+            "owner_first_name": "Administrator",
+            "owner_last_name": "Administratorovich",
+            "owner_email": "admin@example.com",
+            "auto_approve": True,
+        },
+        "tags": {
+        },
+        "additional_values": {
+        },
+        "ems_custom_attributes": {
+        },
+        "miq_custom_attributes": {
+        }
+    }
+
+    request.addfinalizer(
+        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+
+    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    assert rest_api.response.status_code == 200
+
+    def _finished():
+        request.reload()
+        if request.status.lower() in {"error"}:
+            pytest.fail("Error when provisioning: `{}`".format(request.message))
+        return request.request_state.lower() in {"finished", "provisioned"}
+
+    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(
+        lambda: provider.mgmt.does_vm_exist(vm_name),
+        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
+
+
 VOLUME_METHOD = ("""
 prov = $evm.root["miq_provision"]
 prov.set_option(
