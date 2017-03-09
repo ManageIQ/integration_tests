@@ -1,13 +1,17 @@
 import pytest
 from navmazing import NavigationDestinationNotFound
-from utils import testgen
-from cfme.web_ui import Quadicon
+
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
+from cfme.web_ui import Quadicon
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
                                          scope='module')
+
+pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7')]
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
