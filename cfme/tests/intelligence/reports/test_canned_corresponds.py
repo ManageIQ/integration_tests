@@ -6,23 +6,29 @@ from cfme.infrastructure.provider import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
-from utils.providers import get_crud_by_name, setup_a_provider as _setup_a_provider, ProviderFilter
+from utils.providers import get_crud_by_name
 from utils.appliance import get_or_create_current_appliance
-from utils import version
+from utils import version, testgen
 from cfme import test_requirements
 
 provider_props = partial(details_page.infoblock.text, "Properties")
 
+pytest_generate_tests = testgen.generate(classes=[InfraProvider], scope='module')
 
+pytestmark = [pytest.mark.usefixtures('setup_provider')]
+
+'''
 @pytest.fixture(scope="module")
 def setup_a_provider():
     try:
         _setup_a_provider(filters=[ProviderFilter(classes=[InfraProvider])])
     except Exception:
         pytest.skip("It's not possible to set up any providers, therefore skipping")
+'''
 
 
 @pytest.mark.tier(3)
+@pytest.mark.usefixtures('setup_provider')
 @test_requirements.report
 def test_providers_summary(soft_assert, setup_a_provider):
     """Checks some informations about the provider. Does not check memory/frequency as there is
@@ -56,6 +62,7 @@ def test_providers_summary(soft_assert, setup_a_provider):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.usefixtures('setup_provider')
 @test_requirements.report
 def test_cluster_relationships(soft_assert, setup_a_provider):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
@@ -101,6 +108,7 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
 
 @pytest.mark.tier(3)
 @test_requirements.report
+@pytest.mark.usefixtures('setup_provider')
 def test_operations_vm_on(soft_assert, setup_a_provider):
 
     appliance = get_or_create_current_appliance()
@@ -122,30 +130,24 @@ def test_operations_vm_on(soft_assert, setup_a_provider):
                 storages, vms.storage_id == storages.id).filter(
                     vms.power_state == 'on').order_by(vms.name).all()
 
-    if len(vms_in_db) == len(list(report.data.rows)):
-        for vm in vms_in_db:
-            store_path = '{}/{}'.format(vm.storages_name.encode('utf8'),
-                                        vm.vm_location.encode('utf8'))
-            for item in report.data.rows:
-                if vm.vm_name.encode('utf8') == item['VM Name']:
-                    if (vm.hosts_name.encode('utf8') == item['Host'] and
-                        vm.storages_name.encode('utf8') == item['Datastore'] and
-                        store_path == item['Datastore Path'] and
-                        (str(vm.vm_last_scan).encode('utf8') == item['Last Analysis Time'] or
-                            (str(vm.vm_last_scan).encode('utf8') == 'None' and
-                             item['Last Analysis Time'] == '')
-                         )):
-                            continue
-                    else:
-                        pytest.fail("Found not matching items. db:{} report:{}".format(vm, item))
-    else:
-        pytest.fail("Lenghts of report and BD do not match. db count:{} report count:{}".format(
-            len(vms_in_db), len(list(report.data.rows))))
+    assert len(vms_in_db) == len(list(report.data.rows))
+    for vm in vms_in_db:
+        store_path = '{}/{}'.format(vm.storages_name.encode('utf8'),
+                                    vm.vm_location.encode('utf8'))
+        for item in report.data.rows:
+            if vm.vm_name.encode('utf8') == item['VM Name']:
+                assert vm.hosts_name.encode('utf8') == item['Host']
+                assert vm.storages_name.encode('utf8') == item['Datastore']
+                assert store_path == item['Datastore Path']
+                assert (str(vm.vm_last_scan).encode('utf8') == item['Last Analysis Time'] or
+                 (str(vm.vm_last_scan).encode('utf8') == 'None' and
+                 item['Last Analysis Time'] == ''))
 
 
 @pytest.mark.tier(3)
 @test_requirements.report
-def test_datastores_summary(soft_assert, setup_a_provider):
+@pytest.mark.usefixtures('infra_provider')
+def test_datastores_summary(soft_assert):
 
     appliance = get_or_create_current_appliance()
     adb = appliance.db
@@ -168,14 +170,11 @@ def test_datastores_summary(soft_assert, setup_a_provider):
 
             for item in report.data.rows:
                 if store.name.encode('utf8') == item['Datastore Name']:
-                    if (store.store_type.encode('utf8') == item['Type'] and
-                     extract_gb(store.free_space) == float(item['Free Space'].split(' ')[0]) and
-                      extract_gb(store.total_space) == float(item['Total Space'].split(' ')[0]) and
-                       int(number_of_hosts) == int(item['Number of Hosts']) and
-                       int(number_of_vms) == int(item['Number of VMs'])):
-                        continue
-                    else:
-                        pytest.fail("Found not matching items. db:{} report:{}".format(store, item))
+                    assert store.store_type.encode('utf8') == item['Type']
+                    assert extract_gb(store.free_space) == float(item['Free Space'].split(' ')[0])
+                    assert extract_gb(store.total_space) == float(item['Total Space'].split(' ')[0])
+                    assert int(number_of_hosts) == int(item['Number of Hosts'])
+                    assert int(number_of_vms) == int(item['Number of VMs'])
 
 
 def extract_gb(column):
