@@ -2,7 +2,6 @@ import pytest
 from cfme import BaseLoggedInPage, login, Credential
 from cfme.configure.access_control import User
 from utils import conf, error
-from utils.appliance import get_or_create_current_appliance
 from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = pytest.mark.usefixtures('browser')
@@ -12,11 +11,9 @@ pytestmark = pytest.mark.usefixtures('browser')
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.smoke
-@pytest.mark.parametrize(
-    "method", login.LOGIN_METHODS)
-def test_login(method):
+@pytest.mark.parametrize("method", login.LOGIN_METHODS)
+def test_login(method, appliance):
     """ Tests that the appliance can be logged into and shows dashboard page. """
-    appliance = get_or_create_current_appliance()
 
     login_page = navigate_to(appliance.server, 'LoginScreen')
     assert login_page.is_displayed
@@ -30,9 +27,8 @@ def test_login(method):
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_bad_password(request):
+def test_bad_password(request, appliance):
     """ Tests logging in with a bad password. """
-    appliance = get_or_create_current_appliance()
 
     request.addfinalizer(lambda: navigate_to(appliance.server, 'LoginScreen'))
 

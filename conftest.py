@@ -213,6 +213,7 @@ pytest_plugins = (
 
     'markers',
 
+    'cfme.fixtures.base',
     'cfme.fixtures.cli',
     'cfme.fixtures.pytest_selenium',
     'cfme.fixtures.configure_auth_mode',
