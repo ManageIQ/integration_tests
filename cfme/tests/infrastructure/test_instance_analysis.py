@@ -15,13 +15,12 @@ from cfme.control.explorer.policies import VMControlPolicy
 from cfme.control.explorer.actions import Action
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
-from fixtures.pytest_store import store
-from utils import testgen, ssh, safe_string, version, error
+from utils import testgen, ssh, safe_string, error
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import BZ
 
 pytestmark = [pytest.mark.tier(3), test_requirements.smartstate]
 
@@ -128,13 +127,13 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis_data):
+def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis_data, appliance):
 
     # TODO: allow for vddk parameterization
-    if provider.type == 'virtualcenter':
-        store.current_appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
-        store.current_appliance.browser.quit_browser()
-        store.current_appliance.browser.open_browser()
+    if provider.one_of(VMwareProvider):
+        appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
+        appliance.browser.quit_browser()
+        appliance.browser.open_browser()
         set_host_credentials(request, provider, vm_analysis_data)
 
     # Make sure all roles are set
@@ -192,7 +191,8 @@ def vm_analysis_data(provider, analysis_type):
         provisioning_data.setdefault('vlan', pdata['provisioning']['vlan'])
     if isinstance(provider, CloudProvider):
         provisioning_data.setdefault('instance_type', pdata['provisioning']['instance_type'])
-        provisioning_data.setdefault('availability_zone', pdata['provisioning']['availability_zone'])
+        provisioning_data.setdefault('availability_zone',
+                                     pdata['provisioning']['availability_zone'])
         provisioning_data.setdefault('security_group', pdata['provisioning']['security_group'])
         provisioning_data.setdefault('cloud_network', pdata['provisioning']['cloud_network'])
 
@@ -209,7 +209,7 @@ def vm_analysis_data(provider, analysis_type):
 
 
 @pytest.fixture(scope="module")
-def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data):
+def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data, appliance):
     """ Fixture to provision instance on the provider """
 
     vm = VM.factory(vm_name, provider, template_name=vm_analysis_data['image'])
@@ -225,6 +225,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data)
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
     mgmt_system = provider.get_mgmt_system()
+
     @pytest.wait_for(timeout="20m", delay=5)
     def get_ip_address():
         logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
@@ -262,7 +263,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data)
         logger.info("Setting a relationship between VM and appliance")
         from cfme.infrastructure.virtual_machines import Vm
         cfme_rel = Vm.CfmeRelationship(vm)
-        server_name = store.current_appliance.server_name()
+        server_name = appliance.server_name()
         cfme_rel.set_relationship(str(server_name), configuration.server_id())
     return vm
 
@@ -330,8 +331,6 @@ def detect_system_type(vm):
 
 @pytest.mark.tier(1)
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[
-    BZ(1320248, unblock=lambda provider: version.current_version() >= "5.5")])
 def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data):
     """ Tests SSA can be performed on a template
 
@@ -462,11 +461,10 @@ def test_ssa_vm(provider, instance, soft_assert):
     if instance.system_type != WINDOWS:
         soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
         soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-        soft_assert(c_packages == e_packages,
-            "packages: '{}' != '{}'".format(c_packages, e_packages))
-        if not BZ("1312971").blocks:
-            soft_assert(c_services == e_services,
-                        "services: '{}' != '{}'".format(c_services, e_services))
+        soft_assert(c_packages == e_packages, "packages: '{}' != '{}'".format(c_packages,
+                                                                              e_packages))
+        soft_assert(c_services == e_services,
+                    "services: '{}' != '{}'".format(c_services, e_services))
     else:
         # Make sure windows-specific data is not empty
         c_patches = InfoBlock.text('Security', 'Patches')

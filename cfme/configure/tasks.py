@@ -106,7 +106,7 @@ def is_task_finished(destination, task_name, expected_status, clear_tasks_after_
         return False
 
     # throw exception if error in message
-    if 'error' in row.message.lower():
+    if 'error' in row.message.text.lower():
         raise Exception("Task {} error".format(task_name))
 
     if clear_tasks_after_success:
