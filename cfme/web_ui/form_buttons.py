@@ -123,11 +123,15 @@ class FormButton(Pretty):
 
 
 add = FormButton("Add")
+add_ng = FormButton('Add', ng_click='addClicked()')
+attach_volume = FormButton('Attach', ng_click='attachClicked()')
+detach_volume = FormButton('Detach', ng_click='detachClicked()')
 save = FormButton("Save Changes", dimmed_alt="Save", ng_click="saveClicked()")
 angular_save = FormButton("Save changes", ng_click="saveClicked()")
 cancel = FormButton("Cancel")
 cancel_changes = FormButton("Cancel Changes")
 submit = FormButton("Submit")
+submit_changes = FormButton("Submit Changes")
 reset = FormButton("Reset Changes", dimmed_alt="Reset")
 validate = FormButton("Validate the credentials by logging into the Server", dimmed_alt="Validate")
 validate_short = FormButton("Validate the credentials")
