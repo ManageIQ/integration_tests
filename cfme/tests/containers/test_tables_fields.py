@@ -4,7 +4,7 @@ from utils import testgen
 from cfme.web_ui import PagedTable, toolbar as tb
 
 from cfme.containers.pod import Pod
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.service import Service
 from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
@@ -22,67 +22,66 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-class TestObj(object):
+class TestItem(ContainersTestItem):
     def __init__(self, obj, fields_to_verify, polarion_id):
-        self.obj = obj
+        ContainersTestItem.__init__(self, obj, polarion_id)
         self.fields_to_verify = fields_to_verify
-        pytest.mark.polarion(polarion_id)(self)
 
 
-TEST_OBJECTS = [
-    TestObj(ContainersProvider, [
+TEST_ITEMS = [
+    TestItem(ContainersProvider, [
         'hostname', 'port', 'type'
     ], 'CMP-9859'),
-    TestObj(Route, [
+    TestItem(Route, [
         'provider', 'project_name'
     ], 'CMP-9875'),
-    TestObj(Container, [
+    TestItem(Container, [
         'pod_name', 'image', 'state'
     ], 'CMP-9943'),
-    TestObj(Pod, [
+    TestItem(Pod, [
         'provider', 'project_name', 'ready', 'containers',
         'phase', 'restart_policy', 'dns_policy'
     ], 'CMP-9909'),
-    TestObj(Service, [
+    TestItem(Service, [
         'provider', 'project_name', 'type', 'portal_ip', 'session_affinity', 'pods'
     ], 'CMP-9889'),
-    TestObj(Node, [
+    TestItem(Node, [
         'provider', 'ready', 'operating_system', 'kernel_version', 'runtime_version'
     ], 'CMP-9967'),
-    TestObj(Replicator, [
+    TestItem(Replicator, [
         'provider', 'project_name', 'replicas', 'current_replicas'
     ], 'CMP-9920'),
-    TestObj(Image, [
+    TestItem(Image, [
         'provider', 'tag', 'id', 'image_registry'
     ], 'CMP-9975'),
-    TestObj(ImageRegistry, [
+    TestItem(ImageRegistry, [
         'port', 'provider'
     ], 'CMP-9985'),
-    TestObj(Project, [
+    TestItem(Project, [
         'provider', 'container_routes', 'container_services',
         'container_replicators', 'pods', 'containers', 'images'
     ], 'CMP-9886')
 ]
 
 
-@pytest.mark.parametrize('test_obj', TEST_OBJECTS, ids=[obj.obj for obj in TEST_OBJECTS])
-def test_tables_fields(provider, test_obj, soft_assert):
+@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=TEST_ITEMS)
+def test_tables_fields(provider, test_item, soft_assert):
 
-    navigate_to(test_obj.obj, 'All')
+    navigate_to(test_item.obj, 'All')
     tb.select('List View')
     # NOTE: We must re-instantiate here table
     # in order to prevent StaleElementException or UsingSharedTables
     paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
     for row in paged_tbl.rows():
         name = row[2].text  # We're using indexing since it could be either 'Name' or 'Host'
-        for field in test_obj.fields_to_verify:
+        for field in test_item.fields_to_verify:
 
             try:
                 value = getattr(row, field)
             except AttributeError:
                 soft_assert(False, '{}\'s list table: field  not exist: {}'
-                            .format(test_obj.obj.__name__, field))
+                            .format(test_item.obj.__name__, field))
                 continue
 
             soft_assert(value, '{}\'s list table: {} row - has empty field: {}'
-                        .format(test_obj.obj.__name__, name, field))
+                        .format(test_item.obj.__name__, name, field))

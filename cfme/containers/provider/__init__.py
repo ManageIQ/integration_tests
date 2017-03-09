@@ -1,6 +1,8 @@
 from functools import partial
 from random import sample
 
+import pytest
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.provider import BaseProvider
@@ -317,6 +319,23 @@ class TopologyFromDetails(CFMENavigateStep):
 
 
 # Common methods:
+
+class ContainersTestItem(object):
+    """This is a generic test item. Especially used for parametrized functions
+    """
+    def __init__(self, obj, polarion_id):
+        """Args:
+            * obj: The container object in this test (e.g. Image)
+            * The polarion test case ID
+        """
+        self.obj = obj
+        self.polarion_id = polarion_id
+        pytest.mark.polarion(self.polarion_id)(self)
+
+    def __repr__(self):
+        return '{} ({})'.format(self.obj.__name__, self.polarion_id)
+
+
 def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable):
     """Get <count> random rows from the obj list table,
     if <count> is greater that the number of rows, return number of rows.

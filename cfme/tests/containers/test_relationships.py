@@ -7,7 +7,8 @@ from utils.version import current_version
 from cfme.web_ui import paginator, summary_title
 
 from cfme.containers.pod import Pod
-from cfme.containers.provider import ContainersProvider, navigate_and_get_rows
+from cfme.containers.provider import ContainersProvider, navigate_and_get_rows,\
+    ContainersTestItem
 from cfme.containers.service import Service
 from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
@@ -24,23 +25,17 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-class DataSet(object):
-    def __init__(self, obj, polarion_id):
-        self.obj = obj
-        pytest.mark.polarion(polarion_id)(self)
-
-
-TEST_OBJECTS = [
-    DataSet(ContainersProvider, 'CMP-9851'),
-    DataSet(Container, 'CMP-9947'),
-    DataSet(Pod, 'CMP-9929'),
-    DataSet(Service, 'CMP-10564'),
-    DataSet(Node, 'CMP-9962'),
-    DataSet(Replicator, 'CMP-10565'),
-    DataSet(Image, 'CMP-9980'),
-    DataSet(ImageRegistry, 'CMP-9994'),
-    DataSet(Project, 'CMP-9868'),
-    DataSet(Template, 'CMP-10319')
+TEST_ITEMS = [
+    ContainersTestItem(ContainersProvider, 'CMP-9851'),
+    ContainersTestItem(Container, 'CMP-9947'),
+    ContainersTestItem(Pod, 'CMP-9929'),
+    ContainersTestItem(Service, 'CMP-10564'),
+    ContainersTestItem(Node, 'CMP-9962'),
+    ContainersTestItem(Replicator, 'CMP-10565'),
+    ContainersTestItem(Image, 'CMP-9980'),
+    ContainersTestItem(ImageRegistry, 'CMP-9994'),
+    ContainersTestItem(Project, 'CMP-9868'),
+    ContainersTestItem(Template, 'CMP-10319')
 ]
 
 
@@ -65,8 +60,8 @@ def check_relationships(instance):
         assert '(Summary)' in summary_title()
 
 
-@pytest.mark.parametrize('data_set', TEST_OBJECTS, ids=[obj.obj for obj in TEST_OBJECTS])
-def test_relationships_tables(provider, data_set):
+@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=TEST_ITEMS)
+def test_relationships_tables(provider, test_item):
     """This test verifies the integrity of the Relationships table.
     clicking on each field in the Relationships table takes the user
     to either Summary page where we verify that the field that appears
@@ -75,22 +70,22 @@ def test_relationships_tables(provider, data_set):
     that is displayed in the Relationships table.
     """
 
-    if current_version() < "5.7" and data_set.obj == Template:
+    if current_version() < "5.7" and test_item.obj == Template:
         pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
 
-    rows = navigate_and_get_rows(provider, data_set.obj, 1)
+    rows = navigate_and_get_rows(provider, test_item.obj, 1)
     if not rows:
-        pytest.skip('No objects to test for relationships for {}'.format(data_set.obj.__name__))
+        pytest.skip('No objects to test for relationships for {}'.format(test_item.obj.__name__))
     row = rows[-1]
 
-    if data_set.obj is Container:
-        instance = data_set.obj(row.name.text, row.pod_name.text)
-    elif data_set.obj is ImageRegistry:
-        instance = data_set.obj(row.host.text, provider)
-    elif data_set.obj is Image:
-        instance = data_set.obj(row.name.text, row.tag.text, provider)
+    if test_item.obj is Container:
+        instance = test_item.obj(row.name.text, row.pod_name.text)
+    elif test_item.obj is ImageRegistry:
+        instance = test_item.obj(row.host.text, provider)
+    elif test_item.obj is Image:
+        instance = test_item.obj(row.name.text, row.tag.text, provider)
     else:
-        instance = data_set.obj(row.name.text, provider)
+        instance = test_item.obj(row.name.text, provider)
 
     check_relationships(instance)
 
