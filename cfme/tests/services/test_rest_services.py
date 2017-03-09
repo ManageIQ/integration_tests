@@ -124,7 +124,7 @@ class TestServiceRESTAPI(object):
             assert service.name == new_name
 
     def test_edit_multiple_services(self, rest_api, services):
-        """Tests editing multiple service catalogs at time.
+        """Tests editing multiple services at a time.
         Prerequisities:
             * An appliance with ``/api`` available.
         Steps:
@@ -236,13 +236,9 @@ class TestServiceRESTAPI(object):
             rest_api.collections.services.action.retire(*services, **future)
             assert rest_api.response.status_code == 200
 
-        def _finished(ser):
-            ser.reload()
-            if not hasattr(ser, "retires_on"):
-                return False
-            if not hasattr(ser, "retirement_warn"):
-                return False
-            return True
+        def _finished(service):
+            service.reload()
+            return hasattr(service, "retires_on") and hasattr(service, "retirement_warn")
 
         for service in services:
             wait_for(
@@ -263,8 +259,8 @@ class TestServiceRESTAPI(object):
         }
         for service in services:
             service.action.set_ownership(**data)
-            service.reload()
             assert rest_api.response.status_code == 200
+            service.reload()
             assert hasattr(service, "evm_owner_id")
             assert service.evm_owner_id == user.id
 
