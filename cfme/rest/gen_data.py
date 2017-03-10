@@ -436,3 +436,21 @@ def arbitration_rules(request, rest_api, num=2):
         })
 
     return _creating_skeleton(request, rest_api, 'arbitration_rules', data)
+
+
+def blueprints(request, rest_api, num=2):
+    data = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(5)
+        data.append({
+            'name': 'test_blueprint_{}'.format(uniq),
+            'description': 'Test Blueprint {}'.format(uniq),
+            'ui_properties': {
+                'service_catalog': {},
+                'service_dialog': {},
+                'automate_entrypoints': {},
+                'chart_data_model': {}
+            }
+        })
+
+    return _creating_skeleton(request, rest_api, 'blueprints', data)
