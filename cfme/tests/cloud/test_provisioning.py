@@ -72,18 +72,20 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         inst_args['admin_username'] = provisioning['vm_user']
         inst_args['admin_password'] = provisioning['vm_password']
 
-    auto = request.param
-    if auto:
-        inst_args['automatic_placement'] = True
-        inst_args['availability_zone'] = None
-        inst_args['virtual_private_cloud'] = None
-        inst_args['cloud_network'] = None
-        inst_args['cloud_subnet'] = None
-        inst_args['security_groups'] = None
-        inst_args['resource_groups'] = None
-        inst_args['public_ip_address'] = None
-
-    return instance, inst_args
+    try:
+        auto = request.param
+        if auto:
+            inst_args['automatic_placement'] = True
+            inst_args['availability_zone'] = None
+            inst_args['virtual_private_cloud'] = None
+            inst_args['cloud_network'] = None
+            inst_args['cloud_subnet'] = None
+            inst_args['security_groups'] = None
+            inst_args['resource_groups'] = None
+            inst_args['public_ip_address'] = None
+    except AttributeError:
+        # in case nothing was passed just skip
+        pass
     return instance, inst_args, image
 
 
