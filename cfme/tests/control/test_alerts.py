@@ -168,7 +168,7 @@ def vm_name(request, initialize_provider, full_template):
         initialize_provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
     if initialize_provider.type in CANDU_PROVIDER_TYPES:
-        vm_obj.wait_candu_data_available(timeout=60 * 20)
+        vm_obj.wait_candu_data_available(timeout=20 * 60)
     return name
 
 
@@ -195,7 +195,7 @@ def snmp(ssh_client_modscope):
     ssh_client_modscope.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
-@pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
+@pytest.mark.meta(blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         vm_name, vm_crud, provider, request, smtp_test, register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
@@ -335,10 +335,10 @@ def test_alert_snmp(request, vm_name, snmp, provider):
             "Real Time Performance",
             {
                 "performance_field": "CPU - % Used",
-                "performance_field_operator": ">",
+                "performance_field_operator": ">=",
                 "performance_field_value": "0",
                 "performance_trend": "Don't Care",
-                "performance_time_threshold": "1 Minute",
+                "performance_time_threshold": "3 Minutes",
             }),
         notification_frequency="1 Minute",
         snmp_trap={
@@ -363,7 +363,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
         else:
             return False
 
-    wait_for(_snmp_arrived, num_sec=600, delay=15, message="SNMP trap arrived.")
+    wait_for(_snmp_arrived, num_sec=60 * 15, delay=60, message="SNMP trap arrived.")
 
 
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])
