@@ -24,6 +24,8 @@ class OpenStackInstance(Instance):
     STOP = "Stop"
     PAUSE = "Pause"
     RESTART = "Restart"
+    SHELVE = "Shelve"
+    SHELVE_OFFLOAD = "Shelve Offload"
 
     # CFME power states
     STATE_ON = "on"
@@ -31,6 +33,9 @@ class OpenStackInstance(Instance):
     STATE_ERROR = "non-operational"
     STATE_PAUSED = "paused"
     STATE_SUSPENDED = "suspended"
+    STATE_REBOOTING = "reboot_in_progress"
+    STATE_SHELVED = "shelved"
+    STATE_SHELVED_OFFLOAD = "shelved_offloaded"
     STATE_UNKNOWN = "unknown"
     STATE_ARCHIVED = "archived"
     STATE_TERMINATED = "terminated"
@@ -94,12 +99,14 @@ class OpenStackInstance(Instance):
             self.provider.mgmt.stop_vm(self.name)
         elif option == OpenStackInstance.SUSPEND:
             self.provider.mgmt.suspend_vm(self.name)
-        elif option == OpenStackInstance.RESUME:
-            self.provider.mgmt.resume_vm(self.name)
         elif option == OpenStackInstance.PAUSE:
             self.provider.mgmt.pause_vm(self.name)
-        elif option == OpenStackInstance.UNPAUSE:
-            self.provider.mgmt.unpause_vm(self.name)
+        elif option == OpenStackInstance.SHELVE:
+            # TODO: rewrite it once mgmtsystem will get shelve
+            # and shelve_offload methods
+            self.provider.mgmt._find_instance_by_name(self.name).shelve()
+        elif option == OpenStackInstance.SHELVE_OFFLOAD:
+            self.provider.mgmt._find_instance_by_name(self.name).shelve_offload()
         elif option == OpenStackInstance.RESTART:
             self.provider.mgmt.restart_vm(self.name)
         elif option == OpenStackInstance.TERMINATE:
