@@ -1687,9 +1687,9 @@ class IPAppliance(object):
             ssh.run_command('ldconfig')
 
             log_callback('Modifying YAML configuration')
-            c_yaml = self.get_yaml_config('vmdb')
+            c_yaml = self.get_yaml_config()
             c_yaml['product']['storage'] = True
-            self.set_yaml_config('vmdb', c_yaml)
+            self.set_yaml_config(c_yaml)
 
             # To mark that we installed netapp
             ssh.run_command("touch /var/www/miq/vmdb/HAS_NETAPP")
@@ -1726,11 +1726,7 @@ class IPAppliance(object):
     @cached_property
     def get_host_address(self):
         try:
-            if self.version >= '5.6':
-                server = self.get_yaml_config('vmdb').get('server', None)
-            else:
-                server = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db').get(
-                    'server', None)
+            server = self.get_yaml_config().get('server', None)
             if server:
                 return server.get('host', None)
         except Exception as e:
@@ -1919,7 +1915,7 @@ class IPAppliance(object):
 
     @cached_property
     def company_name(self):
-        return self.get_yaml_config("vmdb")["server"]["company"]
+        return self.get_yaml_config()["server"]["company"]
 
     @cached_property
     def zone_description(self):
@@ -1931,64 +1927,48 @@ class IPAppliance(object):
 
     @cached_property
     def is_storage_enabled(self):
-        return 'storage' in self.get_yaml_config('vmdb').get('product', {})
+        return 'storage' in self.get_yaml_config().get('product', {})
 
-    def get_yaml_config(self, config_name):
-        if config_name == 'vmdb':
-            writeout = self.ssh_client.run_rails_command(
-                '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
-                '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
-            )
-            if writeout.rc:
-                logger.error("Config couldn't be found")
-                logger.error(writeout.output)
-                raise Exception('Error obtaining config')
-            base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
-            if base_data.rc:
-                logger.error("Config couldn't be found")
-                logger.error(base_data.output)
-                raise Exception('Error obtaining config')
-            try:
-                return yaml.load(base_data.output)
-            except:
-                logger.debug(base_data.output)
-                raise
+    def get_yaml_config(self):
+        writeout = self.ssh_client.run_rails_command(
+            '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
+            '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
+        )
+        if writeout.rc:
+            logger.error("Config couldn't be found")
+            logger.error(writeout.output)
+            raise Exception('Error obtaining config')
+        base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
+        if base_data.rc:
+            logger.error("Config couldn't be found")
+            logger.error(base_data.output)
+            raise Exception('Error obtaining config')
+        try:
+            return yaml.load(base_data.output)
+        except:
+            logger.debug(base_data.output)
+            raise
+
+    def set_yaml_config(self, data_dict):
+        temp_yaml = NamedTemporaryFile()
+        dest_yaml = '/tmp/conf.yaml'
+        yaml.dump(data_dict, temp_yaml, default_flow_style=False)
+        self.ssh_client.put_file(temp_yaml.name, dest_yaml)
+        # Build and send ruby script
+        dest_ruby = '/tmp/set_conf.rb'
+
+        ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
+        ruby_replacements = {
+            'config_file': dest_yaml
+        }
+        temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
+        self.ssh_client.put_file(temp_ruby.name, dest_ruby)
+
+        # Run it
+        if self.ssh_client.run_rails_command(dest_ruby):
+            self.server_details_changed()
         else:
-            raise Exception('Only [vmdb] config is allowed from 5.6+')
-
-    def set_yaml_config(self, config_name, data_dict):
-        if config_name == 'vmdb':
-            temp_yaml = NamedTemporaryFile()
-            dest_yaml = '/tmp/conf.yaml'
-            yaml.dump(data_dict, temp_yaml, default_flow_style=False)
-            self.ssh_client.put_file(temp_yaml.name, dest_yaml)
-            # Build and send ruby script
-            dest_ruby = '/tmp/set_conf.rb'
-
-            ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
-            ruby_replacements = {
-                'config_file': dest_yaml
-            }
-            temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
-            self.ssh_client.put_file(temp_ruby.name, dest_ruby)
-
-            # Run it
-            if self.ssh_client.run_rails_command(dest_ruby):
-                self.server_details_changed()
-            else:
-                raise Exception('Unable to set config')
-        else:
-            raise Exception('Only [vmdb] config is allowed from 5.6+')
-
-    def get_yaml_file(self, yaml_path):
-        """Get (and parse) a yaml file from the appliance, returning a python data structure"""
-        ret = self.ssh_client.run_command('cat {}'.format(yaml_path))
-        if ret.rc == 0:
-            # Let yaml throw the exceptions here if yaml_path wasn't actually a yaml
-            return yaml.load(ret.output)
-        else:
-            # 2 = errno.ENOENT
-            raise IOError(2, 'Remote yaml not found or permission denied')
+            raise Exception('Unable to set config')
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
@@ -1998,10 +1978,10 @@ class IPAppliance(object):
             quiet: Whether to ignore any errors
         """
         try:
-            vmdb_config = self.get_yaml_config("vmdb")
+            vmdb_config = self.get_yaml_config()
             if vmdb_config["session"]["timeout"] != timeout:
                 vmdb_config["session"]["timeout"] = timeout
-                self.set_yaml_config("vmdb", vmdb_config)
+                self.set_yaml_config(vmdb_config)
         except Exception as ex:
             logger.error('Setting session timeout failed:')
             logger.exception(ex)
@@ -2266,9 +2246,9 @@ class Appliance(IPAppliance):
             Database must be up and running and evm service must be (re)started afterwards
             for the name change to take effect.
         """
-        vmdb_config = self.get_yaml_config('vmdb', self.db)
+        vmdb_config = self.get_yaml_config()
         vmdb_config['server']['name'] = new_name
-        self.set_yaml_config('vmdb', vmdb_config, self.address)
+        self.set_yaml_config(vmdb_config)
         self.name = new_name
 
     def destroy(self):

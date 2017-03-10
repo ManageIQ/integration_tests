@@ -1496,13 +1496,13 @@ def set_server_roles(db=True, **roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    yaml = store.current_appliance.get_yaml_config("vmdb")
+    yaml = store.current_appliance.get_yaml_config()
     if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
     if db:
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
-        store.current_appliance.set_yaml_config("vmdb", yaml)
+        store.current_appliance.set_yaml_config(yaml)
         wait_for(lambda: get_server_roles() == roles, num_sec=60)
     else:
         navigate_to(current_appliance.server, 'Server')

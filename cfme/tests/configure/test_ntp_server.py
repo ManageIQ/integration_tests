@@ -95,13 +95,13 @@ def test_ntp_server_check(request):
         # Configuring the ntp server and restarting the appliance
         # checking if ntp property is available, adding if it is not available
         configuration.set_ntp_servers(*cfme_data['clock_servers'])
-        yaml_config = store.current_appliance.get_yaml_config("vmdb")
+        yaml_config = store.current_appliance.get_yaml_config()
         ntp = yaml_config.get("ntp", None)
         if not ntp:
             yaml_config["ntp"] = {}
         # adding the ntp interval to 1 minute and updating the configuration
         yaml_config["ntp"]["interval"] = '1.minutes'
-        store.current_appliance.set_yaml_config("vmdb", yaml_config)
+        store.current_appliance.set_yaml_config(yaml_config)
         # restarting the evmserverd for NTP to work
         store.current_appliance.restart_evm_service(rude=True)
         store.current_appliance.wait_for_web_ui(timeout=1200)
