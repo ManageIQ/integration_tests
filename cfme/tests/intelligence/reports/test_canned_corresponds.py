@@ -161,21 +161,34 @@ def test_datastores_summary(soft_assert):
     storages_in_db = adb.session.query(storages.store_type, storages.free_space,
                                        storages.total_space, storages.name, storages.id).all()
 
-    if len(storages_in_db) == len(list(report.data.rows)):
-        for store in storages_in_db:
+    assert len(storages_in_db) == len(list(report.data.rows))
+    for store in storages_in_db:
 
-            number_of_vms = adb.session.query(vms.id).filter(vms.storage_id == store.id).count()
-            number_of_hosts = adb.session.query(host_storages.host_id).filter(
-                host_storages.storage_id == store.id).count()
+        number_of_vms = adb.session.query(vms.id).filter(vms.storage_id == store.id).count()
+        number_of_hosts = adb.session.query(host_storages.host_id).filter(
+            host_storages.storage_id == store.id).count()
 
-            for item in report.data.rows:
-                if store.name.encode('utf8') == item['Datastore Name']:
-                    assert store.store_type.encode('utf8') == item['Type']
-                    assert extract_gb(store.free_space) == float(item['Free Space'].split(' ')[0])
-                    assert extract_gb(store.total_space) == float(item['Total Space'].split(' ')[0])
-                    assert int(number_of_hosts) == int(item['Number of Hosts'])
-                    assert int(number_of_vms) == int(item['Number of VMs'])
+        for item in report.data.rows:
+            if store.name.encode('utf8') == item['Datastore Name']:
+                assert store.store_type.encode('utf8') == item['Type']
+                print item['Free Space']
+                assert round_gb(store.free_space) == extract_gb(item['Free Space'])
+                assert round_gb(store.total_space) == extract_gb(item['Total Space'])
+                assert int(number_of_hosts) == int(item['Number of Hosts'])
+                assert int(number_of_vms) == int(item['Number of VMs'])
+
+
+def round_gb(column):
+    return round((float(column) / 1073741824), 1)
 
 
 def extract_gb(column):
-    return round((float(column) / 1073741824), 1)
+    count = float(column.split(' ')[0])
+    power = column.split(' ')[1]
+
+    if power == 'GB':
+        return count
+    elif power == 'MB':
+        return round((count / 1024), 1)
+    elif power == 'Bytes':
+        return round((count / 1073741824), 1)
