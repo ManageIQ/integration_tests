@@ -603,7 +603,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        if method == 'post' and BZ('1414881', forced_streams=['5.7', 'upstream']).blocks:
+        if method == 'post' and BZ('1414881', forced_streams=['5.7', '5.8', 'upstream']).blocks:
             pytest.skip("Affected by BZ1414881, cannot test.")
         for ent in orchestration_templates:
             ent.action.delete(force_method=method)

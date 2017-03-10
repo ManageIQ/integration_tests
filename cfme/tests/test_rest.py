@@ -570,7 +570,7 @@ class TestRequestsRESTAPI(object):
         body = {'options': {'arbitrary_key_allowed': 'test_rest'}}
 
         if from_detail:
-            if BZ('1418331', forced_streams=['5.7', 'upstream']).blocks:
+            if BZ('1418331', forced_streams=['5.7', '5.8', 'upstream']).blocks:
                 pytest.skip("Affected by BZ1418331, cannot test.")
             for request in pending_requests:
                 request.action.edit(**body)
