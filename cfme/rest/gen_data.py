@@ -452,4 +452,5 @@ def blueprints(request, rest_api, num=2):
                 'chart_data_model': {}
             }
         })
+
     return _creating_skeleton(request, rest_api, 'blueprints', data)

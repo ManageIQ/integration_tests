@@ -150,7 +150,8 @@ class TestServiceRESTAPI(object):
             service.reload()
             assert service.name == new_names[i]
 
-    @pytest.mark.meta(blockers=[BZ(1414852, forced_streams=['5.7', '5.8', 'upstream'])])
+    # POST method is not available on < 5.8, as described in BZ 1414852
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_delete_service_post(self, rest_api, services):
         """Tests deleting services from detail using POST method.
 
@@ -485,7 +486,8 @@ class TestServiceTemplateRESTAPI(object):
             rest_api.collections.service_templates.action.delete(*service_templates)
         assert rest_api.response.status_code == 404
 
-    @pytest.mark.meta(blockers=[BZ(1427338, forced_streams=['5.6', '5.7', '5.8', 'upstream'])])
+    # POST method is not available on < 5.8, as described in BZ 1427338
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
     def test_delete_service_template_post(self, rest_api, service_templates):
         """Tests deleting service templates from detail using POST method.
 
