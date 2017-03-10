@@ -9,6 +9,7 @@ from utils.wait import wait_for
 from utils.log import logger
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 
 
 pytestmark = [
@@ -40,15 +41,18 @@ def vm_obj(request, provider, setup_provider_modscope, small_template_modscope):
 
 def verify_vm_power_state(vm_obj, state, action=None):
     vm = vm_obj.get_vm_via_rest()
-    if vm_obj.provider.one_of(GCEProvider, EC2Provider):
-        num_sec = 1600  # extra time for slow providers
+    if vm_obj.provider.one_of(GCEProvider, EC2Provider, SCVMMProvider):
+        num_sec = 4000  # extra time for slow providers
     else:
         num_sec = 1000
     if action:
         action()
-    wait_for(lambda: vm.power_state == state,
-        num_sec=num_sec, delay=20, fail_func=vm.reload,
-        message='Wait for VM state `{}` (current state: {})'.format(state, vm.power_state))
+
+    def _state_changed():
+        vm.reload()
+        return vm.power_state == state
+    wait_for(_state_changed, num_sec=num_sec, delay=20,
+        message="Wait for VM state `{}` (current state: {})".format(state, vm.power_state))
 
 
 def verify_action_result(rest_api, assert_success=True):
@@ -185,7 +189,7 @@ def test_reset_vm(rest_api, vm_obj, from_detail):
     else:
         vm_obj.get_collection_via_rest().action.reset(vm)
     success, message = verify_action_result(rest_api, assert_success=False)
-    if vm_obj.provider.one_of(GCEProvider, EC2Provider):
+    if vm_obj.provider.one_of(GCEProvider, EC2Provider, SCVMMProvider):
         assert success is False
         assert "not available" in message
     else:
