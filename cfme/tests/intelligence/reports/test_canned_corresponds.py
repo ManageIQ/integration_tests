@@ -109,7 +109,7 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
 @pytest.mark.tier(3)
 @test_requirements.report
 @pytest.mark.usefixtures('setup_provider')
-def test_operations_vm_on(soft_assert, setup_a_provider):
+def test_operations_vm_on(soft_assert):
 
     appliance = get_or_create_current_appliance()
     adb = appliance.db
@@ -171,24 +171,38 @@ def test_datastores_summary(soft_assert):
         for item in report.data.rows:
             if store.name.encode('utf8') == item['Datastore Name']:
                 assert store.store_type.encode('utf8') == item['Type']
-                print item['Free Space']
-                assert round_gb(store.free_space) == extract_gb(item['Free Space'])
-                assert round_gb(store.total_space) == extract_gb(item['Total Space'])
+                assert round_num(store.free_space) == extract_num(item['Free Space'])
+                assert round_num(store.total_space) == extract_num(item['Total Space'])
                 assert int(number_of_hosts) == int(item['Number of Hosts'])
                 assert int(number_of_vms) == int(item['Number of VMs'])
 
 
-def round_gb(column):
-    return round((float(column) / 1073741824), 1)
+def round_num(column):
+    ret = float(column)
+    by = 1024
+    kb = pow(1024, 2)
+    mb = pow(1024, 3)
+    gb = pow(1024, 4)
+    tb = pow(1024, 5)
+
+    if ret < by:
+        return ret
+
+    if ret > by and ret < kb:
+        return round((ret / by), 1)
+
+    if ret > kb and ret < mb:
+        return round((ret / kb), 1)
+
+    if ret > mb and ret < gb:
+        return round((ret / mb), 1)
+
+    if ret > gb and ret < tb:
+        return round((ret / gb), 1)
+
+    if ret > tb:
+        return round((ret / tb), 1)
 
 
-def extract_gb(column):
-    count = float(column.split(' ')[0])
-    power = column.split(' ')[1]
-
-    if power == 'GB':
-        return count
-    elif power == 'MB':
-        return round((count / 1024), 1)
-    elif power == 'Bytes':
-        return round((count / 1073741824), 1)
+def extract_num(column):
+    return float(column.split(' ')[0])
