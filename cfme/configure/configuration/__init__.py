@@ -21,7 +21,6 @@ from cfme.web_ui.form_buttons import change_stored_password
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.base.ui import ConfigurationView
-from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
@@ -1504,6 +1503,7 @@ def set_server_roles(db=True, **roles):
     if db:
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
         store.current_appliance.set_yaml_config("vmdb", yaml)
+        wait_for(lambda: get_server_roles() == roles, num_sec=60)
     else:
         navigate_to(current_appliance.server, 'Server')
         fill(server_roles, roles, action=form_buttons.save)
