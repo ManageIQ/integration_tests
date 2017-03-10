@@ -417,7 +417,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
                 len(smtp_test.get_emails(subject_like=expected_text)) > 0
             )
 
-        wait_for(verify, message="email receive check", delay=5)
+        wait_for(verify, message="email receive check", delay=30)
 
 
 def copy_request(cells, modifications):
