@@ -17,9 +17,9 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     [ContainersProvider], scope='function')
 
-# CMP-9973
 
 
+@pytest.mark.polarion('CMP-9973')
 def test_rc_selector(provider):
     """ This test verifies the data integrity for the
         rc selector table
