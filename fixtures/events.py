@@ -37,7 +37,7 @@ match type.
 import logging
 import pytest
 
-from utils.appliance import get_or_create_current_appliance
+from fixtures.pytest_store import store
 from utils.events import EventListener
 from utils.log import setup_logger
 from utils.wait import wait_for, TimedOutError
@@ -47,82 +47,54 @@ from utils.wait import wait_for, TimedOutError
 logger = setup_logger(logging.getLogger('events'))
 
 
-class EventListenerWrapper(object):
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item):
+    if "register_event" in item.funcargnames:
+        appliance = item.funcargs["appliance"]
+        event_listener = appliance.EventListener()
+        event_listener.reset_events()
+        event_listener.start()
+        event_listener.set_last_record()
+        store.event_listener = event_listener
+    yield
 
-    def __init__(self):
-        self._cur_appliance = get_or_create_current_appliance()
-        self._instances = []
 
-    def _register_instance(self, inst):
-        self._instances.append(inst)
-
-    def _unregister_instance(self):
-        self._instances.pop()
-
-    def new_instance(self):
-        inst = EventListener(self._cur_appliance)
-        self._register_instance(inst)
-        return inst
-
-    @property
-    def current_instance(self):
-        try:
-            return self._instances[-1]
-        except IndexError:
-            return None
-
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_setup(self, item):
-        if "register_event" in item.funcargnames:
-            # store.current_appliance.wait_for_ssh()
-            event_listener = self.new_instance()
-            event_listener.reset_events()
-            event_listener.start()
-            event_listener.set_last_record()
-
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    try:
         yield
-
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_call(self, item):
-        try:
-            yield
-        finally:
-            if "register_event" in item.funcargnames:
-                event_listener = self.current_instance
-                soft_assert = item.funcargs["soft_assert"]
-
-                try:
-                    logger.info('Checking the events to come.')
-                    wait_for(event_listener.check_expected_events,
-                             delay=5,
-                             num_sec=180,
-                             handle_exception=True)
-                except TimedOutError:
-                    logger.info('checking collected events')
-                    for event in event_listener.got_events:
-                        soft_assert(len(event['matched_events']),
-                                    "Event {} did not come!".format(event['event']))
-                else:
-                    logger.info('Seems like all events have arrived!')
-
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_teardown(self, item):
+    finally:
         if "register_event" in item.funcargnames:
-            event_listener = self.current_instance
-            event_listener.stop()
-            event_listener.reset_events()
-            self._unregister_instance()
-        yield
+            event_listener = store.event_listener
+            soft_assert = item.funcargs["soft_assert"]
+
+            try:
+                logger.info('Checking the events to come.')
+                wait_for(event_listener.check_expected_events,
+                         delay=5,
+                         num_sec=180,
+                         handle_exception=True)
+            except TimedOutError:
+                logger.info('checking collected events')
+                for event in event_listener.got_events:
+                    soft_assert(len(event['matched_events']),
+                                "Event {} did not come!".format(event['event']))
+            else:
+                logger.info('Seems like all events have arrived!')
 
 
-def pytest_configure(config):
-    plugin = EventListenerWrapper()
-    registration = config.pluginmanager.register(plugin, "event_testing")
-    assert registration
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item):
+    if "register_event" in item.funcargnames:
+        event_listener = store.event_listener
+        event_listener.stop()
+        event_listener.reset_events()
+        store.event_listener = None
+    yield
 
 
-@pytest.fixture(scope="function")
-def register_event(request, uses_event_listener, soft_assert):
+@pytest.yield_fixture(scope="function")
+def register_event(request, uses_event_listener, soft_assert, appliance):
     """register_event(list of events)
     Event registration fixture.
 
@@ -146,7 +118,4 @@ def register_event(request, uses_event_listener, soft_assert):
             register_event(event)
 
     """
-    # We pull out the plugin directly.
-    self = request.config.pluginmanager.getplugin("event_testing")
-
-    return self.current_instance  # Run the test and provide the plugin as a fixture
+    return store.event_listener  # Run the test and provide the plugin as a fixture
