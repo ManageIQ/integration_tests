@@ -231,20 +231,21 @@ class BrowserKeepAliveThread(threading.Thread):
 
     def run(self):
         while not self.stopped():
+            time.sleep(THIRTY_SECONDS)
             with self.manager.factory.lock:
-                try:
-                    log.debug('renew')
-                    self.manager.browser.current_url
-                except Exception as e:
-                    log.error('something bad happened')
-                    log.error(e)
+
+                # The double try is necessary as if the purpose of the function is to ensure that
+                # the connection doesn't die. If the connection does die due to lack of interaction
+                # then this double try will fail the first time and connect the second time.
+                # The break ensures we don't run the call more times than we need to.
+                for _ in range(2):
                     try:
-                        log.debug('renew2')
+                        log.debug('renew')
                         self.manager.browser.current_url
+                        break
                     except Exception as e:
                         log.error('something bad happened')
                         log.error(e)
-            time.sleep(THIRTY_SECONDS)
 
     def stop(self):
         self._stop.set()
