@@ -17,6 +17,11 @@ def test_black_console_set_hostname(request):
         stdin.write("ap \n 1 \n 4 \n test.example.com \n \n")
     else:
         stdin.write("ap \n 4 \n test.example.com \n \n")
+
+    def is_hostname_set(self):
+        return_code, output = self.ssh_client.run_command(
+            "hostname -f | grep test.example.com")
+        return return_code == 0
     return_code, output = store.current_appliance.ssh_client.run_command(
         "hostname -f")
     assert output.strip() == 'test.example.com'
@@ -96,9 +101,9 @@ def test_black_console_external_db(request, temp_appliance_unconfig_funcscope, a
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_black_console_external_db_create(request, app_creds, dedicated_db,
+def test_black_console_external_db_create(request, app_creds, dedicated_db_appliance,
         temp_appliance_unconfig_funcscope):
-    ip = dedicated_db.address
+    ip = dedicated_db_appliance.address
     pwd = app_creds['password']
     client = temp_appliance_unconfig_funcscope.ssh_client
     channel = client.invoke_shell()
