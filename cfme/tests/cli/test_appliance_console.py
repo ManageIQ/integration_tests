@@ -10,22 +10,22 @@ from utils.log_validator import LogValidator
 # def test_black_console_dhcp
 
 
-def test_black_console_set_hostname(request):
-    channel = store.current_appliance.ssh_client.invoke_shell()
-    stdin = channel.makefile('wb')
-    if store.current_appliance.version >= "5.8":
-        stdin.write("ap \n 1 \n 4 \n test.example.com \n \n")
-    else:
-        stdin.write("ap \n 4 \n test.example.com \n \n")
+# def test_black_console_set_hostname(request):
+#     channel = store.current_appliance.ssh_client.invoke_shell()
+#     stdin = channel.makefile('wb')
+#     if store.current_appliance.version >= "5.8":
+#         stdin.write("ap \n 1 \n 4 \n test.example.com \n \n")
+#     else:
+#         stdin.write("ap \n 4 \n test.example.com \n \n")
 
-    def is_hostname_set(self):
-        return_code, output = self.ssh_client.run_command(
-            "hostname -f | grep test.example.com")
-        return return_code == 0
-    return_code, output = store.current_appliance.ssh_client.run_command(
-        "hostname -f")
-    assert output.strip() == 'test.example.com'
-    assert return_code == 0
+#     def is_hostname_set(self):
+#         return_code, output = self.ssh_client.run_command(
+#             "hostname -f | grep test.example.com")
+#         return return_code == 0
+#     return_code, output = store.current_appliance.ssh_client.run_command(
+#         "hostname -f")
+#     assert output.strip() == 'test.example.com'
+#     assert return_code == 0
 
 
 # def test_black_console_set_timezone(request):
@@ -57,17 +57,17 @@ def test_black_console_internal_db(request, app_creds, temp_appliance_unconfig_f
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_internal_db_reset(request, app_creds, temp_appliance_preconfig_funcscope):
-    client = temp_appliance_preconfig_funcscope.ssh_client
-    client.run_command('systemctl stop evmserverd')
-    channel = client.invoke_shell()
-    stdin = channel.makefile('wb')
-    if temp_appliance_preconfig_funcscope.version >= "5.8":
-        stdin.write("ap \n 5 \n 4 \n y \n 1 \n \n")
-    else:
-        stdin.write("ap \n 8 \n 4 \n y \n 1 \n \n")
-    temp_appliance_preconfig_funcscope.wait_for_evm_service()
-    temp_appliance_preconfig_funcscope.wait_for_web_ui()
+# def test_black_console_internal_db_reset(request, app_creds, temp_appliance_preconfig_funcscope):
+#     client = temp_appliance_preconfig_funcscope.ssh_client
+#     client.run_command('systemctl stop evmserverd')
+#     channel = client.invoke_shell()
+#     stdin = channel.makefile('wb')
+#     if temp_appliance_preconfig_funcscope.version >= "5.8":
+#         stdin.write("ap \n 5 \n 4 \n y \n 1 \n \n")
+#     else:
+#         stdin.write("ap \n 8 \n 4 \n y \n 1 \n \n")
+#     temp_appliance_preconfig_funcscope.wait_for_evm_service()
+#     temp_appliance_preconfig_funcscope.wait_for_web_ui()
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
@@ -80,8 +80,7 @@ def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds
         stdin.write("ap \n 5 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
     else:
         stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
-    wait_for(temp_appliance_unconfig_funcscope.is_dedicated_db_active,
-        func_args=[temp_appliance_unconfig_funcscope])
+    wait_for(temp_appliance_unconfig_funcscope.is_dedicated_db_active)
 
 
 def test_black_console_external_db(request, temp_appliance_unconfig_funcscope, app_creds):
