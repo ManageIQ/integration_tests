@@ -17,9 +17,8 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
-    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location
-)
+    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable,
+    DriftGrid, fill, form_buttons, paginator, Input, mixins, match_location)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
 from utils.db_queries import get_host_id
@@ -29,10 +28,9 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
+    navigate_to
 from utils.appliance import Navigatable
-
-from cfme.common import PolicyProfileAssignable
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -93,7 +91,7 @@ match_page = partial(match_location, controller='host',
                      title='Hosts')
 
 
-class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
+class Host(Updateable, Pretty, Navigatable):
     """
     Model of an infrastructure host in cfme.
 
@@ -125,7 +123,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
-                 ipmi_credentials=None, interface_type='lan', provider=None, appliance=None):
+                 ipmi_credentials=None, interface_type='lan', appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.quad_name = 'host'
@@ -139,7 +137,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         self.ipmi_credentials = ipmi_credentials
         self.interface_type = interface_type
         self.db_id = None
-        self.provider = provider
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -217,12 +214,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
-    def load_details(self, refresh=False):
-        """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
-        navigate_to(self, 'Details')
-        if refresh:
-            sel.refresh()
-
     def execute_button(self, button_group, button, cancel=True):
         navigate_to(self, 'Details')
         host_btn = partial(tb.select, button_group)
@@ -243,37 +234,13 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         pow_btn('Power Off', invokes_alert=True)
         sel.handle_alert()
 
-    def get_power_state(self):
-        return self.get_detail('Properties', 'Power State')
-        # return str(find_quadicon(self.name, do_not_navigate=True).state)
-        # return state.split()[1]
+    def get_ipmi(self):
+        return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
+                    password=self.ipmi_credentials.secret, interface_type=self.interface_type)
 
     def refresh(self, cancel=False):
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert(cancel=cancel)
-
-    # TODO remove provider_crud when issue #4137 fixed,host linked with provider
-    def wait_for_host_state_change(self, desired_state, timeout=300, provider_crud=None):
-        """Wait for Host to come to desired state.
-        This function waits just the needed amount of time thanks to wait_for.
-        Args:
-            self: self
-            desired_state: 'on' or 'off'
-            timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
-            provider_crud: provider object where vm resides on (optional)
-        """
-
-        def _looking_for_state_change():
-            tb.refresh()
-            return 'currentstate-' + desired_state in find_quadicon(
-                self.name, do_not_navigate=False).state
-
-        navigate_and_select_all_hosts(self.name, provider_crud)
-        return wait_for(_looking_for_state_change, num_sec=timeout)
-
-    def get_ipmi(self):
-        return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
-                    password=self.ipmi_credentials.secret, interface_type=self.interface_type)
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
@@ -306,11 +273,50 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         quad = Quadicon(self.name, 'host')
         return 'checkmark' in quad.creds
 
+    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
+        """DRY function for managing policy profiles.
+
+        See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
+
+        Args:
+            assign: Wheter to assign or unassign.
+            policy_profile_names: :py:class:`str` with Policy Profile names.
+        """
+        navigate_to(self, 'PolicyAssignment')
+        for policy_profile in policy_profile_names:
+            if assign:
+                manage_policies_tree.check_node(policy_profile)
+            else:
+                manage_policies_tree.uncheck_node(policy_profile)
+        sel.click(form_buttons.save)
+
+    def assign_policy_profiles(self, *policy_profile_names):
+        """ Assign Policy Profiles to this Host.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(True, *policy_profile_names)
+
+    def unassign_policy_profiles(self, *policy_profile_names):
+        """ Unssign Policy Profiles to this Host.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(False, *policy_profile_names)
+
     def get_datastores(self):
         """ Gets list of all datastores used by this host"""
         navigate_to(self, 'Details')
         list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
         return [q.name for q in Quadicon.all("datastore")]
+
+    # def get_provider(self):
+    #     provider = self.get_detail('Infrastructure Provider')
+    #     return provider
 
     @property
     def get_db_id(self):
@@ -331,43 +337,17 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         sel.handle_alert()
         flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
 
-    def check_compliance(self, timeout=240):
-        """Initiates compliance check and waits for it to finish."""
-        navigate_to(self, 'Details')
-        original_state = self.compliance_status
-        tb.select('Policy', 'Check Compliance of Last Known Configuration', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
-        wait_for(
-            lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
-        )
-
-    @property
-    def compliance_status(self):
-        """Returns the title of the compliance infoblock. The title contains datetime so it can be
-        compared.
-
-        Returns:
-            :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
+    def get_host_provisioning_state(self, provider):
+        """" check on Ironic the current provision state
+        using mgmt system to query a node and its provision state
+        returns a string of current provision state: 'active', 'enroll',
+        'manageable', 'available'
+        USAGE: my_host.get_host_provisioning_state()
         """
-        sel.refresh()
-        return self.get_detail('Compliance', 'Status')
-
-    @property
-    def is_compliant(self):
-        """Check if the Host is compliant
-
-        Returns:
-            :py:class:`bool`
-        """
-        text = self.compliance_status.strip().lower()
-        if text.startswith("non-compliant"):
-            return False
-        elif text.startswith("compliant"):
-            return True
-        else:
-            raise ValueError("{} is not a known state for compliance".format(text))
+        nodes = provider.mgmt.list_node()
+        nodes_dict = {i.uuid: i for i in nodes}
+        node = nodes_dict[(str(self.name).split()[0])]
+        return str(node.provision_state)
 
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
@@ -441,7 +421,8 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/host')
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', '/host')(None)
 
     def resetter(self):
         tb.select("Grid View")
@@ -535,7 +516,7 @@ def get_from_config(provider_config_name):
 
     Returns: A Host object that has methods that operate on CFME
     """
-    # TODO: Include provider key in YAML and include provider object when creating
+
     prov_config = conf.cfme_data.get('management_hosts', {})[provider_config_name]
     credentials = get_credentials_from_config(prov_config['credentials'])
     ipmi_credentials = get_credentials_from_config(prov_config['ipmi_credentials'])
@@ -598,18 +579,3 @@ def find_quadicon(host, do_not_navigate=False):
             return quadicon
     else:
         raise HostNotFound("Host '{}' not found in UI!".format(host))
-
-
-def navigate_and_select_all_hosts(host_names, provider_crud=None):
-    """ Reduces some redundant code shared between methods """
-    if isinstance(host_names, basestring):
-        host_names = [host_names]
-
-    if provider_crud:
-        navigate_to(provider_crud, 'ProviderNodes')
-    else:
-        navigate_to(Host, 'All')
-    if paginator.page_controls_exist():
-        paginator.results_per_page(1000)
-    for host_name in host_names:
-        sel.check(Quadicon(host_name, 'host').checkbox())

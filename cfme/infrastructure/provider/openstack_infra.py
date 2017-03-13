@@ -1,4 +1,4 @@
-from navmazing import NavigateToSibling
+from navmazing import NavigateToSibling, NavigationDestinationNotFound
 from utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
                                                 navigator)
 from cfme.web_ui import Form, FileInput, InfoBlock, fill
@@ -99,8 +99,10 @@ class OpenstackInfraProvider(InfraProvider):
             file_path - file path of json file with new node details, navigation
              MUST be from a specific self
         """
-        navigate_to(self, 'Details')
-        sel.click(InfoBlock.element("Relationships", "Nodes"))
+        try:
+            navigate_to(self, 'ProviderNodes')
+        except NavigationDestinationNotFound:
+            assert "Missing nodes in provider's details"
         tb.select('Configuration', 'Register Nodes')
         my_form = {'file': file_path}
         fill(register_nodes_form, my_form, action=register_nodes_form.register)
