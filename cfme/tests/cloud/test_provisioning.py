@@ -16,7 +16,6 @@ from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.generators import random_vm_name
@@ -208,8 +207,6 @@ def test_provision_from_template_using_rest(
         num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
-@pytest.mark.uncollectif(lambda provider:
-        not provider.one_of(EC2Provider) or current_version() < "5.7")
 def test_ec2_manual_placement_using_rest(
         request, setup_provider, provider, vm_name, rest_api, provisioning):
     """ Tests provisioning ec2 instance with manual placement using the REST API.
@@ -218,46 +215,52 @@ def test_ec2_manual_placement_using_rest(
         test_flag: provision
     """
     image_guid = rest_api.collections.templates.get(name=provisioning['image']['name']).guid
-    provider_id = rest_api.collections.providers.get(name=provider.name).id
+    provider_rest = rest_api.collections.providers.get(name=provider.name)
+    security_group_name = provisioning['security_group'].split(':')[0].strip()
     instance_type = provisioning['instance_type'].split(':')[0].strip()
 
     flavors = rest_api.collections.flavors.find_by(name=instance_type)
     assert len(flavors) > 0
     flavor = None
     for flavor in flavors:
-        if flavor.ems_id == provider_id:
+        if flavor.ems_id == provider_rest.id:
             break
     else:
         pytest.fail("Cannot find flavour.")
 
-    cloud_networks = rest_api.collections.cloud_networks.find_by(
-        type='ManageIQ::Providers::Amazon::NetworkManager::CloudNetwork')
-    assert len(cloud_networks) > 0
+    provider_data = rest_api.get(provider_rest._href +
+        '?attributes=cloud_networks,cloud_subnets,security_groups')
+
+    assert len(provider_data['cloud_networks']) > 0
     cloud_network = None
-    for cloud_network in cloud_networks:
-        if cloud_network.ems.parent_ems_id == provider_id:
+    for cloud_network in provider_data['cloud_networks']:
+        if cloud_network['enabled']:
             break
     else:
         pytest.fail("Cannot find cloud network.")
 
-    response = rest_api.get(cloud_network._href + '?attributes=security_groups,cloud_subnets')
-
-    default_group = provisioning['security_group'].split(':')[0].strip()
-    assert len(response['security_groups']) > 0
+    assert len(provider_data['security_groups']) > 0
     security_group = None
-    for security_group in response['security_groups']:
-        if security_group['name'] == default_group:
+    for security_group in provider_data['security_groups']:
+        if ('cloud_network_id' in security_group and
+                security_group['cloud_network_id'] == cloud_network['id'] and
+                security_group['name'] == security_group_name):
             break
     else:
         pytest.fail("Cannot find security group.")
 
-    assert len(response['cloud_subnets']) > 0
+    assert len(provider_data['cloud_subnets']) > 0
     cloud_subnet = None
-    for cloud_subnet in response['cloud_subnets']:
-        if cloud_subnet['status'] == 'available':
-            break
+    availability_zone_id_seen = False
+    for cloud_subnet in provider_data['cloud_subnets']:
+        if 'availability_zone_id' in cloud_subnet:
+            availability_zone_id_seen = True
+            if (cloud_subnet['cloud_network_id'] == cloud_network['id'] and
+                    cloud_subnet['status'] == 'available'):
+                break
     else:
-        pytest.fail("Cannot find cloud subnet.")
+        pytest.fail("Cannot find cloud subnet{}.".format(
+            ", `availability_zone_id` not found" if not availability_zone_id_seen else ""))
 
     provision_data = {
         "version": "1.1",
@@ -269,7 +272,7 @@ def test_ec2_manual_placement_using_rest(
             "instance_type": flavor.id,
             "request_type": "template",
             "placement_auto": False,
-            "cloud_network": cloud_network.id,
+            "cloud_network": cloud_network['id'],
             "cloud_subnet": cloud_subnet['id'],
             "placement_availability_zone": cloud_subnet['availability_zone_id'],
             "security_groups": security_group['id'],
