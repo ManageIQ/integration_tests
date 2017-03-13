@@ -3,6 +3,7 @@ import re
 from cfme.containers.provider import ContainersProvider
 from utils import testgen
 from utils import conf
+from utils.ssh import SSHClient
 from utils.version import current_version
 
 
@@ -14,7 +15,7 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 @pytest.mark.polarion('CMP-10205')
-def test_basic_metrics(provider, ssh_client):
+def test_basic_metrics(provider):
     """ Basic Metrics availability test
         This test checks that the Metrics service is up
         Curls the hawkular status page and checks if it's up
@@ -25,5 +26,5 @@ def test_basic_metrics(provider, ssh_client):
         .get('hostname', [])
     host_url = 'https://' + hostname + '/hawkular/metrics/'
     command = 'curl -X GET ' + host_url + ' --insecure'
-    ssh_client = ssh_client(hostname=hostname, username=username, password=password)
+    ssh_client = SSHClient(hostname=hostname, username=username, password=password)
     assert re.search("Hawkular[ -]Metrics", str(ssh_client.run_command(command)))

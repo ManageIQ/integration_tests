@@ -171,7 +171,7 @@ def do_scan(vm, additional_item_check=None):
     logger.info("Scan finished")
 
 
-def test_check_package_presence(request, fleecing_vm, ssh_client, analysis_profile):
+def test_check_package_presence(request, fleecing_vm, analysis_profile):
     """This test checks compliance by presence of a certain cfme-appliance package which is expected
     to be present on an appliance."""
     # TODO: If we step out from provisioning a full appliance for fleecing, this might need revisit
@@ -202,7 +202,7 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, analysis_profi
     assert fleecing_vm.check_compliance()
 
 
-def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
+def test_check_files(request, fleecing_vm, analysis_profile):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
     """

@@ -44,7 +44,7 @@ def check_log(log, verify_tags):
 
 @pytest.mark.meta(blockers=[1382326, 1406023])
 @pytest.mark.polarion('CMP-9496')
-def test_containers_smartstate_analysis(provider, ssh_client):
+def test_containers_smartstate_analysis(provider):
     """Smart State analysis functionality check for single container image.
     Steps:
         1. Perform smart state analysis
