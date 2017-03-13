@@ -473,6 +473,21 @@
             <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')" id="submit_button"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
         </form>
         <script type="text/javascript">
+        function selectValues(select_id) {
+            return $.map($('#' + select_id + ' option'), function(option) { return option.value; });
+        }
+
+        function selectHasValue(select_id, searched_value) {
+            var values = selectValues(select_id);
+            for(i = 0; i < values.length; i++) {
+                var value = values[i];
+                if(value == searched_value)
+                    return true;
+            }
+
+            return false;
+        }
+
         $(document).ready(function() {
             // Some UI stuff
             $('#enabled_ram').change(function(){
@@ -499,7 +514,10 @@
                         data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
+                    var old_val = $('select#version').val();
                     $('select#version').html(data);
+                    if(selectHasValue('version', old_val))
+                        $('select#version').val(old_val);
                     $("select#version").trigger("change");
                  });
             });
@@ -522,7 +540,10 @@
                         data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
+                    var old_val = $('select#date').val();
                     $('select#date').html(data);
+                    if(selectHasValue('date', old_val))
+                        $('select#date').val(old_val);
                     $("select#date").trigger("change");
                  });
             });
@@ -533,7 +554,10 @@
                         data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
+                    var old_val = $('select#provider').val();
                     $('select#provider').html(data);
+                    if(selectHasValue('provider', old_val))
+                        $('select#provider').val(old_val);
                     if($("#provider").find("option").length <= 1) {
                         // No providers available
                         $("#submit_button")[0].disabled = true;
