@@ -119,7 +119,7 @@ class TestVmEventRESTAPI(object):
         return _vm(request, a_provider, rest_api_modscope)
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-    def test_vm_add_event(self, rest_api, vm, db, from_detail):
+    def test_vm_add_event(self, rest_api, vm, from_detail, appliance):
         event = {
             "event_type": "BadUserNameSessionEvent",
             "event_message": "Cannot login user@test.domain {}".format(from_detail)
@@ -134,8 +134,8 @@ class TestVmEventRESTAPI(object):
         # DB check, doesn't work on 5.4
         if version.current_version() < '5.5':
             return True
-        events = db["event_streams"]
-        events_list = list(db.session.query(events).filter(
+        events = appliance.db["event_streams"]
+        events_list = list(appliance.db.session.query(events).filter(
             events.vm_name == vm,
             events.message == event["event_message"],
             events.event_type == event["event_type"],
@@ -143,7 +143,7 @@ class TestVmEventRESTAPI(object):
         assert len(events_list) == 1, "Could not find the event in the database"
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-    def test_vm_add_lifecycle_event(self, request, rest_api, vm, from_detail, db):
+    def test_vm_add_lifecycle_event(self, request, rest_api, vm, from_detail, appliance):
         """Test that checks whether adding a lifecycle event using the REST API works.
         Prerequisities:
             * A VM
@@ -173,8 +173,8 @@ class TestVmEventRESTAPI(object):
             assert len(rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)) > 0,\
                 "Could not add event"
         # DB check
-        lifecycle_events = db["lifecycle_events"]
-        assert len(list(db.session.query(lifecycle_events).filter(
+        lifecycle_events = appliance.db["lifecycle_events"]
+        assert len(list(appliance.db.session.query(lifecycle_events).filter(
             lifecycle_events.message == event["message"],
             lifecycle_events.status == event["status"],
             lifecycle_events.event == event["event"],

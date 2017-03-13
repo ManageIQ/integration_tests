@@ -126,36 +126,36 @@ def get_host_name(provider):
     return cfme_host.name
 
 
-def query_metric_db(db, provider, metric, vm_name=None, host_name=None):
-    metrics_tbl = db['metrics']
-    ems = db['ext_management_systems']
+def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
+    metrics_tbl = appliance.db['metrics']
+    ems = appliance.db['ext_management_systems']
     if vm_name is None:
         if host_name is not None:
             object_name = host_name
     elif vm_name is not None:
         object_name = vm_name
 
-    with db.transaction:
+    with appliance.db.transaction:
         provs = (
-            db.session.query(metrics_tbl.id)
+            appliance.db.session.query(metrics_tbl.id)
             .join(ems, metrics_tbl.parent_ems_id == ems.id)
             .filter(metrics_tbl.resource_name == object_name,
             ems.name == provider.name)
         )
-    return db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery()))
+    return appliance.db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery()))
 
 
 # Tests to check that specific metrics are being collected
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.7" and provider.type == 'gce')
-def test_raw_metric_vm_cpu(metrics_collection, db, provider):
+def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     if provider.category == "infra":
-        query = query_metric_db(db, provider, 'cpu_usagemhz_rate_average',
+        query = query_metric_db(appliance.db, provider, 'cpu_usagemhz_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usagemhz_rate_average')
     elif provider.category == "cloud":
-        query = query_metric_db(db, provider, 'cpu_usage_rate_average',
+        query = query_metric_db(appliance.db, provider, 'cpu_usage_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usagemhz_rate_average')
 
@@ -167,15 +167,15 @@ def test_raw_metric_vm_cpu(metrics_collection, db, provider):
 
 @pytest.mark.uncollectif(
     lambda provider: provider.type == 'ec2' or provider.type == 'gce')
-def test_raw_metric_vm_memory(metrics_collection, db, provider):
+def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
 
     if provider.type == 'azure':
-        query = query_metric_db(db, provider, 'mem_usage_absolute_average',
+        query = query_metric_db(appliance.db, provider, 'mem_usage_absolute_average',
             vm_name)
         average_rate = attrgetter('mem_usage_absolute_average')
     else:
-        query = query_metric_db(db, provider, 'derived_memory_used',
+        query = query_metric_db(appliance.db, provider, 'derived_memory_used',
             vm_name)
         average_rate = attrgetter('derived_memory_used')
 
@@ -191,9 +191,9 @@ def test_raw_metric_vm_memory(metrics_collection, db, provider):
     blockers=[BZ(1408963, forced_streams=["5.6", "5.7"],
         unblock=lambda provider: provider.type != 'rhevm')]
 )
-def test_raw_metric_vm_network(metrics_collection, db, provider):
+def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
-    query = query_metric_db(db, provider, 'net_usage_rate_average',
+    query = query_metric_db(appliance.db, provider, 'net_usage_rate_average',
         vm_name)
 
     for record in query:
@@ -208,9 +208,9 @@ def test_raw_metric_vm_network(metrics_collection, db, provider):
     blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
         unblock=lambda provider: provider.type != 'rhevm')]
 )
-def test_raw_metric_vm_disk(metrics_collection, db, provider):
+def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
-    query = query_metric_db(db, provider, 'disk_usage_rate_average',
+    query = query_metric_db(appliance.db, provider, 'disk_usage_rate_average',
         vm_name)
 
     for record in query:
@@ -221,9 +221,9 @@ def test_raw_metric_vm_disk(metrics_collection, db, provider):
 
 @pytest.mark.uncollectif(
     lambda provider: provider.category == 'cloud')
-def test_raw_metric_host_cpu(metrics_collection, db, provider):
+def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(db, provider, 'cpu_usagemhz_rate_average',
+    query = query_metric_db(appliance.db, provider, 'cpu_usagemhz_rate_average',
         host_name)
 
     for record in query:
@@ -234,9 +234,9 @@ def test_raw_metric_host_cpu(metrics_collection, db, provider):
 
 @pytest.mark.uncollectif(
     lambda provider: provider.category == 'cloud')
-def test_raw_metric_host_memory(metrics_collection, db, provider):
+def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(db, provider, 'derived_memory_used',
+    query = query_metric_db(appliance.db, provider, 'derived_memory_used',
         host_name)
 
     for record in query:
@@ -247,9 +247,9 @@ def test_raw_metric_host_memory(metrics_collection, db, provider):
 
 @pytest.mark.uncollectif(
     lambda provider: provider.category == 'cloud')
-def test_raw_metric_host_network(metrics_collection, db, provider):
+def test_raw_metric_host_network(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(db, provider, 'net_usage_rate_average',
+    query = query_metric_db(appliance.db, provider, 'net_usage_rate_average',
         host_name)
 
     for record in query:
@@ -264,9 +264,9 @@ def test_raw_metric_host_network(metrics_collection, db, provider):
     blockers=[BZ(1424589, forced_streams=["5.6", "5.7"],
         unblock=lambda provider: provider.type != 'rhevm')]
 )
-def test_raw_metric_host_disk(metrics_collection, db, provider):
+def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(db, provider, 'disk_usage_rate_average',
+    query = query_metric_db(appliance.db, provider, 'disk_usage_rate_average',
         host_name)
 
     for record in query:
