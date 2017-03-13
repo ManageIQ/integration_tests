@@ -7,6 +7,7 @@
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme import BaseLoggedInPage
 from cfme.fixtures import pytest_selenium as sel
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
@@ -14,17 +15,27 @@ from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as 
     paginator, match_location
 from utils.pretty import Pretty
 from utils.wait import wait_for
+from widgetastic_manageiq import TimelinesView
 
 
 details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
+mon_btn = partial(tb.select, 'Monitoring')
 match_page = partial(match_location, controller='ems_cluster',
                      title='Clusters')
 
 # todo: since Cluster always requires provider, it will use only one way to get to Cluster Detail's
 # page. But we need to fix this in the future.
+
+
+class InfraClusterTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Clusters'] and \
+            super(TimelinesView, self).is_displayed
 
 
 class Cluster(Pretty, Navigatable):
@@ -135,6 +146,15 @@ class Details(CFMENavigateStep):
 
     def am_i_here(self):
         return match_page(summary="{} (Summary)".format(self.obj.name))
+
+
+@navigator.register(Cluster, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = InfraClusterTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
 
 
 @navigator.register(Cluster, 'DetailsFromProvider')

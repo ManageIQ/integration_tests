@@ -3,163 +3,109 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
+
+from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
-from cfme.web_ui import InfoBlock, toolbar, jstimelines
-from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
-from utils import testgen
-from utils import version
+from cfme.web_ui import InfoBlock
+from utils import version, testgen
+from utils.appliance.implementations.ui import navigate_to
+from utils.generators import random_vm_name
 from utils.log import logger
 from utils.wait import wait_for
-from selenium.common.exceptions import NoSuchElementException
-from utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [pytest.mark.tier(2)]
-
-
-@pytest.fixture(scope="module")
-def delete_fx_provider_event(db, provider):
-    logger.debug("Deleting timeline events for provider name %s", provider.name)
-    ems = db['ext_management_systems']
-    ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
-    ems_events = db[ems_events_table_name]
-    with db.transaction:
-        providers = (
-            db.session.query(ems_events.id)
-            .join(ems, ems_events.ems_id == ems.id)
-            .filter(ems.name == provider.name)
-        )
-        db.session.query(ems_events).filter(ems_events.id.in_(providers.subquery())).delete(False)
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [VMwareProvider, RHEVMProvider])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytestmark = [pytest.mark.tier(2),
+              pytest.mark.usefixtures("setup_provider_modscope")]
+pytest_generate_tests = testgen.generate([InfraProvider], scope='module')
 
 
 @pytest.fixture(scope="module")
-def vm_name():
-    # We have to use "tt" here to avoid name truncating in the timelines view
-    return "test_tt_" + fauxfactory.gen_alphanumeric(length=4)
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
-@pytest.fixture(scope="module")
-def test_vm(request, provider, vm_name, setup_provider_modscope):
-    """Fixture to provision appliance to the provider being tested if necessary"""
-    navigate_to(InfraProvider, 'All')
-    vm = VM.factory(vm_name, provider)
+def test_vm(request, provider):
+    vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
 
     request.addfinalizer(vm.delete_from_provider)
 
-    if not provider.mgmt.does_vm_exist(vm_name):
-        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        vm.refresh_relationships()
+    if not provider.mgmt.does_vm_exist(vm.name):
+        logger.info("deploying %s on provider %s", vm.name, provider.key)
+        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     return vm
 
 
 @pytest.fixture(scope="module")
-def gen_events(delete_fx_provider_event, provider, test_vm):
+def gen_events(test_vm):
     logger.debug('Starting, stopping VM')
-    mgmt = provider.mgmt
+    mgmt = test_vm.provider.mgmt
     mgmt.stop_vm(test_vm.name)
     mgmt.start_vm(test_vm.name)
 
 
-def count_events(vm, nav_step):
-    try:
-        nav_step()
-    except ToolbarOptionGreyedOrUnavailable:
-        return 0
-    except NoSuchElementException:
-        vm.rediscover()
-        return 0
+def count_events(target, vm):
+    timelines_view = navigate_to(target, 'Timelines')
+    timelines_view.filter.time_position.select_by_visible_text('centered')
+    timelines_view.filter.apply.click()
+    found_events = []
+    for evt in timelines_view.chart.get_events():
+        if not hasattr(evt, 'source_vm'):
+            # BZ(1428797)
+            logger.warn("event {evt} doesn't have source_vm field. Probably issue".format(evt=evt))
+            continue
+        elif evt.source_vm == vm.name:
+            found_events.append(evt)
 
-    events = []
-    for event in jstimelines.events():
-        data = event.block_info()
-        if vm.name in data.values():
-            events.append(event)
-            if len(events) > 0:
-                return len(events)
-    return 0
+    logger.info("found events: {evt}".format(evt="\n".join([repr(e) for e in found_events])))
+    return len(found_events)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
-@pytest.mark.meta(blockers=[1264183, 1281746])
-def test_provider_event(provider, gen_events, test_vm):
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_provider_event(gen_events, test_vm):
     """Tests provider event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    def nav_step():
-        navigate_to(provider, 'Details')
 
-        toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_vm, nav_step], timeout='5m', fail_condition=0,
+    wait_for(count_events, [test_vm.provider, test_vm], timeout='5m', fail_condition=0,
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
-@pytest.mark.meta(blockers=[1281746])
-def test_host_event(provider, gen_events, test_vm):
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_host_event(gen_events, test_vm):
     """Tests host event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    def nav_step():
-        test_vm.load_details()
-        pytest.sel.click(InfoBlock.element('Relationships', 'Host'))
-        toolbar.select('Monitoring', 'Timelines')
-
-    wait_for(count_events, [test_vm, nav_step], timeout='10m', fail_condition=0,
+    test_vm.load_details()
+    host_name = InfoBlock.text('Relationships', 'Host')
+    host = Host(name=host_name, provider=test_vm.provider)
+    wait_for(count_events, [host, test_vm], timeout='10m', fail_condition=0,
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
-@pytest.mark.meta(blockers=[1281746])
-def test_vm_event(provider, gen_events, test_vm):
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_vm_event(gen_events, test_vm):
     """Tests vm event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    def nav_step():
-        test_vm.load_details()
-        toolbar.select('Monitoring', 'Timelines')
 
-    wait_for(count_events, [test_vm, nav_step], timeout='3m', fail_condition=0,
+    wait_for(count_events, [test_vm, test_vm], timeout='3m', fail_condition=0,
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
-@pytest.mark.meta(blockers=[1281746])
-def test_cluster_event(provider, gen_events, test_vm):
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_cluster_event(gen_events, test_vm):
     """Tests cluster event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    def nav_step():
-        # fixme: sometimes get_clusters doesn't return all found clusters
-        # fixme: this try/except statement tries to avoid this
-        all_clusters = []
-        try:
-            all_clusters = provider.get_clusters()
-            cluster = [cl for cl in all_clusters if cl.id == test_vm.cluster_id][-1]
-            navigate_to(cluster, 'Details')
-            toolbar.select('Monitoring', 'Timelines')
-        except IndexError:
-            logger.error("the following clusters were "
-                         "found for provider {p}: {cl} ".format(p=provider.name, cl=all_clusters))
-    wait_for(count_events, [test_vm, nav_step], timeout='5m',
+    all_clusters = test_vm.provider.get_clusters()
+    cluster = next(cl for cl in all_clusters if cl.id == test_vm.cluster_id)
+    wait_for(count_events, [cluster, test_vm], timeout='5m',
              fail_condition=0, message="events to appear")
 
 

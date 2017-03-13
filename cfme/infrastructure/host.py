@@ -31,6 +31,7 @@ from utils import deferred_verpick, version
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
+from widgetastic_manageiq import TimelinesView
 
 from cfme.common import PolicyProfileAssignable
 
@@ -88,9 +89,20 @@ cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
 lif_btn = partial(tb.select, 'Lifecycle')
+mon_btn = partial(tb.select, 'Monitoring')
+
 
 match_page = partial(match_location, controller='host',
                      title='Hosts')
+
+
+class InfraHostTimelinesView(TimelinesView, cfme.BaseLoggedInPage):
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', '/host'] and \
+            super(TimelinesView, self).is_displayed
 
 
 class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
@@ -498,6 +510,15 @@ class Provision(CFMENavigateStep):
 
     def step(self):
         lif_btn('Provision this item')
+
+
+@navigator.register(Host, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = InfraHostTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
 
 
 @fill.method((Form, Host.Credential))

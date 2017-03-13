@@ -3,6 +3,7 @@ import re
 from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
+from lxml.html import document_fromstring
 from math import ceil
 from wait_for import wait_for
 
@@ -16,8 +17,8 @@ from widgetastic.widget import (
     Widget,
     View,
     Select,
-    Text,
     TextInput,
+    Text,
     Checkbox,
     ParametrizedView,
     WidgetDescriptor,
@@ -25,7 +26,8 @@ from widgetastic.widget import (
 from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
+    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
+    Dropdown)
 from cached_property import cached_property
 
 
@@ -1333,3 +1335,170 @@ class AlertEmail(View):
 
     def read(self):
         return list(self.all_emails)
+
+
+class TimelinesZoomSlider(View):
+    """This control represents Timeline's Zoom Slider
+
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+    zoom_in_button = Text(locator='//button[@id="timeline-pf-zoom-in"]')  # "+" button
+    zoom_out_button = Text(locator='//button[@id="timeline-pf-zoom-out"]')  # "-" button
+
+    def __init__(self, parent, locator, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    @property
+    def value(self):
+        return float(self.browser.get_attribute('value', self))
+
+    @cached_property
+    def max(self):
+        return float(self.browser.get_attribute('max', self))
+
+    @cached_property
+    def min(self):
+        return float(self.browser.get_attribute('min', self))
+
+    def zoom_in(self):
+        self.zoom_in_button.click()
+
+    def zoom_out(self):
+        self.zoom_out_button.click()
+
+    def zoom_max(self):
+        while self.value < self.max:
+            self.zoom_in()
+
+    def zoom_min(self):
+        while self.value > self.min:
+            self.zoom_out()
+
+    def read(self):
+        return self.value
+
+
+class TimelinesFilter(View):
+    """represents Filter Part of Timelines view
+
+    """
+    # common
+    event_type = BootstrapSelect(id='tl_show')
+    event_category = BootstrapSelect(id='tl_category_management')
+    time_period = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+    time_range = BootstrapSelect(id='tl_range')
+    time_position = BootstrapSelect(id='tl_timepivot')
+    # todo: implement correct switch between management/policy views when switchable views done
+    apply = Text(locator='.//div[contains(@class, "timeline-apply")]')
+    # management controls
+    detailed_events = Checkbox(name='showDetailedEvents')
+    # policy controls
+    policy_event_category = BootstrapSelect(id='tl_category_policy')
+    policy_event_status = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+
+
+class TimelinesChart(View):
+    """represents Chart part of Timelines View
+
+    # currently only event collection is available
+    # todo: to add widgets for all controls and add chart objects interaction functionality
+    """
+    ROOT = '//div[contains(@class, "timeline-container")]'
+    CATEGORIES = './/*[name()="g" and contains(@class, "timeline-pf-labels")]' \
+                 '//*[name()="text" and @class="timeline-pf-label"]'
+
+    EVENTS = '(.//*[name()="g" and contains(@class, "timeline-pf-drops-container")]/*[name()="g" ' \
+             'and @class="timeline-pf-drop-line"])[{pos}]/*[name()="text" ' \
+             'and contains(@class, "timeline-pf-drop")]'
+
+    legend = Table(locator='//div[@id="legend"]/table')
+    zoom = TimelinesZoomSlider(locator='//input[@id="timeline-pf-slider"]')
+
+    class TimelinesEvent(object):
+        def __repr__(self):
+            attrs = [attr for attr in self.__dict__.keys() if not attr.startswith('_')]
+            params = ", ".join(["{}={}".format(attr, getattr(self, attr)) for attr in attrs])
+            return "TimelinesEvent({})".format(params)
+
+    def __init__(self, parent, logger=None):
+        super(TimelinesChart, self).__init__(parent=parent, logger=logger)
+
+    def get_categories(self, *categories):
+        br = self.browser
+        prepared_categories = []
+        for num, element in enumerate(br.elements(self.CATEGORIES), start=1):
+            # categories have number of events inside them
+            mo = re.search('^(.*?)(\s\(\s*\d+\s*\)\s*)*$', br.text(element))
+            category_name = mo.groups()[0]
+
+            if len(categories) == 0 or (len(categories) > 0 and category_name in categories):
+                prepared_categories.append((num, category_name))
+        return prepared_categories
+
+    def _is_group(self, evt):
+        return 'timeline-pf-event-group' in self.browser.classes(evt)
+
+    def _prepare_event(self, evt, category):
+        node = document_fromstring(evt)
+        # lxml doesn't replace <br> with \n in this case. so this has to be done by us
+        for br in node.xpath("*//br"):
+            br.tail = "\n" + br.tail if br.tail else "\n"
+
+        # parsing event and preparing its attributes
+        event = self.TimelinesEvent()
+        for line in node.text_content().split('\n'):
+            attr_name, attr_val = re.search('^(.*?):(.*)$', line).groups()
+            attr_name = attr_name.strip().lower().replace(' ', '_')
+            setattr(event, attr_name, attr_val.strip())
+        event.category = category
+        return event
+
+    def _click_group(self, group):
+        self.browser.execute_script("""jQuery.fn.art_click = function () {
+                                    this.each(function (i, e) {
+                                    var evt = new MouseEvent("click");
+                                    e.dispatchEvent(evt);
+                                    });};
+                                    $(arguments[0]).art_click();""", group)
+
+    def get_events(self, *categories):
+        got_categories = self.get_categories(*categories)
+        events = []
+        for category in got_categories:
+            cat_position, cat_name = category
+            # obtaining events for each category
+            for raw_event in self.browser.elements(self.EVENTS.format(pos=cat_position)):
+                if not self._is_group(raw_event):
+                    # if ordinary event
+                    event_text = self.browser.get_attribute('data-content', raw_event)
+                    events.append(self._prepare_event(event_text, cat_name))
+                else:
+                    # if event group
+                    # todo: compare old table with new one if any issues
+                    self.legend.clear_cache()
+                    self._click_group(raw_event)
+                    self.legend.wait_displayed()
+                    for row in self.legend.rows():
+                        event_text = self.browser.get_attribute('innerHTML', row['Event'])
+                        events.append(self._prepare_event(event_text, cat_name))
+        return events
+
+
+class TimelinesView(View):
+    """represents Timelines page
+    """
+    title = Text(locator='//h1')
+    breadcrumb = BreadCrumb()
+
+    @View.nested
+    class filter(TimelinesFilter):  # NOQA
+        pass
+
+    @View.nested
+    class chart(TimelinesChart):  # NOQA
+        pass
+
+    @property
+    def is_displayed(self):
+        return self.title.text == 'Timelines'

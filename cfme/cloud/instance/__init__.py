@@ -4,6 +4,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
+from cfme import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.exceptions import (
     InstanceNotFound, OptionNotAvailable, DestinationNotFound,
@@ -18,12 +19,14 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from utils.wait import wait_for
 from utils.log import logger
+from widgetastic_manageiq import TimelinesView
 
 
 cfg_btn = partial(tb.select, 'Configuration')
 pwr_btn = partial(tb.select, 'Power')
 life_btn = partial(tb.select, 'Lifecycle')
 pol_btn = partial(tb.select, 'Policy')
+mon_btn = partial(tb.select, 'Monitoring')
 
 tree_inst_by_prov = partial(accordion.tree, "Instances by Provider")
 tree_instances = partial(accordion.tree, "Instances")
@@ -61,6 +64,14 @@ def details_page_check(name, provider):
         except BlockTypeUnknown:
             # Default to false since we can't identify which provider the image belongs to
             return False
+
+
+class CloudInstanceTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Instances'] and \
+            super(TimelinesView, self).is_displayed
 
 
 @VM.register_for_provider_type("cloud")
@@ -487,3 +498,12 @@ class InstanceRemoveFloatingIP(CFMENavigateStep):
             cfg_btn('Disassociate a Floating IP from this Instance')
         else:
             raise DestinationNotFound('Floating IP assignment not available for appliance version')
+
+
+@navigator.register(Instance, 'Timelines')
+class InstanceTimelines(CFMENavigateStep):
+    VIEW = CloudInstanceTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        mon_btn('Timelines')
