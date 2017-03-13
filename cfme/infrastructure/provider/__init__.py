@@ -28,7 +28,6 @@ from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, deferred_verpick, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.varmeth import variable
@@ -185,7 +184,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
                                            '5.5.0.8': 'host_storages'})
         """ Returns the providers number of templates, as shown on the Details page."""
 
-        results = list(cfmedb().engine.execute(
+        results = list(self.appliance.db.engine.execute(
             'SELECT DISTINCT storages.name, hosts.ems_id '
             'FROM ext_management_systems, hosts, storages, {} '
             'WHERE hosts.id={}.host_id AND '
@@ -211,9 +210,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @num_host.variant('db')
     def num_host_db(self):
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        hosts = cfmedb()["hosts"]
-        hostlist = list(cfmedb().session.query(hosts.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        hosts = self.appliance.db["hosts"]
+        hostlist = list(self.appliance.db.session.query(hosts.name)
                         .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
                         .filter(ext_management_systems.name == self.name))
         return len(hostlist)
@@ -246,9 +245,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
     @num_cluster.variant('db')
     def num_cluster_db(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        clusters = cfmedb()["ems_clusters"]
-        clulist = list(cfmedb().session.query(clusters.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        clusters = self.appliance.db["ems_clusters"]
+        clulist = list(self.appliance.db.session.query(clusters.name)
                        .join(ext_management_systems,
                              clusters.ems_id == ext_management_systems.id)
                        .filter(ext_management_systems.name == self.name))

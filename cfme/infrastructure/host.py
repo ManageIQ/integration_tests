@@ -22,7 +22,6 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
-from utils.db_queries import get_host_id
 from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
@@ -327,7 +326,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     @property
     def get_db_id(self):
         if self.db_id is None:
-            self.db_id = get_host_id(self.name)
+            self.db_id = self.appliance.get_host_id(self.name)
             return self.db_id
         else:
             return self.db_id

@@ -25,7 +25,7 @@ from sentaku import ImplementationContext
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import conf, datafile, db, db_queries, ssh, ports
+from utils import conf, datafile, db, ssh, ports
 from utils.datafile import load_data_file
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
@@ -1880,7 +1880,35 @@ class IPAppliance(object):
             server id, server zone id)``
         """
         try:
-            return db_queries.get_configuration_details(self.db)
+            SEQ_FACT = 1e12
+            miq_servers = self.db['miq_servers']
+            for region in self.db.session.query(self.db['miq_regions']):
+                reg_min = region.region * SEQ_FACT
+                reg_max = reg_min + SEQ_FACT
+                all_servers = self.db.session.query(miq_servers).all()
+                server = None
+                if len(all_servers) == 1:
+                    # If there's only one server, it's the one we want
+                    server = all_servers[0]
+                else:
+                    # Otherwise, filter based on id and ip address
+                    def server_filter(server):
+                        return all([
+                            server.id >= reg_min,
+                            server.id < reg_max,
+                            # XXX: This currently fails due to public/private addresses on openstack
+                            server.ipaddress == self.db.hostname
+                        ])
+                    servers = filter(server_filter, all_servers)
+                    if servers:
+                        server = servers[0]
+                if server:
+                    return region.region, server.name, server.id, server.zone_id
+                else:
+                    return None, None, None, None
+            else:
+                return None
+
         except KeyError:
             return None
 
@@ -1919,11 +1947,28 @@ class IPAppliance(object):
 
     @cached_property
     def zone_description(self):
-        return db_queries.get_zone_description(self.server_zone_id(), db=self.db)
+        zone_id = self.server_zone_id()
+        zones = list(
+            self.db.session.query(self.db["zones"]).filter(
+                self.db["zones"].id == zone_id
+            )
+        )
+        if zones:
+            return zones[0].description
+        else:
+            return None
 
     @cached_property
     def host_id(self, hostname):
-        return db_queries.get_host_id(hostname, db=self.db)
+        hosts = list(
+            self.db.session.query(self.db["hosts"]).filter(
+                self.db["hosts"].name == hostname
+            )
+        )
+        if hosts:
+            return str(hosts[0].id)
+        else:
+            return None
 
     @cached_property
     def is_storage_enabled(self):
@@ -2023,6 +2068,15 @@ class IPAppliance(object):
             self.start_evm_service()
             self.wait_for_evm_service()
             self.wait_for_web_ui()
+
+    def check_domain_enabled(self, domain):
+        namespaces = self.db["miq_ae_namespaces"]
+        q = self.db.session.query(namespaces).filter(
+            namespaces.parent_id == None, namespaces.name == domain)  # NOQA (for is/==)
+        try:
+            return list(q)[0].enabled
+        except IndexError:
+            raise KeyError("No such Domain: {}".format(domain))
 
     def configure_appliance_for_openldap_ext_auth(self, appliance_fqdn):
         """This method changes the /etc/sssd/sssd.conf and /etc/openldap/ldap.conf files to set

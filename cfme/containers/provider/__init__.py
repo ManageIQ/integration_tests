@@ -13,7 +13,6 @@ from utils import deferred_verpick, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.browser import ensure_browser_open
-from utils.db import cfmedb
 from utils.pretty import Pretty
 from utils.varmeth import variable
 
@@ -193,7 +192,7 @@ class ContainersProvider(BaseProvider, Pretty):
     @variable(alias='db')
     def num_container(self):
         # Containers are linked to providers through container definitions and then through pods
-        res = cfmedb().engine.execute(
+        res = self.appliance.db.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, container_groups, container_definitions, containers "
             "WHERE containers.container_definition_id=container_definitions.id "

@@ -450,7 +450,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         """
         wait_for(
             lambda: self.exists,
-            num_sec=timeout, delay=30, fail_func=sel.refresh, fail_condition=True)
+            num_sec=timeout, delay=30, fail_func=sel.refresh, fail_condition=True,
+            message="wait for vm to not exist")
 
     wait_for_delete = wait_to_disappear  # An alias for more fitting verbosity
 
@@ -461,7 +462,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             timeout: time (in seconds) to wait for it to appear
             from_details: when found, should it load the vm details
         """
-        wait_for(lambda: self.exists, num_sec=timeout, delay=30, fail_func=sel.refresh)
+        wait_for(
+            lambda: self.exists,
+            num_sec=timeout, delay=30, fail_func=sel.refresh,
+            message="wait for vm to appear")
         if load_details:
             self.load_details()
 

@@ -11,7 +11,6 @@ from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version, deferred_verpick
-from utils.db import cfmedb
 from utils.units import Unit
 from utils.varmeth import variable
 
@@ -136,10 +135,10 @@ class Taggable(object):
         self.load_details(refresh=True)
         if not self.db_id or not self.taggable_type:
             raise KeyError("'db_id' and/or 'taggable_type' not set")
-        t_cls1 = aliased(cfmedb()['classifications'])
-        t_cls2 = aliased(cfmedb()['classifications'])
-        t_tgg = aliased(cfmedb()['taggings'])
-        query = cfmedb().session.query(t_cls1.tag_id, t_tgg.taggable_id.label('db_id'),
+        t_cls1 = aliased(self.appliance.db['classifications'])
+        t_cls2 = aliased(self.appliance.db['classifications'])
+        t_tgg = aliased(self.appliance.db['taggings'])
+        query = self.appliance.db.session.query(t_cls1.tag_id, t_tgg.taggable_id.label('db_id'),
                                        t_cls2.description.label('category'),
                                        t_cls1.description.label('tag_name'), t_cls1.single_value)\
             .join(t_cls2, t_cls1.parent_id == t_cls2.id)\
