@@ -37,8 +37,6 @@ match type.
 import logging
 import pytest
 
-from fixtures.pytest_store import store
-from utils.events import EventListener
 from utils.log import setup_logger
 from utils.wait import wait_for, TimedOutError
 
@@ -48,24 +46,12 @@ logger = setup_logger(logging.getLogger('events'))
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_setup(item):
-    if "register_event" in item.funcargnames:
-        appliance = item.funcargs["appliance"]
-        event_listener = appliance.EventListener()
-        event_listener.reset_events()
-        event_listener.start()
-        event_listener.set_last_record()
-        store.event_listener = event_listener
-    yield
-
-
-@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
     try:
         yield
     finally:
         if "register_event" in item.funcargnames:
-            event_listener = store.event_listener
+            event_listener = item.funcargs["register_event"]
             soft_assert = item.funcargs["soft_assert"]
 
             try:
@@ -81,16 +67,6 @@ def pytest_runtest_call(item):
                                 "Event {} did not come!".format(event['event']))
             else:
                 logger.info('Seems like all events have arrived!')
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_teardown(item):
-    if "register_event" in item.funcargnames:
-        event_listener = store.event_listener
-        event_listener.stop()
-        event_listener.reset_events()
-        store.event_listener = None
-    yield
 
 
 @pytest.yield_fixture(scope="function")
@@ -118,4 +94,11 @@ def register_event(request, uses_event_listener, soft_assert, appliance):
             register_event(event)
 
     """
-    return store.event_listener  # Run the test and provide the plugin as a fixture
+    event_listener = appliance.event_listener()
+    event_listener.reset_events()
+    event_listener.start()
+    event_listener.set_last_record()
+    yield event_listener
+
+    event_listener.stop()
+    event_listener.reset_events()
