@@ -1,10 +1,10 @@
 import pytest
 
-from cfme.containers.node import NodeCollection, Node
-from utils import testgen, version
-from cfme.web_ui import CheckboxTable, toolbar as tb
-from utils.appliance.implementations.ui import navigate_to
+from cfme.containers.node import Node, NodeCollection
 from cfme.containers.provider import ContainersProvider
+from cfme.web_ui import CheckboxTable, toolbar as tb
+from utils import testgen, version
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
