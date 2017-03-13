@@ -52,20 +52,30 @@ class FormButton(Pretty):
     def alt_expr(self, dimmed=False):
         if self._partial:
             if self._ng_click is None:
-                return "(contains(normalize-space(@alt), {}))".format(
-                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
+                return (
+                    "(contains(normalize-space(@alt), {alt}) or "
+                    "contains(normalize-space(text()), {alt}))".format(
+                        alt=quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt)))
             else:
-                return "(contains(normalize-space(@alt), {}) or @ng-click={})".format(
-                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt),
-                    quoteattr(self._ng_click))
+                return (
+                    "(contains(normalize-space(@alt), {alt}) or "
+                    "@ng-click={click} or "
+                    "contains(normalize-space(text()), {alt}))".format(
+                        alt=quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt),
+                        click=quoteattr(self._ng_click)))
         else:
             if self._ng_click is None:
-                return "(normalize-space(@alt)={})".format(
-                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
+                return (
+                    "(normalize-space(@alt)={alt} or "
+                    "normalize-space(text())={alt})".format(
+                        alt=quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt)))
             else:
-                return "(normalize-space(@alt)={} or @ng-click={})".format(
-                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt),
-                    quoteattr(self._ng_click))
+                return (
+                    "(normalize-space(@alt)={alt} or "
+                    "@ng-click={click} or "
+                    "normalize-space(text())={alt})".format(
+                        alt=quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt),
+                        click=quoteattr(self._ng_click)))
 
     def _format_generator(self, dimmed=False, include_dimmed_alt=False):
         """Generates a dict that will be passed to the formatting strings."""
