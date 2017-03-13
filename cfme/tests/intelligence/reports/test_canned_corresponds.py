@@ -164,7 +164,9 @@ def test_datastores_summary(soft_assert):
     assert len(storages_in_db) == len(list(report.data.rows))
     for store in storages_in_db:
 
-        number_of_vms = adb.session.query(vms.id).filter(vms.storage_id == store.id).count()
+        number_of_vms = adb.session.query(vms.id).filter(
+            vms.storage_id == store.id).filter(
+                vms.template == 'f').count()
         number_of_hosts = adb.session.query(host_storages.host_id).filter(
             host_storages.storage_id == store.id).count()
 
