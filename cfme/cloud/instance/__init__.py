@@ -481,7 +481,7 @@ class InstanceAddFloatingIP(CFMENavigateStep):
     # No am_i_here because the page only indicates name and not provider
 
     def step(self):
-        if version.current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Associate a Floating IP with this Instance')
         else:
             raise DestinationNotFound('Floating IP assignment not available for appliance version')
@@ -494,7 +494,7 @@ class InstanceRemoveFloatingIP(CFMENavigateStep):
     # No am_i_here because the page only indicates name and not provider
 
     def step(self):
-        if version.current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Disassociate a Floating IP from this Instance')
         else:
             raise DestinationNotFound('Floating IP assignment not available for appliance version')

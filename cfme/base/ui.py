@@ -689,7 +689,7 @@ class RegionDiagnosticsReplication(CFMENavigateStep):
         return False
 
     def step(self):
-        if version.current_version() < '5.7':
+        if self.obj.appliance.version < '5.7':
             self.prerequisite_view.replication.select()
         else:
             raise DestinationNotFound('Replication destination is absent in 5.7')
