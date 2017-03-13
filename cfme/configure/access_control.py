@@ -2,7 +2,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme import Credential
+from cfme.base.credentials import Credential
 from cfme.exceptions import CandidateNotFound, OptionNotAvailable
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb

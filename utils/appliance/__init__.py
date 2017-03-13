@@ -177,7 +177,8 @@ class IPAppliance(object):
 
     @property
     def user(self):
-        from cfme.configure.access_control import User, Credential
+        from cfme.configure.access_control import User
+        from cfme.base.credentials import Credential
         if self._user is None:
             # Admin by default
             username = conf.credentials['default']['username']

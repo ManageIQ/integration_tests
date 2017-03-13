@@ -6,7 +6,7 @@ import fauxfactory
 import pytest
 import re
 
-from cfme import Credential
+from cfme.base.credentials import Credential
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu

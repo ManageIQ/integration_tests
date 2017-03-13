@@ -4,6 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 
 import cfme
+import cfme.base.credentials
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.tabstrip as tabs
@@ -87,7 +88,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
                 'url_text': kwargs.get('url'),
                 'ssl_checkbox': kwargs.get('ssl')}
 
-    class Credential(cfme.Credential, Updateable):
+    class Credential(cfme.base.credentials.Credential, Updateable):
         pass
 
     def _submit(self, cancel, submit_button):
@@ -250,7 +251,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             name=data['name'],
             url=data['url'],
             ssl=data['ssl'],
-            credentials=cls.Credential(
+            credentials=cfme.base.credentials.Credential(
                 principal=creds['username'], secret=creds['password']),
             key=key)
 
