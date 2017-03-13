@@ -22,7 +22,7 @@ pytest_generate_tests = testgen.generate(
 
 def test_rc_selector(provider):
     """ This test verifies the data integrity for the
-        rs selector table
+        rc selector table
     """
 
     navigate_to(Replicator, 'All')
