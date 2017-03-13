@@ -1,8 +1,6 @@
 from functools import partial
 from random import sample
 
-import pytest
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.provider import BaseProvider
@@ -330,9 +328,8 @@ class ContainersTestItem(object):
         """
         self.obj = obj
         self.polarion_id = polarion_id
-        pytest.mark.polarion(self.polarion_id)(self)
 
-    def __repr__(self):
+    def pretty_id(self):
         return '{} ({})'.format(self.obj.__name__, self.polarion_id)
 
 

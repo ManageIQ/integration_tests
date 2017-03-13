@@ -20,11 +20,11 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    ContainersTestItem(ContainersProvider, 'CMP-9924'),
-    ContainersTestItem(Project, 'CMP-9925'),
-    ContainersTestItem(Route, 'CMP-9926'),
-    ContainersTestItem(Service, 'CMP-9927'),
-    ContainersTestItem(Replicator, 'CMP-9928')
+    pytest.mark.polarion('CMP-9924')(ContainersTestItem(ContainersProvider, 'CMP-9924')),
+    pytest.mark.polarion('CMP-9925')(ContainersTestItem(Project, 'CMP-9925')),
+    pytest.mark.polarion('CMP-9926')(ContainersTestItem(Route, 'CMP-9926')),
+    pytest.mark.polarion('CMP-9927')(ContainersTestItem(Service, 'CMP-9927')),
+    pytest.mark.polarion('CMP-9928')(ContainersTestItem(Replicator, 'CMP-9928'))
 ]
 
 
@@ -32,7 +32,8 @@ TEST_ITEMS = [
     BZ(1392413, unblock=lambda test_item: test_item.obj != ContainersProvider),
     BZ(1409360, unblock=lambda test_item: test_item.obj != ContainersProvider)
 ])
-@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=TEST_ITEMS)
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_tables_sort(test_item):
 
     pytest.skip('This test is currently skipped due to an issue in the testing framework:'

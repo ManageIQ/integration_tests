@@ -32,93 +32,103 @@ class TestItem(ContainersTestItem):
 
 
 TEST_ITEMS = [
-    TestItem(Container, [
-        'name',
-        'state',
-        'last_state',
-        'restart_count',
-        'backing_ref_container_id',
-        'privileged',
-        'selinux_level'
-    ], 'CMP-9945'),
-    TestItem(Project, [
-        'name',
-        'creation_timestamp',
-        'resource_version',
-    ], 'CMP-10430'),
-    TestItem(Route, [
-        'name',
-        'creation_timestamp',
-        'resource_version',
-        'host_name'
-    ], 'CMP-9877'),
-    TestItem(Pod, [
-        'name',
-        'phase',
-        'creation_timestamp',
-        'resource_version',
-        'restart_policy',
-        'dns_policy',
-        'ip_address'
-    ], 'CMP-9911'),
-    TestItem(Node, [
-        'name',
-        'creation_timestamp',
-        'resource_version',
-        'number_of_cpu_cores',
-        'memory',
-        'max_pods_capacity',
-        'system_bios_uuid',
-        'machine_id',
-        'infrastructure_machine_id',
-        'runtime_version',
-        'kubelet_version',
-        'proxy_version',
-        'operating_system_distribution',
-        'kernel_version',
-    ], 'CMP-9960'),
-    TestItem(Image, {
-        version.LOWEST:
-            [
-                'name',
-                'tag',
-                'image_id',
-                'full_name'
-            ],
-        '5.7':
-            [
-                'name',
-                'tag',
-                'image_id',
-                'full_name',
-                'architecture',
-                'author',
-                'entrypoint',
-                'docker_version',
-                'exposed_ports',
-                'size'
-            ]
-    }, 'CMP-9978'),
-    TestItem(Service, [
-        'name',
-        'creation_timestamp',
-        'resource_version',
-        'session_affinity',
-        'type',
-        'portal_ip'
-    ], 'CMP-9890'),
-    TestItem(ImageRegistry, [
-        'host'
-    ], 'CMP-9988'),
-    TestItem(Template, [
-        'name',
-        'creation_timestamp',
-        'resource_version',
-    ], 'CMP-10316')
+    pytest.mark.polarion('CMP-9945')(
+        TestItem(Container, [
+            'name',
+            'state',
+            'last_state',
+            'restart_count',
+            'backing_ref_container_id',
+            'privileged',
+            'selinux_level'
+        ], 'CMP-9945')),
+    pytest.mark.polarion('CMP-10430')(
+        TestItem(Project, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+        ], 'CMP-10430')),
+    pytest.mark.polarion('CMP-9877')(
+        TestItem(Route, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            'host_name'
+        ], 'CMP-9877')),
+    pytest.mark.polarion('CMP-9911')(
+        TestItem(Pod, [
+            'name',
+            'phase',
+            'creation_timestamp',
+            'resource_version',
+            'restart_policy',
+            'dns_policy',
+            'ip_address'
+        ], 'CMP-9911')),
+    pytest.mark.polarion('CMP-9960')(
+        TestItem(Node, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            'number_of_cpu_cores',
+            'memory',
+            'max_pods_capacity',
+            'system_bios_uuid',
+            'machine_id',
+            'infrastructure_machine_id',
+            'runtime_version',
+            'kubelet_version',
+            'proxy_version',
+            'operating_system_distribution',
+            'kernel_version',
+        ], 'CMP-9960')),
+    pytest.mark.polarion('CMP-9978')(
+        TestItem(Image, {
+            version.LOWEST:
+                [
+                    'name',
+                    'tag',
+                    'image_id',
+                    'full_name'
+                ],
+            '5.7':
+                [
+                    'name',
+                    'tag',
+                    'image_id',
+                    'full_name',
+                    'architecture',
+                    'author',
+                    'entrypoint',
+                    'docker_version',
+                    'exposed_ports',
+                    'size'
+                ]
+        }, 'CMP-9978')),
+    pytest.mark.polarion('CMP-9890')(
+        TestItem(Service, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            'session_affinity',
+            'type',
+            'portal_ip'
+        ], 'CMP-9890')),
+    pytest.mark.polarion('CMP-9988')(
+        TestItem(ImageRegistry, [
+            'host'
+        ], 'CMP-9988')),
+    pytest.mark.polarion('CMP-10316')(
+        TestItem(Template, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+        ], 'CMP-10316'))
 ]
 
 
-@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=TEST_ITEMS)
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_properties(provider, test_item, soft_assert):
 
     if current_version() < "5.7" and test_item.obj == Template:

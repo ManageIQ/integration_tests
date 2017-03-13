@@ -29,42 +29,43 @@ class TestItem(ContainersTestItem):
 
 
 TEST_ITEMS = [
-    TestItem(ContainersProvider, [
+    pytest.mark.polarion('CMP-9859')(TestItem(ContainersProvider, [
         'hostname', 'port', 'type'
-    ], 'CMP-9859'),
-    TestItem(Route, [
+    ], 'CMP-9859')),
+    pytest.mark.polarion('CMP-9875')(TestItem(Route, [
         'provider', 'project_name'
-    ], 'CMP-9875'),
-    TestItem(Container, [
+    ], 'CMP-9875')),
+    pytest.mark.polarion('CMP-9943')(TestItem(Container, [
         'pod_name', 'image', 'state'
-    ], 'CMP-9943'),
-    TestItem(Pod, [
+    ], 'CMP-9943')),
+    pytest.mark.polarion('CMP-9909')(TestItem(Pod, [
         'provider', 'project_name', 'ready', 'containers',
         'phase', 'restart_policy', 'dns_policy'
-    ], 'CMP-9909'),
-    TestItem(Service, [
+    ], 'CMP-9909')),
+    pytest.mark.polarion('CMP-9889')(TestItem(Service, [
         'provider', 'project_name', 'type', 'portal_ip', 'session_affinity', 'pods'
-    ], 'CMP-9889'),
-    TestItem(Node, [
+    ], 'CMP-9889')),
+    pytest.mark.polarion('CMP-9967')(TestItem(Node, [
         'provider', 'ready', 'operating_system', 'kernel_version', 'runtime_version'
-    ], 'CMP-9967'),
-    TestItem(Replicator, [
+    ], 'CMP-9967')),
+    pytest.mark.polarion('CMP-9920')(TestItem(Replicator, [
         'provider', 'project_name', 'replicas', 'current_replicas'
-    ], 'CMP-9920'),
-    TestItem(Image, [
+    ], 'CMP-9920')),
+    pytest.mark.polarion('CMP-9975')(TestItem(Image, [
         'provider', 'tag', 'id', 'image_registry'
-    ], 'CMP-9975'),
-    TestItem(ImageRegistry, [
+    ], 'CMP-9975')),
+    pytest.mark.polarion('CMP-9985')(TestItem(ImageRegistry, [
         'port', 'provider'
-    ], 'CMP-9985'),
-    TestItem(Project, [
+    ], 'CMP-9985')),
+    pytest.mark.polarion('CMP-9886')(TestItem(Project, [
         'provider', 'container_routes', 'container_services',
         'container_replicators', 'pods', 'containers', 'images'
-    ], 'CMP-9886')
+    ], 'CMP-9886'))
 ]
 
 
-@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=TEST_ITEMS)
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert):
 
     navigate_to(test_item.obj, 'All')

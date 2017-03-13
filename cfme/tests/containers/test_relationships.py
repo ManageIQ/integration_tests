@@ -26,16 +26,16 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    ContainersTestItem(ContainersProvider, 'CMP-9851'),
-    ContainersTestItem(Container, 'CMP-9947'),
-    ContainersTestItem(Pod, 'CMP-9929'),
-    ContainersTestItem(Service, 'CMP-10564'),
-    ContainersTestItem(Node, 'CMP-9962'),
-    ContainersTestItem(Replicator, 'CMP-10565'),
-    ContainersTestItem(Image, 'CMP-9980'),
-    ContainersTestItem(ImageRegistry, 'CMP-9994'),
-    ContainersTestItem(Project, 'CMP-9868'),
-    ContainersTestItem(Template, 'CMP-10319')
+    pytest.mark.polarion('CMP-9851')(ContainersTestItem(ContainersProvider, 'CMP-9851')),
+    pytest.mark.polarion('CMP-9947')(ContainersTestItem(Container, 'CMP-9947')),
+    pytest.mark.polarion('CMP-9929')(ContainersTestItem(Pod, 'CMP-9929')),
+    pytest.mark.polarion('CMP-10564')(ContainersTestItem(Service, 'CMP-10564')),
+    pytest.mark.polarion('CMP-9962')(ContainersTestItem(Node, 'CMP-9962')),
+    pytest.mark.polarion('CMP-10565')(ContainersTestItem(Replicator, 'CMP-10565')),
+    pytest.mark.polarion('CMP-9980')(ContainersTestItem(Image, 'CMP-9980')),
+    pytest.mark.polarion('CMP-9994')(ContainersTestItem(ImageRegistry, 'CMP-9994')),
+    pytest.mark.polarion('CMP-9868')(ContainersTestItem(Project, 'CMP-9868')),
+    pytest.mark.polarion('CMP-10319')(ContainersTestItem(Template, 'CMP-10319'))
 ]
 
 
@@ -60,7 +60,8 @@ def check_relationships(instance):
         assert '(Summary)' in summary_title()
 
 
-@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=TEST_ITEMS)
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
 def test_relationships_tables(provider, test_item):
     """This test verifies the integrity of the Relationships table.
     clicking on each field in the Relationships table takes the user
