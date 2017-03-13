@@ -36,4 +36,4 @@ def test_cockpit_button_access(provider, soft_assert):
             tb.exists(
                 'Open a new browser window with Cockpit for this '
                 'VM.  This requires that Cockpit is pre-configured on the VM.'),
-            'Cockpit "Web Console" button is not found on details page.'.format(name))
+            'Cockpit "Web Console" button {} is not found on details page.'.format(name))
