@@ -6,8 +6,6 @@ import yaml
 from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
 from utils import testgen
-from utils.appliance import get_or_create_current_appliance
-from utils.events import EventBuilder
 from utils.generators import random_vm_name
 
 

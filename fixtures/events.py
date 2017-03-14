@@ -8,23 +8,22 @@ at the test end.
 register_event fixture accepts one or several expected events.
 
 simple example:
-    from utils.events import EventBuilder
-    event = EventBuilder().new_event(target_type = 'VmOrTemplate',
-                                     target_name = vm_crud.name,
-                                     event_type = 'vm_create')
+    event = appliance.event_listener().new_event(target_type = 'VmOrTemplate',
+                                                 target_name = vm_crud.name,
+                                                 event_type = 'vm_create')
     register_event(event)
+
 more complex example:
 
-    from utils.events import EventBuilder
-    builder = EventBuilder()
+    listener = appliance.event_listener()
     fd_regexp = '^\s*resourceId:.*?{nsg}.*?^\s*status:.*?^\s*value:\s*{stat}.*?^' \
                 '\s*subStatus:.*?^\s*value:\s*{sstat}'
     add_cmp = lambda _, y: bool(re.search(fd_regexp.format(nsg=nsg_name, stat='Accepted',
                                                            sstat='Created'), y, re.M | re.U | re.S))
     fd_add_attr = {'full_data': 'will be ignored',
                        'cmp_func': add_cmp}
-    add_event = builder.new_event(fd_add_attr, source='AZURE',
-                                      event_type='networkSecurityGroups_write_EndRequest')
+    add_event = listener.new_event(fd_add_attr, source='AZURE',
+                                   event_type='networkSecurityGroups_write_EndRequest')
     register_event(add_event)
 
 Expected events are defined by set of event attributes which should match to the same event
@@ -87,10 +86,10 @@ def register_event(request, uses_event_listener, soft_assert, appliance):
 
     Usage:
 
-        def test_something(foo, bar, register_event):
-            event = EventBuilder().new_event(target_type = 'VmOrTemplate',
-                                             target_name = vm_crud.name,
-                                             event_type = 'vm_create')
+        def test_something(foo, bar, register_event, appliance):
+            event = appliance.event_listener().new_event(target_type = 'VmOrTemplate',
+                                                         target_name = vm.name,
+                                                         event_type = 'vm_create')
             register_event(event)
 
     """

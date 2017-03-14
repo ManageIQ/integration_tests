@@ -11,9 +11,7 @@ from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import flash, jstimelines
 from utils import ports, testgen
-from utils.appliance import get_or_create_current_appliance
 from utils.conf import credentials
-from utils.events import EventBuilder
 from utils.log import logger
 from utils.net import net_check
 from utils.ssh import SSHClient
@@ -198,7 +196,7 @@ def snmp():
 
 @pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
-        vm_name, vm_crud, provider, request, smtp_test, register_event):
+        vm_name, vm_crud, provider, request, smtp_test, appliance, register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
     Metadata:
@@ -216,8 +214,8 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     provider.refresh_provider_relationships()
 
     # preparing events to listen to
-    builder = EventBuilder(get_or_create_current_appliance())
-    base_evt = partial(builder.new_event, target_type='VmOrTemplate', target_name=vm_name)
+    listener = appliance.event_listener()
+    base_evt = partial(listener.new_event, target_type='VmOrTemplate', target_name=vm_name)
     register_event(base_evt(event_type='request_vm_poweroff'), base_evt(event_type='vm_poweoff'))
 
     vm_crud.wait_for_vm_state_change(vm_crud.STATE_OFF)

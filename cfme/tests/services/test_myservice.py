@@ -10,9 +10,7 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.web_ui import toolbar as tb
 from utils import browser, testgen, version
-from utils.appliance import get_or_create_current_appliance
 from utils.browser import ensure_browser_open
-from utils.events import EventBuilder
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -64,15 +62,15 @@ def myservice(setup_provider, provider, catalog_item, request):
     cleanup_vm(vm_name, provider)
 
 
-def test_retire_service(provider, myservice, register_event):
+def test_retire_service(provider, myservice, register_event, appliance):
     """Tests my service
 
     Metadata:
         test_flag: provision
     """
-    builder = EventBuilder(get_or_create_current_appliance())
-    event = builder.new_event(target_type='Service', target_name=myservice.service_name,
-                              event_type='service_retired')
+    listener = appliance.event_listener()
+    event = listener.new_event(target_type='Service', target_name=myservice.service_name,
+                               event_type='service_retired')
     register_event(event)
     myservice.retire()
 

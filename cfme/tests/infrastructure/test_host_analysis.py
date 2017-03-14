@@ -9,8 +9,6 @@ from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
 from utils import conf, testgen, version
-from utils.appliance import get_or_create_current_appliance
-from utils.events import EventBuilder
 from utils.update import update
 from utils.wait import wait_for
 
@@ -58,7 +56,7 @@ def get_host_data_by_name(provider_key, host_name):
 @pytest.mark.uncollectif(
     lambda provider: version.current_version() == version.UPSTREAM and provider.type == 'rhevm')
 def test_run_host_analysis(request, setup_provider, provider, host_type, host_name, register_event,
-                           soft_assert, bug):
+                           soft_assert, bug, appliance):
     """ Run host SmartState analysis
 
     Metadata:
@@ -83,8 +81,8 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
                 test_host.credentials = host.Host.Credential(
                     principal="", secret="", verify_secret="")
 
-    builder = EventBuilder(get_or_create_current_appliance())
-    base_evt = partial(builder.new_event, target_type='Host', target_name=host_name)
+    listener = appliance.event_listener()
+    base_evt = partial(listener.new_event, target_type='Host', target_name=host_name)
 
     register_event(base_evt(event_type='request_host_scan'),
                    base_evt(event_type='host_scan_complete'))

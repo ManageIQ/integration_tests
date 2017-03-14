@@ -8,8 +8,6 @@ from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.control.explorer.actions import Action
 from utils import testgen
-from utils.appliance import get_or_create_current_appliance
-from utils.events import EventBuilder
 from utils.wait import wait_for
 
 
@@ -36,7 +34,7 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
 
 
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
-def test_vm_create(request, vm_crud, provider, register_event):
+def test_vm_create(request, vm_crud, provider, appliance, register_event):
     """ Test whether vm_create_complete event is emitted.
 
     Prerequisities:
@@ -74,9 +72,9 @@ def test_vm_create(request, vm_crud, provider, register_event):
     provider.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: provider.unassign_policy_profiles(profile.description))
 
-    event = EventBuilder(get_or_create_current_appliance()).new_event(target_type='VmOrTemplate',
-                                     target_name=vm_crud.name,
-                                     event_type='vm_create')
+    event = appliance.event_listener().new_event(target_type='VmOrTemplate',
+                                                 target_name=vm_crud.name,
+                                                 event_type='vm_create')
     register_event(event)
 
     vm_crud.create_on_provider()
