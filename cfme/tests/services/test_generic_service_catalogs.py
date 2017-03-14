@@ -28,7 +28,7 @@ pytestmark = [
 def catalog_item(dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
+                  description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog)
     catalog_item.create()
     yield catalog_item
@@ -37,18 +37,18 @@ def catalog_item(dialog, catalog):
 def test_delete_catalog_deletes_service(dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
+                  description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog)
     catalog_item.create()
     catalog.delete()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog, catalog_item.name)
     with error.expected(NoSuchElementException):
         service_catalogs.order()
 
 
 def test_delete_catalog_item_deletes_service(catalog_item):
     catalog_item.delete()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     with error.expected(NoSuchElementException):
         service_catalogs.order()
 
@@ -74,7 +74,7 @@ def test_service_generic_catalog_bundle(catalog_item):
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
-    service_catalogs = ServiceCatalogs(bundle_name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, bundle_name)
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
@@ -102,7 +102,7 @@ def test_bundles_in_bundle(catalog_item):
     third_catalog_bundle = CatalogBundle(name=third_bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     third_catalog_bundle.create([bundle_name, sec_bundle_name])
-    service_catalogs = ServiceCatalogs(third_bundle_name)
+    service_catalogs = ServiceCatalogs(third_catalog_bundle.catalog, third_bundle_name)
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
@@ -118,17 +118,11 @@ def test_bundles_in_bundle(catalog_item):
         assert row.last_message.text == 'Request complete'
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:7277'])
 def test_delete_dialog_before_parent_item(catalog_item):
-    service_dialog = ServiceDialog(label=catalog_item.dialog)
+    service_dialog = ServiceDialog(label=catalog_item.dialog.label)
     service_dialog.delete()
-    message = version.pick({'5.6': (("Dialog \"{}\": Error during delete: Dialog cannot be " +
-                            "deleted because it is connected to other components.").
-                            format(catalog_item.dialog)),
-                            '5.5': (("Dialog \"{}\": Error during 'destroy': Dialog cannot be " +
-                            "deleted because it is connected to other components.").
-                            format(catalog_item.dialog))})
-    flash.assert_message_match(message)
+    flash.assert_message_match(('Dialog \"{}\": Error during delete: Dialog cannot be'
+        ' deleted because it is connected to other components.').format(catalog_item.dialog.label))
 
 
 class TestServiceCatalogViaREST(object):

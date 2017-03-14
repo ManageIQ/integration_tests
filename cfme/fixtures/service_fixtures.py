@@ -8,7 +8,7 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
@@ -23,7 +23,7 @@ def dialog():
                      tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
                      box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
     service_dialog.create(element_data)
-    return dialog
+    yield service_dialog
 
 
 @pytest.yield_fixture(scope="function")
