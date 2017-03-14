@@ -25,11 +25,10 @@ def setup_or_skip_provider(request, provider):
     yield
 
 
-
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
 @test_requirements.report
-def test_providers_summary(soft_assert, setup_a_provider):
+def test_providers_summary(soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
     path = ["Configuration Management", "Providers", "Providers Summary"]
@@ -63,7 +62,7 @@ def test_providers_summary(soft_assert, setup_a_provider):
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
 @test_requirements.report
-def test_cluster_relationships(soft_assert, setup_a_provider):
+def test_cluster_relationships(soft_assert):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)
     for relation in report.data.rows:
@@ -145,7 +144,7 @@ def test_operations_vm_on(soft_assert):
 
 @pytest.mark.tier(3)
 @test_requirements.report
-@pytest.mark.usefixtures('setup_or_skip_provider')
+@pytest.mark.usefixtures('setup_provider')
 def test_datastores_summary(soft_assert):
 
     appliance = get_or_create_current_appliance()
