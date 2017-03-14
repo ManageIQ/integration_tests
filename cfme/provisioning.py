@@ -15,27 +15,13 @@ from utils import version
 from utils import normalize_text
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for
 
 submit_button = form_buttons.FormButton("Submit")
 
 
 def select_security_group(sg):
-    """Workaround for select box that is immediately replaced by the same
-       select box no matter what selenium clicks on (but works fine
-       manually).  For now only selects one item even though it's a
-       multiselect.
-
-    """
-    val = sel.get_attribute(
-        "//select[@id='environment__security_groups']/option[normalize-space(.)='{}']".format(sg),
-        'value')
-    if current_version() < "5.4":
-        sel.browser().execute_script(
-            "$j('#environment__security_groups').val('%s');"
-            "$j.ajax({type: 'POST', url: '/miq_request/prov_field_changed/new',"
-            " data: {'environment__security_groups':'%s'}})" % (val, val))
+    """TODO: Not even sure this is needed any more, but removal of it is not part of this PR"""
     sel.wait_for_ajax()
     sel.sleep(1)
 

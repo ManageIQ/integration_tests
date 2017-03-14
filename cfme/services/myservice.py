@@ -214,7 +214,7 @@ class MyServiceAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Services', 'My Services')
 
     def resetter(self, *args, **kwargs):
-        if version.current_version() < '5.7':
+        if self.obj.appliance.version < '5.7':
             my_service_tree().click_path('All Services')
         tb.refresh()
 
