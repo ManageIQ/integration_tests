@@ -23,6 +23,7 @@ on_exit () {
     git checkout origin/master
     log "Running pip update..."
     run_pip_update
+    log "#*"
     if [ -n "$POST_TASK" ]; then
         [ $RES -eq 0 ] || [ $RES -eq 5 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
         log "Posting result..."
@@ -33,7 +34,6 @@ on_exit () {
         log "Destroying appliance..."
         run_n_log "scripts/clone_template.py --provider $PROVIDER --vm_name $VM_NAME --destroy"
     fi
-    log "#*"
 }
 
 # Tries to run the given command n times - exits if not successful
@@ -64,9 +64,9 @@ do_or_die () {
 # Runs pip update - optionally can make use of wheelhouse
 run_pip_update () {
     if [ -n "$WHEEL_HOST_URL" ]; then
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements/dev.txt --no-cache-dir"
     else
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements/dev.txt --no-cache-dir"
     fi
 }
 
