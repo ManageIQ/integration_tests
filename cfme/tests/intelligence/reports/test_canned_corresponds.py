@@ -8,6 +8,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
 from utils.providers import get_crud_by_name
 from utils.appliance import get_or_create_current_appliance
+from fixtures.provider import setup_or_skip
 from utils import version, testgen
 from cfme import test_requirements
 
@@ -15,16 +16,14 @@ provider_props = partial(details_page.infoblock.text, "Properties")
 
 pytest_generate_tests = testgen.generate(classes=[InfraProvider], scope='module')
 
-pytestmark = [pytest.mark.usefixtures('setup_provider')]
+# pytestmark = [pytest.mark.usefixtures('setup_provider')]
 
-'''
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    try:
-        _setup_a_provider(filters=[ProviderFilter(classes=[InfraProvider])])
-    except Exception:
-        pytest.skip("It's not possible to set up any providers, therefore skipping")
-'''
+
+@pytest.yield_fixture(scope="module")
+def setup_or_skip_provider(request, provider):
+    setup_or_skip(request, provider)
+    yield
+
 
 
 @pytest.mark.tier(3)
@@ -146,7 +145,7 @@ def test_operations_vm_on(soft_assert):
 
 @pytest.mark.tier(3)
 @test_requirements.report
-@pytest.mark.usefixtures('infra_provider')
+@pytest.mark.usefixtures('setup_or_skip_provider')
 def test_datastores_summary(soft_assert):
 
     appliance = get_or_create_current_appliance()
