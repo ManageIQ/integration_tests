@@ -141,6 +141,7 @@ class Datastore(Pretty, Navigatable):
         sel.click(details_page.infoblock.element("Relationships", "Hosts"))
         for q in Quadicon.all('host'):
             fill(q.checkbox(), True)
+        # TODO: This should really be an attr on the datastore called DELETE_BTN or something
         path = version.pick({
             version.LOWEST: "Remove Hosts from the VMDB",
             "5.4": "Remove items from the VMDB"})
@@ -186,7 +187,7 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        if version.current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             accordion.tree('Datastores', 'All Datastores')
         else:
             # todo: there is unsupported accordion in 5.6.3.3. currently it isn't necessary

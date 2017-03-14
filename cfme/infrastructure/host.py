@@ -222,7 +222,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() >= '5.7':
+        if self.appliance.version >= '5.7':
             btn_name = "Remove item"
         else:
             btn_name = "Remove from the VMDB"

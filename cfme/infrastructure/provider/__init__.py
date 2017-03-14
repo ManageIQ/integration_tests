@@ -25,7 +25,7 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, deferred_verpick, version
+from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
@@ -148,14 +148,8 @@ class InfraProvider(Pretty, CloudInfraProvider):
     quad_name = "infra_prov"
     _properties_region = prop_region  # This will get resolved in common to a real form
     db_types = ["InfraManager"]
-    add_provider_button = deferred_verpick({
-        version.LOWEST: form_buttons.FormButton("Add this Infrastructure Provider"),
-        '5.6': form_buttons.add
-    })
-    save_button = deferred_verpick({
-        version.LOWEST: form_buttons.save,
-        '5.6': form_buttons.angular_save
-    })
+    add_provider_button = form_buttons.add
+    save_button = form_buttons.angular_save
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None,
@@ -220,12 +214,8 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @num_host.variant('ui')
     def num_host_ui(self):
-        if version.current_version() < "5.6":
-            host_src = "host.png"
-            node_src = "node.png"
-        else:
-            host_src = "host-"
-            node_src = "node-"
+        host_src = "host-"
+        node_src = "node-"
 
         try:
             num = int(self.get_detail("Relationships", host_src, use_icon=True))
@@ -256,10 +246,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @num_cluster.variant('ui')
     def num_cluster_ui(self):
-        if version.current_version() < "5.6":
-            return int(self.get_detail("Relationships", "cluster.png", use_icon=True))
-        else:
-            return int(self.get_detail("Relationships", "cluster-", use_icon=True))
+        return int(self.get_detail("Relationships", "cluster-", use_icon=True))
 
     def discover(self):
         """
