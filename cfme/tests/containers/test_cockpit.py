@@ -2,7 +2,7 @@ import pytest
 
 from cfme.containers.node import Node, NodeCollection
 from cfme.containers.provider import ContainersProvider
-from cfme.web_ui import CheckboxTable, toolbar as tb
+from cfme.web_ui import toolbar as tb
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 
@@ -23,11 +23,9 @@ def test_cockpit_button_access(provider, soft_assert):
 
     """
 
-    navigate_to(NodeCollection, 'All')
-    tb.select('List View')
+    view = navigate_to(NodeCollection, 'All')
 
-    list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-    names = [r.name.text for r in list_tbl.rows()]
+    names = [r.name.text for r in view.nodes]
 
     for name in names:
         obj = Node(name, provider)
