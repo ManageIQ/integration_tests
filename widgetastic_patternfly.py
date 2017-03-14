@@ -1116,11 +1116,16 @@ class Dropdown(Widget):
             self.browser.click(self)
 
     def close(self, ignore_nonpresent=False):
+        """Close the dropdown
+
+        Args:
+            ignore_nonpresent: Will ignore exceptions due to disabled or missing dropdown
+        """
         try:
             self._verify_enabled()
             if self.is_open:
                 self.browser.click(self)
-        except NoSuchElementException:
+        except (NoSuchElementException, DropdownDisabled):
             if not ignore_nonpresent:
                 raise
 
