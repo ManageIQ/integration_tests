@@ -43,8 +43,9 @@ def send_message_to_bot(msg):
 #    message_type = docker_conf['gh_message_type']
     params = pika.URLParameters(url)
     params.socket_timeout = 5
-    connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
+    connection = None
     try:
+        connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
         channel = connection.channel()
         message = {"channel": irc_channel, "body": msg}
         channel.basic_publish(exchange='', routing_key=queue,
@@ -53,7 +54,8 @@ def send_message_to_bot(msg):
         output = traceback.format_exc()
         logger.warn("Exception while sending a message to the bot: {}".format(output))
     finally:
-        connection.close()
+        if connection:
+            connection.close()
 
 
 def perform_request(url):
