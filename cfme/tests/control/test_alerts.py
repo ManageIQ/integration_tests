@@ -195,7 +195,6 @@ def snmp(ssh_client_modscope):
     ssh_client_modscope.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
-@pytest.mark.meta(blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         vm_name, vm_crud, provider, request, smtp_test, register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
