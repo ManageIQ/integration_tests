@@ -56,10 +56,10 @@ def enable_candu():
         set_server_roles(**original_roles)
 
 
-@pytest.yield_fixture
+@pytest.yield_fixture(scope="module")
 def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()
-    setup_or_skip(provider)
+    setup_or_skip(request, provider)
     yield
     BaseProvider.clear_providers()
 
