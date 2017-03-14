@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """This module tests only cloud specific events"""
 import pytest
-import re
+import yaml
 
 from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
@@ -29,18 +29,20 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
     # registering add/remove network security group events
     # we need to check raw data by regexps, since many azure events aren't parsed by CFME yet
     builder = EventBuilder(get_or_create_current_appliance())
-    fd_regexp = '^\s*resourceId:.*?{nsg}.*?^\s*status:.*?^\s*value:\s*{stat}.*?^' \
-                '\s*subStatus:.*?^\s*value:\s*{sstat}'
 
     def add_cmp(_, y):
-        bool(re.search(fd_regexp.format(nsg=nsg_name, stat='Accepted',
-                                        sstat='Created'), y, re.M | re.U | re.S))
+        data = yaml.load(y)
+        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Accepted' and \
+            data['subStatus']['value'] == 'Created'
+
     fd_add_attr = {'full_data': 'will be ignored',
                    'cmp_func': add_cmp}
 
     def rm_cmp(_, y):
-        bool(re.search(fd_regexp.format(nsg=nsg_name, stat='Succeeded',
-                                        sstat=' '), y, re.M | re.U | re.S))
+        data = yaml.load(y)
+        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded' \
+            and bool(data['subStatus']['value'])
+
     fd_rm_attr = {'full_data': 'will be ignored',
                   'cmp_func': rm_cmp}
 
@@ -75,10 +77,12 @@ def test_vm_capture(request, provider, setup_provider, register_event):
 
     # register event
     builder = EventBuilder(get_or_create_current_appliance())
-    capt_regexp = '^\s*resourceId:.*?{}.*?^\s*status:.*?^\s*value:\s*Succeeded'.format(vm.name)
+
+    def cmp_function(_, y):
+        data = yaml.load(y)
+        return data['resourceId'].endswith(vm.name) and data['status']['value'] == 'Succeeded'
     full_data_attr = {'full_data': 'will be ignored',
-                      'cmp_func': lambda _, y: bool(re.search(capt_regexp, y,
-                                                              re.M | re.U | re.S))}
+                      'cmp_func': cmp_function}
 
     generalize_event = builder.new_event(full_data_attr, source='AZURE',
                                          event_type='virtualMachines_generalize_EndRequest')
