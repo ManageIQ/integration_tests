@@ -181,6 +181,10 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     matchers = [re.compile(text, re.IGNORECASE) for text in texts]
 
     for provider_key in providers:
+        # check for cleanup boolean
+        if not cfme_data['management_systems'][provider_key].get('cleanup', False):
+            print('Skipping {}, cleanup set to false in yaml'.format(provider_key))
+            continue
         ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress', None)
         if ipaddress and not net.is_pingable(ipaddress):
             continue
