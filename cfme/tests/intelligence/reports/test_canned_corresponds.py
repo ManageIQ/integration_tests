@@ -8,21 +8,12 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
 from utils.providers import get_crud_by_name
 from utils.appliance import get_or_create_current_appliance
-from fixtures.provider import setup_or_skip
 from utils import version, testgen
 from cfme import test_requirements
 
 provider_props = partial(details_page.infoblock.text, "Properties")
 
 pytest_generate_tests = testgen.generate(classes=[InfraProvider], scope='module')
-
-# pytestmark = [pytest.mark.usefixtures('setup_provider')]
-
-
-@pytest.yield_fixture(scope="module")
-def setup_or_skip_provider(request, provider):
-    setup_or_skip(request, provider)
-    yield
 
 
 @pytest.mark.tier(3)
