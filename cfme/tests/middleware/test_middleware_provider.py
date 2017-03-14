@@ -109,7 +109,10 @@ def test_required_fields_validation(provider, soft_assert):
 @pytest.mark.usefixtures('setup_provider')
 def test_duplicite_provider_creation(provider):
     """Tests that creation of already existing provider fails."""
-    with error.expected('Host Name has already been taken'):
+    message = 'Name has already been taken, Host Name has already been taken'
+    if current_version() >= '5.8':
+        message = 'Name has already been taken, Host Name has to be unique per provider type'
+    with error.expected(message):
         provider.create(cancel=False, validate_credentials=True)
 # TODO - this checks only hostname err msgs, we need two providers to check name err msg as well
 
