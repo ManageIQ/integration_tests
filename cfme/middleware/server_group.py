@@ -7,9 +7,8 @@ from cfme.middleware.provider import parse_properties
 from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
-from utils.db import cfmedb
 from utils.varmeth import variable
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
 from cfme.middleware.domain import MiddlewareDomain
@@ -21,9 +20,9 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 def _db_select_query(domain, name=None, feed=None):
     """column order: `id`, `name`, `feed`, `profile`,
     `domain_name`, `ems_ref`, `properties`"""
-    t_msgr = cfmedb()['middleware_server_groups']
-    t_md = cfmedb()['middleware_domains']
-    query = cfmedb().session.query(t_msgr.id, t_msgr.name, t_msgr.feed, t_msgr.profile,
+    t_msgr = current_appliance.db['middleware_server_groups']
+    t_md = current_appliance.db['middleware_domains']
+    query = current_appliance.db.session.query(t_msgr.id, t_msgr.name, t_msgr.feed, t_msgr.profile,
                                    t_md.name.label('domain_name'),
                                    t_msgr.ems_ref, t_msgr.properties)\
         .join(t_md, t_msgr.domain_id == t_md.id)

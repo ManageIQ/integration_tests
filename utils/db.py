@@ -289,8 +289,3 @@ class Db(Mapping):
 def database_on_server(hostname, **kwargs):
     db_obj = Db(hostname=hostname, **kwargs)
     yield db_obj
-
-
-#: :py:class:`Db` instance configured with default settings from conf yamls
-def cfmedb():
-    return store.current_appliance.db

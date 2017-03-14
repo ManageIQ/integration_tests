@@ -7,9 +7,8 @@ from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
@@ -20,9 +19,9 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 def _db_select_query(name=None, feed=None, provider=None):
     """column order: `id`, `name`, `feed`,
     `provider_name`, `ems_ref`, `properties`"""
-    t_md = cfmedb()['middleware_domains']
-    t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_md.id, t_md.name, t_md.feed,
+    t_md = current_appliance.db['middleware_domains']
+    t_ems = current_appliance.db['ext_management_systems']
+    query = current_appliance.db.session.query(t_md.id, t_md.name, t_md.feed,
                                    t_ems.name.label('provider_name'),
                                    t_md.ems_ref, t_md.properties)\
         .join(t_ems, t_md.ems_id == t_ems.id)

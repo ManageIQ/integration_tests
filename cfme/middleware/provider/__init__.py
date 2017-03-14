@@ -14,8 +14,8 @@ from cfme.web_ui import (
     CFMECheckbox, Select, flash
 )
 from utils import version
+from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -38,8 +38,8 @@ details_page = Region(infoblock_type='detail')
 
 def _db_select_query(name=None, type=None):
     """column order: `id`, `name`, `type`"""
-    t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_ems.id, t_ems.name, t_ems.type)
+    t_ems = current_appliance.db['ext_management_systems']
+    query = current_appliance.db.session.query(t_ems.id, t_ems.name, t_ems.type)
     if name:
         query = query.filter(t_ems.name == name)
     if type:

@@ -44,6 +44,9 @@ RECOGNIZED_BY_IP = [
     "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"]
 RECOGNIZED_BY_CREDS = ["CloudManager"]
 
+# A helper for the IDs
+SEQ_FACT = 1e12
+
 
 def _current_miqqe_version():
     """Parses MiqQE JS patch version from the patch file
@@ -1880,7 +1883,6 @@ class IPAppliance(object):
             server id, server zone id)``
         """
         try:
-            SEQ_FACT = 1e12
             miq_servers = self.db['miq_servers']
             for region in self.db.session.query(self.db['miq_regions']):
                 reg_min = region.region * SEQ_FACT
