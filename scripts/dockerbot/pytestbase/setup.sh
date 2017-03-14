@@ -13,7 +13,7 @@ run_n_log () {
 
 # Shutdown and destroy everything
 on_exit () {
-    log "Beginning shutdown proc..."
+    log "Beginning shutdown proc...#~"
     echo $RES > $ARTIFACTOR_DIR/result.txt
     if [ -z "$MASTER_AVAILABLE" ]; then
         log "cfme_tests master not available - exiting..."
@@ -33,6 +33,7 @@ on_exit () {
         log "Destroying appliance..."
         run_n_log "scripts/clone_template.py --provider $PROVIDER --vm_name $VM_NAME --destroy"
     fi
+    log "#*"
 }
 
 # Tries to run the given command n times - exits if not successful
@@ -71,6 +72,7 @@ run_pip_update () {
 
 trap on_exit EXIT
 
+log "Cloning repos #~"
 log "Downloading the credentials..."
 do_or_die "GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO $CFME_CRED_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 mkdir $CFME_REPO_DIR
@@ -122,12 +124,16 @@ cd $CFME_REPO_DIR
 git config --global user.email "me@dockerbot"
 git config --global user.name "DockerBot"
 
+log "#*"
+
+log "GPG Checking #~"
 # Get the GPG-Keys
 do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1" 5 1
 
 # die on errors
 set -e
 
+log "#*"
 # If we are given a PR number, then checkout and merge the PR, if not then just check out the branch
 # note that we DO NOT merge.
 if [ -n "$CFME_PR" ]; then
@@ -145,16 +151,19 @@ fi
 
 # If specified, update PIP
 if [ -n "$UPDATE_PIP" ]; then
+    log "Pip Update #~"
     run_pip_update
+    log "#*"
 fi
 
 # If asked, provision the appliance, and update the APPLIANCE variable
 if [ -n "$PROVIDER" ]; then
-    log "Provisioning appliance..."
+    log "Provisioning appliance... #~"
     run_n_log "scripts/clone_template.py --outfile /appliance_ip --provider $PROVIDER --template $TEMPLATE --vm_name $VM_NAME --configure"
     run_n_log "cat /appliance_ip"
     IP_ADDRESS=$(cat /appliance_ip | cut -d= -f2)
     APPLIANCE=https://$IP_ADDRESS
+    log "#*"
 fi
 export APPLIANCE=${APPLIANCE-"None"}
 log $APPLIANCE
@@ -196,7 +205,9 @@ trackerbot:
   url: $TRACKERBOT
 EOF
 
+log "Artifactor output #~"
 run_n_log "cat $CFME_REPO_DIR/conf/env.local.yaml"
+log "#*"
 
 # Remove .pyc files
 run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
