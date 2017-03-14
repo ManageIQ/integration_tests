@@ -146,6 +146,8 @@ def test_operations_vm_on(soft_assert):
 @test_requirements.report
 @pytest.mark.usefixtures('setup_provider')
 def test_datastores_summary(soft_assert):
+    """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
+    storage sizes."""
 
     appliance = get_or_create_current_appliance()
     adb = appliance.db
