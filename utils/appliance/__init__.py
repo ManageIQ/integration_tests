@@ -1960,7 +1960,6 @@ class IPAppliance(object):
         else:
             return None
 
-    @cached_property
     def host_id(self, hostname):
         hosts = list(
             self.db.session.query(self.db["hosts"]).filter(
