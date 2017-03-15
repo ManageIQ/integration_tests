@@ -1,3 +1,4 @@
+import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common import Taggable
 from cfme.exceptions import MiddlewareDomainNotFound
@@ -123,8 +124,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
         rows = provider.mgmt.inventory.list_domain()
         for row in rows:
             domains.append(MiddlewareDomain(
-                name=row.data['Local Host Name']
-                if row.data['Local Host Name'] != 'master' else 'Unnamed Domain',
+                name=re.sub(r'master\.', '', re.sub(r'%20', ' ', row.path.feed_id)),
                 feed=row.path.feed_id,
                 product=row.data['Product Name']
                 if 'Product Name' in row.data else None,
