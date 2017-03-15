@@ -45,6 +45,16 @@ def wait_for_vm_power_state(vm, resulting_state):
             resulting_state, vm.power_state))
 
 
+def vm_retired(vm):
+    vm.reload()
+    try:
+        if vm.retirement_state == 'retired':
+            return True
+    except AttributeError:
+        pass
+    return False
+
+
 def service_body(**kwargs):
     uid = fauxfactory.gen_alphanumeric(5)
     body = {
@@ -193,26 +203,29 @@ class TestServiceRESTAPI(object):
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_retire_service_now(self, rest_api, services, from_detail):
+    def test_retire_service_now(self, rest_api, service_data, from_detail):
         """Test retiring a service now.
 
         Metadata:
             test_flag: rest
         """
+        collection = rest_api.collections.services
+        service = collection.get(name=service_data['service_name'])
+        vm = rest_api.collections.vms.get(name=service_data['vm_name'])
+
         if from_detail:
-            for service in services:
-                service.action.retire()
-                assert rest_api.response.status_code == 200
+            service.action.retire()
+            assert rest_api.response.status_code == 200
         else:
-            rest_api.collections.services.action.retire(*services)
+            collection.action.retire(service)
             assert rest_api.response.status_code == 200
 
-        for service in services:
-            wait_for(
-                lambda: not rest_api.collections.services.find_by(name=service.name),
-                num_sec=600,
-                delay=10,
-            )
+        wait_for(
+            lambda: not collection.find_by(name=service.name),
+            num_sec=600,
+            delay=10,
+        )
+        wait_for(lambda: vm_retired(vm), num_sec=1000, delay=10)
 
     @pytest.mark.parametrize(
         "from_detail", [True, False],
@@ -404,7 +417,7 @@ class TestServiceRESTAPI(object):
         _action_and_check('start', 'on')
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_retire_parent_service_now(self, rest_api):
+    def test_retire_parent_service_now(self, rest_api, service_data):
         """Tests that child service is retired together with a parent service.
 
         Metadata:
@@ -412,7 +425,10 @@ class TestServiceRESTAPI(object):
         """
         collection = rest_api.collections.services
         parent = collection.action.create(service_body())[0]
-        child = collection.action.create(service_body(parent_service={'id': parent.id}))[0]
+        child = collection.get(name=service_data['service_name'])
+        vm = rest_api.collections.vms.get(name=service_data['vm_name'])
+        child.action.edit(ancestry=str(parent.id))
+        child.reload()
 
         parent.action.retire()
         assert rest_api.response.status_code == 200
@@ -421,6 +437,7 @@ class TestServiceRESTAPI(object):
             num_sec=600,
             delay=10,
         )
+        wait_for(lambda: vm_retired(vm), num_sec=1000, delay=10)
 
 
 class TestServiceDialogsRESTAPI(object):
