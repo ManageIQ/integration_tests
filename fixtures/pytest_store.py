@@ -27,7 +27,7 @@ from _pytest.terminal import TerminalReporter
 from cached_property import cached_property
 from py.io import TerminalWriter
 
-from utils import diaper, property_or_none
+from utils import diaper
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -89,51 +89,51 @@ class Store(object):
             else, the base_url from the config is returned."""
         return self.current_appliance.url
 
+    def _maybe_get_plugin(self, name):
+        """ returns the plugin if the pluginmanager is availiable and the plugin exists"""
+        return self.pluginmanager and self.pluginmanager.getplugin(name)
+
     @property
     def in_pytest_session(self):
         return self.session is not None
 
-    @property_or_none
+    @property
     def fixturemanager(self):
         # "publicize" the fixturemanager
-        return self.session._fixturemanager
+        return self.session and self.session._fixturemanager
 
-    @property_or_none
+    @property
     def capturemanager(self):
-        return self.pluginmanager.getplugin('capturemanager')
+        return self._maybe_get_plugin('capturemanager')
 
-    @property_or_none
+    @property
     def pluginmanager(self):
         # Expose this directly on the store for convenience in getting/setting plugins
-        return self.config.pluginmanager
+        return self.config and self.config.pluginmanager
 
-    @property_or_none
+    @property
     def terminalreporter(self):
         if self._terminalreporter is not None:
             return self._terminalreporter
 
-        if self.pluginmanager is not None:
-            reporter = self.pluginmanager.getplugin('terminalreporter')
-            if reporter and isinstance(reporter, TerminalReporter):
-                self._terminalreporter = reporter
-                return reporter
+        reporter = self._maybe_get_plugin('terminalreporter')
+        if reporter and isinstance(reporter, TerminalReporter):
+            self._terminalreporter = reporter
+            return reporter
 
         return FlexibleTerminalReporter(self.config)
 
-    @property_or_none
+    @property
     def terminaldistreporter(self):
-        if self.pluginmanager is not None:
-            reporter = self.pluginmanager.getplugin('terminaldistreporter')
-            if reporter:
-                return reporter
+        return self._maybe_get_plugin('terminaldistreporter')
 
-    @property_or_none
+    @property
     def parallel_session(self):
-        return self.pluginmanager.getplugin('parallel_session')
+        return self._maybe_get_plugin('parallel_session')
 
-    @property_or_none
+    @property
     def slave_manager(self):
-        return self.pluginmanager.getplugin('slave_manager')
+        return self._maybe_get_plugin('slave_manager')
 
     @cached_property
     def my_ip_address(self):
