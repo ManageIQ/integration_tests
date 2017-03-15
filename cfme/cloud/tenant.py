@@ -17,7 +17,6 @@ from cfme.web_ui import (
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for, TimedOutError
 
 create_tenant_form = Form(
@@ -68,7 +67,7 @@ class Tenant(Navigatable):
             logger.error('Timed out waiting for tenant to disappear, continuing')
 
     def delete(self, cancel=False, from_details=True, wait=True):
-        if current_version() < '5.7':
+        if self.appliance.version < '5.7':
             raise OptionNotAvailable('Cannot delete cloud tenants in CFME < 5.7')
         if from_details:
             if cancel:
@@ -151,7 +150,7 @@ class TenantAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        if current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Create Cloud Tenant')
         else:
             raise DestinationNotFound('Cannot add Cloud Tenants in CFME < 5.7')
@@ -162,7 +161,7 @@ class TenantEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        if current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Edit Cloud Tenant')
         else:
             raise DestinationNotFound('Cannot edit Cloud Tenants in CFME < 5.7')

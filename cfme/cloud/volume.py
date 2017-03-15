@@ -8,7 +8,6 @@ from cfme.exceptions import DestinationNotFound
 from cfme.web_ui import match_location, InfoBlock, PagedTable, toolbar as tb
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.version import current_version
 
 match_volumes = partial(match_location, controller='cloud_volume', title='Cloud Volumes')
 match_provider = partial(match_location, controller='ems_cloud', title='Cloud Providers')
@@ -16,13 +15,7 @@ match_provider = partial(match_location, controller='ems_cloud', title='Cloud Pr
 list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 
-def check_version():
-    if current_version() >= '5.7':
-        raise DestinationNotFound('Cloud Volumes does not exist in CFME 5.7+')
-
-
 class Volume(Navigatable):
-
     def __init__(self, name, provider, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
@@ -32,7 +25,8 @@ class Volume(Navigatable):
 @navigator.register(Volume, 'All')
 class All(CFMENavigateStep):
     def prerequisite(self):
-        check_version()
+        if self.obj.appliance.version >= '5.7':
+            raise DestinationNotFound('Cloud Volumes does not exist in CFME 5.7+')
         navigate_to(self.obj.appliance.server, 'LoggedIn')
 
     def am_i_here(self):
@@ -45,7 +39,8 @@ class All(CFMENavigateStep):
 @navigator.register(Volume, 'AllByProvider')
 class AllByProvider(CFMENavigateStep):
     def prerequisite(self):
-        check_version()
+        if self.obj.appliance.version >= '5.7':
+            raise DestinationNotFound('Cloud Volumes does not exist in CFME 5.7+')
         navigate_to(self.obj.appliance.server, 'LoggedIn')
 
     def am_i_here(self):
