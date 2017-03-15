@@ -5,6 +5,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme import BaseLoggedInPage
+import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import PagedTable, CheckboxTable, toolbar as tb, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
@@ -55,9 +56,9 @@ class AvailabilityZoneDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         tb.select('List View')
-        listview_pagetable.find_row_by_cell_on_all_pages(
+        sel.click(listview_pagetable.find_row_by_cell_on_all_pages(
             {'Name': self.obj.name,
-             'Cloud Provider': self.obj.provider.name})
+             'Cloud Provider': self.obj.provider.name}))
 
 
 @navigator.register(AvailabilityZone, 'EditTags')
