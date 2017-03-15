@@ -207,6 +207,112 @@ def test_provision_from_template_using_rest(
         num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
+def test_ec2_manual_placement_using_rest(
+        request, setup_provider, provider, vm_name, rest_api, provisioning):
+    """ Tests provisioning ec2 instance with manual placement using the REST API.
+
+    Metadata:
+        test_flag: provision
+    """
+    image_guid = rest_api.collections.templates.get(name=provisioning['image']['name']).guid
+    provider_rest = rest_api.collections.providers.get(name=provider.name)
+    security_group_name = provisioning['security_group'].split(':')[0].strip()
+    instance_type = provisioning['instance_type'].split(':')[0].strip()
+
+    flavors = rest_api.collections.flavors.find_by(name=instance_type)
+    assert len(flavors) > 0
+    flavor = None
+    for flavor in flavors:
+        if flavor.ems_id == provider_rest.id:
+            break
+    else:
+        pytest.fail("Cannot find flavour.")
+
+    provider_data = rest_api.get(provider_rest._href +
+        '?attributes=cloud_networks,cloud_subnets,security_groups')
+
+    assert len(provider_data['cloud_networks']) > 0
+    cloud_network = None
+    for cloud_network in provider_data['cloud_networks']:
+        if cloud_network['enabled']:
+            break
+    else:
+        pytest.fail("Cannot find cloud network.")
+
+    assert len(provider_data['security_groups']) > 0
+    security_group = None
+    for security_group in provider_data['security_groups']:
+        if ('cloud_network_id' in security_group and
+                security_group['cloud_network_id'] == cloud_network['id'] and
+                security_group['name'] == security_group_name):
+            break
+    else:
+        pytest.fail("Cannot find security group.")
+
+    assert len(provider_data['cloud_subnets']) > 0
+    cloud_subnet = None
+    availability_zone_id_seen = False
+    for cloud_subnet in provider_data['cloud_subnets']:
+        if 'availability_zone_id' in cloud_subnet:
+            availability_zone_id_seen = True
+            if (cloud_subnet['cloud_network_id'] == cloud_network['id'] and
+                    cloud_subnet['status'] == 'available'):
+                break
+    else:
+        pytest.fail("Cannot find cloud subnet{}.".format(
+            ", `availability_zone_id` not found" if not availability_zone_id_seen else ""))
+
+    provision_data = {
+        "version": "1.1",
+        "template_fields": {
+            "guid": image_guid
+        },
+        "vm_fields": {
+            "vm_name": vm_name,
+            "instance_type": flavor.id,
+            "request_type": "template",
+            "placement_auto": False,
+            "cloud_network": cloud_network['id'],
+            "cloud_subnet": cloud_subnet['id'],
+            "placement_availability_zone": cloud_subnet['availability_zone_id'],
+            "security_groups": security_group['id'],
+            "monitoring": "basic"
+        },
+        "requester": {
+            "user_name": "admin",
+            "owner_first_name": "Administrator",
+            "owner_last_name": "Administratorovich",
+            "owner_email": "admin@example.com",
+            "auto_approve": True,
+        },
+        "tags": {
+        },
+        "additional_values": {
+        },
+        "ems_custom_attributes": {
+        },
+        "miq_custom_attributes": {
+        }
+    }
+
+    request.addfinalizer(
+        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+
+    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    assert rest_api.response.status_code == 200
+
+    def _finished():
+        request.reload()
+        if 'error' in request.status.lower():
+            pytest.fail("Error when provisioning: `{}`".format(request.message))
+        return request.request_state.lower() in ('finished', 'provisioned')
+
+    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(
+        lambda: provider.mgmt.does_vm_exist(vm_name),
+        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
+
+
 VOLUME_METHOD = ("""
 prov = $evm.root["miq_provision"]
 prov.set_option(
