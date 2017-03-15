@@ -41,7 +41,7 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
     def rm_cmp(_, y):
         data = yaml.load(y)
         return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded' \
-            and bool(data['subStatus']['value'])
+            and len(data['subStatus']['value']) == 0
 
     fd_rm_attr = {'full_data': 'will be ignored',
                   'cmp_func': rm_cmp}
