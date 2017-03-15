@@ -13,7 +13,7 @@ from cfme.infrastructure.provider import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
 
 from utils import db, version
-from utils.appliance import provision_appliance
+from utils.appliance import provision_appliance, current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
 from utils.log import logger
@@ -92,16 +92,16 @@ def get_distributed_appliances():
     return (appl1, appl2)
 
 
-def configure_db_replication(db_address, appliance):
+def configure_db_replication(db_address):
     """Enables the sync role and configures the appliance to replicate to
        the db_address specified. Then, it waits for the UI to show the replication
        as active and the backlog as empty.
     """
     conf.set_replication_worker_host(db_address)
     flash.assert_message_contain("Configuration settings saved for CFME Server")
-    navigate_to(appliance.server, 'Server')
+    navigate_to(current_appliance.server, 'Server')
     conf.set_server_roles(database_synchronization=True)
-    navigate_to(appliance.server.zone.region, 'Replication')
+    navigate_to(current_appliance.server.zone.region, 'Replication')
     wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
              num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
     assert conf.get_replication_status()
