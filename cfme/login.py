@@ -10,7 +10,7 @@ from __future__ import absolute_import
 import time
 from selenium.webdriver.common.keys import Keys
 
-from cfme import Credential
+from cfme.base import Credential
 from utils import conf
 from utils.log import logger
 from fixtures.pytest_store import store
@@ -18,7 +18,7 @@ from fixtures.pytest_store import store
 from widgetastic.widget import Text, View
 from widgetastic_patternfly import Button, Input, FlashMessages
 
-from . import BaseLoggedInPage
+from cfme.base.workaround import BaseLoggedInPage
 
 
 class LoginPage(View):

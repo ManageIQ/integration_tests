@@ -8,7 +8,7 @@ import pytest
 
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import Credential
+from cfme.base import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, wait_for_a_provider,
     CloudProvider, prop_region)

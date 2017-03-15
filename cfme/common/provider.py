@@ -3,6 +3,7 @@ from functools import partial
 from manageiq_client.api import APIException
 
 import cfme
+import cfme.base
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
@@ -67,7 +68,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     save_button = None
     db_types = ["Providers"]
 
-    class Credential(cfme.Credential, Updateable):
+    class Credential(cfme.base.Credential, Updateable):
         """Provider credentials
 
            Args:

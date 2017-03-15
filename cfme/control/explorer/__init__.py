@@ -4,7 +4,7 @@ from widgetastic.widget import View
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_patternfly import Accordion, Dropdown
 
-from cfme import BaseLoggedInPage
+from cfme.base.workaround import BaseLoggedInPage
 from cfme.base import Server
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 

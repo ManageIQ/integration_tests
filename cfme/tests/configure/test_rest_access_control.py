@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme import Credential
+from cfme.base import Credential
 from cfme import test_requirements
 from cfme.configure.access_control import User
 from cfme.login import login, login_admin

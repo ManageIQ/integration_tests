@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from cfme import BaseLoggedInPage
+from cfme.base.workaround import BaseLoggedInPage
 
 
 class RSSView(BaseLoggedInPage):
