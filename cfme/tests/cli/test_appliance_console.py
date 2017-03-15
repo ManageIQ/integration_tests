@@ -67,7 +67,7 @@ def test_black_console_external_db(request, temp_appliance_unconfig_funcscope, a
     client = temp_appliance_unconfig_funcscope.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
-    if temp_appliance_unconfig_funcscope >= "5.8":
+    if temp_appliance_unconfig_funcscope.version >= "5.8":
         stdin.write("ap \n 5 \n 2 \n {appliance_ip} \n \n {pwd} \n \n 3 \n {appliance_ip} \n \n \n "
             "{pwd} \n {pwd} \n \n".format(appliance_ip=appliance_ip, pwd=pwd))
     else:
@@ -85,7 +85,7 @@ def test_black_console_external_db_create(request, app_creds, dedicated_db_appli
     client = temp_appliance_unconfig_funcscope.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
-    if temp_appliance_unconfig_funcscope >= "5.8":
+    if temp_appliance_unconfig_funcscope.version >= "5.8":
         stdin.write("ap \n 5 \n 1 \n 1 \n 2 \n 0 \n y \n {ip} \n \n \n {pwd} \n {pwd} \n \n"
             .format(ip=ip, pwd=pwd))
     else:
@@ -99,7 +99,10 @@ def test_black_console_extend_storage(request, fqdn_appliance):
     client = fqdn_appliance.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
-    stdin.write("ap \n 13 \n 1 \n y \n \n")
+    if fqdn_appliance.version >= "5.8":
+        stdin.write("ap \n 13 \n 1 \n y \n \n")
+    else:
+        stdin.write("ap \n 13 \n 1 \n y \n \n")
 
     def is_storage_extended(fqdn_appliance):
         return_code, output = store.current_appliance.ssh_client.run_command(
