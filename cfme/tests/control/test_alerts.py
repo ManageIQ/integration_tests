@@ -187,12 +187,12 @@ def vm_crud(provider, vm_name, full_template):
 
 # TODO Replace this with the appliance fixture once complete
 @pytest.yield_fixture(scope="module")
-def snmp(ssh_client_modscope):
-    ssh_client_modscope.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
-    ssh_client_modscope.run_command("systemctl start snmptrapd.service")
+def snmp(appliance):
+    appliance.ssh_client.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
+    appliance.ssh_client.run_command("systemctl start snmptrapd.service")
     yield
-    ssh_client_modscope.run_command("systemctl stop snmptrapd.service")
-    ssh_client_modscope.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
+    appliance.ssh_client.run_command("systemctl stop snmptrapd.service")
+    appliance.ssh_client.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
