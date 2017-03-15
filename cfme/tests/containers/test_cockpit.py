@@ -3,7 +3,7 @@ import pytest
 from cfme.containers.node import NodeCollection
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb
+from cfme.web_ui import toolbar as tb
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
@@ -29,11 +29,10 @@ def test_cockpit_button_access(provider, soft_assert):
 
     """
 
-    navigate_to(NodeCollection, 'All')
-    list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-    names = [r for r in list_tbl.rows()]
-
-    names[0].row_element.click()
+    collection = NodeCollection()
+    nodes = collection.all()
+    node = [node for node in nodes if 'master' in node.name][0]
+    navigate_to(node, 'Details')
 
     soft_assert(
         tb.exists(
