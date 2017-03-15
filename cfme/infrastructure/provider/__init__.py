@@ -9,9 +9,13 @@
 :var candu_form: A :py:class:`cfme.web_ui.Form` object describing the C&U credentials form.
 """
 from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToObject
+from widgetastic.widget import View
+from widgetastic.utils import Fillable
+from widgetastic_patternfly import Input
 from cached_property import cached_property
+from widgetastic_manageiq import PaginationPane
+from .widgetastic_views import ProviderEntities, ProviderSideBar, ProviderToolBar
 from widgetastic_manageiq import TimelinesView
 from cfme import BaseLoggedInPage
 from cfme.base.ui import Server
@@ -85,6 +89,31 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
+
+
+class InfraProviderView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                    self.navigation.currently_selected == ['Compute',
+                                                           'Infrastructure', 'Providers'],
+                    match_page(summary='Infrastructure Providers')))
+
+    @View.nested
+    class toolbar(ProviderToolBar):  # NOQA
+        pass
+
+    @View.nested
+    class sidebar(ProviderSideBar):  # NOQA
+        pass
+
+    @View.nested
+    class providers(ProviderEntities):  # NOQA
+        pass
+
+    @View.nested
+    class paginator(PaginationPane):  # NOQA
+        pass
 
 
 class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -281,6 +310,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
 @navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
+    VIEW = InfraProviderView
     prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def am_i_here(self):
