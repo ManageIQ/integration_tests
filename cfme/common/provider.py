@@ -2,7 +2,6 @@ import datetime
 from functools import partial
 from manageiq_client.api import APIException
 
-import cfme
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
