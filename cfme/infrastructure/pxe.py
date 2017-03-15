@@ -220,7 +220,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this PXE Server from the VMDB'
         else:
             btn_name = 'Remove this PXE Server'
@@ -413,7 +413,7 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this Customization Template from the VMDB'
         else:
             btn_name = 'Remove this Customization Template'
@@ -527,7 +527,7 @@ class SystemImageType(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this System Image Type from the VMDB'
         else:
             btn_name = 'Remove this System Image Type'
@@ -646,7 +646,7 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this ISO Datastore from the VMDB'
         else:
             btn_name = 'Remove this ISO Datastore'

@@ -60,7 +60,7 @@ class Timeprofile(Updateable, Navigatable):
                                      })
         if not cancel:
             sel.click(self.save_button)
-            end = "saved" if version.current_version() > '5.7' else "added"
+            end = "saved" if self.appliance.version > '5.7' else "added"
             flash.assert_success_message('Time Profile "{}" was {}'
                                          .format(self.description, end))
 
@@ -84,7 +84,7 @@ class Timeprofile(Updateable, Navigatable):
         fill(self.timeprofile_form, {'description': new_timeprofile.description,
                               'scope': new_timeprofile.scope},
              action=self.save_button)
-        end = "saved" if version.current_version() > '5.7' else "added"
+        end = "saved" if self.appliance.version > '5.7' else "added"
         flash.assert_success_message('Time Profile "{}" was {}'
                                      .format(new_timeprofile.description, end))
         return new_timeprofile

@@ -150,7 +150,7 @@ class ContainersProvider(BaseProvider, Pretty):
 
     @num_service.variant('ui')
     def num_service_ui(self):
-        if version.current_version() < "5.7":
+        if self.appliance.version < "5.7":
             name = "Services"
         else:
             name = "Container Services"
@@ -212,7 +212,7 @@ class ContainersProvider(BaseProvider, Pretty):
 
     @num_image.variant('ui')
     def num_image_ui(self):
-        if version.current_version() < "5.7":
+        if self.appliance.version < "5.7":
             name = "Images"
         else:
             name = "Container Images"
