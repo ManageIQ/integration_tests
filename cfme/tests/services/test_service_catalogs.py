@@ -31,8 +31,7 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.mark.tier(2)
-def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event,
-                            appliance):
+def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -41,10 +40,8 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
 
-    listener = appliance.event_listener()
-    event = listener.new_event(target_type='Service', target_name=catalog_item.name,
-                               event_type='service_provisioned')
-    register_event(event)
+    register_event(target_type='Service', target_name=catalog_item.name,
+                   event_type='service_provisioned')
 
     service_catalogs = ServiceCatalogs(catalog_item.name)
     service_catalogs.order()

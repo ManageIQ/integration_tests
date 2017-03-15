@@ -440,14 +440,15 @@ class EventListener(Thread):
     def check_expected_events(self):
         return all([len(event['matched_events']) for event in self.got_events])
 
-    def __call__(self, *evts, **kwargs):
+    def __call__(self, *args, **kwargs):
         """
         it is called by register_event fixture.
         bad idea, to replace register_event by object later
         """
         if 'first_event' in kwargs:
-            first_event = kwargs['first_event']
+            first_event = kwargs.pop('first_event')
         else:
             first_event = True
-        logger.info("registering events: {}".format(evts))
-        self.listen_to(*evts, callback=None, first_event=first_event)
+        evt = self.new_event(*args, **kwargs)
+        logger.info("registering event: {}".format(evt))
+        self.listen_to(evt, callback=None, first_event=first_event)

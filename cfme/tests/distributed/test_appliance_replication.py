@@ -329,7 +329,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, verify_vm_running,
-                                      register_event, soft_assert, appliance):
+                                      register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a
     VM being managed by a replication child appliance.
 
@@ -350,12 +350,11 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
 
     appl2.ipapp.browser_steal = True
 
-    listener = appliance.event_listener()
-    base_evt = partial(listener.new_event, target_type='VmOrTemplate', target_name=test_vm.name)
-
     with appl2.ipapp:
-        register_event(base_evt(event_type='vm_poweroff'),
-                       base_evt(event_type='request_vm_poweroff'))
+        register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+                       event_type='request_vm_poweroff')
+        register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+                       event_type='vm_poweroff')
 
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")

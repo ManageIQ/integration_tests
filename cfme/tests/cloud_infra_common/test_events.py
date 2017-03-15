@@ -34,7 +34,7 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
 
 
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
-def test_vm_create(request, vm_crud, provider, appliance, register_event):
+def test_vm_create(request, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.
 
     Prerequisities:
@@ -72,10 +72,7 @@ def test_vm_create(request, vm_crud, provider, appliance, register_event):
     provider.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: provider.unassign_policy_profiles(profile.description))
 
-    event = appliance.event_listener().new_event(target_type='VmOrTemplate',
-                                                 target_name=vm_crud.name,
-                                                 event_type='vm_create')
-    register_event(event)
+    register_event(target_type='VmOrTemplate', target_name=vm_crud.name, event_type='vm_create')
 
     vm_crud.create_on_provider()
     provider.refresh_provider_relationships()

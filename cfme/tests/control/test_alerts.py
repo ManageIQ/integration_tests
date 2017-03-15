@@ -196,7 +196,7 @@ def snmp():
 
 @pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
-        vm_name, vm_crud, provider, request, smtp_test, appliance, register_event):
+        vm_name, vm_crud, provider, request, smtp_test, register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
     Metadata:
@@ -214,20 +214,23 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     provider.refresh_provider_relationships()
 
     # preparing events to listen to
-    listener = appliance.event_listener()
-    base_evt = partial(listener.new_event, target_type='VmOrTemplate', target_name=vm_name)
-    register_event(base_evt(event_type='request_vm_poweroff'), base_evt(event_type='vm_poweoff'))
+    register_event(target_type='VmOrTemplate', target_name=vm_name,
+                   event_type='request_vm_poweroff')
+    register_event(target_type='VmOrTemplate', target_name=vm_name, event_type='vm_poweoff')
 
     vm_crud.wait_for_vm_state_change(vm_crud.STATE_OFF)
     for i in range(5):
         vm_crud.power_control_from_cfme(option=vm_crud.POWER_ON, cancel=False)
-        register_event(base_evt(event_type='request_vm_start'), base_evt(event_type='vm_start'))
+        register_event(target_type='VmOrTemplate', target_name=vm_name,
+                       event_type='request_vm_start')
+        register_event(target_type='VmOrTemplate', target_name=vm_name, event_type='vm_start')
 
         wait_for(lambda: provider.mgmt.is_vm_running(vm_name), num_sec=300)
         vm_crud.wait_for_vm_state_change(vm_crud.STATE_ON)
         vm_crud.power_control_from_cfme(option=vm_crud.POWER_OFF, cancel=False)
-        register_event(base_evt(event_type='request_vm_poweroff'),
-                       base_evt(event_type='vm_poweroff'))
+        register_event(target_type='VmOrTemplate', target_name=vm_name,
+                       event_type='request_vm_poweroff')
+        register_event(target_type='VmOrTemplate', target_name=vm_name, event_type='vm_poweroff')
 
         wait_for(lambda: provider.mgmt.is_vm_stopped(vm_name), num_sec=300)
         vm_crud.wait_for_vm_state_change(vm_crud.STATE_OFF)

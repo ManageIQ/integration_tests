@@ -62,16 +62,14 @@ def myservice(setup_provider, provider, catalog_item, request):
     cleanup_vm(vm_name, provider)
 
 
-def test_retire_service(provider, myservice, register_event, appliance):
+def test_retire_service(provider, myservice, register_event):
     """Tests my service
 
     Metadata:
         test_flag: provision
     """
-    listener = appliance.event_listener()
-    event = listener.new_event(target_type='Service', target_name=myservice.service_name,
-                               event_type='service_retired')
-    register_event(event)
+    register_event(target_type='Service', target_name=myservice.service_name,
+                   event_type='service_retired')
     myservice.retire()
 
 

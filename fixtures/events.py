@@ -5,17 +5,13 @@ The idea of this fixture is to pass some "expected" events to
 :py:class:`utils.events.EventListener` and check whether all expected events are received
 at the test end.
 
-register_event fixture accepts one or several expected events.
+register_event fixture accepts attributes for one expected event
 
 simple example:
-    event = appliance.event_listener().new_event(target_type = 'VmOrTemplate',
-                                                 target_name = vm_crud.name,
-                                                 event_type = 'vm_create')
-    register_event(event)
+    register_event(target_type='VmOrTemplate', target_name=vm_crud.name, event_type='vm_create')
 
 more complex example:
 
-    listener = appliance.event_listener()
     def add_cmp(_, y):
         data = yaml.load(y)
         return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Accepted' and \
@@ -24,8 +20,9 @@ more complex example:
     fd_add_attr = {'full_data': 'will be ignored',
                    'cmp_func': add_cmp}
 
-    add_event = listener.new_event(fd_add_attr, source='AZURE',
-                                   event_type='networkSecurityGroups_write_EndRequest')
+    # add network security group event
+    register_event(fd_add_attr, source='AZURE',
+                   event_type='networkSecurityGroups_write_EndRequest')
 
     def rm_cmp(_, y):
         data = yaml.load(y)
@@ -35,10 +32,9 @@ more complex example:
     fd_rm_attr = {'full_data': 'will be ignored',
                   'cmp_func': rm_cmp}
 
-    remove_event = listener.new_event(fd_rm_attr, source=provider.type.upper(),
-                                     event_type='networkSecurityGroups_delete_EndRequest')
-
-    register_event(add_event, remove_event)
+    # remove network security group event
+    register_event(fd_rm_attr, source=provider.type.upper(),
+                   event_type='networkSecurityGroups_delete_EndRequest')
 
 Expected events are defined by set of event attributes which should match to the same event
 attributes in event_streams db table except one fake attribute - target_name which is resolved into
@@ -84,7 +80,7 @@ def pytest_runtest_call(item):
 
 @pytest.yield_fixture(scope="function")
 def register_event(request, uses_event_listener, soft_assert, appliance):
-    """register_event(list of events)
+    """register_event(list of event attributes)
     Event registration fixture.
 
     This fixture is used to notify the testing system that some event
@@ -92,20 +88,17 @@ def register_event(request, uses_event_listener, soft_assert, appliance):
     It does not register anything by itself.
 
     Args:
-        event 1
+        event attribute 1
         ...
-        event N
+        event attribute N
 
     Returns: None
 
     Usage:
 
         def test_something(foo, bar, register_event, appliance):
-            event = appliance.event_listener().new_event(target_type = 'VmOrTemplate',
-                                                         target_name = vm.name,
-                                                         event_type = 'vm_create')
-            register_event(event)
-
+            register_event(target_type = 'VmOrTemplate', target_name = vm.name,
+                event_type = 'vm_create')
     """
     event_listener = appliance.event_listener()
     event_listener.reset_events()

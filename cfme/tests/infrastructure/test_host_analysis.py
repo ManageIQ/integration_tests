@@ -56,7 +56,7 @@ def get_host_data_by_name(provider_key, host_name):
 @pytest.mark.uncollectif(
     lambda provider: version.current_version() == version.UPSTREAM and provider.type == 'rhevm')
 def test_run_host_analysis(request, setup_provider, provider, host_type, host_name, register_event,
-                           soft_assert, bug, appliance):
+                           soft_assert, bug):
     """ Run host SmartState analysis
 
     Metadata:
@@ -81,11 +81,8 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
                 test_host.credentials = host.Host.Credential(
                     principal="", secret="", verify_secret="")
 
-    listener = appliance.event_listener()
-    base_evt = partial(listener.new_event, target_type='Host', target_name=host_name)
-
-    register_event(base_evt(event_type='request_host_scan'),
-                   base_evt(event_type='host_scan_complete'))
+    register_event(target_type='Host', target_name=host_name, event_type='request_host_scan')
+    register_event(target_type='Host', target_name=host_name, event_type='host_scan_complete')
 
     # Initiate analysis
     test_host.run_smartstate_analysis()
