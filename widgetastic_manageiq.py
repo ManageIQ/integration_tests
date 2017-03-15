@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from collections import namedtuple
 from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
@@ -26,8 +27,7 @@ from widgetastic.widget import (
 from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
-    Dropdown)
+    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
 from cached_property import cached_property
 
 
@@ -631,6 +631,82 @@ class Table(VanillaTable):
             self.logger.info('sort_by(%r, %r): changing the sort order', column, order)
             self.click_sort(column)
             self.logger.debug('sort_by(%r, %r): order already selected', column, order)
+
+
+class SummaryTable(VanillaTable):
+    """Table used in Provider, VM, Host, ... summaries.
+
+    Todo:
+        * Make it work properly with rowspan (that is for the My Company Tags).
+
+    Args:
+        title: Title of the table (eg. ``Properties``)
+    """
+    BASELOC = './/table[./thead/tr/th[contains(@align, "left") and normalize-space(.)={}]]'
+    Image = namedtuple('Image', ['alt', 'title', 'src'])
+
+    def __init__(self, parent, title):
+        VanillaTable.__init__(self, parent, self.BASELOC.format(quote(title)))
+
+    @property
+    def fields(self):
+        """Returns a list of the field names in the table (the left column)."""
+        return [row[0].text for row in self]
+
+    def get_field(self, field_name):
+        """Returns the table row of the field with this name.
+
+        Args:
+            field_name: Name of the field (left column)
+
+        Returns:
+            An instance of :py:class:`VanillaRow`
+        """
+        try:
+            return self.row((0, field_name))
+        except IndexError:
+            raise NameError('Could not find field with name {!r}'.format(field_name))
+
+    def get_text_of(self, field_name):
+        """Returns the text of the field with this name.
+
+        Args:
+            field_name: Name of the field (left column)
+
+        Returns:
+            :py:class:`str`
+        """
+        return self.get_field(field_name)[1].text
+
+    def get_img_of(self, field_name):
+        """Returns the information about the image in the field with this name.
+
+        Args:
+            field_name: Name of the field (left column)
+
+        Returns:
+            A 3-tuple: ``alt``, ``title``, ``src``.
+        """
+        try:
+            img_el = self.browser.element('./img', parent=self.get_field(field_name)[1])
+        except NoSuchElementException:
+            return None
+
+        return self.Image(
+            self.browser.get_attribute('alt', img_el),
+            self.browser.get_attribute('title', img_el),
+            self.browser.get_attribute('src', img_el))
+
+    def click_at(self, field_name):
+        """Clicks the field with this name.
+
+        Args:
+            field_name: Name of the field (left column)
+        """
+        return self.get_field(field_name)[1].click()
+
+    def read(self):
+        return {field: self.get_text_of(field) for field in self.fields}
 
 
 class Accordion(PFAccordion):
