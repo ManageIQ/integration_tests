@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import uuid
+import fauxfactory
 
 import pytest
-
-from manageiq_client.api import APIException
 
 import cfme.web_ui.flash as flash
 import utils.error as error
@@ -15,7 +13,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, version
 from utils.update import update
-from utils.log import logger
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
@@ -256,15 +253,11 @@ class TestProvidersRESTAPI(object):
 
         yield attrs, provider
 
-        log_warn = False
-        for attr in attrs:
-            try:
-                provider.custom_attributes.action.delete(attr)
-            except APIException:
-                # custom attributes can be deleted by tests, just log warning
-                log_warn = True
-        if log_warn:
-            logger.warning("Failed to delete custom attribute.")
+        provider.custom_attributes.reload()
+        ids = [attr.id for attr in attrs]
+        delete_attrs = [attr for attr in provider.custom_attributes if attr.id in ids]
+        if len(delete_attrs) != 0:
+            provider.custom_attributes.action.delete(*delete_attrs)
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
