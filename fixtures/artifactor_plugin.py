@@ -20,8 +20,6 @@ already been used, it will die
 
 
 """
-import sys
-
 import atexit
 from urlparse import urlparse
 

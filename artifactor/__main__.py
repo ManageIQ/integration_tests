@@ -59,5 +59,6 @@ def main():
             for line in traceback.format_tb(sys.exc_traceback):
                 f.write(line)
 
+
 if __name__ == '__main__':
     main()
