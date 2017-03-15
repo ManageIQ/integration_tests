@@ -576,12 +576,15 @@ class BootstrapSelect(Widget, ClickableMixin):
 
     Args:
         id: id of the select, that is the ``data-id`` attribute on the ``button`` tag.
+        can_hide_on_select: Whether the select can hide after selection, important for
+            :py:meth:`close` to work properly.
     """
     ROOT = ParametrizedLocator('.//button[normalize-space(@data-id)={@id|quote}]/..')
 
-    def __init__(self, parent, id, logger=None):
+    def __init__(self, parent, id, can_hide_on_select=False, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.id = id
+        self.can_hide_on_select = can_hide_on_select
 
     @property
     def is_open(self):
@@ -593,13 +596,19 @@ class BootstrapSelect(Widget, ClickableMixin):
 
     def open(self):
         if not self.is_open:
-            self.logger.debug('opened')
             self.click()
+            self.logger.debug('opened')
 
     def close(self):
-        if self.is_open:
-            self.logger.debug('closed')
-            self.click()
+        try:
+            if self.is_open:
+                self.click()
+                self.logger.debug('closed')
+        except NoSuchElementException:
+            if self.can_hide_on_select:
+                self.logger.info('While closing %r it disappeared, but ignoring.', self)
+            else:
+                raise
 
     def select_by_visible_text(self, *items):
         """Selects items in the select.
@@ -1126,7 +1135,9 @@ class Dropdown(Widget):
             if self.is_open:
                 self.browser.click(self)
         except (NoSuchElementException, DropdownDisabled):
-            if not ignore_nonpresent:
+            if ignore_nonpresent:
+                self.logger.info('%r hid so it was not possible to close it. But ignoring.', self)
+            else:
                 raise
 
     @property
