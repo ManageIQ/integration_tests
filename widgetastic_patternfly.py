@@ -93,6 +93,28 @@ class Button(Widget, ClickableMixin):
         return self.browser.get_attribute('title', self)
 
 
+class ViewChangeButton(Widget, ClickableMixin):
+    """A PatternFly/Bootstrap view selection button in CFME 56z
+
+        .. code-block:: python
+
+            ViewChangeButton(title='Grid View')
+            assert button.active
+    """
+    CHECK_VISIBILITY = True
+
+    def __init__(self, parent, title, **kwargs):
+        Widget.__init__(self, parent, logger=kwargs.pop('logger', None))
+        self.title = title
+
+    def __locator__(self):
+        return './/a[(@title={}) and i[contains(@class, "fa")]]'.format(quote(self.title))
+
+    @property
+    def active(self):
+        return 'active' in self.browser.classes(self.parent)
+
+
 class Input(TextInput):
     """Patternfly input
 
