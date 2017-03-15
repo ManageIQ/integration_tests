@@ -31,6 +31,11 @@ class TestItem(ContainersTestItem):
         self.expected_fields = expected_fields
 
 
+# The polarion markers below are used to mark the test item
+# with polarion test case ID.
+# TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
+
+
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9945')(
         TestItem(Container, [
@@ -128,7 +133,7 @@ TEST_ITEMS = [
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
+                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_properties(provider, test_item, soft_assert):
 
     if current_version() < "5.7" and test_item.obj == Template:

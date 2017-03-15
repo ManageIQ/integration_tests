@@ -1,8 +1,6 @@
 import pytest
 
-from utils import testgen
 from cfme.web_ui import PagedTable, toolbar as tb
-
 from cfme.containers.pod import Pod
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.service import Service
@@ -13,7 +11,10 @@ from cfme.containers.project import Project
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.route import Route
+
 from utils.appliance.implementations.ui import navigate_to
+from utils.log import logger
+from utils import testgen
 
 
 pytestmark = [
@@ -26,6 +27,11 @@ class TestItem(ContainersTestItem):
     def __init__(self, obj, fields_to_verify, polarion_id):
         ContainersTestItem.__init__(self, obj, polarion_id)
         self.fields_to_verify = fields_to_verify
+
+
+# The polarion markers below are used to mark the test item
+# with polarion test case ID.
+# TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
 
 
 TEST_ITEMS = [
@@ -65,16 +71,23 @@ TEST_ITEMS = [
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
+                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert):
 
     navigate_to(test_item.obj, 'All')
     tb.select('List View')
     # NOTE: We must re-instantiate here table
     # in order to prevent StaleElementException or UsingSharedTables
+    # TODO: Switch to widgetastic
     paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
     for row in paged_tbl.rows():
-        name = row[2].text  # We're using indexing since it could be either 'Name' or 'Host'
+        cell = row.get(row.get('Name', row.get('Host', None)), row[2])
+        if cell:
+            name = cell.text
+        else:
+            logger.error('Could not find NAME header on {}s list...'
+                         .format(test_item.obj.__name__))
+            continue
         for field in test_item.fields_to_verify:
 
             try:

@@ -25,6 +25,11 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
+# The polarion markers below are used to mark the test item
+# with polarion test case ID.
+# TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
+
+
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9851')(ContainersTestItem(ContainersProvider, 'CMP-9851')),
     pytest.mark.polarion('CMP-9947')(ContainersTestItem(Container, 'CMP-9947')),
@@ -61,7 +66,7 @@ def check_relationships(instance):
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
+                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_relationships_tables(provider, test_item):
     """This test verifies the integrity of the Relationships table.
     clicking on each field in the Relationships table takes the user

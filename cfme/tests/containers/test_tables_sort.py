@@ -19,6 +19,11 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
+# The polarion markers below are used to mark the test item
+# with polarion test case ID.
+# TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
+
+
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9924')(ContainersTestItem(ContainersProvider, 'CMP-9924')),
     pytest.mark.polarion('CMP-9925')(ContainersTestItem(Project, 'CMP-9925')),
@@ -33,7 +38,7 @@ TEST_ITEMS = [
     BZ(1409360, unblock=lambda test_item: test_item.obj != ContainersProvider)
 ])
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.pretty_id() for ti in TEST_ITEMS])
+                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
 def test_tables_sort(test_item):
 
     pytest.skip('This test is currently skipped due to an issue in the testing framework:'
