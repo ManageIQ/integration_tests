@@ -6,17 +6,17 @@ from utils import testgen
 from utils.version import current_version
 from cfme.web_ui import paginator, summary_title
 
-from cfme.containers.pod import Pod, paged_tbl as pod_paged_tbl
-from cfme.containers.provider import ContainersProvider, paged_tbl as provider_paged_tbl,\
-    navigate_and_get_rows
-from cfme.containers.service import Service, paged_tbl as service_paged_tbl
-from cfme.containers.node import Node, list_tbl as node_paged_tbl
-from cfme.containers.replicator import Replicator, paged_tbl as replicator_paged_tbl
-from cfme.containers.image import Image, paged_tbl as image_paged_tbl
-from cfme.containers.project import Project, paged_tbl as project_paged_tbl
-from cfme.containers.template import Template, paged_tbl as template_paged_tbl
-from cfme.containers.container import Container, paged_tbl as container_paged_tbl
-from cfme.containers.image_registry import ImageRegistry, paged_tbl as image_registry_paged_tbl
+from cfme.containers.pod import Pod
+from cfme.containers.provider import ContainersProvider, navigate_and_get_rows,\
+    ContainersTestItem
+from cfme.containers.service import Service
+from cfme.containers.node import Node
+from cfme.containers.replicator import Replicator
+from cfme.containers.image import Image
+from cfme.containers.project import Project
+from cfme.containers.template import Template
+from cfme.containers.container import Container
+from cfme.containers.image_registry import ImageRegistry
 
 
 pytestmark = [
@@ -25,24 +25,22 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-class DataSet(object):
-    def __init__(self, obj, paged_tbl, polarion_id):
-        self.obj = obj
-        self.paged_tbl = paged_tbl
-        pytest.mark.polarion(polarion_id)(self)
+# The polarion markers below are used to mark the test item
+# with polarion test case ID.
+# TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
 
 
-TEST_OBJECTS = [
-    DataSet(ContainersProvider, provider_paged_tbl, 'CMP-9851'),
-    DataSet(Container, container_paged_tbl, 'CMP-9947'),
-    DataSet(Pod, pod_paged_tbl, 'CMP-9929'),
-    DataSet(Service, service_paged_tbl, 'CMP-10564'),
-    DataSet(Node, node_paged_tbl, 'CMP-9962'),
-    DataSet(Replicator, replicator_paged_tbl, 'CMP-10565'),
-    DataSet(Image, image_paged_tbl, 'CMP-9980'),
-    DataSet(ImageRegistry, image_registry_paged_tbl, 'CMP-9994'),
-    DataSet(Project, project_paged_tbl, 'CMP-9868'),
-    DataSet(Template, template_paged_tbl, 'CMP-10319')
+TEST_ITEMS = [
+    pytest.mark.polarion('CMP-9851')(ContainersTestItem(ContainersProvider, 'CMP-9851')),
+    pytest.mark.polarion('CMP-9947')(ContainersTestItem(Container, 'CMP-9947')),
+    pytest.mark.polarion('CMP-9929')(ContainersTestItem(Pod, 'CMP-9929')),
+    pytest.mark.polarion('CMP-10564')(ContainersTestItem(Service, 'CMP-10564')),
+    pytest.mark.polarion('CMP-9962')(ContainersTestItem(Node, 'CMP-9962')),
+    pytest.mark.polarion('CMP-10565')(ContainersTestItem(Replicator, 'CMP-10565')),
+    pytest.mark.polarion('CMP-9980')(ContainersTestItem(Image, 'CMP-9980')),
+    pytest.mark.polarion('CMP-9994')(ContainersTestItem(ImageRegistry, 'CMP-9994')),
+    pytest.mark.polarion('CMP-9868')(ContainersTestItem(Project, 'CMP-9868')),
+    pytest.mark.polarion('CMP-10319')(ContainersTestItem(Template, 'CMP-10319'))
 ]
 
 
@@ -67,8 +65,9 @@ def check_relationships(instance):
         assert '(Summary)' in summary_title()
 
 
-@pytest.mark.parametrize('data_set', TEST_OBJECTS, ids=[obj.obj for obj in TEST_OBJECTS])
-def test_relationships_tables(provider, data_set):
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+def test_relationships_tables(provider, test_item):
     """This test verifies the integrity of the Relationships table.
     clicking on each field in the Relationships table takes the user
     to either Summary page where we verify that the field that appears
@@ -77,22 +76,22 @@ def test_relationships_tables(provider, data_set):
     that is displayed in the Relationships table.
     """
 
-    if current_version() < "5.7" and data_set.obj == Template:
+    if current_version() < "5.7" and test_item.obj == Template:
         pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
 
-    rows = navigate_and_get_rows(provider, data_set.obj, data_set.paged_tbl, 1)
+    rows = navigate_and_get_rows(provider, test_item.obj, 1)
     if not rows:
-        pytest.skip('No objects to test for relationships for {}'.format(data_set.obj.__name__))
+        pytest.skip('No objects to test for relationships for {}'.format(test_item.obj.__name__))
     row = rows[-1]
 
-    if data_set.obj is Container:
-        instance = data_set.obj(row.name.text, row.pod_name.text)
-    elif data_set.obj is ImageRegistry:
-        instance = data_set.obj(row.host.text, provider)
-    elif data_set.obj is Image:
-        instance = data_set.obj(row.name.text, row.tag.text, provider)
+    if test_item.obj is Container:
+        instance = test_item.obj(row.name.text, row.pod_name.text)
+    elif test_item.obj is ImageRegistry:
+        instance = test_item.obj(row.host.text, provider)
+    elif test_item.obj is Image:
+        instance = test_item.obj(row.name.text, row.tag.text, provider)
     else:
-        instance = data_set.obj(row.name.text, provider)
+        instance = test_item.obj(row.name.text, provider)
 
     check_relationships(instance)
 
@@ -103,7 +102,7 @@ def test_container_status_relationships_data_integrity(provider):
         in the status summary table
         is the same number that appears in the Relationships table containers field
     """
-    rows = navigate_and_get_rows(provider, Pod, pod_paged_tbl, 3)
+    rows = navigate_and_get_rows(provider, Pod, 3)
     if not rows:
         pytest.skip('No containers found to test. skipping...')
     pod_names = [r.name.text for r in rows]

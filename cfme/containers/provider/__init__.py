@@ -7,7 +7,7 @@ from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
-    InfoBlock, Region, paginator, match_location, PagedTable)
+    InfoBlock, Region, paginator, match_location, PagedTable, CheckboxTable)
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
 from utils.appliance import Navigatable
@@ -261,6 +261,9 @@ class Details(CFMENavigateStep):
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
+    def resetter(self):
+        tb.select("Summary View")
+
 
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
@@ -313,7 +316,23 @@ class TopologyFromDetails(CFMENavigateStep):
 
 
 # Common methods:
-def navigate_and_get_rows(provider, obj, table, count):
+
+class ContainersTestItem(object):
+    """This is a generic test item. Especially used for parametrized functions
+    """
+    def __init__(self, obj, polarion_id):
+        """Args:
+            * obj: The container object in this test (e.g. Image)
+            * The polarion test case ID
+        """
+        self.obj = obj
+        self.polarion_id = polarion_id
+
+    def pretty_id(self):
+        return '{} ({})'.format(self.obj.__name__, self.polarion_id)
+
+
+def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable):
     """Get <count> random rows from the obj list table,
     if <count> is greater that the number of rows, return number of rows.
 
@@ -328,6 +347,7 @@ def navigate_and_get_rows(provider, obj, table, count):
     navigate_to(obj, 'All')
     tb.select('List View')
     paginator.results_per_page(1000)
+    table = table_class(table_locator="//div[@id='list_grid']//table")
     rows = table.rows_as_list()
     if not rows:
         return []
