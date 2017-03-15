@@ -16,15 +16,29 @@ simple example:
 more complex example:
 
     listener = appliance.event_listener()
-    fd_regexp = '^\s*resourceId:.*?{nsg}.*?^\s*status:.*?^\s*value:\s*{stat}.*?^' \
-                '\s*subStatus:.*?^\s*value:\s*{sstat}'
-    add_cmp = lambda _, y: bool(re.search(fd_regexp.format(nsg=nsg_name, stat='Accepted',
-                                                           sstat='Created'), y, re.M | re.U | re.S))
+    def add_cmp(_, y):
+        data = yaml.load(y)
+        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Accepted' and \
+            data['subStatus']['value'] == 'Created'
+
     fd_add_attr = {'full_data': 'will be ignored',
-                       'cmp_func': add_cmp}
+                   'cmp_func': add_cmp}
+
     add_event = listener.new_event(fd_add_attr, source='AZURE',
                                    event_type='networkSecurityGroups_write_EndRequest')
-    register_event(add_event)
+
+    def rm_cmp(_, y):
+        data = yaml.load(y)
+        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded' \
+            and len(data['subStatus']['value']) == 0
+
+    fd_rm_attr = {'full_data': 'will be ignored',
+                  'cmp_func': rm_cmp}
+
+    remove_event = listener.new_event(fd_rm_attr, source=provider.type.upper(),
+                                     event_type='networkSecurityGroups_delete_EndRequest')
+
+    register_event(add_event, remove_event)
 
 Expected events are defined by set of event attributes which should match to the same event
 attributes in event_streams db table except one fake attribute - target_name which is resolved into
