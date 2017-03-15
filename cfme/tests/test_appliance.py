@@ -3,7 +3,6 @@
 
 import pytest
 
-from fixtures.pytest_store import store
 from utils import db, version
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
@@ -46,46 +45,39 @@ def _rpms_present_packages():
     return filter(package_filter, possible_packages)
 
 
-def test_product_name():
-    if store.current_appliance.is_downstream:
-        assert store.current_appliance.product_name == 'CFME'
-    else:
-        assert store.current_appliance.product_name == 'ManageIQ'
-
-
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.parametrize(('package'), _rpms_present_packages())
-def test_rpms_present(ssh_client, package):
+def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
-    exit, stdout = ssh_client.run_command('rpm -q {}'.format(package))
+    exit, stdout = appliance.ssh_client.run_command('rpm -q {}'.format(package))
     assert 'is not installed' not in stdout
     assert exit == 0
 
 
 # this is going to fail on 5.1
-def test_selinux_enabled(ssh_client):
+def test_selinux_enabled(appliance):
     """Verifies selinux is enabled"""
-    stdout = ssh_client.run_command('getenforce')[1]
+    stdout = appliance.ssh_client.run_command('getenforce')[1]
     assert 'Enforcing' in stdout
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= '5.6', reason='Only valid for <5.6')
-def test_iptables_running(ssh_client):
+def test_iptables_running(appliance):
     """Verifies iptables service is running on the appliance"""
-    stdout = ssh_client.run_command('service iptables status')[1]
+    stdout = appliance.ssh_client.run_command('service iptables status')[1]
     assert 'is not running' not in stdout
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.6', reason='Only valid for >5.7')
-def test_firewalld_running(ssh_client):
+def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance"""
-    stdout = ssh_client.run_command('service firewalld status')[1]
+    stdout = appliance.ssh_client.run_command('service firewalld status')[1]
     assert 'active (running)' in stdout
 
 
-def test_evm_running(ssh_client):
+def test_evm_running(appliance):
     """Verifies overall evm service is running on the appliance"""
-    stdout = ssh_client.run_command('systemctl status evmserverd')[1]
+    stdout = appliance.ssh_client.run_command('systemctl status evmserverd')[1]
     assert 'active (running)' in stdout
 
 
@@ -95,7 +87,7 @@ def test_evm_running(ssh_client):
     'sshd',
     'postgresql',
 ])
-def test_service_enabled(ssh_client, service):
+def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up"""
     if service == 'postgresql':
         service = '{}-postgresql'.format(db.scl_name())
@@ -103,7 +95,7 @@ def test_service_enabled(ssh_client, service):
         cmd = 'systemctl is-enabled {}'.format(service)
     else:
         cmd = 'chkconfig | grep {} | grep -q "5:on"'.format(service)
-    result = ssh_client.run_command(cmd)
+    result = appliance.ssh_client.run_command(cmd)
     assert result.rc == 0, result.output
 
 
@@ -113,10 +105,10 @@ def test_service_enabled(ssh_client, service):
     ('tcp', 80),
     ('tcp', 443),
 ])
-def test_iptables_rules(ssh_client, proto, port):
+def test_iptables_rules(appliance, proto, port):
     """Verifies key iptable rules are in place"""
     # get the current iptables state, nicely formatted for us by iptables-save
-    res = ssh_client.run_command('iptables-save')
+    res = appliance.ssh_client.run_command('iptables-save')
     # get everything from the input chain
     input_rules = filter(lambda line: line.startswith('-A IN'), res.output.splitlines())
 
@@ -134,23 +126,23 @@ def test_iptables_rules(ssh_client, proto, port):
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
-def test_memory_total(ssh_client):
+def test_memory_total(appliance):
     """Verifies that the total memory on the box is >= 6GB"""
-    stdout = ssh_client.run_command(
+    stdout = appliance.ssh_client.run_command(
         'free -g | grep Mem: | awk \'{ print $2 }\'')[1]
     assert stdout >= 6
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
-def test_cpu_total(ssh_client):
+def test_cpu_total(appliance):
     """Verifies that the total number of cpus is >= 4"""
-    stdout = ssh_client.run_command(
+    stdout = appliance.ssh_client.run_command(
         'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'')[1]
     assert stdout >= 4
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_certificates_present(ssh_client, soft_assert):
+def test_certificates_present(appliance, soft_assert):
     """Test whether the required product certificates are present."""
 
     known_certs = ["/etc/rhsm/ca/redhat-uep.pem",
@@ -158,9 +150,9 @@ def test_certificates_present(ssh_client, soft_assert):
     "/etc/pki/product/167.pem", "/etc/pki/product/201.pem"]
 
     for cert in known_certs:
-        cert_path_vaild = ssh_client.run_command("test -f '{}'".format(cert))[0] == 0
+        cert_path_vaild = appliance.ssh_client.run_command("test -f '{}'".format(cert))[0] == 0
         if cert_path_vaild:
-            rc, output = ssh_client.run_command(
+            rc, output = appliance.ssh_client.run_command(
                 "openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '{}'".format(cert))
         assert rc == 0
 
@@ -176,14 +168,16 @@ def test_db_connection(db):
     assert len(databases) > 0
 
 
-def test_asset_precompiled(ssh_client):
-    file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").rc == 0
+def test_asset_precompiled(appliance):
+    file_exists = appliance.ssh_client.run_command(
+        "test -d /var/www/miq/vmdb/public/assets").rc == 0
     assert file_exists, "Assets not precompiled"
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_keys_included(ssh_client, soft_assert):
+def test_keys_included(appliance, soft_assert):
     keys = ['v0_key', 'v1_key', 'v2_key']
     for k in keys:
-        file_exists = ssh_client.run_command("test -e /var/www/miq/vmdb/certs/{}".format(k))[0] == 0
+        file_exists = appliance.ssh_client.run_command(
+            "test -e /var/www/miq/vmdb/certs/{}".format(k))[0] == 0
         soft_assert(file_exists, "{} was not included in the build".format(k))
