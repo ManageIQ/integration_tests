@@ -362,7 +362,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
         else:
             return False
 
-    wait_for(_snmp_arrived, num_sec=60 * 15, delay=60, message="SNMP trap arrived.")
+    wait_for(_snmp_arrived, timeout="30m", delay=60, message="SNMP trap arrived.")
 
 
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])
