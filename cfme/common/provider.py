@@ -17,7 +17,6 @@ from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
-from utils.db import cfmedb
 from utils.log import logger
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
@@ -389,7 +388,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Args:
             table_str: Name of the table; e.g. 'vms' or 'hosts'
         """
-        res = cfmedb().engine.execute(
+        res = self.appliance.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, {0} "
             "WHERE {0}.ems_id=ext_management_systems.id "
@@ -644,9 +643,9 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     @variable(alias="db")
     def num_template(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        vms = cfmedb()["vms"]
-        temlist = list(cfmedb().session.query(vms.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        vms = self.appliance.db["vms"]
+        temlist = list(self.appliance.db.session.query(vms.name)
                        .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
                        .filter(ext_management_systems.name == self.name)
                        .filter(vms.template == True))  # NOQA
@@ -659,9 +658,9 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     @variable(alias="db")
     def num_vm(self):
         """ Returns the providers number of instances, as shown on the Details page."""
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        vms = cfmedb()["vms"]
-        vmlist = list(cfmedb().session.query(vms.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        vms = self.appliance.db["vms"]
+        vmlist = list(self.appliance.db.session.query(vms.name)
                       .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
                       .filter(ext_management_systems.name == self.name)
                       .filter(vms.template == False))  # NOQA

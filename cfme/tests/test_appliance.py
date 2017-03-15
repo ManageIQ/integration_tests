@@ -158,13 +158,13 @@ def test_certificates_present(appliance, soft_assert):
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_db_connection(db):
+def test_db_connection(appliance):
     """Test that the pgsql db is listening externally
 
     This looks for a row in the miq_databases table, which should always exist
     on an appliance with a working database and UI
     """
-    databases = db.session.query(db['miq_databases']).all()
+    databases = appliance.db.session.query(appliance.db['miq_databases']).all()
     assert len(databases) > 0
 
 

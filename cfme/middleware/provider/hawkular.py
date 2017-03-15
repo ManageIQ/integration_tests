@@ -3,7 +3,6 @@ import re
 from cfme.common import TopologyMixin, TimelinesMixin
 from . import MiddlewareProvider
 from utils.appliance import Navigatable
-from utils.db import cfmedb
 from utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
 from . import download, MiddlewareBase, auth_btn, mon_btn
@@ -79,7 +78,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @variable(alias='db')
     def num_server_group(self):
-        res = cfmedb().engine.execute(
+        res = self.appliance.db.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, middleware_domains, middleware_server_groups "
             "WHERE middleware_domains.ems_id=ext_management_systems.id "
@@ -124,8 +123,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @is_refreshed.variant('db')
     def is_refreshed_db(self):
-        ems = cfmedb()['ext_management_systems']
-        dates = cfmedb().session.query(ems.created_on,
+        ems = self.appliance.db['ext_management_systems']
+        dates = self.appliance.session.query(ems.created_on,
                                        ems.updated_on).filter(ems.name == self.name).first()
         return dates.updated_on > dates.created_on
 

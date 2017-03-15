@@ -187,7 +187,6 @@ pytest_plugins = (
     'fixtures.browser',
     'fixtures.cfme_data',
     'fixtures.datafile',
-    'fixtures.db',
     'fixtures.fixtureconf',
     'fixtures.log',
     'fixtures.maximized',

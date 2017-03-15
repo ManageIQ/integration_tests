@@ -7,9 +7,8 @@ from cfme.web_ui import CheckboxTable, paginator, flash, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from cfme.middleware.provider import (
@@ -22,10 +21,10 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 def _db_select_query(name=None, nativeid=None, server=None, provider=None):
     """Column order: `id`, `nativeid`, `name`, `properties`, `server_name`,
     `feed`, `provider_name`, `ems_ref`, `hostname`"""
-    t_ms = cfmedb()['middleware_servers']
-    t_mds = cfmedb()['middleware_datasources']
-    t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(
+    t_ms = current_appliance.db['middleware_servers']
+    t_mds = current_appliance.db['middleware_datasources']
+    t_ems = current_appliance.db['ext_management_systems']
+    query = current_appliance.db.session.query(
         t_mds.id,
         t_mds.nativeid,
         t_mds.name,

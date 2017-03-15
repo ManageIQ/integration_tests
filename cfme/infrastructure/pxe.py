@@ -23,7 +23,6 @@ from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
-from utils.db import cfmedb
 from utils.varmeth import variable
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -173,7 +172,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
         """
         Checks if the PXE server already exists
         """
-        dbs = cfmedb()
+        dbs = self.appliance.db
         candidates = list(dbs.session.query(dbs["pxe_servers"]))
         return self.name in [s.name for s in candidates]
 
@@ -245,10 +244,10 @@ class PXEServer(Updateable, Pretty, Navigatable):
 
     @variable(alias='db')
     def get_pxe_image_type(self, image_name):
-        pxe_i = cfmedb()["pxe_images"]
-        pxe_s = cfmedb()["pxe_servers"]
-        pxe_t = cfmedb()["pxe_image_types"]
-        hosts = list(cfmedb().session.query(pxe_t.name)
+        pxe_i = self.appliance.db["pxe_images"]
+        pxe_s = self.appliance.db["pxe_servers"]
+        pxe_t = self.appliance.db["pxe_image_types"]
+        hosts = list(self.appliance.db.session.query(pxe_t.name)
                      .join(pxe_i, pxe_i.pxe_image_type_id == pxe_t.id)
                      .join(pxe_s, pxe_i.pxe_server_id == pxe_s.id)
                      .filter(pxe_s.name == self.name)
@@ -366,7 +365,7 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         """
         Checks if the Customization template already exists
         """
-        dbs = cfmedb()
+        dbs = self.appliance.db
         candidates = list(dbs.session.query(dbs["customization_templates"]))
         return self.name in [s.name for s in candidates]
 
@@ -614,10 +613,10 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
         Checks if the ISO Datastore already exists via db
         """
-        iso = cfmedb()['iso_datastores']
-        ems = cfmedb()['ext_management_systems']
+        iso = self.appliance.db['iso_datastores']
+        ems = self.appliance.db['ext_management_systems']
         name = self.provider
-        iso_ds = list(cfmedb().session.query(iso.id)
+        iso_ds = list(self.appliance.db.session.query(iso.id)
                       .join(ems, iso.ems_id == ems.id)
                       .filter(ems.name == name))
         if iso_ds:
