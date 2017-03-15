@@ -16,7 +16,6 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from utils.update import Updateable
 from utils.pretty import Pretty
-from utils.version import current_version
 
 cfg_btn = partial(tb.select, "Configuration")
 policy_btn = partial(tb.select, "Policy")
@@ -150,14 +149,14 @@ class CatalogItem(Updateable, Pretty, Navigatable):
                                'select_config_template': self.config_template})
         if not (self.item_type in provider_required_types):
             sel.click(basic_info_form.field_entry_point)
-            if version.current_version() < "5.7":
+            if self.appliance.version < "5.7":
                 dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                      "StateMachines", "ServiceProvision_Template", "default")
             else:
                 entry_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                     "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
-        if version.current_version() >= "5.7" and self.item_type == "AnsibleTower":
+        if self.appliance.version >= "5.7" and self.item_type == "AnsibleTower":
             sel.click(basic_info_form.retirement_entry_point)
             entry_tree.click_path("Datastore", self.domain, "Service", "Retirement",
                     "StateMachines", "ServiceRetirement", "Generic")
@@ -210,7 +209,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         sel.wait_for_element(button_group_form.btn_group_text)
         fill(button_group_form, {'btn_group_text': "group_text",
                                  'btn_group_hvr_text': "descr"})
-        if current_version() > "5.5":
+        if self.appliance.version > "5.5":
             select = AngularSelect("button_image")
             select.select_by_visible_text("Button Image 1")
         else:
@@ -225,7 +224,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         sel.wait_for_element(button_form.btn_text)
         fill(button_form, {'btn_text': "btn_text",
                            'btn_hvr_text': "btn_descr"})
-        if current_version() > "5.5":
+        if self.appliance.version > "5.5":
             select = AngularSelect("button_image")
             select.select_by_visible_text("Button Image 1")
         else:
@@ -271,7 +270,7 @@ class CatalogBundle(Updateable, Pretty, Navigatable):
                                'select_dialog': self.dialog.label})
         sel.click(basic_info_form.field_entry_point)
         if sel.text(basic_info_form.field_entry_point) == "":
-            if version.current_version() < "5.7":
+            if self.appliance.version < "5.7":
                 dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
                     "StateMachines", "ServiceProvision_Template", "default")
             else:
