@@ -11,7 +11,6 @@ from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
 from tempfile import NamedTemporaryFile
-from utils.db import scl_name
 
 from cached_property import cached_property
 
@@ -27,6 +26,7 @@ from fixtures import ui_coverage
 from fixtures.pytest_store import store
 from utils import conf, datafile, db, ssh, ports
 from utils.datafile import load_data_file
+from utils.events import EventListener
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path, conf_path
@@ -778,6 +778,10 @@ class IPAppliance(object):
             value = None
         return value
 
+    def event_listener(self):
+        """Returns an instance of the event listening class pointed to this appliance."""
+        return EventListener(self)
+
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails
 
@@ -1450,7 +1454,7 @@ class IPAppliance(object):
 
     def is_dedicated_db_active(self):
         return_code, output = self.ssh_client.run_command(
-            "systemctl status {}-postgresql.service | grep running".format(scl_name()))
+            "systemctl status {}-postgresql.service | grep running".format(db.scl_name()))
         return return_code == 0
 
     def _check_appliance_ui_wait_fn(self):

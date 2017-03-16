@@ -10,8 +10,6 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
-from utils.appliance import get_or_create_current_appliance
-from utils.events import EventBuilder
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen
@@ -42,10 +40,8 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
 
-    builder = EventBuilder(get_or_create_current_appliance())
-    event = builder.new_event(target_type='Service', target_name=catalog_item.name,
-                              event_type='service_provisioned')
-    register_event(event)
+    register_event(target_type='Service', target_name=catalog_item.name,
+                   event_type='service_provisioned')
 
     service_catalogs = ServiceCatalogs(catalog_item.name)
     service_catalogs.order()

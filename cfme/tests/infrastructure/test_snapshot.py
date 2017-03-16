@@ -120,7 +120,9 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     logger.info('Waiting for vm %s to become active', snapshot1.name)
     wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
-    register_event('VmOrTemplate', test_vm.name, ['request_vm_start', 'vm_start'])
+    register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+                   event_type='request_vm_start')
+    register_event(target_type='VmOrTemplate', target_name=test_vm.name, event_type='vm_start')
     test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
     navigate_to(test_vm.provider, 'Details')
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)

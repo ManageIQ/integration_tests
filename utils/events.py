@@ -153,29 +153,6 @@ class EventTool(object):
                 'Event {}/{}/{} did not happen.'.format(event_type, target_type, target_id))
 
 
-class EventBuilder(object):
-    """
-    this class just simplifies "expected" event creation.
-
-    Usage:
-        builder = EventBuilder(appliance)
-        evt = builder.new_event(target_type='VmOrTemplate',
-                                target_name='my_lovely_vm',
-                                event_type='vm_create')
-    """
-    def __init__(self, appliance):
-        self._tool = EventTool(appliance)
-
-    def new_event(self, *attrs, **kwattrs):
-        event = Event(event_tool=self._tool)
-        for name, value in kwattrs.items():
-            event.add_attrs(EventAttr(**{name: value}))
-
-        for attr in attrs:
-            event.add_attrs(EventAttr(**attr))
-        return event
-
-
 class EventAttr(object):
     """
     contains one event attribute and the method for comparing it.
@@ -316,8 +293,8 @@ class EventListener(Thread):
     """
     def __init__(self, appliance):
         super(EventListener, self).__init__()
-
-        self._tool = EventTool(appliance)
+        self._appliance = appliance
+        self._tool = EventTool(self._appliance)
 
         self._events_to_listen = []
         # last_id is used to ignore already arrived messages the database
@@ -336,6 +313,25 @@ class EventListener(Thread):
             except IndexError:
                 # No events yet, so do nothing
                 pass
+
+    def new_event(self, *attrs, **kwattrs):
+        """
+        this method just simplifies "expected" event creation.
+
+        Usage:
+            listener = appliance.event_listener()
+            evt = listener.new_event(target_type='VmOrTemplate',
+                                    target_name='my_lovely_vm',
+                                    event_type='vm_create')
+            listener.listen_to(evt)
+        """
+        event = Event(event_tool=self._tool)
+        for name, value in kwattrs.items():
+            event.add_attrs(EventAttr(**{name: value}))
+
+        for attr in attrs:
+            event.add_attrs(EventAttr(**attr))
+        return event
 
     def listen_to(self, *evts, **kwargs):
         """
@@ -444,14 +440,15 @@ class EventListener(Thread):
     def check_expected_events(self):
         return all([len(event['matched_events']) for event in self.got_events])
 
-    def __call__(self, *evts, **kwargs):
+    def __call__(self, *args, **kwargs):
         """
         it is called by register_event fixture.
         bad idea, to replace register_event by object later
         """
         if 'first_event' in kwargs:
-            first_event = kwargs['first_event']
+            first_event = kwargs.pop('first_event')
         else:
             first_event = True
-        logger.info("registering events: {}".format(evts))
-        self.listen_to(*evts, callback=None, first_event=first_event)
+        evt = self.new_event(*args, **kwargs)
+        logger.info("registering event: {}".format(evt))
+        self.listen_to(evt, callback=None, first_event=first_event)

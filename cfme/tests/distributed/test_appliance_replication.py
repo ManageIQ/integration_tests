@@ -13,10 +13,9 @@ from cfme.infrastructure.provider import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
 
 from utils import db, version
-from utils.appliance import provision_appliance, current_appliance, get_or_create_current_appliance
+from utils.appliance import provision_appliance, current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
-from utils.events import EventBuilder
 from utils.log import logger
 from utils.ssh import SSHClient
 from utils.wait import wait_for
@@ -187,7 +186,7 @@ def test_external_database_appliance(request, virtualcenter_provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_appliance_replicate_sync_role_change(request, virtualcenter_provider):
+def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, appliance):
     """Tests that a role change is replicated
 
     Metadata:
@@ -204,11 +203,11 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider):
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         conf.set_server_roles(database_synchronization=False)
-        navigate_to(current_appliance.server.zone.region, 'Replication')
+        navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         conf.set_server_roles(database_synchronization=True)
-        navigate_to(current_appliance.server.zone.region, 'Replication')
+        navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -223,7 +222,8 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcenter_provider):
+def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcenter_provider,
+                                                           appliance):
     """Tests that a role change is replicated with backlog
 
     Metadata:
@@ -241,11 +241,11 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         # Replication is up and running, now disable DB sync role
         virtualcenter_provider.create()
         conf.set_server_roles(database_synchronization=False)
-        navigate_to(current_appliance.server.zone.region, 'Replication')
+        navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         conf.set_server_roles(database_synchronization=True)
-        navigate_to(current_appliance.server.zone.region, 'Replication')
+        navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -259,7 +259,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_appliance_replicate_database_disconnection(request, virtualcenter_provider):
+def test_appliance_replicate_database_disconnection(request, virtualcenter_provider, appliance):
     """Tests a database disconnection
 
     Metadata:
@@ -278,7 +278,7 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
         stop_db_process(appl2.address)
         sleep(60)
         start_db_process(appl2.address)
-        navigate_to(current_appliance.server.zone.region, 'Replication')
+        navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -293,7 +293,8 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
-def test_appliance_replicate_database_disconnection_with_backlog(request, virtualcenter_provider):
+def test_appliance_replicate_database_disconnection_with_backlog(request, virtualcenter_provider,
+                                                                 appliance):
     """Tests a database disconnection with backlog
 
     Metadata:
@@ -313,7 +314,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         stop_db_process(appl2.address)
         sleep(60)
         start_db_process(appl2.address)
-        navigate_to(current_appliance.server.zone.region, 'Replication')
+        navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -349,12 +350,11 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
 
     appl2.ipapp.browser_steal = True
 
-    builder = EventBuilder(get_or_create_current_appliance())
-    base_evt = partial(builder.new_event, target_type='VmOrTemplate', target_name=test_vm.name)
-
     with appl2.ipapp:
-        register_event(base_evt(event_type='vm_poweroff'),
-                       base_evt(event_type='request_vm_poweroff'))
+        register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+                       event_type='request_vm_poweroff')
+        register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+                       event_type='vm_poweroff')
 
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")

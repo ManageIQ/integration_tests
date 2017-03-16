@@ -6,8 +6,6 @@ import yaml
 from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
 from utils import testgen
-from utils.appliance import get_or_create_current_appliance
-from utils.events import EventBuilder
 from utils.generators import random_vm_name
 
 
@@ -17,7 +15,6 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([AzureProvider], scope='module')
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
 def test_manage_nsg_group(provider, setup_provider, register_event):
     """
     tests that create/remove azure network security groups events are received and parsed by CFME
@@ -28,7 +25,6 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
 
     # registering add/remove network security group events
     # we need to check raw data by regexps, since many azure events aren't parsed by CFME yet
-    builder = EventBuilder(get_or_create_current_appliance())
 
     def add_cmp(_, y):
         data = yaml.load(y)
@@ -38,6 +34,10 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
     fd_add_attr = {'full_data': 'will be ignored',
                    'cmp_func': add_cmp}
 
+    # add network security group event
+    register_event(fd_add_attr, source=provider.type.upper(),
+                   event_type='networkSecurityGroups_write_EndRequest')
+
     def rm_cmp(_, y):
         data = yaml.load(y)
         return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded' \
@@ -46,20 +46,15 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
     fd_rm_attr = {'full_data': 'will be ignored',
                   'cmp_func': rm_cmp}
 
-    add_event = builder.new_event(fd_add_attr, source=provider.type.upper(),
-                                  event_type='networkSecurityGroups_write_EndRequest')
-    register_event(add_event)
-
-    remove_event = builder.new_event(fd_rm_attr, source=provider.type.upper(),
-                                     event_type='networkSecurityGroups_delete_EndRequest')
-    register_event(remove_event)
+    # remove network security group
+    register_event(fd_rm_attr, source=provider.type.upper(),
+                   event_type='networkSecurityGroups_delete_EndRequest')
 
     # creating and removing network security group
     provider.mgmt.create_netsec_group(nsg_name, resource_group)
     provider.mgmt.remove_netsec_group(nsg_name, resource_group)
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider))
 def test_vm_capture(request, provider, setup_provider, register_event):
     """
     tests that generalize and capture vm azure events are received and parsed by CFME
@@ -75,22 +70,17 @@ def test_vm_capture(request, provider, setup_provider, register_event):
     # # deferred delete vm
     request.addfinalizer(vm.delete_from_provider)
 
-    # register event
-    builder = EventBuilder(get_or_create_current_appliance())
-
     def cmp_function(_, y):
         data = yaml.load(y)
         return data['resourceId'].endswith(vm.name) and data['status']['value'] == 'Succeeded'
     full_data_attr = {'full_data': 'will be ignored',
                       'cmp_func': cmp_function}
 
-    generalize_event = builder.new_event(full_data_attr, source='AZURE',
-                                         event_type='virtualMachines_generalize_EndRequest')
-    register_event(generalize_event)
-
-    capture_event = builder.new_event(full_data_attr, source='AZURE',
-                                      event_type='virtualMachines_capture_EndRequest')
-    register_event(capture_event)
+    # generalize event
+    register_event(full_data_attr, source='AZURE',
+                   event_type='virtualMachines_generalize_EndRequest')
+    # capture event
+    register_event(full_data_attr, source='AZURE', event_type='virtualMachines_capture_EndRequest')
 
     # capture vm
     image_name = vm.name

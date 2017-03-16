@@ -10,9 +10,7 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.web_ui import toolbar as tb
 from utils import browser, testgen, version
-from utils.appliance import get_or_create_current_appliance
 from utils.browser import ensure_browser_open
-from utils.events import EventBuilder
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -70,10 +68,8 @@ def test_retire_service(provider, myservice, register_event):
     Metadata:
         test_flag: provision
     """
-    builder = EventBuilder(get_or_create_current_appliance())
-    event = builder.new_event(target_type='Service', target_name=myservice.service_name,
-                              event_type='service_retired')
-    register_event(event)
+    register_event(target_type='Service', target_name=myservice.service_name,
+                   event_type='service_retired')
     myservice.retire()
 
 
