@@ -7,9 +7,9 @@ from utils.log_validator import LogValidator
 def test_black_console_set_hostname(request, appliance):
     hostname = 'test.com'
     if appliance.version >= "5.8":
-        commands = ['ap', '\n', '1', '4', '{hostname}'.format(hostname=hostname)]
+        commands = ['ap\n', '\n', '1\n', '4\n', '{hostname}\n'.format(hostname=hostname)]
     else:
-        commands = ['ap', '\n', '4', '{hostname}'.format(hostname=hostname)]
+        commands = ['ap\n', '\n', '4\n', '{hostname}\n'.format(hostname=hostname)]
     appliance.appliance_console.run_commands(commands)
 
     def is_hostname_set(appliance):
