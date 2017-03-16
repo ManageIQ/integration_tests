@@ -97,7 +97,7 @@ class SSHClient(paramiko.SSHClient):
         self._keystate = connect_kwargs.pop('keystate', None)
         # Container is used to store buth docker VM's container name and Openshift pod name.
         self._container = connect_kwargs.pop('container', None)
-        self._openshift_shell = connect_kwargs.pop('openshift_shell', None)
+        self.is_pod = connect_kwargs.pop('is_pod', False)
 
         # load the defaults for ssh
         default_connect_kwargs = {
@@ -123,11 +123,7 @@ class SSHClient(paramiko.SSHClient):
 
     @property
     def is_container(self):
-        return self._container is not None and self._openshift_shell is None
-
-    @property
-    def is_pod(self):
-        return self._container is not None and self._openshift_shell is not None
+        return self._container is not None and not self.is_pod
 
     @property
     def username(self):
@@ -232,7 +228,7 @@ class SSHClient(paramiko.SSHClient):
             # This command will be executed in the context of the host provider
             command = 'oc rsh {} bash -c {}'.format(self._container, quote(
                 'source /etc/default/evm; ' + command))
-            return self._openshift_shell.run_command(command, ensure_host=True)
+            ensure_host = True
         elif self.is_container and not ensure_host:
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
                 'source /etc/default/evm; ' + command))

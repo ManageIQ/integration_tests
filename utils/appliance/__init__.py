@@ -149,7 +149,7 @@ class IPAppliance(object):
     """
     _nav_steps = {}
 
-    def __init__(self, address=None, browser_steal=False, container=None, openshift_shell=None):
+    def __init__(self, address=None, browser_steal=False, container=None, openshift_creds=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -165,7 +165,7 @@ class IPAppliance(object):
                 self._url = address.geturl()
         self.browser_steal = browser_steal
         self.container = container
-        self.openshift_shell = openshift_shell
+        self.openshift_creds = openshift_creds or {}
         self._db_ssh_client = None
         self._user = None
         self.appliance_console = ApplianceConsole(self)
@@ -773,13 +773,22 @@ class IPAppliance(object):
             raise Exception('SSH is unavailable')
 
         # IPAppliance.ssh_client only connects to its address
-        connect_kwargs = {
-            'hostname': self.hostname,
-            'username': conf.credentials['ssh']['username'],
-            'password': conf.credentials['ssh']['password'],
-            'container': self.container,
-            'openshift_shell': self.openshift_shell,
-        }
+        if self.openshift_creds:
+            connect_kwargs = {
+                'hostname': self.openshift_creds['hostname'],
+                'username': self.openshift_creds['username'],
+                'password': self.openshift_creds['password'],
+                'container': self.container,
+                'is_pod': True,
+            }
+        else:
+            connect_kwargs = {
+                'hostname': self.hostname,
+                'username': conf.credentials['ssh']['username'],
+                'password': conf.credentials['ssh']['password'],
+                'container': self.container,
+                'is_pod': False,
+            }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
             ssh_client.get_transport().is_active()
@@ -2559,27 +2568,14 @@ def get_or_create_current_appliance():
         base_url = conf.env['base_url']
         if base_url is None or str(base_url.lower()) == 'none':
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
-        openshift = conf.env.get('openshift', None)
-        if openshift:
-            if not isinstance(openshift, dict):
-                raise TypeError('The openshift entry in env.yaml must be a dictionary')
-            try:
-                connect_kwargs = {
-                    'hostname': openshift['hostname'],
-                    'username': openshift['username'],
-                    'password': openshift['password'],
-                }
-            except KeyError:
-                raise ValueError(
-                    'You need to specify hostname, username and password for the openshift in env')
-            openshift_shell = ssh.SSHClient(**connect_kwargs)
-        else:
-            openshift_shell = None
+        openshift_creds = conf.env.get('openshift', {})
+        if not isinstance(openshift_creds, dict):
+            raise TypeError('The openshift entry in env.yaml must be a dictionary')
         stack.push(
             IPAppliance(
                 urlparse(base_url),
                 container=conf.env.get('container', None),
-                openshift_shell=openshift_shell))
+                openshift_creds=openshift_creds))
     return stack.top
 
 
