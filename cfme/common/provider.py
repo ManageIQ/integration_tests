@@ -388,7 +388,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Args:
             table_str: Name of the table; e.g. 'vms' or 'hosts'
         """
-        res = self.appliance.engine.execute(
+        res = self.appliance.db.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, {0} "
             "WHERE {0}.ems_id=ext_management_systems.id "
