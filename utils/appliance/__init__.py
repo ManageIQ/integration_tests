@@ -1811,6 +1811,8 @@ class IPAppliance(object):
         # pulls the db address from the appliance by default, falling back to the appliance
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
+        if self.openshift_creds:
+            return self.openshift_creds['hostname']
         try:
             db = self.wait_for_host_address()
             if db is None:
