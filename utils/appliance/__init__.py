@@ -63,6 +63,31 @@ class ApplianceException(Exception):
     pass
 
 
+class ApplianceConsole(object):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def run_commands(self, commands, autoreturn=True, timeout=20, channel=None):
+        if not channel:
+            channel = self.appliance.ssh_client.invoke_shell()
+        self.commands = commands
+        for command in commands:
+            if isinstance(command, basestring):
+                command_string, timeout = command, timeout
+            else:
+                command_string, timeout = command
+            channel.settimeout(timeout)
+            channel.send("{}".format(command_string))
+            result = ''
+            try:
+                while True:
+                    result += channel.recv(1)
+            except socket.timeout:
+                pass
+            logger.debug(result)
+
+
 class ApplianceConsoleCli(object):
 
     def __init__(self, appliance):
@@ -141,6 +166,7 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
         self._user = None
+        self.appliance_console = ApplianceConsole(self)
         self.ap_cli = ApplianceConsoleCli(self)
         self.browser = ViaUI(owner=self)
         self.context = ImplementationContext.from_instances(
