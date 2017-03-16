@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown
-from widgetastic_manageiq import ItemsToolBarViewSelector
+from widgetastic_patternfly import Dropdown, Button
+from widgetastic_manageiq import ItemsToolBarViewSelector, DetailsToolBarViewSelector
 
 
 class ProviderToolBar(View):
@@ -33,3 +33,18 @@ class ProviderSideBar(View):
     represents left side bar. it usually contains navigation, filters, etc
     """
     pass
+
+
+class DetailsProviderToolBar(View):
+    """
+    represents provider toolbar and its controls
+    """
+    monitoring = Dropdown(text='Monitoring')
+    configuration = Dropdown(text='Configuration')
+    reload = Button(title='Reload Current Display')
+    policy = Dropdown(text='Policy')
+    authentication = Dropdown(text='Authentication')
+
+    @View.nested
+    class view_selector(DetailsToolBarViewSelector):  # NOQA
+        pass

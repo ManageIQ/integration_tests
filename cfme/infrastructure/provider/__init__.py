@@ -10,11 +10,9 @@
 """
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToObject
-from widgetastic.widget import View
+from widgetastic.widget import View, Text
 from cached_property import cached_property
-from widgetastic_manageiq import PaginationPane
-from .widgetastic_views import ProviderEntities, ProviderSideBar, ProviderToolBar
-from widgetastic_manageiq import TimelinesView
+
 from cfme import BaseLoggedInPage
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider
@@ -34,6 +32,12 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
+from widgetastic_manageiq import PaginationPane, BreadCrumb, Checkbox, Table, Button, TimelinesView
+from widgetastic_patternfly import Dropdown
+from .widgetastic_views import (ProviderEntities,
+                                ProviderSideBar,
+                                ProviderToolBar,
+                                DetailsProviderToolBar)
 
 
 details_page = Region(infoblock_type='detail')
@@ -89,7 +93,7 @@ pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
 
-class InfraProviderView(BaseLoggedInPage):
+class InfraProvidersView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return all((self.logged_in_as_current_user,
@@ -114,13 +118,76 @@ class InfraProviderView(BaseLoggedInPage):
         pass
 
 
-class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
+class InfraProviderDetailsView(BaseLoggedInPage):
+    @View.nested
+    class toolbar(DetailsProviderToolBar):
+        pass
 
+    title = Text('//div[@id="main-content"]//h1')
+    breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
+
+    properties = Table('//table[.//th[normalize-space(text())="Properties"]]')
+    status = Table('//table[.//th[normalize-space(text())="Status"]]')
+    relationships = Table('//table[.//th[normalize-space(text())="Relationships"]]')
+    overview = Table('//table[.//th[normalize-space(text())="Overview"]]')
+    smart_management = Table('//table[.//th[normalize-space(text())="Smart Management"]]')
+
+
+class InfraProvidersDiscoverView(BaseLoggedInPage):
+    vcenter = Checkbox('discover_type_virtualcenter')
+    mscvmm = Checkbox('discover_type_scvmm')
+    rhevm = Checkbox('discover_type_rhevm')
+
+    from_ip1 = Input('from_first')
+    from_ip2 = Input('from_second')
+    from_ip3 = Input('from_third')
+    from_ip4 = Input('from_fourth')
+    to_ip4 = Input('to_fourth')
+
+    start = Button('Start')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                    self.navigation.currently_selected == ['Compute',
+                                                           'Infrastructure', 'Providers'],
+                    match_page(summary='Infrastructure Providers Discovery')))
+
+
+class InfraProvidersAddView(BaseLoggedInPage):
+    name = Input('name')
+    type = Dropdown('emstype')
+
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    # todo: rest of entities should be added according to provider type
+
+
+class InfraProvidersManagePoliciesView(BaseLoggedInPage):
+    pass
+
+
+class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
     def is_displayed(self):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] \
             and TimelinesView.is_displayed
+
+
+class InfraProviderCollection(Navigatable):
+    """Collection object for the :py:class:`InfraProvider`."""
+    def create(self, name=None, credentials=None, key=None, zone=None, provider_data=None,
+               cancel=False):
+        pass
+
+    def all(self):
+        pass
+
+    def delete(self, name):
+        pass
 
 
 class InfraProvider(Pretty, CloudInfraProvider):
@@ -308,7 +375,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
 @navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
-    VIEW = InfraProviderView
+    VIEW = InfraProvidersView
     prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def am_i_here(self):
