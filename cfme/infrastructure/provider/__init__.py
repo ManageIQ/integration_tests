@@ -11,8 +11,6 @@
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToObject
 from widgetastic.widget import View
-from widgetastic.utils import Fillable
-from widgetastic_patternfly import Input
 from cached_property import cached_property
 from widgetastic_manageiq import PaginationPane
 from .widgetastic_views import ProviderEntities, ProviderSideBar, ProviderToolBar
@@ -108,7 +106,7 @@ class InfraProviderView(BaseLoggedInPage):
         pass
 
     @View.nested
-    class providers(ProviderEntities):  # NOQA
+    class entities(ProviderEntities):  # NOQA
         pass
 
     @View.nested
