@@ -27,7 +27,8 @@ from widgetastic.widget import (
 from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
+    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, ViewChangeButton, Input,
+    BootstrapSelect)
 from cached_property import cached_property
 
 
@@ -1205,9 +1206,15 @@ class ItemsToolBarViewSelector(View):
         view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    grid_button = Button(title='Grid View')
-    tile_button = Button(title='Tile View')
-    list_button = Button(title='List View')
+    grid_button = VersionPick({
+        Version.lowest(): ViewChangeButton(title='Grid View'),
+        '5.7.0': Button(title='Grid View')})
+    tile_button = VersionPick({
+        Version.lowest(): ViewChangeButton(title='Tile View'),
+        '5.7.0': Button(title='Tile View')})
+    list_button = VersionPick({
+        Version.lowest(): ViewChangeButton(title='List View'),
+        '5.7.0': Button(title='List View')})
 
     @property
     def _view_buttons(self):
@@ -1239,8 +1246,12 @@ class DetailsToolBarViewSelector(View):
         view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    summary_button = Button(title='Summary View')
-    dashboard_button = Button(title='Dashboard View')
+    summary_button = VersionPick({
+        Version.lowest(): ViewChangeButton(title='Summary View'),
+        '5.7.0': Button(title='Summary View')})
+    dashboard_button = VersionPick({
+        Version.lowest(): ViewChangeButton(title='Dashboard View'),
+        '5.7.0': Button(title='Dashboard View')})
 
     @property
     def _view_buttons(self):
