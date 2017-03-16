@@ -645,8 +645,8 @@ class SummaryTable(VanillaTable):
     BASELOC = './/table[./thead/tr/th[contains(@align, "left") and normalize-space(.)={}]]'
     Image = namedtuple('Image', ['alt', 'title', 'src'])
 
-    def __init__(self, parent, title):
-        VanillaTable.__init__(self, parent, self.BASELOC.format(quote(title)))
+    def __init__(self, parent, title, *args, **kwargs):
+        VanillaTable.__init__(self, parent, self.BASELOC.format(quote(title)), *args, **kwargs)
 
     @property
     def fields(self):
