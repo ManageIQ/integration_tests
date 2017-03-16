@@ -32,7 +32,13 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
-from widgetastic_manageiq import PaginationPane, BreadCrumb, Checkbox, Table, Button, TimelinesView
+from widgetastic_manageiq import (PaginationPane,
+                                  BreadCrumb,
+                                  Checkbox,
+                                  SummaryTable,
+                                  ManageIQTree,
+                                  Button,
+                                  TimelinesView)
 from widgetastic_patternfly import Dropdown
 from .widgetastic_views import (ProviderEntities,
                                 ProviderSideBar,
@@ -120,17 +126,17 @@ class InfraProvidersView(BaseLoggedInPage):
 
 class InfraProviderDetailsView(BaseLoggedInPage):
     @View.nested
-    class toolbar(DetailsProviderToolBar):
+    class toolbar(DetailsProviderToolBar):  # NOQA
         pass
 
     title = Text('//div[@id="main-content"]//h1')
     breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
 
-    properties = Table('//table[.//th[normalize-space(text())="Properties"]]')
-    status = Table('//table[.//th[normalize-space(text())="Status"]]')
-    relationships = Table('//table[.//th[normalize-space(text())="Relationships"]]')
-    overview = Table('//table[.//th[normalize-space(text())="Overview"]]')
-    smart_management = Table('//table[.//th[normalize-space(text())="Smart Management"]]')
+    properties = SummaryTable(title="Properties")
+    status = SummaryTable(title="Status")
+    relationships = SummaryTable(title="Relationships")
+    overview = SummaryTable(title="Overview")
+    smart_management = SummaryTable(title="Smart Management")
 
 
 class InfraProvidersDiscoverView(BaseLoggedInPage):
@@ -166,7 +172,11 @@ class InfraProvidersAddView(BaseLoggedInPage):
 
 
 class InfraProvidersManagePoliciesView(BaseLoggedInPage):
-    pass
+    policies = ManageIQTree('protectbox')
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+    # todo: to add provider buttons when really necessary
 
 
 class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
