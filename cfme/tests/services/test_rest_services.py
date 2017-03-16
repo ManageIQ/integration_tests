@@ -323,6 +323,17 @@ class TestServiceRESTAPI(object):
         _action_and_check('start', 'on')
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_service_vm_subcollection(self, appliance, service_data):
+        """Tests /api/services/:id/vms.
+
+        Metadata:
+            test_flag: rest
+        """
+        service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
+        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        assert service.vms[0].id == vm.id
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_create_service_from_parent(self, request, appliance):
         """Tests creation of new service that reference existing service.
 
