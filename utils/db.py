@@ -31,7 +31,7 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor.close()
 
 
-def scl_name():
+def postgres_version():
     # postgres's version is in the service name and file paths when we pull it from SCL,
     # so this is a little resolver to help keep the version picking centralized
     return version.pick({
