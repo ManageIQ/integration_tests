@@ -168,30 +168,12 @@ def test_datastores_summary(soft_assert, appliance):
 
 
 def round_num(column):
-    ret = float(column)
-    by = 1024
-    kb = pow(1024, 2)
-    mb = pow(1024, 3)
-    gb = pow(1024, 4)
-    tb = pow(1024, 5)
+    num = float(column)
 
-    if ret < by:
-        return ret
+    while num > 1024:
+        num /= 1024.0
 
-    if ret >= by and ret < kb:
-        return round((ret / by), 1)
-
-    if ret >= kb and ret < mb:
-        return round((ret / kb), 1)
-
-    if ret >= mb and ret < gb:
-        return round((ret / mb), 1)
-
-    if ret >= gb and ret < tb:
-        return round((ret / gb), 1)
-
-    if ret >= tb:
-        return round((ret / tb), 1)
+    return round(num, 1)
 
 
 def extract_num(column):
