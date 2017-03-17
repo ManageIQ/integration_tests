@@ -2,7 +2,7 @@
 import pytest
 
 from cfme.configure.access_control import Group, User
-from cfme import Credential, login
+from cfme import Credential, login, BaseLoggedInPage
 from utils import browser
 from utils.conf import cfme_data
 
@@ -72,7 +72,7 @@ def user(request, data, add_group):
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
     "add_group", ['create_group', 'retrieve_group', 'evm_default_group'])
-def test_auth_configure(request, configure_auth, group, user, data):
+def test_auth_configure(request, configure_auth, group, user, data, appliance):
     """This test checks whether different cfme auth modes are working correctly.
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
        e.g. test_auth[ext-ipa_create-group]
@@ -84,8 +84,11 @@ def test_auth_configure(request, configure_auth, group, user, data):
     """
     request.addfinalizer(auth_finalizer)
     with user:
-        login.login(user, submit_method='click_on_login')
-        assert login.current_full_name() == data['fullname']
-        login.logout()
-    login.login_admin()
+        log_in_view = appliance.browser.create_view(login.LoginPage)
+        log_in_view.log_in(user)
+        logged_in_view = appliance.browser.create_view(BaseLoggedInPage)
+        assert logged_in_view.current_fullname == data['fullname']
+        logged_in_view.logout()
+    log_in_view = appliance.browser.create_view(login.LoginPage)
+    log_in_view.login_admin()
     assert user.exists is True

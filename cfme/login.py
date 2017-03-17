@@ -203,17 +203,5 @@ def logout():
         store.current_appliance.user = None
 
 
-def current_full_name():
-    """ Returns the current username.
-
-    Returns: the current username.
-    """
-    logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
-    if logged_in_view.logged_in:
-        return logged_in_view.current_fullname
-    else:
-        return None
-
-
 def current_user():
     return store.current_appliance.user
