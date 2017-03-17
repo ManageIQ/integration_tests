@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from widgetastic.widget import View
 from widgetastic_patternfly import Tab, BootstrapSelect, Input, BootstrapTreeview
-from widgetastic_manageiq import VersionPick, Version, CheckboxSelect, Table, Calendar
+from widgetastic_manageiq import VersionPick, Version, CheckboxSelect, Table, Calendar, ManageIQForm
 
 from cfme import web_ui as ui
 from cfme import BaseLoggedInPage
@@ -26,7 +26,7 @@ def select_security_group(sg):
     sel.sleep(1)
 
 
-class ProvisioningForm(BaseLoggedInPage):
+class ProvisioningForm(BaseLoggedInPage, ManageIQForm):
     @View.nested
     class request(Tab):  # noqa
         TAB_NAME = 'Request'
