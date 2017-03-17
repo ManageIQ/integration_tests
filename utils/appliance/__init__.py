@@ -78,6 +78,8 @@ class ApplianceConsole(object):
             else:
                 command_string, timeout = command
             channel.settimeout(timeout)
+            if autoreturn:
+                command_string = (command_string + '\n')
             channel.send("{}".format(command_string))
             result = ''
             try:

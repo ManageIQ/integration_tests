@@ -9,7 +9,7 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 @pytest.mark.smoke
 def test_black_console(request, appliance):
-    command_set = ('exec > >(tee /tmp/opt.txt)\n', 'ap\n', '\n')
+    command_set = ('exec > >(tee /tmp/opt.txt)', 'ap', '')
     appliance.appliance_console.run_commands(command_set)
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Virtual Appliance'")
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Server:'")
@@ -20,9 +20,9 @@ def test_black_console(request, appliance):
 def test_black_console_set_hostname(request, appliance):
     hostname = 'Elite-QE.redhat.com'
     if appliance.version >= "5.8":
-        command_set = ('ap\n', '\n', '1\n', '4\n', '{hostname}\n'.format(hostname=hostname))
+        command_set = ('ap', '', '1', '4', hostname)
     else:
-        command_set = ('ap\n', '\n', '4\n', '{hostname}\n'.format(hostname=hostname))
+        command_set = ('ap', '', '4', hostname)
     appliance.appliance_console.run_commands(command_set)
 
     def is_hostname_set(appliance):
@@ -37,13 +37,9 @@ def test_black_console_set_hostname(request, appliance):
 def test_black_console_internal_db(request, app_creds, temp_appliance_unconfig_funcscope):
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap\n', '\n', '5\n', '1\n', '1\n', 'y\n', '1\n', 'n\n', '0\n',
-            '{pwd}\n'.format(pwd=pwd), TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45),
-            '\n')
+        command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 45), '')
     else:
-        command_set = ('ap\n', '\n', '8\n', '1\n', '1\n', 'y\n', '1\n', 'n\n', '0\n',
-            '{pwd}\n'.format(pwd=pwd), TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45),
-            '\n')
+        command_set = ('ap', '', '8', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 45), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
@@ -52,11 +48,9 @@ def test_black_console_internal_db(request, app_creds, temp_appliance_unconfig_f
 def test_black_console_internal_db_reset(request, app_creds, temp_appliance_preconfig_funcscope):
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     if temp_appliance_preconfig_funcscope.version >= "5.8":
-        command_set = ('ap\n', '\n', '5\n', '4\n', 'y\n', TimedCommand(command='1\n', timeout=90),
-            '\n', '\n', '15\n', 'y\n')
+        command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 90), '', '', '15', 'y')
     else:
-        command_set = ('ap\n', '\n', '8\n', '4\n', 'y\n', TimedCommand(command='1\n', timeout=90),
-            '\n', '\n', '19\n', 'y\n')
+        command_set = ('ap', '', '8', '4', 'y', TimedCommand('1', 90), '', '', '19', 'y')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_preconfig_funcscope.wait_for_evm_service()
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
@@ -66,13 +60,9 @@ def test_black_console_internal_db_reset(request, app_creds, temp_appliance_prec
 def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds):
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap\n', '\n', '5\n', '1\n', '1\n', '1\n', 'y\n',
-            '{pwd}\n'.format(pwd=pwd), TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45),
-                '\n')
+        command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 45), '')
     else:
-        command_set = ('ap\n', '\n', '8\n', '1\n', '1\n', '1\n', 'y\n',
-            '{pwd}\n'.format(pwd=pwd), TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45),
-                '\n')
+        command_set = ('ap', '', '8', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 45), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     wait_for(temp_appliance_unconfig_funcscope.is_dedicated_db_active)
 
@@ -82,15 +72,11 @@ def test_black_console_external_db(
     ip = appliance.address
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap\n', '\n', '5\n', '2\n', '{ip}\n'.format(ip=ip), '\n',
-            '{pwd}\n'.format(pwd=pwd), '\n', '3\n', '{ip}\n'.format(ip=ip), '\n', '\n',
-            '{pwd}\n'.format(pwd=pwd), TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45),
-                '\n')
+        command_set = ('ap', '', '5', '2', ip, '', pwd, '', '3', ip, '', '',
+            pwd, TimedCommand(pwd, 45), '')
     else:
-        command_set = ('ap\n', '\n', '8\n', '2\n', '{ip}\n'.format(ip=ip), '\n',
-            '{pwd}\n'.format(pwd=pwd), '\n', '3\n', '{ip}\n'.format(ip=ip), '\n', '\n',
-            '{pwd}\n'.format(pwd=pwd), TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45),
-                '\n')
+        command_set = ('ap', '', '8', '2', ip, '', pwd, '', '3', ip, '', '',
+            pwd, TimedCommand(pwd, 45), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
@@ -102,13 +88,11 @@ def test_black_console_external_db_create(request, app_creds, dedicated_db_appli
     ip = dedicated_db_appliance.address
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap\n', '\n', '5\n', '1\n', '1\n', '2\n', '0\n', 'y\n',
-            '{ip}\n'.format(ip=ip), '\n', '\n', '{pwd}\n'.format(pwd=pwd),
-            TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45), '\n')
+        command_set = ('ap', '', '5', '1', '1', '2', '0', 'y', ip, '', '', pwd,
+            TimedCommand(pwd, 45), '')
     else:
-        command_set = ('ap\n', '\n', '8\n', '1\n', '1\n', '2\n', '0\n', 'y\n',
-            '{ip}\n'.format(ip=ip), '\n', '\n', '{pwd}\n'.format(pwd=pwd),
-            TimedCommand(command='{pwd}\n'.format(pwd=pwd), timeout=45), '\n')
+        command_set = ('ap', '', '8', '1', '1', '2', '0', 'y', ip, '', '', pwd,
+            TimedCommand(pwd, 45), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
@@ -116,9 +100,9 @@ def test_black_console_external_db_create(request, app_creds, dedicated_db_appli
 
 def test_black_console_extend_storage(request, fqdn_appliance):
     if fqdn_appliance.version >= "5.8":
-        command_set = ('ap\n', '\n', '10\n', '1\n', 'y\n', '\n')
+        command_set = ('ap', '', '10', '1', 'y', '')
     else:
-        command_set = ('ap\n', '\n', '13\n', '1\n', 'y\n', '\n')
+        command_set = ('ap', '', '13', '1', 'y', '')
     fqdn_appliance.appliance_console.run_commands(command_set)
 
     def is_storage_extended(fqdn_appliance):
@@ -128,19 +112,11 @@ def test_black_console_extend_storage(request, fqdn_appliance):
 
 def test_black_console_ipa(request, ipa_creds, fqdn_appliance):
     if fqdn_appliance.version >= "5.8":
-        command_set = ('ap\n', '\n', '11\n',
-            '{hostname}\n'.format(hostname=ipa_creds['hostname']),
-            '{domain}\n'.format(domain=ipa_creds['domain']), '\n',
-            '{username}\n'.format(username=ipa_creds['username']),
-            '{password}\n'.format(password=ipa_creds['password']),
-            TimedCommand(command='y\n', timeout=40), '\n')
+        command_set = ('ap', '', '11', ipa_creds['hostname'], ipa_creds['domain'], '',
+            ipa_creds['username'], ipa_creds['password'], TimedCommand('y', 40), '')
     else:
-        command_set = ('ap\n', '\n', '14\n',
-            '{hostname}\n'.format(hostname=ipa_creds['hostname']),
-            '{domain}\n'.format(domain=ipa_creds['domain']), '\n',
-            '{username}\n'.format(username=ipa_creds['username']),
-            '{password}\n'.format(password=ipa_creds['password']),
-            TimedCommand(command='y\n', timeout=40), '\n')
+        command_set = ('ap', '', '14', ipa_creds['hostname'], ipa_creds['domain'], '',
+            ipa_creds['username'], ipa_creds['password'], TimedCommand('y', 40), '')
     fqdn_appliance.appliance_console.run_commands(command_set)
 
     def is_sssd_running(fqdn_appliance):
@@ -161,9 +137,9 @@ def test_black_console_external_auth(request, auth_type, app_creds, ipa_crud):
                             password=app_creds['password'])
     evm_tail.fix_before_start()
     if ipa_crud.version >= "5.8":
-        command_set = ('ap\n', '\n', '12\n', '{auth}\n'.format(auth=auth_type[1]), '4\n')
+        command_set = ('ap', '', '12', auth_type[1], '4')
     else:
-        command_set = ('ap\n', '\n', '15\n', '{auth}\n'.format(auth=auth_type[1]), '4\n')
+        command_set = ('ap', '', '15', auth_type[1], '4')
     ipa_crud.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
@@ -175,8 +151,8 @@ def test_black_console_external_auth(request, auth_type, app_creds, ipa_crud):
 
     evm_tail.fix_before_start()
     if ipa_crud.version >= "5.8":
-        command_set = ('ap\n', '\n', '12\n', '{auth}\n'.format(auth=auth_type[1]), '4\n')
+        command_set = ('ap', '', '12', auth_type[1], '4')
     else:
-        command_set = ('ap\n', '\n', '15\n', '{auth}\n'.format(auth=auth_type[1]), '4\n')
+        command_set = ('ap', '', '15', auth_type[1], '4')
     ipa_crud.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
