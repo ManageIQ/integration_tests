@@ -25,6 +25,31 @@ def test_login(method, appliance):
     assert login_page.is_displayed
 
 
+@pytest.mark.requirement('drift')
+@pytest.mark.tier(1)
+@pytest.mark.sauce
+@pytest.mark.smoke
+def test_re_login(appliance):
+    """
+    Tests that the appliance can be logged into and shows dashboard page after re-login to it.
+    """
+
+    login_page = navigate_to(appliance.server, 'LoginScreen')
+    assert login_page.is_displayed
+    login_page.login_admin()
+    logged_in_page = appliance.browser.create_view(BaseLoggedInPage)
+    assert logged_in_page.is_displayed
+    logged_in_page.logout()
+    assert login_page.is_displayed
+    # Added re-login
+    login_page.login_admin()
+    logged_in_page = appliance.browser.create_view(BaseLoggedInPage)
+    assert logged_in_page.is_displayed
+    logged_in_page.logout()
+    login_page.flush_widget_cache()
+    assert login_page.is_displayed
+
+
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_bad_password(request, appliance):
