@@ -1589,3 +1589,19 @@ class TimelinesView(View):
     @property
     def is_displayed(self):
         return self.title.text == 'Timelines'
+
+
+class ManageIQForm(View):
+    """Generic form view with common action buttons
+
+    .. code-block:: python
+
+        class PageWithFormView(View):
+            @View.nested
+            class form(ManageIQForm):
+                # widgets
+    """
+    continue_button = Button('Continue')
+    submit_button = Button('Submit')
+    reset_button = Button('Reset')
+    cancel_button = Button('Cancel')
