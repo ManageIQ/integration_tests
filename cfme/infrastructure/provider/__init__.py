@@ -20,8 +20,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
-    Region, Quadicon, Form, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location, BootstrapSwitch
+    Region, Quadicon, Form, CheckboxTree, fill, form_buttons,
+    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location, paginator, BootstrapSwitch
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
@@ -39,7 +39,7 @@ from widgetastic_manageiq import (PaginationPane,
                                   ManageIQTree,
                                   Button,
                                   TimelinesView)
-from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Input, BootstrapSelect, Tab, Dropdown
 from .widgetastic_views import (ProviderEntities,
                                 ProviderSideBar,
                                 ProviderToolBar,
@@ -102,10 +102,9 @@ mon_btn = partial(tb.select, 'Monitoring')
 class InfraProvidersView(BaseLoggedInPage):
     @property
     def is_displayed(self):
-        return all((self.logged_in_as_current_user,
-                    self.navigation.currently_selected == ['Compute',
-                                                           'Infrastructure', 'Providers'],
-                    match_page(summary='Infrastructure Providers')))
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.entities.title.text == 'Infrastructure Providers'
 
     @View.nested
     class toolbar(ProviderToolBar):  # NOQA
@@ -155,22 +154,77 @@ class InfraProvidersDiscoverView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return all((self.logged_in_as_current_user,
-                    self.navigation.currently_selected == ['Compute',
-                                                           'Infrastructure', 'Providers'],
-                    match_page(summary='Infrastructure Providers Discovery')))
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            match_page(summary='Infrastructure Providers Discovery')
+
+
+class DefaultEndpointForm(View):
+    hostname = Input('default_hostname')
+    username = Input('default_userid')
+    password = Input('default_password')
+    confirm_password = Input('default_verify')
+
+    validate = Button('Validate')
+    pass
+
+
+class SCVMMEndpointForm(DefaultEndpointForm):
+    security_protocol = BootstrapSelect(id='default_security_protocol')
+    realm = Input('realm')  # appears when Kerberos is chosen in security_protocol
+
+
+class VirtualCenterEndpointForm(DefaultEndpointForm):
+    pass
+
+
+class RHEVMEndpointForm(View):
+    # default tab
+    @View.nested
+    class default(Tab):  # NOQA
+        TAB_NAME = 'Default'
+
+    @View.nested
+    class database(Tab):
+        TAB_NAME = 'C & U Database'
 
 
 class InfraProvidersAddView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
     name = Input('name')
-    type = Dropdown('emstype')
-    zone = Input('Zone')
-
+    prov_type = BootstrapSelect(id='emstype')
+    zone = Input('zone')
     add = Button('Add')
     cancel = Button('Cancel')
 
-    # todo: rest of entities should be added according to provider type
+    @View.nested
+    class endpoints(View):
+        # this is switchable view that gets replaced this concrete view.
+        # it gets changed according to currently chosen provider type every time
+        # when it gets accessed
+        pass
+
+    def __getattribute__(self, item):
+        if item == 'endpoints':
+            if self.prov_type.selected_option == 'Microsoft System Center VMM':
+                return SCVMMEndpointForm(parent=self)
+
+            elif self.prov_type.selected_option == 'VMware vCenter':
+                return VirtualCenterEndpointForm(parent=self)
+
+            elif self.prov_type.selected_option == 'Red Hat Virtualization Manager':
+                return RHEVMEndpointForm(parent=self)
+            else:
+                raise Exception('The form for provider with such name '
+                                'is absent: {}'.format(self.prov_type.text))
+        else:
+            return super(InfraProvidersAddView, self).__getattribute__(item)
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == 'Add New Infrastructure Provider'
 
 
 class InfraProvidersManagePoliciesView(BaseLoggedInPage):
@@ -397,19 +451,18 @@ class All(CFMENavigateStep):
     VIEW = InfraProvidersView
     prerequisite = NavigateToObject(Server, 'LoggedIn')
 
-    def am_i_here(self):
-        return match_page(summary='Infrastructure Providers')
-
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')
 
     def resetter(self):
         # Reset view and selection
-        if tb.exists("Grid View"):
-            tb.select("Grid View")
-        if paginator.page_controls_exist():
-            sel.check(paginator.check_all())
-            sel.uncheck(paginator.check_all())
+        tb = self.view.toolbar
+        paginator = self.view.paginator
+        if 'Grid View' not in tb.view_selector.selected:
+            tb.view_selector.select('Grid View')
+        if paginator.exists:
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(InfraProvider, 'Add')
@@ -418,7 +471,8 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Infrastructure Provider')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Add a New Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from widgetastic.widget import View
+from widgetastic.widget import View, Text
 from widgetastic_patternfly import Dropdown, Button
 from widgetastic_manageiq import ItemsToolBarViewSelector, DetailsToolBarViewSelector
 
@@ -22,6 +22,7 @@ class ProviderEntities(View):
     """
     should represent the view with different items like providers
     """
+    title = Text('//div[@id="main-content"]//h1')
 
     @View.nested
     class search(object):  # NOQA
