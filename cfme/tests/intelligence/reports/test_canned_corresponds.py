@@ -7,7 +7,6 @@ from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
 from utils.providers import get_crud_by_name
-from utils.appliance import get_or_create_current_appliance
 from utils import version, testgen
 from cfme import test_requirements
 
@@ -98,9 +97,8 @@ def test_cluster_relationships(soft_assert):
 @pytest.mark.tier(3)
 @test_requirements.report
 @pytest.mark.usefixtures('setup_provider')
-def test_operations_vm_on(soft_assert):
+def test_operations_vm_on(soft_assert, appliance):
 
-    appliance = get_or_create_current_appliance()
     adb = appliance.db
     vms = adb['vms']
     hosts = adb['hosts']
@@ -136,11 +134,10 @@ def test_operations_vm_on(soft_assert):
 @pytest.mark.tier(3)
 @test_requirements.report
 @pytest.mark.usefixtures('setup_provider')
-def test_datastores_summary(soft_assert):
+def test_datastores_summary(soft_assert, appliance):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes."""
 
-    appliance = get_or_create_current_appliance()
     adb = appliance.db
     storages = adb['storages']
     vms = adb['vms']
@@ -181,19 +178,19 @@ def round_num(column):
     if ret < by:
         return ret
 
-    if ret > by and ret < kb:
+    if ret >= by and ret < kb:
         return round((ret / by), 1)
 
-    if ret > kb and ret < mb:
+    if ret >= kb and ret < mb:
         return round((ret / kb), 1)
 
-    if ret > mb and ret < gb:
+    if ret >= mb and ret < gb:
         return round((ret / mb), 1)
 
-    if ret > gb and ret < tb:
+    if ret >= gb and ret < tb:
         return round((ret / gb), 1)
 
-    if ret > tb:
+    if ret >= tb:
         return round((ret / tb), 1)
 
 
