@@ -10,8 +10,7 @@ from fixtures.appliance import temp_appliances
 
 @pytest.yield_fixture(scope="function")
 def dedicated_db_appliance(app_creds, appliance):
-    if appliance.version > '5.7':
-
+    if appliance.version.vstring > '5.7':
         with temp_appliances(count=1, preconfigured=False) as apps:
             pwd = app_creds['password']
             client = apps[0].ssh_client

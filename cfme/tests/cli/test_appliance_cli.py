@@ -1,20 +1,18 @@
-from fixtures.pytest_store import store
 from utils.log_validator import LogValidator
 from utils import version
 import pytest
 
 
-def test_set_hostname(request):
-    store.current_appliance.appliance_console_cli.set_hostname('test.example.com')
-    return_code, output = store.current_appliance.ssh_client.run_command(
-        "hostname -f")
+def test_set_hostname(request, appliance):
+    appliance.appliance_console_cli.set_hostname('test.example.com')
+    return_code, output = appliance.ssh_client.run_command("hostname -f")
     assert output.strip() == 'test.example.com'
     assert return_code == 0
 
 
 def test_configure_appliance_internal_fetch_key(
-        request, app_creds, temp_appliance_unconfig_funcscope):
-    fetch_key_ip = store.current_appliance.address
+        request, app_creds, temp_appliance_unconfig_funcscope, appliance):
+    fetch_key_ip = appliance.address
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal_fetch_key(
         0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
         fetch_key_ip, app_creds['sshlogin'], app_creds['sshpass'])
@@ -22,8 +20,9 @@ def test_configure_appliance_internal_fetch_key(
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_configure_appliance_external_join(request, app_creds, temp_appliance_unconfig_funcscope):
-    appliance_ip = store.current_appliance.address
+def test_configure_appliance_external_join(request, app_creds, appliance,
+        temp_appliance_unconfig_funcscope):
+    appliance_ip = appliance.address
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_join(
         appliance_ip, app_creds['username'], app_creds['password'], 'vmdb_production', appliance_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
