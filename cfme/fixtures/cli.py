@@ -1,6 +1,5 @@
 from utils.version import get_stream
 from cfme.test_framework.sprout.client import SproutClient
-from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 import pytest
@@ -10,8 +9,8 @@ from fixtures.appliance import temp_appliances
 
 
 @pytest.yield_fixture(scope="function")
-def dedicated_db_appliance(app_creds):
-    if current_appliance.version.vstring > '5.7':
+def dedicated_db_appliance(app_creds, appliance):
+    if appliance.version > '5.7':
 
         with temp_appliances(count=1, preconfigured=False) as apps:
             pwd = app_creds['password']
@@ -30,13 +29,13 @@ def dedicated_db_appliance(app_creds):
 
 
 @pytest.yield_fixture(scope="function")
-def fqdn_appliance():
+def fqdn_appliance(appliance):
     sp = SproutClient.from_config()
     available_providers = set(sp.call_method('available_providers'))
     required_providers = set(cfme_data['fqdn_providers'])
     usable_providers = available_providers & required_providers
-    version = current_appliance.version.vstring
-    stream = get_stream(current_appliance.version)
+    version = appliance.version.vstring
+    stream = get_stream(appliance.version)
     for provider in usable_providers:
         try:
             apps, pool_id = sp.provision_appliances(
