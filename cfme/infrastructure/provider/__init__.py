@@ -162,8 +162,10 @@ class InfraProvidersDiscoverView(BaseLoggedInPage):
 
 
 class InfraProvidersAddView(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
     name = Input('name')
     type = Dropdown('emstype')
+    zone = Input('Zone')
 
     add = Button('Add')
     cancel = Button('Cancel')
@@ -176,7 +178,14 @@ class InfraProvidersManagePoliciesView(BaseLoggedInPage):
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
-    # todo: to add provider buttons when really necessary
+
+
+class InfraProvidersEditTagsView(BaseLoggedInPage):
+    # todo: to add table and assignment controls
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
 
 class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -405,6 +414,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
+    VIEW = InfraProvidersAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -413,6 +423,7 @@ class Add(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Discover')
 class Discover(CFMENavigateStep):
+    VIEW = InfraProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -421,6 +432,7 @@ class Discover(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = InfraProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -434,6 +446,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'ManagePolicies')
 class ManagePolicies(CFMENavigateStep):
+    VIEW = InfraProvidersManagePoliciesView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -443,10 +456,30 @@ class ManagePolicies(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
 class ManagePoliciesFromDetails(CFMENavigateStep):
+    VIEW = InfraProvidersManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
         pol_btn('Manage Policies')
+
+
+@navigator.register(InfraProvider, 'EditTags')
+class EditTags(CFMENavigateStep):
+    VIEW = InfraProvidersEditTagsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Edit Tags')
+
+
+@navigator.register(InfraProvider, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = InfraProvidersEditTagsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Edit Tags')
 
 
 @navigator.register(InfraProvider, 'Edit')
