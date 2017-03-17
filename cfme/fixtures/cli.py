@@ -1,4 +1,5 @@
 from utils.version import get_stream
+from collections import namedtuple
 from cfme.test_framework.sprout.client import SproutClient
 from utils.conf import cfme_data, credentials
 from utils.log import logger
@@ -7,16 +8,19 @@ from wait_for import wait_for
 from cfme.test_framework.sprout.client import SproutException
 from fixtures.appliance import temp_appliances
 
+TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
+
 
 @pytest.yield_fixture(scope="function")
 def dedicated_db_appliance(app_creds, appliance):
     if appliance.version.vstring > '5.7':
         with temp_appliances(count=1, preconfigured=False) as apps:
             pwd = app_creds['password']
-            client = apps[0].ssh_client
-            channel = client.invoke_shell()
-            stdin = channel.makefile('wb')
-            stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
+            if apps[0].version >= "5.8":
+                command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 45), '')
+            else:
+                command_set = ('ap', '', '8', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 45), '')
+            apps[0].appliance_console.run_commands(command_set)
             wait_for(apps[0].is_dedicated_db_active)
             yield apps[0]
     else:
