@@ -7,6 +7,16 @@ from utils.log_validator import LogValidator
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 
+@pytest.mark.smoke
+def test_black_console(request, appliance):
+    command_set = ('exec > >(tee /tmp/opt.txt)\n', 'ap\n', '\n')
+    appliance.appliance_console.run_commands(command_set)
+    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Virtual Appliance'")
+    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Server:'")
+    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Database:'")
+    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Version:'")
+
+
 def test_black_console_set_hostname(request, appliance):
     hostname = 'Elite-QE.redhat.com'
     if appliance.version >= "5.8":
