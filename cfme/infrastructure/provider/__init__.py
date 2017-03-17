@@ -10,7 +10,7 @@
 """
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToObject
-from widgetastic.widget import View, Text
+from widgetastic.widget import View, Text, FileInput
 from cached_property import cached_property
 
 from cfme import BaseLoggedInPage
@@ -38,7 +38,8 @@ from widgetastic_manageiq import (PaginationPane,
                                   SummaryTable,
                                   ManageIQTree,
                                   Button,
-                                  TimelinesView)
+                                  TimelinesView,
+                                  RadioGroup)
 from widgetastic_patternfly import Input, BootstrapSelect, Tab, Dropdown
 from .widgetastic_views import (ProviderEntities,
                                 ProviderSideBar,
@@ -178,14 +179,13 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
 
 
 class RHEVMEndpointForm(View):
-    # default tab
     @View.nested
     class default(Tab, DefaultEndpointForm):  # NOQA
         TAB_NAME = 'Default'
         api_port = Input('default_api_port')
 
     @View.nested
-    class database(Tab):
+    class database(Tab):  # NOQA
         TAB_NAME = 'C & U Database'
         hostname = Input('metrics_hostname')
         api_port = Input('metrics_api_port')
@@ -197,19 +197,50 @@ class RHEVMEndpointForm(View):
         validate = Button('Validate')
 
 
+class OpenStackInfraEndpointForm(View):
+    @View.nested
+    class default(Tab, DefaultEndpointForm):  # NOQA
+        TAB_NAME = 'Default'
+        api_port = Input('default_api_port')
+        security_protocol = BootstrapSelect('default_security_protocol')
+
+    @View.nested
+    class events(Tab):
+        TAB_NAME = 'Events'
+        event_stream = RadioGroup(locator='//div[@id="amqp"]')
+        # below controls which appear only if amqp is chosen
+        hostname = Input('amqp_hostname')
+        api_port = Input('amqp_api_port')
+        security_protocol = BootstrapSelect('amqp_security_protocol')
+
+        username = Input('amqp_userid')
+        password = Input('amqp_password')
+        confirm_password = Input('amqp_verify')
+
+        validate = Button('Validate')
+
+    @View.nested
+    class rsa_keypair(Tab):
+        TAB_NAME = 'RSA key pair'
+
+        username = Input('ssh_keypair_userid')
+        private_key = FileInput(locator='.//input[@id="ssh_keypair_password"]')
+
+
 class InfraProvidersAddView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
     name = Input('name')
     prov_type = BootstrapSelect(id='emstype')
+    api_version = BootstrapSelect(id='api_version')  # only for OpenStack
     zone = Input('zone')
     add = Button('Add')
     cancel = Button('Cancel')
 
     @View.nested
-    class endpoints(View):
+    class endpoints(View):  # NOQA
         # this is switchable view that gets replaced this concrete view.
         # it gets changed according to currently chosen provider type every time
-        # when it gets accessed
+        # when it is accessed
         pass
 
     def __getattribute__(self, item):
@@ -222,6 +253,10 @@ class InfraProvidersAddView(BaseLoggedInPage):
 
             elif self.prov_type.selected_option == 'Red Hat Virtualization Manager':
                 return RHEVMEndpointForm(parent=self)
+
+            elif self.prov_type.selected_option == 'OpenStack Platform Director':
+                return OpenStackInfraEndpointForm(parent=self)
+
             else:
                 raise Exception('The form for provider with such name '
                                 'is absent: {}'.format(self.prov_type.text))
