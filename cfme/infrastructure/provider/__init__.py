@@ -166,7 +166,6 @@ class DefaultEndpointForm(View):
     confirm_password = Input('default_verify')
 
     validate = Button('Validate')
-    pass
 
 
 class SCVMMEndpointForm(DefaultEndpointForm):
@@ -181,12 +180,21 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
 class RHEVMEndpointForm(View):
     # default tab
     @View.nested
-    class default(Tab):  # NOQA
+    class default(Tab, DefaultEndpointForm):  # NOQA
         TAB_NAME = 'Default'
+        api_port = Input('default_api_port')
 
     @View.nested
     class database(Tab):
         TAB_NAME = 'C & U Database'
+        hostname = Input('metrics_hostname')
+        api_port = Input('metrics_api_port')
+        database_name = Input('metrics_database_name')
+        username = Input('metrics_userid')
+        password = Input('metrics_password')
+        confirm_password = Input('metrics_verify')
+
+        validate = Button('Validate')
 
 
 class InfraProvidersAddView(BaseLoggedInPage):
