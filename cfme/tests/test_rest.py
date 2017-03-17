@@ -173,6 +173,23 @@ def test_user_settings(rest_api):
     assert isinstance(rest_api.settings, dict)
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_resources_hiding(rest_api):
+    """Test that it's possible to hide resources in response.
+
+    Metadata:
+        test_flag: rest
+    """
+    roles = rest_api.collections.roles
+    resources_visible = rest_api.get(roles._href + '?filter[]=read_only=true')
+    assert rest_api.response.status_code == 200
+    assert 'resources' in resources_visible
+    resources_hidden = rest_api.get(roles._href + '?filter[]=read_only=true&hide=resources')
+    assert rest_api.response.status_code == 200
+    assert 'resources' not in resources_hidden
+    assert resources_hidden['subcount'] == resources_visible['subcount']
+
+
 class TestBulkQueryRESTAPI(object):
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_bulk_query(self, rest_api):
