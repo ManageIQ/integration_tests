@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import fauxfactory
 import logging
 import os
@@ -100,9 +99,9 @@ class ApplianceConsoleCli(object):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def _run(self, ap_cli_command):
+    def _run(self, appliance_console_cli_command):
         return self.appliance.ssh_client.run_command(
-            "appliance_console_cli {}".format(ap_cli_command))
+            "appliance_console_cli {}".format(appliance_console_cli_command))
 
     def set_hostname(self, hostname):
         self._run("-H {host}".format(host=hostname))
@@ -174,7 +173,7 @@ class IPAppliance(object):
         self._db_ssh_client = None
         self._user = None
         self.appliance_console = ApplianceConsole(self)
-        self.ap_cli = ApplianceConsoleCli(self)
+        self.appliance_console_cli = ApplianceConsoleCli(self)
         self.browser = ViaUI(owner=self)
         self.context = ImplementationContext.from_instances(
             [self.browser])

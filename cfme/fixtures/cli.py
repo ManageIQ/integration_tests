@@ -55,8 +55,8 @@ def fqdn_appliance(appliance):
 
 @pytest.yield_fixture()
 def ipa_crud(fqdn_appliance, app_creds, ipa_creds):
-    fqdn_appliance.ap_cli.configure_ipa(ipa_creds['ipaserver'], ipa_creds['username'],
-        ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
+    fqdn_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
+        ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
 
     yield(fqdn_appliance)
 
