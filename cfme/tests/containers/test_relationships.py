@@ -46,6 +46,8 @@ TEST_ITEMS = [
 
 def check_relationships(instance):
     """Check the relationships linking & data integrity"""
+    instance.summary.reload()  # Because sometimes:
+    # AttributeError: 'Summary' object has no attribute 'relationships'
     sum_values = instance.summary.relationships.items().values()
     shuffle(sum_values)
     for attr in sum_values:

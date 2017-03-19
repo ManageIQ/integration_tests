@@ -73,4 +73,6 @@ def test_search_bar(provider, soft_assert):
                         'Should not find records, search results: "{}"'
                         .format(search_string, results_row_names))
         finally:
-            search.ensure_no_filter_applied()
+            # search.ensure_no_filter_applied() -> TimedOutError
+            # https://github.com/ManageIQ/integration_tests/issues/4401
+            search.normal_search("")
