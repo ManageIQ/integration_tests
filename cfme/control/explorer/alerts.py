@@ -4,7 +4,7 @@ from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
 
-from widgetastic.widget import Text, Checkbox
+from widgetastic.widget import Text, Checkbox, View
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic_manageiq import SNMPForm, AlertEmail
 
@@ -31,6 +31,21 @@ class AlertFormCommon(ControlExplorerView):
     description = Input(name="description")
     active = Checkbox("enabled_cb")
     based_on = BootstrapSelect("miq_alert_db")
+
+    @View.nested
+    class evaluate(View):  # noqa
+        type = BootstrapSelect("exp_name")
+        # Real Time Performance Parameters
+        performance_field = BootstrapSelect("perf_column")
+        performance_field_operator = BootstrapSelect("select_operator")
+        performance_field_value = Input(name="value_threshold")
+        performance_trend = BootstrapSelect("trend_direction")
+        performance_time_threshold = BootstrapSelect("rt_time_threshold")
+
+        def fill(self, values):
+            new_values = dict(type=values[0], **values[1])
+            return View.fill(self, new_values)
+
     driving_event = BootstrapSelect("exp_event")
     notification_frequency = BootstrapSelect("repeat_time")
     snmp_trap_send = Checkbox("send_snmp_cb")
@@ -103,11 +118,8 @@ class Alert(Updateable, Navigatable, Pretty):
     Args:
         description: Name of the Alert.
         based_on: Cluster, Datastore, Host, Provider, ...
-        evaluate: If specified as :py:class:`str`, it will select 'Expression (Custom)' and compile
-            the string into the program which selects the expression. If specified as callable
-            (something that has ``.__call__`` method inside), then it will also select the custom
-            expression and will use the function to fill the expression. If specified as tuple(list)
-            it will use it as follows: ``("What to Evaluate selection", dict(values="for form"))``.
+        evaluate: Use it as follows:
+            ``("What to Evaluate selection", dict(values="for form"))``.
             If you want to select Nothing, you will therefore pass ``("Nothing", {})``.
             Other example:
 
@@ -116,11 +128,9 @@ class Alert(Updateable, Navigatable, Pretty):
                     ("Hardware Reconfigured",
                      dict(hw_attribute="Number of CPUs", hw_attribute_operator="Increased")
                     )
-
-            For all fields, check the `form` class variable.
         driving_event: This Alert's driving event (Hourly Timer, ...).
         notification_frequency: 1 Minute, 2 Minutes, ...
-        snmp_trap: Not Implemented
+        snmp_trap: Whether to send snmp traps.
         emails: Whether to send e-mails. `False` disables, string or list of strings
             with emails enables.
         timeline_event: Whether generate a timeline event.
@@ -146,8 +156,7 @@ class Alert(Updateable, Navigatable, Pretty):
         self.description = description
         self.active = active
         self.based_on = based_on
-        if evaluate is not None:
-            raise NotImplementedError
+        self.evaluate = evaluate
         self.driving_event = driving_event
         self.notification_frequency = notification_frequency
         self.snmp_trap = snmp_trap
@@ -242,6 +251,7 @@ class Alert(Updateable, Navigatable, Pretty):
             description=self.description,
             active=self.active,
             based_on=self.based_on,
+            evaluate=self.evaluate,
             driving_event=self.driving_event,
             notification_frequency=self.notification_frequency,
             timeline_event=self.timeline_event,

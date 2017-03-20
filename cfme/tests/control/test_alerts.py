@@ -185,16 +185,14 @@ def vm_crud(provider, vm_name, full_template):
 
 # TODO Replace this with the appliance fixture once complete
 @pytest.yield_fixture(scope="module")
-def snmp():
-    ssh = store.current_appliance.ssh_client
-    ssh.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
-    ssh.run_command("systemctl start snmptrapd.service")
+def snmp(appliance):
+    appliance.ssh_client.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
+    appliance.ssh_client.run_command("systemctl start snmptrapd.service")
     yield
-    ssh.run_command("systemctl stop snmptrapd.service")
-    ssh.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
+    appliance.ssh_client.run_command("systemctl stop snmptrapd.service")
+    appliance.ssh_client.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
-@pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         vm_name, vm_crud, provider, request, smtp_test, register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
@@ -337,12 +335,12 @@ def test_alert_snmp(request, vm_name, snmp, provider):
             "Real Time Performance",
             {
                 "performance_field": "CPU - % Used",
-                "performance_field_operator": ">",
+                "performance_field_operator": ">=",
                 "performance_field_value": "0",
                 "performance_trend": "Don't Care",
                 "performance_time_threshold": "3 Minutes",
             }),
-        notification_frequency="5 Minutes",
+        notification_frequency="1 Minute",
         snmp_trap={
             "hosts": "127.0.0.1",
             "version": "v2",
@@ -357,7 +355,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
 
     def _snmp_arrived():
         rc, stdout = store.current_appliance.ssh_client.run_command(
-            "journalctl /usr/sbin/snmptrapd | grep {}".format(match_string))
+            "journalctl --no-pager /usr/sbin/snmptrapd | grep {}".format(match_string))
         if rc != 0:
             return False
         elif stdout:
@@ -365,7 +363,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
         else:
             return False
 
-    wait_for(_snmp_arrived, num_sec=600, delay=15, message="SNMP trap arrived.")
+    wait_for(_snmp_arrived, timeout="30m", delay=60, message="SNMP trap arrived.")
 
 
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])
