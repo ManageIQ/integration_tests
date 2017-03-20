@@ -5,6 +5,7 @@ import pytest
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.infrastructure.host import Host
 from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -149,3 +150,21 @@ def test_delete_instance(new_instance):
     assert new_instance.name not in new_instance.provider.mgmt.list_vm()
     navigate_to(new_instance, 'AllForProvider')
     assert new_instance.name not in Quadicon.all()
+
+
+def test_list_vms_infra_node(provider, soft_assert):
+    navigate_to(provider.infra_provider, 'ProviderNodes')
+    # Match hypervisors by IP with count of running VMs
+    hvisors = dict()
+    for hv in provider.mgmt.api.hypervisors.list():
+        hvisors.update({hv.host_ip: hv.running_vms})
+
+    # Skip non-compute nodes
+    quads = filter(lambda q: 'Compute' in q.name, Quadicon.all())
+    quads = [q.name for q in quads]
+    for quad in quads:
+        host = Host(quad, provider=provider.infra_provider)
+        navigate_to(host, 'Details')
+        host_ip = host.get_detail('Properties', 'IP Address')
+        vms = int(host.get_detail('Relationships', 'VMs'))
+        soft_assert(hvisors[host_ip] == vms)
