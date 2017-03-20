@@ -452,7 +452,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/host')
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Hosts')
 
     def resetter(self):
         tb.select("Grid View")
