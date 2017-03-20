@@ -90,3 +90,10 @@ def test_cannot_edit_builtin():
         assert not details_view.configuration.item_enabled('Edit this Domain')
     else:
         assert not details_view.configuration.is_displayed
+
+
+@pytest.mark.tier(2)
+def test_domain_name_wrong():
+    domains = DomainCollection()
+    with error.expected('Name may contain only'):
+        domains.create(name='with space')
