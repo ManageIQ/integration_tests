@@ -81,7 +81,7 @@ def test_tables_fields(provider, test_item, soft_assert):
     # TODO: Switch to widgetastic
     paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
     for row in paged_tbl.rows():
-        cell = row.get(row.get('Name', row.get('Host', None)), row[2])
+        cell = row[2]  # We're using indexing since it could be either 'name' or 'host'
         if cell:
             name = cell.text
         else:
