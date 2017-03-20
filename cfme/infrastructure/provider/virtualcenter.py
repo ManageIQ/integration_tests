@@ -19,10 +19,18 @@ class VMwareProvider(InfraProvider):
         self.end_ip = end_ip
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'VMware vCenter',
-                'hostname_text': kwargs.get('hostname'),
-                'ipaddress_text': kwargs.get('ip_address')}
+        main_values = {
+            'name': kwargs.get('name'),
+            'prov_type': create and 'VMware vCenter',
+        }
+
+        endpoint_values = {
+            'default': {
+                'hostname': kwargs.get('hostname'),
+                # 'ipaddress_text': kwargs.get('ip_address'),
+            }
+        }
+        return main_values, endpoint_values
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """

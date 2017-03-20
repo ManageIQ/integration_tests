@@ -30,13 +30,15 @@ class SCVMMProvider(InfraProvider):
         }
 
         endpoint_values = {
-            'hostname': kwargs.get('hostname'),
-            # 'ipaddress_text': kwargs.get('ip_address'),
-            'security_protocol': kwargs.get('sec_protocol')
+            'default': {
+                'hostname': kwargs.get('hostname'),
+                # 'ipaddress_text': kwargs.get('ip_address'),
+                'security_protocol': kwargs.get('sec_protocol')
+            }
         }
 
-        if 'security_protocol' in endpoint_values and \
-                endpoint_values['security_protocol'] is 'Kerberos':
+        if 'security_protocol' in endpoint_values['default'] and \
+                        endpoint_values['default']['security_protocol'] is 'Kerberos':
             endpoint_values['realm'] = kwargs.get('sec_realm')
 
         return main_values, endpoint_values

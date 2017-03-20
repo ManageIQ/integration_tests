@@ -211,7 +211,7 @@ class OpenStackInfraEndpointForm(View):
         security_protocol = BootstrapSelect('default_security_protocol')
 
     @View.nested
-    class events(Tab, BeforeFillMixin):
+    class events(Tab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Events'
         event_stream = RadioGroup(locator='//div[@id="amqp"]')
         # below controls which appear only if amqp is chosen
@@ -226,7 +226,7 @@ class OpenStackInfraEndpointForm(View):
         validate = Button('Validate')
 
     @View.nested
-    class rsa_keypair(Tab, BeforeFillMixin):
+    class rsa_keypair(Tab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'RSA key pair'
 
         username = Input('ssh_keypair_userid')

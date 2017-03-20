@@ -170,11 +170,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     principal = self.principal
 
                 if hasattr(form.endpoints, 'default'):
-                    form.default.fill({'username': principal,
+                    form.endpoints.default.fill({'username': principal,
                                        'password': self.secret,
                                        'confirm_password': self.verify_secret})
                     if validate:
-                        form.default.validate.click()
+                        form.endpoints.default.validate.click()
                 else:
                     form.endpoints.fill({'username': principal,
                                          'password': self.secret,
@@ -282,15 +282,24 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 self._submit(cancel, self.add_provider_button)
             else:
                 view = navigate_to(self, 'Add')
+                # to get rid of this old code
                 main_form_values, endpoint_form_values = self._form_mapping(True, **self.__dict__)
-                view.fill(main_form_values)
-                # todo: move to endpoints approach
-                view.endpoints.fill(endpoint_form_values)
 
-                # todo: add endpoints
+                # filling main part of dialog
+                view.fill(main_form_values)
+
+                # filling endpoints
+                if not hasattr(view.endpoints, 'default'):
+                    view.endpoints.fill(endpoint_form_values)
+                else:
+                    for endpoint in endpoint_form_values:
+                        getattr(view.endpoints, endpoint).fill(endpoint_form_values[endpoint])
+
+                # filling credentials
                 for cred in self.credentials:
                     self.credentials[cred].fill(view, validate=validate_credentials)
 
+                # todo: add wait especially if provider cannot be reached
                 if cancel:
                     view.cancel.click()
                 else:
