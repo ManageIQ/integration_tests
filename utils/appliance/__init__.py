@@ -24,7 +24,7 @@ from sentaku import ImplementationContext
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import conf, datafile, db, ssh, ports
+from utils import conf, datafile, db, ssh, ports, version
 from utils.datafile import load_data_file
 from utils.events import EventListener
 from utils.log import logger, create_sublogger, logger_wrap
@@ -162,6 +162,15 @@ class IPAppliance(object):
         """
         assert 'appliance' not in kwargs
         return cls(appliance=self, *args, **kwargs)
+
+    def postgres_version(self):
+        # postgres's version is in the service name and file paths when we pull it from SCL,
+        # so this is a little resolver to help keep the version picking centralized
+        return version.pick({
+            version.LOWEST: 'postgresql92',
+            '5.5': 'rh-postgresql94',
+            '5.7': 'rh-postgresql95'
+        })
 
     @property
     def default_zone(self):
@@ -1454,7 +1463,8 @@ class IPAppliance(object):
 
     def is_dedicated_db_active(self):
         return_code, output = self.ssh_client.run_command(
-            "systemctl status {}-postgresql.service | grep running".format(db.postgres_version()))
+            "systemctl status {}-postgresql.service | grep running".format(
+                IPAppliance.postgres_version()))
         return return_code == 0
 
     def _check_appliance_ui_wait_fn(self):
