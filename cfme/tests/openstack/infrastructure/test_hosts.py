@@ -45,6 +45,16 @@ def test_host_cpu_resources(provider, soft_assert):
             soft_assert(value > 0, "Aggregate Node {} is 0".format(field))
 
 
+def test_host_auth(provider, soft_assert):
+    navigate_to(provider, 'ProviderNodes')
+    quads = list(Quadicon.all())
+    for quad in quads:
+        host = Host(name=quad.name, provider=provider)
+        navigate_to(host, 'Details')
+        soft_assert(host.get_detail('Authentication Status',
+                                    'SSH Key Pair Credentials' == 'Valid'))
+
+
 def test_host_devices(provider):
     navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
