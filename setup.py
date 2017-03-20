@@ -18,6 +18,7 @@ setup(
         'console_scripts': [
             'miq-release = scripts.release:main',
             'miq-artifactor-server = artifactor.__main__:main',
+            'miq-runtest = cfme.scripting.runtest:main',
         ],
         'manageiq.provider_categories':
         [

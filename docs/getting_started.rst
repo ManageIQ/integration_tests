@@ -1,8 +1,9 @@
 Getting Started
 ===============
 
-Before you start copypasting ...
---------------------------------
+
+Before you start 
+-----------------
 Welcome to the Getting Started Guide. The CFME QE team is glad that you have decided to read this
 page that will help you understand how ``cfme_tests`` interacts with the appliances. There are some
 important information contained within this text, so we would like you to spend some time to
@@ -10,109 +11,36 @@ carefully read this page from beginning to the end. That will make you familiari
 and will minimize the chance of doing it wrong. Then you can proceed the shortest way using the
 setup and execution scripts.
 
+
+Obtaining what you need (Project Setup)
+----------------------------------------
+
+* create a dedicated folder for working with the integration tests,
+  our automated quickstart has expectations that best work out
+  when it has its own place
+* obtain the ``cfme_tests`` repository
+  (`fork and clone <https://github.com/ManageIQ/integration_tests/fork>`_)
+* if you have access, obtain the ``cfme-qe-yamls`` repository (internal url, please ask the team) and
+  put the ``.yaml_key`` file into the root of the ``cfme_tests`` repository.
+* enter the ``cfme_tests`` repository with your shell and execute ``python -m cfme.scripting.quickstart``
+  which will in turn configure your system, the development environment and the default configuration files
+* activate the development environment by ``. ../cfme_venv/bin/activate``
+* Set up a local selenium server that opens browser windows somewhere other than your
+  desktop. There is a Docker based solution for the browser, look at the script
+  ``scripts/dockerbot/sel_container.py``. That ensures you have the proper versions of browsers. You
+  can also set everything up in your system using Xvnc - :doc:`guides/vnc_selenium` .
+
 Appliances in containers
 ------------------------
 If the target appliance you will be testing is a container, you might like to consult
 :doc:`guides/container` for the details specific to testing containers.
 
-Setup
------
-You can use this shortcut to install the system and python dependencies which will leave you only
-with the need to copy the yamls and putting the ``.yaml_key`` in place. Copy this to an executable
-file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
 
-.. code-block:: bash
+Running Tests
+==============
 
-  #!/usr/bin/env bash
-
-  pkcon install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel python-devel
-  virtualenv .cfme_tests
-
-  . ./.cfme_tests/bin/activate
-  python scripts/disable-bytecode.py
-  pip install --upgrade pip
-  PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt --no-cache-dir
-  echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
-
-Detailed steps (manual environment setup):
-
-* Create a virtualenv from which to run tests
-
-  * Execute one of the following commands:
-
-    * ``pip install virtualenv``
-    * ``easy_install virtualenv``
-    * ``yum install python-virtualenv``
-
-  * Create a virtualenv: ``virtualenv <name>``
-  * To activate the virtualenv later: ``source <name>/bin/activate``, but do not do it yet, it still
-    needs finishing touches.
-
-* Fork and Clone this repository
-* Get the shared encryption key (``.yaml_key``) for credentials. Ask in CFME QE.
-* Make sure you set the shared secret for the credentials files encryption. There are two ways:
-
-  * add ``export CFME_TESTS_KEY="our shared key"`` into the activate script
-  * create ``.yaml_key`` file in project root containing the key
-
-
-* Ensure the following devel packages are installed (for building python dependencies):
-
-  * ``gcc``
-  * ``postgresql-devel``
-  * ``libxml2-devel``
-  * ``libxslt-devel``
-  * ``zeromq3-devel``
-  * ``libcurl-devel``
-  * ``redhat-rpm-config``
-  * ``gcc-c++``
-  * ``openssl-devel``
-  * ``libffi-devel``
-  * ``python-devel``
-  * Fedora (possibly RHEL-like systems) users:
-
-    * ``pkcon install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel python-devel``
-
-    * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
-
-* Activate the virtual environment:
-
-To activate the virtualenv, the ``bin/activate`` script must be sourced. Bear in mind that you
-should have the two options added in the ``bin/activate`` script BEFORE you source it, otherwise it
-will not work.
-
-.. code-block:: bash
-
-   # Bash example:
-   cd /path/to/virtualenv
-   source bin/activate or . bin/activate
-
-* Install python dependencies:
-
-  * ``PYCURL_SSL_LIBRARY=nss pip install -Ur /path/to/virtualenv/cfme_tests/requirements.txt``
-  * If you get error from pycurl and you used this command, you might like to remove pycurl and try
-    installing it again with different SSL library set. The error message should give you an idea
-    what to try. For reinstallation, you will need to use the command mentioned in next bullet.
-  * If you forget to use the ``PYCURL_SSL_LIBRARY`` env variable and you get a pycurl error, you
-    have to run it like this to fix it:
-
-    * Ensure you have ``libcurl-devel`` installed (this was not a prerequisite before so it can
-      happen)
-    * Run ``PYCURL_SSL_LIBRARY=nss pip install -U -r requirements.txt --no-cache-dir``
-
-* run ``python scripts/disable-bytecode.py`` if you want to avoid having to clean up python bytecode
-* You copy/symlink the required YAML files into ``conf/`` if you have access to team's internal YAML
-  repository. Required YAML files are ``env``, ``cfme_data``, ``credentials``. If the file's
-  extension is ``.yaml`` it is loaded normally, if its extension is ``.eyaml`` then it is encrypted
-  and you need to have the decryption key in the ``cfme_tests/`` directory. You can also start them
-  from scratch by copying the templates in ``conf/`` and editing them to suit the environment you
-  use.
-* Set up a local selenium server that opens browser windows somewhere other than your
-  desktop. There is a Docker based solution for the browser, look at the script
-  ``scripts/dockerbot/sel_container.py``. That ensures you have the proper versions of browsers. You
-  can also set everything up in your system using Xvnc - :doc:`guides/vnc_selenium` .
-* Test! Run py.test. (This takes a long time, Ctrl-C will stop it)
-* When py.test ends or you Ctrl-C it, it will look stuck in the phase "collecting artifacts". You
+* Test! Run miq-runtest. (This takes a long time, Ctrl-C will stop it)
+* When miq-runtest ends or you Ctrl-C it, it will look stuck in the phase "collecting artifacts". You
   can either wait about 30 seconds, or you can Ctrl-C it again.
 * In either case, check your processes sometimes, the artifactor process likes to hang when forced
   to quit, but it can also happen when it ends normally, though it is not too common.
@@ -171,7 +99,7 @@ started as quickly as possible:
     ``cfme_tests`` also uses SSH and Postgres extensively, therefore you MUST have those services
     accessible and ideally on the expected ports. If you don't have them running on the expected
     ports, you MUST specify them manually using ``--port-ssh`` and ``--port-db`` command-line
-    parameters. If you run your code outside of ``py.test`` run, you MUST use ``utils.ports``
+    parameters. If you run your code outside of ``miq-runtest`` run, you MUST use ``utils.ports``
     to override the ports (that is what the command-line parameters do anyway). The approach using
     ``utils.ports`` will be most likely discontinued in the future in favour of merging that
     functionality inside :py:class:`utils.appliance.IPAppliance` class. Everything in the repository
@@ -223,7 +151,7 @@ started as quickly as possible:
 
 * If you want to test against multiple appliances, use the ``--appliance w.x.y.z`` parameter. Eg. if
   you have appliances ``1.2.3.4`` and ``2.3.4.5``, then append ``--appliance 1.2.3.4 --appliance 2.3.4.5``
-  to the ``py.test`` command. Due to a glitch that has not been resolved yet, you should set the
+  to the ``miq-runtest`` command. Due to a glitch that has not been resolved yet, you should set the
   ``base_url`` to the first appliance.
 
 * If you have access to Sprout, you can request a fresh appliance to run your tests, you can use
@@ -231,7 +159,7 @@ started as quickly as possible:
 
   .. code-block:: bash
 
-     SPROUT_USER=username SPROUT_PASSWORD=verysecret py.test <your pytest params> --use-sprout --sprout-group "<stream name>" --sprout-appliances N
+     SPROUT_USER=username SPROUT_PASSWORD=verysecret miq-runtest <your pytest params> --use-sprout --sprout-group "<stream name>" --sprout-appliances N
 
   If you specify ``N`` greater than 1, the parallelized run is set up automatically. More help
   about the sprout parameters are in :py:mod:`fixtures.parallelizer`. If you don't know what
