@@ -326,7 +326,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     @property
     def get_db_id(self):
         if self.db_id is None:
-            self.db_id = self.appliance.get_host_id(self.name)
+            self.db_id = self.appliance.host_id(self.name)
             return self.db_id
         else:
             return self.db_id
