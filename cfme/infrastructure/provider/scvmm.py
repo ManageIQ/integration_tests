@@ -24,18 +24,22 @@ class SCVMMProvider(InfraProvider):
 
     def _form_mapping(self, create=None, **kwargs):
 
-        values = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'Microsoft System Center VMM',
-            'hostname_text': kwargs.get('hostname'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol')
+        main_values = {
+            'name': kwargs.get('name'),
+            'prov_type': create and 'Microsoft System Center VMM',
         }
 
-        if 'sec_protocol' in values and values['sec_protocol'] is 'Kerberos':
-            values['sec_realm'] = kwargs.get('sec_realm')
+        endpoint_values = {
+            'hostname': kwargs.get('hostname'),
+            # 'ipaddress_text': kwargs.get('ip_address'),
+            'security_protocol': kwargs.get('sec_protocol')
+        }
 
-        return values
+        if 'security_protocol' in endpoint_values and \
+                endpoint_values['security_protocol'] is 'Kerberos':
+            endpoint_values['realm'] = kwargs.get('sec_realm')
+
+        return main_values, endpoint_values
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """

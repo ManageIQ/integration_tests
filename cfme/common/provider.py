@@ -110,13 +110,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 ('validate_btn', form_buttons.validate),
             ]
 
-            if version.current_version() >= '5.6':
-                amevent = "Events"
-            else:
-                amevent = "AMQP"
+            amevent = "Events"
             tab_fields[amevent] = []
-            if version.current_version() >= "5.6":
-                tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
+            tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
             tab_fields[amevent].extend([
                 ('amqp_principal', Input("amqp_userid")),
                 ('amqp_secret', Input("amqp_password")),
@@ -133,6 +129,58 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 self.token = kwargs['token']
             if self.type == 'service_account':
                 self.service_account = kwargs['service_account']
+
+        def fill(self, form, validate=False):
+            """
+            todo: to replace this somehow later
+            to move cloud methods as well
+            Args:
+                form:
+                validate:
+
+            Returns:
+
+            """
+            if self.type == 'amqp':
+                form.endpoints.events.fill({
+                    'event_stream': 'amqp',
+                    'username': self.principal,
+                    'password': self.secret,
+                    'confirm_password': self.verify_secret
+                })
+                if validate:
+                    form.endpoints.events.validate.click()
+
+            elif self.type == 'candu':
+                form.endpoints.database.fill({'username': self.principal,
+                                              'password': self.secret,
+                                              'confirm_password': self.verify_secret
+                                              })
+                if validate:
+                    form.endpoints.database.validate.click()
+                    # todo: to add check of flash message if necessary
+
+            elif self.type == 'ssh':
+                form.endpoints.rsa_keypair.fill({'username': self.principal,
+                                                 'private_key': self.secret})
+            else:
+                if self.domain:
+                    principal = r'{}\{}'.format(self.domain, self.principal)
+                else:
+                    principal = self.principal
+
+                if hasattr(form.endpoints, 'default'):
+                    form.default.fill({'username': principal,
+                                       'password': self.secret,
+                                       'confirm_password': self.verify_secret})
+                    if validate:
+                        form.default.validate.click()
+                else:
+                    form.endpoints.fill({'username': principal,
+                                         'password': self.secret,
+                                         'confirm_password': self.verify_secret})
+                    if validate:
+                        form.endpoints.validate.click()
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -223,15 +271,35 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         else:
             created = True
             logger.info('Setting up provider: %s', self.key)
-            navigate_to(self, 'Add')
-            fill(self.properties_form, self._form_mapping(True, **self.__dict__))
-            for cred in self.credentials:
-                fill(self.credentials[cred].form, self.credentials[cred],
-                     validate=validate_credentials)
-            self._submit(cancel, self.add_provider_button)
-            if not cancel:
-                flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
-                                                                                self.name))
+
+            from cfme.infrastructure.provider import InfraProvider
+            if not self.one_of(InfraProvider):
+                navigate_to(self, 'Add')
+                fill(self.properties_form, self._form_mapping(True, **self.__dict__))
+                for cred in self.credentials:
+                    fill(self.credentials[cred].form, self.credentials[cred],
+                         validate=validate_credentials)
+                self._submit(cancel, self.add_provider_button)
+            else:
+                view = navigate_to(self, 'Add')
+                main_form_values, endpoint_form_values = self._form_mapping(True, **self.__dict__)
+                view.fill(main_form_values)
+                # todo: move to endpoints approach
+                view.endpoints.fill(endpoint_form_values)
+
+                # todo: add endpoints
+                for cred in self.credentials:
+                    self.credentials[cred].fill(view, validate=validate_credentials)
+
+                if cancel:
+                    view.cancel.click()
+                else:
+                    view.add.click()
+
+                if not cancel:
+                    flash.assert_message_match('{} Providers "{}" '
+                                               'was saved'.format(self.string_name, self.name))
+
         if validate_inventory:
             self.validate()
 

@@ -160,6 +160,12 @@ class InfraProvidersDiscoverView(BaseLoggedInPage):
             match_page(summary='Infrastructure Providers Discovery')
 
 
+class BeforeFillMixin(object):
+    def before_fill(self, values):
+        if self.exists and not self.is_active():
+            self.select()
+
+
 class DefaultEndpointForm(View):
     hostname = Input('default_hostname')
     username = Input('default_userid')
@@ -180,12 +186,12 @@ class VirtualCenterEndpointForm(DefaultEndpointForm):
 
 class RHEVMEndpointForm(View):
     @View.nested
-    class default(Tab, DefaultEndpointForm):  # NOQA
+    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         api_port = Input('default_api_port')
 
     @View.nested
-    class database(Tab):  # NOQA
+    class database(Tab, BeforeFillMixin):  # NOQA
         TAB_NAME = 'C & U Database'
         hostname = Input('metrics_hostname')
         api_port = Input('metrics_api_port')
@@ -199,13 +205,13 @@ class RHEVMEndpointForm(View):
 
 class OpenStackInfraEndpointForm(View):
     @View.nested
-    class default(Tab, DefaultEndpointForm):  # NOQA
+    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         api_port = Input('default_api_port')
         security_protocol = BootstrapSelect('default_security_protocol')
 
     @View.nested
-    class events(Tab):
+    class events(Tab, BeforeFillMixin):
         TAB_NAME = 'Events'
         event_stream = RadioGroup(locator='//div[@id="amqp"]')
         # below controls which appear only if amqp is chosen
@@ -220,7 +226,7 @@ class OpenStackInfraEndpointForm(View):
         validate = Button('Validate')
 
     @View.nested
-    class rsa_keypair(Tab):
+    class rsa_keypair(Tab, BeforeFillMixin):
         TAB_NAME = 'RSA key pair'
 
         username = Input('ssh_keypair_userid')
@@ -233,8 +239,13 @@ class InfraProvidersAddView(BaseLoggedInPage):
     prov_type = BootstrapSelect(id='emstype')
     api_version = BootstrapSelect(id='api_version')  # only for OpenStack
     zone = Input('zone')
+
     add = Button('Add')
     cancel = Button('Cancel')
+
+    # only in edit view
+    vnc_start_port = Input('host_default_vnc_port_start')
+    vnc_end_port = Input('host_default_vnc_port_end')
 
     @View.nested
     class endpoints(View):  # NOQA
@@ -353,7 +364,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         self.template_name = "Templates"
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name')}
+        return {'name': kwargs.get('name')}
 
     @cached_property
     def vm_name(self):
@@ -581,6 +592,7 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = InfraProvidersAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
