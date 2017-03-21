@@ -353,9 +353,7 @@ class Vm(BaseVM):
     class CfmeRelationship(object):
         relationship_form = Form(
             fields=[
-                ('server_select', {
-                    version.LOWEST: Select("//*[@id='server_id']"),
-                    "5.5": AngularSelect("server_id")}),
+                ('server_select', AngularSelect("server_id")),
                 ('save_button', form_buttons.save),
                 ('reset_button', form_buttons.reset),
                 ('cancel_button', form_buttons.cancel)
