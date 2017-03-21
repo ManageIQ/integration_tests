@@ -35,10 +35,15 @@ class OpenshiftProvider(ContainersProvider):
             .find_by(name=self.name).resources[0].href
 
     def _form_mapping(self, create=None, **kwargs):
+        if self.appliance.version > '5.8.0.3':
+            sec_protocol = kwargs.get('provider_data')['sec_protocol']
+        else:
+            sec_protocol = None
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'OpenShift',
                 'hostname_text': kwargs.get('hostname'),
                 'port_text': kwargs.get('port'),
+                'sec_protocol': sec_protocol,
                 'zone_select': kwargs.get('zone')}
 
     @variable(alias='db')
