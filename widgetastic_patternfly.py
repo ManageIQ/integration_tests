@@ -39,6 +39,10 @@ class DropdownItemDisabled(Exception):
     pass
 
 
+class DropdownItemNotFound(Exception):
+    pass
+
+
 class Button(Widget, ClickableMixin):
     """A PatternFly/Bootstrap button
 
@@ -1170,7 +1174,18 @@ class Dropdown(Widget):
 
     def item_element(self, item):
         """Returns a WebElement for given item name."""
-        return self.browser.element(self.ITEM_LOCATOR.format(quote(item)), parent=self)
+        try:
+            return self.browser.element(self.ITEM_LOCATOR.format(quote(item)), parent=self)
+        except NoSuchElementException:
+            try:
+                items = self.items
+            except NoSuchElementException:
+                items = []
+            if items:
+                items_string = 'These items are present: {}'.format('; '.join(items))
+            else:
+                items_string = 'The dropdown is probably not present'
+            raise DropdownItemNotFound('Item {!r} not found. {}'.format(item, items_string))
 
     def item_enabled(self, item):
         """Returns whether the given item is enabled.
