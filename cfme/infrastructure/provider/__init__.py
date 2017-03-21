@@ -10,7 +10,7 @@
 """
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToObject
-from widgetastic.widget import View, Text, FileInput
+from widgetastic.widget import View, Text
 from cached_property import cached_property
 
 from cfme import BaseLoggedInPage
@@ -39,7 +39,8 @@ from widgetastic_manageiq import (PaginationPane,
                                   ManageIQTree,
                                   Button,
                                   TimelinesView,
-                                  RadioGroup)
+                                  RadioGroup,
+                                  FileInput)
 from widgetastic_patternfly import Input, BootstrapSelect, Tab, Dropdown
 from .widgetastic_views import (ProviderEntities,
                                 ProviderSideBar,

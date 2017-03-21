@@ -1,9 +1,6 @@
-import atexit
 import datetime
-import os
 from functools import partial
 from manageiq_client.api import APIException
-from tempfile import NamedTemporaryFile
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
@@ -164,16 +161,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     # todo: to add check of flash message if necessary
 
             elif self.type == 'ssh':
-                # workaround since FileInput widget doesn't support file autocreation now
-                secret = self.secret
-                if not os.path.isfile(self.secret):
-                    f = NamedTemporaryFile()
-                    f.write(str(self.secret))
-                    f.flush()
-                    secret = os.path.abspath(f.name)
-                    atexit.register(f.close)
-
-                form.endpoints.rsa_keypair.fill({'username': self.principal, 'private_key': secret})
+                form.endpoints.rsa_keypair.fill({'username': self.principal,
+                                                 'private_key': self.secret})
             else:
                 if self.domain:
                     principal = r'{}\{}'.format(self.domain, self.principal)
@@ -334,16 +323,38 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
-        navigate_to(self, 'Edit')
-        fill(self.properties_form, self._form_mapping(**updates))
-        for cred in self.credentials:
-            fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
-                 validate=validate_credentials)
-        self._submit(cancel, self.save_button)
-        name = updates.get('name', self.name)
-        if not cancel:
-            flash.assert_message_match(
-                '{} Provider "{}" was saved'.format(self.string_name, name))
+        from cfme.infrastructure.provider import InfraProvider
+        if not self.one_of(InfraProvider):
+            navigate_to(self, 'Edit')
+            fill(self.properties_form, self._form_mapping(**updates))
+            for cred in self.credentials:
+                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
+                     validate=validate_credentials)
+            self._submit(cancel, self.save_button)
+            name = updates.get('name', self.name)
+            if not cancel:
+                flash.assert_message_match(
+                    '{} Provider "{}" was saved'.format(self.string_name, name))
+        else:
+            view = navigate_to(self, 'Edit')
+
+            # update values:
+            fill(self.properties_form, self._form_mapping(**updates))
+
+            # update credentials:
+            for cred in self.credentials:
+                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
+                     validate=validate_credentials)
+
+            if cancel:
+                view.cancel.click()
+            else:
+                view.add.click()
+
+            name = updates.get('name', self.name)
+            if not cancel:
+                flash.assert_message_match(
+                    '{} Provider "{}" was saved'.format(self.string_name, name))
 
     def delete(self, cancel=True):
         """
