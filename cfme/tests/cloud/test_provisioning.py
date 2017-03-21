@@ -16,6 +16,7 @@ from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.generators import random_vm_name
@@ -207,6 +208,7 @@ def test_provision_from_template_using_rest(
         num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
 def test_ec2_manual_placement_using_rest(
         request, setup_provider, provider, vm_name, rest_api, provisioning):
     """ Tests provisioning ec2 instance with manual placement using the REST API.
