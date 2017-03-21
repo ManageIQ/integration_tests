@@ -52,7 +52,7 @@ def test_host_auth(provider, soft_assert):
         host = Host(name=quad.name, provider=provider)
         navigate_to(host, 'Details')
         soft_assert(host.get_detail('Authentication Status',
-                                    'SSH Key Pair Credentials' == 'Valid'))
+                                    'SSH Key Pair Credentials') == 'Valid')
 
 
 def test_host_devices(provider):
