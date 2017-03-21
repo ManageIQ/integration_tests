@@ -101,6 +101,7 @@ class ContainersProvider(BaseProvider, Pretty):
             zone=None,
             hostname=None,
             port=None,
+            sec_protocol=None,
             provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -112,6 +113,7 @@ class ContainersProvider(BaseProvider, Pretty):
         self.zone = zone
         self.hostname = hostname
         self.port = port
+        self.sec_protocol = sec_protocol
         self.provider_data = provider_data
 
     def _on_detail_page(self):
