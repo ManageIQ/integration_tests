@@ -17,6 +17,7 @@ from cfme.containers.project import Project
 from cfme.containers.template import Template
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
+from cfme.containers.volume import Volume
 
 
 pytestmark = [
@@ -40,7 +41,8 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-9980')(ContainersTestItem(Image, 'CMP-9980')),
     pytest.mark.polarion('CMP-9994')(ContainersTestItem(ImageRegistry, 'CMP-9994')),
     pytest.mark.polarion('CMP-9868')(ContainersTestItem(Project, 'CMP-9868')),
-    pytest.mark.polarion('CMP-10319')(ContainersTestItem(Template, 'CMP-10319'))
+    pytest.mark.polarion('CMP-10319')(ContainersTestItem(Template, 'CMP-10319')),
+    pytest.mark.polarion('CMP-10410')(ContainersTestItem(Volume, 'CMP-10410'))
 ]
 
 
