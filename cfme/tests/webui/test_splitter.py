@@ -11,9 +11,10 @@ from cfme.infrastructure.pxe import ISODatastore
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.intelligence.chargeback import ComputeRate
 from cfme.intelligence.reports.reports import CustomReport
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.catalogs import service_catalogs # noqa
 from cfme.services.myservice import MyService
 from cfme.services import workloads  # noqa
+from cfme.automate import explorer # noqa
 from cfme.optimize.utilization import Utilization
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.infrastructure.networking import InfraNetworking
@@ -25,7 +26,7 @@ from utils.blockers import BZ
 
 LOCATIONS = [
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
-    (MyService, 'All'), (ServiceCatalogs, 'All'), (Server, 'WorkloadsDefault'),
+    (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'WorkloadsDefault'),
     (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (Vm, 'VMsOnly'),
     (ISODatastore, 'All'), (Server, 'Configuration'), (Datastore, 'All'), (ConfigManager, 'All'),
     (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
