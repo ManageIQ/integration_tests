@@ -337,14 +337,23 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     '{} Provider "{}" was saved'.format(self.string_name, name))
         else:
             view = navigate_to(self, 'Edit')
-
+            # todo: to replace/merge this code with create
             # update values:
-            fill(self.properties_form, self._form_mapping(**updates))
+            main_form_values, endpoint_form_values = self._form_mapping(**updates)
 
-            # update credentials:
+            # filling main part of dialog
+            view.fill(main_form_values)
+
+            # filling endpoints
+            if not hasattr(view.endpoints, 'default'):
+                view.endpoints.fill(endpoint_form_values['default'])
+            else:
+                for endpoint in endpoint_form_values:
+                    getattr(view.endpoints, endpoint).fill(endpoint_form_values[endpoint])
+
+            # filling credentials
             for cred in self.credentials:
-                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
-                     validate=validate_credentials)
+                self.credentials[cred].fill(view, validate=validate_credentials)
 
             if cancel:
                 view.cancel.click()

@@ -244,10 +244,6 @@ class InfraProvidersAddView(BaseLoggedInPage):
     add = Button('Add')
     cancel = Button('Cancel')
 
-    # only in edit view
-    vnc_start_port = Input('host_default_vnc_port_start')
-    vnc_end_port = Input('host_default_vnc_port_end')
-
     @View.nested
     class endpoints(View):  # NOQA
         # this is switchable view that gets replaced this concrete view.
@@ -257,6 +253,8 @@ class InfraProvidersAddView(BaseLoggedInPage):
 
     def __getattribute__(self, item):
         if item == 'endpoints':
+            provider_type = if isinstance(self.prov_type, BootstrapSelect)
+
             if self.prov_type.selected_option == 'Microsoft System Center VMM':
                 return SCVMMEndpointForm(parent=self)
 
@@ -280,6 +278,20 @@ class InfraProvidersAddView(BaseLoggedInPage):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
             self.title.text == 'Add New Infrastructure Provider'
+
+
+class InfraProvidersEditView(InfraProvidersAddView):
+    prov_type = Text(locator='//label[@name="emstype"')
+
+    # only in edit view
+    vnc_start_port = Input('host_default_vnc_port_start')
+    vnc_end_port = Input('host_default_vnc_port_end')
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == 'Edit Infrastructure Provider'
 
 
 class InfraProvidersManagePoliciesView(BaseLoggedInPage):
@@ -593,7 +605,7 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = InfraProvidersAddView
+    VIEW = InfraProvidersEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
