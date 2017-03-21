@@ -90,7 +90,7 @@ def test_evm_running(appliance):
 def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up"""
     if service == 'postgresql':
-        service = '{}-postgresql'.format(appliance.postgres_version())
+        service = '{}-postgresql'.format(appliance.postgres_version)
     if pytest.store.current_appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
     else:

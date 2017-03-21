@@ -163,6 +163,7 @@ class IPAppliance(object):
         assert 'appliance' not in kwargs
         return cls(appliance=self, *args, **kwargs)
 
+    @property
     def postgres_version(self):
         # postgres's version is in the service name and file paths when we pull it from SCL,
         # so this is a little resolver to help keep the version picking centralized
@@ -379,7 +380,7 @@ class IPAppliance(object):
         """
         def _db_dropped():
             rc, out = self.ssh_client.run_command(
-                'systemctl restart {}-postgresql'.format(self.postgres_version()), timeout=60)
+                'systemctl restart {}-postgresql'.format(self.postgres_version), timeout=60)
             assert rc == 0, "Failed to restart postgres service: {}".format(out)
             self.ssh_client.run_command('dropdb vmdb_production', timeout=15)
             rc, out = self.ssh_client.run_command(
@@ -813,7 +814,7 @@ class IPAppliance(object):
         logger.info('Checking appliance database')
         if not self.db_online:
             # postgres isn't running, try to start it
-            cmd = 'service {}-postgresql restart'.format(self.postgres_version())
+            cmd = 'service {}-postgresql restart'.format(self.postgres_version)
             result = self.db_ssh_client.run_command(cmd)
             if result.rc != 0:
                 return 'postgres failed to start:\n{}'.format(result.output)
@@ -1306,7 +1307,7 @@ class IPAppliance(object):
         client.run_command(cmd)
 
         # back up pg_hba.conf
-        scl = self.postgres_version()
+        scl = self.postgres_version
         client.run_command('mv /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf '
                            '/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf.sav'.format(scl=scl))
 
@@ -1370,7 +1371,7 @@ class IPAppliance(object):
             rbt_repl = {
                 'miq_lib': '/var/www/miq/lib',
                 'region': region,
-                'postgres_version': self.postgres_version()
+                'postgres_version': self.postgres_version
             }
 
             # Find and load our rb template with replacements
@@ -1464,7 +1465,7 @@ class IPAppliance(object):
     def is_dedicated_db_active(self):
         return_code, output = self.ssh_client.run_command(
             "systemctl status {}-postgresql.service | grep running".format(
-                self.postgres_version()))
+                self.postgres_version))
         return return_code == 0
 
     def _check_appliance_ui_wait_fn(self):
@@ -1552,7 +1553,7 @@ class IPAppliance(object):
                 log_callback('restarting evm service by killing processes')
                 status, msg = ssh.run_command(
                     'killall -9 ruby; service {}-postgresql restart'.format(
-                        self.postgres_version()))
+                        self.postgres_version))
                 self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
             else:
                 self._evm_service_command(
