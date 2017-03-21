@@ -8,8 +8,10 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 
 @pytest.mark.smoke
-def test_black_console(request, appliance):
-    command_set = ('exec > >(tee /tmp/opt.txt)', 'ap', '')
+def test_black_console(appliance):
+    """'exec > >(tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
+
+    command_set = ('exec > >(tee /tmp/opt.txt)', 'ap')
     appliance.appliance_console.run_commands(command_set)
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Virtual Appliance'")
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Server:'")
@@ -17,7 +19,10 @@ def test_black_console(request, appliance):
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Version:'")
 
 
-def test_black_console_set_hostname(request, appliance):
+def test_black_console_set_hostname(appliance):
+    """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '4' gives
+    access to set hostname, 'hostname' sets new hostname."""
+
     hostname = 'Elite-QE.redhat.com'
     if appliance.version >= "5.8":
         command_set = ('ap', '', '1', '4', hostname)
@@ -34,7 +39,11 @@ def test_black_console_set_hostname(request, appliance):
     assert return_code == 0
 
 
-def test_black_console_internal_db(request, app_creds, temp_appliance_unconfig_funcscope):
+def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope):
+    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
+    '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
+    db region number, 'pwd' db password, 'pwd' confirm db password + wait 45 secs and '' finish."""
+
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
         command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 45), '')
@@ -45,7 +54,11 @@ def test_black_console_internal_db(request, app_creds, temp_appliance_unconfig_f
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_internal_db_reset(request, app_creds, temp_appliance_preconfig_funcscope):
+def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_funcscope):
+    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
+    confirm db reset, '1' db region number + wait 90 secs, '' continue, '' clear info screen,
+    '15/19' start evm and 'y' confirm start."""
+
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     if temp_appliance_preconfig_funcscope.version >= "5.8":
         command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 90), '', '', '15', 'y')
@@ -58,6 +71,10 @@ def test_black_console_internal_db_reset(request, app_creds, temp_appliance_prec
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds):
+    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
+    '1' selects internal db, '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd'
+    confirm db password + wait 45 secs and '' finish."""
+
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
         command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 45), '')
@@ -67,12 +84,17 @@ def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds
     wait_for(temp_appliance_unconfig_funcscope.is_dedicated_db_active)
 
 
-def test_black_console_external_db(
-        request, temp_appliance_unconfig_funcscope, app_creds, appliance):
+def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
+    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '2' fetch v2_key,
+    'ip' address to fetch from, '' default username, 'pwd' db password, '' default v2_key location,
+    '3' join external region, 'ip' address of joining region, '' default port number, '' use defult
+    db name, '' default username, 'pwd' db password, 'pwd' confirm db password + wait 45 secs and
+    '' finish."""
+
     ip = appliance.address
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap', '', '5', '2', ip, '', pwd, '', '3', ip, '', '',
+        command_set = ('ap', '', '5', '2', ip, '', pwd, '', '3', ip, '', '', '',
             pwd, TimedCommand(pwd, 45), '')
     else:
         command_set = ('ap', '', '8', '2', ip, '', pwd, '', '3', ip, '', '',
@@ -83,22 +105,30 @@ def test_black_console_external_db(
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_black_console_external_db_create(request, app_creds, dedicated_db_appliance,
+def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
         temp_appliance_unconfig_funcscope):
+    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' create v2_key,
+    '2' create region in external db, '0' db region number, 'y' confirm create region in external db
+    'ip' address of dedicated db, '' default port number, '' use defult db name, '' default
+    username, 'pwd' db password, 'pwd' confirm db password + wait 45 secs and '' finish."""
+
     ip = dedicated_db_appliance.address
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap', '', '5', '1', '1', '2', '0', 'y', ip, '', '', pwd,
+        command_set = ('ap', '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
             TimedCommand(pwd, 45), '')
     else:
-        command_set = ('ap', '', '8', '1', '1', '2', '0', 'y', ip, '', '', pwd,
+        command_set = ('ap', '', '8', '1', '2', '0', 'y', ip, '', '', pwd,
             TimedCommand(pwd, 45), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_black_console_extend_storage(request, fqdn_appliance):
+def test_black_console_extend_storage(fqdn_appliance):
+    """'ap' launches appliance_console, '' clears info screen, '10/13' extend storage, '1' select
+    disk, 'y' confirm configuration and '' complete."""
+
     if fqdn_appliance.version >= "5.8":
         command_set = ('ap', '', '10', '1', 'y', '')
     else:
@@ -110,7 +140,10 @@ def test_black_console_extend_storage(request, fqdn_appliance):
     wait_for(is_storage_extended, func_args=[fqdn_appliance])
 
 
-def test_black_console_ipa(request, ipa_creds, fqdn_appliance):
+def test_black_console_ipa(ipa_creds, fqdn_appliance):
+    """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
+    + wait 40 secs and '' finish."""
+
     if fqdn_appliance.version >= "5.8":
         command_set = ('ap', '', '11', ipa_creds['hostname'], ipa_creds['domain'], '',
             ipa_creds['username'], ipa_creds['password'], TimedCommand('y', 40), '')
@@ -129,7 +162,10 @@ def test_black_console_ipa(request, ipa_creds, fqdn_appliance):
 
 @pytest.mark.parametrize('auth_type', [('sso_enabled', '1'), ('saml_enabled', '2'),
     ('local_login_disabled', '3')], ids=['sso', 'saml', 'local_login'])
-def test_black_console_external_auth(request, auth_type, app_creds, ipa_crud):
+def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
+    """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
+    'auth_type' auth type to change, '4' apply changes."""
+
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type[0])],
                             hostname=ipa_crud.address,

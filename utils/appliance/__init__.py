@@ -64,6 +64,8 @@ class ApplianceException(Exception):
 
 
 class ApplianceConsole(object):
+    """ApplianceConsole is used for navigating and running appliance_console commands against an
+    appliance."""
 
     def __init__(self, appliance):
         self.appliance = appliance
