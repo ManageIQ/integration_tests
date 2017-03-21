@@ -143,7 +143,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
                                'select_catalog': catalog.name,
-                               'select_dialog': dialog.name,
+                               'select_dialog': dialog.label,
                                'select_orch_template': orch_template,
                                'select_provider': provider_name,
                                'select_config_template': self.config_template})
