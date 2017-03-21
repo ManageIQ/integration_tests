@@ -2,7 +2,7 @@ import pytest
 
 from itertools import chain
 from cfme.containers.provider import ContainersProvider, navigate_and_get_rows
-from cfme.containers.replicator import Replicator as rc
+from cfme.containers.replicator import Replicator as Rc
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 
@@ -22,16 +22,16 @@ def test_rc_selector(provider, soft_assert):
         rc selectors table
     """
 
-    navigate_to(rc, 'All')
+    navigate_to(Rc, 'All')
 
     list_selectors_api = provider.mgmt.list_replication_controller_selector()
     list_selectors_values_api = list(chain.from_iterable(
         [d.values() for d in list_selectors_api]))
-    rows = navigate_and_get_rows(provider, rc, 2)
+    rows = navigate_and_get_rows(provider, Rc, 2)
     rc_names = [r.name.text for r in rows]
 
     for name in rc_names:
-        obj = rc(name, provider)
+        obj = Rc(name, provider)
         keys = obj.summary.selector.keys
         vals_prop_tbl_ui = []
         for key in keys:
