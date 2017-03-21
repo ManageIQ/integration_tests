@@ -57,7 +57,7 @@ class OpenstackInfraProvider(InfraProvider):
         }
         if 'amqp' in self.credentials:
             endpoint_values['events'].update({
-                'event_selection': 'amqp',
+                'event_stream': 'AMQP',
                 'hostname': kwargs.get('hostname'),
                 'api_port': kwargs.get('amqp_api_port', '5672'),
                 'security_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")

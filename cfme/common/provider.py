@@ -1,6 +1,9 @@
+import atexit
 import datetime
+import os
 from functools import partial
 from manageiq_client.api import APIException
+from tempfile import NamedTemporaryFile
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
@@ -143,7 +146,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             """
             if self.type == 'amqp':
                 form.endpoints.events.fill({
-                    'event_stream': 'amqp',
+                    'event_stream': 'AMQP',
                     'username': self.principal,
                     'password': self.secret,
                     'confirm_password': self.verify_secret
@@ -161,8 +164,16 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     # todo: to add check of flash message if necessary
 
             elif self.type == 'ssh':
-                form.endpoints.rsa_keypair.fill({'username': self.principal,
-                                                 'private_key': self.secret})
+                # workaround since FileInput widget doesn't support file autocreation now
+                secret = self.secret
+                if not os.path.isfile(self.secret):
+                    f = NamedTemporaryFile()
+                    f.write(str(self.secret))
+                    f.flush()
+                    secret = os.path.abspath(f.name)
+                    atexit.register(f.close)
+
+                form.endpoints.rsa_keypair.fill({'username': self.principal, 'private_key': secret})
             else:
                 if self.domain:
                     principal = r'{}\{}'.format(self.domain, self.principal)
@@ -290,7 +301,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
                 # filling endpoints
                 if not hasattr(view.endpoints, 'default'):
-                    view.endpoints.fill(endpoint_form_values)
+                    view.endpoints.fill(endpoint_form_values['default'])
                 else:
                     for endpoint in endpoint_form_values:
                         getattr(view.endpoints, endpoint).fill(endpoint_form_values[endpoint])
