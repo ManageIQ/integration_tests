@@ -6,13 +6,13 @@ from collections import namedtuple
 import pytest
 
 from utils import testgen
+from utils.blockers import BZ
 from utils.ssh import SSHTail
 from utils.appliance.implementations.ui import navigate_to
 
 from cfme.web_ui import paginator, toolbar as tb
 from cfme.containers.image import Image, list_tbl
 from cfme.containers.provider import ContainersProvider
-from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.tasks import Tasks
 
 
@@ -52,9 +52,10 @@ def verify_log(log, verification_tags):
                             .format(tag))
 
 
-@pytest.mark.meta(blockers=[1382326, 1408255, 1371896])
+@pytest.mark.meta(blockers=[BZ(1382326), BZ(1408255), BZ(1371896),
+                            BZ(1437128, forced_streams=['5.7'])])
 @pytest.mark.parametrize(('registry'), REGISTRIES)
-def test_containers_smartstate_analysis(provider, ssh_client, registry, soft_assert):
+def test_containers_smartstate_analysis(provider, registry, soft_assert):
 
     """Smart State analysis functionality check for single container image.
     Steps:
@@ -81,7 +82,7 @@ def test_containers_smartstate_analysis(provider, ssh_client, registry, soft_ass
     relevant_images = []
     paginator.results_per_page(1000)
     for row in list_tbl.rows():
-        if row.registry.text.lower() == registry.lower():
+        if row.image_registry.text.lower() == registry.lower():
             relevant_images.append(row)
     if not relevant_images:
         pytest.skip('Images of the following registry not found: {}'
