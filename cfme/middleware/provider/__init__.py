@@ -74,7 +74,7 @@ class MiddlewareProvider(BaseProvider):
     quad_name = None
     _properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add")
-    save_button = form_buttons.FormButton("Save changes")
+    save_button = form_buttons.FormButton("Save")
     taggable_type = 'ExtManagementSystem'
     db_types = ["MiddlewareManager"]
 

@@ -124,7 +124,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     @is_refreshed.variant('db')
     def is_refreshed_db(self):
         ems = self.appliance.db['ext_management_systems']
-        dates = self.appliance.session.query(ems.created_on,
+        dates = self.appliance.db.session.query(ems.created_on,
                                        ems.updated_on).filter(ems.name == self.name).first()
         return dates.updated_on > dates.created_on
 
