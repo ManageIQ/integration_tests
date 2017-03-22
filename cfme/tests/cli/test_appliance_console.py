@@ -14,7 +14,6 @@ def test_black_console(appliance):
     command_set = ('exec > >(tee /tmp/opt.txt)', 'ap')
     appliance.appliance_console.run_commands(command_set)
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Virtual Appliance'")
-    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Server:'")
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Database:'")
     assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep 'CFME Version:'")
 
@@ -54,6 +53,7 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
     confirm db reset, '1' db region number + wait 90 secs, '' continue, '' clear info screen,
@@ -125,6 +125,7 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_extend_storage(fqdn_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10/13' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
@@ -140,6 +141,7 @@ def test_black_console_extend_storage(fqdn_appliance):
     wait_for(is_storage_extended, func_args=[fqdn_appliance])
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_ipa(ipa_creds, fqdn_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
     + wait 40 secs and '' finish."""
@@ -160,6 +162,7 @@ def test_black_console_ipa(ipa_creds, fqdn_appliance):
     assert return_code == 0
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 @pytest.mark.parametrize('auth_type', [('sso_enabled', '1'), ('saml_enabled', '2'),
     ('local_login_disabled', '3')], ids=['sso', 'saml', 'local_login'])
 def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
