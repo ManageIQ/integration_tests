@@ -814,7 +814,7 @@ class IPAppliance(object):
         logger.info('Checking appliance database')
         if not self.db_online:
             # postgres isn't running, try to start it
-            cmd = 'service {}-postgresql restart'.format(self.postgres_version)
+            cmd = 'systemctl restart {}-postgresql'.format(self.postgres_version)
             result = self.db_ssh_client.run_command(cmd)
             if result.rc != 0:
                 return 'postgres failed to start:\n{}'.format(result.output)
