@@ -41,7 +41,7 @@ from widgetastic_manageiq import (PaginationPane,
                                   TimelinesView,
                                   RadioGroup,
                                   FileInput)
-from widgetastic_patternfly import Input, BootstrapSelect, Tab, Dropdown
+from widgetastic_patternfly import Input, BootstrapSelect, Tab, BootstrapSwitch
 from .widgetastic_views import (ProviderEntities,
                                 ProviderSideBar,
                                 ProviderToolBar,
@@ -190,6 +190,8 @@ class RHEVMEndpointForm(View):
     class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
         api_port = Input('default_api_port')
+        verify_tls = BootstrapSwitch(id='default_tls_verify')
+        ca_certs = Input('default_tls_ca_certs')
 
     @View.nested
     class database(Tab, BeforeFillMixin):  # NOQA

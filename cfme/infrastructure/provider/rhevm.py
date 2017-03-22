@@ -39,8 +39,6 @@ class RHEVMProvider(InfraProvider):
         main_values = {
             'name': kwargs.get('name'),
             'prov_type': create and provider_name,
-            'verify_tls_switch': verify_tls,
-            'ca_certs': ca_certs
         }
 
         endpoint_values = {
@@ -48,6 +46,8 @@ class RHEVMProvider(InfraProvider):
                 'hostname': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
                 # 'ipaddress_text': kwargs.get('ip_address'),
+                'verify_tls': verify_tls,
+                'ca_certs': ca_certs
                 },
             'database': {
                 'hostname': kwargs.get('hostname') if self.credentials.get('candu', None) else None
