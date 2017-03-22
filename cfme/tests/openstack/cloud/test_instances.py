@@ -34,14 +34,6 @@ def new_instance(provider):
     return instance
 
 
-@pytest.fixture(scope='function')
-def shelved_instance(new_instance):
-    new_instance.power_control_from_provider(OpenStackInstance.SHELVE)
-    navigate_to(new_instance, 'Details')
-    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
-    return new_instance
-
-
 def test_create_instance(new_instance, soft_assert):
     """Creates an instance and verifies it appears on UI"""
     navigate_to(new_instance, 'Details')
@@ -103,22 +95,26 @@ def test_shelve_instance(new_instance):
                      OpenStackInstance.STATE_SHELVED)
 
 
-def test_shelve_offload_instance(shelved_instance):
-    shelved_instance.power_control_from_cfme(from_details=True,
-                                             option=OpenStackInstance.SHELVE_OFFLOAD)
-    shelved_instance.wait_for_instance_state_change(
-        OpenStackInstance.STATE_SHELVED_OFFLOAD)
-    state = shelved_instance.get_detail(properties=('Power Management',
-                                                    'Power State'))
+def test_shelve_offload_instance(new_instance):
+    new_instance.power_control_from_cfme(from_details=True,
+                                         option=OpenStackInstance.SHELVE)
+    new_instance.power_control_from_cfme(from_details=True,
+                                         option=OpenStackInstance.SHELVE_OFFLOAD)
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED_OFFLOAD)
+    state = new_instance.get_detail(properties=('Power Management',
+                                                'Power State'))
     assert state == OpenStackInstance.STATE_SHELVED_OFFLOAD
 
 
-def test_start_instance(shelved_instance):
-    shelved_instance.power_control_from_cfme(from_details=True,
-                                             option=OpenStackInstance.START)
-    shelved_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
-    state = shelved_instance.get_detail(properties=('Power Management',
-                                                    'Power State'))
+def test_start_instance(new_instance):
+    new_instance.power_control_from_provider(OpenStackInstance.STOP)
+    navigate_to(new_instance, 'Details')
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STOP)
+    new_instance.power_control_from_cfme(from_details=True,
+                                         option=OpenStackInstance.START)
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
+    state = new_instance.get_detail(properties=('Power Management',
+                                                'Power State'))
     assert state == OpenStackInstance.STATE_ON
 
 
