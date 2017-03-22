@@ -253,18 +253,20 @@ class InfraProvidersAddView(BaseLoggedInPage):
 
     def __getattribute__(self, item):
         if item == 'endpoints':
-            provider_type = if isinstance(self.prov_type, BootstrapSelect)
+            # this control is BootstrapSelect in Add view and Text in Edit view
+            provider_type = self.prov_type.selected_option \
+                if isinstance(self.prov_type, BootstrapSelect) else self.prov_type.text
 
-            if self.prov_type.selected_option == 'Microsoft System Center VMM':
+            if provider_type == 'Microsoft System Center VMM':
                 return SCVMMEndpointForm(parent=self)
 
-            elif self.prov_type.selected_option == 'VMware vCenter':
+            elif provider_type == 'VMware vCenter':
                 return VirtualCenterEndpointForm(parent=self)
 
-            elif self.prov_type.selected_option == 'Red Hat Virtualization Manager':
+            elif provider_type == 'Red Hat Virtualization Manager':
                 return RHEVMEndpointForm(parent=self)
 
-            elif self.prov_type.selected_option == 'OpenStack Platform Director':
+            elif provider_type == 'OpenStack Platform Director':
                 return OpenStackInfraEndpointForm(parent=self)
 
             else:
@@ -281,11 +283,15 @@ class InfraProvidersAddView(BaseLoggedInPage):
 
 
 class InfraProvidersEditView(InfraProvidersAddView):
-    prov_type = Text(locator='//label[@name="emstype"')
+    prov_type = Text(locator='//label[@name="emstype"]')
 
     # only in edit view
     vnc_start_port = Input('host_default_vnc_port_start')
     vnc_end_port = Input('host_default_vnc_port_end')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
     @property
     def is_displayed(self):

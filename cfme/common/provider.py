@@ -1,4 +1,5 @@
 import datetime
+from copy import copy
 from functools import partial
 from manageiq_client.api import APIException
 
@@ -182,6 +183,16 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     if validate:
                         form.endpoints.validate.click()
 
+        def reset(self):
+            self.principal = None
+            self.secret = None
+            self.verify_secret = None
+            self.domain = None
+
+        def update(self, creds):
+            for cred in creds:
+                setattr(self, cred, creds[cred])
+
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
 
@@ -351,14 +362,24 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 for endpoint in endpoint_form_values:
                     getattr(view.endpoints, endpoint).fill(endpoint_form_values[endpoint])
 
+            # workaround for openstack provider where events always not validated when edited
+            # todo: to handle this somehow. moving to provider's create/update ?
+            # if hasattr(view.endpoints, 'events'):
+            #     view.endpoints.events.validate.click()
+
             # filling credentials
-            for cred in self.credentials:
-                self.credentials[cred].fill(view, validate=validate_credentials)
+            credentials = updates.get('credentials')
+            if credentials:
+                for key in credentials:
+                    credential = copy(self.credentials[key])
+                    credential.reset()
+                    credential.update(credentials[key])
+                    credential.fill(view, validate=validate_credentials)
 
             if cancel:
                 view.cancel.click()
             else:
-                view.add.click()
+                view.save.click()
 
             name = updates.get('name', self.name)
             if not cancel:
