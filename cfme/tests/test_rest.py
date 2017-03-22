@@ -65,14 +65,14 @@ def test_vm_scan(rest_api, vm, from_detail):
         return response.task.state.lower() == 'finished'
 
 
-COLLECTIONS_IGNORED_56 = {
+COLLECTIONS_ADDED_IN_57 = {
     "arbitration_profiles", "arbitration_rules", "arbitration_settings", "automate",
     "automate_domains", "blueprints", "cloud_networks", "container_deployments", "currencies",
     "measures", "notifications", "orchestration_templates", "virtual_templates",
 }
 
 
-COLLECTIONS_IGNORED_57 = {
+COLLECTIONS_ADDED_IN_58 = {
     "actions", "alert_definitions", "alerts", "authentications", "configuration_script_payloads",
     "configuration_script_sources", "load_balancers",
 }
@@ -99,8 +99,8 @@ COLLECTIONS_IGNORED_57 = {
      "vms", "zones"])
 @pytest.mark.uncollectif(
     lambda collection_name:
-        (collection_name in COLLECTIONS_IGNORED_56 and current_version() < "5.7") or
-        (collection_name in COLLECTIONS_IGNORED_57 and current_version() < "5.8")
+        (collection_name in COLLECTIONS_ADDED_IN_57 and current_version() < "5.7") or
+        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8")
 )
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
