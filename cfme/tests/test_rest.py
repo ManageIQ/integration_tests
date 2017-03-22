@@ -12,7 +12,8 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
-from cfme.rest.gen_data import arbitration_settings, automation_requests_data
+from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
+from cfme.rest.gen_data import automation_requests_data
 from fixtures.provider import setup_one_or_skip
 from utils.providers import ProviderFilter
 from utils.version import current_version
@@ -251,81 +252,77 @@ class TestBulkQueryRESTAPI(object):
 
 
 class TestArbitrationSettingsRESTAPI(object):
+    @pytest.fixture(scope='function')
+    def arbitration_settings(self, request, rest_api):
+        num_settings = 2
+        response = _arbitration_settings(request, rest_api, num=num_settings)
+        assert rest_api.response.status_code == 200
+        assert len(response) == num_settings
+        return response
+
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
-    def test_create_arbitration_settings(self, request, rest_api):
+    def test_create_arbitration_settings(self, rest_api, arbitration_settings):
         """Tests create arbitration settings.
 
         Metadata:
             test_flag: rest
         """
-        num_settings = 2
-        response = arbitration_settings(request, rest_api, num=num_settings)
-        assert rest_api.response.status_code == 200
-        assert len(response) == num_settings
-        for entity in response:
-            record = rest_api.collections.arbitration_settings.get(id=entity.id)
-            assert record._data == entity._data
+        for setting in arbitration_settings:
+            record = rest_api.collections.arbitration_settings.get(id=setting.id)
+            assert record._data == setting._data
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
-    def test_delete_arbitration_settings_from_detail(self, request, rest_api, method):
+    def test_delete_arbitration_settings_from_detail(self, rest_api, arbitration_settings, method):
         """Tests delete arbitration settings from detail.
 
         Metadata:
             test_flag: rest
         """
-        num_settings = 2
-        response = arbitration_settings(request, rest_api, num=num_settings)
-        assert len(response) == num_settings
         status = 204 if method == 'delete' else 200
-        for entity in response:
-            entity.action.delete(force_method=method)
+        for setting in arbitration_settings:
+            setting.action.delete(force_method=method)
             assert rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
-                entity.action.delete(force_method=method)
+                setting.action.delete(force_method=method)
             assert rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
-    def test_delete_arbitration_settings_from_collection(self, request, rest_api):
+    def test_delete_arbitration_settings_from_collection(self, rest_api, arbitration_settings):
         """Tests delete arbitration settings from collection.
 
         Metadata:
             test_flag: rest
         """
-        num_settings = 2
-        response = arbitration_settings(request, rest_api, num=num_settings)
-        assert len(response) == num_settings
         collection = rest_api.collections.arbitration_settings
-        collection.action.delete(*response)
+        collection.action.delete(*arbitration_settings)
         assert rest_api.response.status_code == 200
         with error.expected('ActiveRecord::RecordNotFound'):
-            collection.action.delete(*response)
+            collection.action.delete(*arbitration_settings)
         assert rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_edit_arbitration_settings(self, request, rest_api, from_detail):
+    def test_edit_arbitration_settings(self, rest_api, arbitration_settings, from_detail):
         """Tests edit arbitration settings.
 
         Metadata:
             test_flag: rest
         """
-        num_settings = 2
-        response = arbitration_settings(request, rest_api, num=num_settings)
-        assert len(response) == num_settings
+        num_settings = len(arbitration_settings)
         uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_settings)]
         new = [{'name': 'test_edit{}'.format(u), 'display_name': 'Test Edit{}'.format(u)}
                for u in uniq]
         if from_detail:
             edited = []
             for i in range(num_settings):
-                edited.append(response[i].action.edit(**new[i]))
+                edited.append(arbitration_settings[i].action.edit(**new[i]))
                 assert rest_api.response.status_code == 200
         else:
             for i in range(num_settings):
-                new[i].update(response[i]._ref_repr())
+                new[i].update(arbitration_settings[i]._ref_repr())
             edited = rest_api.collections.arbitration_settings.action.edit(*new)
             assert rest_api.response.status_code == 200
         assert len(edited) == num_settings
