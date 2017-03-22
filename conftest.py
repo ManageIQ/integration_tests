@@ -36,18 +36,6 @@ class _AppliancePoliceException(Exception):
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
-    # Keeping due to compatibility
-    parser.addoption("--no-tracer", dest="no_tracer", action="store_true", default=False,
-                     help="Disable the function tracer (REMOVED, doesn't do anything!)")
-    parser.addoption("--tracer", dest="tracer", action="store_true", default=False,
-                     help="Enable the function tracer (REMOVED, doesn't do anything!)")
-
-
-def pytest_cmdline_main(config):
-    for opt in ['--tracer', '--no-tracer']:
-        if config.getoption(opt):
-            print("The {} option has been REMOVED, it doesn't do anything; please, stop using it!"
-                  .format(opt))
 
 
 def pytest_sessionstart(session):
