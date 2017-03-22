@@ -6,6 +6,7 @@ import socket
 import sys
 from collections import namedtuple
 from os import path as os_path
+from subprocess import call
 from urlparse import urlparse
 
 import paramiko
@@ -357,12 +358,41 @@ class SSHClient(paramiko.SSHClient):
     def get_file(self, remote_file, local_path='', **kwargs):
         logger.info("Transferring remote file {remote_file} to local {local_path}".format(
             remote_file=remote_file, local_path=local_path))
+        base_name = os_path.basename(remote_file)
         if self.is_container:
-            tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
+            tmp_file_name = 'temp_{}'.format(fauxfactory.gen_alpha())
+            tempfilename = '/share/{}'.format(tmp_file_name)
             self.run_command('cp {} {}'.format(remote_file, tempfilename))
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
                 tempfilename, local_path, **kwargs)
             self.run_command('rm {}'.format(tempfilename))
+            call([
+                'mv',
+                os_path.join(local_path, tmp_file_name),
+                os_path.join(local_path, base_name)])
+            return scp
+        elif self.is_pod:
+            tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
+            tmp_file_name = 'file-{}'.format(fauxfactory.gen_alpha().lower())
+            tmp_full_name = '/tmp/{}/{}'.format(tmp_folder_name, tmp_file_name)
+            # Clean up container's temporary folder
+            self.run_command('rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name))
+            # Create/Clean up the host's temporary folder
+            self.run_command(
+                'rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name), ensure_host=True)
+            # Now copy the file in container to the tmp folder
+            assert self.run_command('cp {} {}'.format(remote_file, tmp_full_name))
+            # Use the oc rsync to pull the file onto the host
+            assert self.run_command(
+                'oc rsync {}:/tmp/{} /tmp'.format(self._container, tmp_folder_name),
+                ensure_host=True)
+            # Now download the file to the openshift host
+            scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
+                tmp_full_name, local_path, **kwargs)
+            call([
+                'mv',
+                os_path.join(local_path, tmp_file_name),
+                os_path.join(local_path, base_name)])
             return scp
         else:
             return SCPClient(self.get_transport(), progress=self._progress_callback).get(
