@@ -46,15 +46,38 @@ class DropdownItemNotFound(Exception):
 class Button(Widget, ClickableMixin):
     """A PatternFly/Bootstrap button
 
+    You can match by text, partial text or by attributes, you can also add the bootstrap classes
+    into the matching.
+
     .. code-block:: python
 
         Button('Text of button (unless it is an input ...)')
         Button('contains', 'Text of button (unless it is an input ...)')
         Button(title='Show xyz')  # And such
+        Button('Add', classes=[Button.PRIMARY])
         assert button.active
         assert not button.disabled
     """
     CHECK_VISIBILITY = True
+
+    # Classes usable in the constructor
+    # Button types
+    DEFAULT = 'btn-default'
+    PRIMARY = 'btn-primary'
+    SUCCESS = 'btn-success'
+    INFO = 'btn-info'
+    WARNING = 'btn-warning'
+    DANGER = 'btn-danger'
+    LINK = 'btn-link'
+
+    # Button sizes
+    LARGE = 'btn-lg'
+    MEDIUM = 'btn-md'
+    SMALL = 'btn-sm'
+    EXTRA_SMALL = 'btn-xs'
+
+    # Shape
+    BLOCK = 'btn-block'
 
     def __init__(self, parent, *text, **kwargs):
         logger = kwargs.pop('logger', None)
@@ -62,7 +85,7 @@ class Button(Widget, ClickableMixin):
         self.args = text
         self.kwargs = kwargs
         if text:
-            if kwargs:
+            if kwargs and 'classes' not in kwargs:
                 raise TypeError('If you pass button text then do not pass anything else.')
             if len(text) == 1:
                 self.locator_conditions = 'normalize-space(.)={}'.format(quote(text[0]))
@@ -74,6 +97,12 @@ class Button(Widget, ClickableMixin):
             # Join the kwargs
             self.locator_conditions = ' and '.join(
                 '@{}={}'.format(attr, quote(value)) for attr, value in kwargs.items())
+        classes = kwargs.pop('classes', [])
+        if classes:
+            self.locator_conditions += ' and '
+            self.locator_conditions += ' and '.join(
+                'contains(@class, {})'.format(quote(klass))
+                for klass in classes)
 
     # TODO: Handle input value the same way as text for other tags
     def __locator__(self):
