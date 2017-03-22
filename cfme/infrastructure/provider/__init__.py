@@ -20,8 +20,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
-    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location
+    Region, Quadicon, Form, CheckboxTree, fill, form_buttons, paginator, Input,
+    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location, BootstrapSwitch
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
@@ -51,23 +51,8 @@ discover_form = Form(
         ('start_button', FormButton("Start the Host Discovery"))
     ])
 
-properties_form = Form(
-    fields=[
-        ('type_select', {
-            version.LOWEST: Select('select#server_emstype'),
-            '5.5': AngularSelect("server_emstype")
-        }),
-        ('name_text', Input("name")),
-        ('hostname_text', {version.LOWEST: Input("hostname")}),
-        ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('api_port', Input("port")),
-        ('sec_protocol', {version.LOWEST: Select("select#security_protocol"),
-            '5.5': AngularSelect("security_protocol", exact=True)}),
-        ('sec_realm', Input("realm"))
-    ])
 
-
-properties_form_56 = TabStripForm(
+properties_form = TabStripForm(
     fields=[
         ('type_select', AngularSelect("emstype")),
         ('name_text', Input("name")),
@@ -78,6 +63,8 @@ properties_form_56 = TabStripForm(
             ('hostname_text', Input("default_hostname")),
             ('api_port', Input("default_api_port")),
             ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
+            ('verify_tls_switch', BootstrapSwitch(input_id="default_tls_verify")),
+            ('ca_certs', Input('default_tls_ca_certs')),
         ],
         "Events": [
             ('event_selection', Radio('event_stream_selection')),
@@ -91,15 +78,7 @@ properties_form_56 = TabStripForm(
         ]
     })
 
-
-prop_region = Region(
-    locators={
-        'properties_form': {
-            version.LOWEST: properties_form,
-            '5.6': properties_form_56,
-        }
-    }
-)
+prop_region = Region(locators={'properties_form': properties_form})
 
 manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 

@@ -10,7 +10,8 @@ class RHEVMProvider(InfraProvider):
     db_types = ["Redhat::InfraManager"]
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, start_ip=None, end_ip=None,
+                 ip_address=None, api_port=None, verify_tls=False, ca_certs=None, start_ip=None,
+                 end_ip=None,
                  provider_data=None, appliance=None):
         super(RHEVMProvider, self).__init__(
             name=name, credentials=credentials, zone=zone, key=key, provider_data=provider_data,
@@ -19,6 +20,8 @@ class RHEVMProvider(InfraProvider):
         self.hostname = hostname
         self.ip_address = ip_address
         self.api_port = api_port
+        self.verify_tls = verify_tls
+        self.ca_certs = ca_certs
         self.start_ip = start_ip
         self.end_ip = end_ip
 
@@ -26,10 +29,18 @@ class RHEVMProvider(InfraProvider):
         provider_name = version.pick({
             version.LOWEST: 'Red Hat Enterprise Virtualization Manager',
             '5.7.1': 'Red Hat Virtualization Manager'})
+        verify_tls = version.pick({
+            version.LOWEST: None,
+            '5.8': kwargs.get('verify_tls', False)})
+        ca_certs = version.pick({
+            version.LOWEST: None,
+            '5.8': kwargs.get('ca_certs', None)})
         return {'name_text': kwargs.get('name'),
                 'type_select': create and provider_name,
                 'hostname_text': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
+                'verify_tls_switch': verify_tls,
+                'ca_certs': ca_certs,
                 'ipaddress_text': kwargs.get('ip_address'),
                 'candu_hostname_text':
                 kwargs.get('hostname') if self.credentials.get('candu', None) else None}
