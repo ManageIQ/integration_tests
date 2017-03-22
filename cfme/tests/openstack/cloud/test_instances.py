@@ -9,6 +9,7 @@ from cfme.infrastructure.host import Host
 from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.providers import get_crud
 from utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenStackProvider],
@@ -153,7 +154,8 @@ def test_delete_instance(new_instance):
 
 
 def test_list_vms_infra_node(provider, soft_assert):
-    navigate_to(provider.infra_provider, 'ProviderNodes')
+    infra_provider = get_crud(provider.get_yaml_data()['infra_provider'])
+    navigate_to(infra_provider, 'ProviderNodes')
     # Match hypervisors by IP with count of running VMs
     hvisors = dict()
     for hv in provider.mgmt.api.hypervisors.list():
@@ -163,7 +165,7 @@ def test_list_vms_infra_node(provider, soft_assert):
     quads = filter(lambda q: 'Compute' in q.name, Quadicon.all())
     quads = [q.name for q in quads]
     for quad in quads:
-        host = Host(quad, provider=provider.infra_provider)
+        host = Host(quad, provider=infra_provider)
         navigate_to(host, 'Details')
         host_ip = host.get_detail('Properties', 'IP Address')
         vms = int(host.get_detail('Relationships', 'VMs'))
