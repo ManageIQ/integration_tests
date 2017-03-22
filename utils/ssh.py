@@ -224,7 +224,7 @@ class SSHClient(paramiko.SSHClient):
         original_command = command
         uses_sudo = False
         logger.info("Running command %r", command)
-        if self.is_pod:
+        if self.is_pod and not ensure_host:
             # This command will be executed in the context of the host provider
             command = 'oc rsh {} bash -c {}'.format(self._container, quote(
                 'source /etc/default/evm; ' + command))
@@ -321,6 +321,25 @@ class SSHClient(paramiko.SSHClient):
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tempfilename, **kwargs)
             self.run_command('mv {} {}'.format(tempfilename, remote_file))
+            return scp
+        elif self.is_pod:
+            tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
+            # Clean up container's temporary folder
+            self.run_command('rm -rf /tmp/{0}'.format(tmp_folder_name))
+            # Create/Clean up the host's temporary folder
+            self.run_command(
+                'rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name), ensure_host=True)
+            # Now upload the file to the openshift host
+            tmp_file_name = 'file-{}'.format(fauxfactory.gen_alpha().lower())
+            tmp_full_name = '/tmp/{}/{}'.format(tmp_folder_name, tmp_file_name)
+            scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
+                local_file, tmp_full_name, **kwargs)
+            # use oc rsync to put the file in the container
+            assert self.run_command(
+                'oc rsync /tmp/{} {}:/tmp/'.format(tmp_folder_name, self._container),
+                ensure_host=True)
+            # Move the file onto correct place
+            assert self.run_command('mv {} {}'.format(tmp_full_name, remote_file))
             return scp
         else:
             if self.username == 'root':
