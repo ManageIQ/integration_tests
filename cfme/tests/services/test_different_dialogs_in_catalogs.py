@@ -13,6 +13,7 @@ from cfme.services import requests
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -48,7 +49,7 @@ def tagcontrol_dialog():
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
     servicedialog.create(element_data)
-    yield dialog
+    yield servicedialog
 
 
 @pytest.yield_fixture(scope="function")
@@ -57,7 +58,7 @@ def catalog():
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
-    yield catalog
+    yield cat
 
 
 @pytest.fixture(scope="function")
@@ -86,6 +87,7 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(blockers=[BZ(1434990, forced_streams=["5.7", "upstream"])])
 def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
@@ -97,7 +99,8 @@ def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request)
     dialog_values = {
         'default_select_value': "Gold"
     }
-    service_catalogs = ServiceCatalogs(service_name=catalog_item.name, dialog_values=dialog_values)
+    service_catalogs = ServiceCatalogs(catalog=catalog_item.catalog, name=catalog_item.name,
+                                       dialog_values=dialog_values)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     row_description = catalog_item.name
