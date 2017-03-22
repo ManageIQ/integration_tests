@@ -134,6 +134,7 @@ class InfraProviderDetailsSummaryView(View):
 
 
 class InfraProviderDetailsDashboardView(View):
+    # todo: need to develop this page
     pass
 
 
@@ -146,14 +147,34 @@ class InfraProviderDetailsView(BaseLoggedInPage):
         pass
 
     @View.nested
-    class contents(InfraProviderDetailsSummaryView):
+    class contents(View):
         pass
+
+    def __getattribute__(self, item):
+        if item == 'contents':
+            view_type = self.toolbar.view_selector.selected
+
+            if view_type == 'Summary View':
+                return InfraProviderDetailsSummaryView(parent=self)
+
+            elif view_type == 'Dashboard View':
+                return InfraProviderDetailsDashboardView(parent=self)
+
+            else:
+                raise Exception('The form for provider with such name '
+                                'is absent: {}'.format(self.prov_type.text))
+        else:
+            return super(InfraProviderDetailsView, self).__getattribute__(item)
 
     @property
     def is_displayed(self):
+        subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
+            else 'Dashboard'
+        title = '{name} ({subtitle})'.format(name=self.context['object'].name, subtitle=subtitle)
+
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
-            self.title == '{name} (Summary)'.format(name=self.obj.name)  # true only for summary
+            self.breadcrumb.active_location == title
 
 
 class InfraProvidersDiscoverView(BaseLoggedInPage):
