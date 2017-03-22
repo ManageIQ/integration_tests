@@ -561,9 +561,10 @@ class ParallelSession(object):
                     'cleansing appliance', slave, purple=True)
                 try:
                     app.delete_all_providers()
-                except:
+                except Exception as e:
                     self.print_message(
                         'cloud not cleanse', slave, red=True)
+                    self.print_message('error:', e, red=True)
             self.slave_allocation[slave] = [prov]
             self._pool.remove(test_group)
             return test_group
