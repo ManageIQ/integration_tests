@@ -13,14 +13,14 @@ from utils.version import current_version
 from utils.appliance.implementations.ui import navigate_to
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def hosts(infra_provider):
     navigate_to(Host, 'All')
     search.ensure_no_filter_applied()
     return host.get_all_hosts()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def hosts_with_vm_count(hosts):
     """Returns a list of tuples (hostname, vm_count)"""
     hosts_with_vm_count = []
@@ -50,7 +50,7 @@ def get_expression(user_input=False, op=">"):
 pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def host_with_median_vm(hosts_with_vm_count):
     """We'll pick a host with median number of vms"""
     return hosts_with_vm_count[len(hosts_with_vm_count) // 2]
