@@ -1,10 +1,11 @@
 import pytest
+import random
 
 from cfme.configure.tasks import is_host_analysis_finished
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import Host, wait_for_host_delete
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import InfoBlock, Quadicon, toolbar
+from cfme.web_ui import flash, InfoBlock, Quadicon, toolbar
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
@@ -125,3 +126,16 @@ def test_host_zones_assigned(provider):
         host = Host(name=quad.name, provider=provider)
         result = host.get_detail('Relationships', 'Availability Zone')
         assert result, "Availability zone doesn't specified"
+
+
+@pytest.mark.trylast
+def test_host_delete(provider):
+    navigate_to(provider, 'ProviderNodes')
+    quads = filter(lambda q: 'Compute' in q.name, Quadicon.all())
+    hname = random.choice(quads).name
+    host = Host(hname, provider)
+    host.delete(cancel=False)
+    flash.assert_no_errors()
+    wait_for_host_delete(host)
+    navigate_to(provider, 'ProviderNodes')
+    assert hname not in [q.name for q in Quadicon.all()]
