@@ -253,16 +253,25 @@ def test_ec2_manual_placement_using_rest(
 
     assert len(provider_data['cloud_subnets']) > 0
     cloud_subnet = None
-    availability_zone_id_seen = False
     for cloud_subnet in provider_data['cloud_subnets']:
-        if 'availability_zone_id' in cloud_subnet:
-            availability_zone_id_seen = True
-            if (cloud_subnet['cloud_network_id'] == cloud_network['id'] and
-                    cloud_subnet['status'] == 'available'):
-                break
+        if (cloud_subnet['cloud_network_id'] == cloud_network['id'] and
+                cloud_subnet['status'] == 'available'):
+            break
     else:
-        pytest.fail("Cannot find cloud subnet{}.".format(
-            ", `availability_zone_id` not found" if not availability_zone_id_seen else ""))
+        pytest.fail("Cannot find cloud subnet.")
+
+    def _find_availability_zone_id():
+        subnet_data = rest_api.get(provider_rest._href + '?attributes=cloud_subnets')
+        for subnet in subnet_data['cloud_subnets']:
+            if subnet['id'] == cloud_subnet['id'] and 'availability_zone_id' in subnet:
+                return subnet['availability_zone_id']
+        return False
+
+    if 'availability_zone_id' in cloud_subnet:
+        availability_zone_id = cloud_subnet['availability_zone_id']
+    else:
+        availability_zone_id, _ = wait_for(
+            _find_availability_zone_id, num_sec=100, delay=5, message="availability_zone present")
 
     provision_data = {
         "version": "1.1",
@@ -276,7 +285,7 @@ def test_ec2_manual_placement_using_rest(
             "placement_auto": False,
             "cloud_network": cloud_network['id'],
             "cloud_subnet": cloud_subnet['id'],
-            "placement_availability_zone": cloud_subnet['availability_zone_id'],
+            "placement_availability_zone": availability_zone_id,
             "security_groups": security_group['id'],
             "monitoring": "basic"
         },
@@ -309,7 +318,7 @@ def test_ec2_manual_placement_using_rest(
             pytest.fail("Error when provisioning: `{}`".format(request.message))
         return request.request_state.lower() in ('finished', 'provisioned')
 
-    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=1000, delay=5, message="REST provisioning finishes")
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
         num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
