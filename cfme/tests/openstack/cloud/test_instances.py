@@ -98,8 +98,7 @@ def test_shelve_instance(new_instance):
 def test_shelve_offload_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
-    new_instance.power_control_from_cfme(from_details=True,
-                                         option=OpenStackInstance.SHELVE_OFFLOAD)
+    new_instance.power_control_from_cfme(option=OpenStackInstance.SHELVE_OFFLOAD)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED_OFFLOAD)
     state = new_instance.get_detail(properties=('Power Management',
                                                 'Power State'))
@@ -146,7 +145,7 @@ def test_delete_instance(new_instance):
 
     assert new_instance.name not in new_instance.provider.mgmt.list_vm()
     navigate_to(new_instance, 'AllForProvider')
-    assert new_instance.name not in Quadicon.all()
+    assert new_instance.name not in [q.name for q in Quadicon.all()]
 
 
 def test_list_vms_infra_node(provider, soft_assert):
