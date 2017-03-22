@@ -155,14 +155,21 @@ def pages():
         for page in pages():
             # Do seleniumy things here, like finding and clicking elements
 
+    Raises:
+        :py:class:`ValueError`: When the paginator "breaks" (does not change)
     """
     # Reset the paginator, then yield the first page
     if page_controls_exist():
         reset()
         yield
         # Yield while there are more pages
+        current_page_nums = _page_nums()
         while not is_dimmed(next()):
             sel.click(next())
+            new_page_nums = _page_nums()
+            if new_page_nums == current_page_nums:
+                raise ValueError('The paginator did not change: {}'.format(new_page_nums))
+            current_page_nums = new_page_nums
             yield
     else:
         yield
