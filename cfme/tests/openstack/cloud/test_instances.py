@@ -109,7 +109,7 @@ def test_shelve_offload_instance(new_instance):
 def test_start_instance(new_instance):
     new_instance.power_control_from_provider(OpenStackInstance.STOP)
     navigate_to(new_instance, 'Details')
-    new_instance.wait_for_instance_state_change(OpenStackInstance.STOP)
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.START)
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
