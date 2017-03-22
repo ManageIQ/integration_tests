@@ -111,7 +111,7 @@ def is_task_finished(destination, task_name, expected_status, clear_tasks_after_
 
     if clear_tasks_after_success:
         # Remove all finished tasks so they wouldn't poison other tests
-        view.delete('Delete All', handle_alert=True)
+        view.delete.item_select('Delete All', handle_alert=True)
 
     return True
 
