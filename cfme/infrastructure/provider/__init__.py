@@ -125,19 +125,35 @@ class InfraProvidersView(BaseLoggedInPage):
         pass
 
 
-class InfraProviderDetailsView(BaseLoggedInPage):
-    @View.nested
-    class toolbar(DetailsProviderToolBar):  # NOQA
-        pass
-
-    title = Text('//div[@id="main-content"]//h1')
-    breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
-
+class InfraProviderDetailsSummaryView(View):
     properties = SummaryTable(title="Properties")
     status = SummaryTable(title="Status")
     relationships = SummaryTable(title="Relationships")
     overview = SummaryTable(title="Overview")
     smart_management = SummaryTable(title="Smart Management")
+
+
+class InfraProviderDetailsDashboardView(View):
+    pass
+
+
+class InfraProviderDetailsView(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
+    breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
+
+    @View.nested
+    class toolbar(DetailsProviderToolBar):  # NOQA
+        pass
+
+    @View.nested
+    class contents(InfraProviderDetailsSummaryView):
+        pass
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title == '{name} (Summary)'.format(name=self.obj.name)  # true only for summary
 
 
 class InfraProvidersDiscoverView(BaseLoggedInPage):
