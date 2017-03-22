@@ -223,6 +223,6 @@ pytest_plugins = (
     'cfme.fixtures.tag',
     'cfme.fixtures.vm_name',
 
-    'metaplugins',
+    'cfme.metaplugins',
 )
 collect_ignore = ["tests/scenarios"]
