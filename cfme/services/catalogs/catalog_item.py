@@ -126,7 +126,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
 
         sel.wait_for_element(basic_info_form.name_text)
         catalog = fakeobject_or_object(self.catalog, "name", "Unassigned")
-        dialog = fakeobject_or_object(self.dialog, "name", "No Dialog")
+        dialog = fakeobject_or_object(self.dialog, "label", "No Dialog")
 
         # Need to provide the (optional) provider name to the form, not the object
         provider_name = None
