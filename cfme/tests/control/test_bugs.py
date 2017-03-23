@@ -258,7 +258,7 @@ def test_delete_all_actions_from_compliance_policy(request):
 
 @pytest.mark.parametrize("item_type,create_function", items, ids=[item[0] for item in items])
 @pytest.mark.uncollectif(lambda item_type: item_type in ["Policy profiles", "Alert profiles"] and
-    BZ(1304396, forced_streams=["5.6", "5.7"]).blocks)
+    BZ(1304396, forced_streams=["5.6", "5.7", "5.8"]).blocks)
 def test_control_identical_descriptions(request, item_type, create_function):
     """CFME should not allow to create policy, alerts, profiles, actions and others to be created
     if the item with the same description already exists.
