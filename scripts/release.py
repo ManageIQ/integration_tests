@@ -52,7 +52,7 @@ def main():
 
     valid_labels = [
         u'fix-locator-or-text', u'infra-related', u'fix-test', u'doc',
-        u'other', u'enhancement', u'fix-framework', u'new-test-or-feature'
+        u'other', u'enhancement', u'fix-framework', u'new-test-or-feature', u'tech-debt'
     ]
 
     print('integration_tests {} Released'.format(new_ver))
@@ -78,6 +78,7 @@ def main():
         items += result.json()['items']
 
     prs = {}
+    pr_nums_without_label = []
     for pr in items:
         prs[pr['number']] = pr
         for label in pr['labels']:
@@ -85,7 +86,13 @@ def main():
                 pr['label'] = label['name']
                 break
         else:
-            raise Exception("PR [{}]: Does not have a label".format(pr['number']))
+            pr_nums_without_label.append(str(pr['number']))
+
+    if pr_nums_without_label:
+        print("ERROR: The following PRs don't have any of recognized labels: {}"
+              .format(', '.join(pr_nums_without_label)))
+        print("Recognized labels: {}".format(', '.join(valid_labels)))
+        return 1
 
     if not args.stats:
         max_len_pr = len(
@@ -131,7 +138,7 @@ def main():
                     labels[prs[pr_number]['label']] += 1
 
         for label in labels:
-            print("{},{}".format(label, labels[label]))
+            print("{}, {}".format(label, labels[label]))
 
 
 if __name__ == "__main__":
