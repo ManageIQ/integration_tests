@@ -109,9 +109,9 @@ class ApplianceConsoleCli(object):
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
         self._run("-h {dbhostname} -U {username} -p {password} -d {dbname} -v -K {fetch_key} "
-            "-s {sshlogin} -a {sshpass}".format(
-                dbhostname=dbhostname, username=username, password=password, dbname=dbname,
-                fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
+            "-s {sshlogin} -a {sshpass}".format(dbhostname=dbhostname, username=username,
+                password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
+                sshpass=sshpass))
 
     def configure_appliance_external_create(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
