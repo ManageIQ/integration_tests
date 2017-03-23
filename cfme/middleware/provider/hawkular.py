@@ -40,7 +40,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     db_types = ["Hawkular::MiddlewareManager"]
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None,
-            appliance=None, **kwargs):
+            appliance=None, sec_protocol=None, **kwargs):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.hostname = hostname
@@ -50,11 +50,13 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
             credentials = {}
         self.credentials = credentials
         self.key = key
+        self.sec_protocol = sec_protocol if sec_protocol else 'Non-SSL'
         self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Hawkular',
+                'sec_protocol': kwargs.get('sec_protocol'),
                 'hostname_text': kwargs.get('hostname'),
                 'port_text': kwargs.get('port')}
 
@@ -160,6 +162,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
             name=prov_config['name'],
             key=prov_key,
             hostname=prov_config['hostname'],
+            sec_protocol=prov_config.get('sec_protocol', None),
             port=prov_config['port'],
             credentials={'default': credentials},
             appliance=appliance)
