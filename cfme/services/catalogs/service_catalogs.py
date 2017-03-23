@@ -6,6 +6,7 @@ from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.base import Server
 
 from . import ServicesCatalogView
 
@@ -46,6 +47,17 @@ class ServiceCatalogsView(ServicesCatalogView):
             self.title.text == 'All Services' and
             self.service_catalogs.is_opened and
             self.service_catalogs.tree.currently_selected == ["All Services"])
+
+
+class ServiceCatalogsDefaultView(ServicesCatalogView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'All Services' and
+            self.service_catalogs.is_opened)
 
 
 class DetailsServiceCatalogView(ServicesCatalogView):
@@ -91,6 +103,16 @@ class ServiceCatalogs(Updateable, Pretty, Navigatable):
         view.submit_button.click()
         # Request page is displayed after this hence not asserting for view
         view.flash.assert_success_message("Order Request was Submitted")
+
+
+@navigator.register(Server)
+class ServiceCatalogsDefault(CFMENavigateStep):
+    VIEW = ServiceCatalogsDefaultView
+
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
 
 
 @navigator.register(ServiceCatalogs, 'All')

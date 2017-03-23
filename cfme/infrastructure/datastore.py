@@ -194,8 +194,9 @@ class All(CFMENavigateStep):
             # for existing tests
             pass
         tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
 
 
 @navigator.register(Datastore, 'Details')
