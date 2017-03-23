@@ -15,6 +15,9 @@ def parse_cmd_line():
     parser.add_argument('--exclude-eips', nargs='+',
                         help='List of EIPs, which should be '
                              'excluded. Allocation_id or public IP are allowed.')
+    parser.add_argument('--exclude-elbs', nargs='+',
+                        help='List of ELBs, which should be '
+                             'excluded.')
     parser.add_argument("--output", dest="output", help="target file name, default "
                                                         "'cleanup_ec2.log' in utils.path.log_path",
                         default=log_path.join('cleanup_ec2.log').strpath)
@@ -50,7 +53,7 @@ def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
                                       tablefmt='orgtbl'))
 
     except Exception as e:
-        logger.error(e)
+        print e
 
 
 def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
@@ -75,7 +78,29 @@ def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
         logger.error(e)
 
 
-def ec2cleanup(exclude_volumes, exclude_eips, output):
+def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
+    elb_list = []
+    provider_name = provider_mgmt.kwargs['name']
+    try:
+        for elb in provider_mgmt.get_all_unused_loadbalancers():
+            if excluded_elbs and elb.name in excluded_elbs:
+                print "  Excluding Elastic LoadBalancer id: {}".format(elb.name)  # noqa
+                continue
+            else:
+                elb_list.append([provider_name, elb.name])
+                provider_mgmt.delete_loadbalancer(loadbalancer=elb)
+        print "  Deleted Elastic LoadBalancers: {}".format(elb_list)  # noqa
+        with open(output, 'a+') as report:
+            if elb_list:
+                # tabulate volume_list and write it
+                report.write(tabulate(tabular_data=elb_list,
+                                      headers=['Provider Key', 'ELB name'],
+                                      tablefmt='orgtbl'))
+    except Exception as e:
+        logger.error(e)
+
+
+def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, output):
     with open(output, 'w') as report:
         report.write('ec2cleanup.py, Address and Volume Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
@@ -90,8 +115,11 @@ def ec2cleanup(exclude_volumes, exclude_eips, output):
         delete_unattached_volumes(provider_mgmt=provider_mgmt,
                                   excluded_volumes=exclude_volumes,
                                   output=output)
-
+        print "Deleting Elastic LoadBalancers..."  # noqa
+        delete_unused_loadbalancers(provider_mgmt=provider_mgmt,
+                                  excluded_elbs=exclude_elbs,
+                                  output=output)
 
 if __name__ == "__main__":
     args = parse_cmd_line()
-    sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.output))
+    sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.exclude_elbs, args.output))
