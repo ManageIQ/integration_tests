@@ -41,7 +41,8 @@ from widgetastic_manageiq import (PaginationPane,
                                   Button,
                                   TimelinesView,
                                   RadioGroup,
-                                  FileInput)
+                                  FileInput,
+                                  Table)
 from widgetastic_patternfly import Input, BootstrapSelect, Tab, BootstrapSwitch
 from .widgetastic_views import (ProviderEntities,
                                 ProviderSideBar,
@@ -347,13 +348,23 @@ class InfraProvidersManagePoliciesView(BaseLoggedInPage):
     reset = Button('Reset')
     cancel = Button('Cancel')
 
+    @property
+    def is_displayed(self):
+        return False
+
 
 class InfraProvidersEditTagsView(BaseLoggedInPage):
-    # todo: to add table and assignment controls
+    tag_category = BootstrapSelect('tag_cat')
+    tag = BootstrapSelect('tag_add')
+    chosen_tags = Table(locator='//div[@id="assignments_div"]/table')
 
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -619,7 +630,7 @@ class ManagePolicies(CFMENavigateStep):
 
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        pol_btn('Manage Policies')
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
@@ -628,7 +639,7 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Manage Policies')
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(InfraProvider, 'EditTags')
@@ -638,7 +649,7 @@ class EditTags(CFMENavigateStep):
 
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(InfraProvider, 'EditTagsFromDetails')
@@ -647,7 +658,7 @@ class EditTagsFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(InfraProvider, 'Edit')
