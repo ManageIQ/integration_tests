@@ -336,6 +336,10 @@ def policy_and_condition(request):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda condition: condition.FIELD_VALUE == "Provider" and
+    current_version() < "5.7.1"
+)
 def test_condition_crud(condition):
     # CR
     condition.create()
