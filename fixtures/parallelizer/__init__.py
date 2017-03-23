@@ -565,7 +565,7 @@ class ParallelSession(object):
                     self.print_message(
                         'cloud not cleanse', slave, red=True)
                     self.print_message('error:', e, red=True)
-            self.slave_allocation[slave] = [prov]
+            slave.provider_allocation = [prov]
             self._pool.remove(test_group)
             return test_group
         assert not self._pool, self._pool
