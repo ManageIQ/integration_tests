@@ -256,7 +256,7 @@ class TestProvidersRESTAPI(object):
         provider.custom_attributes.reload()
         ids = [attr.id for attr in attrs]
         delete_attrs = [attr for attr in provider.custom_attributes if attr.id in ids]
-        if len(delete_attrs) != 0:
+        if delete_attrs:
             provider.custom_attributes.action.delete(*delete_attrs)
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
