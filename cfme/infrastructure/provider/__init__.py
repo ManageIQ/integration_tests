@@ -21,7 +21,8 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
     Region, Quadicon, Form, CheckboxTree, fill, form_buttons,
-    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location, paginator, BootstrapSwitch
+    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location, paginator,
+    BootstrapSwitch as OldBootstrapSwitch, Input as OldInput
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
@@ -54,14 +55,14 @@ match_page = partial(match_location, controller='ems_infra', title='Infrastructu
 # Forms
 discover_form = Form(
     fields=[
-        ('rhevm_chk', Input("discover_type_rhevm")),
-        ('vmware_chk', Input("discover_type_virtualcenter")),
-        ('scvmm_chk', Input("discover_type_scvmm")),
-        ('from_0', Input("from_first")),
-        ('from_1', Input("from_second")),
-        ('from_2', Input("from_third")),
-        ('from_3', Input("from_fourth")),
-        ('to_3', Input("to_fourth")),
+        ('rhevm_chk', OldInput("discover_type_rhevm")),
+        ('vmware_chk', OldInput("discover_type_virtualcenter")),
+        ('scvmm_chk', OldInput("discover_type_scvmm")),
+        ('from_0', OldInput("from_first")),
+        ('from_1', OldInput("from_second")),
+        ('from_2', OldInput("from_third")),
+        ('from_3', OldInput("from_fourth")),
+        ('to_3', OldInput("to_fourth")),
         ('start_button', FormButton("Start the Host Discovery"))
     ])
 
@@ -69,26 +70,26 @@ discover_form = Form(
 properties_form = TabStripForm(
     fields=[
         ('type_select', AngularSelect("emstype")),
-        ('name_text', Input("name")),
+        ('name_text', OldInput("name")),
         ("api_version", AngularSelect("api_version")),
     ],
     tab_fields={
         "Default": [
-            ('hostname_text', Input("default_hostname")),
-            ('api_port', Input("default_api_port")),
+            ('hostname_text', OldInput("default_hostname")),
+            ('api_port', OldInput("default_api_port")),
             ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
-            ('verify_tls_switch', BootstrapSwitch(input_id="default_tls_verify")),
-            ('ca_certs', Input('default_tls_ca_certs')),
+            ('verify_tls_switch', OldBootstrapSwitch(input_id="default_tls_verify")),
+            ('ca_certs', OldInput('default_tls_ca_certs')),
         ],
         "Events": [
             ('event_selection', Radio('event_stream_selection')),
-            ('amqp_hostname_text', Input("amqp_hostname")),
-            ('amqp_api_port', Input("amqp_api_port")),
+            ('amqp_hostname_text', OldInput("amqp_hostname")),
+            ('amqp_api_port', OldInput("amqp_api_port")),
             ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
         ],
         "C & U Database": [
-            ('candu_hostname_text', Input("metrics_hostname")),
-            ('acandu_api_port', Input("metrics_api_port")),
+            ('candu_hostname_text', OldInput("metrics_hostname")),
+            ('acandu_api_port', OldInput("metrics_api_port")),
         ]
     })
 
@@ -114,6 +115,7 @@ class InfraProvidersView(BaseLoggedInPage):
 
     @View.nested
     class sidebar(ProviderSideBar):  # NOQA
+        # it has nothing atm but this can change soon
         pass
 
     @View.nested
@@ -147,7 +149,7 @@ class InfraProviderDetailsView(BaseLoggedInPage):
         pass
 
     @View.nested
-    class contents(View):
+    class contents(View):  # NOQA
         pass
 
     def __getattribute__(self, item):

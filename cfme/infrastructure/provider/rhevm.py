@@ -48,7 +48,7 @@ class RHEVMProvider(InfraProvider):
                 # 'ipaddress_text': kwargs.get('ip_address'),
                 'verify_tls': verify_tls,
                 'ca_certs': ca_certs
-                },
+            },
             'database': {
                 'hostname': kwargs.get('hostname') if self.credentials.get('candu', None) else None
             }

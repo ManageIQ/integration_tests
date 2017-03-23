@@ -38,7 +38,7 @@ class SCVMMProvider(InfraProvider):
         }
 
         if 'security_protocol' in endpoint_values['default'] and \
-                        endpoint_values['default']['security_protocol'] is 'Kerberos':
+                endpoint_values['default']['security_protocol'] is 'Kerberos':
             endpoint_values['realm'] = kwargs.get('sec_realm')
 
         return main_values, endpoint_values

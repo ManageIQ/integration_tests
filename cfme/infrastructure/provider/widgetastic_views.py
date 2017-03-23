@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Dropdown, Button
-from widgetastic_manageiq import ItemsToolBarViewSelector, DetailsToolBarViewSelector
+from widgetastic_manageiq import ItemsToolBarViewSelector, DetailsToolBarViewSelector, Search
 
 
 class ProviderToolBar(View):
@@ -12,10 +12,7 @@ class ProviderToolBar(View):
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
     download = Dropdown(text='Download')
-
-    @View.nested
-    class view_selector(ItemsToolBarViewSelector):  # NOQA
-        pass
+    view_selector = ItemsToolBarViewSelector()
 
 
 class ProviderEntities(View):
@@ -25,7 +22,7 @@ class ProviderEntities(View):
     title = Text('//div[@id="main-content"]//h1')
 
     @View.nested
-    class search(object):  # NOQA
+    class search(Search):  # NOQA
         pass
 
 
