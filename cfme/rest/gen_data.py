@@ -454,3 +454,18 @@ def blueprints(request, rest_api, num=2):
         })
 
     return _creating_skeleton(request, rest_api, 'blueprints', data)
+
+
+def conditions(request, rest_api, num=2):
+    data = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(5)
+        data.append({
+            'name': 'test_condition_{}'.format(uniq),
+            'description': 'Test Condition {}'.format(uniq),
+            'expression': {'=': {'field': 'ContainerImage-architecture', 'value': 'dsa'}},
+            'towhat': 'ExtManagementSystem',
+            'modifier': 'allow'
+        })
+
+    return _creating_skeleton(request, rest_api, 'conditions', data)
