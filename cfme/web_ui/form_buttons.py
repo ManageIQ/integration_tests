@@ -6,6 +6,8 @@ You can use it also for the other buttons with same shape like those CRUD ones.
 from selenium.common.exceptions import NoSuchElementException
 from xml.sax.saxutils import quoteattr
 
+from widgetastic.xpath import quote
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill
 from utils import version
@@ -26,6 +28,8 @@ class FormButton(Pretty):
     """
     pretty_attrs = ['_alt', '_dimmed_alt', '_force', '_partial', '_ng_click']
 
+    PRIMARY = 'btn-primary'
+
     class Button:
         """Holds pieces of the XPath to be assembled."""
         TAG_TYPES = "//a | //button | //img | //input"
@@ -42,12 +46,15 @@ class FormButton(Pretty):
         ON_CURRENT_TAB = (
             "not(ancestor::div[contains(@class, 'tab-pane') and not(contains(@class, 'active'))])")
 
-    def __init__(self, alt, dimmed_alt=None, force_click=False, partial_alt=False, ng_click=None):
+    def __init__(
+            self, alt, dimmed_alt=None, force_click=False, partial_alt=False, ng_click=None,
+            classes=None):
         self._alt = alt
         self._dimmed_alt = dimmed_alt
         self._force = force_click
         self._partial = partial_alt
         self._ng_click = ng_click
+        self._classes = classes or []
 
     def alt_expr(self, dimmed=False):
         if self._partial:
@@ -86,19 +93,24 @@ class FormButton(Pretty):
         d["ALT_EXPR"] = self.alt_expr(dimmed=dimmed)
         if include_dimmed_alt:
             d["DIMMED_ALT"] = quoteattr(self._dimmed_alt or self._alt)
+        if self._classes:
+            d['CLASSES'] = 'and ({})'.format(
+                ' and '.join('contains(@class, {})'.format(quote(kls)) for kls in self._classes))
+        else:
+            d['CLASSES'] = ''
         return d
 
     def locate(self):
         return (
             "({TAG_TYPES})[{ALT_EXPR} and {NOT_DIMMED} and {TYPE_CONDITION} and {IS_DISPLAYED} "
-            "and {ON_CURRENT_TAB}]"
+            "and {ON_CURRENT_TAB} {CLASSES}]"
             .format(**self._format_generator(dimmed=False)))
 
     @property
     def is_dimmed(self):
         locator = (
             "({TAG_TYPES})[{ALT_EXPR} and {DIMMED} and {TYPE_CONDITION} and {IS_DISPLAYED} "
-            "and {ON_CURRENT_TAB}]"
+            "and {ON_CURRENT_TAB} {CLASSES}]"
             "|"  # A bit different type of a button
             "({TAG_TYPES})[normalize-space(.)={DIMMED_ALT} and {IS_DISPLAYED} and "
             "(@disabled='true' or contains(@class, 'btn-disabled')) and {ON_CURRENT_TAB}]"
