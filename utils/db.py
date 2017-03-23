@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
 from fixtures.pytest_store import store
-from utils import conf, ports, version
+from utils import conf, ports
 from utils.log import logger
 
 
@@ -29,16 +29,6 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     except StandardError:
         raise DisconnectionError
     cursor.close()
-
-
-def postgres_version():
-    # postgres's version is in the service name and file paths when we pull it from SCL,
-    # so this is a little resolver to help keep the version picking centralized
-    return version.pick({
-        version.LOWEST: 'postgresql92',
-        '5.5': 'rh-postgresql94',
-        '5.7': 'rh-postgresql95'
-    })
 
 
 class Db(Mapping):

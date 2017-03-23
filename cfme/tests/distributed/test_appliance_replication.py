@@ -11,7 +11,7 @@ from cfme.configure import configuration as conf
 from cfme.infrastructure.provider import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
 
-from utils import db, version
+from utils import version
 from utils.appliance import provision_appliance, current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
@@ -45,14 +45,15 @@ def get_ssh_client(hostname):
 # and we should be using the with context manager, they are being used incorrectly below
 def stop_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service {}-postgresql stop'.format(db.postgres_version()))[0] == 0,\
+        assert ssh.run_command('service {}-postgresql stop'.format(
+            current_appliance.postgres_version))[0] == 0,\
             "Could not stop postgres process on {}".format(address)
 
 
 def start_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service {}-postgresql start'
-            .format(db.postgres_version()))[0] == 0,\
+        assert ssh.run_command('systemctl start {}-postgresql'
+            .format(current_appliance.postgres_version))[0] == 0,\
             "Could not start postgres process on {}".format(address)
 
 

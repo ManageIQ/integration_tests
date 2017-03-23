@@ -6,7 +6,7 @@ import subprocess
 import time
 from optparse import OptionParser
 
-from utils import db
+from utils import current_appliance
 
 parser = OptionParser()
 parser.add_option('--backupfile', help='backup file to be restored')
@@ -53,7 +53,7 @@ psql_output = run_command('psql -d vmdb_production -U root -c ' +
 count = psql_output.split("\n")[2].strip()
 if count > 2:
     logger.info("Too many postgres threads(" + str(count) + ")... restarting")
-    run_command("service {}-postgresql restart".format(db.postgres_version()))
+    run_command("service {}-postgresql restart".format(current_appliance.postgres_version))
     time.sleep(60)
 run_command("cd /var/www/miq/vmdb/backup_and_restore/;./miq_vmdb_background_restore " +
     options.backupfile + " > /tmp/restore.out 2>&1")
