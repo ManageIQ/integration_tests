@@ -304,6 +304,9 @@ class ContainerImageCondition(BaseCondition):
 
 class ProviderCondition(BaseCondition):
 
-    TREE_NODE = "Container Provider"
+    TREE_NODE = deferred_verpick({
+        version.LOWEST: "Container Provider",
+        '5.7.2': "Provider",
+    })
     PRETTY = "Provider"
     FIELD_VALUE = "Provider"
