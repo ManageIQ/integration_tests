@@ -19,13 +19,8 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
-from cfme.web_ui import (
-    Region, Quadicon, Form, CheckboxTree, fill, form_buttons,
-    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location, paginator,
-    BootstrapSwitch as OldBootstrapSwitch, Input as OldInput
-)
-from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.tabstrip import TabStripForm
+from cfme.web_ui import Quadicon, match_location
+
 from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -50,57 +45,7 @@ from .widgetastic_views import (ProviderEntities,
                                 DetailsProviderToolBar)
 
 
-details_page = Region(infoblock_type='detail')
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
-
-# Forms
-discover_form = Form(
-    fields=[
-        ('rhevm_chk', OldInput("discover_type_rhevm")),
-        ('vmware_chk', OldInput("discover_type_virtualcenter")),
-        ('scvmm_chk', OldInput("discover_type_scvmm")),
-        ('from_0', OldInput("from_first")),
-        ('from_1', OldInput("from_second")),
-        ('from_2', OldInput("from_third")),
-        ('from_3', OldInput("from_fourth")),
-        ('to_3', OldInput("to_fourth")),
-        ('start_button', FormButton("Start the Host Discovery"))
-    ])
-
-
-properties_form = TabStripForm(
-    fields=[
-        ('type_select', AngularSelect("emstype")),
-        ('name_text', OldInput("name")),
-        ("api_version", AngularSelect("api_version")),
-    ],
-    tab_fields={
-        "Default": [
-            ('hostname_text', OldInput("default_hostname")),
-            ('api_port', OldInput("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
-            ('verify_tls_switch', OldBootstrapSwitch(input_id="default_tls_verify")),
-            ('ca_certs', OldInput('default_tls_ca_certs')),
-        ],
-        "Events": [
-            ('event_selection', Radio('event_stream_selection')),
-            ('amqp_hostname_text', OldInput("amqp_hostname")),
-            ('amqp_api_port', OldInput("amqp_api_port")),
-            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
-        ],
-        "C & U Database": [
-            ('candu_hostname_text', OldInput("metrics_hostname")),
-            ('acandu_api_port', OldInput("metrics_api_port")),
-        ]
-    })
-
-prop_region = Region(locators={'properties_form': properties_form})
-
-manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
-
-cfg_btn = partial(tb.select, 'Configuration')
-pol_btn = partial(tb.select, 'Policy')
-mon_btn = partial(tb.select, 'Monitoring')
 
 
 class InfraProvidersView(BaseLoggedInPage):
@@ -181,7 +126,9 @@ class InfraProviderDetailsView(BaseLoggedInPage):
 
 
 class InfraProvidersDiscoverView(BaseLoggedInPage):
-    vcenter = Checkbox('discover_type_virtualcenter')
+    title = Text('//div[@id="main-content"]//h1')
+
+    vmware = Checkbox('discover_type_virtualcenter')
     mscvmm = Checkbox('discover_type_scvmm')
     rhevm = Checkbox('discover_type_rhevm')
 
@@ -198,7 +145,7 @@ class InfraProvidersDiscoverView(BaseLoggedInPage):
     def is_displayed(self):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
-            match_page(summary='Infrastructure Providers Discovery')
+            self.title.text == 'Infrastructure Providers Discovery'
 
 
 class BeforeFillMixin(object):
@@ -288,7 +235,7 @@ class InfraProvidersAddView(BaseLoggedInPage):
 
     @View.nested
     class endpoints(View):  # NOQA
-        # this is switchable view that gets replaced this concrete view.
+        # this is switchable view that gets replaced with concrete view.
         # it gets changed according to currently chosen provider type every time
         # when it is accessed
         pass
@@ -416,10 +363,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     page_name = "infrastructure"
     templates_destination_name = "Templates"
     quad_name = "infra_prov"
-    _properties_region = prop_region  # This will get resolved in common to a real form
     db_types = ["InfraManager"]
-    add_provider_button = form_buttons.add
-    save_button = form_buttons.angular_save
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None,
@@ -445,10 +389,8 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='db')
     def num_datastore(self):
-        storage_table_name = version.pick({version.LOWEST: 'hosts_storages',
-                                           '5.5.0.8': 'host_storages'})
         """ Returns the providers number of templates, as shown on the Details page."""
-
+        storage_table_name = 'host_storages'
         results = list(self.appliance.db.engine.execute(
             'SELECT DISTINCT storages.name, hosts.ems_id '
             'FROM ext_management_systems, hosts, storages, {} '
@@ -518,7 +460,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     def num_cluster_ui(self):
         return int(self.get_detail("Relationships", "cluster-", use_icon=True))
 
-    def discover(self):
+    def discover(self):  # todo: move this to provider collections
         """
         Begins provider discovery from a provider instance
 
@@ -562,8 +504,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
         web_clusters = []
-        navigate_to(self, 'Details')
-        sel.click(InfoBlock.element('Relationships', 'Clusters'))
+        view = navigate_to(self, 'Details')
+        # todo: create nav location + view later
+        view.contents.relationships.click_at('Clusters')
         icons = Quadicon.all(qtype='cluster')
         for icon in icons:
             web_clusters.append(Cluster(icon.name, self))
@@ -606,7 +549,8 @@ class Discover(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Discover Infrastructure Providers')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Discover Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')
@@ -619,8 +563,9 @@ class Details(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        if tb.exists("Summary View"):
-            tb.select("Summary View")
+        view_selector = self.view.toolbar.view_selector
+        if view_selector.selected != 'Summary View':
+            view_selector.select('Summary View')
 
 
 @navigator.register(InfraProvider, 'ManagePolicies')
@@ -668,7 +613,8 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg_btn('Edit Selected Infrastructure Providers')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Edit Selected Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Timelines')
@@ -677,7 +623,8 @@ class Timelines(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Timelines')
+        mon = self.prerequisite_view.toolbar.monitoring
+        mon.item_select('Timelines')
 
 
 @navigator.register(InfraProvider, 'Instances')
@@ -688,7 +635,8 @@ class Instances(CFMENavigateStep):
         return match_page(summary='{} (All VMs)'.format(self.obj.name))
 
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'VMs and Instances'))
+        self.prerequisite_view.contents.relationships.click_at('VMs and Instances')
+        # todo: add vms view when it is done
 
 
 @navigator.register(InfraProvider, 'Templates')
@@ -699,16 +647,16 @@ class Templates(CFMENavigateStep):
         return match_page(summary='{} (All Templates)'.format(self.obj.name))
 
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'Templates'))
+        self.prerequisite_view.contents.relationships.click_at('Templates')
+        # todo: add templates view when it is done
 
 
-def get_all_providers(do_not_navigate=False):
+def get_all_providers():
     """Returns list of all providers"""
-    if not do_not_navigate:
-        navigate_to(InfraProvider, 'All')
+    view = navigate_to(InfraProvider, 'All')
     providers = set([])
     link_marker = "ems_infra"
-    for page in paginator.pages():
+    for _ in view.paginator.pages():
         for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
                 "'{}/show')]".format(link_marker)):
             providers.add(sel.get_attribute(title, "title"))
@@ -728,30 +676,32 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
         start_ip: String start of the IP range for discovery
         end_ip: String end of the IP range for discovery
     """
-    navigate_to(InfraProvider, 'Discover')
+    view = navigate_to(InfraProvider, 'Discover')
     form_data = {}
     if rhevm:
-        form_data.update({'rhevm_chk': True})
+        form_data.update({'rhevm': True})
     if vmware:
-        form_data.update({'vmware_chk': True})
+        form_data.update({'vmware': True})
     if scvmm:
-        form_data.update({'scvmm_chk': True})
+        form_data.update({'scvmm': True})
 
     if start_ip:
-        for idx, octet in enumerate(start_ip.split('.')):
-            key = 'from_%i' % idx
+        for idx, octet in enumerate(start_ip.split('.'), start=1):
+            key = 'from_ip{idx}'.format(idx=idx)
             form_data.update({key: octet})
     if end_ip:
         end_octet = end_ip.split('.')[-1]
-        form_data.update({'to_3': end_octet})
+        form_data.update({'to_ip4': end_octet})
 
-    fill(discover_form, form_data,
-         action=form_buttons.cancel if cancel else discover_form.start_button,
-         action_always=True)
+    view.fill(form_data)
+    if cancel:
+        view.cancel.click()
+    else:
+        view.start.click()
 
 
 def wait_for_a_provider():
-    navigate_to(InfraProvider, 'All')
+    view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
-             num_sec=1000, fail_func=sel.refresh)
+    wait_for(view.paginator.items_amount, fail_condition=None,
+             message="Wait for any provider to appear", num_sec=1000, fail_func=sel.refresh)

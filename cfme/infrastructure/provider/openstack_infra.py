@@ -1,7 +1,7 @@
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
 
-from . import InfraProvider, prop_region
+from . import InfraProvider
 from cfme import BaseLoggedInPage
 from cfme.exceptions import DestinationNotFound
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
@@ -25,15 +25,15 @@ class InfraProviderNodesView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
 
     @View.nested
-    class toolbar(NodesToolBar):
+    class toolbar(NodesToolBar):  # NOQA
         pass
 
     @View.nested
-    class contents(View):
+    class contents(View):  # NOQA
         pass
 
     @View.nested
-    class paginator(PaginationPane):
+    class paginator(PaginationPane):  # NOQA
         pass
 
     @property
@@ -46,7 +46,6 @@ class InfraProviderNodesView(BaseLoggedInPage):
 
 class OpenstackInfraProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_host']
-    _properties_region = prop_region
     type_name = "openstack_infra"
     mgmt_class = OpenstackInfraSystem
     db_types = ["Openstack::InfraManager"]
@@ -92,9 +91,6 @@ class OpenstackInfraProvider(InfraProvider):
 
     def has_nodes(self):
         details_view = navigate_to(self, 'Details')
-        view_selector = details_view.toolbar.view_selector
-        if view_selector.selected != 'Summary View':
-            view_selector.select('Summary View')
         try:
             details_view.contents.relationships.get_text_of('Hosts')
             return False
@@ -167,9 +163,6 @@ class ProviderNodes(CFMENavigateStep):
 
     def step(self):
         view = self.prerequisite_view
-        view_selector = view.toolbar.view_selector
-        if view_selector.selected != 'Summary View':
-            view_selector.select('Summary View')
         try:
             view.contents.relationships.click_at('Nodes')
         except NameError:
