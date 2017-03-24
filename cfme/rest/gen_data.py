@@ -469,3 +469,23 @@ def conditions(request, rest_api, num=2):
         })
 
     return _creating_skeleton(request, rest_api, 'conditions', data)
+
+
+def policies(request, rest_api, num=2):
+    conditions_response = conditions(request, rest_api, num=2)
+    data = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(5)
+        data.append({
+            'name': 'test_policy_{}'.format(uniq),
+            'description': 'Test Policy {}'.format(uniq),
+            'mode': 'compliance',
+            'towhat': 'ManageIQ::Providers::Redhat::InfraManager',
+            'conditions_ids': [conditions_response[0].id, conditions_response[1].id],
+            'policy_contents': [{
+                'event_id': 2,
+                'actions': [{'action_id': 1, 'opts': {'qualifier': 'failure'}}]
+            }]
+        })
+
+    return _creating_skeleton(request, rest_api, 'policies', data)
