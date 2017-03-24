@@ -94,7 +94,7 @@ def original_instance(request, original_method, original_class):
 @pytest.mark.meta(blockers=[1254055], server_roles=["+automate"])
 @pytest.mark.tier(2)
 def test_priority(
-        request, ssh_client, original_method, original_instance, original_domain, copy_domain,
+        request, appliance, original_method, original_instance, original_domain, copy_domain,
         original_method_write_data, copy_method_write_data, domain_collection):
     """This test checks whether method overriding works across domains with the aspect of priority.
 
@@ -119,6 +119,7 @@ def test_priority(
         * Run the same simulation again.
         * The contents of the file should be the same as in the first case.
     """
+    ssh_client = appliance.ssh_client
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     domain_collection.set_order([original_domain])  # Default first
     #
