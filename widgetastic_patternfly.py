@@ -635,6 +635,7 @@ class BootstrapSelect(Widget, ClickableMixin):
             :py:meth:`close` to work properly.
     """
     ROOT = ParametrizedLocator('.//button[normalize-space(@data-id)={@id|quote}]/..')
+    BY_VISIBLE_TEXT = './div/ul/li/a[./span[contains(@class, "text") and normalize-space(.)={}]]'
 
     def __init__(self, parent, id, can_hide_on_select=False, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -678,10 +679,10 @@ class BootstrapSelect(Widget, ClickableMixin):
         self.open()
         for text in items:
             self.logger.info('selecting by visible text: %r', text)
-            self.browser.click(
-                './div/ul/li/a[./span[contains(@class, "text") and normalize-space(.)={}]]'.format(
-                    quote(text)),
-                parent=self)
+            try:
+                self.browser.click(self.BY_VISIBLE_TEXT.format(quote(text)), parent=self)
+            except NoSuchElementException:
+                raise NoSuchElementException('Could not find {!r} in {!r}'.format(text, self))
         self.close()
 
     @property

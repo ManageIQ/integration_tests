@@ -1589,3 +1589,85 @@ class TimelinesView(View):
     @property
     def is_displayed(self):
         return self.title.text == 'Timelines'
+
+
+class AttributeValueForm(View):
+    @View.nested
+    class fields(ParametrizedView):  # noqa
+        PARAMETERS = ('id', )
+
+        attribute = Input(
+            locator=ParametrizedLocator('.//input[@id=concat({@attr_prefix|quote}, {id|quote})]'))
+        value = Input(
+            locator=ParametrizedLocator('.//input[@id=concat({@val_prefix|quote}, {id|quote})]'))
+
+        @property
+        def attr_prefix(self):
+            return self.parent.attr_prefix
+
+        @property
+        def val_prefix(self):
+            return self.parent.val_prefix
+
+        # TODO: Figure out how to smuggle some extra data to the all classmethod
+        # TODO: since it is now impossible to pass the attr_prefix to it.
+
+    ATTRIBUTES = ParametrizedLocator('.//input[starts-with(@id, {@attr_prefix|quote})]')
+
+    def __init__(self, parent, attr_prefix, val_prefix, start=1, end=5, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.attr_prefix = attr_prefix
+        self.val_prefix = val_prefix
+        self.start = start
+        self.end = end
+
+    @property
+    def count(self):
+        return (self.end - self.start) + 1
+
+    @property
+    def current_attributes(self):
+        attributes = [
+            (i, self.browser.get_attribute('value', e))
+            for i, e in enumerate(self.browser.elements(self.ATTRIBUTES), self.start)]
+        return [a for a in attributes if a]
+
+    def attribute_to_id(self, attribute):
+        for id, attr in self.current_attributes:
+            if attr == attribute:
+                return id
+        else:
+            return None
+
+    def read(self):
+        result = {}
+        for id, attribute in self.current_attributes:
+            if not attribute:
+                continue
+            value = self.fields(id=str(id)).value.read()
+            result[attribute] = value
+        return result
+
+    def clear(self):
+        changed = False
+        for id, attr in self.current_attributes:
+            field = self.fields(id=str(id))
+            if field.attribute.fill(''):
+                changed = True
+            if field.value.fill(''):
+                changed = True
+        return changed
+
+    def fill(self, values):
+        if hasattr(values, 'items') and hasattr(values, 'keys'):
+            values = list(values.items())
+        if len(values) > self.count:
+            raise ValueError(
+                'This form is supposed to have only {} fields, passed {} items'.format(
+                    self.count, len(values)))
+        changed = self.clear()
+        for id, (key, value) in enumerate(values, self.start):
+            field = self.fields(id=str(id))
+            if field.fill({'attribute': key, 'value': value}):
+                changed = True
+        return changed
