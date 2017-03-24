@@ -18,8 +18,8 @@ from cfme.services import requests
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, match_location,
-    BootstrapTreeview, summary_title, Table, search
+    match_location, Table, search, paginator, toolbar, Calendar, Select, Input, CheckboxTable,
+    summary_title, BootstrapTreeview, AngularSelect
 )
 from cfme.web_ui.search import search_box
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -77,6 +77,9 @@ retirement_date_form = Form(fields=[
 retire_remove_button = "//span[@id='remove_button']/a/img"
 
 match_page = partial(match_location, controller='vm_infra', title='Virtual Machines')
+vm_templates_tree = partial(accordion.tree, "VMs & Templates")
+vms_tree = partial(accordion.tree, "VMs")
+templates_tree = partial(accordion.tree, "Templates")
 
 
 def reset_page():
@@ -341,68 +344,6 @@ class Vm(BaseVM):
     def get_collection_via_rest(self):
         return self.appliance.rest_api.collections.vms
 
-    def equal_drift_results(self, row_text, section, *indexes):
-        """ Compares drift analysis results of a row specified by it's title text
-
-        Args:
-            row_text: Title text of the row to compare
-            section: Accordion section where the change happened; this section must be activated
-            indexes: Indexes of results to compare starting with 0 for first row (latest result).
-                     Compares all available drifts, if left empty (default).
-
-        Note:
-            There have to be at least 2 drift results available for this to work.
-
-        Returns:
-            ``True`` if equal, ``False`` otherwise.
-        """
-        # mark by indexes or mark all
-        self.load_details(refresh=True)
-        sel.click(InfoBlock("Properties", "Drift History"))
-        if indexes:
-            drift_table.select_rows_by_indexes(*indexes)
-        else:
-            # We can't compare more than 10 drift results at once
-            # so when selecting all, we have to limit it to the latest 10
-            if len(list(drift_table.rows())) > 10:
-                drift_table.select_rows_by_indexes(*range(0, min(10, len)))
-            else:
-                drift_table.select_all()
-        tb.select("Select up to 10 timestamps for Drift Analysis")
-
-        # Make sure the section we need is active/open
-        sec_loc_map = {
-            'Properties': 'Properties',
-            'Security': 'Security',
-            'Configuration': 'Configuration',
-            'My Company Tags': 'Categories'}
-        sec_loc_template = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
-            "//span[contains(@class, 'dynatree-checkbox')]"
-        sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
-            "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
-        sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
-
-        # Deselect other sections
-        for other_section in sec_loc_map.keys():
-            other_section_loc = sec_loc_template.format(sec_loc_map[other_section])
-            other_section_classes = sel.get_attribute(other_section_loc + '/..', "class")
-            if other_section != section and 'dynatree-partsel' in other_section_classes:
-                # Element needs to be checked out if it has no dynatree-selected
-                if 'dynatree-selected' not in other_section_classes:
-                    sel.click(other_section_loc)
-                sel.click(other_section_loc)
-
-        # Activate the required section
-        sel.click(sec_checkbox_loc)
-        sel.click(sec_apply_btn)
-
-        if not tb.is_active("All attributes"):
-            tb.select("All attributes")
-        d_grid = DriftGrid()
-        if any(d_grid.cell_indicates_change(row_text, i) for i in range(0, len(indexes))):
-            return False
-        return True
-
     @property
     def cluster_id(self):
         """returns id of cluster current vm belongs to"""
@@ -412,7 +353,7 @@ class Vm(BaseVM):
     class CfmeRelationship(object):
         relationship_form = Form(
             fields=[
-                ('server_select', Select("//*[@id='server_id']")),
+                ('server_select', AngularSelect("server_id")),
                 ('save_button', form_buttons.save),
                 ('reset_button', form_buttons.reset),
                 ('cancel_button', form_buttons.cancel)
@@ -442,17 +383,9 @@ class Vm(BaseVM):
                 fill(self.relationship_form, {'server_select': option},
                      action=self.relationship_form.cancel_button)
             else:
-                fill(self.relationship_form, {'server_select': option},
-                     action=self.relationship_form.save_button)
-                # something weird going on where changing the select doesn't POST to undim save
-                sel.wait_for_ajax()
-                if self.relationship_form.save_button.is_dimmed:
-                    logger.warning("Worked around dimmed save button")
-                    sel.browser().execute_script(
-                        "$j.ajax({type: 'POST', url: '/vm_infra/evm_relationship_field_changed',"
-                        " data: {'server_id':'%s'}})" % (server_id))
-                    sel.click(form_buttons.FormButton(
-                        "Save Changes", dimmed_alt="Save", force_click=True))
+                fill(self.relationship_form, {'server_select': option})
+                sel.click(form_buttons.FormButton(
+                    "Save Changes", dimmed_alt="Save", force_click=True))
                 flash.assert_success_message("Management Engine Relationship saved")
 
 

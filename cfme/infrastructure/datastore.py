@@ -85,12 +85,8 @@ class Datastore(Pretty, Navigatable):
              message="Wait datastore to appear", num_sec=1000, fail_func=sel.refresh)
 
     def load_details(self):
-        # todo: to remove this context related functionality along with making provider
-        # param mandatory
-        if not self.provider:
-            navigate_to(self, 'Details')
-        else:
-            navigate_to(self, 'DetailsFromProvider')
+        # todo: to remove this context related functionality
+        navigate_to(self, 'Details')
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
@@ -110,10 +106,7 @@ class Datastore(Pretty, Navigatable):
         Returns: List of strings with names or `[]` if no hosts found.
         """
         self.load_details()
-        try:
-            sel.click(details_page.infoblock.element("Relationships", "Hosts"))
-        except sel.NoSuchElementException:
-            sel.click(InfoBlock('Relationships', 'Hosts'))
+        sel.click(InfoBlock('Relationships', 'Hosts'))
         return [q.name for q in Quadicon.all("host")]
 
     def get_vms(self):
@@ -212,8 +205,10 @@ class Details(CFMENavigateStep):
 
 @navigator.register(Datastore, 'DetailsFromProvider')
 class DetailsFromProvider(CFMENavigateStep):
-    def step(self):
+    def prerequisite(self, *args, **kwargs):
         navigate_to(self.obj.provider, 'Details')
+
+    def step(self):
         list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 

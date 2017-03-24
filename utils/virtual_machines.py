@@ -32,13 +32,13 @@ def _vm_cleanup(mgmt, vm_name):
             'Could not destroy VM/instance %s (%s: %s)', vm_name, type(f).__name__, str(f))
 
 
-def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
-        **deploy_args):
+def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
     """
     Args:
         provider_key: Provider key on which the VM is to be created
         vm_name: Name of the VM to be deployed
         template_name: Name of the template that the VM is deployed from
+        timeout: the timeout for template deploy
     """
     allow_skip = deploy_args.pop("allow_skip", ())
     if isinstance(allow_skip, dict):

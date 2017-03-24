@@ -14,6 +14,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from cfme.services import requests
 
@@ -95,19 +96,22 @@ def is_cluster_analysis_finished(name, **kwargs):
     return is_analysis_finished(name=name, task_type='cluster', **kwargs)
 
 
-def is_task_finished(tab_destination, task_name, expected_status, clear_tasks_after_success=True):
-    view = navigate_to(Tasks, tab_destination)
-    row = view.tabs.tab_destination.table.row(task_name=task_name, state=expected_status)
-    if row is None:
+def is_task_finished(destination, task_name, expected_status, clear_tasks_after_success=True):
+    view = navigate_to(Tasks, destination)
+    tab_view = getattr(view.tabs, destination.lower())
+    try:
+        row = tab_view.table.row(task_name=task_name, state=expected_status)
+    except IndexError:
+        logger.warn('IndexError exception suppressed when searching for task row, no match found.')
         return False
 
-    # throw exception if status is error
-    if 'Error' in row.title:
-        raise Exception("Task {} errored".format(task_name))
+    # throw exception if error in message
+    if 'error' in row.message.text.lower():
+        raise Exception("Task {} error".format(task_name))
 
     if clear_tasks_after_success:
         # Remove all finished tasks so they wouldn't poison other tests
-        view.delete('Delete All', handle_alert=True)
+        view.delete.item_select('Delete All', handle_alert=True)
 
     return True
 
@@ -118,7 +122,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
     tabs_data = {
         'vm': {
             'tab': 'AllTasks',
-            'task': '{}',
+            'task': 'Scan from Vm {}',
             'state': 'finished'
         },
         'host': {
@@ -136,8 +140,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
             'task': 'SmartState Analysis for [{}]',
             'state': "Finished"}
     }[task_type]
-
-    return is_task_finished(tab_destination=tabs_data['tab'],
+    return is_task_finished(destination=tabs_data['tab'],
                             task_name=tabs_data['task'].format(name),
                             expected_status=tabs_data['state'],
                             clear_tasks_after_success=clear_tasks_after_success)
