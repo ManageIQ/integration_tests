@@ -465,6 +465,20 @@ def _configure_warnings():
     wlog.propagate = False
 
 
+def setup_for_worker(workername, loggers=('cfme', 'py.warnings')):
+    # this function is a bad hack, at some point we want a more ballanced setup
+    for logger in loggers:
+        log = logging.getLogger(logger)
+        handler = next(x for x in log.handlers
+                       if isinstance(x, logging.FileHandler))
+        handler.close()
+        base, name = os.path.split(handler.baseFilename)
+        add_prefix.prefix = "({})".format(workername)
+        handler.baseFilename = os.path.join(
+            base, "{worker}-{name}".format(worker=workername, name=name))
+        log.debug("worker log started")  # directly reopens the file
+
+
 _configure_warnings()
 
 # Register a custom excepthook to log unhandled exceptions
