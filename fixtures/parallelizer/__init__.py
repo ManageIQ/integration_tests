@@ -325,7 +325,7 @@ class ParallelSession(object):
         """Rudely kill a slave"""
         slave.url = None
         if slave.poll() is None:
-            slave.kill()
+            slave.process.kill()
             self.monitor_shutdown(slave, **kwargs)
 
     def send_tests(self, slave):
