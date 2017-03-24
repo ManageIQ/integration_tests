@@ -55,9 +55,29 @@ properties_form = Form(
     fields=[
         ('type_select', AngularSelect('emstype')),
         ('name_text', Input('name')),
+        ('sec_protocol', AngularSelect('default_security_protocol', exact=True)),
         ('hostname_text', Input('default_hostname')),
         ('port_text', Input('default_api_port'))
     ])
+
+properties_form_57 = Form(
+    fields=[
+        ('type_select', AngularSelect('emstype')),
+        ('name_text', Input('name')),
+        ('hostname_text', Input('default_hostname')),
+        ('port_text', Input('default_api_port'))
+    ])
+
+
+prop_region = Region(
+    locators={
+        'properties_form': {
+            version.UPSTREAM: properties_form,
+            '5.8': properties_form,
+            '5.7': properties_form_57,
+        }
+    }
+)
 
 
 class MiddlewareProvider(BaseProvider):
@@ -72,7 +92,7 @@ class MiddlewareProvider(BaseProvider):
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
     quad_name = None
-    _properties_form = properties_form
+    _properties_region = prop_region  # This will get resolved in common to a real form
     add_provider_button = form_buttons.FormButton("Add")
     save_button = form_buttons.FormButton("Save")
     taggable_type = 'ExtManagementSystem'
