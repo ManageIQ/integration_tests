@@ -106,13 +106,10 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
 
 @navigator.register(ProvisioningDialog, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Automate', 'Customization')
-
-    def resetter(self):
-        accordion.tree("Provisioning Dialogs", "All Dialogs")
+        self.prerequisite_view.provisioning_dialogs.tree.click_path('All Dialogs')
 
 
 @navigator.register(ProvisioningDialog, 'Add')
