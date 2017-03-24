@@ -35,10 +35,12 @@ class Timeprofile(Updateable, Navigatable):
             ("hours", CFMECheckbox("all_hours")),
         ]
     )
-    save_edit_button = form_buttons.FormButton('Save changes')
+    save_edit_button = deferred_verpick({'5.7': form_buttons.FormButton('Save changes'),
+                                         '5.8': form_buttons.FormButton('Save')})
     save_button = deferred_verpick({
         version.LOWEST: form_buttons.FormButton("Add this Time Profile"),
-        '5.7': form_buttons.FormButton('Add')
+        '5.7': form_buttons.FormButton('Add'),
+        '5.8': form_buttons.FormButton('Save')
     })
 
     def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None,
