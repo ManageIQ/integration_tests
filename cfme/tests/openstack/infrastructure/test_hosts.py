@@ -52,8 +52,9 @@ def test_host_auth(provider, soft_assert):
     for quad in quads:
         host = Host(name=quad.name, provider=provider)
         navigate_to(host, 'Details')
-        soft_assert(host.get_detail('Authentication Status',
-                                    'SSH Key Pair Credentials') == 'Valid')
+        auth_status = host.get_detail('Authentication Status', 'SSH Key Pair Credentials')
+        soft_assert(auth_status == 'Valid',
+                    'Incorrect SSH authentication status {}'.format(auth_status))
 
 
 def test_host_devices(provider):

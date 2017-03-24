@@ -156,11 +156,11 @@ def test_list_vms_infra_node(provider, soft_assert):
         hvisors.update({hv.host_ip: hv.running_vms})
 
     # Skip non-compute nodes
-    quads = filter(lambda q: 'Compute' in q.name, Quadicon.all())
-    quads = [q.name for q in quads]
+    quads = [q.name for q in Quadicon.all() if 'Compute' in q.name]
     for quad in quads:
         host = Host(quad, provider=provider.infra_provider)
         navigate_to(host, 'Details')
         host_ip = host.get_detail('Properties', 'IP Address')
         vms = int(host.get_detail('Relationships', 'VMs'))
-        soft_assert(hvisors[host_ip] == vms)
+        soft_assert(vms == hvisors[host_ip],
+                    'Number of instances on UI does not match with real value')
