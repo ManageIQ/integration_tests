@@ -20,6 +20,7 @@ from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
+from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 
 pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
 
@@ -432,3 +433,51 @@ class TestProvidersRESTAPI(object):
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].availability_zone_id == zone.id
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_create_arbitration_rules_with_profile(self, request, rest_api, arbitration_profiles):
+        """Tests creation of arbitration rules referencing arbitration profiles.
+
+        Metadata:
+            test_flag: rest
+        """
+        num_rules = 2
+        profile = arbitration_profiles[0]
+        references = [{'id': profile.id}, {'href': profile._href}]
+        data = []
+        for index in range(num_rules):
+            data.append({
+                'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
+                'operation': 'inject',
+                'arbitration_profile': references[index % 2],
+                'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
+            })
+
+        response = creating_skeleton(request, rest_api, 'arbitration_rules', data)
+        assert rest_api.response.status_code == 200
+        assert len(response) == num_rules
+        for rule in response:
+            record = rest_api.collections.arbitration_rules.get(id=rule.id)
+            assert record.arbitration_profile_id == rule.arbitration_profile_id == profile.id
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_create_arbitration_rule_with_invalid_profile(self, request, rest_api):
+        """Tests creation of arbitration rule referencing invalid arbitration profile.
+
+        Metadata:
+            test_flag: rest
+        """
+        data = [{
+            'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
+            'operation': 'inject',
+            'arbitration_profile': 'invalid_value',
+            'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
+        }]
+
+        response = creating_skeleton(request, rest_api, 'arbitration_rules', data)
+        # this will fail once BZ 1433477 is fixed - change and expand the test accordingly
+        assert rest_api.response.status_code == 200
+        for rule in response:
+            assert not hasattr(rule, 'arbitration_profile_id')
