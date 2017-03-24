@@ -46,3 +46,14 @@ class DetailsProviderToolBar(View):
     @View.nested
     class view_selector(DetailsToolBarViewSelector):  # NOQA
         pass
+
+
+class NodesToolBar(View):
+    """
+    represents nodes toolbar and its controls
+    """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    power = Dropdown(text='Power')
+    download = Dropdown(text='Download')
+    view_selector = ItemsToolBarViewSelector()

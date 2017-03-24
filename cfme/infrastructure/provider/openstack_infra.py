@@ -1,21 +1,47 @@
 from navmazing import NavigateToSibling
-from utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
-                                                navigator)
-from cfme.web_ui import Form, FileInput, InfoBlock, fill
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Region
+from widgetastic.widget import View, Text
+
 from . import InfraProvider, prop_region
+from cfme import BaseLoggedInPage
+from cfme.exceptions import DestinationNotFound
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
-import cfme.fixtures.pytest_selenium as sel
+from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from widgetastic_manageiq import Button, FileInput, PaginationPane
+from .widgetastic_views import NodesToolBar
 
-details_page = Region(infoblock_type='detail')
 
-register_nodes_form = Form(
-    fields=[
-        ('file', FileInput('nodes_json[file]')),
-        ('register', "//*[@name='register']"),
-        ('cancel', "//*[@name='cancel']")
-    ])
+class InfraProviderRegisterNodesView(View):
+    file = FileInput(locator='//input[@id="nodes_json_file"]')
+    register = Button('Register')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class InfraProviderNodesView(BaseLoggedInPage):
+    # todo: to add the rest a bit later
+    title = Text('//div[@id="main-content"]//h1')
+
+    @View.nested
+    class toolbar(NodesToolBar):
+        pass
+
+    @View.nested
+    class contents(View):
+        pass
+
+    @View.nested
+    class paginator(PaginationPane):
+        pass
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Managed Hosts)'.format(name=self.context['object'].name)
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == title
 
 
 class OpenstackInfraProvider(InfraProvider):
@@ -65,12 +91,15 @@ class OpenstackInfraProvider(InfraProvider):
         return main_values, endpoint_values
 
     def has_nodes(self):
+        details_view = navigate_to(self, 'Details')
+        view_selector = details_view.toolbar.view_selector
+        if view_selector.selected != 'Summary View':
+            view_selector.select('Summary View')
         try:
-            details_page.infoblock.text("Relationships", "Hosts")
+            details_view.contents.relationships.get_text_of('Hosts')
             return False
-        except sel.NoSuchElementException:
-            return int(
-                details_page.infoblock.text("Relationships", "Nodes")) > 0
+        except NameError:
+            return int(details_view.contents.relationships.get_text_of('Nodes')) > 0
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
@@ -107,11 +136,11 @@ class OpenstackInfraProvider(InfraProvider):
             file_path - file path of json file with new node details, navigation
              MUST be from a specific self
         """
-        navigate_to(self, 'Details')
-        sel.click(InfoBlock.element("Relationships", "Nodes"))
-        tb.select('Configuration', 'Register Nodes')
-        my_form = {'file': file_path}
-        fill(register_nodes_form, my_form, action=register_nodes_form.register)
+        nodes_view = navigate_to(self, 'ProviderNodes')
+        nodes_view.toolbar.configuration.item_select('Register Nodes')
+        reg_form = self.create_view(InfraProviderRegisterNodesView)
+        reg_form.fill({'file': file_path})
+        reg_form.register.click()
 
     def node_exist(self, name='my_node'):
         """" registered imported host exist
@@ -133,7 +162,15 @@ class OpenstackInfraProvider(InfraProvider):
 
 @navigator.register(OpenstackInfraProvider, 'ProviderNodes')
 class ProviderNodes(CFMENavigateStep):
+    VIEW = InfraProviderNodesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element("Relationships", "Nodes"))
+        view = self.prerequisite_view
+        view_selector = view.toolbar.view_selector
+        if view_selector.selected != 'Summary View':
+            view_selector.select('Summary View')
+        try:
+            view.contents.relationships.click_at('Nodes')
+        except NameError:
+            raise DestinationNotFound("Nodes aren't present on details page of this provider")
