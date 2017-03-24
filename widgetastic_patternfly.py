@@ -8,7 +8,7 @@ from cached_property import cached_property
 
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from widgetastic.log import call_sig
-from widgetastic.utils import ParametrizedLocator, VersionPick
+from widgetastic.utils import ParametrizedLocator, VersionPick, Version
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
 from widgetastic.xpath import quote
 
@@ -106,9 +106,15 @@ class Button(Widget, ClickableMixin):
 
     # TODO: Handle input value the same way as text for other tags
     def __locator__(self):
-        return (
-            './/*[(self::a or self::button or (self::input and (@type="button" or @type="submit")))'
-            ' and contains(@class, "btn") and ({})]'.format(self.locator_conditions))
+        parts = [
+            './/*[(self::a or self::button',
+            'or (self::input and (@type="button" or @type="submit")))',
+            VersionPick({
+                Version.lowest(): '',  # No button class in CFME 56z
+                '5.7.0.1': 'and contains(@class, "btn")'}).pick(self.browser.product_version),
+            'and ({})]'.format(self.locator_conditions)]
+        loc = ' '.join(parts)
+        return loc
 
     @property
     def active(self):
