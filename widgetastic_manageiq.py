@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
+import atexit
 import re
+import os
 from collections import namedtuple
 from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
 from lxml.html import document_fromstring
 from math import ceil
+from tempfile import NamedTemporaryFile
 from wait_for import wait_for
 
 from widgetastic.exceptions import NoSuchElementException
@@ -23,6 +26,7 @@ from widgetastic.widget import (
     Checkbox,
     ParametrizedView,
     WidgetDescriptor,
+    FileInput as BaseFileInput,
     do_not_read_this_widget)
 from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
@@ -1671,3 +1675,18 @@ class AttributeValueForm(View):
             if field.fill({'attribute': key, 'value': value}):
                 changed = True
         return changed
+
+
+class FileInput(BaseFileInput):
+    """ represents enhanced FileInput control.
+    Accepts a string. If the string is a file, then it is put in the input. Otherwise a temporary
+    file is generated and that one is fed to the file input.
+    """
+    def fill(self, value):
+        if not os.path.isfile(value):
+            f = NamedTemporaryFile()
+            f.write(str(value))
+            f.flush()
+            value = os.path.abspath(f.name)
+            atexit.register(f.close)
+        return super(FileInput, self).fill(value)
