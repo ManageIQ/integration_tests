@@ -2,12 +2,20 @@
 from widgetastic.widget import View, Text
 
 from cfme import BaseLoggedInPage
-from widgetastic_patternfly import Dropdown
-from widgetastic_manageiq import DetailsToolBarViewSelector
+from widgetastic_patternfly import Dropdown, BootstrapSelect
 from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
-                                  TimelinesView)
+                                  TimelinesView,
+                                  DetailsToolBarViewSelector,
+                                  ItemsToolBarViewSelector,
+                                  Checkbox,
+                                  ManageIQTree,
+                                  Input,
+                                  Table,
+                                  PaginationPane,
+                                  FileInput
+                                  )
 
 
 class ProviderDetailsToolBar(View):
@@ -101,3 +109,110 @@ class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] \
             and TimelinesView.is_displayed
+
+
+class ProvidersDiscoverView(BaseLoggedInPage):
+    """
+     Discover View from Infrastructure Providers page
+    """
+    title = Text('//div[@id="main-content"]//h1')
+
+    vmware = Checkbox('discover_type_virtualcenter')
+    mscvmm = Checkbox('discover_type_scvmm')
+    rhevm = Checkbox('discover_type_rhevm')
+
+    from_ip1 = Input('from_first')
+    from_ip2 = Input('from_second')
+    from_ip3 = Input('from_third')
+    from_ip4 = Input('from_fourth')
+    to_ip4 = Input('to_fourth')
+
+    start = Button('Start')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == 'Infrastructure Providers Discovery'
+
+
+class ProvidersManagePoliciesView(BaseLoggedInPage):
+    """
+     Provider's Manage Policies view
+    """
+    policies = ManageIQTree('protectbox')
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class ProvidersEditTagsView(BaseLoggedInPage):
+    """
+     Provider's Edit Tags view
+    """
+    tag_category = BootstrapSelect('tag_cat')
+    tag = BootstrapSelect('tag_add')
+    chosen_tags = Table(locator='//div[@id="assignments_div"]/table')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class NodesToolBar(View):
+    """
+     represents nodes toolbar and its controls (exists for Infra OpenStack provider)
+    """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    power = Dropdown(text='Power')
+    download = Dropdown(text='Download')
+    view_selector = ItemsToolBarViewSelector()
+
+
+class ProviderRegisterNodesView(View):
+    """
+     represents Register Nodes view (exists for Infra OpenStack provider)    
+    """
+    file = FileInput(locator='//input[@id="nodes_json_file"]')
+    register = Button('Register')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class ProviderNodesView(BaseLoggedInPage):
+    """
+     represents main Nodes view (exists for Infra OpenStack provider)
+    """
+    title = Text('//div[@id="main-content"]//h1')
+
+    @View.nested
+    class toolbar(NodesToolBar):  # NOQA
+        pass
+
+    @View.nested
+    class contents(View):  # NOQA
+        pass
+
+    @View.nested
+    class paginator(PaginationPane):  # NOQA
+        pass
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Managed Hosts)'.format(name=self.context['object'].name)
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == title

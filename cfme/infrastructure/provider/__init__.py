@@ -15,12 +15,16 @@ from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.provider_views import ProviderDetailsView, ProviderTimelinesView
+from cfme.common.provider_views import (ProviderDetailsView,
+                                        ProviderTimelinesView,
+                                        ProvidersDiscoverView,
+                                        ProvidersManagePoliciesView,
+                                        ProvidersEditTagsView)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
 from cfme.web_ui import (
-    Region, Quadicon, Form, CheckboxTree, fill, form_buttons, paginator, Input,
+    Region, Quadicon, Form, form_buttons, paginator, Input,
     AngularSelect, toolbar as tb, Radio, match_location, BootstrapSwitch)
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
@@ -33,21 +37,6 @@ from utils.varmeth import variable
 from utils.wait import wait_for
 
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
-
-# Forms
-discover_form = Form(
-    fields=[
-        ('rhevm_chk', Input("discover_type_rhevm")),
-        ('vmware_chk', Input("discover_type_virtualcenter")),
-        ('scvmm_chk', Input("discover_type_scvmm")),
-        ('from_0', Input("from_first")),
-        ('from_1', Input("from_second")),
-        ('from_2', Input("from_third")),
-        ('from_3', Input("from_fourth")),
-        ('to_3', Input("to_fourth")),
-        ('start_button', FormButton("Start the Host Discovery"))
-    ])
-
 
 properties_form = TabStripForm(
     fields=[
@@ -76,8 +65,6 @@ properties_form = TabStripForm(
     })
 
 prop_region = Region(locators={'properties_form': properties_form})
-
-manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
@@ -209,7 +196,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     def num_cluster_ui(self):
         return int(self.get_detail("Relationships", "cluster-", use_icon=True))
 
-    def discover(self):
+    def discover(self):  # todo: move this to provider collections
         """
         Begins provider discovery from a provider instance
 
@@ -292,10 +279,12 @@ class Add(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Discover')
 class Discover(CFMENavigateStep):
+    VIEW = ProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Discover Infrastructure Providers')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Discover Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')
@@ -325,10 +314,20 @@ class ManagePolicies(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
 class ManagePoliciesFromDetails(CFMENavigateStep):
+    VIEW = ProvidersManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Manage Policies')
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
+
+
+@navigator.register(InfraProvider, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = ProvidersEditTagsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(InfraProvider, 'Edit')
@@ -400,26 +399,28 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
         start_ip: String start of the IP range for discovery
         end_ip: String end of the IP range for discovery
     """
-    navigate_to(InfraProvider, 'Discover')
+    view = navigate_to(InfraProvider, 'Discover')
     form_data = {}
     if rhevm:
-        form_data.update({'rhevm_chk': True})
+        form_data.update({'rhevm': True})
     if vmware:
-        form_data.update({'vmware_chk': True})
+        form_data.update({'vmware': True})
     if scvmm:
-        form_data.update({'scvmm_chk': True})
+        form_data.update({'scvmm': True})
 
     if start_ip:
-        for idx, octet in enumerate(start_ip.split('.')):
-            key = 'from_%i' % idx
+        for idx, octet in enumerate(start_ip.split('.'), start=1):
+            key = 'from_ip{idx}'.format(idx=idx)
             form_data.update({key: octet})
     if end_ip:
         end_octet = end_ip.split('.')[-1]
-        form_data.update({'to_3': end_octet})
+        form_data.update({'to_ip4': end_octet})
 
-    fill(discover_form, form_data,
-         action=form_buttons.cancel if cancel else discover_form.start_button,
-         action_always=True)
+    view.fill(form_data)
+    if cancel:
+        view.cancel.click()
+    else:
+        view.start.click()
 
 
 def wait_for_a_provider():
