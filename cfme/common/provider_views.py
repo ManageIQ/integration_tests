@@ -8,6 +8,7 @@ from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
                                   TimelinesView)
+from utils.version import current_version
 
 
 class ProviderDetailsToolBar(View):
@@ -62,24 +63,30 @@ class ProviderDetailsView(BaseLoggedInPage):
     def __getattribute__(self, item):
         # todo: to replace this code with switchable views asap
         if item == 'contents':
-            view_type = self.toolbar.view_selector.selected
+            if current_version() >= '5.7':
+                view_type = self.toolbar.view_selector.selected
+                if view_type == 'Summary View':
+                    return ProviderDetailsSummaryView(parent=self)
 
-            if view_type == 'Summary View':
-                return ProviderDetailsSummaryView(parent=self)
+                elif view_type == 'Dashboard View':
+                    return ProviderDetailsDashboardView(parent=self)
 
-            elif view_type == 'Dashboard View':
-                return ProviderDetailsDashboardView(parent=self)
-
+                else:
+                    raise Exception('The form for provider with such name '
+                                    'is absent: {}'.format(self.prov_type.text))
             else:
-                raise Exception('The form for provider with such name '
-                                'is absent: {}'.format(self.prov_type.text))
+                return ProviderDetailsSummaryView(parent=self)  # 5.6 has only only Summary view
+
         else:
             return super(ProviderDetailsView, self).__getattribute__(item)
 
     @property
     def is_displayed(self):
-        subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
-            else 'Dashboard'
+        if current_version() >= '5.7':
+            subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
+                else 'Dashboard'
+        else:
+            subtitle = 'Summary'  # 5.6 has only only Summary view
         title = '{name} ({subtitle})'.format(name=self.context['object'].name, subtitle=subtitle)
 
         return self.logged_in_as_current_user and \
