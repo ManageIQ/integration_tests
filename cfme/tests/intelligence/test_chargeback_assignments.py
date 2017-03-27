@@ -33,7 +33,8 @@ def test_assign_compute_enterprise(virtualcenter_provider):
 
 def test_assign_compute_provider(virtualcenter_provider):
     compute_provider = cb.Assign(
-        assign_to="Selected Cloud/Infrastructure Providers",
+        assign_to=version.pick({version.LOWEST: 'Selected Cloud/Infrastructure Providers',
+                            '5.7': 'Selected Providers'}),
         selections={
             virtualcenter_provider.name: "Default"
         })
