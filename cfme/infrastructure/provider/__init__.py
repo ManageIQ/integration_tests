@@ -24,9 +24,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
 from cfme.web_ui import (
-    Region, Quadicon, Form, form_buttons, paginator, Input,
+    Region, Quadicon, form_buttons, paginator, Input,
     AngularSelect, toolbar as tb, Radio, match_location, BootstrapSwitch)
-from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, version
 from utils.appliance import Navigatable

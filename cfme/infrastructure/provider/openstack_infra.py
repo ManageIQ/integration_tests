@@ -88,12 +88,9 @@ class OpenstackInfraProvider(InfraProvider):
             file_path - file path of json file with new node details, navigation
              MUST be from a specific self
         """
-        nodes_view = navigate_to(self, 'ProviderNodes')
-        nodes_view.toolbar.configuration.item_select('Register Nodes')
-        # todo: replace with new nav destination
-        reg_form = self.create_view(ProviderRegisterNodesView)
-        reg_form.fill({'file': file_path})
-        reg_form.register.click()
+        view = navigate_to(self, 'RegisterNodes')
+        view.fill({'file': file_path})
+        view.register.click()
 
     def node_exist(self, name='my_node'):
         """" registered imported host exist
@@ -124,3 +121,12 @@ class ProviderNodes(CFMENavigateStep):
             view.contents.relationships.click_at('Nodes')
         except NameError:
             raise DestinationNotFound("Nodes aren't present on details page of this provider")
+
+
+@navigator.register(OpenstackInfraProvider, 'RegisterNodes')
+class ProviderRegisterNodes(CFMENavigateStep):
+    VIEW = ProviderRegisterNodesView
+    prerequisite = NavigateToSibling('ProviderNodes')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Register Nodes')
