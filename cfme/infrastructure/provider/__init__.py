@@ -25,7 +25,7 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, version
+from utils import conf, version, deferred_verpick
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
@@ -127,7 +127,8 @@ class InfraProvider(Pretty, CloudInfraProvider):
     _properties_region = prop_region  # This will get resolved in common to a real form
     db_types = ["InfraManager"]
     add_provider_button = form_buttons.add
-    save_button = form_buttons.angular_save
+    save_button = deferred_verpick({version.LOWEST: form_buttons.angular_save,
+                   '5.8': FormButton('Save')})
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None,
