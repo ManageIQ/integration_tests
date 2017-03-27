@@ -9,7 +9,8 @@ from cached_property import cached_property
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from widgetastic.log import call_sig
 from widgetastic.utils import ParametrizedLocator, VersionPick
-from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
+from widgetastic.widget import ClickableMixin, TextInput, Widget, View, Checkbox, \
+    do_not_read_this_widget
 from widgetastic.xpath import quote
 
 from wait_for import wait_for, wait_for_decorator
@@ -1257,3 +1258,33 @@ class Dropdown(Widget):
 
     def __repr__(self):
         return '{}({!r})'.format(type(self).__name__, self.text)
+
+
+class BootstrapSwitch(Checkbox):
+    """ represents checkbox like switch control.
+    widgetastic checkbox doesn't work right for this control.
+    So, this widget is some kind of enhancement
+    .. code-block:: python
+
+        switch = BootstrapSwitch(id="default_tls_verify"')
+        switch.fill(True)
+        switch.read()
+    """
+    ROOT = ParametrizedLocator('//div[contains(@class, "bootstrap-switch-container") and '
+                               '{@input}]')
+
+    def __init__(self, parent, id=None, name=None, logger=None):
+        if not (id or name):
+            raise ValueError('either id or name should be present')
+        elif name is not None:
+            id_attr = '@name={}'.format(quote(name))
+        else:
+            id_attr = '@id={}'.format(quote(id))
+
+        self.input = './/input[{}]'.format(id_attr)
+
+        Checkbox.__init__(self, parent, locator=self.ROOT, logger=logger)
+
+    @property
+    def selected(self):
+        return self.browser.is_selected(parent=self, locator=self.input)
