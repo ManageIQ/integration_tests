@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from fixtures.pytest_store import store
 from functools import partial
 
-from cfme.base.ui import Server, Region
+from cfme.base.ui import Server, Region, ConfigurationView
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
@@ -20,7 +20,7 @@ from cfme.web_ui.form_buttons import change_stored_password
 from utils import version, conf
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.base.ui import ConfigurationView
+from utils.blockers import BZ
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.timeutil import parsetime
@@ -369,8 +369,8 @@ class ServerLogDepot(Pretty):
         """
         if not self.is_cleared:
             view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
-            # workaround for issue: "type" == "No Depot" in first second after page load
-            wait_for(lambda: view.type.selected_option != '<No Depot>', num_sec=5)
+            if BZ.bugzilla.get_bug(1436326).is_opened:
+                wait_for(lambda: view.type.selected_option != '<No Depot>', num_sec=5)
             view.type.fill('<No Depot>')
             view.save.click()
             view.flash.assert_success_message("Log Depot Settings were saved")
