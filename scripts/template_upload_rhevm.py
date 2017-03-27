@@ -84,10 +84,6 @@ def change_edomain_state(api, state, edomain, provider):
                     dc.storagedomains.get(edomain).deactivate()
                 elif state == 'active' and export_domain.get_status().state != 'active':
                     dc.storagedomains.get(edomain).activate()
-                else:
-                    raise ValueError(
-                        'Wrong state passed, expected maintenance or active, passed {}'.format(
-                            state))
 
                 wait_for(is_edomain_in_state,
                         [api, state, edomain], fail_condition=False, delay=5, num_sec=240)
