@@ -16,6 +16,7 @@ from widgetastic_manageiq import (BreadCrumb,
                                   PaginationPane,
                                   FileInput
                                   )
+from widgetastic.utils import VersionPick, Version
 
 
 class ProviderDetailsToolBar(View):
@@ -141,7 +142,8 @@ class ProvidersManagePoliciesView(BaseLoggedInPage):
     """
      Provider's Manage Policies view
     """
-    policies = ManageIQTree('protectbox')
+    policies = VersionPick({Version.lowest(): ManageIQTree('protect_treebox'),
+                            '5.7': ManageIQTree('protectbox')})
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
