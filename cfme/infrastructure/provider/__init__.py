@@ -10,19 +10,18 @@
 """
 from functools import partial
 
-from navmazing import NavigateToSibling, NavigateToObject
 from cached_property import cached_property
-from widgetastic_manageiq import TimelinesView
-from cfme import BaseLoggedInPage
+from navmazing import NavigateToSibling, NavigateToObject
+
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider
+from cfme.common.provider_views import ProviderDetailsView, ProviderTimelinesView
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
+from cfme.infrastructure.host import Host
 from cfme.web_ui import (
     Region, Quadicon, Form, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location, BootstrapSwitch
-)
+    AngularSelect, toolbar as tb, Radio, match_location, BootstrapSwitch)
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, version
@@ -33,8 +32,6 @@ from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
 
-
-details_page = Region(infoblock_type='detail')
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
 
 # Forms
@@ -85,15 +82,6 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
-
-
-class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
-
-    @property
-    def is_displayed(self):
-        return self.logged_in_as_current_user and \
-            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] \
-            and TimelinesView.is_displayed
 
 
 class InfraProvider(Pretty, CloudInfraProvider):
@@ -153,19 +141,14 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='db')
     def num_datastore(self):
-        storage_table_name = version.pick({version.LOWEST: 'hosts_storages',
-                                           '5.5.0.8': 'host_storages'})
         """ Returns the providers number of templates, as shown on the Details page."""
-
         results = list(self.appliance.db.engine.execute(
             'SELECT DISTINCT storages.name, hosts.ems_id '
-            'FROM ext_management_systems, hosts, storages, {} '
-            'WHERE hosts.id={}.host_id AND '
-            'storages.id={}.storage_id AND '
-            'hosts.ems_id=ext_management_systems.id AND '
-            'ext_management_systems.name=\'{}\''.format(storage_table_name,
-                                                        storage_table_name, storage_table_name,
-                                                        self.name)))
+            'FROM ext_management_systems ems, hosts, storages st, host_storages hst'
+            'WHERE hosts.id=hst.host_id AND '
+            'st.id=hst.storage_id AND '
+            'hosts.ems_id=ems.id AND '
+            'ems.name=\'{}\''.format(self.name)))
         return len(results)
 
     @num_datastore.variant('ui')
@@ -270,8 +253,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
         web_clusters = []
-        navigate_to(self, 'Details')
-        sel.click(InfoBlock.element('Relationships', 'Clusters'))
+        view = navigate_to(self, 'Details')
+        # todo: create nav location + view later
+        view.contents.relationships.click_at('Clusters')
         icons = Quadicon.all(qtype='cluster')
         for icon in icons:
             web_clusters.append(Cluster(icon.name, self))
@@ -316,6 +300,7 @@ class Discover(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = ProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -323,8 +308,9 @@ class Details(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        if tb.exists("Summary View"):
-            tb.select("Summary View")
+        view_selector = self.view.toolbar.view_selector
+        if view_selector.selected != 'Summary View':
+            view_selector.select('Summary View')
 
 
 @navigator.register(InfraProvider, 'ManagePolicies')
@@ -355,11 +341,12 @@ class Edit(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Timelines')
 class Timelines(CFMENavigateStep):
-    VIEW = InfraProviderTimelinesView
+    VIEW = ProviderTimelinesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Timelines')
+        mon = self.prerequisite_view.toolbar.monitoring
+        mon.item_select('Timelines')
 
 
 @navigator.register(InfraProvider, 'Instances')
@@ -370,7 +357,8 @@ class Instances(CFMENavigateStep):
         return match_page(summary='{} (All VMs)'.format(self.obj.name))
 
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'VMs and Instances'))
+        self.prerequisite_view.contents.relationships.click_at('VMs and Instances')
+        # todo: add vms view when it is done
 
 
 @navigator.register(InfraProvider, 'Templates')
@@ -381,7 +369,8 @@ class Templates(CFMENavigateStep):
         return match_page(summary='{} (All Templates)'.format(self.obj.name))
 
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'Templates'))
+        self.prerequisite_view.contents.relationships.click_at('Templates')
+        # todo: add templates view when it is done
 
 
 def get_all_providers(do_not_navigate=False):
