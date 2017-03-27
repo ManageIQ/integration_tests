@@ -6,7 +6,9 @@ import utils.error as error
 
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
+from cfme.rest.gen_data import policies as _policies
 from utils.version import current_version
+from utils.blockers import BZ
 
 pytestmark = [
     test_requirements.rest
@@ -88,4 +90,96 @@ class TestConditionsRESTAPI(object):
             assert rest_api.response.status_code == 200
         assert len(edited) == num_conditions
         for i in range(num_conditions):
+            assert edited[i].description == new[i]['description']
+
+
+class TestPoliciesRESTAPI(object):
+    @pytest.fixture(scope='function')
+    def policies(self, request, rest_api):
+        num_policies = 2
+        response = _policies(request, rest_api, num=num_policies)
+        assert rest_api.response.status_code == 200
+        assert len(response) == num_policies
+        return response
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    def test_create_policies(self, rest_api, policies):
+        """Tests create policies.
+
+        Metadata:
+            test_flag: rest
+        """
+        for policy in policies:
+            record = rest_api.collections.policies.get(id=policy.id)
+            assert record.description == policy.description
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    def test_delete_policies_from_detail_post(self, policies, rest_api):
+        """Tests delete policies from detail using POST method.
+
+        Metadata:
+            test_flag: rest
+        """
+        for policy in policies:
+            policy.action.delete(force_method='post')
+            assert rest_api.response.status_code == 200
+            with error.expected('ActiveRecord::RecordNotFound'):
+                policy.action.delete(force_method='post')
+            assert rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    @pytest.mark.meta(blockers=[BZ(1435773, forced_streams=['5.8', 'upstream'])])
+    def test_delete_policies_from_detail_delete(self, policies, rest_api):
+        """Tests delete policies from detail using DELETE method.
+
+        Metadata:
+            test_flag: rest
+        """
+        for policy in policies:
+            policy.action.delete(force_method='delete')
+            assert rest_api.response.status_code == 204
+            with error.expected('ActiveRecord::RecordNotFound'):
+                policy.action.delete(force_method='delete')
+            assert rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    def test_delete_policies_from_collection(self, policies, rest_api):
+        """Tests delete policies from collection.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.policies
+        collection.action.delete(*policies)
+        assert rest_api.response.status_code == 200
+        with error.expected('ActiveRecord::RecordNotFound'):
+            collection.action.delete(*policies)
+        assert rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    @pytest.mark.meta(blockers=[BZ(1435777, forced_streams=['5.8', 'upstream'])])
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_edit_policies(self, policies, rest_api, from_detail):
+        """Tests edit policies.
+
+        Metadata:
+            test_flag: rest
+        """
+        num_policies = len(policies)
+        uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_policies)]
+        new = [{'description': 'Edited Test Policy {}'.format(u)} for u in uniq]
+        if from_detail:
+            edited = []
+            for i in range(num_policies):
+                edited.append(policies[i].action.edit(**new[i]))
+                assert rest_api.response.status_code == 200
+        else:
+            for i in range(num_policies):
+                new[i].update(policies[i]._ref_repr())
+            edited = rest_api.collections.policies.action.edit(*new)
+            assert rest_api.response.status_code == 200
+        assert len(edited) == num_policies
+        for i in range(num_policies):
             assert edited[i].description == new[i]['description']
