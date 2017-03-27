@@ -56,24 +56,26 @@ def test_delete_catalog_item_deletes_service(catalog_item):
 def test_service_circular_reference(catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
-    catalog_bundle.create([catalog_item.name])
+                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+                   catalog_items=[catalog_item.name])
+    catalog_bundle.create()
     sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
     sec_catalog_bundle = CatalogBundle(name=sec_bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog,
-                   dialog=catalog_item.dialog)
-    sec_catalog_bundle.create([bundle_name])
+                   dialog=catalog_item.dialog, catalog_items=[bundle_name])
+    sec_catalog_bundle.create()
     with error.expected("Error during 'Resource Add': Adding resource <{}> to Service <{}> "
                         "will create a circular reference".format(sec_bundle_name, bundle_name)):
         catalog_bundle.update({'description': "edit_desc",
-                               'cat_item': sec_catalog_bundle.name})
+                               'catalog_items': sec_catalog_bundle.name})
 
 
 def test_service_generic_catalog_bundle(catalog_item):
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
-    catalog_bundle.create([catalog_item.name])
+                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+                   catalog_items=[catalog_item.name])
+    catalog_bundle.create()
     service_catalogs = ServiceCatalogs(catalog_item.catalog, bundle_name)
     service_catalogs.order()
     flash.assert_no_errors()
@@ -84,7 +86,7 @@ def test_service_generic_catalog_bundle(catalog_item):
         fail_func=requests.reload, num_sec=900, delay=20)
     # Success message differs between 5.6 and 5.7
     if version.current_version() >= '5.7':
-        assert 'Service [{}] Provisioned Successfully'.format(bundle_name) in row.last_message.text
+        assert 'Provisioned Successfully' in row.last_message.text
     else:
         assert row.last_message.text == 'Request complete'
 
@@ -92,16 +94,19 @@ def test_service_generic_catalog_bundle(catalog_item):
 def test_bundles_in_bundle(catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
-    catalog_bundle.create([catalog_item.name])
+                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+                   catalog_items=[catalog_item.name])
+    catalog_bundle.create()
     sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
     sec_catalog_bundle = CatalogBundle(name=sec_bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
-    sec_catalog_bundle.create([bundle_name])
+                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+                   catalog_items=[bundle_name])
+    sec_catalog_bundle.create()
     third_bundle_name = "third_" + fauxfactory.gen_alphanumeric()
     third_catalog_bundle = CatalogBundle(name=third_bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
-    third_catalog_bundle.create([bundle_name, sec_bundle_name])
+                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
+                   catalog_items=[bundle_name, sec_bundle_name])
+    third_catalog_bundle.create()
     service_catalogs = ServiceCatalogs(third_catalog_bundle.catalog, third_bundle_name)
     service_catalogs.order()
     flash.assert_no_errors()
@@ -112,8 +117,7 @@ def test_bundles_in_bundle(catalog_item):
         fail_func=requests.reload, num_sec=900, delay=20)
     # Success message differs between 5.6 and 5.7
     if version.current_version() >= '5.7':
-        assert 'Service [{}] Provisioned Successfully'.format(third_bundle_name)\
-            in row.last_message.text
+        assert 'Provisioned Successfully' in row.last_message.text
     else:
         assert row.last_message.text == 'Request complete'
 

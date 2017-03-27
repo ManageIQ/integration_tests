@@ -12,8 +12,8 @@ from cfme.web_ui import flash
 from cfme import test_requirements
 from utils.log import logger
 from utils.wait import wait_for
-from utils import testgen
-from utils.blockers import BZ
+from utils import testgen, error
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -43,7 +43,7 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     register_event(target_type='Service', target_name=catalog_item.name,
                    event_type='service_provisioned')
 
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     row_description = catalog_item.name
@@ -82,7 +82,6 @@ def test_order_catalog_item_via_rest(
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1384759, forced_streams=["5.7", "upstream"])])
 def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
@@ -94,9 +93,10 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     catalog_item.create()
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
-    catalog_bundle.create([catalog_item.name])
-    service_catalogs = ServiceCatalogs(catalog_bundle.name)
+                   display_in=True, catalog=catalog_item.catalog,
+                   dialog=catalog_item.dialog, catalog_items=[catalog_item.name])
+    catalog_bundle.create()
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_bundle.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(bundle_name))
     row_description = bundle_name
@@ -121,8 +121,8 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
-    catalog_item.create()
-    flash.assert_message_match("'Catalog/Name' is required")
+    with error.expected("'Catalog/Name' is required"):
+        catalog_item.create()
 
 
 @pytest.mark.tier(3)
@@ -146,7 +146,7 @@ def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     row_description = catalog_item.name
