@@ -62,7 +62,7 @@ class ProviderDetailsView(BaseLoggedInPage):
     def __getattribute__(self, item):
         # todo: to replace this code with switchable views asap
         if item == 'contents':
-            if self.context['object'].appliance.current_version() >= '5.7':
+            if self.context['object'].appliance.version >= '5.7':
                 view_type = self.toolbar.view_selector.selected
                 if view_type == 'Summary View':
                     return ProviderDetailsSummaryView(parent=self)
@@ -81,7 +81,7 @@ class ProviderDetailsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        if self.context['object'].appliance.current_version() >= '5.7':
+        if self.context['object'].appliance.version >= '5.7':
             subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
                 else 'Dashboard'
         else:
