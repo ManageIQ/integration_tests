@@ -18,7 +18,8 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from utils import testgen
+from cfme.services import requests
+from utils import normalize_text, testgen
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.update import update
@@ -73,7 +74,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         inst_args['instance_type'] = provisioning['vm_size'].lower()
         inst_args['admin_username'] = provisioning['vm_user']
         inst_args['admin_password'] = provisioning['vm_password']
-    return instance, inst_args
+    return instance, inst_args, image
 
 
 @pytest.fixture(scope="function")
@@ -87,8 +88,20 @@ def test_provision_from_template(request, setup_provider, provider, testing_inst
     Metadata:
         test_flag: provision
     """
-    instance, inst_args = testing_instance
+    instance, inst_args, image = testing_instance
     instance.create(**inst_args)
+    logger.info('Waiting for cfme provision request for vm %s', instance.name)
+    row_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
+    cells = {'Description': row_description}
+    try:
+        row, __ = wait_for(requests.wait_for_request, [cells],
+                           fail_func=requests.reload, num_sec=1500, delay=20)
+    except Exception as e:
+        requests.debug_requests()
+        raise e
+    assert normalize_text(row.status.text) == 'ok' and \
+        normalize_text(row.request_state.text) == 'finished', \
+        "Provisioning failed with the message {}".format(row.last_message.text)
     instance.wait_to_appear(timeout=800)
     provider.refresh_provider_relationships()
     logger.info("Refreshing provider relationships and power states")

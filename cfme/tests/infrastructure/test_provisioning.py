@@ -41,8 +41,8 @@ def vm_name():
 
 
 @pytest.mark.tier(1)
-def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_provider, provider,
-        vm_name, smtp_test, request, provisioning):
+def test_provision_from_template(rbac_role, setup_provider, provider, vm_name, smtp_test,
+                                 request, provisioning):
     """ Tests provisioning from a template
 
     Metadata:
