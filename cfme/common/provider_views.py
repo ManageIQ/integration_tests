@@ -10,12 +10,13 @@ from widgetastic_manageiq import (BreadCrumb,
                                   DetailsToolBarViewSelector,
                                   ItemsToolBarViewSelector,
                                   Checkbox,
-                                  ManageIQTree,
                                   Input,
                                   Table,
                                   PaginationPane,
                                   FileInput,
-                                  Search)
+                                  Search,
+                                  DynaTree,
+                                  BootstrapTreeview)
 from widgetastic.utils import VersionPick, Version
 
 
@@ -142,8 +143,8 @@ class ProvidersManagePoliciesView(BaseLoggedInPage):
     """
      Provider's Manage Policies view
     """
-    policies = VersionPick({Version.lowest(): ManageIQTree('protect_treebox'),
-                            '5.7': ManageIQTree('protectbox')})
+    policies = VersionPick({Version.lowest(): DynaTree('protect_treebox'),
+                            '5.7': BootstrapTreeview('protectbox')})
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
