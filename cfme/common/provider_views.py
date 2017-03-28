@@ -178,7 +178,7 @@ class NodesToolBar(View):
     policy = Dropdown(text='Policy')
     power = Dropdown(text='Power')
     download = Dropdown(text='Download')
-    view_selector = ItemsToolBarViewSelector()
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class ProviderRegisterNodesView(View):
@@ -228,7 +228,7 @@ class ProviderToolBar(View):
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
     download = Dropdown(text='Download')
-    view_selector = ItemsToolBarViewSelector()
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class ProviderEntities(View):

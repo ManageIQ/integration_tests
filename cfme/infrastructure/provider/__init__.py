@@ -399,7 +399,6 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
         start_ip: String start of the IP range for discovery
         end_ip: String end of the IP range for discovery
     """
-    view = navigate_to(InfraProvider, 'Discover')
     form_data = {}
     if rhevm:
         form_data.update({'rhevm': True})
@@ -416,6 +415,7 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
         end_octet = end_ip.split('.')[-1]
         form_data.update({'to_ip4': end_octet})
 
+    view = navigate_to(InfraProvider, 'Discover')
     view.fill(form_data)
     if cancel:
         view.cancel.click()
