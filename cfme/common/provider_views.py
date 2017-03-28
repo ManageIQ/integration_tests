@@ -14,8 +14,8 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Input,
                                   Table,
                                   PaginationPane,
-                                  FileInput
-                                  )
+                                  FileInput,
+                                  Search)
 from widgetastic.utils import VersionPick, Version
 
 
@@ -218,3 +218,58 @@ class ProviderNodesView(BaseLoggedInPage):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
             self.title.text == title
+
+
+class ProviderToolBar(View):
+    """
+     represents provider toolbar and its controls
+    """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    authentication = Dropdown(text='Authentication')
+    download = Dropdown(text='Download')
+    view_selector = ItemsToolBarViewSelector()
+
+
+class ProviderEntities(View):
+    """
+    should represent the view with different items like providers
+    """
+    title = Text('//div[@id="main-content"]//h1')
+
+    @View.nested
+    class search(Search):  # NOQA
+        pass
+    # todo: in progress
+
+
+class ProviderSideBar(View):
+    """
+    represents left side bar. it usually contains navigation, filters, etc
+    """
+    pass
+
+
+class ProvidersView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.entities.title.text == 'Infrastructure Providers'
+
+    @View.nested
+    class toolbar(ProviderToolBar):  # NOQA
+        pass
+
+    @View.nested
+    class sidebar(ProviderSideBar):  # NOQA
+        # it has nothing atm but this can change soon
+        pass
+
+    @View.nested
+    class entities(ProviderEntities):  # NOQA
+        pass
+
+    @View.nested
+    class paginator(PaginationPane):  # NOQA
+        pass

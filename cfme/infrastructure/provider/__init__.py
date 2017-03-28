@@ -19,7 +19,8 @@ from cfme.common.provider_views import (ProviderDetailsView,
                                         ProviderTimelinesView,
                                         ProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
-                                        ProvidersEditTagsView)
+                                        ProvidersEditTagsView,
+                                        ProvidersView)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
@@ -251,21 +252,21 @@ class InfraProvider(Pretty, CloudInfraProvider):
 @navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
+    VIEW = ProvidersView
     prerequisite = NavigateToObject(Server, 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Infrastructure Providers')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')
 
     def resetter(self):
         # Reset view and selection
-        if tb.exists("Grid View"):
-            tb.select("Grid View")
-        if paginator.page_controls_exist():
-            sel.check(paginator.check_all())
-            sel.uncheck(paginator.check_all())
+        tb = self.view.toolbar
+        paginator = self.view.paginator
+        if 'Grid View' not in tb.view_selector.selected:
+            tb.view_selector.select('Grid View')
+        if paginator.exists:
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(InfraProvider, 'Add')
