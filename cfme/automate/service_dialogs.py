@@ -83,7 +83,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
     def __init__(self, label=None, description=None,
                  submit=False, cancel=False,
                  tab_label=None, tab_desc=None,
-                 box_label=None, box_desc=None, appliance=None):
+                 box_label=None, box_desc=None, element_data=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.label = label
         self.description = description
@@ -93,6 +93,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
         self.tab_desc = tab_desc
         self.box_label = box_label
         self.box_desc = box_desc
+        self.element_data = element_data
 
     def as_fill_value(self):
         return self.label
@@ -108,7 +109,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
             fill(element_form, each_element)
             self.element_type(each_element)
 
-    def create(self, *element_data):
+    def create(self):
         navigate_to(self, 'Add')
         fill(label_form, {
             'label': self.label,
@@ -124,7 +125,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
         sel.wait_for_element(box_form.box_label)
         fill(box_form, {'box_label': self.box_label,
                         'box_desc': self.box_desc})
-        self.add_element(*element_data)
+        self.add_element(self.element_data)
         sel.click(form_buttons.add)
         flash.assert_success_message('Dialog "{}" was added'.format(self.label))
 

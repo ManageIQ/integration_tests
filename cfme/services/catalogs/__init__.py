@@ -41,6 +41,7 @@ class ServicesCatalogView(BaseLoggedInPage):
         tree = ManageIQTree()
 
     configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
 
 @navigator.register(Server)
