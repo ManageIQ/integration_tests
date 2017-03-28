@@ -57,6 +57,10 @@ class ProviderDetailsView(BaseLoggedInPage):
 
     @View.nested
     class contents(View):  # NOQA
+        # this is switchable view that gets replaced with concrete view.
+        # it gets changed according to currently chosen view type  every time
+        # when it is accessed
+        # it is provided provided by __getattribute__
         pass
 
     def __getattribute__(self, item):
@@ -71,8 +75,8 @@ class ProviderDetailsView(BaseLoggedInPage):
                     return ProviderDetailsDashboardView(parent=self)
 
                 else:
-                    raise Exception('The form for provider with such name '
-                                    'is absent: {}'.format(self.prov_type.text))
+                    raise Exception('The content view type "{v}" for provider "{p}" doesnt '
+                                    'exist'.format(v=view_type, p=self.context['object'].name))
             else:
                 return ProviderDetailsSummaryView(parent=self)  # 5.6 has only only Summary view
 
