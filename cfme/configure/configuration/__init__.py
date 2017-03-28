@@ -89,6 +89,14 @@ ntp_servers = Form(
     ]
 )
 
+depot_types = dict(
+    anon_ftp="Anonymous FTP",
+    ftp="FTP",
+    nfs="NFS",
+    smb="Samba",
+    dropbox="Red Hat Dropbox",
+)
+
 db_configuration = Form(
     fields=[
         ('type', Select("select#production_dbtype")),
@@ -293,42 +301,36 @@ class AnalysisProfileCopy(CFMENavigateStep):
         tb.select('Configuration', 'Copy this selected Analysis Profile')
 
 
-class ServerLogDepot(Pretty):
+class ServerLogDepot(Pretty, Navigatable):
     """ This class represents the 'Collect logs' for the server.
 
     Usage:
 
-        log_credentials = ServerLogDepot.Credentials("nfs", "backup.acme.com")
-        log_credentials.update()
-        ServerLogDepot.collect_all()
-        ServerLogDepot.Credentials.clear()
+    log_credentials = configure.ServerLogDepot("anon_ftp",
+                                               depot_name=fauxfactory.gen_alphanumeric(),
+                                               uri=fauxfactory.gen_alphanumeric())
+    log_credentials.create()
+    log_credentials.clear()
 
     """
 
-    def __init__(self, p_type, depot_name=None, uri=None, username=None, password=None):
-        self.p_type = p_type
+    def __init__(self, depot_type, depot_name=None, uri=None, username=None, password=None,
+                 appliance=None):
         self.depot_name = depot_name
         self.uri = uri
         self.username = username
         self.password = password
-
-        p_types = dict(
-            anon_ftp="Anonymous FTP",
-            ftp="FTP",
-            nfs="NFS",
-            smb="Samba",
-            dropbox="Red Hat Dropbox",
-        )
-        self.p_type = p_types[p_type]
+        self.depot_type = depot_types[depot_type]
+        Navigatable.__init__(self, appliance=appliance)
 
     def create(self, cancel=False):
         self.clear()
-        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
-        view.fill({'type': self.p_type})
-        if self.p_type != 'Red Hat Dropbox':
+        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEdit')
+        view.fill({'type': self.depot_type})
+        if self.depot_type != 'Red Hat Dropbox':
             view.fill({'depot_name': self.depot_name,
                        'uri': self.uri})
-        if self.p_type in ['FTP', 'Samba']:
+        if self.depot_type in ['FTP', 'Samba']:
             view.fill({'username': self.username,
                        'password': self.password,
                        'confirm_password': self.password})
@@ -343,7 +345,7 @@ class ServerLogDepot(Pretty):
 
     @property
     def last_collection(self):
-        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
         text = view.last_log_collection.text
         if text.lower() == "never":
             return None
@@ -355,12 +357,12 @@ class ServerLogDepot(Pretty):
 
     @property
     def last_message(self):
-        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
         return view.last_log_message.text
 
     @property
     def is_cleared(self):
-        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
         return view.log_depot_uri.text == "N/A"
 
     def clear(self):
@@ -368,7 +370,7 @@ class ServerLogDepot(Pretty):
 
         """
         if not self.is_cleared:
-            view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEdit')
             if BZ.bugzilla.get_bug(1436326).is_opened:
                 wait_for(lambda: view.type.selected_option != '<No Depot>', num_sec=5)
             view.type.fill('<No Depot>')
@@ -382,20 +384,20 @@ class ServerLogDepot(Pretty):
             selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
         """
 
-        view = navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
         last_collection = self.last_collection
         # Initiate the collection
         tb.select("Collect", selection)
         view.flash.assert_success_message(
             "Log collection for CFME MiqServer {} [{}] has been initiated".
-            format(current_appliance.server_name(), current_appliance.server_zone_id()))
+            format(self.appliance.server_name(), self.appliance.server_zone_id()))
 
         def _refresh():
             """ The page has no refresh button, so we'll switch between tabs.
 
             """
-            navigate_to(current_appliance.server, 'Workers')
-            navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
+            navigate_to(self.appliance.server, 'Workers')
+            navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
 
         # Wait for start
         if last_collection is not None:

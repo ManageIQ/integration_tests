@@ -386,6 +386,7 @@ class DiagnosticsWorkers(CFMENavigateStep):
 
 class DiagnosticsCollectLogsView(ServerDiagnosticsView):
     edit = Button(title="Edit the Log Depot settings for the selected Server")
+    collect = Dropdown('Collect')
 
     @property
     def is_displayed(self):
@@ -409,7 +410,6 @@ class DiagnosticsCollectLogs(CFMENavigateStep):
 
 
 class DiagnosticsCollectLogsEdit(DiagnosticsCollectLogsView):
-    protocol = BootstrapSelect('log_protocol')
 
     @property
     def is_displayed(self):
