@@ -44,7 +44,7 @@ class SlaveManager(object):
 
     def message(self, message, **kwargs):
         """Send a message to the master, which should get printed to the console"""
-        self.send_event('message', message=message, **kwargs)  # message!
+        self.send_event('message', message=message, markup=kwargs)  # message!
 
     def pytest_collection_finish(self, session):
         """pytest collection hook
