@@ -4,6 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import ManageIQTree, Checkbox, AttributeValueForm, SummaryFormItem
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
+from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text
 
 from cfme import BaseLoggedInPage
@@ -386,7 +387,8 @@ class DiagnosticsWorkers(CFMENavigateStep):
 
 class DiagnosticsCollectLogsView(ServerDiagnosticsView):
     edit = Button(title="Edit the Log Depot settings for the selected Server")
-    collect = Dropdown('Collect')
+    collect = Dropdown(VersionPick({Version.lowest(): 'Collect Logs',
+                       '5.7': 'Collect'}))
 
     @property
     def is_displayed(self):
@@ -415,7 +417,7 @@ class DiagnosticsCollectLogsEdit(DiagnosticsCollectLogsView):
     def is_displayed(self):
         return super(DiagnosticsCollectLogsEdit, self).is_displayed and self.protocol.is_displayed
 
-    type = BootstrapSelect('log_protocol')
+    depot_type = BootstrapSelect('log_protocol')
     depot_name = Input('depot_name')
     uri = Input('uri')
     username = Input(name='log_userid')

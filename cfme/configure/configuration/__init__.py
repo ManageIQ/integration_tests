@@ -306,11 +306,11 @@ class ServerLogDepot(Pretty, Navigatable):
 
     Usage:
 
-    log_credentials = configure.ServerLogDepot("anon_ftp",
+        log_credentials = configure.ServerLogDepot("anon_ftp",
                                                depot_name=fauxfactory.gen_alphanumeric(),
                                                uri=fauxfactory.gen_alphanumeric())
-    log_credentials.create()
-    log_credentials.clear()
+        log_credentials.create()
+        log_credentials.clear()
 
     """
 
@@ -326,7 +326,7 @@ class ServerLogDepot(Pretty, Navigatable):
     def create(self, cancel=False):
         self.clear()
         view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEdit')
-        view.fill({'type': self.depot_type})
+        view.fill({'depot_type': self.depot_type})
         if self.depot_type != 'Red Hat Dropbox':
             view.fill({'depot_name': self.depot_name,
                        'uri': self.uri})
@@ -372,8 +372,8 @@ class ServerLogDepot(Pretty, Navigatable):
         if not self.is_cleared:
             view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEdit')
             if BZ.bugzilla.get_bug(1436326).is_opened:
-                wait_for(lambda: view.type.selected_option != '<No Depot>', num_sec=5)
-            view.type.fill('<No Depot>')
+                wait_for(lambda: view.depot_type.selected_option != '<No Depot>', num_sec=5)
+            view.depot_type.fill('<No Depot>')
             view.save.click()
             view.flash.assert_success_message("Log Depot Settings were saved")
 
@@ -394,6 +394,8 @@ class ServerLogDepot(Pretty, Navigatable):
 
         def _refresh():
             """ The page has no refresh button, so we'll switch between tabs.
+
+            Why this? Selenium's refresh() is way too slow. This is much faster.
 
             """
             navigate_to(self.appliance.server, 'Workers')
