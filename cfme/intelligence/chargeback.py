@@ -80,7 +80,7 @@ rate_form = Form(
         ('storage_fixed_2_var', _mkitem("variable_rate", 1)),
         ('storage_alloc_var', _mkitem("variable_rate", 2)),
         ('storage_used_var', _mkitem("variable_rate", 3)),
-        ('add_button', form_buttons.add),
+        ('add_button', form_buttons.FormButton('Add', by_alt_only=True)),
         ('save_button', form_buttons.save),
         ('reset_button', form_buttons.reset),
         ('cancel_button', form_buttons.cancel)])
