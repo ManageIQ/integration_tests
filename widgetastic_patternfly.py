@@ -146,7 +146,7 @@ class ViewChangeButton(Widget, ClickableMixin):
 
     @property
     def active(self):
-        return 'active' in self.browser.classes(self.parent)
+        return 'active' in self.browser.classes('..', parent=self)
 
 
 class Input(TextInput):
