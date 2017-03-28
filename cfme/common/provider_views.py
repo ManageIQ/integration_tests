@@ -8,7 +8,6 @@ from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
                                   TimelinesView)
-from utils.version import current_version
 
 
 class ProviderDetailsToolBar(View):
@@ -63,7 +62,7 @@ class ProviderDetailsView(BaseLoggedInPage):
     def __getattribute__(self, item):
         # todo: to replace this code with switchable views asap
         if item == 'contents':
-            if current_version() >= '5.7':
+            if self.context['object'].appliance.current_version() >= '5.7':
                 view_type = self.toolbar.view_selector.selected
                 if view_type == 'Summary View':
                     return ProviderDetailsSummaryView(parent=self)
@@ -82,7 +81,7 @@ class ProviderDetailsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        if current_version() >= '5.7':
+        if self.context['object'].appliance.current_version() >= '5.7':
             subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
                 else 'Dashboard'
         else:
@@ -95,6 +94,9 @@ class ProviderDetailsView(BaseLoggedInPage):
 
 
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
+    """
+     represents Timelines page
+    """
     @property
     def is_displayed(self):
         return self.logged_in_as_current_user and \
