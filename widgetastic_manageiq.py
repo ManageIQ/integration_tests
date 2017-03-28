@@ -1681,6 +1681,13 @@ class FileInput(BaseFileInput):
     """ represents enhanced FileInput control.
     Accepts a string. If the string is a file, then it is put in the input. Otherwise a temporary
     file is generated and that one is fed to the file input.
+
+    technical debt:
+    ronny:
+        this introduces a requirement for out of band resource and file management, we should avoid
+        something like that
+        while this is merge-able as it adds functionality, we should clearly mark this as technical
+        debt needing a better resource management exposed from widgetastic or our wrappers
     """
     def fill(self, value):
         if not os.path.isfile(value):
