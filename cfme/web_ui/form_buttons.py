@@ -48,15 +48,19 @@ class FormButton(Pretty):
 
     def __init__(
             self, alt, dimmed_alt=None, force_click=False, partial_alt=False, ng_click=None,
-            classes=None):
+            classes=None, by_alt_only=False):
         self._alt = alt
         self._dimmed_alt = dimmed_alt
         self._force = force_click
         self._partial = partial_alt
         self._ng_click = ng_click
         self._classes = classes or []
+        self._by_alt_only = by_alt_only
 
     def alt_expr(self, dimmed=False):
+        if self._by_alt_only:
+            return ("normalize-space(@alt)={alt}".format(
+                alt=quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt)))
         if self._partial:
             if self._ng_click is None:
                 return (
