@@ -1,5 +1,6 @@
 import argparse
 import sys
+import traceback as tb
 from datetime import datetime
 
 from utils.path import log_path
@@ -33,9 +34,9 @@ def azure_cleanup(nic_template, pip_template, output):
             print "Removing Public IPs with the name \"{}\"".format(pip_template)  # noqa
             provider_mgmt.remove_unused_pips(pip_template)
         return True
-    except Exception as e:
-        report.exception(e)
-        report.error("Something happened to the Azure")
+    except Exception:
+        print("Something bad happened during cleanup Azure")
+        tb.print_exc()
         return False
 
 
