@@ -51,7 +51,7 @@ class OpenstackInfraProvider(InfraProvider):
             details_view.contents.relationships.get_text_of('Hosts')
             return False
         except NameError:
-            return int(details_view.contents.relationships.get_text_of('Nodes')) > 0
+            return int(details_view.contents.relationships.get_text_of('Hosts / Nodes')) > 0
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
@@ -118,7 +118,7 @@ class ProviderNodes(CFMENavigateStep):
     def step(self):
         view = self.prerequisite_view
         try:
-            view.contents.relationships.click_at('Nodes')
+            view.contents.relationships.click_at('Hosts / Nodes')
         except NameError:
             raise DestinationNotFound("Nodes aren't present on details page of this provider")
 

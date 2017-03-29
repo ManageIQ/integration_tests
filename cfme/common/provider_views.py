@@ -2,7 +2,6 @@
 from widgetastic.widget import View, Text
 
 from cfme import BaseLoggedInPage
-from widgetastic_patternfly import Dropdown, BootstrapSelect
 from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
@@ -17,6 +16,7 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Search,
                                   DynaTree,
                                   BootstrapTreeview)
+from widgetastic_patternfly import Dropdown, BootstrapSelect
 from widgetastic.utils import VersionPick, Version
 
 
