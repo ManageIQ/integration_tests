@@ -1,6 +1,6 @@
 from navmazing import NavigateToSibling
 
-from . import InfraProvider, prop_region
+from . import InfraProvider
 from cfme.common.provider_views import ProviderNodesView, ProviderRegisterNodesView
 from cfme.exceptions import DestinationNotFound
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
@@ -9,7 +9,6 @@ from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, na
 
 class OpenstackInfraProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_host']
-    _properties_region = prop_region
     type_name = "openstack_infra"
     mgmt_class = OpenstackInfraSystem
     db_types = ["Openstack::InfraManager"]
@@ -28,22 +27,30 @@ class OpenstackInfraProvider(InfraProvider):
         self.sec_protocol = sec_protocol
 
     def _form_mapping(self, create=None, **kwargs):
-        data_dict = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'OpenStack Platform Director',
-            'hostname_text': kwargs.get('hostname'),
-            'api_port': kwargs.get('api_port'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol'),
-            'amqp_sec_protocol': kwargs.get('amqp_sec_protocol')}
+        main_values = {
+            'name': kwargs.get('name'),
+            'prov_type': create and 'OpenStack Platform Director',
+        }
+
+        endpoint_values = {
+            'default': {
+                'hostname': kwargs.get('hostname'),
+                # 'ipaddress_text': kwargs.get('ip_address'),
+                'api_port': kwargs.get('api_port'),
+                'security_protocol': kwargs.get('sec_protocol'),
+            },
+            'events': {
+                'security_protocol': kwargs.get('amqp_sec_protocol'),
+            }
+        }
         if 'amqp' in self.credentials:
-            data_dict.update({
-                'event_selection': 'amqp',
-                'amqp_hostname_text': kwargs.get('hostname'),
-                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
-                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
+            endpoint_values['events'].update({
+                'event_stream': 'AMQP',
+                'hostname': kwargs.get('hostname'),
+                'api_port': kwargs.get('amqp_api_port', '5672'),
+                'security_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
             })
-        return data_dict
+        return main_values, endpoint_values
 
     def has_nodes(self):
         details_view = navigate_to(self, 'Details')

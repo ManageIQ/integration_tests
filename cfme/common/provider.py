@@ -1,4 +1,5 @@
 import datetime
+from copy import copy
 from functools import partial
 from manageiq_client.api import APIException
 
@@ -114,13 +115,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 ('validate_btn', form_buttons.validate),
             ]
 
-            if version.current_version() >= '5.6':
-                amevent = "Events"
-            else:
-                amevent = "AMQP"
+            amevent = "Events"
             tab_fields[amevent] = []
-            if version.current_version() >= "5.6":
-                tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
+            tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
             tab_fields[amevent].extend([
                 ('amqp_principal', Input("amqp_userid")),
                 ('amqp_secret', Input("amqp_password")),
@@ -137,6 +134,68 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 self.token = kwargs['token']
             if self.type == 'service_account':
                 self.service_account = kwargs['service_account']
+
+        def fill(self, form, validate=False):
+            """
+            todo: to replace this somehow later
+            to move cloud methods as well
+            Args:
+                form:
+                validate:
+
+            Returns:
+
+            """
+            if self.type == 'amqp':
+                form.endpoints.events.fill({
+                    'event_stream': 'AMQP',
+                    'username': self.principal,
+                    'password': self.secret,
+                    'confirm_password': self.verify_secret
+                })
+                if validate:
+                    form.endpoints.events.validate.click()
+
+            elif self.type == 'candu':
+                form.endpoints.database.fill({'username': self.principal,
+                                              'password': self.secret,
+                                              'confirm_password': self.verify_secret
+                                              })
+                if validate:
+                    form.endpoints.database.validate.click()
+                    # todo: to add check of flash message if necessary
+
+            elif self.type == 'ssh':
+                form.endpoints.rsa_keypair.fill({'username': self.principal,
+                                                 'private_key': self.secret})
+            else:
+                if self.domain:
+                    principal = r'{}\{}'.format(self.domain, self.principal)
+                else:
+                    principal = self.principal
+
+                if hasattr(form.endpoints, 'default'):
+                    form.endpoints.default.fill({'username': principal,
+                                       'password': self.secret,
+                                       'confirm_password': self.verify_secret})
+                    if validate:
+                        form.endpoints.default.validate.click()
+                else:
+                    form.endpoints.fill({'username': principal,
+                                         'password': self.secret,
+                                         'confirm_password': self.verify_secret})
+                    if validate:
+                        form.endpoints.validate.click()
+
+        def reset(self):
+            self.principal = None
+            self.secret = None
+            self.verify_secret = None
+            self.domain = None
+
+        def update(self, creds):
+            for cred in creds:
+                setattr(self, cred, creds[cred])
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -227,12 +286,39 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         else:
             created = True
             logger.info('Setting up provider: %s', self.key)
-            navigate_to(self, 'Add')
-            fill(self.properties_form, self._form_mapping(True, hawkular=False, **self.__dict__))
-            for cred in self.credentials:
-                fill(self.credentials[cred].form, self.credentials[cred],
-                     validate=validate_credentials)
-            self._submit(cancel, self.add_provider_button)
+            from cfme.infrastructure.provider import InfraProvider
+            if not self.one_of(InfraProvider):
+                navigate_to(self, 'Add')
+                fill(self.properties_form, self._form_mapping(True, hawkular=False, **self.__dict__))
+                for cred in self.credentials:
+                    fill(self.credentials[cred].form, self.credentials[cred],
+                         validate=validate_credentials)
+                self._submit(cancel, self.add_provider_button)
+            else:
+                view = navigate_to(self, 'Add')
+                # to get rid of this old code
+                main_form_values, endpoint_form_values = self._form_mapping(True, **self.__dict__)
+
+                # filling main part of dialog
+                view.fill(main_form_values)
+
+                # filling endpoints
+                if not hasattr(view.endpoints, 'default'):
+                    view.endpoints.fill(endpoint_form_values['default'])
+                else:
+                    for endpoint in endpoint_form_values:
+                        getattr(view.endpoints, endpoint).fill(endpoint_form_values[endpoint])
+
+                # filling credentials
+                for cred in self.credentials:
+                    self.credentials[cred].fill(view, validate=validate_credentials)
+
+                # todo: add wait especially if provider cannot be reached
+                if cancel:
+                    view.cancel.click()
+                else:
+                    view.add.click()
+
             if not cancel:
                 flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
                                                                                 self.name))
@@ -250,16 +336,57 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
-        navigate_to(self, 'Edit')
-        fill(self.properties_form, self._form_mapping(**updates))
-        for cred in self.credentials:
-            fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
-                 validate=validate_credentials)
-        self._submit(cancel, self.save_button)
-        name = updates.get('name', self.name)
-        if not cancel:
-            flash.assert_message_match(
-                '{} Provider "{}" was saved'.format(self.string_name, name))
+        from cfme.infrastructure.provider import InfraProvider
+        if not self.one_of(InfraProvider):
+            navigate_to(self, 'Edit')
+            fill(self.properties_form, self._form_mapping(**updates))
+            for cred in self.credentials:
+                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
+                     validate=validate_credentials)
+            self._submit(cancel, self.save_button)
+            name = updates.get('name', self.name)
+            if not cancel:
+                flash.assert_message_match(
+                    '{} Provider "{}" was saved'.format(self.string_name, name))
+        else:
+            view = navigate_to(self, 'Edit')
+            # todo: to replace/merge this code with create
+            # update values:
+            main_form_values, endpoint_form_values = self._form_mapping(**updates)
+
+            # filling main part of dialog
+            view.fill(main_form_values)
+
+            # filling endpoints
+            if not hasattr(view.endpoints, 'default'):
+                view.endpoints.fill(endpoint_form_values['default'])
+            else:
+                for endpoint in endpoint_form_values:
+                    getattr(view.endpoints, endpoint).fill(endpoint_form_values[endpoint])
+
+            # workaround for openstack provider where events always not validated when edited
+            # todo: to handle this somehow. moving to provider's create/update ?
+            # if hasattr(view.endpoints, 'events'):
+            #     view.endpoints.events.validate.click()
+
+            # filling credentials
+            credentials = updates.get('credentials')
+            if credentials:
+                for key in credentials:
+                    credential = copy(self.credentials[key])
+                    credential.reset()
+                    credential.update(credentials[key])
+                    credential.fill(view, validate=validate_credentials)
+
+            if cancel:
+                view.cancel.click()
+            else:
+                view.save.click()
+
+            name = updates.get('name', self.name)
+            if not cancel:
+                flash.assert_message_match(
+                    '{} Provider "{}" was saved'.format(self.string_name, name))
 
     def delete(self, cancel=True):
         """

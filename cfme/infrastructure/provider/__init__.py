@@ -15,7 +15,9 @@ from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.provider_views import (ProviderDetailsView,
+from cfme.common.provider_views import (ProviderAddView,
+                                        ProviderEditView,
+                                        ProviderDetailsView,
                                         ProviderTimelinesView,
                                         ProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
@@ -24,10 +26,7 @@ from cfme.common.provider_views import (ProviderDetailsView,
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
-from cfme.web_ui import (
-    Region, Quadicon, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio, match_location, BootstrapSwitch)
-from cfme.web_ui.tabstrip import TabStripForm
+from cfme.web_ui import Quadicon, paginator, toolbar as tb, match_location
 from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -37,35 +36,6 @@ from utils.varmeth import variable
 from utils.wait import wait_for
 
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
-
-properties_form = TabStripForm(
-    fields=[
-        ('type_select', AngularSelect("emstype")),
-        ('name_text', Input("name")),
-        ("api_version", AngularSelect("api_version")),
-    ],
-    tab_fields={
-        "Default": [
-            ('hostname_text', Input("default_hostname")),
-            ('api_port', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
-            ('verify_tls_switch', BootstrapSwitch(input_id="default_tls_verify")),
-            ('ca_certs', Input('default_tls_ca_certs')),
-        ],
-        "Events": [
-            ('event_selection', Radio('event_stream_selection')),
-            ('amqp_hostname_text', Input("amqp_hostname")),
-            ('amqp_api_port', Input("amqp_api_port")),
-            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
-        ],
-        "C & U Database": [
-            ('candu_hostname_text', Input("metrics_hostname")),
-            ('acandu_api_port', Input("metrics_api_port")),
-        ]
-    })
-
-prop_region = Region(locators={'properties_form': properties_form})
-
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
@@ -99,10 +69,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     page_name = "infrastructure"
     templates_destination_name = "Templates"
     quad_name = "infra_prov"
-    _properties_region = prop_region  # This will get resolved in common to a real form
     db_types = ["InfraManager"]
-    add_provider_button = form_buttons.add
-    save_button = form_buttons.angular_save
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None,
@@ -118,7 +85,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         self.template_name = "Templates"
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name')}
+        return {'name': kwargs.get('name')}
 
     @cached_property
     def vm_name(self):
@@ -271,10 +238,12 @@ class All(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
+    VIEW = ProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Infrastructure Provider')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Add a New Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
@@ -332,11 +301,13 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = ProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg_btn('Edit Selected Infrastructure Providers')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Edit Selected Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Timelines')

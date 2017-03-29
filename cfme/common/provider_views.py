@@ -12,8 +12,9 @@ from widgetastic_manageiq import (BreadCrumb,
                                   FileInput,
                                   Search,
                                   DynaTree,
-                                  BootstrapTreeview)
-from widgetastic_patternfly import Dropdown, BootstrapSelect
+                                  BootstrapTreeview,
+                                  RadioGroup)
+from widgetastic_patternfly import Dropdown, BootstrapSelect, Tab, BootstrapSwitch
 from widgetastic.widget import View, Text
 from widgetastic.utils import VersionPick, Version
 
@@ -250,3 +251,144 @@ class ProvidersView(BaseLoggedInPage):
     sidebar = View.nested(ProviderSideBar)
     entities = View.nested(ProviderEntities)
     paginator = View.nested(PaginationPane)
+
+
+class BeforeFillMixin(object):
+    def before_fill(self):
+        if self.exists and not self.is_active():
+            self.select()
+
+
+class DefaultEndpointForm(View):
+    hostname = Input('default_hostname')
+    username = Input('default_userid')
+    password = Input('default_password')
+    confirm_password = Input('default_verify')
+
+    validate = Button('Validate')
+
+
+class SCVMMEndpointForm(DefaultEndpointForm):
+    security_protocol = BootstrapSelect(id='default_security_protocol')
+    realm = Input('realm')  # appears when Kerberos is chosen in security_protocol
+
+
+class VirtualCenterEndpointForm(DefaultEndpointForm):
+    pass
+
+
+class RHEVMEndpointForm(View):
+    @View.nested
+    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Default'
+        api_port = Input('default_api_port')
+        verify_tls = BootstrapSwitch(id='default_tls_verify')
+        ca_certs = Input('default_tls_ca_certs')
+
+    @View.nested
+    class database(Tab, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'C & U Database'
+        hostname = Input('metrics_hostname')
+        api_port = Input('metrics_api_port')
+        database_name = Input('metrics_database_name')
+        username = Input('metrics_userid')
+        password = Input('metrics_password')
+        confirm_password = Input('metrics_verify')
+
+        validate = Button('Validate')
+
+
+class OpenStackInfraEndpointForm(View):
+    @View.nested
+    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Default'
+        api_port = Input('default_api_port')
+        security_protocol = BootstrapSelect('default_security_protocol')
+
+    @View.nested
+    class events(Tab, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Events'
+        event_stream = RadioGroup(locator='//div[@id="amqp"]')
+        # below controls which appear only if amqp is chosen
+        hostname = Input('amqp_hostname')
+        api_port = Input('amqp_api_port')
+        security_protocol = BootstrapSelect('amqp_security_protocol')
+
+        username = Input('amqp_userid')
+        password = Input('amqp_password')
+        confirm_password = Input('amqp_verify')
+
+        validate = Button('Validate')
+
+    @View.nested
+    class rsa_keypair(Tab, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'RSA key pair'
+
+        username = Input('ssh_keypair_userid')
+        private_key = FileInput(locator='.//input[@id="ssh_keypair_password"]')
+
+
+class ProviderAddView(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
+    name = Input('name')
+    prov_type = BootstrapSelect(id='emstype')
+    api_version = BootstrapSelect(id='api_version')  # only for OpenStack
+    zone = Input('zone')
+
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    @View.nested
+    class endpoints(View):  # NOQA
+        # this is switchable view that gets replaced with concrete view.
+        # it gets changed according to currently chosen provider type every time
+        # when it is accessed
+        pass
+
+    def __getattribute__(self, item):
+        if item == 'endpoints':
+            # this control is BootstrapSelect in Add view and Text in Edit view
+            provider_type = self.prov_type.selected_option \
+                if isinstance(self.prov_type, BootstrapSelect) else self.prov_type.text
+
+            if provider_type == 'Microsoft System Center VMM':
+                return SCVMMEndpointForm(parent=self)
+
+            elif provider_type == 'VMware vCenter':
+                return VirtualCenterEndpointForm(parent=self)
+
+            elif provider_type == 'Red Hat Virtualization Manager':
+                return RHEVMEndpointForm(parent=self)
+
+            elif provider_type == 'OpenStack Platform Director':
+                return OpenStackInfraEndpointForm(parent=self)
+
+            else:
+                raise Exception('The form for provider with such name '
+                                'is absent: {}'.format(self.prov_type.text))
+        else:
+            return super(ProviderAddView, self).__getattribute__(item)
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == 'Add New Infrastructure Provider'
+
+
+class ProviderEditView(ProviderAddView):
+    prov_type = Text(locator='//label[@name="emstype"]')
+
+    # only in edit view
+    vnc_start_port = Input('host_default_vnc_port_start')
+    vnc_end_port = Input('host_default_vnc_port_end')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == 'Edit Infrastructure Provider'
