@@ -66,7 +66,7 @@ lxml==3.7.3
 manageiq-client==0.2.0
 MarkupSafe==0.23
 mccabe==0.6.1
-mgmtsystem==1.4.35
+mgmtsystem==1.5.0
 mistune==0.7.3
 mock==2.0.0
 monotonic==1.2
