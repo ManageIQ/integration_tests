@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 import pytest
-from functools import partial
 
-from cfme.infrastructure.provider import InfraProvider, details_page
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
 from utils.providers import get_crud_by_name
-from utils import version, testgen
+from utils import testgen
 from cfme import test_requirements
 
-provider_props = partial(details_page.infoblock.text, "Properties")
 
 pytest_generate_tests = testgen.generate(classes=[InfraProvider], scope='module')
 
@@ -26,27 +24,20 @@ def test_providers_summary(soft_assert):
     for provider in report.data.rows:
         if any(ptype in provider["MS Type"] for ptype in {"ec2", "openstack"}):  # Skip cloud
             continue
-        navigate_to(InfraProvider(name=provider["Name"]), 'Details')
-        hostname = version.pick({
-            version.LOWEST: ("Hostname", "Hostname"),
-            "5.5": ("Host Name", "Hostname")})
-        soft_assert(
-            provider_props(hostname[0]) == provider[hostname[1]],
-            "Hostname does not match at {}".format(provider["Name"]))
+        details_view = navigate_to(InfraProvider(name=provider["Name"]), 'Details')
+        props = details_view.contents.properties
 
-        if version.current_version() < "5.4":
-            # In 5.4, hostname and IP address are shared under Hostname (above)
-            soft_assert(
-                provider_props("IP Address") == provider["IP Address"],
-                "IP Address does not match at {}".format(provider["Name"]))
+        hostname = ("Host Name", "Hostname")
+        soft_assert(props.get_text_of(hostname[0]) == provider[hostname[1]],
+                    "Hostname does not match at {}".format(provider["Name"]))
 
-        soft_assert(
-            provider_props("Aggregate Host CPU Cores") == provider["Total Number of Logical CPUs"],
-            "Logical CPU count does not match at {}".format(provider["Name"]))
+        cpu_cores = props.get_text_of("Aggregate Host CPU Cores")
+        soft_assert(cpu_cores == provider["Total Number of Logical CPUs"],
+                    "Logical CPU count does not match at {}".format(provider["Name"]))
 
-        soft_assert(
-            provider_props("Aggregate Host CPUs") == provider["Total Number of Physical CPUs"],
-            "Physical CPU count does not match at {}".format(provider["Name"]))
+        host_cpu = props.get_text_of("Aggregate Host CPUs")
+        soft_assert(host_cpu == provider["Total Number of Physical CPUs"],
+                    "Physical CPU count does not match at {}".format(provider["Name"]))
 
 
 @pytest.mark.tier(3)

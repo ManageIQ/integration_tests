@@ -1,26 +1,51 @@
 from navmazing import NavigateToSibling
-from utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
-                                                navigator)
-from cfme.web_ui import Form, FileInput, InfoBlock, fill
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Region
-from . import InfraProvider, prop_region
+from widgetastic.widget import View, Text
+
+from . import InfraProvider
+from cfme import BaseLoggedInPage
+from cfme.exceptions import DestinationNotFound
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
-import cfme.fixtures.pytest_selenium as sel
+from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from widgetastic_manageiq import Button, FileInput, PaginationPane
+from .widgetastic_views import NodesToolBar
 
-details_page = Region(infoblock_type='detail')
 
-register_nodes_form = Form(
-    fields=[
-        ('file', FileInput('nodes_json[file]')),
-        ('register', "//*[@name='register']"),
-        ('cancel', "//*[@name='cancel']")
-    ])
+class InfraProviderRegisterNodesView(View):
+    file = FileInput(locator='//input[@id="nodes_json_file"]')
+    register = Button('Register')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class InfraProviderNodesView(BaseLoggedInPage):
+    # todo: to add the rest a bit later
+    title = Text('//div[@id="main-content"]//h1')
+
+    @View.nested
+    class toolbar(NodesToolBar):  # NOQA
+        pass
+
+    @View.nested
+    class contents(View):  # NOQA
+        pass
+
+    @View.nested
+    class paginator(PaginationPane):  # NOQA
+        pass
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Managed Hosts)'.format(name=self.context['object'].name)
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == title
 
 
 class OpenstackInfraProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_host']
-    _properties_region = prop_region
     type_name = "openstack_infra"
     mgmt_class = OpenstackInfraSystem
     db_types = ["Openstack::InfraManager"]
@@ -39,30 +64,38 @@ class OpenstackInfraProvider(InfraProvider):
         self.sec_protocol = sec_protocol
 
     def _form_mapping(self, create=None, **kwargs):
-        data_dict = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'OpenStack Platform Director',
-            'hostname_text': kwargs.get('hostname'),
-            'api_port': kwargs.get('api_port'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol'),
-            'amqp_sec_protocol': kwargs.get('amqp_sec_protocol')}
+        main_values = {
+            'name': kwargs.get('name'),
+            'prov_type': create and 'OpenStack Platform Director',
+        }
+
+        endpoint_values = {
+            'default': {
+                'hostname': kwargs.get('hostname'),
+                # 'ipaddress_text': kwargs.get('ip_address'),
+                'api_port': kwargs.get('api_port'),
+                'security_protocol': kwargs.get('sec_protocol'),
+            },
+            'events': {
+                'security_protocol': kwargs.get('amqp_sec_protocol'),
+            }
+        }
         if 'amqp' in self.credentials:
-            data_dict.update({
-                'event_selection': 'amqp',
-                'amqp_hostname_text': kwargs.get('hostname'),
-                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
-                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
+            endpoint_values['events'].update({
+                'event_stream': 'AMQP',
+                'hostname': kwargs.get('hostname'),
+                'api_port': kwargs.get('amqp_api_port', '5672'),
+                'security_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
             })
-        return data_dict
+        return main_values, endpoint_values
 
     def has_nodes(self):
+        details_view = navigate_to(self, 'Details')
         try:
-            details_page.infoblock.text("Relationships", "Hosts")
+            details_view.contents.relationships.get_text_of('Hosts')
             return False
-        except sel.NoSuchElementException:
-            return int(
-                details_page.infoblock.text("Relationships", "Nodes")) > 0
+        except NameError:
+            return int(details_view.contents.relationships.get_text_of('Nodes')) > 0
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
@@ -99,11 +132,11 @@ class OpenstackInfraProvider(InfraProvider):
             file_path - file path of json file with new node details, navigation
              MUST be from a specific self
         """
-        navigate_to(self, 'Details')
-        sel.click(InfoBlock.element("Relationships", "Nodes"))
-        tb.select('Configuration', 'Register Nodes')
-        my_form = {'file': file_path}
-        fill(register_nodes_form, my_form, action=register_nodes_form.register)
+        nodes_view = navigate_to(self, 'ProviderNodes')
+        nodes_view.toolbar.configuration.item_select('Register Nodes')
+        reg_form = self.create_view(InfraProviderRegisterNodesView)
+        reg_form.fill({'file': file_path})
+        reg_form.register.click()
 
     def node_exist(self, name='my_node'):
         """" registered imported host exist
@@ -125,7 +158,12 @@ class OpenstackInfraProvider(InfraProvider):
 
 @navigator.register(OpenstackInfraProvider, 'ProviderNodes')
 class ProviderNodes(CFMENavigateStep):
+    VIEW = InfraProviderNodesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element("Relationships", "Nodes"))
+        view = self.prerequisite_view
+        try:
+            view.contents.relationships.click_at('Nodes')
+        except NameError:
+            raise DestinationNotFound("Nodes aren't present on details page of this provider")
