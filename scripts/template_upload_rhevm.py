@@ -81,9 +81,16 @@ def change_edomain_state(api, state, edomain, provider):
             export_domain = dc.storagedomains.get(edomain)
             if export_domain:
                 if state == 'maintenance' and export_domain.get_status().state == 'active':
-                    dc.storagedomains.get(edomain).deactivate()
+                    # may be tasks on the storage, try multiple times
+                    print('RHEVM:{} {} in active, waiting for deactivate...').format(
+                        provider, edomain)
+                    wait_for(lambda: dc.storagedomains.get(edomain).deactivate(), delay=5,
+                             num_sec=600, handle_exception=True)
                 elif state == 'active' and export_domain.get_status().state != 'active':
-                    dc.storagedomains.get(edomain).activate()
+                    print('RHEVM:{} {} not active, waiting for active...').format(provider,
+                        edomain)
+                    wait_for(lambda: dc.storagedomains.get(edomain).activate(), delay=5,
+                             num_sec=600, handle_exception=True)
 
                 wait_for(is_edomain_in_state,
                         [api, state, edomain], fail_condition=False, delay=5, num_sec=240)
@@ -378,12 +385,13 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip,
     try:
         ssh_client = make_ssh_client(provider_ip, sshname, sshpass)
         edomain_path = edomainip + ':' + path
-        command = 'mkdir -p ~/tmp_filemount && mount -O tcp {} ~/tmp_filemount &&'.format(
-            edomain_path)
-        command += 'cd ~/tmp_filemount/master/vms &&'
+        temp_path = '~/tmp_filemount'
+        command = 'mkdir -p {} &&'.format(temp_path)
+        command += 'mount -O tcp {} {} &&'.format(edomain_path, temp_path)
+        command += 'cd {}/master/vms &&'.format(temp_path)
         command += 'find . -maxdepth 1 -type d -empty -delete &&'
-        command += 'cd ~ && umount ~/tmp_filemount &&'
-        command += 'find . -maxdepth 1 -name tmp_filemount -type d -empty -delete'
+        command += 'cd ~ && umount {} &&'.format(temp_path)
+        command += 'rmdir {}'.format(temp_path)
         print("RHEVM:{} Deleting the empty directories on edomain/vms file...".format(provider))
         exit_status, output = ssh_client.run_command(command)
         ssh_client.close()
@@ -428,7 +436,7 @@ def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, tem
 
         if unimported_template:
             print("RHEVM:{} deleting the template on export domain...".format(provider))
-            unimported_template.delete()
+            wait_for(unimported_template.delete, delay=10, num_sec=600, handle_exception=True)
 
         print("RHEVM:{} waiting for template delete on export domain...".format(provider))
         wait_for(is_edomain_template_deleted, [api, temp_template_name, edomain],

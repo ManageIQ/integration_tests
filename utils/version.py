@@ -173,8 +173,9 @@ class Version(object):
             vstring = ".".join(map(str, vstring))
         elif vstring:
             vstring = str(vstring).strip()
-        if vstring in ('master', 'latest', 'upstream') or 'euwe' in vstring:
+        if vstring in ('master', 'latest', 'upstream') or 'fine' in vstring:
             vstring = 'master'
+        # TODO These aren't used anywhere - remove?
         if vstring == 'darga-3':
             vstring = '5.6.1'
         if vstring == 'darga-4.1':

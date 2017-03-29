@@ -15,6 +15,7 @@ import sys
 import os
 import urllib2
 from threading import Lock, Thread
+from time import sleep
 
 from mgmtsystem import GoogleCloudSystem
 from utils.conf import cfme_data
@@ -77,23 +78,21 @@ def download_image_file(image_url, destination=None):
             return (file_name, file_path)
         os.remove(file_name)
     print("Downloading: {} Bytes: {}".format(file_name, file_size))
-    f = open(file_name, 'wb')
-    os.system('cls')
-    file_size_dl = 0
-    block_sz = 8192
-    while True:
-        buffer_f = u.read(block_sz)
-        if not buffer_f:
-            break
+    with open(file_name, 'wb') as f:
+        file_size_dl = 0
+        block_sz = 8192
+        while True:
+            buffer_f = u.read(block_sz)
+            if not buffer_f:
+                break
 
-        file_size_dl += len(buffer_f)
-        f.write(buffer_f)
-        status = r"{:.2f}".format(file_size_dl, file_size_dl * 100. / file_size)
-        status = status + chr(8) * (len(status) + 1)
-        print('r')
-        print(status)
+            file_size_dl += len(buffer_f)
+            f.write(buffer_f)
+            status = r"{:.2f}".format(file_size_dl, file_size_dl * 100. / file_size)
+            status += chr(8) * (len(status) + 1)
+            print(status)
+            sleep(5)
 
-    f.close()
     return (file_name, file_path)
 
 
