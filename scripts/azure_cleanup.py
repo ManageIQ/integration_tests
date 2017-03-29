@@ -28,9 +28,9 @@ def azure_cleanup(nic_template, pip_template, output):
         for provider_key in list_provider_keys('azure'):
             provider_mgmt = get_mgmt(provider_key)
             print "----- Provider: {} -----".format(provider_key)  # noqa
-            print "Removing Nics with the name \"{}\"".format(nic_template)
+            print "Removing Nics with the name \"{}\"".format(nic_template)  # noqa
             provider_mgmt.remove_unused_nics(nic_template)
-            print "Removing Public IPs with the name \"{}\"".format(pip_template)
+            print "Removing Public IPs with the name \"{}\"".format(pip_template)  # noqa
             provider_mgmt.remove_unused_pips(pip_template)
         return True
     except Exception as e:
@@ -38,6 +38,7 @@ def azure_cleanup(nic_template, pip_template, output):
         report.error("Something happened to the Azure")
         return False
 
+
 if __name__ == "__main__":
     args = parse_cmd_line()
-    sys.exit(azure_cleanup(args.nic_template,args.pip_template, args.output))
+    sys.exit(azure_cleanup(args.nic_template, args.pip_template, args.output))
