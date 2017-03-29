@@ -320,15 +320,17 @@ class DynaTree(Widget):
 
         """
         leaf = self.expand_path(*path, **kwargs)
-        checkbox = self.browser.element('./span[contains(@class, '
-                                        '"dynatree-checkbox")]', parent=leaf)
         title = self.browser.element('./a', parent=leaf)
 
         self.logger.info("Path %r yielded menuitem %r", path, self.browser.text(title))
         if title is not None:
             self.browser.plugin.ensure_page_safe()
             self.browser.click(title)
-            self.browser.click(checkbox)
+
+            checkbox_locator = './span[contains(@class, "dynatree-checkbox")]'
+            if self.browser.is_displayed(checkbox_locator, parent=leaf):
+                checkbox = self.browser.element(checkbox_locator, parent=leaf)
+                self.browser.click(checkbox)
 
         return leaf
 
