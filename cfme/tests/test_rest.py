@@ -76,27 +76,34 @@ COLLECTIONS_ADDED_IN_58 = {
 }
 
 
+COLLECTIONS_ALL = {
+    "actions", "alert_definitions", "alerts", "arbitration_profiles",
+    "arbitration_rules", "arbitration_settings", "authentications", "automate",
+    "automate_domains", "automation_requests", "availability_zones",
+    "blueprints", "categories", "chargebacks", "cloud_networks", "clusters",
+    "conditions", "configuration_script_payloads",
+    "configuration_script_sources", "container_deployments", "currencies",
+    "data_stores", "events", "features", "flavors", "groups", "hosts",
+    "instances", "load_balancers", "measures", "notifications",
+    "orchestration_templates", "pictures", "policies", "policy_actions",
+    "policy_profiles", "providers", "provision_dialogs", "provision_requests",
+    "rates", "reports", "request_tasks", "requests", "resource_pools",
+    "results", "roles", "security_groups", "servers", "service_catalogs",
+    "service_dialogs", "service_orders", "service_requests",
+    "service_templates", "services", "settings", "tags", "tasks", "templates",
+    "tenants", "users", "virtual_templates", "vms", "zones"
+}
+
+
+# non-typical collections without "id" and "resources"
+COLLECTIONS_OMMITED = {"settings"}
+
+
 @pytest.mark.tier(3)
-@pytest.mark.parametrize(
-    "collection_name",
-    ["actions", "alert_definitions", "alerts", "arbitration_profiles",
-     "arbitration_rules", "arbitration_settings", "authentications",
-     "automate", "automate_domains", "automation_requests",
-     "availability_zones", "blueprints", "categories", "chargebacks",
-     "cloud_networks", "clusters", "conditions",
-     "configuration_script_payloads", "configuration_script_sources",
-     "container_deployments", "currencies", "data_stores", "events",
-     "features", "flavors", "groups", "hosts", "instances", "load_balancers",
-     "measures", "notifications", "orchestration_templates", "pictures",
-     "policies", "policy_actions", "policy_profiles", "providers",
-     "provision_dialogs", "provision_requests", "rates", "reports",
-     "request_tasks", "requests", "resource_pools", "results", "roles",
-     "security_groups", "servers", "service_catalogs", "service_dialogs",
-     "service_orders", "service_requests", "service_templates", "services",
-     "tags", "tasks", "templates", "tenants", "users", "virtual_templates",
-     "vms", "zones"])
+@pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda collection_name:
+        (collection_name in COLLECTIONS_OMMITED) or
         (collection_name in COLLECTIONS_ADDED_IN_57 and current_version() < "5.7") or
         (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8")
 )
@@ -112,6 +119,34 @@ def test_query_simple_collections(rest_api, collection_name):
     assert rest_api.response.status_code == 200
     collection.reload()
     list(collection)
+
+
+COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categories", "roles"}
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
+@pytest.mark.uncollectif(
+    lambda collection_name:
+        (collection_name in COLLECTIONS_OMMITED) or
+        (collection_name in COLLECTIONS_ADDED_IN_57 and current_version() < "5.7") or
+        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
+        (collection_name in COLLECTIONS_BUGGY_ATTRS and
+            BZ(1437201, forced_streams=["5.6", "5.7", "5.8", "upstream"]).blocks)
+)
+def test_select_attributes(rest_api, collection_name):
+    """Tests that it's possible to limit returned attributes.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = getattr(rest_api.collections, collection_name)
+    response = rest_api.get('{}{}'.format(collection._href, '?expand=resources&attributes=id'))
+    assert rest_api.response.status_code == 200
+    for resource in response['resources']:
+        assert 'id' in resource
+        expected_len = 2 if 'href' in resource else 1
+        assert len(resource) == expected_len
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
