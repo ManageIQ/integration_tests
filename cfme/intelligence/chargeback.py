@@ -11,6 +11,7 @@ import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons, match_location
+from cfme.web_ui.form_buttons import FormButton
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.version import LOWEST, pick
@@ -80,7 +81,7 @@ rate_form = Form(
         ('storage_fixed_2_var', _mkitem("variable_rate", 1)),
         ('storage_alloc_var', _mkitem("variable_rate", 2)),
         ('storage_used_var', _mkitem("variable_rate", 3)),
-        ('add_button', form_buttons.add),
+        ('add_button', form_buttons.FormButton("Add", classes=[FormButton.PRIMARY])),
         ('save_button', form_buttons.save),
         ('reset_button', form_buttons.reset),
         ('cancel_button', form_buttons.cancel)])
