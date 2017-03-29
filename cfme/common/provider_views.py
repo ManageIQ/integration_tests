@@ -200,18 +200,9 @@ class ProviderNodesView(BaseLoggedInPage):
      represents main Nodes view (exists for Infra OpenStack provider)
     """
     title = Text('//div[@id="main-content"]//h1')
-
-    @View.nested
-    class toolbar(NodesToolBar):  # NOQA
-        pass
-
-    @View.nested
-    class contents(View):  # NOQA
-        pass
-
-    @View.nested
-    class paginator(PaginationPane):  # NOQA
-        pass
+    toolbar = View.nested(NodesToolBar)
+    contents = View.nested(View)  # left it for future
+    paginator = View.nested(PaginationPane)
 
     @property
     def is_displayed(self):
@@ -237,10 +228,7 @@ class ProviderEntities(View):
     should represent the view with different items like providers
     """
     title = Text('//div[@id="main-content"]//h1')
-
-    @View.nested
-    class search(Search):  # NOQA
-        pass
+    search = View.nested(Search)
     # todo: in progress
 
 
@@ -258,19 +246,7 @@ class ProvidersView(BaseLoggedInPage):
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
             self.entities.title.text == 'Infrastructure Providers'
 
-    @View.nested
-    class toolbar(ProviderToolBar):  # NOQA
-        pass
-
-    @View.nested
-    class sidebar(ProviderSideBar):  # NOQA
-        # it has nothing atm but this can change soon
-        pass
-
-    @View.nested
-    class entities(ProviderEntities):  # NOQA
-        pass
-
-    @View.nested
-    class paginator(PaginationPane):  # NOQA
-        pass
+    toolbar = View.nested(ProviderToolBar)
+    sidebar = View.nested(ProviderSideBar)
+    entities = View.nested(ProviderEntities)
+    paginator = View.nested(PaginationPane)
