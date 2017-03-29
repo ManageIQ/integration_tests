@@ -15,7 +15,6 @@ from cfme.intelligence.chargeback import ChargebackView
 from cfme.login import LoginPage
 
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
-from utils import version
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -38,15 +37,15 @@ class LoginScreen(CFMENavigateStep):
 
     def step(self):
         # Can be either blank or logged in
-        from utils.browser import ensure_browser_open
+        import utils.browser as browser
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()
         if not self.view.is_displayed:
             # Something is wrong
             del self.view  # In order to unbind the browser
-            quit()
-            ensure_browser_open()
+            browser.quit()
+            browser.ensure_browser_open()
             if not self.view.is_displayed:
                 raise Exception('Could not open the login screen')
 
