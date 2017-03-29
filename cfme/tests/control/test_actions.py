@@ -447,7 +447,7 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm
 
 
 def test_action_power_on_logged(
-        request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
+        request, assign_policy_for_testing, vm, vm_off, appliance, vm_crud_refresh):
     """ This test tests action 'Generate log message'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -466,7 +466,7 @@ def test_action_power_on_logged(
 
     # Search the logs
     def search_logs():
-        rc, stdout = ssh_client.run_command(
+        rc, stdout = appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/policy.log | grep '{}'".format(policy_desc))
         if rc != 0:  # Nothing found, so shortcut
             return False
@@ -484,7 +484,7 @@ def test_action_power_on_logged(
 
 
 def test_action_power_on_audit(
-        request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
+        request, assign_policy_for_testing, vm, vm_off, appliance, vm_crud_refresh):
     """ This test tests action 'Generate Audit Event'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -503,7 +503,7 @@ def test_action_power_on_audit(
 
     # Search the logs
     def search_logs():
-        rc, stdout = ssh_client.run_command(
+        rc, stdout = appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/audit.log | grep '{}'".format(policy_desc)
         )
         if rc != 0:  # Nothing found, so shortcut
