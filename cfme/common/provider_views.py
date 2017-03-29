@@ -20,9 +20,7 @@ class ProviderDetailsToolBar(View):
     policy = Dropdown(text='Policy')
     authentication = Dropdown(text='Authentication')
 
-    @View.nested
-    class view_selector(DetailsToolBarViewSelector):  # NOQA
-        pass
+    view_selector = View.nested(DetailsToolBarViewSelector)
 
 
 class ProviderDetailsSummaryView(View):
@@ -50,10 +48,7 @@ class ProviderDetailsView(BaseLoggedInPage):
     """
     title = Text('//div[@id="main-content"]//h1')
     breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
-
-    @View.nested
-    class toolbar(ProviderDetailsToolBar):  # NOQA
-        pass
+    toolbar = View.nested(ProviderDetailsToolBar)
 
     @View.nested
     class contents(View):  # NOQA
