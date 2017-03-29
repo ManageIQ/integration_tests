@@ -120,7 +120,7 @@ class ProvidersDiscoverView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
 
     vmware = Checkbox('discover_type_virtualcenter')
-    mscvmm = Checkbox('discover_type_scvmm')
+    scvmm = Checkbox('discover_type_scvmm')
     rhevm = Checkbox('discover_type_rhevm')
 
     from_ip1 = Input('from_first')
