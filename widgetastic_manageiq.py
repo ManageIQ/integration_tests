@@ -305,7 +305,7 @@ class DynaTree(Widget):
         if node is not None:
             self.expand_id(last_id)
 
-        return self.browser.element('./span/a', parent=node)
+        return self.browser.element('./span', parent=node)
 
     def click_path(self, *path, **kwargs):
         """ Exposes a path and then clicks it.
@@ -320,10 +320,18 @@ class DynaTree(Widget):
 
         """
         leaf = self.expand_path(*path, **kwargs)
-        self.logger.info("Path %r yielded menuitem %r", path, self.browser.text(leaf))
-        if leaf is not None:
+        title = self.browser.element('./a', parent=leaf)
+
+        self.logger.info("Path %r yielded menuitem %r", path, self.browser.text(title))
+        if title is not None:
             self.browser.plugin.ensure_page_safe()
-            self.browser.click(leaf)
+            self.browser.click(title)
+
+            checkbox_locator = './span[contains(@class, "dynatree-checkbox")]'
+            if self.browser.is_displayed(checkbox_locator, parent=leaf):
+                checkbox = self.browser.element(checkbox_locator, parent=leaf)
+                self.browser.click(checkbox)
+
         return leaf
 
 
