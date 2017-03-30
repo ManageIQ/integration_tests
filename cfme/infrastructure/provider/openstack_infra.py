@@ -1,21 +1,10 @@
 from navmazing import NavigateToSibling
-from utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
-                                                navigator)
-from cfme.web_ui import Form, FileInput, InfoBlock, fill
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Region
+
 from . import InfraProvider, prop_region
+from cfme.common.provider_views import ProviderNodesView, ProviderRegisterNodesView
+from cfme.exceptions import DestinationNotFound
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
-import cfme.fixtures.pytest_selenium as sel
-
-details_page = Region(infoblock_type='detail')
-
-register_nodes_form = Form(
-    fields=[
-        ('file', FileInput('nodes_json[file]')),
-        ('register', "//*[@name='register']"),
-        ('cancel', "//*[@name='cancel']")
-    ])
+from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
 
 class OpenstackInfraProvider(InfraProvider):
@@ -57,12 +46,12 @@ class OpenstackInfraProvider(InfraProvider):
         return data_dict
 
     def has_nodes(self):
+        details_view = navigate_to(self, 'Details')
         try:
-            details_page.infoblock.text("Relationships", "Hosts")
+            details_view.contents.relationships.get_text_of('Hosts')
             return False
-        except sel.NoSuchElementException:
-            return int(
-                details_page.infoblock.text("Relationships", "Nodes")) > 0
+        except NameError:
+            return int(details_view.contents.relationships.get_text_of('Hosts / Nodes')) > 0
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
@@ -99,11 +88,9 @@ class OpenstackInfraProvider(InfraProvider):
             file_path - file path of json file with new node details, navigation
              MUST be from a specific self
         """
-        navigate_to(self, 'Details')
-        sel.click(InfoBlock.element("Relationships", "Nodes"))
-        tb.select('Configuration', 'Register Nodes')
-        my_form = {'file': file_path}
-        fill(register_nodes_form, my_form, action=register_nodes_form.register)
+        view = navigate_to(self, 'RegisterNodes')
+        view.fill({'file': file_path})
+        view.register.click()
 
     def node_exist(self, name='my_node'):
         """" registered imported host exist
@@ -125,7 +112,21 @@ class OpenstackInfraProvider(InfraProvider):
 
 @navigator.register(OpenstackInfraProvider, 'ProviderNodes')
 class ProviderNodes(CFMENavigateStep):
+    VIEW = ProviderNodesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element("Relationships", "Nodes"))
+        view = self.prerequisite_view
+        try:
+            view.contents.relationships.click_at('Hosts / Nodes')
+        except NameError:
+            raise DestinationNotFound("Nodes aren't present on details page of this provider")
+
+
+@navigator.register(OpenstackInfraProvider, 'RegisterNodes')
+class ProviderRegisterNodes(CFMENavigateStep):
+    VIEW = ProviderRegisterNodesView
+    prerequisite = NavigateToSibling('ProviderNodes')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Register Nodes')
