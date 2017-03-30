@@ -20,8 +20,9 @@ def some_dialogs(request):
         dialog = ServiceDialog(
             label='test_paginator_{}'.format(random_str),
             tab_label='tab_{}'.format(random_str),
-            box_label='box_{}'.format(random_str))
-        dialog.create(element_data)
+            box_label='box_{}'.format(random_str),
+            element_data=element_data)
+        dialog.create()
         to_delete.append(dialog)
     return to_delete
 

@@ -13,7 +13,7 @@ from utils.update import update
 pytestmark = [test_requirements.automate, pytest.mark.usefixtures('uses_infra_providers')]
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.yield_fixture(scope="module")
 def dialog():
     dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
@@ -28,10 +28,10 @@ def dialog():
                                    cancel=True, tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                                    tab_desc="my tab desc",
                                    box_label="box_" + fauxfactory.gen_alphanumeric(),
-                                   box_desc="my box desc")
-    service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "%s" was added' % dialog_name)
+                                   box_desc="my box desc", element_data=element_data)
+    service_dialog.create()
     yield service_dialog
+    service_dialog.delete()
 
 
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
