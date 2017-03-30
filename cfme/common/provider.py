@@ -86,14 +86,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     ('default_principal', Input("default_userid")),
                     ('default_secret', Input("default_password")),
                     ('default_verify_secret', Input("default_verify")),
-                    ('token_secret', {
-                        version.LOWEST: Input('bearer_password'),
-                        '5.6': Input('default_password')
-                    }),
-                    ('token_verify_secret', {
-                        version.LOWEST: Input('bearer_verify'),
-                        '5.6': Input('default_verify')
-                    }),
+                    ('token_secret', Input('default_password')),
+                    ('token_verify_secret', Input('default_verify')),
                 ],
 
                 "RSA key pair": [
@@ -289,7 +283,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             from cfme.infrastructure.provider import InfraProvider
             if not self.one_of(InfraProvider):
                 navigate_to(self, 'Add')
-                fill(self.properties_form, self._form_mapping(True, hawkular=False, **self.__dict__))
+                fill(self.properties_form, self._form_mapping(True,
+                                                              hawkular=False, **self.__dict__))
                 for cred in self.credentials:
                     fill(self.credentials[cred].form, self.credentials[cred],
                          validate=validate_credentials)
