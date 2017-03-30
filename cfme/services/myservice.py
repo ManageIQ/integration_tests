@@ -208,13 +208,18 @@ class MyServiceAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):
-        return match_page(summary='All Services')
+        if self.obj.appliance.version > '5.8':
+            return match_page(summary='Active Services')
+        else:
+            return match_page(summary='All Services')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'My Services')
 
     def resetter(self, *args, **kwargs):
-        if self.obj.appliance.version < '5.7':
+        if self.obj.appliance.version > '5.8':
+            my_service_tree().click_path('Active Services')
+        else:
             my_service_tree().click_path('All Services')
         tb.refresh()
 
@@ -228,7 +233,10 @@ class MyServiceDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         logger.debug('Clicking tree for service: {}'.format(self.obj.service_name))
-        my_service_tree().click_path('All Services', self.obj.service_name)
+        if self.obj.appliance.version > '5.8':
+            my_service_tree().click_path('Active Services', self.obj.service_name)
+        else:
+            my_service_tree().click_path('All Services', self.obj.service_name)
 
     def resetter(self, *args, **kwargs):
         tb.refresh()
