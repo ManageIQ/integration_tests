@@ -6,6 +6,8 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils.wait import wait_for
 from utils import testgen
+from utils.version import current_version
+from utils.blockers import BZ
 
 
 pytestmark = [test_requirements.provision]
@@ -13,9 +15,8 @@ pytestmark = [test_requirements.provision]
 pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope="module")
 
 
-@pytest.fixture(scope="module")
-def provision_data(rest_api_modscope, provider, small_template_modscope):
-    templates = rest_api_modscope.collections.templates.find_by(name=small_template_modscope)
+def get_provision_data(rest_api, provider, small_template, auto_approve=True):
+    templates = rest_api.collections.templates.find_by(name=small_template)
     for template in templates:
         try:
             ems_id = template.ems_id
@@ -25,7 +26,8 @@ def provision_data(rest_api_modscope, provider, small_template_modscope):
             guid = template.guid
             break
     else:
-        raise Exception("No such template {} on provider!".format(small_template_modscope))
+        raise Exception("No such template {} on provider!".format(small_template))
+
     result = {
         "version": "1.1",
         "template_fields": {
@@ -42,7 +44,7 @@ def provision_data(rest_api_modscope, provider, small_template_modscope):
             "owner_first_name": "John",
             "owner_last_name": "Doe",
             "owner_email": "jdoe@sample.com",
-            "auto_approve": True
+            "auto_approve": auto_approve
         },
         "tags": {
             "network_location": "Internal",
@@ -54,9 +56,15 @@ def provision_data(rest_api_modscope, provider, small_template_modscope):
         "ems_custom_attributes": {},
         "miq_custom_attributes": {}
     }
+
     if provider.one_of(RHEVMProvider):
         result["vm_fields"]["provision_type"] = "native_clone"
     return result
+
+
+@pytest.fixture(scope="module")
+def provision_data(rest_api_modscope, provider, small_template_modscope):
+    return get_provision_data(rest_api_modscope, provider, small_template_modscope)
 
 
 # Here also available the ability to create multiple provision request, but used the save
@@ -92,3 +100,51 @@ def test_provision(request, provision_data, provider, rest_api):
 
     wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1437689, forced_streams=['5.6', '5.7', '5.8', 'upstream'])])
+@pytest.mark.meta(server_roles="+automate")
+@pytest.mark.usefixtures("setup_provider")
+def test_create_pending_provision_requests(rest_api, provider, small_template):
+    """Tests creation of pending provision request using /api/provision_requests.
+
+    Metadata:
+        test_flag: rest, provision
+    """
+    provision_data = get_provision_data(rest_api, provider, small_template, auto_approve=False)
+    response = rest_api.collections.provision_requests.action.create(**provision_data)
+    assert rest_api.response.status_code == 200
+    provision_request = response[0]
+    assert provision_request.options['auto_approve'] is False
+    # The `approval_state` is `pending_approval`. Wait to see that
+    # it does NOT change - that would mean the request was auto-approved.
+    # The `wait_for` is expected to fail.
+    wait_for(
+        lambda: provision_request.approval_state != 'pending_approval',
+        fail_func=provision_request.reload,
+        num_sec=30,
+        delay=10,
+        silent_failure=True)
+    assert provision_request.approval_state == 'pending_approval'
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+@pytest.mark.tier(2)
+@pytest.mark.meta(server_roles="+automate")
+@pytest.mark.usefixtures("setup_provider")
+def test_provision_attributes(rest_api, provider, small_template):
+    """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
+
+    Metadata:
+        test_flag: rest, provision
+    """
+    provision_data = get_provision_data(rest_api, provider, small_template, auto_approve=False)
+    response = rest_api.collections.provision_requests.action.create(**provision_data)
+    assert rest_api.response.status_code == 200
+    provision_request = response[0]
+    # workaround for BZ1437689 to make sure the vm is not provisioned
+    provision_request.action.deny(reason="denied")
+    provision_request.reload(attributes=('v_workflow_class', 'v_allowed_tags'))
+    assert provision_request.v_workflow_class
+    assert provision_request.v_allowed_tags
