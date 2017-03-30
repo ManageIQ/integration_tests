@@ -54,7 +54,7 @@ class Image(Taggable, SummaryMixin, Navigatable):
             ssa_timeout = '10M'
             try:
                 tasks.wait_analysis_finished('Container image analysis',
-                                             'vm', delay=5, timeout=ssa_timeout)
+                                             'container', timeout=ssa_timeout)
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(ssa_timeout))

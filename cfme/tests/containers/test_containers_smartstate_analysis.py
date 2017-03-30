@@ -29,12 +29,11 @@ REGISTRIES = (
 LOG_VERIFICATION_TAGS = ('pod_wait', 'analyze', 'finish')
 TESTED_ATTR = namedtuple('TESTED_ATTR', ['table', 'attr', 'verifier'])
 TESTED_ATTRIBUTES = (
-    TESTED_ATTR('configuration', 'packages', bool),
     TESTED_ATTR('configuration', 'openscap_results', bool),
     TESTED_ATTR('configuration', 'openscap_html', lambda val: val == 'Available'),
     TESTED_ATTR('configuration', 'last_scan', dateparser.parse),
     TESTED_ATTR('compliance', 'status', lambda val: val == 'Compliant'),
-    TESTED_ATTR('configuration', 'history', lambda val: val == 'Available')
+    TESTED_ATTR('compliance', 'history', lambda val: val == 'Available')
 )
 
 
@@ -53,7 +52,7 @@ def verify_log(log, verification_tags):
 
 
 @pytest.mark.meta(blockers=[BZ(1382326), BZ(1408255), BZ(1371896),
-                            BZ(1437128, forced_streams=['5.7'])])
+                            BZ(1437128, forced_streams=['5.6', '5.7'])])
 @pytest.mark.parametrize(('registry'), REGISTRIES)
 def test_containers_smartstate_analysis(provider, registry, soft_assert):
 
@@ -94,10 +93,9 @@ def test_containers_smartstate_analysis(provider, registry, soft_assert):
     image_obj.summary.reload()
     for tbl, attr, verifier in TESTED_ATTRIBUTES:
         table = getattr(image_obj.summary, tbl)
-        if not hasattr(table, attr):
-            soft_assert(False,
-                '{} table has no parameter \'{}\''.format(tbl, attr))
+        if not soft_assert(hasattr(table, attr),
+            '{} table has missing attribute \'{}\''.format(tbl, attr)):
             continue
         value = getattr(table, attr).value
         soft_assert(verifier(value),
-                'Error in parameter ({}.{}.value == {})'.format(tbl, attr, value))
+            '{}.{} attribute has unexpected value ({})'.format(tbl, attr, value))
