@@ -73,7 +73,7 @@ class OpenshiftProvider(ContainersProvider):
             zone=prov_config['server_zone'],
             hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
             port=prov_config['port'],
-            sec_protocol=prov_config['sec_protocol'],
+            sec_protocol=prov_config.get('sec_protocol', None),
             provider_data=prov_config,
             appliance=appliance)
 
