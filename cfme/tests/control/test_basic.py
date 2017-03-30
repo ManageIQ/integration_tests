@@ -337,7 +337,7 @@ def policy_and_condition(request):
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(
-    lambda condition: condition.FIELD_VALUE == "Provider" and
+    lambda condition: condition is conditions.ProviderCondition and
     current_version() < "5.7.1"
 )
 def test_condition_crud(condition):
@@ -419,7 +419,7 @@ def test_policy_profile_crud(random_vm_control_policy, random_host_control_polic
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(
-    lambda condition_for_expressions: condition_for_expressions.FIELD_VALUE == "Provider" and
+    lambda condition_for_expressions: condition_for_expressions is conditions.ProviderCondition and
     current_version() < "5.7.1"
 )
 @pytest.mark.parametrize("fill_type,expression,verify", EXPRESSIONS_TO_TEST, ids=[
@@ -454,7 +454,8 @@ def test_control_alert_copy(random_alert):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda alert_profile: alert_profile.TYPE == "Middleware Server" and
+@pytest.mark.uncollectif(
+    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
     current_version() < "5.7")
 def test_alert_profile_crud(alert_profile):
     alert_profile.create()
