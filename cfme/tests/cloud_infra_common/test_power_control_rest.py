@@ -41,7 +41,7 @@ def vm_obj(request, provider, setup_provider, small_template, vm_name):
         except Exception:
             logger.warning("Failed to delete vm `{}`.".format(vm_obj.name))
 
-    vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
+    vm_obj.create_on_provider(timeout=2400, find_in_cfme=True, allow_skip="default")
     return vm_obj
 
 
@@ -102,12 +102,7 @@ def test_stop(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
     else:
         rest_api.collections.vms.action.stop(vm)
     verify_action_result(rest_api)
-    wait_for(
-        lambda: vm_obj.provider.mgmt.is_vm_stopped(vm_obj.name),
-        num_sec=1200,
-        delay=20,
-        silent_failure=True,
-        message="mgmt system check - vm stopped")
+    wait_for_vm_state_change(vm_obj, vm_obj.STATE_OFF)
     soft_assert(not verify_vm_power_state(vm, vm_obj.STATE_ON), "vm still running")
 
 
