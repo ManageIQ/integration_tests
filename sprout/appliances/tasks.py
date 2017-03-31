@@ -1819,7 +1819,7 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
 
 @singleton_task()
 def read_docker_images_from_url(self):
-    for group in Group.objects.exclude(templates_url=None):
+    for group in Group.objects.exclude(Q(templates_url=None) | Q(templates_url='')):
         read_docker_images_from_url_group.delay(group.id)
 
 
