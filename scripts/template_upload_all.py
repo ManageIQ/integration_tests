@@ -94,12 +94,16 @@ def template_name(image_link, image_ts, checksum_link, version=None):
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-vvvv-yyyymmddhhmm
             return "miq-nightly-{}-{}".format(version, result[0])
         elif "stable" in image_link:
-            if 'euwe' in image_link:
-                pattern = re.compile(r'[^\d]*?-euwe-(.*)-(?P<year>\d{4})(?P<month>\d{2})('
-                                     r'?P<day>\d{2})')
-                result = pattern.findall(image_name)
-                return "miq-stable-euwe-{}-{}{}{}".format(result[0][0], result[0][1], result[0][2],
-                                                      result[0][3])
+            # Handle named MIQ releases, dropping provider and capturing release and date
+            if 'master' not in image_link:
+                pattern = re.compile(r'manageiq-[^\d]*?-(?P<release>[-\w]*?)'
+                                     r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
+                # Use match so we can use regex group names
+                result = pattern.match(image_name)
+                return "miq-stable-{}-{}{}{}".format(result.group('release'),
+                                                     result.group('year'),
+                                                     result.group('month'),
+                                                     result.group('day'))
             return "miq-stable-{}-{}".format(result[0][0], result[0][2])
         else:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm

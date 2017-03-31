@@ -29,8 +29,8 @@ stream_matchers = (
     (get_stream('5.8'), r'^cfme-58.*-(?P<month>\d{2})(?P<day>\d{2})'),
     # Nightly builds have potentially multiple version streams bound to them so we
     # cannot use get_stream()
-    ('upstream_stable', r'^miq-stable-darga-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    ('upstream_euwe', r'^miq-stable-euwe-(.*)-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    ('upstream_stable', r'^miq-stable-(?P<release>[-\w]*?)'
+                        r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     ('downstream-nightly', r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     # new format
     ('downstream-nightly', r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
@@ -132,7 +132,7 @@ def provider_templates(api):
 
 
 def mark_provider_template(api, provider, template, tested=None, usable=None,
-        diagnosis='', build_number=None):
+        diagnosis='', build_number=None, stream=None):
     """Mark a provider template as tested and/or usable
 
     Args:
@@ -146,7 +146,7 @@ def mark_provider_template(api, provider, template, tested=None, usable=None,
     Returns the response of the API request
 
     """
-    provider_template = _as_providertemplate(provider, template)
+    provider_template = _as_providertemplate(provider, template, group=stream)
 
     if tested is not None:
         provider_template['tested'] = bool(tested)
@@ -220,11 +220,13 @@ def templates_to_test(api, limit=1, request_type=None):
     return templates
 
 
-def _as_providertemplate(provider, template):
+def _as_providertemplate(provider, template, group=None):
     if not isinstance(provider, Provider):
         provider = Provider(str(provider))
+    if not isinstance(group, Group) and group is not None:
+        group = Group(name=group)
     if not isinstance(template, Template):
-        template = Template(str(template))
+        template = Template(str(template), group=group)
 
     return ProviderTemplate(provider, template)
 
@@ -261,7 +263,7 @@ def trackerbot_add_provider_template(stream, provider, template_name):
             print('Template {} already tracked for provider {}'.format(
                 template_name, provider))
         else:
-            mark_provider_template(api(), provider, template_name)
+            mark_provider_template(api(), provider, template_name, stream=stream)
             print('Added {} template {} on provider {}'.format(
                 stream, template_name, provider))
     except Exception as e:
