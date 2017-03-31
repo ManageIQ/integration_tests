@@ -2,7 +2,7 @@
 """This module contains control REST API specific tests."""
 import pytest
 import fauxfactory
-import utils.error as error
+from utils import error
 
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions

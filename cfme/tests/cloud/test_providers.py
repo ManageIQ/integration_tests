@@ -6,7 +6,7 @@ import fauxfactory
 
 import pytest
 
-import utils.error as error
+from utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme.exceptions import FlashMessageException

@@ -5,7 +5,7 @@ from time import sleep
 import traceback
 
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
-import utils.error as error
+from utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential, login, test_requirements
 from cfme.automate.explorer import AutomateExplorer # NOQA
