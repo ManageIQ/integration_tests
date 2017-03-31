@@ -51,12 +51,31 @@ properties_form_56 = TabStripForm(
         ],
     })
 
+properties_form_58 = TabStripForm(
+    fields=[
+        ('type_select', AngularSelect('ems_type')),
+        ('name_text', Input('name'))
+    ],
+    tab_fields={
+        "Default": [
+            ('hostname_text', Input("default_hostname")),
+            ('port_text', Input("default_api_port")),
+            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
+        ],
+        "Hawkular": [
+            ('hawkular_hostname', Input("hawkular_hostname")),
+            ('hawkular_api_port', Input("hawkular_api_port")),
+            ('hawkular_sec_protocol', AngularSelect("hawkular_security_protocol", exact=True)),
+        ],
+    })
+
 
 prop_region = Region(
     locators={
         'properties_form': {
             version.LOWEST: properties_form,
             '5.6': properties_form_56,
+            '5.8': properties_form_58
         }
     }
 )
@@ -102,6 +121,7 @@ class ContainersProvider(BaseProvider, Pretty):
             hostname=None,
             port=None,
             sec_protocol=None,
+            hawkular_sec_protocol=None,
             provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -114,6 +134,7 @@ class ContainersProvider(BaseProvider, Pretty):
         self.hostname = hostname
         self.port = port
         self.sec_protocol = sec_protocol
+        self.hawkular_sec_protocol = hawkular_sec_protocol
         self.provider_data = provider_data
 
     def _on_detail_page(self):

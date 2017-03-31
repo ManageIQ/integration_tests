@@ -105,6 +105,10 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     ('candu_secret', Input("metrics_password")),
                     ('candu_verify_secret', Input("metrics_verify")),
                 ],
+
+                "Hawkular": [
+                    ('hawkular_validate_btn', form_buttons.validate),
+                ]
             }
             fields_end = [
                 ('validate_btn', form_buttons.validate),
@@ -752,6 +756,12 @@ def _fill_credential(form, cred, validate=None):
                 'token_verify_secret': cred.verify_token,
                 'validate_btn': validate
             })
+            if validate:
+                # Validate default creds and move on to hawkular tab validation
+                flash.assert_no_errors()
+                fill(cred.form, {
+                    'hawkular_validate_btn': validate
+                })
     elif cred.type == 'service_account':
         fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
     else:
