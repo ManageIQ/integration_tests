@@ -229,6 +229,17 @@ def test_http_options_node_types(rest_api, collection_name):
     assert rest_api.response.status_code == 200
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_http_options_subcollections(rest_api):
+    """Tests that OPTIONS returns supported subcollections.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert 'tags' in rest_api.collections.vms.options()['subcollections']
+    assert rest_api.response.status_code == 200
+
+
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_server_info(rest_api):
     """Check that server info is present.
