@@ -199,7 +199,7 @@ def test_reset_vm(rest_api, vm_obj, verify_vm_running, from_detail):
     else:
         rest_api.collections.vms.action.reset(vm)
     success, message = verify_action_result(rest_api, assert_success=False)
-    if current_version() < '5.8':
+    if current_version() < '5.7':
         unsupported_providers = (GCEProvider, EC2Provider, SCVMMProvider)
     else:
         unsupported_providers = (GCEProvider, EC2Provider)
