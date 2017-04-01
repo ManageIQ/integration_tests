@@ -193,11 +193,11 @@ class CatalogItem(Updateable, Pretty, Navigatable):
     def create(self):
         view = navigate_to(self, 'Add')
         # Need to provide the (optional) provider name to the form, not the object
-        provider_name = None
-        provider_required_types = ['AnsibleTower', 'Orchestration']
-        if self.item_type in provider_required_types \
-                or self.provider_type in provider_required_types:
-            provider_name = self.provider.name
+        provider_formvalue = None
+        if self.item_type == 'Orchestration':
+            provider_formvalue = self.provider.name
+        elif self.item_type == 'AnsibleTower':
+            provider_formvalue = self.provider
         # For tests where orchestration template is None
         view.before_filling()
         view.fill({'name': self.name,
@@ -207,7 +207,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
                    'select_dialog': self.dialog,
                    'select_orch_template': self.orch_template.template_name
                    if self.orch_template else None,
-                   'select_provider': provider_name,
+                   'select_provider': provider_formvalue,
                    'select_config_template': self.config_template})
 
         if view.field_entry_point.value == "":

@@ -82,8 +82,9 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         self.key = key or name
 
     def _form_mapping(self, create=None, **kwargs):
+        provider_type = None if self.appliance.version >= '5.8' else (create and self.type)
         return {'name_text': kwargs.get('name'),
-                'type_select': create and self.type,
+                'type_select': provider_type,
                 'url_text': kwargs.get('url'),
                 'ssl_checkbox': kwargs.get('ssl')}
 
@@ -441,17 +442,26 @@ class MgrAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version > '5.7.0.8':
-            self.prerequisite_view.navigation.select('Configuration', 'Management')
-        else:
+        if self.obj.appliance.version < '5.7':
             self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
+        elif self.obj.appliance.version > '5.7' and self.obj.appliance.version < '5.8':
+            self.prerequisite_view.navigation.select('Configuration', 'Management')
+        elif self.obj.appliance.version >= '5.8':
+            self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
 
     def resetter(self):
-        accordion.tree('Providers', 'All Configuration Manager Providers')
+        if self.obj.appliance.version >= '5.8':
+            accordion.tree('Providers', 'All Ansible Tower Providers')
+        else:
+            accordion.tree('Providers', 'All Configuration Manager Providers')
         tb.select('Grid View')
 
     def am_i_here(self):
-        return match_page('All Configuration Management Providers')
+        if self.obj.appliance.version >= '5.8':
+            page = 'All Ansible Tower Providers'
+        else:
+            page = 'All Configuration Manager Providers'
+        return match_page(page)
 
 
 @navigator.register(ConfigManager, 'Add')
