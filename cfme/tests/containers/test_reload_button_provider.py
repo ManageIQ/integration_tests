@@ -52,9 +52,6 @@ def test_reload_button_provider(provider):
 
     num_img_cfme_56 = len(provider.mgmt.list_image())
     num_img_cfme_57 = len(list_img_from_openshift_parsed_new)
-    num_img_cfme_58 = len(list_img_from_openshift_parsed_new)
 
     assert num_img_in_cfme == version.pick({version.LOWEST: num_img_cfme_56,
-                                            '5.7': num_img_cfme_57,
-                                            '5.8': num_img_cfme_58
-                                            })
+                                            '5.7': num_img_cfme_57})
