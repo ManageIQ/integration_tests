@@ -3,7 +3,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common import SummaryMixin, Taggable
+from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location, InfoBlock,\
     flash, PagedTable
@@ -20,7 +20,7 @@ match_page = partial(match_location, controller='container_image',
                      title='Images')
 
 
-class Image(Taggable, SummaryMixin, Navigatable):
+class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
 
     def __init__(self, name, tag, provider, appliance=None):
         self.name = name

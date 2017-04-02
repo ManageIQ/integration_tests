@@ -345,13 +345,15 @@ class TopologyFromDetails(CFMENavigateStep):
 class ContainersTestItem(object):
     """This is a generic test item. Especially used for parametrized functions
     """
-    def __init__(self, obj, polarion_id):
+    def __init__(self, obj, polarion_id, **additional_attrs):
         """Args:
             * obj: The container object in this test (e.g. Image)
             * The polarion test case ID
         """
         self.obj = obj
         self.polarion_id = polarion_id
+        for name, value in additional_attrs.items():
+            self.__setattr__(name, value)
 
     def pretty_id(self):
         return '{} ({})'.format(self.obj.__name__, self.polarion_id)
