@@ -5,7 +5,6 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from cfme.fixtures.base import appliance
 from utils import testgen
 from utils.blockers import BZ
 
@@ -19,16 +18,16 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 @pytest.fixture(scope='module')
-def node_hardwares_db_data():
+def node_hardwares_db_data(appliance):
 
     """Grabbing hardwares table data for nodes"""
 
-    db = appliance().db
-    hardwares_table = db.get('hardwares')
-    container_nodes = db.get('container_nodes')
+    db = appliance.db
+    hardwares_table = db['hardwares']
+    container_nodes = db['container_nodes']
 
     out = {}
-    for node in container_nodes.__table__.select().where(True).execute().fetchall():
+    for node in db.session.query(container_nodes).all():
 
         out[node.name] = hardwares_table.__table__.select().where(
             hardwares_table.id == node.id
@@ -68,14 +67,12 @@ def test_pods_per_ready_status(soft_assert, pods_per_ready_status):
         name = row['# Pods per Ready Status']
         readiness_ui = (True if row['Ready Condition Status'].lower() == 'true'
                         else False)
-        if name not in pods_per_ready_status:  # this check based on BZ#1435958
-            soft_assert(False,
-                        'Could not find pod "{}" in openshift.'
-                        .format(name))
-            continue
-        soft_assert(pods_per_ready_status[name] == readiness_ui,
-                    'For pod "{}" expected readiness is "{}" got "{}"'
-                    .format(name, pods_per_ready_status[name], readiness_ui))
+        if soft_assert(name in pods_per_ready_status,  # this check based on BZ#1435958
+                'Could not find pod "{}" in openshift.'
+                .format(name)):
+            soft_assert(pods_per_ready_status[name] == readiness_ui,
+                        'For pod "{}" expected readiness is "{}" got "{}"'
+                        .format(name, pods_per_ready_status[name], readiness_ui))
 
 
 @pytest.mark.meta(blockers=[BZ(1435970, forced_streams=["5.8"])])
@@ -155,8 +152,8 @@ def test_report_nodes_by_number_of_cpu_cores(soft_assert, node_hardwares_db_data
 @pytest.mark.polarion('CMP-10008')
 def test_report_projects_by_number_of_pods(appliance, soft_assert):
 
-    container_projects = appliance.db.get('container_projects')
-    container_pods = appliance().db.get('container_groups')
+    container_projects = appliance.db['container_projects']
+    container_pods = appliance.db['container_groups']
 
     report = get_report('Projects by Number of Pods')
     for row in report.data.rows:

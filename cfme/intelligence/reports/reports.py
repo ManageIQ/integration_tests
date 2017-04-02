@@ -5,7 +5,7 @@ Extensively uses :py:mod:`cfme.intelligence.reports.ui_elements`
 """
 from functools import partial
 from cached_property import cached_property
-from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
+from navmazing import NavigateToSibling, NavigateToObject
 
 from . import Report
 from cfme.fixtures import pytest_selenium as sel

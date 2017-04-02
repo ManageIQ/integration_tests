@@ -2,7 +2,6 @@ from datetime import datetime
 import re
 from collections import namedtuple
 from random import random
-from cfme.fixtures.base import appliance
 
 import pytest
 
@@ -31,27 +30,33 @@ vpor_data_instance = namedtuple('vpor_data_instance',
                                     'max_mem_usage_absolute_average'
                                 ])
 
+cpu_usagemhz_rate_average__data_range = 8000
+derived_memory_used__data_range = 100
+max_cpu_usage_rate_average__data_range = 8000
+max_mem_usage_absolute_average__data_range = 100
+
+
+def gen_vpor_values():
+    return vpor_values_pattern.format(
+        random(), random() * cpu_usagemhz_rate_average__data_range,
+        random() * 100, random() * derived_memory_used__data_range,
+        random(), random() * max_cpu_usage_rate_average__data_range,
+        random() * 100, random() * max_mem_usage_absolute_average__data_range
+    )
+
 
 @pytest.yield_fixture(scope='module')
-def vporizer():
+def vporizer(appliance):
 
     """Grabbing vim_performance_operating_ranges table data for nodes and projects.
     In case that no such data exists, inserting fake rows"""
 
-    db = appliance().db
-    vpor = db.get('vim_performance_operating_ranges')
+    db = appliance.db
+    vpor = db['vim_performance_operating_ranges']
 
-    def gen_vpor_values():
-        return vpor_values_pattern.format(
-            random(), random() * 8000,
-            random() * 100, random() * 100,
-            random(), random() * 8000,
-            random() * 100, random() * 100
-        )
-
-    container_nodes = db.get('container_nodes')
-    container_pods = db.get('container_groups')
-    container_projects = db.get('container_projects')
+    container_nodes = db['container_nodes']
+    container_pods = db['container_groups']
+    container_projects = db['container_projects']
     created_at = datetime.now()
     vpor_data_list = []
 
@@ -60,8 +65,7 @@ def vporizer():
         ('ContainerNode', 'ContainerProject', 'ContainerGroup')
     ):
 
-        for resource in table.__table__.select() \
-                .where(True).execute().fetchall():
+        for resource in db.session.query(table).all():
             def get_resource_vpor_data():
                 return vpor.__table__.select().where(
                     (vpor.resource_id == resource.id) &
