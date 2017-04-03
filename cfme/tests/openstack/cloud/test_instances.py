@@ -107,7 +107,6 @@ def test_shelve_offload_instance(new_instance):
 
 def test_start_instance(new_instance):
     new_instance.power_control_from_provider(OpenStackInstance.STOP)
-    navigate_to(new_instance, 'Details')
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.START)
@@ -159,7 +158,6 @@ def test_list_vms_infra_node(provider, soft_assert):
     quads = [q.name for q in Quadicon.all() if 'Compute' in q.name]
     for quad in quads:
         host = Host(quad, provider=provider.infra_provider)
-        navigate_to(host, 'Details')
         host_ip = host.get_detail('Properties', 'IP Address')
         vms = int(host.get_detail('Relationships', 'VMs'))
         soft_assert(vms == hvisors[host_ip],
