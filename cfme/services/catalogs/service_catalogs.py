@@ -135,7 +135,7 @@ class ServiceCatalogDetails(CFMENavigateStep):
     def step(self):
         try:
             self.prerequisite_view.service_catalogs.tree.click_path("All Services",
-                self.obj.catalog.name, self.obj.name)
+                    self.obj.catalog, self.obj.name)
         except:
             raise NoSuchElementException()
 
