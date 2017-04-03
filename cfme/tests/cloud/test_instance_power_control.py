@@ -113,6 +113,7 @@ def wait_for_termination(provider, instance):
 def check_power_options(soft_assert, instance, power_state):
     """ Checks if power options match given power state ('on', 'off')
     """
+    # NEEDS REMEDIATION
     must_be_available = {
         AzureInstance: {
             'on': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT,

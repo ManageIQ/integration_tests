@@ -46,6 +46,30 @@ set_ownership_form = Form(fields=[
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
+def base_types(template=False):
+    from pkg_resources import iter_entry_points
+    search = "template" if template else "vm"
+    return {
+        ep.name: ep.resolve() for ep in iter_entry_points('manageiq.{}_categories'.format(search))
+    }
+
+
+def instance_types(category, template=False):
+    from pkg_resources import iter_entry_points
+    search = "template" if template else "vm"
+    return {
+        ep.name: ep.resolve() for ep in iter_entry_points(
+            'manageiq.{}_types.{}'.format(search, category))
+    }
+
+
+def all_types(template=False):
+    all_types = base_types(template)
+    for category in all_types.keys():
+        all_types.update(instance_types(category, template))
+    return all_types
+
+
 class _TemplateMixin(object):
     pass
 
@@ -126,26 +150,15 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
                 want to create it.
             template: Whether the generated object class should be VM/Instance or a template class.
         """
-        # Ensure the classes are loaded:
-        import cfme.cloud.instance  # NOQA
-        from cfme.cloud.instance.azure import AzureInstance  # NOQA
-        from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
-        from cfme.cloud.instance.gce import GCEInstance  # NOQA
-        from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
-        import cfme.infrastructure.virtual_machines  # NOQA
         try:
-            return (
-                cls._registered_types[provider.type]["template" if template else "vm"]
-                (vm_name, provider, template_name))
+            return all_types(template)[provider.type](vm_name, provider, template_name)
         except KeyError:
             # Matching via provider type failed. Maybe we have some generic classes for infra/cloud?
             try:
-                return (
-                    cls._registered_types[provider.category]["template" if template else "vm"]
-                    (vm_name, provider, template_name))
+                return all_types(template)[provider.category](vm_name, provider, template_name)
             except KeyError:
                 raise UnknownProviderType(
-                    'Unknown type of cloud provider CRUD object: {}'
+                    'Unknown type of provider CRUD object: {}'
                     .format(provider.__class__.__name__))
 
     ###
