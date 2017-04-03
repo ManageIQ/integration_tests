@@ -72,7 +72,6 @@ properties_form_58 = TabStripForm(
     })
 
 
-
 prop_region = Region(
     locators={
         'properties_form': {
