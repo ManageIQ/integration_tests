@@ -345,6 +345,8 @@ class TopologyFromDetails(CFMENavigateStep):
 class ContainersTestItem(object):
     """This is a generic test item. Especially used for parametrized functions
     """
+    __test__ = False
+
     def __init__(self, obj, polarion_id, **additional_attrs):
         """Args:
             * obj: The container object in this test (e.g. Image)
