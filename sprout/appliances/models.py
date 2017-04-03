@@ -61,6 +61,19 @@ class MetadataMixin(models.Model):
     class Meta:
         abstract = True
     object_meta_data = models.TextField(default=yaml.dump({}))
+    created_on = models.DateTimeField(default=timezone.now, editable=False)
+    modified_on = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created_on = timezone.now()
+        if not kwargs.pop('ignore_modified', False):
+            self.modified_on = timezone.now()
+        return super(MetadataMixin, self).save(*args, **kwargs)
+
+    @property
+    def age(self):
+        return timezone.now() - self.created_on
 
     def reload(self):
         new_self = type(self).objects.get(pk=self.pk)
@@ -911,7 +924,6 @@ class Appliance(MetadataMixin):
                 self.class_logger(self.pk).info("Killing")
                 if not self.marked_for_deletion:
                     self.marked_for_deletion = True
-                    self.leased_until = None
                     self.save()
                     return kill_appliance.delay(self.id)
 
@@ -951,10 +963,6 @@ class Appliance(MetadataMixin):
             return "Expired!"
         else:
             return nice_seconds(seconds)
-
-    @property
-    def age(self):
-        return timezone.now() - self.datetime_leased
 
     @property
     def can_launch(self):
@@ -1027,18 +1035,6 @@ class AppliancePool(MetadataMixin):
 
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
-
-    @property
-    def age(self):
-        try:
-            leased = Appliance.objects\
-                .filter(appliance_pool=self)\
-                .exclude(datetime_leased=None)\
-                .order_by('datetime_leased')\
-                .values('datetime_leased')[0]['datetime_leased']
-            return timezone.now() - leased
-        except IndexError:
-            return None
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
@@ -1229,10 +1225,11 @@ class AppliancePool(MetadataMixin):
                 with transaction.atomic():
                     with appliance.kill_lock:
                         if (
-                                save_lives and appliance.ready and appliance.leased_until is None
-                                and appliance.marked_for_deletion is False
-                                and not appliance.managed_providers
-                                and appliance.power_state not in appliance.BAD_POWER_STATES):
+                                save_lives and
+                                appliance.ready and
+                                appliance.marked_for_deletion is False and
+                                not appliance.managed_providers and
+                                appliance.power_state not in appliance.BAD_POWER_STATES):
                             appliance.appliance_pool = None
                             appliance.datetime_leased = None
                             appliance.save()

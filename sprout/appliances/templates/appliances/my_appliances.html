@@ -99,6 +99,7 @@
                 With {{ pool.override_cpu }} cores
             </h2>
             {% endif %}
+            <h3>Age: {{pool.age|nice_timedelta}}</h3>
             {% if pool.current_count != pool.total_count %}
                 <p>{{ pool.current_count }} from {{ pool.total_count }} appliances provisioned</p>
             {% endif %}
