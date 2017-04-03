@@ -54,7 +54,7 @@ def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
                                       tablefmt='orgtbl'))
 
     except Exception as e:
-        logger.error(e)
+        print(e)
 
 
 def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
@@ -76,7 +76,7 @@ def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
                                       headers=['Provider Key', 'Volume ID'],
                                       tablefmt='orgtbl'))
     except Exception as e:
-        logger.error(e)
+        print(e)
 
 
 def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
@@ -98,7 +98,7 @@ def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
                                       headers=['Provider Key', 'ELB name'],
                                       tablefmt='orgtbl'))
     except Exception as e:
-        logger.error(e)
+        print(e)
 
 
 def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
@@ -120,12 +120,12 @@ def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
                                       headers=['Provider Key', 'ENI ID'],
                                       tablefmt='orgtbl'))
     except Exception as e:
-        logger.error(e)
+        print(e)
 
 
 def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, output):
     with open(output, 'w') as report:
-        report.write('ec2cleanup.py, Address and Volume Cleanup')
+        report.write('ec2cleanup.py, Address, Volume, LoadBalancer and Network Interface Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
     for provider_key in list_provider_keys('ec2'):
         provider_mgmt = get_mgmt(provider_key)
