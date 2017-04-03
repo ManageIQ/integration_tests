@@ -30,19 +30,27 @@ class OpenshiftProvider(ContainersProvider):
         return self.appliance.rest_api.collections.providers\
             .find_by(name=self.name).resources[0].href
 
-    def _form_mapping(self, create=None, **kwargs):
-        if self.appliance.version > '5.8.0.3':
+    def _form_mapping(self, create=None, hawkular=False, **kwargs):
+        if self.appliance.version > '5.8.0.3' and hawkular:
+            sec_protocol = kwargs.get('sec_protocol'),
+            hawkular_hostname = kwargs.get('hostname')
+            hawkular_sec_protocol = kwargs.get('hawkular_sec_protocol')
+        elif self.appliance.version > '5.8.0.3' and not hawkular:
             sec_protocol = kwargs.get('sec_protocol')
+            hawkular_hostname = None
+            hawkular_sec_protocol = None
         else:
             sec_protocol = None
+            hawkular_hostname = None
+            hawkular_sec_protocol = None
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'OpenShift',
                 'hostname_text': kwargs.get('hostname'),
                 'port_text': kwargs.get('port'),
                 'sec_protocol': sec_protocol,
                 'zone_select': kwargs.get('zone'),
-                'hawkular_hostname': kwargs.get('hostname'),
-                'hawkular_sec_protocol': kwargs.get('hawkular_sec_protocol')}
+                'hawkular_hostname': hawkular_hostname,
+                'hawkular_sec_protocol': hawkular_sec_protocol}
 
     @variable(alias='db')
     def num_route(self):

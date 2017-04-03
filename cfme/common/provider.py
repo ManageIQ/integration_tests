@@ -228,7 +228,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             created = True
             logger.info('Setting up provider: %s', self.key)
             navigate_to(self, 'Add')
-            fill(self.properties_form, self._form_mapping(True, **self.__dict__))
+            fill(self.properties_form, self._form_mapping(True, hawkular=False, **self.__dict__))
             for cred in self.credentials:
                 fill(self.credentials[cred].form, self.credentials[cred],
                      validate=validate_credentials)

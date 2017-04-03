@@ -61,11 +61,13 @@ properties_form_58 = TabStripForm(
             ('hostname_text', Input("default_hostname")),
             ('port_text', Input("default_api_port")),
             ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
+            ('trusted_ca_certificates', Input("default_tls_ca_certs"))
         ],
         "Hawkular": [
             ('hawkular_hostname', Input("hawkular_hostname")),
             ('hawkular_api_port', Input("hawkular_api_port")),
             ('hawkular_sec_protocol', AngularSelect("hawkular_security_protocol", exact=True)),
+            ('hawkular_ca_certificates', Input("hawkular_tls_ca_certs"))
         ],
     })
 
