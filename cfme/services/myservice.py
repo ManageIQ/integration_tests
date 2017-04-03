@@ -202,25 +202,27 @@ class MyService(Updateable, Navigatable):
         navigate_to(self, 'All')
         down_btn("Download as " + extension)
 
+    @property
+    def label_all_services(self):
+        if self.appliance.version < '5.8':
+            return 'All Services'
+        else:
+            return 'Active Services'
+
 
 @navigator.register(MyService, 'All')
 class MyServiceAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):
-        if self.obj.appliance.version > '5.8':
-            return match_page(summary='Active Services')
-        else:
-            return match_page(summary='All Services')
+        return match_page(summary=self.obj.label_all_services)
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'My Services')
 
     def resetter(self, *args, **kwargs):
-        if self.obj.appliance.version > '5.8':
-            my_service_tree().click_path('Active Services')
-        else:
-            my_service_tree().click_path('All Services')
+        if self.obj.appliance.version < '5.7':
+            my_service_tree().click_path(self.obj.label_all_services)
         tb.refresh()
 
 
@@ -233,10 +235,7 @@ class MyServiceDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         logger.debug('Clicking tree for service: {}'.format(self.obj.service_name))
-        if self.obj.appliance.version > '5.8':
-            my_service_tree().click_path('Active Services', self.obj.service_name)
-        else:
-            my_service_tree().click_path('All Services', self.obj.service_name)
+        my_service_tree().click_path(self.obj.label_all_services, self.obj.service_name)
 
     def resetter(self, *args, **kwargs):
         tb.refresh()
