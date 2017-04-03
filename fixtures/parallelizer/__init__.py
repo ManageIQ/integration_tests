@@ -239,6 +239,10 @@ class ParallelSession(object):
         slaveid, _, event_json = self.sock.recv_multipart(flags=zmq.NOBLOCK)
         event_data = json.loads(event_json)
         event_name = event_data.pop('_event_name')
+        if slaveid not in self.slaves:
+            self.log.error("message from terminated worker %s %s %s",
+                           slaveid, event_name, event_data)
+            return None, None, None
         return self.slaves[slaveid], event_data, event_name
 
     def print_message(self, message, prefix='master', **markup):
