@@ -36,11 +36,11 @@ def test_broken_angular_select(request):
         name="Catitem_{}".format(fauxfactory.gen_alpha()),
         description=fauxfactory.gen_alpha(),
         display_in=True,
-        catalog=cat.name,
+        catalog=cat,
         dialog="azure-single-vm-from-user-image")
     item.create()
     request.addfinalizer(item.delete)
-    sc = service_catalogs.ServiceCatalogs(item.name)
+    sc = service_catalogs.ServiceCatalogs(item.catalog, item.name)
     navigate_to(sc, 'Order')
     # The check itself
     fill(the_select, "Linux")
