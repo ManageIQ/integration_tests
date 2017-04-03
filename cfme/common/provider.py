@@ -107,8 +107,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 ],
 
                 "Hawkular": [
-                    ('hawkular_validate_btn', form_buttons.validate),
-                ]
+                    ('hawkular_validate_btn', {
+                        version.LOWEST: form_buttons.validate,
+                        '5.6': None
+                    }),
+                ],
             }
             fields_end = [
                 ('validate_btn', form_buttons.validate),
