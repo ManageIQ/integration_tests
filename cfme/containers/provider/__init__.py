@@ -72,6 +72,7 @@ properties_form_58 = TabStripForm(
     })
 
 
+
 prop_region = Region(
     locators={
         'properties_form': {
@@ -97,7 +98,8 @@ class ContainersProvider(BaseProvider, Pretty):
         'num_replication_controller',
         'num_pod',
         'num_node',
-        'num_container']
+        'num_container',
+        'num_image_registry']
     # TODO add 'num_volume', 'num_image_registry'
     string_name = "Containers"
     page_name = "containers"
@@ -216,7 +218,8 @@ class ContainersProvider(BaseProvider, Pretty):
 
     @variable(alias='db')
     def num_container(self):
-        # Containers are linked to providers through container definitions and then through pods
+        # Containers are linked to providers through container definitions and
+        # then through pods
         res = self.appliance.db.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, container_groups, container_definitions, containers "
@@ -256,7 +259,8 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Providers')
+        self.prerequisite_view.navigation.select(
+            'Compute', 'Containers', 'Providers')
 
     def resetter(self):
         # Reset view and selection
@@ -345,6 +349,7 @@ class TopologyFromDetails(CFMENavigateStep):
 class ContainersTestItem(object):
     """This is a generic test item. Especially used for parametrized functions
     """
+
     def __init__(self, obj, polarion_id):
         """Args:
             * obj: The container object in this test (e.g. Image)
