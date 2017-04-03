@@ -39,6 +39,7 @@ def node_hardwares_db_data(appliance):
 @pytest.fixture(scope='function')
 def pods_per_ready_status(provider):
     """Grabing the pods and their ready status from API"""
+    #  TODO: Add later this logic to mgmtsystem
     entities_j = provider.mgmt.api.get('pod')[1]['items']
     out = {}
     for entity_j in entities_j:
@@ -51,6 +52,10 @@ def pods_per_ready_status(provider):
     return out
 
 
+def get_vpor_data_by_name(vporizer_, name):
+    return [vals for vals in vporizer_ if vals.resource_name == name]
+
+
 def get_report(menu_name):
     """Queue a report by menu name , wait for finish and return it"""
     path_to_report = ['Configuration Management', 'Containers', menu_name]
@@ -58,7 +63,7 @@ def get_report(menu_name):
     return CannedSavedReport(path_to_report, run_at)
 
 
-# @pytest.mark.meta(blockers=[BZ(1435958, forced_streams=["5.8"])])
+@pytest.mark.meta(blockers=[BZ(1435958, forced_streams=["5.8"])])
 @pytest.mark.polarion('CMP-9533')
 def test_pods_per_ready_status(soft_assert, pods_per_ready_status):
 
@@ -111,7 +116,7 @@ def test_report_nodes_by_cpu_usage(appliance, soft_assert, vporizer):
     report = get_report('Nodes By CPU Usage')
     for row in report.data.rows:
 
-        vpor_values = [vals for vals in vporizer if vals.resource_name == row["Name"]][0]
+        vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
         usage_db = round(vpor_values.max_cpu_usage_rate_average, 2)
         usage_report = round(float(row['CPU Usage (%)']), 2)
 
@@ -126,7 +131,7 @@ def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
     report = get_report('Nodes By Memory Usage')
     for row in report.data.rows:
 
-        vpor_values = [vals for vals in vporizer if vals.resource_name == row["Name"]][0]
+        vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
         usage_db = round(vpor_values.max_mem_usage_absolute_average, 2)
         usage_report = round(float(row['Memory Usage (%)']), 2)
 
@@ -174,7 +179,7 @@ def test_report_projects_by_cpu_usage(soft_assert, vporizer):
     report = get_report('Projects By CPU Usage')
     for row in report.data.rows:
 
-        vpor_values = [vals for vals in vporizer if vals.resource_name == row["Name"]][0]
+        vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
         usage_db = round(vpor_values.max_cpu_usage_rate_average, 2)
         usage_report = round(float(row['CPU Usage (%)']), 2)
 
@@ -189,7 +194,7 @@ def test_report_projects_by_memory_usage(soft_assert, vporizer):
     report = get_report('Projects By Memory Usage')
     for row in report.data.rows:
 
-        vpor_values = [vals for vals in vporizer if vals.resource_name == row["Name"]][0]
+        vpor_values = get_vpor_data_by_name(vporizer, row["Name"])[0]
         usage_db = round(vpor_values.max_mem_usage_absolute_average, 2)
         usage_report = round(float(row['Memory Usage (%)']), 2)
 

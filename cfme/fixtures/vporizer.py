@@ -30,18 +30,20 @@ vpor_data_instance = namedtuple('vpor_data_instance',
                                     'max_mem_usage_absolute_average'
                                 ])
 
-cpu_usagemhz_rate_average__data_range = 8000
-derived_memory_used__data_range = 100
-max_cpu_usage_rate_average__data_range = 8000
-max_mem_usage_absolute_average__data_range = 100
+cpu_usagemhz_rate_average__data_range = 8196  # 13 bit depth
+derived_memory_used__data_range = 100  # Percents
+max_cpu_usage_rate_average__data_range = 8196  # 13 bit depth
+max_mem_usage_absolute_average__data_range = 100  # Percents
 
 
 def gen_vpor_values():
     return vpor_values_pattern.format(
         random(), random() * cpu_usagemhz_rate_average__data_range,
-        random() * 100, random() * derived_memory_used__data_range,
+        random() * derived_memory_used__data_range,
+        random() * derived_memory_used__data_range,
         random(), random() * max_cpu_usage_rate_average__data_range,
-        random() * 100, random() * max_mem_usage_absolute_average__data_range
+        random() * max_mem_usage_absolute_average__data_range,
+        random() * max_mem_usage_absolute_average__data_range
     )
 
 
@@ -60,11 +62,12 @@ def vporizer(appliance):
     created_at = datetime.now()
     vpor_data_list = []
 
-    for table, resource_type in zip(
+    tables_2_names = zip(
         (container_nodes, container_projects, container_pods),
         ('ContainerNode', 'ContainerProject', 'ContainerGroup')
-    ):
-
+    )
+    for table, resource_type in tables_2_names:
+        ids = []
         for resource in db.session.query(table).all():
             def get_resource_vpor_data():
                 return vpor.__table__.select().where(
@@ -75,11 +78,13 @@ def vporizer(appliance):
             # Should be True only in case that the appliance age is greater than 24h
             # if there isn't such row, insert...
             if not get_resource_vpor_data():
-                vpor.__table__.insert().values(
-                    resource_type=resource_type, resource_id=resource.id,
-                    created_at=created_at, days=30, updated_at=datetime.now(),
-                    time_profile_id=1, values=gen_vpor_values()
-                ).execute()
+                ids.append(
+                    vpor.__table__.insert().values(
+                        resource_type=resource_type, resource_id=resource.id,
+                        created_at=created_at, days=30, updated_at=datetime.now(),
+                        time_profile_id=1, values=gen_vpor_values()
+                    ).execute().inserted_primary_key[0]
+                )
             # now, collecting the values from the table
             resource_vpor_data = get_resource_vpor_data()
             vpor_values_match = re.search(vpor_values_pattern.replace('{}', '([\d\.]+)'),
@@ -98,4 +103,4 @@ def vporizer(appliance):
 
     yield vpor_data_list
 
-    vpor.__table__.delete().where(vpor.created_at == created_at).execute()
+    vpor.__table__.delete().where(vpor.id.in_(ids)).execute()
