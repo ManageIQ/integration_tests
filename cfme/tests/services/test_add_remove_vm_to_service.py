@@ -10,7 +10,6 @@ from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from utils import testgen
-from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
@@ -40,7 +39,7 @@ def copy_domain(request):
 
 
 @pytest.yield_fixture(scope='function')
-def myservice(setup_provider, provider, catalog_item, request):
+def myservice(setup_provider, provider, catalog_item, request, logger):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()

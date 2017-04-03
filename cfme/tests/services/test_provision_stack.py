@@ -133,7 +133,8 @@ def prepare_stack_data(provider, provisioning):
     return stack_data
 
 
-def test_provision_stack(setup_provider, provider, provisioning, catalog, catalog_item, request):
+def test_provision_stack(
+        setup_provider, provider, provisioning, catalog, catalog_item, request, logger):
     """Tests stack provisioning
 
     Metadata:
@@ -157,7 +158,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert 'Provisioned Successfully' in row.last_message.text
 
 
-def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
+def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request, logger):
     """Tests stack provisioning
 
     Metadata:
@@ -204,7 +205,7 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
-def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
+def test_retire_stack(provider, provisioning, catalog, catalog_item, request, logger):
     """Tests stack provisioning
 
     Metadata:

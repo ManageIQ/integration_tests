@@ -12,7 +12,6 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.web_ui import flash
 from utils import error
 from utils.blockers import BZ
-from utils.log import logger
 from utils.update import update
 
 
@@ -20,7 +19,7 @@ pytestmark = [test_requirements.service, pytest.mark.tier(3)]
 
 
 @pytest.yield_fixture(scope="module")
-def dialog():
+def dialog(logger):
     dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
 
     element_data = dict(
@@ -50,7 +49,7 @@ def dialog():
 
 
 @pytest.yield_fixture(scope="module")
-def catalog():
+def catalog(logger):
     catalog_name = "test_cat_" + fauxfactory.gen_alphanumeric()
     cat = Catalog(name=catalog_name,
                   description="my catalog")
@@ -66,7 +65,7 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(dialog, catalog):
+def catalog_item(dialog, catalog, logger):
     cat_item = CatalogItem(item_type="Generic",
                            name='test_item_' + fauxfactory.gen_alphanumeric(),
                            description="my catalog item", display_in=True,

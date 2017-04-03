@@ -6,7 +6,6 @@ from utils import version
 from utils.appliance import ApplianceException
 from utils.blockers import BZ
 from utils.conf import cfme_data
-from utils.log import logger
 
 
 def pytest_generate_tests(metafunc):
@@ -37,7 +36,7 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
         version.get_stream(db_version) == version.current_stream())
 @pytest.mark.meta(
     blockers=[BZ(1354466, unblock=lambda db_url: 'ldap' not in db_url)])
-def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
+def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc, logger):
     app = temp_appliance_extended_db
 
     # Download the database

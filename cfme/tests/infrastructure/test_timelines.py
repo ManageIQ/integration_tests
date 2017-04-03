@@ -22,7 +22,7 @@ pytest_generate_tests = testgen.generate([InfraProvider], scope='module')
 
 
 @pytest.fixture(scope="module")
-def test_vm(request, provider):
+def test_vm(request, provider, logger):
     vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
 
     request.addfinalizer(vm.delete_from_provider)
@@ -34,7 +34,7 @@ def test_vm(request, provider):
 
 
 @pytest.fixture(scope="module")
-def gen_events(test_vm):
+def gen_events(test_vm, logger):
     logger.debug('Starting, stopping VM')
     mgmt = test_vm.provider.mgmt
     mgmt.stop_vm(test_vm.name)

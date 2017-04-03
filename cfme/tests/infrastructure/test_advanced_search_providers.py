@@ -7,13 +7,12 @@ import pytest
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.infrastructure.provider import InfraProvider
-from fixtures.pytest_store import store
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
 from cfme.web_ui import search
 from cfme.web_ui.search import DisabledButtonException
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
+from fixtures.pytest_store import store
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -34,7 +33,7 @@ def setup_cleanup_search():
 
 
 @pytest.yield_fixture(scope="function")
-def rails_delete_filter(request):
+def rails_delete_filter(request, logger):
     """Introspect a function bound filter_name and use ssh_client and rails to delete it"""
     # No pre-test, just cleanup after yield
     yield
@@ -71,7 +70,7 @@ def test_filter_without_user_input():
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_with_user_input():
+def test_filter_with_user_input(logger):
     # Set up the filter
     logger.debug('DEBUG: test_with_user_input: fill and apply')
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=)",
@@ -90,7 +89,7 @@ def test_filter_with_user_input_and_cancellation():
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_cancel(rails_delete_filter):
+def test_filter_save_cancel(rails_delete_filter, logger):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_cancel.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_cancel.filter_name))
@@ -107,7 +106,7 @@ def test_filter_save_cancel(rails_delete_filter):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_and_load(rails_delete_filter):
+def test_filter_save_and_load(rails_delete_filter, logger):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_load.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_and_load.filter_name))
@@ -126,7 +125,7 @@ def test_filter_save_and_load(rails_delete_filter):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_and_cancel_load(rails_delete_filter):
+def test_filter_save_and_cancel_load(rails_delete_filter, logger):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_cancel_load.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_and_cancel_load.filter_name))
@@ -145,7 +144,7 @@ def test_filter_save_and_cancel_load(rails_delete_filter):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter):
+def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter, logger):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_cancel_load_with_user_input.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(
@@ -186,7 +185,7 @@ def test_quick_search_with_filter(request):
     assert_no_cfme_exception()
 
 
-def test_can_delete_filter():
+def test_can_delete_filter(logger):
     filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(filter_name))
     assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)

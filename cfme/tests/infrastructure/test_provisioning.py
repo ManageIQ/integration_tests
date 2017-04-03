@@ -11,7 +11,6 @@ from cfme.web_ui import fill
 from utils import normalize_text, testgen
 from utils.blockers import BZ
 from utils.generators import random_vm_name
-from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
@@ -87,7 +86,7 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_prov
 
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
 def test_provision_approval(
-        setup_provider, provider, vm_name, smtp_test, request, edit, provisioning):
+        setup_provider, provider, vm_name, smtp_test, request, edit, provisioning, logger):
     """ Tests provisioning approval. Tests couple of things.
 
     * Approve manually

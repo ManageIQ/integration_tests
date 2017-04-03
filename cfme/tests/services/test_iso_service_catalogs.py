@@ -12,7 +12,6 @@ from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
 from cfme import test_requirements
 from utils import testgen
-from utils.log import logger
 from utils.wait import wait_for
 from utils.conf import cfme_data
 from utils.blockers import BZ
@@ -122,7 +121,7 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
 
 @pytest.mark.usefixtures('setup_iso_datastore')
 @pytest.mark.meta(blockers=[BZ(1358069, forced_streams=["5.6", "5.7", "upstream"])])
-def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request):
+def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request, logger):
     """Tests RHEV ISO service catalog
 
     Metadata:

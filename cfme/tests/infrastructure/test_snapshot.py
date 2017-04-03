@@ -12,7 +12,6 @@ from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
-from utils.log import logger
 from utils.path import data_path
 from utils.ssh import SSHClient
 from utils.wait import wait_for
@@ -96,7 +95,7 @@ def test_delete_all_snapshots(test_vm, provider):
 
 @pytest.mark.meta(blockers=[1333566])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
-def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request):
+def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request, logger):
     """Tests revert snapshot
 
     Metadata:

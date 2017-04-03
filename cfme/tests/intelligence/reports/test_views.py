@@ -10,7 +10,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils import testgen
 from utils.blockers import BZ
-from utils.log import logger
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.report,
@@ -22,7 +21,7 @@ pytest_generate_tests = testgen.generate(
 
 
 @pytest.yield_fixture(scope='module')
-def create_report():
+def create_report(logger):
     # TODO parameterize on path, for now test infrastructure reports
     path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
     report = CannedSavedReport.new(path)

@@ -16,7 +16,6 @@ from cfme.intelligence.reports.reports import CustomReport
 from datetime import date
 from utils import testgen
 from utils.blockers import BZ
-from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for
 
@@ -50,7 +49,7 @@ def new_credential():
 
 
 @pytest.yield_fixture(scope="module")
-def vm_ownership(enable_candu, setup_provider_modscope, provider):
+def vm_ownership(enable_candu, setup_provider_modscope, provider, logger):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
     try:
@@ -98,7 +97,7 @@ def enable_candu():
 
 
 @pytest.fixture(scope="module")
-def assign_compute_default_rate(provider):
+def assign_compute_default_rate(provider, logger):
     # Assign default Compute rate to the Enterprise and then queue the Chargeback report.
     enterprise = cb.Assign(
         assign_to="The Enterprise",
@@ -110,7 +109,7 @@ def assign_compute_default_rate(provider):
 
 
 @pytest.yield_fixture(scope="module")
-def assign_compute_custom_rate(new_compute_rate, provider):
+def assign_compute_custom_rate(new_compute_rate, provider, logger):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
     enterprise = cb.Assign(
@@ -145,7 +144,7 @@ def count_records_rollups_table(appliance, provider):
 
 
 @pytest.fixture(scope="module")
-def resource_usage(vm_ownership, appliance, provider):
+def resource_usage(vm_ownership, appliance, provider, logger):
     # Retrieve resource usage values from metric_rollups table.
     average_cpu_used_in_mhz = 0
     average_memory_used_in_mb = 0
@@ -279,7 +278,7 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_default(vm_ownership, assign_compute_default_rate, provider):
+def chargeback_report_default(vm_ownership, assign_compute_default_rate, provider, logger):
     # Create a Chargeback report based on the default Compute rate; Queue the report.
     owner = vm_ownership
     data = {'menu_name': 'cb_' + provider.name,
@@ -303,7 +302,7 @@ def chargeback_report_default(vm_ownership, assign_compute_default_rate, provide
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_custom(vm_ownership, assign_compute_custom_rate, provider):
+def chargeback_report_custom(vm_ownership, assign_compute_custom_rate, provider, logger):
     # Create a Chargeback report based on a custom Compute rate; Queue the report
     owner = vm_ownership
     data = {'menu_name': 'cb_custom_' + provider.name,

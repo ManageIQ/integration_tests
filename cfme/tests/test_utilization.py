@@ -13,7 +13,6 @@ from cfme.middleware.provider import MiddlewareProvider
 from fixtures.provider import setup_or_skip
 from utils import testgen
 from utils import conf
-from utils.log import logger
 from utils.version import current_version
 
 
@@ -54,7 +53,7 @@ def clean_setup_provider(request, provider):
 
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.7" and provider.type == 'gce')
-def test_metrics_collection(clean_setup_provider, provider, enable_candu):
+def test_metrics_collection(clean_setup_provider, provider, enable_candu, logger):
     """Check the db is gathering collection data for the given provider
 
     Metadata:

@@ -7,14 +7,13 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.configure import about
 from utils import version
 from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2246"])
 @pytest.mark.meta(blockers=[1272618])
-def test_about_links():
+def test_about_links(logger):
     if version.current_version() < '5.7':
         navigate_to(Server, 'About')
     else:

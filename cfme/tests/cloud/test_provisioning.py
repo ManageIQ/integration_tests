@@ -20,7 +20,6 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.generators import random_vm_name
-from utils.log import logger
 from utils.update import update
 from utils.version import current_version
 from utils.wait import wait_for, RefreshTimer
@@ -81,7 +80,8 @@ def vm_name(request, provider):
     return random_vm_name('prov')
 
 
-def test_provision_from_template(request, setup_provider, provider, testing_instance, soft_assert):
+def test_provision_from_template(
+        request, setup_provider, provider, testing_instance, soft_assert, logger):
     """ Tests instance provision from template
 
     Metadata:
@@ -103,7 +103,8 @@ def test_provision_from_template(request, setup_provider, provider, testing_inst
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type != 'gce' or current_version() < "5.7")
-def test_gce_preemtible_provision(request, setup_provider, provider, testing_instance, soft_assert):
+def test_gce_preemtible_provision(
+        request, setup_provider, provider, testing_instance, soft_assert, logger):
     instance, inst_args = testing_instance
     instance.create(**inst_args)
     instance.wait_to_appear(timeout=800)
