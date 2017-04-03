@@ -48,7 +48,7 @@ def vm_obj(request, provider, setup_provider, small_template, vm_name):
 def wait_for_vm_state_change(vm_obj, state):
     vm = vm_obj.get_vm_via_rest()
     if vm_obj.provider.one_of(GCEProvider, EC2Provider, SCVMMProvider):
-        num_sec = 2400  # extra time for slow providers
+        num_sec = 4000  # extra time for slow providers
     else:
         num_sec = 1200
 
