@@ -21,16 +21,16 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 LOG_VERIFICATION_VERBS = ('pod_create', 'pod_wait', 'pod_delete', 'analyze', 'finish')
 
-TestedAttr = namedtuple('TestedAttr', ['table', 'attr', 'verifier'])
+AttributeToVerify = namedtuple('AttributeToVerify', ['table', 'attr', 'verifier'])
 
 TESTED_ATTRIBUTES__openscap_off = (
-    TestedAttr('configuration', 'openscap_results', bool),
-    TestedAttr('configuration', 'openscap_html', lambda val: val == 'Available'),
-    TestedAttr('configuration', 'last_scan', dateparser.parse)
+    AttributeToVerify('configuration', 'openscap_results', bool),
+    AttributeToVerify('configuration', 'openscap_html', lambda val: val == 'Available'),
+    AttributeToVerify('configuration', 'last_scan', dateparser.parse)
 )
 TESTED_ATTRIBUTES__openscap_on = TESTED_ATTRIBUTES__openscap_off + (
-    TestedAttr('compliance', 'status', lambda val: val.startswith('Compliant')),
-    TestedAttr('compliance', 'history', lambda val: val == 'Available')
+    AttributeToVerify('compliance', 'status', lambda val: val.startswith('Compliant')),
+    AttributeToVerify('compliance', 'history', lambda val: val == 'Available')
 )
 
 TEST_ITEMS = (
