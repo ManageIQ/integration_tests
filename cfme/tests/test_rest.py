@@ -132,6 +132,44 @@ def test_add_picture(rest_api):
     assert collection.count == count + 1
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_add_picture_invalid_extension(rest_api):
+    """Tests adding picture with invalid extension.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.pictures
+    count = collection.count
+    with error.expected('Extension must be'):
+        collection.action.create({
+            "extension": "xcf",
+            "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
+            "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
+    assert rest_api.response.status_code == 400
+    collection.reload()
+    assert collection.count == count
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+@pytest.mark.meta(blockers=[BZ(1438587, forced_streams=['5.8', 'upstream'])])
+def test_add_picture_invalid_data(rest_api):
+    """Tests adding picture with invalid content.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.pictures
+    count = collection.count
+    with error.expected('Invalid content'):  # change once the BZ1438587 is fixed
+        collection.action.create({
+            "extension": "png",
+            "content": "invalid"})
+    assert rest_api.response.status_code == 400
+    collection.reload()
+    assert collection.count == count
+
+
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_http_options(rest_api):
     """Tests OPTIONS http method.
