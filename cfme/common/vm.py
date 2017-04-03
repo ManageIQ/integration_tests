@@ -81,7 +81,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     In order to inherit these, you have to implement the ``on_details`` method.
     """
     pretty_attrs = ['name', 'provider', 'template_name']
-    _registered_types = {}
 
     # Forms
     edit_form = Form(
@@ -102,46 +101,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     # Factory class methods
     #
     @classmethod
-    def register_for_provider_type(cls, *provider_types):
-        """This method is used to assign the subclasses to certain providers.
-
-        Usage as follows:
-
-        .. code-block:: python
-
-           @BaseVM.register_for_provider_type("cloud")
-           class Instance(BaseVM):
-               pass
-
-           @BaseVM.register_for_provider_type("ec2")
-           class EC2Instance(BaseVM):
-               pass
-
-           @BaseVM.register_for_provider_type("infra")
-           class VM(BaseVM):
-               pass
-
-        You can use both the types of providers and also the general classes (infra, cloud).
-
-        Args:
-            *provider_types: The provider types to assign this class to
-        """
-        def f(klass):
-            for provider_type in provider_types:
-                if provider_type not in cls._registered_types:
-                    cls._registered_types[provider_type] = {}
-                if issubclass(klass, _TemplateMixin):
-                    cls._registered_types[provider_type]["template"] = klass
-                else:
-                    cls._registered_types[provider_type]["vm"] = klass
-            return klass
-        return f
-
-    @classmethod
     def factory(cls, vm_name, provider, template_name=None, template=False):
         """Factory class method that determines the correct subclass for given provider.
 
-        For reference how does that work, refer to :py:meth:`register_for_provider_type`
+        For reference how does that work, refer to the entrypoints in the setup.py
 
         Args:
             vm_name: Name of the VM/Instance as it appears in the UI

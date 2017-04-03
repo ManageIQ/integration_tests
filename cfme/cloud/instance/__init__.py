@@ -74,7 +74,6 @@ class CloudInstanceTimelinesView(TimelinesView, BaseLoggedInPage):
             super(TimelinesView, self).is_displayed
 
 
-@VM.register_for_provider_type("cloud")
 class Instance(VM, Navigatable):
     """Represents a generic instance in CFME. This class is used if none of the inherited classes
     will match.

@@ -2,11 +2,9 @@ from utils import version, deferred_verpick
 from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui import fill, flash
 from cfme.fixtures import pytest_selenium as sel
-from cfme.common.vm import VM
 from . import Instance, select_provision_image
 
 
-@VM.register_for_provider_type("openstack")
 class OpenStackInstance(Instance):
     # CFME & provider power control options
     START = "Start"  # START also covers RESUME and UNPAUSE (same as in CFME 5.4+ web UI)
@@ -39,6 +37,15 @@ class OpenStackInstance(Instance):
     STATE_UNKNOWN = "unknown"
     STATE_ARCHIVED = "archived"
     STATE_TERMINATED = "terminated"
+
+    UI_POWERSTATES_AVAILABLE = {
+        'on': [SUSPEND, SOFT_REBOOT, HARD_REBOOT, TERMINATE],
+        'off': [START, TERMINATE]
+    }
+    UI_POWERSTATES_UNAVAILABLE = {
+        'on': [START],
+        'off': [SUSPEND, SOFT_REBOOT, HARD_REBOOT]
+    }
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,
                instance_type=None, cancel=False, **prov_fill_kwargs):

@@ -60,6 +60,7 @@ setup(
         'manageiq.template_categories':
         [
             'infra = cfme.infrastructure.virtual_machines:Template',
+            'cloud = cfme.cloud.instance.image:Image'
         ],
 
     },
