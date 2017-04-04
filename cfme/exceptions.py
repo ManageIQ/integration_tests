@@ -271,6 +271,13 @@ class KeyPairNotFound(CFMEException):
     pass
 
 
+class AvailabilityZoneNotFound(CFMEException):
+    """
+    Raised if a specific Cloud Availability Zone cannot be found.
+    """
+    pass
+
+
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
