@@ -73,6 +73,7 @@ class WorkloadsDefaultView(WorkloadsView):
             self.title.text == 'All VMs & Instances' and
             self.vms.is_opened)
 
+
 class WorkloadsTemplate(WorkloadsView):
     title = Text("#explorer_title_text")
 

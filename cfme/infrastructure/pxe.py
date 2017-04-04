@@ -13,7 +13,6 @@ from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table,
 from cfme.web_ui import paginator as pg
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
-from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 import utils.conf as conf

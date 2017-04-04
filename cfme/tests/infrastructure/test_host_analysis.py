@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-from functools import partial
 
 from cfme import test_requirements
 from cfme.configure.tasks import is_host_analysis_finished

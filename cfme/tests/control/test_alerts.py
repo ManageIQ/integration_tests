@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from functools import partial
 
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
