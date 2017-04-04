@@ -150,9 +150,7 @@ def test_delete_instance(new_instance):
 def test_list_vms_infra_node(provider, soft_assert):
     navigate_to(provider.infra_provider, 'ProviderNodes')
     # Match hypervisors by IP with count of running VMs
-    hvisors = dict()
-    for hv in provider.mgmt.api.hypervisors.list():
-        hvisors.update({hv.host_ip: hv.running_vms})
+    hvisors = {hv.host_ip: hv.running_vms for hv in provider.mgmt.api.hypervisors.list()}
 
     # Skip non-compute nodes
     quads = [q.name for q in Quadicon.all() if 'Compute' in q.name]

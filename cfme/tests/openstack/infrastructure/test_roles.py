@@ -65,7 +65,6 @@ def test_roles_summary(provider, soft_assert):
             soft_assert(res, err_ptrn.format(v))
 
 
-@pytest.mark.trylast
 def test_role_delete(provider):
     navigate_to(DeploymentRoles, 'All')
     quads = list(Quadicon.all())

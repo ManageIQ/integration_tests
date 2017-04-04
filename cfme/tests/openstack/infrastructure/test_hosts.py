@@ -132,11 +132,11 @@ def test_host_zones_assigned(provider):
 @pytest.mark.trylast
 def test_host_delete(provider):
     navigate_to(provider, 'ProviderNodes')
-    quads = filter(lambda q: 'Compute' in q.name, Quadicon.all())
-    hname = random.choice(quads).name
-    host = Host(hname, provider)
+    quad_names = [q.name for q in Quadicon.all() if 'Compute' in q.name]
+    host_name = random.choice(quad_names).name
+    host = Host(host_name, provider)
     host.delete(cancel=False)
     flash.assert_no_errors()
     wait_for_host_delete(host)
     navigate_to(provider, 'ProviderNodes')
-    assert hname not in [q.name for q in Quadicon.all()]
+    assert host_name not in [q.name for q in Quadicon.all()]
