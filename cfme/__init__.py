@@ -1,5 +1,3 @@
-from cfme.web_ui import FileInput, Input, Radio, form_buttons
-from cfme.web_ui.tabstrip import TabStripForm
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils import version
@@ -47,6 +45,9 @@ class ProvCredential(Credential, Updateable):
          type: One of [amqp, candu, ssh, token] (optional)
          domain: Domain for default credentials (optional)
     """
+    from cfme.web_ui import FileInput, Input, Radio, form_buttons
+    from cfme.web_ui.tabstrip import TabStripForm
+
     @property
     def form(self):
         fields = [
