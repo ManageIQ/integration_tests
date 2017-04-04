@@ -791,21 +791,22 @@ class TestOrchestrationTemplatesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        response_len = len(orchestration_templates)
+        CONTENT_TEMPLATE = "{ 'Description' : '%s' }\n"
+        num_orch_templates = len(orchestration_templates)
         new = []
-        for _ in range(response_len):
+        for _ in range(num_orch_templates):
             uniq = fauxfactory.gen_alphanumeric(5)
             new.append({
                 "name": "test_copied_{}".format(uniq),
-                "content": "{ 'Description' : " + "'{}'".format(uniq) + "}\n"
+                "content": CONTENT_TEMPLATE.replace('%s', uniq)
             })
         if from_detail:
             copied = []
-            for i in range(response_len):
+            for i in range(num_orch_templates):
                 copied.append(orchestration_templates[i].action.copy(**new[i]))
                 assert rest_api.response.status_code == 200
         else:
-            for i in range(response_len):
+            for i in range(num_orch_templates):
                 new[i].update(orchestration_templates[i]._ref_repr())
             copied = rest_api.collections.orchestration_templates.action.copy(*new)
             assert rest_api.response.status_code == 200
@@ -813,8 +814,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
         request.addfinalizer(
             lambda: rest_api.collections.orchestration_templates.action.delete(*copied))
 
-        assert len(copied) == response_len
-        for i in range(response_len):
+        assert len(copied) == num_orch_templates
+        for i in range(num_orch_templates):
             orchestration_templates[i].reload()
             assert copied[i].name == new[i]['name']
             assert orchestration_templates[i].id != copied[i].id
@@ -835,19 +836,19 @@ class TestOrchestrationTemplatesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        response_len = len(orchestration_templates)
+        num_orch_templates = len(orchestration_templates)
         new = []
-        for _ in range(response_len):
+        for _ in range(num_orch_templates):
             new.append({
                 "name": "test_copied_{}".format(fauxfactory.gen_alphanumeric(5))
             })
         if from_detail:
-            for i in range(response_len):
+            for i in range(num_orch_templates):
                 with error.expected("content must be unique"):
                     orchestration_templates[i].action.copy(**new[i])
                 assert rest_api.response.status_code == 400
         else:
-            for i in range(response_len):
+            for i in range(num_orch_templates):
                 new[i].update(orchestration_templates[i]._ref_repr())
             with error.expected("content must be unique"):
                 rest_api.collections.orchestration_templates.action.copy(*new)
