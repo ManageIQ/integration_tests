@@ -40,7 +40,7 @@ def pytest_generate_tests(metafunc):
         host = hosts[0]
         creds = credentials[host["credentials"]]
         ip_address = resolve_hostname(host["name"])
-        cred = VMwareProvider.Credential(
+        cred = VMwareProvider.ProvCredential(
             principal=creds["username"],
             secret=creds["password"],
             verify_secret=creds["password"]

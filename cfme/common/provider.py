@@ -68,7 +68,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     save_button = None
     db_types = ["Providers"]
 
-    class Credential(cfme.Credential, Updateable):
+    class ProvCredential(cfme.Credential, Updateable):
         """Provider credentials
 
            Args:
@@ -131,7 +131,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
 
         def __init__(self, **kwargs):
-            super(BaseProvider.Credential, self).__init__(**kwargs)
+            super(BaseProvider.ProvCredential, self).__init__(**kwargs)
             self.type = kwargs.get('cred_type', None)
             self.domain = kwargs.get('domain', None)
             if self.type == 'token':
@@ -515,7 +515,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         domain = credential_dict.get('domain', None)
         token = credential_dict.get('token', None)
-        return cls.Credential(
+        return cls.ProvCredential(
             principal=credential_dict['username'],
             secret=credential_dict['password'],
             cred_type=cred_type,
@@ -708,7 +708,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             return True
 
 
-@fill.method((Form, BaseProvider.Credential))
+@fill.method((Form, BaseProvider.ProvCredential))
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """

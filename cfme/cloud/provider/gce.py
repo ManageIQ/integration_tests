@@ -50,7 +50,7 @@ class GCEProvider(CloudProvider):
         service_account = credential_dict.get('service_account', None)
         if service_account:
             service_account = cls.gce_service_account_formating(service_account)
-        return cls.Credential(
+        return cls.ProvCredential(
             principal=credential_dict['username'],
             secret=credential_dict['password'],
             cred_type=cred_type,

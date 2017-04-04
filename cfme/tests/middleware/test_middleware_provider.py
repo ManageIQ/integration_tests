@@ -43,7 +43,7 @@ def test_add_cancelled_validation():
 def test_password_mismatch_validation(soft_assert):
     """ Tests password mismatch check """
     prov = HawkularProvider()
-    cred = prov.Credential(
+    cred = prov.ProvCredential(
         principal='bad',
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(6)
