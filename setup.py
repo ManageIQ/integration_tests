@@ -45,6 +45,24 @@ setup(
             'kubernetes = cfme.containers.provider.kubernetes:KubernetesProvider',
             'openshift = cfme.containers.provider.openshift:OpenshiftProvider',
         ],
+        'manageiq.vm_categories':
+        [
+            'infra = cfme.infrastructure.virtual_machines:Vm',
+            'cloud = cfme.cloud.instance:Instance'
+        ],
+        'manageiq.vm_types.cloud':
+        [
+            'ec2 = cfme.cloud.instance.ec2:EC2Instance',
+            'gce = cfme.cloud.instance.gce:GCEInstance',
+            'openstack = cfme.cloud.instance.openstack:OpenStackInstance',
+            'azure = cfme.cloud.instance.azure:AzureInstance'
+        ],
+        'manageiq.template_categories':
+        [
+            'infra = cfme.infrastructure.virtual_machines:Template',
+            'cloud = cfme.cloud.instance.image:Image'
+        ],
+
     },
     packages=find_packages(),
 )

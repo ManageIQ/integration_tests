@@ -104,7 +104,6 @@ class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
             super(TimelinesView, self).is_displayed
 
 
-@BaseVM.register_for_provider_type("infra")
 class Vm(BaseVM):
     """Represents a VM in CFME
 
@@ -389,7 +388,6 @@ class Vm(BaseVM):
                 flash.assert_success_message("Management Engine Relationship saved")
 
 
-@BaseTemplate.register_for_provider_type("infra")
 class Template(BaseTemplate):
     REMOVE_MULTI = "Remove Templates from the VMDB"
 

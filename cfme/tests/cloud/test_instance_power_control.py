@@ -5,10 +5,6 @@ import pytest
 import cfme.web_ui.flash as flash
 from cfme import test_requirements
 from cfme.cloud.instance import Instance
-from cfme.cloud.instance.openstack import OpenStackInstance
-from cfme.cloud.instance.ec2 import EC2Instance
-from cfme.cloud.instance.azure import AzureInstance
-from cfme.cloud.instance.gce import GCEInstance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -115,58 +111,11 @@ def wait_for_termination(provider, instance):
 def check_power_options(soft_assert, instance, power_state):
     """ Checks if power options match given power state ('on', 'off')
     """
-    must_be_available = {
-        AzureInstance: {
-            'on': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT,
-                   AzureInstance.TERMINATE],
-            'off': [AzureInstance.START, AzureInstance.TERMINATE]
-        },
-        EC2Instance: {
-            'on': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT, EC2Instance.TERMINATE],
-            'off': [EC2Instance.START, EC2Instance.TERMINATE]
-        },
-        OpenStackInstance: {
-            'on': [
-                OpenStackInstance.SUSPEND,
-                OpenStackInstance.SOFT_REBOOT,
-                OpenStackInstance.HARD_REBOOT,
-                OpenStackInstance.TERMINATE
-            ],
-            'off': [OpenStackInstance.START, OpenStackInstance.TERMINATE]
-        },
-        GCEInstance: {
-            'on': [GCEInstance.STOP, GCEInstance.SOFT_REBOOT, GCEInstance.TERMINATE],
-            'off': [GCEInstance.START, GCEInstance.TERMINATE]
-        }
-    }
-    mustnt_be_available = {
-        AzureInstance: {
-            'on': [AzureInstance.START],
-            'off': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT]
-        },
-        EC2Instance: {
-            'on': [EC2Instance.START],
-            'off': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT]
-        },
-        OpenStackInstance: {
-            'on': [OpenStackInstance.START],
-            'off': [
-                OpenStackInstance.SUSPEND,
-                OpenStackInstance.SOFT_REBOOT,
-                OpenStackInstance.HARD_REBOOT
-            ]
-        },
-        GCEInstance: {
-            'on': [GCEInstance.START],
-            'off': [GCEInstance.STOP, GCEInstance.SOFT_REBOOT]
-        }
-    }
-
-    for pwr_option in must_be_available[instance.__class__][power_state]:
+    for pwr_option in instance.UI_POWERSTATES_AVAILABLE[power_state]:
         soft_assert(
             instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
             "{} must be available in current power state - {} ".format(pwr_option, power_state))
-    for pwr_option in mustnt_be_available[instance.__class__][power_state]:
+    for pwr_option in instance.UI_POWERSTATES_UNAVAILABLE[power_state]:
         soft_assert(
             not instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
             "{} must not be available in current power state - {} ".format(pwr_option, power_state))

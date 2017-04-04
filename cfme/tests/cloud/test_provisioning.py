@@ -9,10 +9,6 @@ from textwrap import dedent
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.cloud.instance import Instance
-from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
-from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
-from cfme.cloud.instance.azure import AzureInstance  # NOQA
-from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
@@ -51,6 +47,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         'last_name': 'Provisioner',
         'notes': note,
     }
+    # TODO Move this into helpers on the provider classes
     if not isinstance(provider, AzureProvider):
         inst_args['instance_type'] = provisioning['instance_type']
         inst_args['availability_zone'] = provisioning['availability_zone']

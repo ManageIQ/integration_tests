@@ -5,10 +5,6 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.instance import Instance
-from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
-from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
-from cfme.cloud.instance.azure import AzureInstance  # NOQA
-from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import testgen, ssh

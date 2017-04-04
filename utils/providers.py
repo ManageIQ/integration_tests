@@ -15,11 +15,6 @@ from copy import copy
 
 from cfme.common.provider import all_types
 
-from cfme.containers import provider as containers_providers  # NOQA
-from cfme.cloud import provider as cloud_providers  # NOQA
-from cfme.infrastructure import provider as infrastructure_providers  # NOQA
-from cfme.middleware import provider as middleware_providers  # NOQA
-
 from cfme.exceptions import UnknownProviderType
 from utils import conf, version
 from utils.log import logger
