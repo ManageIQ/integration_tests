@@ -64,7 +64,22 @@ def create_requests(collection, rest_api, automation_requests_data, multiple):
 
 
 def create_pending_requests(collection, rest_api, requests_pending):
+    # The `approval_state` is `pending_approval`. Wait to see that
+    # it does NOT change - that would mean the request was auto-approved.
+    # The `wait_for` is expected to fail.
+    # It's enough to wait just for the first request, it gives
+    # other requests the same amount of time to change state.
+    waiting_request = requests_pending[0]
+    wait_for(
+        lambda: waiting_request.approval_state != 'pending_approval',
+        fail_func=waiting_request.reload,
+        num_sec=30,
+        delay=10,
+        silent_failure=True)
+
     for request in requests_pending:
+        request.reload()
+        assert request.approval_state == 'pending_approval'
         resource = collection.get(id=request.id)
         assert rest_api.response.status_code == 200
         assert resource.type == 'AutomationRequest'
