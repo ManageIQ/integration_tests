@@ -186,6 +186,74 @@ def test_user_settings(rest_api):
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_datetime_filtering(rest_api, a_provider):
+    """Tests support for DateTime filtering with timestamps in YYYY-MM-DDTHH:MM:SSZ format.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.vms
+    url_string = '{}{}'.format(
+        collection._href,
+        '?expand=resources&attributes=created_on&sort_by=created_on&sort_order=asc'
+        '&filter[]=created_on{}{}')
+    vms_num = len(collection)
+    assert vms_num > 3
+    baseline_vm = collection[vms_num / 2]
+    baseline_datetime = baseline_vm._data['created_on']  # YYYY-MM-DDTHH:MM:SSZ
+
+    def _get_filtered_resources(operator):
+        return rest_api.get(url_string.format(operator, baseline_datetime))['resources']
+
+    older_resources = _get_filtered_resources('<')
+    newer_resources = _get_filtered_resources('>')
+    matching_resources = _get_filtered_resources('=')
+    # this will fail once BZ1437529 is fixed
+    # should be: ``assert len(matching_resources)``
+    assert len(matching_resources) == 0
+    if older_resources:
+        last_older = collection.get(id=older_resources[-1]['id'])
+        assert last_older.created_on < baseline_vm.created_on
+    if newer_resources:
+        first_newer = collection.get(id=newer_resources[0]['id'])
+        # this will fail once BZ1437529 is fixed
+        # should be: ``assert first_newer.created_on > baseline_vm.created_on``
+        assert first_newer.created_on == baseline_vm.created_on
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_date_filtering(rest_api, a_provider):
+    """Tests support for DateTime filtering with timestamps in YYYY-MM-DD format.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.vms
+    url_string = '{}{}'.format(
+        collection._href,
+        '?expand=resources&attributes=created_on&sort_by=created_on&sort_order=desc'
+        '&filter[]=created_on{}{}')
+    vms_num = len(collection)
+    assert vms_num > 3
+    baseline_vm = collection[vms_num / 2]
+    baseline_date, _ = baseline_vm._data['created_on'].split('T')  # YYYY-MM-DD
+
+    def _get_filtered_resources(operator):
+        return rest_api.get(url_string.format(operator, baseline_date))['resources']
+
+    older_resources = _get_filtered_resources('<')
+    newer_resources = _get_filtered_resources('>')
+    matching_resources = _get_filtered_resources('=')
+    assert len(matching_resources)
+    if newer_resources:
+        last_newer = collection.get(id=newer_resources[-1]['id'])
+        assert last_newer.created_on > baseline_vm.created_on
+    if older_resources:
+        first_older = collection.get(id=older_resources[0]['id'])
+        assert first_older.created_on < baseline_vm.created_on
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_resources_hiding(rest_api):
     """Test that it's possible to hide resources in response.
 
