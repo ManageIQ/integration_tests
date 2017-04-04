@@ -150,7 +150,7 @@ class CFMENavigateStep(NavigateStep):
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
         if getattr(fn, '_can_skip_badness_test', False):
-            self.log_message('Op is a Nop! ({})'.format(fn.__name__))
+            # self.log_message('Op is a Nop! ({})'.format(fn.__name__))
             return
 
         if self.VIEW:
@@ -240,7 +240,8 @@ class CFMENavigateStep(NavigateStep):
         from cfme import login
 
         try:
-            self.log_message("Invoking {}, with {} and {}".format(fn.func_name, args, kwargs))
+            self.log_message(
+                "Invoking {}, with {} and {}".format(fn.func_name, args, kwargs), level="debug")
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
@@ -352,12 +353,20 @@ class CFMENavigateStep(NavigateStep):
     def post_navigate(self, *args, **kwargs):
         pass
 
-    def log_message(self, msg):
-        logger.info("[UI-NAV/{}/{}]: {}".format(self.obj.__class__.__name__, self._name, msg))
+    def log_message(self, msg, level="debug"):
+        str_msg = "[UI-NAV/{}/{}]: {}".format(self.obj.__class__.__name__, self._name, msg)
+        getattr(logger, level)(str_msg)
+
+    def construst_message(self, here, resetter, view, duration):
+        str_here = "Already Here" if here else "Needed Navigation"
+        str_resetter = "Resetter Used" if resetter else "No Resetter"
+        str_view = "View Returned" if view else "No View Available"
+        return "{}/{}/{} (elapsed {}ms)".format(str_here, str_resetter, str_view, duration)
 
     def go(self, _tries=0, *args, **kwargs):
         nav_args = {'use_resetter': True}
-
+        self.log_message("Beginning Navigation...", level="info")
+        start_time = time.time()
         if _tries > 2:
             # Need at least three tries:
             # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
@@ -369,25 +378,25 @@ class CFMENavigateStep(NavigateStep):
             if arg in kwargs:
                 nav_args[arg] = kwargs.pop(arg)
         self.check_for_badness(self.pre_navigate, _tries, nav_args, *args, **kwargs)
-        self.log_message("Checking if already here")
         here = False
+        resetter_used = False
         try:
             here = self.check_for_badness(self.am_i_here, _tries, nav_args, *args, **kwargs)
         except Exception as e:
-            self.log_message("Exception raised [{}] whilst checking if already here".format(e))
-        if here:
-            self.log_message("Already here")
-        else:
-            self.log_message("Not here")
+            self.log_message(
+                "Exception raised [{}] whilst checking if already here".format(e), level="error")
+        if not here:
+            self.log_message("Prerequiesite Needed")
             self.prerequisite_view = self.prerequisite()
-            self.log_message("Heading to destination")
             self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
         if nav_args['use_resetter']:
-            self.log_message("Running resetter")
+            resetter_used = True
             self.check_for_badness(self.resetter, _tries, nav_args, *args, **kwargs)
         self.check_for_badness(self.post_navigate, _tries, nav_args, *args, **kwargs)
-        if self.VIEW is not None:
-            return self.view
+        view = self.view if self.VIEW is not None else None
+        duration = int((time.time() - start_time) * 1000)
+        self.log_message(self.construst_message(here, resetter_used, view, duration), level="info")
+        return view
 
 
 navigator = Navigate()
