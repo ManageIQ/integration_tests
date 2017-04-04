@@ -25,7 +25,7 @@ def test_black_console_set_hostname(appliance):
     """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '4' gives
     access to set hostname, 'hostname' sets new hostname."""
 
-    hostname = 'Elite-QE.redhat.com'
+    hostname = 'test.example.com'
     if appliance.version >= "5.8":
         command_set = ('ap', '', '1', '4', hostname)
     else:
