@@ -792,13 +792,13 @@ class TestOrchestrationTemplatesRESTAPI(object):
             test_flag: rest
         """
         num_orch_templates = len(orchestration_templates)
-        content_template = "{ 'Description' : '%S' }\n"
+        content_template = "{ 'Description' : '@s' }\n"
         new = []
         for _ in range(num_orch_templates):
             uniq = fauxfactory.gen_alphanumeric(5)
             new.append({
                 "name": "test_copied_{}".format(uniq),
-                "content": content_template.replace('%S', uniq)
+                "content": content_template.replace('@s', uniq)
             })
         if from_detail:
             copied = []
