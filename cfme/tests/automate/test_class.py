@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from utils import error
+from utils.blockers import BZ
 from utils.update import update
 
 
@@ -75,7 +76,25 @@ def test_schema_crud(request, namespace):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1428424])
+@pytest.mark.meta(blockers=[1404788])
+def test_schema_duplicate_field_disallowed(request, domain):
+    ns = domain.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+    a_class = ns.classes.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    field = fauxfactory.gen_alpha()
+    a_class.schema.add_field(name=field, type='Relationship')
+    with error.expected('Name has already been taken'):
+        a_class.schema.add_field(name=field, type='Relationship')
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1428424, forced_streams=['5.8', 'upstream'])])
 def test_duplicate_class_disallowed(namespace):
     name = fauxfactory.gen_alphanumeric()
     namespace.classes.create(name=name)

@@ -454,10 +454,12 @@ class ClassSchema(Navigatable):
         change = self._fill_field(page, **kwargs)
         if change:
             page.schema.save_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Schema for Automate Class "{}" was saved'.format(self.klass.name))
         else:
             page.schema.cancel_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Edit of schema for Automate Class "{}" was cancelled by the user'.format(
                     self.klass.name))
@@ -470,10 +472,12 @@ class ClassSchema(Navigatable):
                 change = True
         if change:
             page.schema.save_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Schema for Automate Class "{}" was saved'.format(self.klass.name))
         else:
             page.schema.cancel_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Edit of schema for Automate Class "{}" was cancelled by the user'.format(
                     self.klass.name))
@@ -491,10 +495,12 @@ class ClassSchema(Navigatable):
         change = self._delete_field(page, field)
         if change:
             page.schema.save_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Schema for Automate Class "{}" was saved'.format(self.klass.name))
         else:
             page.schema.cancel_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Edit of schema for Automate Class "{}" was cancelled by the user'.format(
                     self.klass.name))
@@ -507,10 +513,12 @@ class ClassSchema(Navigatable):
                 change = True
         if change:
             page.schema.save_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Schema for Automate Class "{}" was saved'.format(self.klass.name))
         else:
             page.schema.cancel_button.click()
+            page.flash.assert_no_error()
             page.flash.assert_message(
                 'Edit of schema for Automate Class "{}" was cancelled by the user'.format(
                     self.klass.name))
