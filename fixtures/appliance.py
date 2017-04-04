@@ -32,7 +32,7 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
             count=count, lease_time=lease_time, preconfigured=preconfigured)
         yield apps
     finally:
-        temp_appliances.ssh_client.close()
+        apps.ssh_client.close()
         sprout_client.destroy_pool(request_id)
 
 

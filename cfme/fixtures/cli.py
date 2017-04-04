@@ -53,7 +53,7 @@ def fqdn_appliance(appliance):
         raise SproutException('No provision available')
     yield apps[0]
 
-    fqdn_appliance.ssh_client.close()
+    apps[0].ssh_client.close()
     sp.destroy_pool(pool_id)
 
 
