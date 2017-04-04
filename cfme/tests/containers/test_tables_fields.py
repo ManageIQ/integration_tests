@@ -13,7 +13,6 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.route import Route
 
 from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
 from utils import testgen
 
 
@@ -72,8 +71,7 @@ TEST_ITEMS = [
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
-def test_tables_fields(provider, test_item, soft_assert):
-
+def test_tables_fields(provider, test_item, soft_assert, logger):
     navigate_to(test_item.obj, 'All')
     tb.select('List View')
     # NOTE: We must re-instantiate here table

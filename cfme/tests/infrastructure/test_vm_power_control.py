@@ -10,7 +10,6 @@ from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
 from utils import testgen
 from utils.generators import random_vm_name
-from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 
 pytestmark = [
@@ -29,7 +28,7 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def testing_vm(request, provider, vm_name):
+def testing_vm(request, provider, vm_name, logger):
     """Fixture to provision vm to the provider being tested"""
     vm = VM.factory(vm_name, provider)
     logger.info("provider_key: %s", provider.key)
@@ -46,7 +45,7 @@ def testing_vm(request, provider, vm_name):
 
 
 @pytest.fixture(scope="function")
-def testing_vm_tools(request, provider, vm_name, full_template):
+def testing_vm_tools(request, provider, vm_name, full_template, logger):
     """Fixture to provision vm with preinstalled tools to the provider being tested"""
     vm = VM.factory(vm_name, provider, template_name=full_template["name"])
     logger.info("provider_key: %s", provider.key)
@@ -223,7 +222,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
-    def test_suspend(self, testing_vm, verify_vm_running, soft_assert):
+    def test_suspend(self, testing_vm, verify_vm_running, soft_assert, logger):
         """Tests suspend
 
         Metadata:
@@ -255,7 +254,7 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     def test_start_from_suspend(
-            self, testing_vm, verify_vm_suspended, soft_assert):
+            self, testing_vm, verify_vm_suspended, soft_assert, logger):
         """Tests start from suspend
 
         Metadata:

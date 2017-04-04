@@ -15,7 +15,6 @@ from utils import version
 from utils.appliance import provision_appliance, current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
-from utils.log import logger
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -116,7 +115,7 @@ def vm_name():
 
 
 @pytest.fixture(scope="module")
-def test_vm(request, virtualcenter_provider, vm_name):
+def test_vm(request, virtualcenter_provider, vm_name, logger):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm = VM.factory(vm_name, virtualcenter_provider)
 

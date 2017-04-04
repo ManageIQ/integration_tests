@@ -11,7 +11,6 @@ from cfme.services.myservice import MyService
 from cfme.web_ui import toolbar as tb
 from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
-from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
@@ -38,7 +37,7 @@ pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.yield_fixture(scope='function')
-def myservice(setup_provider, provider, catalog_item, request):
+def myservice(setup_provider, provider, catalog_item, request, logger):
     """Tests my service
 
     Metadata:

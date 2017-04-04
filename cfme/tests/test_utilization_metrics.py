@@ -19,7 +19,6 @@ from operator import attrgetter
 from utils import testgen
 from utils import conf
 from utils.blockers import BZ
-from utils.log import logger
 from utils.version import current_version
 
 
@@ -65,7 +64,7 @@ def clean_setup_provider(request, provider):
 
 
 @pytest.fixture(scope="module")
-def metrics_collection(clean_setup_provider, provider, enable_candu):
+def metrics_collection(clean_setup_provider, provider, enable_candu, logger):
     """Check the db is gathering collection data for the given provider.
 
     Metadata:

@@ -12,7 +12,6 @@ from cfme.common.vm import VM
 from cfme.web_ui import toolbar
 from utils import testgen
 from utils.blockers import BZ
-from utils.log import logger
 from utils.wait import wait_for
 from utils.version import pick
 
@@ -38,7 +37,7 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def testing_vm(request, vm_name, setup_provider, provider, provisioning):
+def testing_vm(request, vm_name, setup_provider, provider, provisioning, logger):
     vm_obj = VM.factory(vm_name, provider, provisioning["template"])
 
     def _finalize():

@@ -6,7 +6,6 @@ from cfme.common.vm import VM
 from utils import testgen
 from utils.generators import random_vm_name
 from utils.wait import wait_for
-from utils.log import logger
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -25,7 +24,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def vm_obj(request, provider, setup_provider_modscope, small_template_modscope):
+def vm_obj(request, provider, setup_provider_modscope, small_template_modscope, logger):
     vm_obj = VM.factory(random_vm_name('pwrctl'), provider, template_name=small_template_modscope)
 
     @request.addfinalizer

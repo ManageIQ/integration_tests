@@ -11,7 +11,6 @@ from cfme.web_ui import toolbar as tb
 from utils import testgen
 from utils.blockers import BZ
 from utils.generators import random_vm_name
-from utils.log import logger
 from utils.providers import ProviderFilter
 from utils.timeutil import parsetime
 from utils.wait import wait_for
@@ -31,7 +30,7 @@ pytestmark = [
 
 
 @pytest.yield_fixture(scope="function")
-def test_vm(small_template, provider):
+def test_vm(small_template, provider, logger):
     vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     yield vm
@@ -128,7 +127,7 @@ def test_set_retirement_date(test_vm):
 
 @test_requirements.retirement
 @pytest.mark.tier(2)
-def test_unset_retirement_date(test_vm):
+def test_unset_retirement_date(test_vm, logger):
     """Tests cancelling a scheduled retirement by removing the set date
     """
     num_days = 3
@@ -149,7 +148,7 @@ def test_unset_retirement_date(test_vm):
                             BZ(1430373, forced_streams=['5.6'],
                                unblock=lambda provider: provider.one_of(InfraProvider))])
 @pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
-def test_resume_retired_instance(test_vm, provider, remove_date):
+def test_resume_retired_instance(test_vm, provider, remove_date, logger):
     """Test resuming a retired instance, should be supported for infra and cloud, though the
     actual recovery results may differ depending on state after retirement
 

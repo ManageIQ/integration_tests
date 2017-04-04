@@ -13,7 +13,6 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from utils.wait import wait_for
 from utils import testgen
-from utils.log import logger
 from utils import version
 
 pytestmark = [
@@ -87,7 +86,7 @@ def clone_vm_name():
 
 
 @pytest.fixture
-def create_vm(provider, setup_provider, catalog_item, request):
+def create_vm(provider, setup_provider, catalog_item, request, logger):
     vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
     service_catalogs = ServiceCatalogs(catalog_item.name)

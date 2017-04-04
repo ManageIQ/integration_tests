@@ -13,7 +13,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import flash, toolbar
 from utils import testgen
 from utils.blockers import BZ
-from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
@@ -83,7 +82,7 @@ def testing_vm(request, setup_provider, provider):
 
 @pytest.mark.meta(blockers=[1211627, BZ(1311221, forced_streams=['5.5'])])
 def test_vmware_vimapi_hotadd_disk(
-        request, testing_group, provider, testing_vm, domain, cls):
+        request, testing_group, provider, testing_vm, domain, cls, logger):
     """ Tests hot adding a disk to vmware vm.
 
     This test exercises the ``VMware_HotAdd_Disk`` method, located in ``/Integration/VMware/VimApi``

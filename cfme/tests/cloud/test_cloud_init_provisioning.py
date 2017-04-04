@@ -8,7 +8,6 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import testgen, ssh
-from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
@@ -39,7 +38,7 @@ def vm_name(request):
 
 @pytest.mark.tier(3)
 def test_provision_cloud_init(request, setup_provider, provider, provisioning,
-                              setup_ci_template, vm_name):
+                              setup_ci_template, vm_name, logger):
     """ Tests provisioning from a template with cloud_init
 
     Metadata:

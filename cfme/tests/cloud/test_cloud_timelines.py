@@ -19,7 +19,7 @@ pytest_generate_tests = testgen.generate([AzureProvider, OpenStackProvider], sco
 
 
 @pytest.fixture(scope="module")
-def test_instance(request, provider):
+def test_instance(request, provider, logger):
     instance = Instance.factory(random_vm_name("timelines", max_length=16), provider)
 
     request.addfinalizer(instance.delete_from_provider)
@@ -31,7 +31,7 @@ def test_instance(request, provider):
 
 
 @pytest.fixture(scope="module")
-def gen_events(test_instance):
+def gen_events(test_instance, logger):
     logger.debug('Starting, stopping VM')
     mgmt = test_instance.provider.mgmt
     mgmt.stop_vm(test_instance.name)

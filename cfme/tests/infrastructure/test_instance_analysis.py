@@ -19,7 +19,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from utils import testgen, ssh, safe_string, error
 from utils.conf import cfme_data
-from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.tier(3), test_requirements.smartstate]
@@ -209,7 +208,7 @@ def vm_analysis_data(provider, analysis_type):
 
 
 @pytest.fixture(scope="module")
-def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data, appliance):
+def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data, appliance, logger):
     """ Fixture to provision instance on the provider """
 
     vm = VM.factory(vm_name, provider, template_name=vm_analysis_data['image'])
@@ -331,7 +330,8 @@ def detect_system_type(vm):
 
 @pytest.mark.tier(1)
 @pytest.mark.long_running
-def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data):
+def test_ssa_template(
+        request, local_setup_provider, provider, soft_assert, vm_analysis_data, logger):
     """ Tests SSA can be performed on a template
 
     Metadata:
@@ -401,7 +401,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
 
 @pytest.mark.tier(2)
 @pytest.mark.long_running
-def test_ssa_vm(provider, instance, soft_assert):
+def test_ssa_vm(provider, instance, soft_assert, logger):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
@@ -559,7 +559,7 @@ def test_ssa_groups(provider, instance, soft_assert):
 
 
 @pytest.mark.long_running
-def test_ssa_packages(provider, instance, soft_assert):
+def test_ssa_packages(provider, instance, soft_assert, logger):
     """ Tests SSA fetches correct results for packages
 
     Metadata:

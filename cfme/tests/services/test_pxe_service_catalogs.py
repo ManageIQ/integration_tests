@@ -12,7 +12,6 @@ from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_fro
 from cfme.services import requests
 from cfme import test_requirements
 from utils import testgen
-from utils.log import logger
 from utils.wait import wait_for
 from utils.conf import cfme_data
 
@@ -134,7 +133,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
-def test_pxe_servicecatalog(setup_provider, provider, catalog_item, request):
+def test_pxe_servicecatalog(setup_provider, provider, catalog_item, request, logger):
     """Tests RHEV PXE service catalog
 
     Metadata:

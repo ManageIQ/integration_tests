@@ -12,7 +12,6 @@ from cfme.web_ui import flash
 from cfme import test_requirements
 from selenium.common.exceptions import NoSuchElementException
 from utils import error
-from utils.log import logger
 from utils.wait import wait_for
 from utils import version
 
@@ -70,7 +69,7 @@ def test_service_circular_reference(catalog_item):
                                'catalog_items': sec_catalog_bundle.name})
 
 
-def test_service_generic_catalog_bundle(catalog_item):
+def test_service_generic_catalog_bundle(catalog_item, logger):
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
@@ -91,7 +90,7 @@ def test_service_generic_catalog_bundle(catalog_item):
         assert row.last_message.text == 'Request complete'
 
 
-def test_bundles_in_bundle(catalog_item):
+def test_bundles_in_bundle(catalog_item, logger):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,

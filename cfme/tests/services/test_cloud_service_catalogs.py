@@ -12,7 +12,6 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
 from utils import testgen
-from utils.log import logger
 from utils.wait import wait_for
 
 
@@ -56,7 +55,8 @@ def catalog():
     yield catalog
 
 
-def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
+def test_cloud_catalog_item(
+        setup_provider, provider, dialog, catalog, request, provisioning, logger):
     """Tests cloud catalog item
 
     Metadata:

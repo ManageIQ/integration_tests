@@ -7,7 +7,6 @@ from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
 from utils.conf import cfme_data
-from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
@@ -83,7 +82,7 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 @pytest.mark.meta(blockers=[1203775, 1232427])
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
 def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provider, smtp_test,
-                           request):
+                           request, logger):
     """Tests host provisioning
 
     Metadata:

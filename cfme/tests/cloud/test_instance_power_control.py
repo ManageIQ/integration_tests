@@ -11,7 +11,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.generators import random_vm_name
-from utils.log import logger
+from utils.logger import logger
 from utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
@@ -26,7 +26,7 @@ pytestmark = [pytest.mark.tier(2), pytest.mark.long_running, test_requirements.p
 
 
 @pytest.yield_fixture(scope="function")
-def testing_instance(request, setup_provider, provider):
+def testing_instance(request, setup_provider, provider, logger):
     """ Fixture to provision instance on the provider
     """
     instance = Instance.factory(random_vm_name('pwr-c'), provider)
@@ -135,7 +135,7 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider, testing_i
 
 
 def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance, verify_vm_running,
-                            soft_assert):
+                            soft_assert, logger):
     """ Tests terminate instance
 
     Metadata:
@@ -173,7 +173,7 @@ def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert,
 
 
 def test_start(setup_provider_funcscope, provider, testing_instance, soft_assert,
-               verify_vm_stopped):
+               verify_vm_stopped, logger):
     """ Tests instance start
 
     Metadata:
@@ -192,7 +192,7 @@ def test_start(setup_provider_funcscope, provider, testing_instance, soft_assert
 
 
 def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
-                     verify_vm_running):
+                     verify_vm_running, logger):
     """ Tests instance soft reboot
 
     Metadata:

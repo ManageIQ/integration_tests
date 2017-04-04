@@ -4,7 +4,6 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from utils.update import update
 from cfme.cloud.tenant import Tenant
 from utils import testgen
-from utils.log import logger
 from utils.version import current_version
 
 
@@ -12,7 +11,7 @@ pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
 
 
 @pytest.yield_fixture(scope='function')
-def tenant(provider, setup_provider):
+def tenant(provider, setup_provider, logger):
     tenant = Tenant(name=fauxfactory.gen_alphanumeric(8), provider=provider)
 
     yield tenant

@@ -10,7 +10,6 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
-from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen, error
 
@@ -31,7 +30,8 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.mark.tier(2)
-def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event):
+def test_order_catalog_item(
+        provider, setup_provider, catalog_item, request, register_event, logger):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -55,7 +55,7 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
 
 @pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
-        request, rest_api, provider, setup_provider, catalog_item, catalog):
+        request, rest_api, provider, setup_provider, catalog_item, catalog, logger):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
     Metadata:
         test_flag: provision, rest
@@ -82,7 +82,7 @@ def test_order_catalog_item_via_rest(
 
 
 @pytest.mark.tier(2)
-def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
+def test_order_catalog_bundle(provider, setup_provider, catalog_item, request, logger):
     """Tests ordering a catalog bundle
     Metadata:
         test_flag: provision
@@ -140,7 +140,7 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
 
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
-def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
+def test_request_with_orphaned_template(provider, setup_provider, catalog_item, logger):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision

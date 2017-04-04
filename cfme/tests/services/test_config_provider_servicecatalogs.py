@@ -10,7 +10,6 @@ from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from utils import testgen, version
-from utils.log import logger
 from utils.wait import wait_for
 from utils.blockers import BZ
 
@@ -107,7 +106,7 @@ def catalog_item(request, config_manager, dialog, catalog):
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq-ui-classic:267'])
-def test_order_catalog_item(catalog_item, request):
+def test_order_catalog_item(catalog_item, request, logger):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -127,7 +126,7 @@ def test_order_catalog_item(catalog_item, request):
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[BZ(1420179, forced_streams=["5.6", "5.7", "upstream"])])
-def test_retire_ansible_service(catalog_item, request):
+def test_retire_ansible_service(catalog_item, request, logger):
     """Tests order catalog item
     Metadata:
         test_flag: provision

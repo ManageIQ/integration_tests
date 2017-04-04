@@ -6,7 +6,6 @@ from cfme.configure.configuration import server_roles_disabled
 from cfme.rest.gen_data import a_provider as _a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils.log import logger
 from utils import error
 
 
@@ -19,7 +18,7 @@ def a_provider(request):
 
 
 @pytest.fixture(scope="function")
-def provider_rest(request, rest_api):
+def provider_rest(request, rest_api, logger):
     response = rest_api.collections.providers.action.create(
         hostname=fauxfactory.gen_alphanumeric(),
         name=fauxfactory.gen_alphanumeric(),

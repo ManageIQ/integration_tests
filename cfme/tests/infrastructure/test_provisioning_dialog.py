@@ -17,7 +17,6 @@ from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.generators import random_vm_name
-from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for, TimedOutError
 
@@ -74,7 +73,7 @@ def prov_data(provisioning, provider):
 
 
 @pytest.fixture(scope="function")
-def provisioner(request, setup_provider, provider, vm_name):
+def provisioner(request, setup_provider, provider, vm_name, logger):
 
     def _provisioner(template, provisioning_data, delayed=None):
         vm = Vm(name=vm_name, provider=provider, template_name=template)

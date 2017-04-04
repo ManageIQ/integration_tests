@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from fixtures.pytest_store import store
 from utils.browser import quit
 from utils.conf import cfme_data
-from utils.log import logger
 from utils.wait import wait_for
 import fauxfactory
 import pytest
@@ -82,7 +81,7 @@ def test_ntp_conf_file_update_check(request):
 
 
 @pytest.mark.tier(3)
-def test_ntp_server_check(request):
+def test_ntp_server_check(request, logger):
     request.addfinalizer(clear_ntp_settings)
     orig_date = appliance_date()
     past_date = orig_date - timedelta(days=10)
