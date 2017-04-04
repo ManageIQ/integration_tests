@@ -91,6 +91,7 @@ class SSHClient(paramiko.SSHClient):
     The ``container`` param then contains the name of the container.
     """
     def __init__(self, stream_output=False, **connect_kwargs):
+        self.logger = connect_kwargs.pop('logger', logger)
         super(SSHClient, self).__init__()
         self._streaming = stream_output
         # deprecated/useless karg, included for backward-compat
@@ -162,7 +163,7 @@ class SSHClient(paramiko.SSHClient):
 
     def _progress_callback(self, filename, size, sent):
         if sent > 0:
-            logger.debug('scp progress for %r: %s of %s ', filename, sent, size)
+            self.logger.debug('scp progress for %r: %s of %s ', filename, sent, size)
 
     def close(self):
         with diaper:
@@ -187,16 +188,16 @@ class SSHClient(paramiko.SSHClient):
 
     def open_sftp(self, *args, **kwargs):
         if self.is_container:
-            logger.warning(
+            self.logger.warning(
                 'You are about to use sftp on a containerized appliance. It may not work.')
         self.connect()
         return super(SSHClient, self).open_sftp(*args, **kwargs)
 
     def get_transport(self, *args, **kwargs):
         if self.connected:
-            logger.trace('reusing ssh transport')
+            self.logger.trace('reusing ssh transport')
         else:
-            logger.trace('connecting new ssh transport')
+            self.logger.trace('connecting new ssh transport')
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
@@ -219,7 +220,8 @@ class SSHClient(paramiko.SSHClient):
         """
         if isinstance(command, dict):
             command = version.pick(command)
-        logger.info("Parsing command `{command}`".format(command=command))
+        original_command = command
+        self.logger.info("Running command `%s`", command)
         uses_sudo = False
         if self.is_container and not ensure_host:
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
@@ -230,7 +232,8 @@ class SSHClient(paramiko.SSHClient):
             command = 'sudo -i bash -c {command}'.format(command=quote(command))
             uses_sudo = True
 
-        logger.info("Running command `{command}`".format(command=command))
+        if original_command != command:
+            self.logger.info("Actually running command `%s`", command)
         command += '\n'
 
         output = []
@@ -261,16 +264,14 @@ class SSHClient(paramiko.SSHClient):
                     break
             exit_status = session.recv_exit_status()
             return SSHResult(exit_status, ''.join(output))
-        except paramiko.SSHException as exc:
+        except paramiko.SSHException:
             if reraise:
                 raise
             else:
-                logger.exception(exc)
-        except socket.timeout as e:
-            logger.error("Command `{command}` timed out.".format(command=command))
-            logger.exception(e)
-            logger.error("Output of the command before it failed was:\n{output}".format(
-                output=''.join(output)))
+                self.logger.exception('An unhandled Paramiko exception happened')
+        except socket.timeout:
+            self.logger.exception("Command `%s` timed out.", command)
+            self.logger.error("Output of the command before it failed was:\n%r", ''.join(output))
             raise
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
@@ -292,19 +293,18 @@ class SSHClient(paramiko.SSHClient):
             "do :; done & done".format(seconds, cpus), **kwargs)
 
     def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
-        logger.info("Running rails command `{command}`".format(command=command))
+        self.logger.info("Running rails command `%s`", command)
         return self.run_command('/var/www/miq/vmdb/bin/rails runner {command}'.format(
             command=command), timeout=timeout, **kwargs)
 
     def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
-        logger.info("Running rake command `{command}`".format(command=command))
+        self.logger.info("Running rake command `%s`", command)
         return self.run_command(
             '/var/www/miq/vmdb/bin/rake -f /var/www/miq/vmdb/Rakefile {command}'.format(
                 command=command), timeout=timeout, **kwargs)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
-        logger.info("Transferring local file {local_file} to remote {remote_file}".format(
-            local_file=local_file, remote_file=remote_file))
+        self.logger.info("Transferring local file %s to remote %s", local_file, remote_file)
         if self.is_container:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
@@ -325,8 +325,7 @@ class SSHClient(paramiko.SSHClient):
             return scp
 
     def get_file(self, remote_file, local_path='', **kwargs):
-        logger.info("Transferring remote file {remote_file} to local {local_path}".format(
-            remote_file=remote_file, local_path=local_path))
+        self.logger.info("Transferring remote file %s to local %s", remote_file, local_path)
         if self.is_container:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
             self.run_command('cp {} {}'.format(remote_file, tempfilename))
@@ -354,14 +353,14 @@ class SSHClient(paramiko.SSHClient):
             not patched by the current patch-file, it will be used to restore it first.
             Recompiling assets and restarting appropriate services might be required.
         """
-        logger.info('Patching {remote_path}'.format(remote_path=remote_path))
+        self.logger.info('Patching %s', remote_path)
 
         # Upload diff to the appliance
         diff_remote_path = os_path.join('/tmp/', os_path.basename(remote_path))
         self.put_file(local_path, diff_remote_path)
 
         # If already patched with current file, exit
-        logger.info('Checking if already patched')
+        self.logger.info('Checking if already patched')
         rc, out = self.run_command(
             'patch {} {} -f --dry-run -R'.format(remote_path, diff_remote_path))
         if rc == 0:
@@ -369,27 +368,26 @@ class SSHClient(paramiko.SSHClient):
 
         # If we have a .bak file available, it means the file is already patched
         # by some older patch; in that case, replace the file-to-be-patched by the .bak first
-        logger.info("Checking if {}.bak is available".format(remote_path))
+        self.logger.info("Checking if %s.bak is available", remote_path)
         rc, out = self.run_command('test -e {}.bak'.format(remote_path))
         if rc == 0:
-            logger.info(
-                "{}.bak found; using it to replace {}".format(remote_path, remote_path))
+            self.logger.info(
+                "%s.bak found; using it to replace %s", remote_path, remote_path)
             rc, out = self.run_command('mv {}.bak {}'.format(remote_path, remote_path))
             if rc != 0:
                 raise Exception(
                     "Unable to replace {} with {}.bak".format(remote_path, remote_path))
         else:
-            logger.info("{}.bak not found".format(remote_path))
+            self.logger.info("%s.bak not found", remote_path)
 
         # If not patched and there's MD5 checksum available, check it
         if md5:
-            logger.info("MD5 sum check in progress for {remote_path}".format(
-                remote_path=remote_path))
+            self.logger.info("MD5 sum check in progress for %s", remote_path)
             rc, out = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
             if rc == 0:
-                logger.info('MD5 sum check result: file not changed')
+                self.logger.info('MD5 sum check result: file not changed')
             else:
-                logger.warning('MD5 sum check result: file has been changed!')
+                self.logger.warning('MD5 sum check result: file has been changed!')
 
         # Create the backup and patch
         rc, out = self.run_command(

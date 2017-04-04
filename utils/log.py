@@ -166,12 +166,15 @@ class logger_wrap(object):
         self.kwargs = kwargs
 
     def __call__(self, func):
-        def newfunc(*args, **kwargs):
+        def newfunc(wrapped_self, *args, **kwargs):
             cb = kwargs.get('log_callback', None)
             if not cb:
-                cb = logger.info
+                if hasattr(wrapped_self, 'logger'):
+                    cb = wrapped_self.logger.info
+                else:
+                    cb = logger.info
             kwargs['log_callback'] = lambda msg: cb(self.args[0].format(msg))
-            return func(*args, **kwargs)
+            return func(wrapped_self, *args, **kwargs)
         return newfunc
 
 

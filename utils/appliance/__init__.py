@@ -26,7 +26,7 @@ from fixtures.pytest_store import store
 from utils import conf, datafile, db, ssh, ports, version
 from utils.datafile import load_data_file
 from utils.events import EventListener
-from utils.log import logger, create_sublogger, logger_wrap
+from utils.log import logger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path, conf_path
 from utils.version import Version, get_stream, pick, LATEST
@@ -65,12 +65,18 @@ class ApplianceException(Exception):
     pass
 
 
+class ApplianceConsoleLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        return '[CLI] {}'.format(msg), kwargs
+
+
 class ApplianceConsole(object):
     """ApplianceConsole is used for navigating and running appliance_console commands against an
     appliance."""
 
     def __init__(self, appliance):
         self.appliance = appliance
+        self.logger = ApplianceConsoleLoggerAdapter(self.appliance.logger, {})
 
     def run_commands(self, commands, autoreturn=True, timeout=20, channel=None):
         if not channel:
@@ -91,7 +97,7 @@ class ApplianceConsole(object):
                     result += channel.recv(1)
             except socket.timeout:
                 pass
-            logger.debug(result)
+            self.logger.debug(result)
 
 
 class ApplianceConsoleCli(object):
@@ -142,6 +148,36 @@ class ApplianceConsoleCli(object):
         assert return_code != 0
 
 
+class ApplianceLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        msg = msg.strip()
+        if msg.startswith('['):
+            spacer = ''
+        else:
+            spacer = ': '
+        return '[{}]{}{}'.format(self.extra['appliance_ip'], spacer, msg), kwargs
+
+
+class RESTLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        return '[REST]: {}'.format(msg), kwargs
+
+
+class SSHLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        return '[SSH]: {}'.format(msg), kwargs
+
+    def trace(self, msg, *args, **kwargs):
+        """
+        Log 'msg % args' with severity 'TRACE'.
+
+        TODO: Remove
+
+        """
+        if self.isEnabledFor(logging.TRACE):
+            self.log(logging.TRACE, msg, args, **kwargs)
+
+
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -154,7 +190,9 @@ class IPAppliance(object):
     """
     _nav_steps = {}
 
-    def __init__(self, address=None, browser_steal=False, container=None):
+    def __init__(
+            self, address=None, browser_steal=False, container=None, db_port=None, logger=None):
+        # Wrap the logger
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -168,6 +206,9 @@ class IPAppliance(object):
                 self.address = address.netloc
                 self.scheme = address.scheme
                 self._url = address.geturl()
+        if not logger:
+            from utils.log import logger
+        self.logger = ApplianceLoggerAdapter(logger, {'appliance_ip': self.address})
         self.browser_steal = browser_steal
         self.container = container
         self._db_ssh_client = None
@@ -178,6 +219,7 @@ class IPAppliance(object):
         self.context = ImplementationContext.from_instances(
             [self.browser])
         self._server = None
+        self.db_port = db_port or ports.DB
 
     def get(self, cls, *args, **kwargs):
         """A generic getter for instantiation of Collection classes
@@ -221,9 +263,9 @@ class IPAppliance(object):
             # Admin by default
             username = conf.credentials['default']['username']
             password = conf.credentials['default']['password']
-            logger.info(
-                '%r.user was set to None before, therefore generating an admin user: %s/%s',
-                self, username, password)
+            self.logger.info(
+                'user was set to None before, therefore generating an admin user: %s/%s',
+                username, password)
             cred = Credential(principal=username, secret=password)
             self._user = User(credential=cred, appliance=self, name='Administrator')
         return self._user
@@ -231,7 +273,7 @@ class IPAppliance(object):
     @user.setter
     def user(self, user_object):
         if user_object is None:
-            logger.info('%r.user set to None, will be set to admin on next access', self)
+            self.logger.info('user set to None, will be set to admin on next access')
         self._user = user_object
 
     @property
@@ -261,7 +303,8 @@ class IPAppliance(object):
         if (
                 exc_type is not None and not RUNNING_UNDER_SPROUT):
             from cfme.fixtures.pytest_selenium import take_screenshot
-            logger.info("Before we pop this appliance, a screenshot and a traceback will be taken.")
+            self.logger.info(
+                "Before we pop this appliance, a screenshot and a traceback will be taken.")
             ss, ss_error = take_screenshot()
             full_tb = "".join(traceback.format_tb(exc_tb))
             short_tb = "{}: {}".format(exc_type.__name__, str(exc_val))
@@ -285,14 +328,15 @@ class IPAppliance(object):
                     description="Appliance CM error screenshot failure", mode="w",
                     contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
         elif exc_type is not None:
-            logger.info("Error happened but we are not inside a test run so no screenshot now.")
+            self.logger.info(
+                "Error happened but we are not inside a test run so no screenshot now.")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
             self._screenshot_capture_at_context_leave(exc_type, exc_val, exc_tb)
         except Exception:
             # repr is used in order to avoid having the appliance object in the log record
-            logger.exception("taking a screenshot for %s failed", repr(self))
+            self.logger.exception("taking a screenshot for %s failed", repr(self))
         finally:
             assert stack.pop() is self, 'appliance stack inconsistent'
 
@@ -307,7 +351,7 @@ class IPAppliance(object):
 
     @cached_property
     def rest_logger(self):
-        return create_sublogger('rest-api')
+        return RESTLoggerAdapter(self.logger, {})
 
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
@@ -489,7 +533,7 @@ class IPAppliance(object):
         try:
             ems_list = list(self.db.session.query(ems_table))
         except Exception as ex:
-            self.log.warning("Unable to query DB for managed providers: %s", str(ex))
+            self.logger.warning("Unable to query DB for managed providers: %s", str(ex))
             return []
         known_ems_list = []
         for ems in ems_list:
@@ -541,7 +585,7 @@ class IPAppliance(object):
             else:
                 unrecognized_ems_names.add(ems.name)
         if unrecognized_ems_names:
-            self.log.warning(
+            self.logger.warning(
                 "Unrecognized managed providers: {}".format(', '.join(unrecognized_ems_names)))
         return list(found_cruds)
 
@@ -679,8 +723,8 @@ class IPAppliance(object):
                 '{|f| f.write(I18n.t(\'product.name\')) }"')
             result = self.ssh_client.run_command('cat /tmp/product_name.txt')
             return result.output
-        except:
-            logger.error(
+        except Exception:
+            self.logger.exception(
                 "Couldn't fetch the product name from appliance, using ManageIQ as default")
             return 'ManageIQ'
 
@@ -732,10 +776,6 @@ class IPAppliance(object):
         return Version(res.output)
 
     @cached_property
-    def log(self):
-        return create_sublogger(self.address)
-
-    @cached_property
     def coverage(self):
         return ui_coverage.CoverageManager(self)
 
@@ -746,6 +786,7 @@ class IPAppliance(object):
             'hostname': self.hostname,
             'username': conf.credentials['ssh']['ssh-user'],
             'key_filename': conf_path.join('appliance_private_key').strpath,
+            'logger': SSHLoggerAdapter(self.logger, {}),
         }
         return ssh.SSHClient(**connect_kwargs)
 
@@ -774,15 +815,16 @@ class IPAppliance(object):
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
             'container': self.container,
+            'logger': SSHLoggerAdapter(self.logger, {}),
         }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
             ssh_client.get_transport().is_active()
-            logger.info('default appliance ssh credentials are valid')
-        except Exception as e:
-            logger.error(e)
-            logger.error('default appliance ssh credentials failed, trying establish ssh connection'
-                         ' using ssh private key')
+            self.logger.info('default appliance ssh credentials are valid')
+        except Exception:
+            self.logger.exception(
+                'default appliance ssh credentials failed, trying establish ssh connection'
+                ' using ssh private key')
             ssh_client = self.ssh_client_with_privatekey()
         # FIXME: propperly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
@@ -830,17 +872,17 @@ class IPAppliance(object):
         such as in the template tester.
 
         """
-        logger.info('Diagnosing EVM failures, this can take a while...')
+        self.logger.info('Diagnosing EVM failures, this can take a while...')
 
         if not self.address:
             return 'appliance has no IP Address; provisioning failed or networking is broken'
 
-        logger.info('Checking appliance SSH Connection')
+        self.logger.info('Checking appliance SSH Connection')
         if not self.is_ssh_running:
             return 'SSH is not running on the appliance'
 
         # Now for the DB
-        logger.info('Checking appliance database')
+        self.logger.info('Checking appliance database')
         if not self.db_online:
             # postgres isn't running, try to start it
             cmd = 'systemctl restart {}-postgresql'.format(self.postgres_version)
@@ -857,7 +899,7 @@ class IPAppliance(object):
             return 'vmdb_production has no tables'
 
         # try to start EVM
-        logger.info('Checking appliance evmserverd service')
+        self.logger.info('Checking appliance evmserverd service')
         try:
             self.restart_evm_service()
         except ApplianceException as ex:
@@ -881,7 +923,7 @@ class IPAppliance(object):
         # # checking whether it is enabled and enable it
         is_enabled_cmd = 'systemctl is-enabled chronyd'
         if client.run_command(is_enabled_cmd).rc != 0:
-            logger.debug("chrony will start on system startup")
+            self.logger.debug("chrony will start on system startup")
             client.run_command('systemctl enable chronyd')
             client.run_command('systemctl daemon-reload')
 
@@ -889,7 +931,7 @@ class IPAppliance(object):
         server_template = 'server {srv} iburst'
         base_config = ['driftfile /var/lib/chrony/drift', 'makestep 10 10', 'rtcsync']
         try:
-            logger.debug('obtaining clock servers from config file')
+            self.logger.debug('obtaining clock servers from config file')
             clock_servers = conf.cfme_data.get('clock_servers', {})
             for clock_server in clock_servers:
                 base_config.append(server_template.format(srv=clock_server))
@@ -904,18 +946,18 @@ class IPAppliance(object):
         old_conf_file = client.run_command("cat {f}".format(f=filename)).output
         conf_file_updated = False
         if config_file != old_conf_file:
-            logger.debug("chrony's config file isn't equal to prepared one, overwriting it")
+            self.logger.debug("chrony's config file isn't equal to prepared one, overwriting it")
             client.run_command('echo "{txt}" > {f}'.format(txt=config_file, f=filename))
             conf_file_updated = True
 
         if conf_file_updated or client.run_command('systemctl status chronyd').rc != 0:
-            logger.debug('restarting chronyd')
+            self.logger.debug('restarting chronyd')
             client.run_command('systemctl restart chronyd')
 
         # check that chrony is running correctly now
         result = client.run_command('chronyc tracking')
         if result.rc == 0:
-            logger.info('chronyc is running correctly')
+            self.logger.info('chronyc is running correctly')
         else:
             raise ApplianceException("chrony doesn't work. "
                                      "Error message: {e}".format(e=result.output))
@@ -950,13 +992,13 @@ class IPAppliance(object):
 
         self.precompile_assets()
         self.restart_evm_service()
-        logger.info("Waiting for Web UI to start")
+        self.logger.info("Waiting for Web UI to start")
         wait_for(
             func=self.is_web_ui_running,
             message='appliance.is_web_ui_running',
             delay=20,
             timeout=300)
-        logger.info("Web UI is up and running")
+        self.logger.info("Web UI is up and running")
         self.ssh_client.run_command(
             "echo '{}' > /var/www/miq/vmdb/.miqqe_version".format(current_miqqe_version))
         # Invalidate cached version
@@ -1193,7 +1235,7 @@ class IPAppliance(object):
         if "enabled" not in kwargs:
             kwargs["enabled"] = 1
         filename = "/etc/yum.repos.d/{}.repo".format(repo_id)
-        logger.info("Writing a new repofile %s %s", repo_id, repo_url)
+        self.logger.info("Writing a new repofile %s %s", repo_id, repo_url)
         self.ssh_client.run_command('echo "[update-{}]" > {}'.format(repo_id, filename))
         self.ssh_client.run_command('echo "name=update-url-{}" >> {}'.format(repo_id, filename))
         self.ssh_client.run_command('echo "baseurl={}" >> {}'.format(repo_url, filename))
@@ -1223,12 +1265,12 @@ class IPAppliance(object):
         repos = self.find_product_repos()
         if product in repos:
             for v, i in repos[product].iteritems():
-                logger.info("Deleting %s repo with version %s (%s)", product, v, i)
+                self.logger.info("Deleting %s repo with version %s (%s)", product, v, i)
                 self.ssh_client.run_command("rm -f /etc/yum.repos.d/{}.repo".format(i))
         return self.write_repofile(fauxfactory.gen_alpha(), repo_url, **kwargs)
 
     def enable_disable_repo(self, repo_id, enable):
-        logger.info("%s repository %s", "Enabling" if enable else "Disabling", repo_id)
+        self.logger.info("%s repository %s", "Enabling" if enable else "Disabling", repo_id)
         return self.ssh_client.run_command(
             "sed -i 's/^enabled=./enabled={}/' /etc/yum.repos.d/{}.repo".format(
                 1 if enable else 0, repo_id)).rc == 0
@@ -1300,9 +1342,9 @@ class IPAppliance(object):
             # failure to update is fatal, kill this process
             raise KeyboardInterrupt(msg)
 
-        self.log.error(result.output)
+        self.logger.error(result.output)
         if result.rc != 0:
-            self.log.error('appliance update failed')
+            self.logger.error('appliance update failed')
             msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
@@ -1482,8 +1524,8 @@ class IPAppliance(object):
             client.run_command('rm {}'.format(remote_file))
 
         if status != 0:
-            self.log.error('error enabling external db')
-            self.log.error(out)
+            self.logger.error('error enabling external db')
+            self.logger.error(out)
             msg = ('Appliance {} failed to enable external DB running on {}'
                   .format(self.address, db_address))
             log_callback(msg)
@@ -1502,17 +1544,17 @@ class IPAppliance(object):
         try:
             response = requests.get(self.url, timeout=15, verify=False)
             if response.status_code == 200:
-                self.log.info("Appliance online")
+                self.logger.info("Appliance online")
                 return True
             else:
-                self.log.debug('Appliance online, status code %s', response.status_code)
+                self.logger.debug('Appliance online, status code %s', response.status_code)
         except requests.exceptions.Timeout:
-            self.log.debug('Appliance offline, connection timed out')
+            self.logger.debug('Appliance offline, connection timed out')
         except ValueError:
             # requests exposes invalid URLs as ValueErrors, which is excellent
             raise
         except Exception as ex:
-            self.log.debug('Appliance online, but connection failed: %s', str(ex))
+            self.logger.debug('Appliance online, but connection failed: %s', str(ex))
         return False
 
     def is_web_ui_running(self, unsure=False):
@@ -1625,7 +1667,7 @@ class IPAppliance(object):
                      ``True`` == start, ``False`` == stop
         """
         prefix = "" if running else "dis"
-        (log_callback or self.log.info)('Waiting for web UI to ' + prefix + 'appear')
+        (log_callback or self.logger.info)('Waiting for web UI to ' + prefix + 'appear')
         result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
             fail_condition=not running, delay=10)
         return result
@@ -1777,9 +1819,8 @@ class IPAppliance(object):
             server = self.get_yaml_config().get('server', None)
             if server:
                 return server.get('host', None)
-        except Exception as e:
-            logger.exception(e)
-            self.log.error('Exception occured while fetching host address')
+        except Exception:
+            self.logger.exception('Exception occured while fetching host address')
 
     def wait_for_host_address(self):
         try:
@@ -1788,9 +1829,8 @@ class IPAppliance(object):
                      delay=5,
                      num_sec=120)
             return self.get_host_address
-        except Exception as e:
-            logger.exception(e)
-            self.log.error('waiting for host address from yaml_config timedout')
+        except Exception:
+            self.logger.exception('waiting for host address from yaml_config timedout')
 
     @cached_property
     def db_address(self):
@@ -1809,14 +1849,12 @@ class IPAppliance(object):
             else:
                 return db
         except (IOError, KeyError) as exc:
-            self.log.error('Unable to pull database address from appliance')
-            self.log.exception(exc)
+            self.logger.exception('Unable to pull database address from appliance')
             return self.address
 
     @cached_property
     def db(self):
-        # slightly crappy: anything that changes self.db_address should also del(self.db)
-        return db.Db(self.db_address)
+        return db.Db(self)
 
     @property
     def is_db_enabled(self):
@@ -2026,18 +2064,18 @@ class IPAppliance(object):
             '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
         )
         if writeout.rc:
-            logger.error("Config couldn't be found")
-            logger.error(writeout.output)
+            self.logger.error("Config couldn't be found")
+            self.logger.error(writeout.output)
             raise Exception('Error obtaining config')
         base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
         if base_data.rc:
-            logger.error("Config couldn't be found")
-            logger.error(base_data.output)
+            self.logger.error("Config couldn't be found")
+            self.logger.error(base_data.output)
             raise Exception('Error obtaining config')
         try:
             return yaml.load(base_data.output)
-        except:
-            logger.debug(base_data.output)
+        except Exception:
+            self.logger.debug(base_data.output)
             raise
 
     def set_yaml_config(self, data_dict):
@@ -2073,14 +2111,13 @@ class IPAppliance(object):
             if vmdb_config["session"]["timeout"] != timeout:
                 vmdb_config["session"]["timeout"] = timeout
                 self.set_yaml_config(vmdb_config)
-        except Exception as ex:
-            logger.error('Setting session timeout failed:')
-            logger.exception(ex)
+        except Exception:
+            self.logger.exception('Setting session timeout failed:')
             if not quiet:
                 raise
 
     def delete_all_providers(self):
-        logger.info('Destroying all appliance providers')
+        self.logger.info('Destroying all appliance providers')
         for prov in self.rest_api.collections.providers:
             prov.action.delete()
 
@@ -2233,7 +2270,7 @@ class Appliance(IPAppliance):
     def _custom_configure(self, **kwargs):
         log_callback = kwargs.pop(
             "log_callback",
-            lambda msg: logger.info("Custom configure %s: %s", self.vmname, msg))
+            lambda msg: self.logger.info("Custom configure %s: %s", self.vmname, msg))
         region = kwargs.get('region', 0)
         db_address = kwargs.get('db_address', None)
         key_address = kwargs.get('key_address', None)
@@ -2309,7 +2346,7 @@ class Appliance(IPAppliance):
                 if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
                     try:
                         self.wait_for_web_ui(timeout=300, running=False)
-                    except:
+                    except Exception:
                         pass
                     self.wait_for_web_ui(running=True)
 
@@ -2405,7 +2442,7 @@ class Appliance(IPAppliance):
 
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
-            log_callback = logger.info
+            log_callback = self.logger.info
         if not self.is_on_rhev:
             log_callback("appliance NOT on rhev, unable to connect direct_lun")
             raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
