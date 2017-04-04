@@ -270,6 +270,34 @@ def test_resources_hiding(rest_api):
     assert resources_hidden['subcount'] == resources_visible['subcount']
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_sorting_by_attributes(rest_api):
+    """Test that it's possible to sort resources by attributes.
+
+    Metadata:
+        test_flag: rest
+    """
+    url_string = '{}{}'.format(
+        rest_api.collections.groups._href,
+        '?expand=resources&attributes=id&sort_by=id&sort_order={}')
+    response_asc = rest_api.get(url_string.format('asc'))
+    assert rest_api.response.status_code == 200
+    assert 'resources' in response_asc
+    response_desc = rest_api.get(url_string.format('desc'))
+    assert rest_api.response.status_code == 200
+    assert 'resources' in response_desc
+    assert response_asc['subcount'] == response_desc['subcount']
+
+    id_last = 0
+    for resource in response_asc['resources']:
+        assert resource['id'] > id_last
+        id_last = resource['id']
+    id_last += 1
+    for resource in response_desc['resources']:
+        assert resource['id'] < id_last
+        id_last = resource['id']
+
+
 class TestBulkQueryRESTAPI(object):
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_bulk_query(self, rest_api):
