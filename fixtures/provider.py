@@ -58,6 +58,15 @@ _setup_failures = defaultdict(lambda: 0)
 SETUP_FAIL_LIMIT = 3
 
 
+def pytest_addoption(parser):
+    # Create the cfme option group for use in other plugins
+    parser.getgroup('cfme')
+    parser.addoption("--provider-limit", action="store", default=0, type=int,
+        help=(
+            "Number of cloud/infra providers allowed to coexist on appliance. 0 means no limit. "
+            "Use 1 or 2 when running on a single appliance, depending on HW configuration."))
+
+
 def _artifactor_skip_providers(request, providers, skip_msg):
     node = request.node
     name, location = get_test_idents(node)
@@ -67,8 +76,26 @@ def _artifactor_skip_providers(request, providers, skip_msg):
     pytest.skip(skip_msg)
 
 
-def _setup_provider_verbose(provider):
+def _setup_provider_verbose(request, provider):
     try:
+        if request.config.option.provider_limit > 0:
+            existing_providers = [
+                p for p in list_providers(use_global_filters=False)
+                if p.exists and p.key != provider.key]
+            random.shuffle(existing_providers)
+            maximum_current_providers = request.config.option.provider_limit - 1
+            if len(existing_providers) > maximum_current_providers:
+                providers_to_remove = existing_providers[maximum_current_providers:]
+                store.terminalreporter.write_line(
+                    'Removing extra providers: {}'.format(', '.join(
+                        [p.key for p in providers_to_remove])))
+                for p in providers_to_remove:
+                    logger.info('removing provider %r', p.key)
+                    p.delete(cancel=False)
+                # Decoupled wait for better performance
+                for p in providers_to_remove:
+                    logger.info('waiting for provider %r to disappear', p.key)
+                    p.wait_for_delete()
         store.terminalreporter.write_line(
             "Trying to set up provider {}\n".format(provider.key), green=True)
         provider.setup()
@@ -104,7 +131,7 @@ def setup_or_skip(request, provider):
         skip_msg = "Provider {} had been marked as problematic".format(provider.key)
         _artifactor_skip_providers(request, [provider], skip_msg)
 
-    if not _setup_provider_verbose(provider):
+    if not _setup_provider_verbose(request, provider):
         _artifactor_skip_providers(
             request, [provider], "Unable to setup provider {}".format(provider.key))
 
@@ -155,7 +182,7 @@ def setup_one_or_skip(request, filters=None, use_global_filters=True):
     # Try to set up one of matching providers
     non_existing = [prov for prov in providers if not prov.exists]
     for provider in non_existing:
-        if _setup_provider_verbose(provider):
+        if _setup_provider_verbose(request, provider):
             return provider
 
     skip_msg = "Failed to set up any matching providers: {}", [p.key for p in providers]
