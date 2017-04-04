@@ -4,7 +4,7 @@ import pytest
 
 
 def test_set_hostname(request, appliance):
-    hostname = 'Elite-QE.redhat.com'
+    hostname = 'cfme.redhat.com'
     appliance.appliance_console_cli.set_hostname(hostname)
     return_code, output = appliance.ssh_client.run_command("hostname -f")
     assert output.strip() == hostname
