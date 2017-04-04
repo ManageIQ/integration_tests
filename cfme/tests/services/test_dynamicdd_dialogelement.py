@@ -53,8 +53,8 @@ def dialog(copy_instance, create_method):
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create(element_data)
+                           box_desc="my box desc", element_data=element_data)
+    dialog.create()
     yield dialog
 
 
@@ -96,12 +96,11 @@ def copy_instance(request, copy_domain):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1219950])
 def test_dynamicdropdown_dialog(dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog.label)
+                  description="my catalog", display_in=True, catalog=catalog,
+                  dialog=dialog)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

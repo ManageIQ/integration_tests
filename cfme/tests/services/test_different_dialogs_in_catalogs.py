@@ -47,8 +47,8 @@ def tagcontrol_dialog():
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    servicedialog.create(element_data)
+                           box_desc="my box desc", element_data=element_data)
+    servicedialog.create()
     yield servicedialog
 
 
