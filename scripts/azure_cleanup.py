@@ -28,14 +28,14 @@ def azure_cleanup(nic_template, pip_template, output):
     try:
         for provider_key in list_provider_keys('azure'):
             provider_mgmt = get_mgmt(provider_key)
-            print "----- Provider: {} -----".format(provider_key)  # noqa
-            print "Removing Nics with the name \"{}\"".format(nic_template)  # noqa
+            print ("----- Provider: {} -----".format(provider_key))
+            print ("Removing Nics with the name \"{}\"".format(nic_template))
             provider_mgmt.remove_unused_nics(nic_template)
-            print "Removing Public IPs with the name \"{}\"".format(pip_template)  # noqa
+            print ("Removing Public IPs with the name \"{}\"".format(pip_template))
             provider_mgmt.remove_unused_pips(pip_template)
         return True
     except Exception:
-        print("Something bad happened during cleanup Azure")
+        print("Something bad happened during Azure cleanup")
         tb.print_exc()
         return False
 
