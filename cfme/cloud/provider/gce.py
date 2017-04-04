@@ -1,4 +1,5 @@
 from . import CloudProvider
+import cfme
 import cfme.fixtures.pytest_selenium as sel
 from mgmtsystem.google import GoogleCloudSystem
 
@@ -50,7 +51,7 @@ class GCEProvider(CloudProvider):
         service_account = credential_dict.get('service_account', None)
         if service_account:
             service_account = cls.gce_service_account_formating(service_account)
-        return cls.ProvCredential(
+        return cfme.ProvCredential(
             principal=credential_dict['username'],
             secret=credential_dict['password'],
             cred_type=cred_type,

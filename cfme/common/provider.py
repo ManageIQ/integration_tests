@@ -8,12 +8,12 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
     FlashMessageException)
 from cfme.web_ui import breadcrumbs_names, summary_title
-from cfme.web_ui import (flash, Quadicon, CheckboxTree, Region, fill, FileInput,
-                         Form, Input, Radio)
+from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, version, ParamClassName
+from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
@@ -67,77 +67,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     add_provider_button = None
     save_button = None
     db_types = ["Providers"]
-
-    class ProvCredential(cfme.Credential, Updateable):
-        """Provider credentials
-
-           Args:
-             type: One of [amqp, candu, ssh, token] (optional)
-             domain: Domain for default credentials (optional)
-        """
-        @property
-        def form(self):
-            fields = [
-                ('token_secret_55', Input('bearer_token')),
-                ('google_service_account', Input('service_account')),
-            ]
-            tab_fields = {
-                ("Default", ('default_when_no_tabs', )): [
-                    ('default_principal', Input("default_userid")),
-                    ('default_secret', Input("default_password")),
-                    ('default_verify_secret', Input("default_verify")),
-                    ('token_secret', {
-                        version.LOWEST: Input('bearer_password'),
-                        '5.6': Input('default_password')
-                    }),
-                    ('token_verify_secret', {
-                        version.LOWEST: Input('bearer_verify'),
-                        '5.6': Input('default_verify')
-                    }),
-                ],
-
-                "RSA key pair": [
-                    ('ssh_user', Input("ssh_keypair_userid")),
-                    ('ssh_key', FileInput("ssh_keypair_password")),
-                ],
-
-                "C & U Database": [
-                    ('candu_principal', Input("metrics_userid")),
-                    ('candu_secret', Input("metrics_password")),
-                    ('candu_verify_secret', Input("metrics_verify")),
-                ],
-
-                "Hawkular": [
-                    ('hawkular_validate_btn', form_buttons.validate),
-                ]
-            }
-            fields_end = [
-                ('validate_btn', form_buttons.validate),
-            ]
-
-            if version.current_version() >= '5.6':
-                amevent = "Events"
-            else:
-                amevent = "AMQP"
-            tab_fields[amevent] = []
-            if version.current_version() >= "5.6":
-                tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
-            tab_fields[amevent].extend([
-                ('amqp_principal', Input("amqp_userid")),
-                ('amqp_secret', Input("amqp_password")),
-                ('amqp_verify_secret', Input("amqp_verify")),
-            ])
-
-            return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
-
-        def __init__(self, **kwargs):
-            super(BaseProvider.ProvCredential, self).__init__(**kwargs)
-            self.type = kwargs.get('cred_type', None)
-            self.domain = kwargs.get('domain', None)
-            if self.type == 'token':
-                self.token = kwargs['token']
-            if self.type == 'service_account':
-                self.service_account = kwargs['service_account']
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -515,7 +444,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         domain = credential_dict.get('domain', None)
         token = credential_dict.get('token', None)
-        return cls.ProvCredential(
+        return cfme.ProvCredential(
             principal=credential_dict['username'],
             secret=credential_dict['password'],
             cred_type=cred_type,
@@ -708,7 +637,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             return True
 
 
-@fill.method((Form, BaseProvider.ProvCredential))
+@fill.method((Form, cfme.ProvCredential))
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """

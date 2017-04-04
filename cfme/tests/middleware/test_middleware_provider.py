@@ -4,6 +4,7 @@ import uuid
 import pytest
 
 from utils import error
+import cfme
 from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import fill, flash, form_buttons
@@ -43,7 +44,7 @@ def test_add_cancelled_validation():
 def test_password_mismatch_validation(soft_assert):
     """ Tests password mismatch check """
     prov = HawkularProvider()
-    cred = prov.ProvCredential(
+    cred = cfme.ProvCredential(
         principal='bad',
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(6)
