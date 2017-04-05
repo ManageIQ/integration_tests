@@ -6,11 +6,11 @@ not be difficult to extend the parametrizer.
 import pytest
 
 import cfme
-import cfme.credential
+import cfme.base.credential
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from utils import testgen
 from utils.conf import credentials
 from utils.net import resolve_hostname
-from utils import testgen
 from utils.version import Version
 
 
@@ -42,7 +42,7 @@ def pytest_generate_tests(metafunc):
         host = hosts[0]
         creds = credentials[host["credentials"]]
         ip_address = resolve_hostname(host["name"])
-        cred = cfme.credential.Credential(
+        cred = cfme.base.credential.Credential(
             principal=creds["username"],
             secret=creds["password"],
             verify_secret=creds["password"]

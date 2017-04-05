@@ -1,10 +1,10 @@
 from functools import partial
+
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-
 import cfme
-import cfme.credential
+import cfme.base.credential
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.tabstrip as tabs
@@ -14,13 +14,12 @@ from cfme.web_ui import (
     AngularSelect, match_location
 )
 from utils import version, conf
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
-
 
 properties_form = Form(
     fields=[
@@ -89,7 +88,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
                 'url_text': kwargs.get('url'),
                 'ssl_checkbox': kwargs.get('ssl')}
 
-    class Credential(cfme.credential.Credential, Updateable):
+    class Credential(cfme.base.credential.Credential, Updateable):
         pass
 
     def _submit(self, cancel, submit_button):
@@ -252,7 +251,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             name=data['name'],
             url=data['url'],
             ssl=data['ssl'],
-            credentials=cfme.credential.Credential(
+            credentials=cfme.base.credential.Credential(
                 principal=creds['username'], secret=creds['password']),
             key=key)
 

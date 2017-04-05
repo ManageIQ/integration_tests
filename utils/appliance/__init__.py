@@ -1,28 +1,26 @@
-import fauxfactory
 import logging
 import os
 import re
 import socket
-import yaml
+import traceback
 from copy import copy
-from manageiq_client.api import ManageIQClient as MiqApi
+from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
-from tempfile import NamedTemporaryFile
-
-from cached_property import cached_property
-
-from werkzeug.local import LocalStack, LocalProxy
 
 import dateutil.parser
+import fauxfactory
 import requests
-import traceback
-
+import yaml
+from cached_property import cached_property
+from manageiq_client.api import ManageIQClient as MiqApi
 from sentaku import ImplementationContext
+from werkzeug.local import LocalStack, LocalProxy
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
+from utils import clear_property_cache
 from utils import conf, datafile, db, ssh, ports, version
 from utils.datafile import load_data_file
 from utils.events import EventListener
@@ -31,10 +29,7 @@ from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path, conf_path
 from utils.version import Version, get_stream, pick, LATEST
 from utils.wait import wait_for
-from utils import clear_property_cache
-
 from .implementations.ui import ViaUI
-
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 
@@ -217,7 +212,7 @@ class IPAppliance(object):
     @property
     def user(self):
         from cfme.configure.access_control import User
-        from cfme.credential import Credential
+        from cfme.base.credential import Credential
         if self._user is None:
             # Admin by default
             username = conf.credentials['default']['username']

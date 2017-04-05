@@ -1,8 +1,9 @@
-import cfme.credential
-from . import CloudProvider
-import cfme
-import cfme.fixtures.pytest_selenium as sel
 from mgmtsystem.google import GoogleCloudSystem
+
+import cfme
+import cfme.base.credential
+import cfme.fixtures.pytest_selenium as sel
+from . import CloudProvider
 
 
 class GCEProvider(CloudProvider):
@@ -49,7 +50,7 @@ class GCEProvider(CloudProvider):
         """
         service_account = credential_dict.get('service_account', None)
         service_account = cls.gce_service_account_formating(service_account)
-        return cfme.credential.ServiceAccountCredential(service_account=service_account)
+        return cfme.base.credential.ServiceAccountCredential(service_account=service_account)
 
     @staticmethod
     def gce_service_account_formating(data):

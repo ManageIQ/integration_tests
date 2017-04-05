@@ -2,10 +2,10 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.credential import Credential
-from cfme.exceptions import CandidateNotFound, OptionNotAvailable
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
+from cfme.base.credential import Credential
+from cfme.exceptions import CandidateNotFound, OptionNotAvailable
 from cfme.web_ui import (
     AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)

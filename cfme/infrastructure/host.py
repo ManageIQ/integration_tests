@@ -11,7 +11,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme
-import cfme.credential
+import cfme.base.credential
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
@@ -162,7 +162,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
                 'ipmi_address_text': kwargs.get('ipmi_address'),
                 'mac_address_text': kwargs.get('mac_address')}
 
-    class Credential(cfme.credential.Credential, Updateable):
+    class Credential(cfme.base.credential.Credential, Updateable):
         """Provider credentials
 
            Args:

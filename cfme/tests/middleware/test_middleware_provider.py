@@ -4,7 +4,7 @@ import uuid
 import pytest
 
 from utils import error
-from cfme.credential import Credential
+from cfme.base.credential import Credential
 from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import fill, flash, form_buttons
