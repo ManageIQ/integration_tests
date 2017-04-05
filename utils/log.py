@@ -213,6 +213,20 @@ class PrefixAddingLoggerFilter(logging.Filter):
         return True
 
 
+class StackedPrefixLoggerAdapter(logging.LoggerAdapter):
+    @property
+    def prefix(self):
+        return self.extra['item_type']
+
+    def process(self, msg, kwargs):
+        msg = msg.strip()
+        if msg.startswith('['):
+            spacer = ''
+        else:
+            spacer = ': '
+        return '[{}]{}{}'.format(self.prefix, spacer, msg), kwargs
+
+
 class NamedLoggerAdapter(TraceLoggerAdapter):
     """An adapter that injects a name into log messages"""
     def process(self, message, kwargs):

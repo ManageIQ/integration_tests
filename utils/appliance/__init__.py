@@ -26,7 +26,7 @@ from fixtures.pytest_store import store
 from utils import conf, datafile, db, ssh, ports, version
 from utils.datafile import load_data_file
 from utils.events import EventListener
-from utils.log import logger, logger_wrap
+from utils.log import logger, logger_wrap, StackedPrefixLoggerAdapter
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path, conf_path
 from utils.version import Version, get_stream, pick, LATEST
@@ -65,18 +65,13 @@ class ApplianceException(Exception):
     pass
 
 
-class ApplianceConsoleLoggerAdapter(logging.LoggerAdapter):
-    def process(self, msg, kwargs):
-        return '[CLI] {}'.format(msg), kwargs
-
-
 class ApplianceConsole(object):
     """ApplianceConsole is used for navigating and running appliance_console commands against an
     appliance."""
 
     def __init__(self, appliance):
         self.appliance = appliance
-        self.logger = ApplianceConsoleLoggerAdapter(self.appliance.logger, {})
+        self.logger = StackedPrefixLoggerAdapter(self.appliance.logger, {'item_type': 'CLI'})
 
     def run_commands(self, commands, autoreturn=True, timeout=20, channel=None):
         if not channel:
@@ -148,24 +143,16 @@ class ApplianceConsoleCli(object):
         assert return_code != 0
 
 
-class ApplianceLoggerAdapter(logging.LoggerAdapter):
-    def process(self, msg, kwargs):
-        msg = msg.strip()
-        if msg.startswith('['):
-            spacer = ''
-        else:
-            spacer = ': '
-        return '[{}]{}{}'.format(self.extra['appliance_ip'], spacer, msg), kwargs
+class ApplianceLoggerAdapter(StackedPrefixLoggerAdapter):
+    @property
+    def prefix(self):
+        return 'A:{}'.format(self.extra['appliance_ip'])
 
 
-class RESTLoggerAdapter(logging.LoggerAdapter):
-    def process(self, msg, kwargs):
-        return '[REST]: {}'.format(msg), kwargs
-
-
-class SSHLoggerAdapter(logging.LoggerAdapter):
-    def process(self, msg, kwargs):
-        return '[SSH]: {}'.format(msg), kwargs
+class SSHLoggerAdapter(StackedPrefixLoggerAdapter):
+    def __init__(self, logger, extra):
+        extra['item_type'] = 'SSH'
+        super(SSHLoggerAdapter, self).__init__(logger, extra)
 
     def trace(self, msg, *args, **kwargs):
         """
@@ -208,7 +195,8 @@ class IPAppliance(object):
                 self._url = address.geturl()
         if not logger:
             from utils.log import logger
-        self.logger = ApplianceLoggerAdapter(logger, {'appliance_ip': self.address})
+        self.logger = ApplianceLoggerAdapter(
+            logger, {'appliance_ip': self.address, 'item_type': 'appliance'})
         self.browser_steal = browser_steal
         self.container = container
         self._db_ssh_client = None
@@ -351,7 +339,7 @@ class IPAppliance(object):
 
     @cached_property
     def rest_logger(self):
-        return RESTLoggerAdapter(self.logger, {})
+        return StackedPrefixLoggerAdapter(self.logger, {'item_type': 'REST'})
 
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")

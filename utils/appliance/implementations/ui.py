@@ -3,7 +3,7 @@ import json
 import time
 from jsmin import jsmin
 
-from utils.log import logger, create_sublogger
+from utils.log import StackedPrefixLoggerAdapter
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import get_rails_error
 from time import sleep
@@ -105,7 +105,7 @@ class MiqBrowser(Browser):
         super(MiqBrowser, self).__init__(
             selenium,
             plugin_class=MiqBrowserPlugin,
-            logger=create_sublogger('MiqBrowser'),
+            logger=StackedPrefixLoggerAdapter(endpoint.owner.logger, {'item_type': 'BROWSER'}),
             extra_objects=extra_objects)
 
     @property
@@ -126,6 +126,12 @@ def can_skip_badness_test(fn):
     return fn
 
 
+class StepLoggerAdapter(StackedPrefixLoggerAdapter):
+    @property
+    def prefix(self):
+        return 'NAV/{}/{}'.format(self.extra['class_name'], self.extra['location_name'])
+
+
 class CFMENavigateStep(NavigateStep):
     VIEW = None
 
@@ -139,6 +145,12 @@ class CFMENavigateStep(NavigateStep):
     def appliance(self):
         return self.obj.appliance
 
+    @cached_property
+    def logger(self):
+        return StepLoggerAdapter(
+            self.appliance.logger,
+            {'class_name': type(self.obj).__name__, 'location_name': self._name})
+
     def create_view(self, *args, **kwargs):
         return self.appliance.browser.create_view(*args, **kwargs)
 
@@ -150,7 +162,7 @@ class CFMENavigateStep(NavigateStep):
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
         if getattr(fn, '_can_skip_badness_test', False):
-            # self.log_message('Op is a Nop! ({})'.format(fn.__name__))
+            # self.logger.debug('Op is a Nop! ({})'.format(fn.__name__))
             return
 
         if self.VIEW:
@@ -171,7 +183,7 @@ class CFMENavigateStep(NavigateStep):
 
         try:
             br.widgetastic.execute_script('miqSparkleOff();', silent=True)
-        except:  # Diaper OK (mfalesni)
+        except Exception:  # Diaper OK (mfalesni)
             # miqSparkleOff undefined, so it's definitely off.
             pass
 
@@ -180,14 +192,15 @@ class CFMENavigateStep(NavigateStep):
         if (
                 br.widgetastic.is_displayed("//div[@id='blocker_div' or @id='notification']") or
                 br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
-            logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
+            self.logger.warning(
+                "Page was blocked with blocker div on start of navigation, recycling.")
             self.appliance.browser.quit_browser()
             self.go(_tries, *args, **go_kwargs)
 
         # Check if modal window is displayed
         if (br.widgetastic.is_displayed(
                 "//div[contains(@class, 'modal-dialog') and contains(@class, 'modal-lg')]")):
-            logger.warning("Modal window was open; closing the window")
+            self.logger.warning("Modal window was open; closing the window")
             br.widgetastic.click(
                 "//button[contains(@class, 'close') and contains(@data-dismiss, 'modal')]")
 
@@ -196,14 +209,13 @@ class CFMENavigateStep(NavigateStep):
             br.widgetastic.execute_script("jQuery", silent=True)
         except Exception as e:
             if "jQuery" not in str(e):
-                logger.error("Checked for jQuery but got something different.")
-                logger.exception(e)
+                self.logger.exception("Checked for jQuery but got something different.")
             # Restart some workers
-            logger.warning("Restarting UI and VimBroker workers!")
+            self.logger.warning("Restarting UI and VimBroker workers!")
             with self.appliance.ssh_client as ssh:
                 # Blow off the Vim brokers and UI workers
                 ssh.run_rails_command("\"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill\"")
-            logger.info("Waiting for web UI to come back alive.")
+            self.logger.info("Waiting for web UI to come back alive.")
             sleep(10)   # Give it some rest
             self.appliance.wait_for_web_ui()
             self.appliance.browser.quit_browser()
@@ -213,17 +225,17 @@ class CFMENavigateStep(NavigateStep):
         # Same with rails errors
         rails_e = get_rails_error()
         if rails_e is not None:
-            logger.warning("Page was blocked by rails error, renavigating.")
-            logger.error(rails_e)
+            self.logger.warning("Page was blocked by rails error, renavigating.")
+            self.logger.error(rails_e)
             # RHEL7 top does not know -M and -a
-            logger.debug('Top CPU consumers:')
-            logger.debug(store.current_appliance.ssh_client.run_command(
+            self.logger.debug('Top CPU consumers:')
+            self.logger.debug(store.current_appliance.ssh_client.run_command(
                 'top -c -b -n1 | head -30').output)
-            logger.debug('Top Memory consumers:')
-            logger.debug(store.current_appliance.ssh_client.run_command(
+            self.logger.debug('Top Memory consumers:')
+            self.logger.debug(store.current_appliance.ssh_client.run_command(
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
-            logger.debug('Managed known Providers:')
-            logger.debug(
+            self.logger.debug('Managed known Providers:')
+            self.logger.debug(
                 '%r', [prov.key for prov in store.current_appliance.managed_known_providers])
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
@@ -240,8 +252,7 @@ class CFMENavigateStep(NavigateStep):
         from cfme import login
 
         try:
-            self.log_message(
-                "Invoking {}, with {} and {}".format(fn.func_name, args, kwargs), level="debug")
+            self.logger.debug("Invoking %s, with %r and %r", fn.func_name, args, kwargs)
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
@@ -253,21 +264,20 @@ class CFMENavigateStep(NavigateStep):
                 self.go(_tries, *args, **go_kwargs)
             else:
                 # There was still an alert when we tried again, shoot the browser in the head
-                logger.debug('Unxpected alert, recycling browser')
+                self.logger.debug('Unxpected alert, recycling browser')
                 recycle = True
         except (ErrorInResponseException, InvalidSwitchToTargetException):
             # Unable to switch to the browser at all, need to recycle
-            logger.info('Invalid browser state, recycling browser')
+            self.logger.info('Invalid browser state, recycling browser')
             recycle = True
         except exceptions.CFMEExceptionOccured as e:
             # We hit a Rails exception
-            logger.info('CFME Exception occured')
-            logger.exception(e)
+            self.logger.exception('CFME Exception occured')
             recycle = True
         except exceptions.CannotContinueWithNavigation as e:
             # The some of the navigation steps cannot succeed
-            logger.info('Cannot continue with navigation due to: {}; '
-                'Recycling browser'.format(str(e)))
+            self.logger.info('Cannot continue with navigation due to: %r; '
+                'Recycling browser', e)
             recycle = True
         except (NoSuchElementException, InvalidElementStateException, WebDriverException,
                 StaleElementReferenceException) as e:
@@ -276,38 +286,39 @@ class CFMENavigateStep(NavigateStep):
             # reason why this happened so do not put the next branches in elif
             if isinstance(e, WebDriverException) and "jQuery" in str(e):
                 # UI failed in some way, try recycling the browser
-                logger.exception(
+                self.logger.exception(
                     "UI failed in some way, jQuery not found, (probably) recycling the browser.")
                 recycle = True
             # If the page is blocked, then recycle...
             if (
                     br.widgetastic.is_displayed("//div[@id='blocker_div' or @id='notification']") or
                     br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
-                logger.warning("Page was blocked with blocker div, recycling.")
+                self.logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
             elif cfme_exc.is_cfme_exception():
-                logger.exception("CFME Exception before force navigate started!: {}".format(
+                self.logger.error("CFME Exception before force navigate started!: {}".format(
                     cfme_exc.cfme_exception_text()))
                 recycle = True
             elif br.widgetastic.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
                 # 502
-                logger.exception("Proxy error detected. Killing browser and restarting evmserverd.")
+                self.logger.exception(
+                    "Proxy error detected. Killing browser and restarting evmserverd.")
                 req = br.widgetastic.elements("/html/body/p[1]//a")
                 req = br.widgetastic.text(req[0]) if req else "No request stated"
                 reason = br.widgetastic.elements("/html/body/p[2]/strong")
                 reason = br.widgetastic.text(reason[0]) if reason else "No reason stated"
-                logger.info("Proxy error: {} / {}".format(req, reason))
+                self.logger.warning("Proxy error: {} / {}".format(req, reason))
                 restart_evmserverd = True
             elif br.widgetastic.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
                 # 503 and similar sort of errors
                 title = br.widgetastic.text("//body/h1")
                 body = br.widgetastic.text("//body/p")
-                logger.exception("Application error {}: {}".format(title, body))
+                self.logger.error("Application error %s: %s", title, body)
                 sleep(5)  # Give it a little bit of rest
                 recycle = True
             elif br.widgetastic.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
                 # Rails exception detection
-                logger.exception("Rails exception before force navigate started!: %r:%r at %r",
+                self.logger.exception("Rails exception before force navigate started!: %r:%r at %r",
                     br.widgetastic.text("//body/div[@class='dialog']/h1"),
                     br.widgetastic.text("//body/div[@class='dialog']/p"),
                     getattr(manager.browser, 'current_url', "error://dead-browser")
@@ -316,28 +327,28 @@ class CFMENavigateStep(NavigateStep):
             elif br.widgetastic.elements("//ul[@id='maintab']/li[@class='inactive']") and not\
                     br.widgetastic.elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
                 # If upstream and is the bottom part of menu is not displayed
-                logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
+                self.logger.error("Detected glitch from BZ#1112574. HEADSHOT!")
                 recycle = True
             elif not login.logged_in():
                 # Session timeout or whatever like that, login screen appears.
-                logger.exception("Looks like we are logged out. Try again.")
+                self.logger.error("Looks like we are logged out. Try again.")
                 recycle = True
             else:
-                logger.error("Could not determine the reason for failing the navigation. " +
-                    " Reraising.  Exception: {}".format(str(e)))
-                logger.debug(store.current_appliance.ssh_client.run_command(
-                    'systemctl status evmserverd').output)
+                self.logger.error("Could not determine the reason for failing the navigation. " +
+                    " Reraising.  Exception: %s", e)
+                self.logger.debug(store.current_appliance.ssh_client.run_command(
+                    'systemctl evmserverd status').output)
                 raise
 
         if restart_evmserverd:
-            logger.info("evmserverd restart requested")
+            self.logger.info("evmserverd restart requested")
             self.appliance.restart_evm_service()
             self.appliance.wait_for_web_ui()
             self.go(_tries, *args, **go_kwargs)
 
         if recycle or restart_evmserverd:
             self.appliance.browser.quit_browser()
-            logger.debug('browser killed on try {}'.format(_tries))
+            self.logger.debug('browser killed on try {}'.format(_tries))
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries, *args, **go_kwargs)
 
@@ -353,19 +364,15 @@ class CFMENavigateStep(NavigateStep):
     def post_navigate(self, *args, **kwargs):
         pass
 
-    def log_message(self, msg, level="debug"):
-        str_msg = "[UI-NAV/{}/{}]: {}".format(self.obj.__class__.__name__, self._name, msg)
-        getattr(logger, level)(str_msg)
-
-    def construst_message(self, here, resetter, view, duration):
+    def construct_message(self, here, resetter, view, duration):
         str_here = "Already Here" if here else "Needed Navigation"
         str_resetter = "Resetter Used" if resetter else "No Resetter"
         str_view = "View Returned" if view else "No View Available"
-        return "{}/{}/{} (elapsed {}ms)".format(str_here, str_resetter, str_view, duration)
+        return ("%s/%s/%s (elapsed %d ms)", str_here, str_resetter, str_view, duration)
 
     def go(self, _tries=0, *args, **kwargs):
         nav_args = {'use_resetter': True}
-        self.log_message("Beginning Navigation...", level="info")
+        self.logger.info("Beginning Navigation...")
         start_time = time.time()
         if _tries > 2:
             # Need at least three tries:
@@ -382,11 +389,11 @@ class CFMENavigateStep(NavigateStep):
         resetter_used = False
         try:
             here = self.check_for_badness(self.am_i_here, _tries, nav_args, *args, **kwargs)
-        except Exception as e:
-            self.log_message(
-                "Exception raised [{}] whilst checking if already here".format(e), level="error")
+        except Exception:
+            self.log.exception(
+                "Exception raised whilst checking if already here")
         if not here:
-            self.log_message("Prerequiesite Needed")
+            self.logger.debug("Prerequisite Needed")
             self.prerequisite_view = self.prerequisite()
             self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
         if nav_args['use_resetter']:
@@ -395,7 +402,7 @@ class CFMENavigateStep(NavigateStep):
         self.check_for_badness(self.post_navigate, _tries, nav_args, *args, **kwargs)
         view = self.view if self.VIEW is not None else None
         duration = int((time.time() - start_time) * 1000)
-        self.log_message(self.construst_message(here, resetter_used, view, duration), level="info")
+        self.logger.info(*self.construct_message(here, resetter_used, view, duration))
         return view
 
 
@@ -415,6 +422,10 @@ class ViaUI(object):
     @property
     def appliance(self):
         return self.owner
+
+    @cached_property
+    def logger(self):
+        return StackedPrefixLoggerAdapter(self.appliance.logger, {'item_type': 'WT'})
 
     @cached_property
     def widgetastic(self):
@@ -451,6 +462,6 @@ class ViaUI(object):
         view = view_class(
             self.widgetastic,
             additional_context=additional_context,
-            logger=logger)
+            logger=self.logger)
 
         return view
