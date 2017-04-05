@@ -27,7 +27,7 @@ def test_black_console_set_hostname(appliance):
 
     hostname = 'test.example.com'
     if appliance.version >= "5.8":
-        command_set = ('ap', '', '1', '4', hostname)
+        command_set = ('ap', '', '1', '5', hostname)
     else:
         command_set = ('ap', '', '4', hostname)
     appliance.appliance_console.run_commands(command_set)
