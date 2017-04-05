@@ -4,8 +4,8 @@ import diaper
 import pytest
 
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.availability_zone import AvailabilityZone
 # from cfme.cloud.flavor import Flavor # Replace when all targets support widgets
+# from cfme.cloud.availability_zone import AvailabilityZone # Replace all targets support widgets
 from cfme.cloud.instance import Instance
 from cfme.cloud.tenant import Tenant
 from cfme.infrastructure.cluster import Cluster
@@ -27,8 +27,8 @@ param_classes = {
 
     'Cloud Providers': CloudProvider,
     'Cloud Instances': Instance,
-    'Cloud Availabity Zones': AvailabilityZone,
     # 'Cloud Flavors': Flavor, # Test needs to be refactored along with tag mixin for widgets
+    # 'Cloud Availabity Zones': AvailabilityZone,  # Add back when all classes support widgets
     'Cloud Tenants': Tenant
 }
 
@@ -42,6 +42,8 @@ def _navigate_and_check(location):
     navigate_to(param_classes[location], 'All')
     tb.select('Grid View')
     return Quadicon.any_present()
+
+# TODO Replace navigation and item selection with widgets when all tested classes have them
 
 
 def _tag_item_through_selecting(request, location, tag):

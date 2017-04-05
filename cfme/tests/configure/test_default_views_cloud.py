@@ -40,6 +40,7 @@ def set_and_test_default_view(group_name, view, page):
     old_default = DefaultView.get_default_view(group_name)
     DefaultView.set_default_view(group_name, view)
     navigate_to(page, 'All', use_resetter=False)
+    # TODO replace view detection with widgets when all tested classes have them
     assert tb.is_active(view), "{} view setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
