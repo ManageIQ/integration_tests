@@ -63,7 +63,7 @@ def pytest_addoption(parser):
     parser.getgroup('cfme')
     parser.addoption("--provider-limit", action="store", default=0, type=int,
         help=(
-            "Number of cloud/infra providers allowed to coexist on appliance. 0 means no limit. "
+            "Number of providers allowed to coexist on appliance. 0 means no limit. "
             "Use 1 or 2 when running on a single appliance, depending on HW configuration."))
 
 
@@ -79,6 +79,7 @@ def _artifactor_skip_providers(request, providers, skip_msg):
 def _setup_provider_verbose(request, provider):
     try:
         if request.config.option.provider_limit > 0:
+            # TODO: Use appliance.
             existing_providers = [
                 p for p in list_providers(use_global_filters=False)
                 if p.exists and p.key != provider.key]
