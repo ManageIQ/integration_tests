@@ -257,6 +257,13 @@ class StackNotFound(CFMEException):
     pass
 
 
+class FlavorNotFound(CFMEException):
+    """
+    Raised if a specific cloud flavor cannot be found in the UI
+    """
+    pass
+
+
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
