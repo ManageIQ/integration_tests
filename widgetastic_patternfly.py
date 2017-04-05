@@ -634,14 +634,18 @@ class BootstrapSelect(Widget, ClickableMixin):
         id: id of the select, that is the ``data-id`` attribute on the ``button`` tag.
         can_hide_on_select: Whether the select can hide after selection, important for
             :py:meth:`close` to work properly.
+        partial: :py:class:`bool` Whether to accept a partial match on select_by_visible_text
     """
     ROOT = ParametrizedLocator('.//button[normalize-space(@data-id)={@id|quote}]/..')
-    BY_VISIBLE_TEXT = './div/ul/li/a[./span[contains(@class, "text") and normalize-space(.)={}]]'
+    BY_EXACT_TEXT = './div/ul/li/a[./span[contains(@class, "text") and normalize-space(.)={}]]'
+    BY_PARTIAL_TEXT = './div/ul/li/a[./span[contains(@class, "text") and contains(' \
+                      'normalize-space(.), {})]]'
 
-    def __init__(self, parent, id, can_hide_on_select=False, logger=None):
+    def __init__(self, parent, id, can_hide_on_select=False, partial=False, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.id = id
         self.can_hide_on_select = can_hide_on_select
+        self.partial = partial
 
     @property
     def is_open(self):
@@ -681,7 +685,8 @@ class BootstrapSelect(Widget, ClickableMixin):
         for text in items:
             self.logger.info('selecting by visible text: %r', text)
             try:
-                self.browser.click(self.BY_VISIBLE_TEXT.format(quote(text)), parent=self)
+                locator = self.BY_PARTIAL_TEXT if self.partial else self.BY_EXACT_TEXT
+                self.browser.click(locator.format(quote(text)), parent=self)
             except NoSuchElementException:
                 raise NoSuchElementException('Could not find {!r} in {!r}'.format(text, self))
         self.close()
