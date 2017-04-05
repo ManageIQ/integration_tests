@@ -10,6 +10,7 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect
 from . import ControlExplorerView
 from utils.appliance import Navigatable
 from utils.update import Updateable
+from utils import version
 
 
 class AlertProfileFormCommon(ControlExplorerView):
@@ -207,7 +208,13 @@ class BaseAlertProfile(Updateable, Navigatable, Pretty):
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
-                'Alert Profile "{}" assignments succesfully saved'.format(self.description))
+                'Alert Profile "{}" assignments {} saved'.format(
+                    self.description,
+                    version.pick({
+                        version.LOWEST: "succesfully",
+                        "5.8": "successfully",
+                    })
+                ))
         else:
             view.flash.assert_message(
                 'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
