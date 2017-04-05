@@ -14,6 +14,7 @@ from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import vm as _vm
 from utils.update import update
 from utils.wait import wait_for
+from utils.version import current_version
 from utils import error
 
 
@@ -39,6 +40,9 @@ def test_tag_crud(category):
 
 
 class TestTagsViaREST(object):
+
+    COLLECTIONS_BULK_TAGS = ("services", "vms")
+
     @pytest.fixture(scope="function")
     def categories(self, request, rest_api, num=3):
         return _categories(request, rest_api, num)
@@ -77,6 +81,33 @@ class TestTagsViaREST(object):
             return _services(request, rest_api_modscope, a_provider, dialog, service_catalogs)
         except:
             pass
+
+    def service_body(self, **kwargs):
+        uid = fauxfactory.gen_alphanumeric(5)
+        body = {
+            'name': 'test_rest_service_{}'.format(uid),
+            'description': 'Test REST Service {}'.format(uid),
+        }
+        body.update(kwargs)
+        return body
+
+    @pytest.fixture(scope="module")
+    def dummy_services(self, request, rest_api_modscope):
+        # create simple service using REST API
+        bodies = [self.service_body() for _ in range(3)]
+        collection = rest_api_modscope.collections.services
+        new_services = collection.action.create(*bodies)
+        assert rest_api_modscope.response.status_code == 200
+
+        @request.addfinalizer
+        def _finished():
+            collection.reload()
+            ids = [service.id for service in new_services]
+            delete_entities = [service for service in collection if service.id in ids]
+            if len(delete_entities) != 0:
+                collection.action.delete(*delete_entities)
+
+        return new_services
 
     @pytest.fixture(scope="module")
     def service_templates(self, request, rest_api_modscope, dialog):
@@ -198,3 +229,104 @@ class TestTagsViaREST(object):
         assert rest_api.response.status_code == 200
         entity.reload()
         assert tag.id not in [t.id for t in entity.tags.all]
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    @pytest.mark.tier(3)
+    @pytest.mark.parametrize(
+        "collection_name", COLLECTIONS_BULK_TAGS)
+    def test_bulk_assign_and_unassign_tag(self, rest_api, tags_mod, dummy_services, vm,
+            collection_name):
+        """Tests bulk assigning and unassigning tags.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = getattr(rest_api.collections, collection_name)
+        collection.reload()
+        if len(collection) > 1:
+            entities = [collection[-2], collection[-1]]  # slice notation doesn't work here
+        else:
+            entities = [collection[-1]]
+
+        new_tags = []
+        for index, tag in enumerate(tags_mod):
+            identifiers = [{'href': tag._href}, {'id': tag.id}]
+            new_tags.append(identifiers[index % 2])
+
+        # add some more tags in supported formats
+        new_tags.append({'category': 'department', 'name': 'finance'})
+        new_tags.append({'name': '/managed/department/presales'})
+        tags_ids = set([t.id for t in tags_mod])
+        tags_ids.add(rest_api.collections.tags.get(name='/managed/department/finance').id)
+        tags_ids.add(rest_api.collections.tags.get(name='/managed/department/presales').id)
+        tags_count = len(new_tags) * len(entities)
+
+        def _verify_action_result():
+            assert rest_api.response.status_code == 200
+            response = rest_api.response.json()
+            assert len(response['results']) == tags_count
+            num_success = 0
+            for result in response['results']:
+                if result['success']:
+                    num_success += 1
+            assert num_success == tags_count
+
+        collection.action.assign_tags(*entities, tags=new_tags)
+        _verify_action_result()
+        for entity in entities:
+            entity.tags.reload()
+            assert len(tags_ids - set([t.id for t in entity.tags.all])) == 0
+
+        collection.action.unassign_tags(*entities, tags=new_tags)
+        _verify_action_result()
+        for entity in entities:
+            entity.tags.reload()
+            assert len(set([t.id for t in entity.tags.all]) - tags_ids) == entity.tags.subcount
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
+    @pytest.mark.tier(3)
+    @pytest.mark.parametrize(
+        "collection_name", COLLECTIONS_BULK_TAGS)
+    def test_bulk_assign_and_unassign_invalid_tag(self, rest_api, dummy_services, vm,
+            collection_name):
+        """Tests bulk assigning and unassigning invalid tags.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = getattr(rest_api.collections, collection_name)
+        collection.reload()
+        if len(collection) > 1:
+            entities = [collection[-2], collection[-1]]  # slice notation doesn't work here
+        else:
+            entities = [collection[-1]]
+
+        new_tags = ['invalid_tag1', 'invalid_tag2']
+        tags_count = len(new_tags) * len(entities)
+        tags_per_entities_count = []
+        for entity in entities:
+            entity.tags.reload()
+            tags_per_entities_count.append(entity.tags.subcount)
+
+        def _verify_action_result():
+            assert rest_api.response.status_code == 200
+            response = rest_api.response.json()
+            assert len(response['results']) == tags_count
+            num_fail = 0
+            for result in response['results']:
+                if not result['success']:
+                    num_fail += 1
+            assert num_fail == tags_count
+
+        def _check_tags_counts():
+            for index, entity in enumerate(entities):
+                entity.tags.reload()
+                assert entity.tags.subcount == tags_per_entities_count[index]
+
+        collection.action.assign_tags(*entities, tags=new_tags)
+        _verify_action_result()
+        _check_tags_counts()
+
+        collection.action.unassign_tags(*entities, tags=new_tags)
+        _verify_action_result()
+        _check_tags_counts()
