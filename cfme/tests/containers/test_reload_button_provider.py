@@ -11,8 +11,7 @@ pytestmark = [
         lambda: version.current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2)]
-pytest_generate_tests = testgen.generate(
-    [ContainersProvider], scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 @pytest.mark.polarion('CMP-9878')
@@ -44,8 +43,7 @@ def test_reload_button_provider(provider):
     list_img_from_registry_splitted_new = set(list_img_from_registry_splitted)
     list_img_from_openshift_parsed_new = set(list_img_from_openshift_parsed)
 
-    list_img_from_openshift_parsed_new.update(
-        list_img_from_registry_splitted_new)
+    list_img_from_openshift_parsed_new.update(list_img_from_registry_splitted_new)
 
     num_img_in_cfme = provider.num_image()
     # TODO Fix num_image_ui()
