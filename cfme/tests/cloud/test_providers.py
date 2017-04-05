@@ -108,7 +108,7 @@ def test_provider_add_with_bad_credentials(provider):
         flash = 'Login failed due to a bad username or password.'
         cred_args['principal'] = "bad"
 
-    provider.credentials['default'] = provider.Credential(**cred_args)
+    provider.credentials['default'] = Credential(**cred_args)
     with error.expected(flash):
         provider.create(validate_credentials=True)
 
