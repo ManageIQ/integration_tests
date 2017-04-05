@@ -226,13 +226,13 @@ class CFMENavigateStep(NavigateStep):
         rails_e = get_rails_error()
         if rails_e is not None:
             self.logger.warning("Page was blocked by rails error, renavigating.")
-            self.logger.error(rails_e)
+            self.logger.error('%s', rails_e)
             # RHEL7 top does not know -M and -a
             self.logger.debug('Top CPU consumers:')
-            self.logger.debug(store.current_appliance.ssh_client.run_command(
+            self.logger.debug('%s', store.current_appliance.ssh_client.run_command(
                 'top -c -b -n1 | head -30').output)
             self.logger.debug('Top Memory consumers:')
-            self.logger.debug(store.current_appliance.ssh_client.run_command(
+            self.logger.debug('%s', store.current_appliance.ssh_client.run_command(
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
             self.logger.debug('Managed known Providers:')
             self.logger.debug(
@@ -276,8 +276,7 @@ class CFMENavigateStep(NavigateStep):
             recycle = True
         except exceptions.CannotContinueWithNavigation as e:
             # The some of the navigation steps cannot succeed
-            self.logger.info('Cannot continue with navigation due to: %r; '
-                'Recycling browser', e)
+            self.logger.info('Cannot continue with navigation due to: %r; Recycling browser', e)
             recycle = True
         except (NoSuchElementException, InvalidElementStateException, WebDriverException,
                 StaleElementReferenceException) as e:
@@ -296,8 +295,8 @@ class CFMENavigateStep(NavigateStep):
                 self.logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
             elif cfme_exc.is_cfme_exception():
-                self.logger.error("CFME Exception before force navigate started!: {}".format(
-                    cfme_exc.cfme_exception_text()))
+                self.logger.error("CFME Exception before force navigate started!: %s",
+                    cfme_exc.cfme_exception_text())
                 recycle = True
             elif br.widgetastic.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
                 # 502
@@ -307,7 +306,7 @@ class CFMENavigateStep(NavigateStep):
                 req = br.widgetastic.text(req[0]) if req else "No request stated"
                 reason = br.widgetastic.elements("/html/body/p[2]/strong")
                 reason = br.widgetastic.text(reason[0]) if reason else "No reason stated"
-                self.logger.warning("Proxy error: {} / {}".format(req, reason))
+                self.logger.warning("Proxy error: %s / %s", req, reason)
                 restart_evmserverd = True
             elif br.widgetastic.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
                 # 503 and similar sort of errors
@@ -318,7 +317,7 @@ class CFMENavigateStep(NavigateStep):
                 recycle = True
             elif br.widgetastic.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
                 # Rails exception detection
-                self.logger.exception("Rails exception before force navigate started!: %r:%r at %r",
+                self.logger.error("Rails exception before force navigate started!: %r:%r at %r",
                     br.widgetastic.text("//body/div[@class='dialog']/h1"),
                     br.widgetastic.text("//body/div[@class='dialog']/p"),
                     getattr(manager.browser, 'current_url', "error://dead-browser")
@@ -334,9 +333,9 @@ class CFMENavigateStep(NavigateStep):
                 self.logger.error("Looks like we are logged out. Try again.")
                 recycle = True
             else:
-                self.logger.error("Could not determine the reason for failing the navigation. " +
-                    " Reraising.  Exception: %s", e)
-                self.logger.debug(store.current_appliance.ssh_client.run_command(
+                self.logger.exception(
+                    "Could not determine the reason for failing the navigation. Reraising.")
+                self.logger.debug('%s', store.current_appliance.ssh_client.run_command(
                     'systemctl evmserverd status').output)
                 raise
 
@@ -348,7 +347,7 @@ class CFMENavigateStep(NavigateStep):
 
         if recycle or restart_evmserverd:
             self.appliance.browser.quit_browser()
-            self.logger.debug('browser killed on try {}'.format(_tries))
+            self.logger.debug('browser killed on try %d', _tries)
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries, *args, **go_kwargs)
 
