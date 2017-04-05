@@ -25,12 +25,6 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-class TestItem(ContainersTestItem):
-    def __init__(self, obj, expected_fields, polarion_id):
-        ContainersTestItem.__init__(self, obj, polarion_id)
-        self.expected_fields = expected_fields
-
-
 # The polarion markers below are used to mark the test item
 # with polarion test case ID.
 # TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
@@ -38,97 +32,88 @@ class TestItem(ContainersTestItem):
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-9945')(
-        TestItem(Container, [
-            'name',
-            'state',
-            'last_state',
-            'restart_count',
-            'backing_ref_container_id',
-            'privileged',
-            'selinux_level'
-        ], 'CMP-9945')),
+        ContainersTestItem(
+            Container,
+            'CMP-9945',
+            expected_fields=[
+                'name', 'state', 'last_state', 'restart_count',
+                'backing_ref_container_id', 'privileged', 'selinux_level'
+            ]
+        )
+    ),
     pytest.mark.polarion('CMP-10430')(
-        TestItem(Project, [
-            'name',
-            'creation_timestamp',
-            'resource_version',
-        ], 'CMP-10430')),
+        ContainersTestItem(
+            Project,
+            'CMP-10430',
+            expected_fields=['name', 'creation_timestamp', 'resource_version']
+        )
+    ),
     pytest.mark.polarion('CMP-9877')(
-        TestItem(Route, [
-            'name',
-            'creation_timestamp',
-            'resource_version',
-            'host_name'
-        ], 'CMP-9877')),
+        ContainersTestItem(
+            Route,
+            'CMP-9877',
+            expected_fields=['name', 'creation_timestamp', 'resource_version', 'host_name']
+        )
+    ),
     pytest.mark.polarion('CMP-9911')(
-        TestItem(Pod, [
-            'name',
-            'phase',
-            'creation_timestamp',
-            'resource_version',
-            'restart_policy',
-            'dns_policy',
-            'ip_address'
-        ], 'CMP-9911')),
+        ContainersTestItem(
+            Pod,
+            'CMP-9911',
+            expected_fields=[
+                'name', 'phase', 'creation_timestamp', 'resource_version',
+                'restart_policy', 'dns_policy', 'ip_address'
+            ]
+        )
+    ),
     pytest.mark.polarion('CMP-9960')(
-        TestItem(Node, [
-            'name',
-            'creation_timestamp',
-            'resource_version',
-            'number_of_cpu_cores',
-            'memory',
-            'max_pods_capacity',
-            'system_bios_uuid',
-            'machine_id',
-            'infrastructure_machine_id',
-            'runtime_version',
-            'kubelet_version',
-            'proxy_version',
-            'operating_system_distribution',
-            'kernel_version',
-        ], 'CMP-9960')),
+        ContainersTestItem(
+            Node,
+            'CMP-9960',
+            expected_fields=[
+                'name', 'creation_timestamp', 'resource_version', 'number_of_cpu_cores',
+                'memory', 'max_pods_capacity', 'system_bios_uuid', 'machine_id',
+                'infrastructure_machine_id', 'runtime_version', 'kubelet_version',
+                'proxy_version', 'operating_system_distribution', 'kernel_version',
+            ]
+        )
+    ),
     pytest.mark.polarion('CMP-9978')(
-        TestItem(Image, {
-            version.LOWEST:
-                [
-                    'name',
-                    'tag',
-                    'image_id',
-                    'full_name'
-                ],
-            '5.7':
-                [
-                    'name',
-                    'tag',
-                    'image_id',
-                    'full_name',
-                    'architecture',
-                    'author',
-                    'entrypoint',
-                    'docker_version',
-                    'exposed_ports',
-                    'size'
+        ContainersTestItem(
+            Image,
+            'CMP-9978',
+            expected_fields={
+                version.LOWEST: ['name', 'tag', 'image_id', 'full_name'],
+                '5.7': [
+                    'name', 'tag', 'image_id', 'full_name', 'architecture', 'author',
+                    'entrypoint', 'docker_version', 'exposed_ports', 'size'
                 ]
-        }, 'CMP-9978')),
+            }
+        )
+    ),
     pytest.mark.polarion('CMP-9890')(
-        TestItem(Service, [
-            'name',
-            'creation_timestamp',
-            'resource_version',
-            'session_affinity',
-            'type',
-            'portal_ip'
-        ], 'CMP-9890')),
+        ContainersTestItem(
+            Service,
+            'CMP-9890',
+            expected_fields=[
+                'name', 'creation_timestamp', 'resource_version', 'session_affinity',
+                'type', 'portal_ip'
+            ]
+        )
+    ),
     pytest.mark.polarion('CMP-9988')(
-        TestItem(ImageRegistry, [
-            'host'
-        ], 'CMP-9988')),
+        ContainersTestItem(
+            ImageRegistry,
+            'CMP-9988',
+            expected_fields=['host']
+        )
+    ),
     pytest.mark.polarion('CMP-10316')(
-        TestItem(Template, [
-            'name',
-            'creation_timestamp',
-            'resource_version',
-        ], 'CMP-10316'))
+        ContainersTestItem(
+            Template,
+            'CMP-10316',
+            expected_fields=['name', 'creation_timestamp', 'resource_version']
+        )
+    )
 ]
 
 

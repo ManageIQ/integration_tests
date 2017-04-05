@@ -1,89 +1,84 @@
-import re
-import pytest
-from random import choice
+import dateparser
 from traceback import format_exc
+from collections import namedtuple
+
+import pytest
+
+from cfme.containers.image import Image
+from cfme.containers.provider import ContainersProvider, ContainersTestItem,\
+    navigate_and_get_rows
+
+from utils.log_validator import LogValidator
 from utils import testgen
-from utils.version import current_version
-from utils.ssh import SSHTail
-from utils.appliance.implementations.ui import navigate_to
-from cfme.web_ui import InfoBlock
-from cfme.configure import tasks
-from cfme.containers.image import Image, list_tbl
-from cfme.containers.provider import ContainersProvider
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, flash
-from cfme.configure.tasks import Tasks, tasks_table
-from wait_for import TimedOutError
+from utils.blockers import BZ
 
 
 pytestmark = [
     pytest.mark.meta(server_roles='+smartproxy'),
-    pytest.mark.uncollectif(
-        lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
+LOG_VERIFICATION_VERBS = ('pod_create', 'pod_wait', 'pod_delete', 'analyze', 'finish')
 
-LOG_VERIFICATION_TAGS = ('pod_wait', 'analyze', 'finish')
-RESULT_DETAIL_FIELDS = {'Packages': lambda val: int(val) > 0,
-                        'OpenSCAP Resultids': len, 'OpenSCAP HTML': len, 'Last scan': len}
+AttributeToVerify = namedtuple('AttributeToVerify', ['table', 'attr', 'verifier'])
+
+TESTED_ATTRIBUTES__openscap_off = (
+    AttributeToVerify('configuration', 'openscap_results', bool),
+    AttributeToVerify('configuration', 'openscap_html', lambda val: val == 'Available'),
+    AttributeToVerify('configuration', 'last_scan', dateparser.parse)
+)
+TESTED_ATTRIBUTES__openscap_on = TESTED_ATTRIBUTES__openscap_off + (
+    AttributeToVerify('compliance', 'status', lambda val: val.startswith('Compliant')),
+    AttributeToVerify('compliance', 'history', lambda val: val == 'Available')
+)
+
+TEST_ITEMS = (
+    pytest.mark.polarion('CMP-9496')(
+        ContainersTestItem(Image, 'CMP-9496',
+                           is_openscap=False,
+                           tested_attr=TESTED_ATTRIBUTES__openscap_off)
+    ),
+    pytest.mark.polarion('CMP-10064')(
+        ContainersTestItem(Image, 'CMP-10064',
+                           is_openscap=True,
+                           tested_attr=TESTED_ATTRIBUTES__openscap_on)
+    )
+)
 
 
-def delete_all_vm_tasks():
-    # delete all tasks
-    view = navigate_to(Tasks, 'AllTasks')
-    view.delete.item_select('Delete All', handle_alert=True)
+@pytest.mark.meta(blockers=[BZ(1382326), BZ(1408255), BZ(1371896),
+                            BZ(1437128, forced_streams=['5.6', '5.7'])])
+@pytest.mark.parametrize(('test_item'), TEST_ITEMS)
+def test_containers_smartstate_analysis(provider, test_item, soft_assert):
 
+    chosen_row = navigate_and_get_rows(provider, Image, 1)[0]
+    image_obj = Image(chosen_row.name.text, chosen_row.tag.text, provider)
 
-def check_log(log, verify_tags):
-    """Verify that verify_tags are shown in the log as the pattern below"""
-    for tag in verify_tags:
-        assert re.findall(r'\n(.+Scanning::Job#{}.+)\n'.format(re.escape(tag)), log)
+    if test_item.is_openscap:
+        image_obj.assign_policy_profiles('OpenSCAP profile')
+    else:
+        image_obj.unassign_policy_profiles('OpenSCAP profile')
 
-
-@pytest.mark.meta(blockers=[1382326, 1406023])
-@pytest.mark.polarion('CMP-9496')
-def test_containers_smartstate_analysis(provider):
-    """Smart State analysis functionality check for single container image.
-    Steps:
-        1. Perform smart state analysis
-            Expected: Green message showing: "...Analysis successfully Initiated"
-        2. Waiting for analysis finish
-            Expected: 'finished'
-        3. check task succession in log
-            Expected: LOG_VERIFICATION_TAGS are shown in the log
-        4. verify that detail was added
-            Expected: all RESULT_DETAIL_FIELDS are shown an pass the function"""
-    delete_all_vm_tasks()
-    # step 1
-    navigate_to(Image, 'All')
-    tb.select('List View')
-    count = list_tbl.row_count()
-    if not count:
-        pytest.skip('Images table is empty! - cannot perform SSA test -> Skipping...')
     try:
-        evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
+        evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                                matched_patterns=LOG_VERIFICATION_VERBS)
     except:  # TODO: Should we add a specific exception?
         pytest.skip('Cannot continue test, probably due to containerized appliance\n'
                     'Traceback: \n{}'.format(format_exc()))
-    evm_tail.set_initial_file_end()
-    list_tbl.select_rows_by_indexes(choice(range(count)))
-    tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_contain('Analysis successfully initiated')
-    # step 2
-    ssa_timeout = '5M'
-    try:
-        tasks.wait_analysis_finished('Container image analysis',
-                                     'vm', delay=5, timeout=ssa_timeout)
-    except TimedOutError:
-        pytest.fail('Timeout exceeded, Waited too much time for SSA to finish ({}).'
-                    .format(ssa_timeout))
-    # Step 3
-    check_log(evm_tail.raw_string(), LOG_VERIFICATION_TAGS)
-    # Step 4
-    time_queued = tasks_table.rows_as_list()[0].updated.text
-    tasks_table.click_cell('Updated', value=time_queued)
-    for field, verify_func in RESULT_DETAIL_FIELDS.items():
-        assert verify_func(InfoBlock.text('Configuration', field))
+
+    evm_tail.fix_before_start()
+
+    image_obj.perform_smartstate_analysis(wait_for_finish=True)
+
+    image_obj.summary.reload()
+    for tbl, attr, verifier in test_item.tested_attr:
+
+        table = getattr(image_obj.summary, tbl)
+
+        if not soft_assert(hasattr(table, attr),
+                '{} table has missing attribute \'{}\''.format(tbl, attr)):
+            continue
+        value = getattr(table, attr).value
+        soft_assert(verifier(value),
+            '{}.{} attribute has unexpected value ({})'.format(tbl, attr, value))

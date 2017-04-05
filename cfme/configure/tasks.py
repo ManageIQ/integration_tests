@@ -120,6 +120,11 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
     """ Check if analysis is finished - if not, reload page"""
 
     tabs_data = {
+        'container': {
+            'tab': 'AllTasks',
+            'task': '{}',
+            'state': 'finished'
+        },
         'vm': {
             'tab': 'AllTasks',
             'task': 'Scan from Vm {}',

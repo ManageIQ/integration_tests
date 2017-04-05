@@ -23,50 +23,75 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-class TestItem(ContainersTestItem):
-    def __init__(self, obj, fields_to_verify, polarion_id):
-        ContainersTestItem.__init__(self, obj, polarion_id)
-        self.fields_to_verify = fields_to_verify
-
-
 # The polarion markers below are used to mark the test item
 # with polarion test case ID.
 # TODO: future enhancement - https://github.com/pytest-dev/pytest/pull/1921
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9859')(TestItem(ContainersProvider, [
-        'hostname', 'port', 'type'
-    ], 'CMP-9859')),
-    pytest.mark.polarion('CMP-9875')(TestItem(Route, [
-        'provider', 'project_name'
-    ], 'CMP-9875')),
-    pytest.mark.polarion('CMP-9943')(TestItem(Container, [
-        'pod_name', 'image', 'state'
-    ], 'CMP-9943')),
-    pytest.mark.polarion('CMP-9909')(TestItem(Pod, [
-        'provider', 'project_name', 'ready', 'containers',
-        'phase', 'restart_policy', 'dns_policy'
-    ], 'CMP-9909')),
-    pytest.mark.polarion('CMP-9889')(TestItem(Service, [
-        'provider', 'project_name', 'type', 'portal_ip', 'session_affinity', 'pods'
-    ], 'CMP-9889')),
-    pytest.mark.polarion('CMP-9967')(TestItem(Node, [
-        'provider', 'ready', 'operating_system', 'kernel_version', 'runtime_version'
-    ], 'CMP-9967')),
-    pytest.mark.polarion('CMP-9920')(TestItem(Replicator, [
-        'provider', 'project_name', 'replicas', 'current_replicas'
-    ], 'CMP-9920')),
-    pytest.mark.polarion('CMP-9975')(TestItem(Image, [
-        'provider', 'tag', 'id', 'image_registry'
-    ], 'CMP-9975')),
-    pytest.mark.polarion('CMP-9985')(TestItem(ImageRegistry, [
-        'port', 'provider'
-    ], 'CMP-9985')),
-    pytest.mark.polarion('CMP-9886')(TestItem(Project, [
-        'provider', 'container_routes', 'container_services',
-        'container_replicators', 'pods', 'containers', 'images'
-    ], 'CMP-9886'))
+    pytest.mark.polarion('CMP-9859')(
+        ContainersTestItem(
+            ContainersProvider, 'CMP-9859', fields_to_verify=['hostname', 'port', 'type']
+        )
+    ),
+    pytest.mark.polarion('CMP-9875')(
+        ContainersTestItem(
+            Route, 'CMP-9875', fields_to_verify=['provider', 'project_name']
+        )
+    ),
+    pytest.mark.polarion('CMP-9943')(
+        ContainersTestItem(
+            Container, 'CMP-9943', fields_to_verify=['pod_name', 'image', 'state']
+        )
+    ),
+    pytest.mark.polarion('CMP-9909')(
+        ContainersTestItem(
+            Pod, 'CMP-9909', fields_to_verify=[
+                'provider', 'project_name', 'ready', 'containers',
+                'phase', 'restart_policy', 'dns_policy'
+            ]
+        )
+    ),
+    pytest.mark.polarion('CMP-9889')(
+        ContainersTestItem(
+            Service, 'CMP-9889', fields_to_verify=[
+                'provider', 'project_name', 'type', 'portal_ip',
+                'session_affinity', 'pods'
+            ]
+        )
+    ),
+    pytest.mark.polarion('CMP-9967')(
+        ContainersTestItem(
+            Node, 'CMP-9967', fields_to_verify=[
+                'provider', 'ready', 'operating_system', 'kernel_version',
+                'runtime_version'
+            ]
+        )
+    ),
+    pytest.mark.polarion('CMP-9920')(
+        ContainersTestItem(
+            Replicator, 'CMP-9920',
+            fields_to_verify=['provider', 'project_name', 'replicas', 'current_replicas']
+        )
+    ),
+    pytest.mark.polarion('CMP-9975')(
+        ContainersTestItem(
+            Image, 'CMP-9975', fields_to_verify=['provider', 'tag', 'id', 'image_registry']
+        )
+    ),
+    pytest.mark.polarion('CMP-9985')(
+        ContainersTestItem(
+            ImageRegistry, 'CMP-9985', fields_to_verify=['port', 'provider']
+        )
+    ),
+    pytest.mark.polarion('CMP-9886')(
+        ContainersTestItem(
+            Project, 'CMP-9886', fields_to_verify=[
+                'provider', 'container_routes', 'container_services',
+                'container_replicators', 'pods', 'containers', 'images'
+            ]
+        )
+    )
 ]
 
 
