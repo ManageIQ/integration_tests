@@ -313,7 +313,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
     wait for it to finish.
 
     Args:
-      credential (cfme.Credential):  Amazon discovery credentials.
+      credential (cfme.credential.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
     navigate_to(CloudProvider, 'Discover')

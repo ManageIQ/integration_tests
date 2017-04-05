@@ -1,3 +1,4 @@
+import cfme.credential
 from . import CloudProvider
 import cfme
 import cfme.fixtures.pytest_selenium as sel
@@ -25,15 +26,15 @@ class GCEProvider(CloudProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        ser_acc_creds = cls.get_credentials_from_config(
-            prov_config['credentials'], cred_type='service_account')
+        sa_creds = cls.get_credentials_from_config(prov_config['credentials'],
+                                                   cred_type='service_account')
         return cls(name=prov_config['name'],
-            project=prov_config['project'],
-            zone=prov_config['zone'],
-            region=prov_config['region'],
-            credentials={'default': ser_acc_creds},
-            key=prov_key,
-            appliance=appliance)
+                   project=prov_config['project'],
+                   zone=prov_config['zone'],
+                   region=prov_config['region'],
+                   credentials={'service_account': sa_creds},
+                   key=prov_key,
+                   appliance=appliance)
 
     @classmethod
     def get_credentials(cls, credential_dict, cred_type=None):
@@ -46,18 +47,9 @@ class GCEProvider(CloudProvider):
         Returns:
             A :py:class:`BaseProvider.Credential` instance.
         """
-        domain = credential_dict.get('domain', None)
-        token = credential_dict.get('token', None)
         service_account = credential_dict.get('service_account', None)
-        if service_account:
-            service_account = cls.gce_service_account_formating(service_account)
-        return cfme.ProvCredential(
-            principal=credential_dict['username'],
-            secret=credential_dict['password'],
-            cred_type=cred_type,
-            domain=domain,
-            token=token,
-            service_account=service_account)
+        service_account = cls.gce_service_account_formating(service_account)
+        return cfme.credential.ServiceAccountCredential(service_account=service_account)
 
     @staticmethod
     def gce_service_account_formating(data):

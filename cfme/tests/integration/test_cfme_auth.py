@@ -2,7 +2,8 @@
 import pytest
 
 from cfme.configure.access_control import Group, User
-from cfme import Credential, login
+from cfme import login
+from cfme.credential import Credential
 from utils import browser
 from utils.conf import cfme_data
 
