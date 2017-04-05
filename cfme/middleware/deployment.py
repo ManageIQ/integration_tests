@@ -233,5 +233,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        if paginator.page_controls_exist():
+            paginator.results_per_page(1000)
         list_tbl.click_row_by_cells({'Deployment Name': self.obj.name,
                                      'Server': self.obj.server.name})

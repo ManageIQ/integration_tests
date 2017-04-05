@@ -11,7 +11,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Region, Form, AngularSelect, InfoBlock, Input, Quadicon,
     form_buttons, toolbar as tb, paginator, fill, FileInput,
-    CFMECheckbox, Select, flash
+    CFMECheckbox, Select, flash, tabstrip
 )
 from utils import version
 from utils.appliance import current_appliance
@@ -266,11 +266,13 @@ jdbc_driver_form = Form(
 datasource_form = Form(
     fields=[
         ("ds_type", Select("//select[@id='chooose_datasource_input']")),
+        ("xa_ds", CFMECheckbox("xa_ds_cb")),
         ("ds_name", Input("ds_name_input")),
         ("jndi_name", Input("jndi_name_input")),
         ("driver_name", Input("jdbc_ds_driver_name_input")),
         ("driver_module_name", Input("jdbc_modoule_name_input")),
         ("driver_class", Input("jdbc_ds_driver_input")),
+        ("existing_driver", Select("//select[@id='existing_jdbc_driver_input']")),
         ("ds_url", Input("connection_url_input")),
         ("username", Input("user_name_input")),
         ("password", Input("password_input")),
@@ -379,9 +381,10 @@ class Container(SummaryMixin):
         flash.assert_success_message('JDBC Driver "{}" has been installed on this server.'
                     .format(driver_name))
 
-    def add_datasource(self, ds_type, ds_name, jndi_name, driver_name,
-               driver_module_name, driver_class, ds_url,
-               username, password=None, sec_domain=None, cancel=False):
+    def add_datasource(self, ds_type, ds_name, jndi_name, ds_url,
+               xa_ds=False, driver_name=None,
+               existing_driver=None, driver_module_name=None, driver_class=None,
+               username=None, password=None, sec_domain=None, cancel=False):
         """Clicks to "Add Datasource" button,
         in opened window fills fields by provided parameter by clicking 'Next',
         and submits the form by clicking 'Finish'.
@@ -401,9 +404,14 @@ class Container(SummaryMixin):
         """
         self.load_details(refresh=True)
         datasources_btn("Add Datasource", invokes_alert=True)
+        if self.appliance.version >= '5.8':
+            fill(datasource_form,
+                {
+                    "xa_ds": xa_ds
+                })
         fill(datasource_form,
             {
-                "ds_type": ds_type
+                "ds_type": ds_type,
             })
         sel.click(datasource_form.cancel_button if cancel else datasource_form.next0_button)
         fill(datasource_form,
@@ -412,12 +420,19 @@ class Container(SummaryMixin):
                 "jndi_name": jndi_name
             })
         sel.click(datasource_form.cancel_button if cancel else datasource_form.next1_button)
-        fill(datasource_form,
-            {
-                "driver_name": driver_name,
-                "driver_module_name": driver_module_name,
-                "driver_class": driver_class
-            })
+        if existing_driver and self.appliance.version >= '5.8':
+            tabstrip.select_tab("Existing Driver")
+            fill(datasource_form,
+                {
+                    "existing_driver": existing_driver
+                })
+        else:
+            fill(datasource_form,
+                {
+                    "driver_name": driver_name,
+                    "driver_module_name": driver_module_name,
+                    "driver_class": driver_class
+                })
         sel.click(datasource_form.cancel_button if cancel else datasource_form.next2_button)
         fill(datasource_form,
             {
