@@ -152,7 +152,12 @@ class ApplianceLoggerAdapter(StackedPrefixLoggerAdapter):
 class SSHLoggerAdapter(StackedPrefixLoggerAdapter):
     def __init__(self, logger, extra):
         extra['item_type'] = 'SSH'
+        self.username = extra['ssh_user']
         super(SSHLoggerAdapter, self).__init__(logger, extra)
+
+    @property
+    def prefix(self):
+        return super(SSHLoggerAdapter, self).prefix + ':' + self.username
 
     def trace(self, msg, *args, **kwargs):
         """
@@ -774,7 +779,8 @@ class IPAppliance(object):
             'hostname': self.hostname,
             'username': conf.credentials['ssh']['ssh-user'],
             'key_filename': conf_path.join('appliance_private_key').strpath,
-            'logger': SSHLoggerAdapter(self.logger, {}),
+            'logger': SSHLoggerAdapter(
+                self.logger, {'ssh_user': conf.credentials['ssh']['ssh-user']}),
         }
         return ssh.SSHClient(**connect_kwargs)
 
@@ -803,7 +809,8 @@ class IPAppliance(object):
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
             'container': self.container,
-            'logger': SSHLoggerAdapter(self.logger, {}),
+            'logger': SSHLoggerAdapter(
+                self.logger, {'ssh_user': conf.credentials['ssh']['username']}),
         }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
