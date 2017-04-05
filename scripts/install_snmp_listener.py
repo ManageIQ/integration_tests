@@ -54,7 +54,7 @@ def main():
             "sed -i '/--dport 5432/a -A INPUT -p tcp -m tcp --dport 8765 -j ACCEPT' "
             "/etc/sysconfig/iptables"
         )
-        client.run_command("service iptables restart")
+        client.run_command("systemctl restart iptables")
         # Check if accessible
         try:
             requests.get("http://{}:8765/".format(args.address))

@@ -78,8 +78,8 @@ def generate_statistics(the_list, decimals=2):
 def get_worker_pid(worker_type):
     """Obtains the pid of the first worker with the worker_type specified"""
     ssh_client = SSHClient()
-    exit_status, out = ssh_client.run_command('service evmserverd status 2> /dev/null | grep -m 1 '
-        '\'{}\' | awk \'{{print $7}}\''.format(worker_type))
+    exit_status, out = ssh_client.run_command('systemctl status evmserverd 2> /dev/null | grep '
+        '-m 1 \'{}\' | awk \'{{print $7}}\''.format(worker_type))
     worker_pid = str(out).strip()
     if out:
         logger.info('Obtained {} PID: {}'.format(worker_type, worker_pid))

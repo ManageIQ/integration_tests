@@ -30,7 +30,7 @@ Pre-testing (``pytest_configure`` hook):
 2. Install and require the coverage hook (copy ``coverage_hook`` to config/, add
    require line to the end of ``config/boot.rb``)
 3. Restart EVM (Rudely) to start running coverage on the appliance processes:
-   ``killall -9 ruby; service evmserverd start``
+   ``killall -9 ruby; sysemctl start evmserverd``
 4. TOUCH ALL THE THINGS (run ``thing_toucher.rb`` with the rails runner).
    Fork this process off and come back to it later
 
@@ -38,7 +38,7 @@ Post-testing (``pytest_unconfigure`` hook):
 
 1. Poll ``thing_toucher`` to make sure it completed; block if needed.
 2. Stop EVM, but nicely this time so the coverage atexit hooks run:
-   ``service evmserverd stop``
+   ``systemctl stop evmserverd``
 3. Run ``coverage_merger.rb`` with the rails runner, which compiles all the individual process
    reports and runs coverage again, additionally creating an rcov report
 4. Pull the coverage dir back for parsing and archiving
@@ -241,7 +241,7 @@ class CoverageManager(object):
 
     def _collect_reports(self):
         # restart evm to stop the proccesses and let the simplecov exit hook run
-        self.ipapp.ssh_client.run_command('service evmserverd stop')
+        self.ipapp.ssh_client.run_command('systemctl stop evmserverd')
         # collect back to the collection appliance if parallelized
         if store.current_appliance != self.collection_appliance:
             self.print_message('sending reports to {}'.format(self.collection_appliance.address))
