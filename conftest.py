@@ -141,6 +141,7 @@ pytest_plugins = (
     'cfme.fixtures.smtp',
     'cfme.fixtures.tag',
     'cfme.fixtures.vm_name',
+    'cfme.fixtures.vporizer',
 
     'cfme.metaplugins',
 )

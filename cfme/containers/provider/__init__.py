@@ -358,7 +358,9 @@ class ContainersTestItem(object):
             self.__setattr__(name, value)
 
     def pretty_id(self):
-        return '{} ({})'.format(self.obj.__name__, self.polarion_id)
+        return '{} ({})'.format(
+            getattr(self.obj, '__name__', str(self.obj)),
+            self.polarion_id)
 
 
 def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable):
