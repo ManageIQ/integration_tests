@@ -32,17 +32,17 @@ def test_evmserverd_stop(appliance):
     """
 
     if appliance.version >= 5.8:
-        name = 'Server'
+        server_name = 'Server'
     else:
-        name = 'Server_Name'
+        server_name = 'Server_Name'
 
-    server_names = {name for server in appliance.ssh_client.status["servers"]}
+    server_names = {server_name for server in appliance.ssh_client.status["servers"]}
     assert appliance.ssh_client.run_command("service evmserverd stop").rc == 0
 
     @pytest.wait_for(timeout="2m", delay=5)
     def servers_stopped():
         status = {
-            name: server for server in appliance.ssh_client.status["servers"]
+            server_name: server for server in appliance.ssh_client.status["servers"]
         }
         for server_name in server_names:
             if status[server_name]["Status"] != "stopped":
