@@ -1757,6 +1757,10 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
                 provider_api.get_meta_value(vm_name, 'sprout_leased_until'))
             construct['status_changed'] = parsedate(
                 provider_api.get_meta_value(vm_name, 'sprout_status_changed'))
+            construct['created_on'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_created_on'))
+            construct['modified_on'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_modified_on'))
         except KeyError as e:
             self.logger.error('Failed to reconstruct %d/%s', appliance_id, vm_name)
             self.logger.exception(e)

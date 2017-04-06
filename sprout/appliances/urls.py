@@ -45,6 +45,7 @@ urlpatterns = [
     url(r'^change_password/done$', views.go_home, name='password_change_done'),
     url(r'^logout$', views.logout, name="logout"),
     url(r'^pool/request$', views.request_pool, name="request_pool"),
+    url(r'^pool/clone$', views.clone_pool, name="clone_pool"),
     url(r'^pool/transfer$', views.transfer_pool, name="transfer_pool"),
     url(r'^pool/kill/(?P<pool_id>\d+)$', views.kill_pool, name="kill_pool"),
     url(r'^vms$', views.vms, name="vms_default"),

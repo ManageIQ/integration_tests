@@ -720,6 +720,8 @@ class Appliance(MetadataMixin):
         """If possible, uploads some metadata to the provider VM object to be able to recover."""
         self._set_meta('id', self.id)
         self._set_meta('source_template_id', self.template.id)
+        self._set_meta('created_on', apply_if_not_none(self.created_on, "isoformat"))
+        self._set_meta('modified_on', apply_if_not_none(self.modified_on, "isoformat"))
         if self.appliance_pool is not None:
             self._set_meta('pool_id', self.appliance_pool.id)
             self._set_meta('pool_total_count', self.appliance_pool.total_count)
@@ -791,6 +793,8 @@ class Appliance(MetadataMixin):
             container=self.template.container,
             ram=self.ram,
             cpu=self.cpu,
+            created_on=self.created_on,
+            modified_on=self.modified_on,
         )
 
     @property
@@ -1036,6 +1040,63 @@ class AppliancePool(MetadataMixin):
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
 
+    def merge(self, source_pool):
+        if not self.finished:
+            raise Exception('Provisioning of the target pool has not finished yet.')
+        if not source_pool.finished:
+            raise Exception('Provisioning of the source pool has not finished yet.')
+        if self.not_needed_anymore:
+            raise Exception('Target pool is being deleted.')
+        if source_pool.not_needed_anymore:
+            raise Exception('Source pool is being deleted.')
+        if self.group != source_pool.group:
+            raise ValueError('The groups of the pools differ')
+        if self.provider != source_pool.provider:
+            raise ValueError('The provider of the pools differ')
+        if self.version != source_pool.version:
+            raise ValueError('The version of the pools differ')
+        if self.date != source_pool.date:
+            raise ValueError('The date of the pools differ')
+        if self.preconfigured != source_pool.preconfigured:
+            raise ValueError('The preconfigured of the pools differ')
+
+        if self.yum_update != source_pool.yum_update:
+            raise ValueError('The yum_update of the pools differ')
+
+        if self.is_container != source_pool.is_container:
+            raise ValueError('The is_container of the pools differ')
+
+        if self.override_memory != source_pool.override_memory:
+            raise ValueError('The override_memory of the pools differ')
+
+        if self.override_cpu != source_pool.override_cpu:
+            raise ValueError('The override_cpu of the pools differ')
+
+        with transaction.atomic():
+            for appliance in source_pool.appliances:
+                appliance.appliance_pool = self
+                appliance.save()
+                self.total_count += 1
+                self.save()
+            source_pool.delete()
+
+        return self
+
+    def clone(self, num_appliances=None, time_leased=60, owner=None):
+        return self.create(
+            owner or self.owner,
+            self.group,
+            version=self.version,
+            date=self.date,
+            provider=self.provider,
+            num_appliances=self.total_count if num_appliances is None else num_appliances,
+            time_leased=time_leased,
+            preconfigured=self.preconfigured,
+            yum_update=self.yum_update,
+            container=self.is_container,
+            ram=self.override_memory,
+            cpu=self.override_cpu)
+
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
             time_leased=60, preconfigured=True, yum_update=False, container=False, ram=None,
@@ -1094,12 +1155,16 @@ class AppliancePool(MetadataMixin):
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update,
             is_container=container, override_memory=ram, override_cpu=cpu)
+        if num_appliances == 0:
+            req_params['finished'] = True
         req = cls(**req_params)
         if not req.possible_templates:
             raise Exception("No possible templates! (pool params: {})".format(str(req_params)))
         req.save()
         cls.class_logger(req.pk).info("Created")
-        request_appliance_pool.delay(req.id, time_leased)
+        if num_appliances > 0:
+            # Only if we have any appliances to request
+            request_appliance_pool.delay(req.id, time_leased)
         return req
 
     def delete(self, *args, **kwargs):
