@@ -5,6 +5,7 @@ import pytest
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.infrastructure.host import Host
 from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -30,14 +31,6 @@ def new_instance(provider):
                     cloud_tenant=prov_data['tenant'])
     instance.wait_to_appear()
     return instance
-
-
-@pytest.fixture(scope='function')
-def shelved_instance(new_instance):
-    new_instance.power_control_from_provider(OpenStackInstance.SHELVE)
-    navigate_to(new_instance, 'Details')
-    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
-    return new_instance
 
 
 def test_create_instance(new_instance, soft_assert):
@@ -101,22 +94,25 @@ def test_shelve_instance(new_instance):
                      OpenStackInstance.STATE_SHELVED)
 
 
-def test_shelve_offload_instance(shelved_instance):
-    shelved_instance.power_control_from_cfme(from_details=True,
-                                             option=OpenStackInstance.SHELVE_OFFLOAD)
-    shelved_instance.wait_for_instance_state_change(
-        OpenStackInstance.STATE_SHELVED_OFFLOAD)
-    state = shelved_instance.get_detail(properties=('Power Management',
-                                                    'Power State'))
+def test_shelve_offload_instance(new_instance):
+    new_instance.power_control_from_cfme(from_details=True,
+                                         option=OpenStackInstance.SHELVE)
+    new_instance.power_control_from_cfme(from_details=True,
+                                         option=OpenStackInstance.SHELVE_OFFLOAD)
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED_OFFLOAD)
+    state = new_instance.get_detail(properties=('Power Management',
+                                                'Power State'))
     assert state == OpenStackInstance.STATE_SHELVED_OFFLOAD
 
 
-def test_start_instance(shelved_instance):
-    shelved_instance.power_control_from_cfme(from_details=True,
-                                             option=OpenStackInstance.START)
-    shelved_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
-    state = shelved_instance.get_detail(properties=('Power Management',
-                                                    'Power State'))
+def test_start_instance(new_instance):
+    new_instance.power_control_from_provider(OpenStackInstance.STOP)
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_OFF)
+    new_instance.power_control_from_cfme(from_details=True,
+                                         option=OpenStackInstance.START)
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_ON)
+    state = new_instance.get_detail(properties=('Power Management',
+                                                'Power State'))
     assert state == OpenStackInstance.STATE_ON
 
 
@@ -148,4 +144,19 @@ def test_delete_instance(new_instance):
 
     assert new_instance.name not in new_instance.provider.mgmt.list_vm()
     navigate_to(new_instance, 'AllForProvider')
-    assert new_instance.name not in Quadicon.all()
+    assert new_instance.name not in [q.name for q in Quadicon.all()]
+
+
+def test_list_vms_infra_node(provider, soft_assert):
+    navigate_to(provider.infra_provider, 'ProviderNodes')
+    # Match hypervisors by IP with count of running VMs
+    hvisors = {hv.host_ip: hv.running_vms for hv in provider.mgmt.api.hypervisors.list()}
+
+    # Skip non-compute nodes
+    quads = [q.name for q in Quadicon.all() if 'Compute' in q.name]
+    for quad in quads:
+        host = Host(quad, provider=provider.infra_provider)
+        host_ip = host.get_detail('Properties', 'IP Address')
+        vms = int(host.get_detail('Relationships', 'VMs'))
+        soft_assert(vms == hvisors[host_ip],
+                    'Number of instances on UI does not match with real value')

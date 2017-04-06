@@ -1,13 +1,11 @@
 import pytest
 from random import choice
 
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.deployment_roles import DeploymentRoles
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import flash, Quadicon, summary_title
 from utils import testgen
-from utils.wait import wait_for
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -75,8 +73,6 @@ def test_role_delete(provider):
     dr = DeploymentRoles(role_name, provider)
     dr.delete()
     flash.assert_no_errors()
-    provider.refresh_provider_relationships()
-    wait_for(provider.is_refreshed)
-    sel.refresh()
+    navigate_to(dr, 'AllForProvider')
     names = [q.name for q in list(Quadicon.all())]
     assert role_name not in names
