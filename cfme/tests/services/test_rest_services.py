@@ -778,3 +778,77 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert edited[i].description == new[i]['description']
             orchestration_templates[i].reload()
             assert orchestration_templates[i].description == new[i]['description']
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_copy_orchestration_templates(self, request, rest_api, orchestration_templates,
+            from_detail):
+        """Tests copying of orchestration templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        num_orch_templates = len(orchestration_templates)
+        new = []
+        for _ in range(num_orch_templates):
+            uniq = fauxfactory.gen_alphanumeric(5)
+            new.append({
+                "name": "test_copied_{}".format(uniq),
+                "content": "{{ 'Description' : '{}' }}\n".format(uniq)
+            })
+        if from_detail:
+            copied = []
+            for i in range(num_orch_templates):
+                copied.append(orchestration_templates[i].action.copy(**new[i]))
+                assert rest_api.response.status_code == 200
+        else:
+            for i in range(num_orch_templates):
+                new[i].update(orchestration_templates[i]._ref_repr())
+            copied = rest_api.collections.orchestration_templates.action.copy(*new)
+            assert rest_api.response.status_code == 200
+
+        request.addfinalizer(
+            lambda: rest_api.collections.orchestration_templates.action.delete(*copied))
+
+        assert len(copied) == num_orch_templates
+        for i in range(num_orch_templates):
+            orchestration_templates[i].reload()
+            assert copied[i].name == new[i]['name']
+            assert orchestration_templates[i].id != copied[i].id
+            assert orchestration_templates[i].name != copied[i].name
+            assert orchestration_templates[i].description == copied[i].description
+            new_record = rest_api.collections.orchestration_templates.get(id=copied[i].id)
+            assert new_record.name == copied[i].name
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_invalid_copy_orchestration_templates(self, rest_api, orchestration_templates,
+            from_detail):
+        """Tests copying of orchestration templates without changing content.
+
+        Metadata:
+            test_flag: rest
+        """
+        num_orch_templates = len(orchestration_templates)
+        new = []
+        for _ in range(num_orch_templates):
+            new.append({
+                "name": "test_copied_{}".format(fauxfactory.gen_alphanumeric(5))
+            })
+        if from_detail:
+            for i in range(num_orch_templates):
+                with error.expected("content must be unique"):
+                    orchestration_templates[i].action.copy(**new[i])
+                assert rest_api.response.status_code == 400
+        else:
+            for i in range(num_orch_templates):
+                new[i].update(orchestration_templates[i]._ref_repr())
+            with error.expected("content must be unique"):
+                rest_api.collections.orchestration_templates.action.copy(*new)
+            assert rest_api.response.status_code == 400
