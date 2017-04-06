@@ -129,7 +129,6 @@ def test_host_zones_assigned(provider):
         assert result, "Availability zone doesn't specified"
 
 
-@pytest.mark.trylast
 def test_host_delete(provider):
     navigate_to(provider, 'ProviderNodes')
     quad_names = [q.name for q in Quadicon.all() if 'Compute' in q.name]
