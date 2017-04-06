@@ -126,23 +126,23 @@ def get_host_name(provider):
     return cfme_host.name
 
 
-def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
-    metrics_tbl = appliance.db['metrics']
-    ems = appliance.db['ext_management_systems']
+def query_metric_db(appliance_db, provider, metric, vm_name=None, host_name=None):
+    metrics_tbl = appliance_db['metrics']
+    ems = appliance_db['ext_management_systems']
     if vm_name is None:
         if host_name is not None:
             object_name = host_name
     elif vm_name is not None:
         object_name = vm_name
 
-    with appliance.db.transaction:
+    with appliance_db.transaction:
         provs = (
-            appliance.db.session.query(metrics_tbl.id)
+            appliance_db.session.query(metrics_tbl.id)
             .join(ems, metrics_tbl.parent_ems_id == ems.id)
             .filter(metrics_tbl.resource_name == object_name,
             ems.name == provider.name)
         )
-    return appliance.db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery()))
+    return appliance_db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery()))
 
 
 # Tests to check that specific metrics are being collected
