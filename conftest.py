@@ -8,15 +8,10 @@ Top-level conftest.py does a couple of things:
 import pytest
 import requests
 
-from fixtures.artifactor_plugin import art_client, appliance_ip_address
-from cfme.configure import configuration
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
 from utils import ports
-from utils.appliance import ApplianceException
 from utils.conf import rdb
-from utils.log import logger
-from utils.path import data_path
 from utils.net import net_check
 from utils.wait import TimedOutError
 
@@ -35,7 +30,6 @@ class _AppliancePoliceException(Exception):
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
-
 
 
 @pytest.fixture(autouse=True, scope="function")
