@@ -110,7 +110,7 @@ def pytest_configure(config):
     global proc
     if not SLAVEID and not proc and isinstance(art_client, ArtifactorClient):
         import subprocess
-        cmd = ['cfme-artifactor-server', '--port', str(art_client.port)]
+        cmd = ['miq-artifactor-server', '--port', str(art_client.port)]
         if config.getvalue('run_id'):
             cmd.append('--run-id')
             cmd.append(str(config.getvalue('run_id')))

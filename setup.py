@@ -16,8 +16,8 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'cfme-release = scripts.release:main',
-            'cfme-artifactor-server = artifactor.__main__:main',
+            'miq-release = scripts.release:main',
+            'miq-artifactor-server = artifactor.__main__:main',
         ],
         'manageiq.provider_categories':
         [
