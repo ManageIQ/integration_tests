@@ -38,7 +38,7 @@ def test_evmserverd_stop(appliance):
     })
 
     server_names = {server_name for server in appliance.ssh_client.status["servers"]}
-    assert appliance.ssh_client.run_command("service evmserverd stop").rc == 0
+    assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
 
     @pytest.wait_for(timeout="2m", delay=5)
     def servers_stopped():
