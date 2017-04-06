@@ -3,8 +3,8 @@ from functools import partial
 
 from manageiq_client.api import APIException
 
-import cfme
-import cfme.base.credential
+from cfme.base.credential import CANDUCredential, ServiceAccountCredential, TokenCredential, \
+    SSHCredential, AzureCredential, AMQPCredential, Credential
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
@@ -440,26 +440,26 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`BaseProvider.Credential` instance.
+            A :py:class:`cfme.base.credential.Credential` instance.
         """
         domain = credential_dict.get('domain', None)
         token = credential_dict.get('token', None)
         if not cred_type:
-            return cfme.base.credential.Credential(principal=credential_dict['username'],
-                                                   secret=credential_dict['password'],
-                                                   domain=domain)
+            return Credential(principal=credential_dict['username'],
+                              secret=credential_dict['password'],
+                              domain=domain)
         elif cred_type == 'amqp':
-            return cfme.base.credential.AMQPCredential(principal=credential_dict['username'],
-                                                       secret=credential_dict['password'])
+            return AMQPCredential(principal=credential_dict['username'],
+                                  secret=credential_dict['password'])
 
         elif cred_type == 'ssh':
-            return cfme.base.credential.SSHCredential(principal=credential_dict['username'],
-                                                      secret=credential_dict['password'])
+            return SSHCredential(principal=credential_dict['username'],
+                                 secret=credential_dict['password'])
         elif cred_type == 'candu':
-            return cfme.base.credential.CANDUCredential(principal=credential_dict['username'],
-                                                        secret=credential_dict['password'])
+            return CANDUCredential(principal=credential_dict['username'],
+                                   secret=credential_dict['password'])
         elif cred_type == 'token':
-            return cfme.base.credential.TokenCredential(token=token)
+            return TokenCredential(token=token)
 
     @classmethod
     def get_credentials_from_config(cls, credential_config_name, cred_type=None):
@@ -470,7 +470,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`BaseProvider.Credential` instance.
+            A :py:class:`cfme.base.credential.Credential` instance.
         """
         creds = conf.credentials[credential_config_name]
         return cls.get_credentials(creds, cred_type=cred_type)
@@ -489,7 +489,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 considered as the credentials.
 
         Returns:
-            :py:class:`BaseProvider.Credentials` instance
+            :py:class:`cfme.base.credential.Credential` instance
         """
         if isinstance(cred_yaml_key, dict):
             return cls.get_credentials(cred_yaml_key, cred_type=cred_type)
@@ -647,24 +647,24 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             return True
 
 
-@fill.method((Form, cfme.base.credential.Credential))  # default credential
-@fill.method((Form, cfme.base.credential.AMQPCredential))
-@fill.method((Form, cfme.base.credential.CANDUCredential))
-@fill.method((Form, cfme.base.credential.AzureCredential))
-@fill.method((Form, cfme.base.credential.SSHCredential))
-@fill.method((Form, cfme.base.credential.TokenCredential))
-@fill.method((Form, cfme.base.credential.ServiceAccountCredential))
+@fill.method((Form, Credential))  # default credential
+@fill.method((Form, AMQPCredential))
+@fill.method((Form, CANDUCredential))
+@fill.method((Form, AzureCredential))
+@fill.method((Form, SSHCredential))
+@fill.method((Form, TokenCredential))
+@fill.method((Form, ServiceAccountCredential))
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
-    if isinstance(cred, cfme.base.credential.AMQPCredential):
+    if isinstance(cred, AMQPCredential):
         fill(cred.form, {
             'event_selection': 'amqp',
             'amqp_principal': cred.principal,
             'amqp_secret': cred.secret,
             'amqp_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    elif isinstance(cred, cfme.base.credential.CANDUCredential):
+    elif isinstance(cred, CANDUCredential):
         fill(cred.form, {'candu_principal': cred.principal,
             'candu_secret': cred.secret,
             'candu_verify_secret': cred.verify_secret,
@@ -687,13 +687,13 @@ def _fill_credential(form, cred, validate=None):
                 # ``exc`` must have some contents by now since at least one except had to happen.
                 raise exc
 
-    elif isinstance(cred, cfme.base.credential.AzureCredential):
+    elif isinstance(cred, AzureCredential):
         fill(cred.form, {'default_username': cred.principal,
                          'default_password': cred.secret,
                          'default_verify': cred.secret})
-    elif isinstance(cred, cfme.base.credential.SSHCredential):
+    elif isinstance(cred, SSHCredential):
         fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
-    elif isinstance(cred, cfme.base.credential.TokenCredential):
+    elif isinstance(cred, TokenCredential):
         fill(cred.form, {
             'token_secret': cred.token,
             'token_verify_secret': cred.verify_token,
@@ -705,14 +705,14 @@ def _fill_credential(form, cred, validate=None):
             fill(cred.form, {
                 'hawkular_validate_btn': validate
             })
-    elif isinstance(cred, cfme.base.credential.ServiceAccountCredential):
+    elif isinstance(cred, ServiceAccountCredential):
         fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
     else:
         fill(cred.form, {'default_principal': cred.principal,
             'default_secret': cred.secret,
             'default_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    if validate and isinstance(cred, cfme.base.credential.CANDUCredential):
+    if validate and isinstance(cred, CANDUCredential):
         # because we already validated it for the specific case
         flash.assert_no_errors()
 

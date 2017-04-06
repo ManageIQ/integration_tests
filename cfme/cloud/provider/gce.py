@@ -1,7 +1,6 @@
 from mgmtsystem.google import GoogleCloudSystem
 
-import cfme
-import cfme.base.credential
+from cfme.base.credential import ServiceAccountCredential
 import cfme.fixtures.pytest_selenium as sel
 from . import CloudProvider
 
@@ -46,11 +45,11 @@ class GCEProvider(CloudProvider):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`BaseProvider.Credential` instance.
+            A :py:class:`cfme.base.credential.Credential` instance.
         """
         service_account = credential_dict.get('service_account', None)
         service_account = cls.gce_service_account_formating(service_account)
-        return cfme.base.credential.ServiceAccountCredential(service_account=service_account)
+        return ServiceAccountCredential(service_account=service_account)
 
     @staticmethod
     def gce_service_account_formating(data):
