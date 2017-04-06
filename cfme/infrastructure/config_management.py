@@ -3,8 +3,7 @@ from functools import partial
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-import cfme
-import cfme.base.credential
+from cfme.base.credential import Credential as BaseCredential
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.tabstrip as tabs
@@ -88,7 +87,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
                 'url_text': kwargs.get('url'),
                 'ssl_checkbox': kwargs.get('ssl')}
 
-    class Credential(cfme.base.credential.Credential, Updateable):
+    class Credential(BaseCredential, Updateable):
         pass
 
     def _submit(self, cancel, submit_button):
@@ -251,7 +250,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             name=data['name'],
             url=data['url'],
             ssl=data['ssl'],
-            credentials=cfme.base.credential.Credential(
+            credentials=cls.Credential(
                 principal=creds['username'], secret=creds['password']),
             key=key)
 
