@@ -216,6 +216,19 @@ def test_http_options(rest_api):
     assert rest_api.response.status_code == 200
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+@pytest.mark.parametrize("collection_name", ["hosts", "clusters"])
+def test_http_options_node_types(rest_api, collection_name):
+    """Tests that OPTIONS http method on Hosts and Clusters collection returns node_types.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = getattr(rest_api.collections, collection_name)
+    assert 'node_types' in collection.options()['data']
+    assert rest_api.response.status_code == 200
+
+
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_server_info(rest_api):
     """Check that server info is present.
