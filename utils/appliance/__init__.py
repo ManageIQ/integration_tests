@@ -126,7 +126,7 @@ class ApplianceConsoleCli(object):
                 dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
-        self._run("--ipaserver {ipaserver} --ipaprincapal {username} --ipapassword {password}"
+        self._run("--ipaserver {ipaserver} --ipaprincipal {username} --ipapassword {password}"
             " --ipadomain {domain} --iparealm {realm}".format(
                 ipaserver=ipaserver, username=username, password=password, domain=domain,
                 realm=realm))
