@@ -33,7 +33,7 @@ def test_evmserverd_stop(appliance):
     """
 
     server_name = version.pick({
-        version.LOWEST: 'Server_Name',
+        version.LOWEST: 'Server Name',
         '5.8': 'Server'
     })
 
