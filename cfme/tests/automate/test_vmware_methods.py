@@ -70,7 +70,7 @@ def testing_vm(request, setup_provider, provider):
     vm = VM.factory(
         "test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
         provider,
-        template_name=provider.data['provisioning']['template']
+        template_name=provider.data['full_template']['name']
     )
     try:
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
