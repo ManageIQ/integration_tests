@@ -7,7 +7,7 @@ import django.utils.timezone
 
 
 def appliances_forwards(apps, schema_editor):
-    Appliance = apps.get_model("appliances", "Appliance")
+    Appliance = apps.get_model("appliances", "Appliance")  # noqa
     for appliance in Appliance.objects.using(schema_editor.connection.alias).all():
         changed = False
         current_latest = None
@@ -30,8 +30,8 @@ def appliances_forwards(apps, schema_editor):
 
 
 def appliance_pools_forwards(apps, schema_editor):
-    AppliancePool = apps.get_model("appliances", "AppliancePool")
-    Appliance = apps.get_model("appliances", "Appliance")
+    AppliancePool = apps.get_model("appliances", "AppliancePool")  # noqa
+    Appliance = apps.get_model("appliances", "Appliance")  # noqa
     for pool in AppliancePool.objects.using(schema_editor.connection.alias).all():
         created_on_dates = sorted(
             [appliance.created_on for appliance in Appliance.objects.filter(appliance_pool=pool)],
@@ -45,7 +45,7 @@ def appliance_pools_forwards(apps, schema_editor):
 
 
 def templates_forwards(apps, schema_editor):
-    Template = apps.get_model("appliances", "Template")
+    Template = apps.get_model("appliances", "Template")  # noqa
     for template in Template.objects.using(schema_editor.connection.alias).all():
         template.created_on = template.date
         template.save()
