@@ -31,8 +31,8 @@ from widgetastic.widget import (
 from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, ViewChangeButton, Input,
-    BootstrapSelect)
+    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
+    ViewChangeButton, CheckableBootstrapTreeview)
 from cached_property import cached_property
 
 
@@ -333,6 +333,62 @@ class DynaTree(Widget):
                 self.browser.click(checkbox)
 
         return leaf
+
+
+class CheckableDynaTree(DynaTree):
+    """ Checkable variation of CFME Tree. This widget not only expands a tree for a provided path,
+    but also checks a checkbox.
+    """
+
+    IS_CHECKABLE = './span[contains(@class, "dynatree-checkbox")]'
+    IS_CHECKED = './../span[contains(@class, "dynatree-selected")]'
+
+    def is_checkable(self, item):
+        return bool(self.browser.elements(self.IS_CHECKABLE, parent=item))
+
+    def is_checked(self, item):
+        return bool(self.browser.elements(self.IS_CHECKED, parent=item))
+
+    def check_uncheck_node(self, check, *path, **kwargs):
+        leaf = self.expand_path(*path, **kwargs)
+        if not self.is_checkable(leaf):
+            raise TypeError('Item is not checkable')
+        checked = self.is_checked(leaf)
+        if checked != check:
+            self.logger.info('%s %r', 'Checking' if check else 'Unchecking', path[-1])
+            self.browser.click(self.IS_CHECKABLE, parent=leaf)
+
+    def check_node(self, *path, **kwargs):
+        """Expands the passed path and checks a checkbox that is located at the node."""
+        return self.check_uncheck_node(True, *path, **kwargs)
+
+    def uncheck_node(self, *path, **kwargs):
+        """Expands the passed path and unchecks a checkbox that is located at the node."""
+        return self.check_uncheck_node(False, *path, **kwargs)
+
+    def node_checked(self, *path, **kwargs):
+        """Check if a checkbox is checked on the node in that path."""
+        leaf = self.expand_path(*path, **kwargs)
+        if not self.is_checkable(leaf):
+            return False
+        return self.is_checked(leaf)
+
+    def fill(self, path):
+        if self.node_checked(*path):
+            return False
+        else:
+            self.check_node(*path)
+            return True
+
+    def read(self):
+        do_not_read_this_widget()
+
+
+def CheckableManageIQTree(tree_id=None):  # noqa
+    return VersionPick({
+        Version.lowest(): CheckableDynaTree(tree_id),
+        '5.7.0.1': CheckableBootstrapTreeview(tree_id),
+    })
 
 
 def ManageIQTree(tree_id=None):  # noqa

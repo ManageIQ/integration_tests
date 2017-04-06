@@ -4,12 +4,13 @@ from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavig
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, TextInput
-from widgetastic_manageiq import MultiBoxSelect, ManageIQTree
+from widgetastic_manageiq import MultiBoxSelect, CheckableManageIQTree
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
 from utils.update import Updateable
+from utils import version
 
 
 class AlertProfileFormCommon(ControlExplorerView):
@@ -84,7 +85,7 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
     title = Text("#explorer_title_text")
     assign_to = BootstrapSelect("chosen_assign_to")
     tag_category = BootstrapSelect("chosen_cat")
-    selections = ManageIQTree("obj_treebox")
+    selections = CheckableManageIQTree("obj_treebox")
     header = Text("//div[@id='alert_profile_assign_div']/h3")
     based_on = Text('//label[normalize-space(.)="Based On"]/../div')
 
@@ -207,7 +208,13 @@ class BaseAlertProfile(Updateable, Navigatable, Pretty):
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
-                'Alert Profile "{}" assignments succesfully saved'.format(self.description))
+                'Alert Profile "{}" assignments {} saved'.format(
+                    self.description,
+                    version.pick({
+                        version.LOWEST: "succesfully",
+                        "5.8": "successfully",
+                    })
+                ))
         else:
             view.flash.assert_message(
                 'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
