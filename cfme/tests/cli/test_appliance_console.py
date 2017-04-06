@@ -202,3 +202,49 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
         command_set = ('ap', '', '15', auth_type.index, '4')
     ipa_crud.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_black_console_external_auth_all(app_creds, ipa_crud):
+    """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
+    'auth_type' auth type to change, '4' apply changes."""
+
+    evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                            matched_patterns=['.*sso_enabled to true.*', '.*saml_enabled to true.*',
+                                '.*local_login_disabled to true.*'],
+                            hostname=ipa_crud.address,
+                            username=app_creds['sshlogin'],
+                            password=app_creds['password'])
+    evm_tail.fix_before_start()
+    if ipa_crud.version >= "5.8":
+        command_set = ('ap', '', '12', '1', '2', '3', '4')
+    else:
+        command_set = ('ap', '', '15', '1', '2', '3', '4')
+    ipa_crud.appliance_console.run_commands(command_set)
+    evm_tail.validate_logs()
+
+    evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                            matched_patterns=['.*sso_enabled to false.*',
+                                '.*saml_enabled to false.*', '.*local_login_disabled to false.*'],
+                            hostname=ipa_crud.address,
+                            username=app_creds['sshlogin'],
+                            password=app_creds['password'])
+
+    evm_tail.fix_before_start()
+    if ipa_crud.version >= "5.8":
+        command_set = ('ap', '', '12', '1', '2', '3', '4')
+    else:
+        command_set = ('ap', '', '15', '1', '2', '3', '4')
+    ipa_crud.appliance_console.run_commands(command_set)
+    evm_tail.validate_logs()
+
+
+def test_black_console_scap_accounts(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
