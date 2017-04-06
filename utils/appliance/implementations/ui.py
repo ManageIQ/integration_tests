@@ -129,7 +129,7 @@ def can_skip_badness_test(fn):
 class StepLoggerAdapter(StackedPrefixLoggerAdapter):
     @property
     def prefix(self):
-        return 'NAV/{}/{}'.format(self.extra['class_name'], self.extra['location_name'])
+        return '{}/{}'.format(self.extra['class_name'], self.extra['location_name'])
 
 
 class CFMENavigateStep(NavigateStep):
@@ -147,8 +147,10 @@ class CFMENavigateStep(NavigateStep):
 
     @cached_property
     def logger(self):
+        # TODO: Possibly let navmazing itself take logger too
+        # TODO: this way we need to stack two in here
         return StepLoggerAdapter(
-            self.appliance.logger,
+            StackedPrefixLoggerAdapter(self.appliance.logger, {'item_type': 'UI-NAV'}),
             {'class_name': type(self.obj).__name__, 'location_name': self._name})
 
     def create_view(self, *args, **kwargs):
