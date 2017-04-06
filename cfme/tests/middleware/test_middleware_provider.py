@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-import utils.error as error
+from utils import error
 from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import fill, flash, form_buttons

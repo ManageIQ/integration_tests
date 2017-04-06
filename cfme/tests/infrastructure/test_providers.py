@@ -5,7 +5,7 @@ import fauxfactory
 import pytest
 
 import cfme.web_ui.flash as flash
-import utils.error as error
+from utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider

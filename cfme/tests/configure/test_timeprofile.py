@@ -2,7 +2,7 @@
 import fauxfactory
 import cfme.configure.settings as st
 import pytest
-import utils.error as error
+from utils import error
 from utils.update import update
 from utils import version
 from cfme import test_requirements

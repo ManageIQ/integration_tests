@@ -2,7 +2,7 @@
 """This module contains REST API specific tests."""
 import pytest
 import fauxfactory
-import utils.error as error
+from utils import error
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider

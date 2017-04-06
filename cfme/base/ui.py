@@ -37,7 +37,7 @@ class LoginScreen(CFMENavigateStep):
 
     def step(self):
         # Can be either blank or logged in
-        import utils.browser as browser
+        from utils import browser
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()

@@ -8,7 +8,7 @@ is caught.
 
 Usage:
 
-    import utils.error as error
+    from utils import error
     with error.expected('foo'):
         x = 1
         raise Exception('oh noes foo happened!')  # this will be caught because regex matches

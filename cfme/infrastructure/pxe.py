@@ -15,7 +15,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-import utils.conf as conf
+from utils import conf
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import project_path
