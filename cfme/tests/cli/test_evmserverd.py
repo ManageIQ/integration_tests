@@ -7,10 +7,10 @@ from utils.version import current_version
 
 @pytest.yield_fixture(scope="module")
 def start_evmserverd_after_module(appliance):
-    appliance.ssh_client.run_command("service evmserverd start")
+    appliance.ssh_client.run_command("systemctl start evmserverd")
     appliance.wait_for_web_ui()
     yield
-    appliance.ssh_client.run_command("service evmserverd restart")
+    appliance.ssh_client.run_command("systemctl restart evmserverd")
     appliance.wait_for_web_ui()
 
 
@@ -31,7 +31,7 @@ def test_evmserverd_stop(appliance):
             stopping the service are present.
     """
     server_names = {server["Server Name"] for server in appliance.ssh_client.status["servers"]}
-    assert appliance.ssh_client.run_command("service evmserverd stop").rc == 0
+    assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
 
     @pytest.wait_for(timeout="2m", delay=5)
     def servers_stopped():
@@ -44,7 +44,7 @@ def test_evmserverd_stop(appliance):
         return True
 
     if current_version() >= "5.5":
-        status = appliance.ssh_client.run_command("service evmserverd status")
+        status = appliance.ssh_client.run_command("systemctl status evmserverd")
         assert "Stopped EVM server daemon" in status.output
         assert "code=exited" in status.output
 
@@ -63,13 +63,13 @@ def test_evmserverd_start_twice(appliance):
         * Extract the PID of the evmserverd from the output from the last command.
         * Verify the process with such PID exists ``kill -0 $PID``.
     """
-    assert appliance.ssh_client.run_command("service evmserverd stop").rc == 0
+    assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
     # Start first time
-    res = appliance.ssh_client.run_command("service evmserverd start")
+    res = appliance.ssh_client.run_command("systemctl start evmserverd")
     assert "running evm in background" in res.output.lower()
     assert res.rc == 0
     # Start second time
-    res = appliance.ssh_client.run_command("service evmserverd start")
+    res = appliance.ssh_client.run_command("systemctl start evmserverd")
     assert "evm is already running" in res.output.lower()
     assert res.rc == 0
     # Verify the process is running

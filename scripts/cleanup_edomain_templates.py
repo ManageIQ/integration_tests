@@ -53,7 +53,7 @@ def parse_cmd_line():
 
 def is_ovirt_engine_running(provider_mgmt):
     try:
-        stdout = make_ssh_client(provider_mgmt).run_command('service ovirt-engine status')[1]
+        stdout = make_ssh_client(provider_mgmt).run_command('systemctl status ovirt-engine')[1]
         if 'running' not in stdout:
             return False
         return True

@@ -429,7 +429,7 @@ class SSHClient(paramiko.SSHClient):
 
     @property
     def status(self):
-        """Parses the output of the ``service evmserverd status``.
+        """Parses the output of the ``systemctl status evmserverd``.
 
         Returns:
             A dictionary containing ``servers`` and ``workers``, both lists. Each of the lists
@@ -444,11 +444,11 @@ class SSHClient(paramiko.SSHClient):
                 'key :terminate is duplicated and overwritten',
             ]))
         if version.current_version() < "5.5":
-            data = self.run_command("service evmserverd status")
+            data = self.run_command("systemctl status evmserverd")
         else:
             data = self.run_rake_command("evm:status")
         if data.rc != 0:
-            raise Exception("service evmserverd status $?={}".format(data.rc))
+            raise Exception("systemctl status evmserverd $?={}".format(data.rc))
         data = data.output.strip().split("\n\n")
         if len(data) == 2:
             srvs, wrks = data

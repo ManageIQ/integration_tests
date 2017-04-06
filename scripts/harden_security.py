@@ -116,7 +116,7 @@ def main():
     def restart_appliance(address):
         print('Restarting evmserverd on {}'.format(address))
         with SSHClient(hostname=address, **ssh_creds) as client:
-            status, out = client.run_command('service evmserverd restart')
+            status, out = client.run_command('systemctl restart evmserverd')
             if status != 0:
                 print("Restarting evmserverd failed on {}".format(address))
                 sys.exit(1)

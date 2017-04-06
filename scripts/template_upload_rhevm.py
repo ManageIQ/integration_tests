@@ -65,7 +65,7 @@ def make_ssh_client(rhevip, sshname, sshpass):
 def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
     try:
         ssh_client = make_ssh_client(rhevm_ip, sshname, sshpass)
-        stdout = ssh_client.run_command('service ovirt-engine status')[1]
+        stdout = ssh_client.run_command('systemctl status ovirt-engine')[1]
         ssh_client.close()
         return 'running' in stdout
     except Exception:

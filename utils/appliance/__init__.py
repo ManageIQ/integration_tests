@@ -444,7 +444,7 @@ class IPAppliance(object):
             ssh_client.run_command("restorecon -R /etc/sysconfig/network-scripts", ensure_host=True)
             ssh_client.run_command("restorecon /etc/sysconfig/network", ensure_host=True)
             # Stop the evmserverd and move the logs somewhere
-            ssh_client.run_command("service evmserverd stop", ensure_host=True)
+            ssh_client.run_command("systemctl stop evmserverd", ensure_host=True)
             ssh_client.run_command("mkdir -p /var/www/miq/vmdb/log/preconfigure-logs",
                 ensure_host=True)
             ssh_client.run_command(
@@ -1135,7 +1135,7 @@ class IPAppliance(object):
 
         if start:
             log_callback("Starting ...")
-            client.run_command('service merkyl restart')
+            client.run_command('systemctl restart merkyl')
             log_callback("Setting it to start after reboot")
             client.run_command("chkconfig merkyl on")
 
@@ -1358,7 +1358,7 @@ class IPAppliance(object):
             "/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf".format(scl=scl))
 
         # restart postgres
-        status, out = client.run_command("service {scl}-postgresql restart".format(scl=scl))
+        status, out = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
         return status
 
     @logger_wrap("Enable internal DB: {}")
@@ -1581,7 +1581,7 @@ class IPAppliance(object):
             if rude:
                 log_callback('restarting evm service by killing processes')
                 status, msg = ssh.run_command(
-                    'killall -9 ruby; service {}-postgresql restart'.format(
+                    'killall -9 ruby; systemctl restart {}-postgresql'.format(
                         self.postgres_version))
                 self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
             else:

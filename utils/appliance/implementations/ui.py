@@ -326,7 +326,7 @@ class CFMENavigateStep(NavigateStep):
                 logger.error("Could not determine the reason for failing the navigation. " +
                     " Reraising.  Exception: {}".format(str(e)))
                 logger.debug(store.current_appliance.ssh_client.run_command(
-                    'service evmserverd status').output)
+                    'systemctl status evmserverd').output)
                 raise
 
         if restart_evmserverd:

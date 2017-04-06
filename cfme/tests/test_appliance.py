@@ -64,14 +64,14 @@ def test_selinux_enabled(appliance):
 @pytest.mark.uncollectif(lambda: version.current_version() >= '5.6', reason='Only valid for <5.6')
 def test_iptables_running(appliance):
     """Verifies iptables service is running on the appliance"""
-    stdout = appliance.ssh_client.run_command('service iptables status')[1]
+    stdout = appliance.ssh_client.run_command('systemctl status iptables')[1]
     assert 'is not running' not in stdout
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.6', reason='Only valid for >5.7')
 def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance"""
-    stdout = appliance.ssh_client.run_command('service firewalld status')[1]
+    stdout = appliance.ssh_client.run_command('systemctl status firewalld')[1]
     assert 'active (running)' in stdout
 
 
