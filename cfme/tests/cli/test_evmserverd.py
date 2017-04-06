@@ -30,13 +30,19 @@ def test_evmserverd_stop(appliance):
         * For 5.5+: Really call ``service evmserverd status`` and check that the mentions of
             stopping the service are present.
     """
-    server_names = {server["Server Name"] for server in appliance.ssh_client.status["servers"]}
-    assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
+
+    if appliance.version >= 5.8:
+        name = 'Server'
+    else:
+        name = 'Server_Name'
+
+    server_names = {name for server in appliance.ssh_client.status["servers"]}
+    assert appliance.ssh_client.run_command("service evmserverd stop").rc == 0
 
     @pytest.wait_for(timeout="2m", delay=5)
     def servers_stopped():
         status = {
-            server["Server Name"]: server for server in appliance.ssh_client.status["servers"]
+            name: server for server in appliance.ssh_client.status["servers"]
         }
         for server_name in server_names:
             if status[server_name]["Status"] != "stopped":
