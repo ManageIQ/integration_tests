@@ -245,7 +245,7 @@ def test_api_port_blank_validation(request):
 
 @pytest.mark.tier(3)
 def test_user_id_max_character_validation():
-    cred = Credential(principal=fauxfactory.gen_alphanumeric(51))
+    cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
     discover(cred, d_type="Amazon")
 
 
