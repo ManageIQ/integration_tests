@@ -2,6 +2,7 @@
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
 import re
+import version
 from utils.version import current_version
 
 
@@ -31,10 +32,10 @@ def test_evmserverd_stop(appliance):
             stopping the service are present.
     """
 
-    if appliance.version >= 5.8:
-        server_name = 'Server'
-    else:
-        server_name = 'Server_Name'
+    server_name = version.pick({
+        version.LOWEST: 'Server_Name',
+        '5.8': 'Server'
+    })
 
     server_names = {server_name for server in appliance.ssh_client.status["servers"]}
     assert appliance.ssh_client.run_command("service evmserverd stop").rc == 0
