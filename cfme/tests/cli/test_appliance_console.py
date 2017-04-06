@@ -248,3 +248,80 @@ def test_black_console_scap_accounts(temp_appliance_preconfig_funcscope):
     else:
         command_set = ('ap', '', '17', '')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+
+def test_black_console_scap_audit(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+
+def test_black_console_scap_boot(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+
+def test_black_console_scap_user(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+
+def test_black_console_scap_sshd(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+
+def test_black_console_scap_kernel(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+
+def test_black_console_scap_ipv6(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+
+
+def test_black_console_scap_ipv4(temp_appliance_preconfig_funcscope):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig_funcscope.version >= "5.8":
+        command_set = ('ap', '', '10', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
