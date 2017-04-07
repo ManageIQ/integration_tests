@@ -3,6 +3,7 @@ from collections import namedtuple
 from wait_for import wait_for
 from utils import version
 from utils.log_validator import LogValidator
+from utils.path import data_path
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
@@ -239,160 +240,27 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
-def test_black_console_scap_accounts(appliance_pre_scap):
+@pytest.fixture
+def run_scap(temp_appliance_preconfig):
     """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
     configuration, '' complete."""
 
-    if appliance_pre_scap.version >= "5.8":
+    if temp_appliance_preconfig.version >= "5.8":
         command_set = ('ap', '', '14', '')
     else:
         command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/pam.d/postlogin | grep 'pam_lastlog.so silent noupdate showfailed'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/security/pwquality.conf | grep 'dcredit = -1'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/security/pwquality.conf | grep 'ucredit = -1'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/security/pwquality.conf | grep 'ocredit = -1'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/security/pwquality.conf | grep 'lcredit = -1'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/security/pwquality.conf | grep 'difok = 4'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/default/useradd | grep 'INACTIVE=35'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/login.defs | grep 'PASS_MAX_DAYS     60'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/login.defs | grep 'PASS_MIN_DAYS     1'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/login.defs | grep 'PASS_MIN_LEN     14'")
+    temp_appliance_preconfig.appliance_console.run_commands(command_set)
 
 
-def test_black_console_scap_audit(appliance):
-    appliance_pre_scap = appliance
-    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
-    configuration, '' complete."""
+def test_scap(temp_appliance_preconfig):
+    temp_appliance_preconfig.ssh_client.put_file(
+        data_path.join("cli").join('scap.rb'), '/tmp/scap.rb')
+    # Sometimes you need to run it twice - go figure!
+    temp_appliance_preconfig.ssh_client.run_command('ruby /tmp/scap.rb')
+    temp_appliance_preconfig.ssh_client.run_command('ruby /tmp/scap.rb')
+    temp_appliance_preconfig.ssh_client.get_file(
+        '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
 
-    if appliance_pre_scap.version >= "5.8":
-        command_set = ('ap', '', '14', '')
-    else:
-        command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/security/limits.conf | grep"
-        " '*     hard   core    0'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k audit_time_rules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k audit_time_rules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k audit_time_rules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -k time-change'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/localtime -p wa -k audit_time_rules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/group -p wa -k audit_rules_usergroup_modification'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/passwd -p wa -k audit_rules_usergroup_modification'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/gshadow -p wa -k audit_rules_usergroup_modification'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/shadow -p wa -k audit_rules_usergroup_modification'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/security/opasswd -p wa -k audit_rules_usergroup_modification'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/selinux/ -p wa -k MAC-policy'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S"
-        " truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S"
-        " truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b64 -S creat -S open -S openat -S open_by_handle_at -S"
-        " truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b64 -S creat -S open -S openat -S open_by_handle_at -S"
-        " truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /etc/sudoers -p wa -k actions'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-a always,exit -F arch=b64 -S init_module -S delete_module -k modules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /usr/sbin/insmod -p x -k modules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /usr/sbin/rmmod -p x -k modules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
-        " '-w /usr/sbin/modprobe -p x -k modules'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/modprobe.d/sctp.conf | grep --"
-        " 'install sctp /bin/true'")
-    assert appliance_pre_scap.ssh_client.run_command("cat /etc/modprobe.d/dccp.conf | grep --"
-        " 'install dccp /bin/true'")
-
-
-def test_black_console_scap_boot(appliance_pre_scap):
-    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
-    configuration, '' complete."""
-
-    if appliance_pre_scap.version >= "5.8":
-        command_set = ('ap', '', '14', '')
-    else:
-        command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
-
-
-def test_black_console_scap_user(appliance_pre_scap):
-    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
-    configuration, '' complete."""
-
-    if appliance_pre_scap.version >= "5.8":
-        command_set = ('ap', '', '14', '')
-    else:
-        command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
-
-
-def test_black_console_scap_sshd(appliance_pre_scap):
-    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
-    configuration, '' complete."""
-
-    if appliance_pre_scap.version >= "5.8":
-        command_set = ('ap', '', '14', '')
-    else:
-        command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
-
-
-def test_black_console_scap_kernel(appliance_pre_scap):
-    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
-    configuration, '' complete."""
-
-    if appliance_pre_scap.version >= "5.8":
-        command_set = ('ap', '', '14', '')
-    else:
-        command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
-
-
-def test_black_console_scap_ipv6(appliance_pre_scap):
-    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
-    configuration, '' complete."""
-
-    if appliance_pre_scap.version >= "5.8":
-        command_set = ('ap', '', '14', '')
-    else:
-        command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
-
-
-def test_black_console_scap_ipv4(appliance_pre_scap):
-    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
-    configuration, '' complete."""
-
-    if appliance_pre_scap.version >= "5.8":
-        command_set = ('ap', '', '14', '')
-    else:
-        command_set = ('ap', '', '17', '')
-    appliance_pre_scap.appliance_console.run_commands(command_set)
+tree = ET.parse('scap-results.xccdf.xml')
+for item in root.findall('.//{http://checklists.nist.gov/xccdf/1.1}rule-result'):
+    print item.attrib.get('idref'), item.findall('./{http://checklists.nist.gov/xccdf/1.1}result')[0].text

@@ -13,15 +13,13 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 
 @pytest.yield_fixture(scope="module")
-@pytest.mark.parametrize('scap_file', [('postlogin', '/etc/pam.d/'), ('pwquality.conf',
-    'etc/security/'), ('useradd', '/etc/default/'), ('login.defs', '/etc/'),
-    ('limits.conf', '/etc/security/'), ('audit.rules', '/etc/audit'),
-    ('dccp.conf', '/etc/modprobe.d/'), ('sctp.conf', '/etc/modprobe.d/')], ids=['postlogin',
-    'pwquality', 'useradd', 'login.defs', 'limits.conf', 'audit.rules', 'dccp.conf', 'sctp.conf'])
-def appliance_pre_scap(appliance):
-    temp_appliance_preconfig = appliance
+def appliance_pre_scap(temp_appliance_preconfig):
+    scap_file = [('postlogin', '/etc/pam.d/'), ('pwquality.conf',
+        'etc/security/'), ('useradd', '/etc/default/'), ('login.defs', '/etc/'),
+        ('limits.conf', '/etc/security/'), ('audit.rules', '/etc/audit'),
+        ('dccp.conf', '/etc/modprobe.d/'), ('sctp.conf', '/etc/modprobe.d/')]
     temp_appliance_preconfig.ssh_client.put_file(
-        data_path.join("cli").join('{scap_file[0]}').strpath, '{scap_file[1]}')
+        data_path.join("cli").join(scap_file[0].strpath), scap_file[1])
     yield temp_appliance_preconfig
 
     temp_appliance_preconfig.ssh_client.close()
