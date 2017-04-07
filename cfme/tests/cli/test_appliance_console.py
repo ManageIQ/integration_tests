@@ -5,6 +5,7 @@ from utils import version
 from utils.log_validator import LogValidator
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
+LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
 
 
 @pytest.mark.smoke
@@ -166,35 +167,38 @@ def test_black_console_ipa(ipa_creds, fqdn_appliance):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-@pytest.mark.parametrize('auth_type', [('sso_enabled', '1'), ('saml_enabled', '2'),
-    ('local_login_disabled', '3')], ids=['sso', 'saml', 'local_login'])
+@pytest.mark.parametrize('auth_type', [
+    LoginOption('sso', 'sso_enabled', '1'),
+    LoginOption('saml', 'saml_enabled', '2'),
+    LoginOption('local_login', 'local_login_disabled', '3')
+], ids=['sso', 'saml', 'local_login'])
 def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to true.*'.format(auth_type[0])],
+                            matched_patterns=['.*{} to true.*'.format(auth_type.option)],
                             hostname=ipa_crud.address,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
     if ipa_crud.version >= "5.8":
-        command_set = ('ap', '', '12', auth_type[1], '4')
+        command_set = ('ap', '', '12', auth_type.index, '4')
     else:
-        command_set = ('ap', '', '15', auth_type[1], '4')
+        command_set = ('ap', '', '15', auth_type.index, '4')
     ipa_crud.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to false.*'.format(auth_type[0])],
+                            matched_patterns=['.*{} to false.*'.format(auth_type.option)],
                             hostname=ipa_crud.address,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
 
     evm_tail.fix_before_start()
     if ipa_crud.version >= "5.8":
-        command_set = ('ap', '', '12', auth_type[1], '4')
+        command_set = ('ap', '', '12', auth_type.index, '4')
     else:
-        command_set = ('ap', '', '15', auth_type[1], '4')
+        command_set = ('ap', '', '15', auth_type.index, '4')
     ipa_crud.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
