@@ -27,35 +27,6 @@ pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=[['provisioning', 'image']], scope="module")
 
 
-@pytest.yield_fixture(scope="function")
-def dialog():
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
-    )
-    service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                                   submit=True, cancel=True,
-                                   tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                                   tab_desc="my tab desc",
-                                   box_label="box_" + fauxfactory.gen_alphanumeric(),
-                                   box_desc="my box desc")
-    service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "{}" was added'.format(dialog))
-    yield dialog
-
-
-@pytest.yield_fixture(scope="function")
-def catalog():
-    cat_name = "cat_" + fauxfactory.gen_alphanumeric()
-    catalog = Catalog(name=cat_name, description="my catalog")
-    catalog.create()
-    yield catalog
-
-
 def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
     """Tests cloud catalog item
 
@@ -92,13 +63,13 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
                                name=item_name,
                                description="my catalog",
                                display_in=True,
-                               catalog=catalog.name,
+                               catalog=catalog,
                                dialog=dialog,
                                catalog_name=image,
                                provider=provider,
                                prov_data=provisioning_data)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', item_name)
