@@ -2753,6 +2753,9 @@ class Quadicon(Pretty):
         self._name = name
         self.qtype = qtype
 
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(type(self).__name__, self._name, self.qtype)
+
     @property
     def qtype(self):
         return self._qtype
@@ -2828,8 +2831,29 @@ class Quadicon(Pretty):
             if rtype == 'txt':
                 return el.text
             if rtype == 'img':
-                img_el = sel.element('.//img', root=el)
-                img_name = sel.get_attribute(img_el, 'src')
+                try:
+                    img_el = sel.element(
+                        './/img|.//div[contains(@style, "background-image")]',
+                        root=el)
+                except sel_exceptions.NoSuchElementException:
+                    raise NoSuchElementException(
+                        ('Could not find the image field in quadrant {} of {!r}. '
+                        'This may be an error or a UI change.').format(corner, self))
+                tag = sel.tag(img_el)
+                if tag == 'img':
+                    img_name = sel.get_attribute(img_el, 'src')
+                elif tag == 'div':
+                    style = sel.get_attribute(img_el, 'style')
+                    match = re.search(r'background-image:\s*url\("([^"]+)"\)', style)
+                    if not match:
+                        raise ValueError(
+                            'Could not find the image url in style {!r} of {!r} quadrant {}'.format(
+                                style, self, corner))
+                    img_name = match.groups()[0]
+                else:
+                    raise ValueError(
+                        'Unknown tag <{}> when parsing quadicon {!r}, quadrant {}'.format(
+                            tag, self, corner))
                 path, filename = os.path.split(img_name)
                 root, ext = os.path.splitext(filename)
                 return root
