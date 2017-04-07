@@ -160,6 +160,9 @@ class Provider(MetadataMixin):
     custom_memory_limit = models.IntegerField(null=True, blank=True)
     custom_cpu_limit = models.IntegerField(null=True, blank=True)
 
+    class Meta:
+        ordering = ['id']
+
     def perf_sync(self):
         try:
             stats = self.api.usage_and_quota()
@@ -395,6 +398,9 @@ class Group(MetadataMixin):
     templates_url = models.TextField(
         blank=True, null=True, help_text='Location of templates. Currently used for containers.')
 
+    class Meta:
+        ordering = ['id']
+
     @property
     def obsolete_templates(self):
         """Return a list of obsolete templates. Ignores the latest one even if it was obsolete by
@@ -459,6 +465,9 @@ class GroupShepherd(MetadataMixin):
         help_text="How many appliances to keep spinned for quick taking.")
     unconfigured_template_pool_size = models.IntegerField(default=0,
         help_text="How many appliances to keep spinned for quick taking - unconfigured ones.")
+
+    class Meta:
+        ordering = ['template_group', 'user_group', 'id']
 
     @property
     def appliances(self):
@@ -534,6 +543,9 @@ class Template(MetadataMixin):
             'Whether the appliance is located in a container in the VM. '
             'This then specifies the container name.'))
     ga_released = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['name', 'original_name', 'provider', 'id']
 
     @property
     def provider_api(self):
@@ -622,6 +634,7 @@ class Template(MetadataMixin):
 class Appliance(MetadataMixin):
     class Meta:
         permissions = (('can_modify_hw', 'Can modify HW configuration'), )
+        ordering = ['name', 'id']
 
     class Power(object):
         ON = "on"
@@ -1039,6 +1052,9 @@ class AppliancePool(MetadataMixin):
 
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['id']
 
     def merge(self, source_pool):
         if not self.finished:
