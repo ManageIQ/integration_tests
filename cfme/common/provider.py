@@ -13,7 +13,7 @@ from cfme.web_ui import (flash, Quadicon, CheckboxTree, Region, fill, FileInput,
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, version
+from utils import conf, version, ParamClassName
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
@@ -54,6 +54,7 @@ def all_types():
 
 class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
+    _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""

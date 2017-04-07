@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.base import Server
 from cfme.common.vm import VM
 from cfme.control.explorer.policy_profiles import PolicyProfile
@@ -12,11 +14,10 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
-from cfme import test_requirements
 from utils.generators import random_vm_name
-from widgetastic.widget import Text
 from utils.appliance import get_or_create_current_appliance
 from utils.blockers import BZ
+from widgetastic.widget import Text
 
 
 pytestmark = [
@@ -113,13 +114,15 @@ def create_alert(request):
     return alert
 
 
+ProfileCreateFunction = namedtuple('ProfileCreateFunction', ['name', 'fn'])
+
 items = [
-    ("Policy profiles", create_policy_profile),
-    ("Policies", create_policy),
-    ("Conditions", create_condition),
-    ("Actions", create_action),
-    ("Alert profiles", create_alert_profile),
-    ("Alerts", create_alert)
+    ProfileCreateFunction("Policy profiles", create_policy_profile),
+    ProfileCreateFunction("Policies", create_policy),
+    ProfileCreateFunction("Conditions", create_condition),
+    ProfileCreateFunction("Actions", create_action),
+    ProfileCreateFunction("Alert profiles", create_alert_profile),
+    ProfileCreateFunction("Alerts", create_alert)
 ]
 
 
@@ -256,10 +259,11 @@ def test_delete_all_actions_from_compliance_policy(request):
         policy.assign_actions_to_event("VM Compliance Check", [])
 
 
-@pytest.mark.parametrize("item_type,create_function", items, ids=[item[0] for item in items])
-@pytest.mark.uncollectif(lambda item_type: item_type in ["Policy profiles", "Alert profiles"] and
+@pytest.mark.parametrize("create_function", items, ids=[item.name for item in items])
+@pytest.mark.uncollectif(
+    lambda create_function: create_function.name in ["Policy profiles", "Alert profiles"] and
     BZ(1304396, forced_streams=["5.6", "5.7", "5.8"]).blocks)
-def test_control_identical_descriptions(request, item_type, create_function):
+def test_control_identical_descriptions(request, create_function):
     """CFME should not allow to create policy, alerts, profiles, actions and others to be created
     if the item with the same description already exists.
 
@@ -270,6 +274,6 @@ def test_control_identical_descriptions(request, item_type, create_function):
     Result:
         The item shouldn't be created.
     """
-    item = create_function(request)
+    item = create_function.fn(request)
     with pytest.raises(AssertionError):
         item.create()

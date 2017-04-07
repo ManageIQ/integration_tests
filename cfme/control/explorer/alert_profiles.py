@@ -10,7 +10,7 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect
 from . import ControlExplorerView
 from utils.appliance import Navigatable
 from utils.update import Updateable
-from utils import version
+from utils import version, ParamClassName
 
 
 class AlertProfileFormCommon(ControlExplorerView):
@@ -106,7 +106,7 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
 class BaseAlertProfile(Updateable, Navigatable, Pretty):
 
     TYPE = None
-
+    _param_name = ParamClassName('description')
     pretty_attrs = ["description", "alerts"]
 
     def __init__(self, description, alerts=None, notes=None, appliance=None):

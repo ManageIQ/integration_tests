@@ -373,3 +373,34 @@ class InstanceClassMethod(object):
         else:
             # instancemethod
             return partial(self.instance_or_class_method, o)
+
+
+class ParamClassName(object):
+    """ ParamClassName is a Descriptor to help when using classes and instances as parameters
+
+    Note: This descriptor is a hack until collections are implemented everywhere
+
+    Usage:
+
+    .. code-block:: python
+
+        class Provider(object):
+            _param_name = ParamClassName('name')
+
+            def __init__(self, name):
+                self.name = name
+
+    When accessing the ``_param_name`` on the class object it will return the ``__name__`` of the
+    class by default. When accessing the ``_param_name`` on an instance of the class, it will return
+    the attribute that is passed in.
+    """
+
+    def __init__(self, instance_attr, class_attr='__name__'):
+        self.instance_attr = instance_attr
+        self.class_attr = class_attr
+
+    def __get__(self, instance, owner):
+        if instance:
+            return getattr(instance, self.instance_attr)
+        else:
+            return getattr(owner, self.class_attr)
