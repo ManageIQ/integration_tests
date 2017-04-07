@@ -10,15 +10,14 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 @pytest.mark.smoke
 def test_black_console(appliance):
     """'exec > >(tee /tmp/opt.txt)' saves stdout to file, 'ap' launch appliance_console."""
-    appliance_title = 'CFME' if version.appliance_is_downstream() else 'ManageIQ'
     command_set = ('exec > >(tee /tmp/opt.txt)', 'ap')
     appliance.appliance_console.run_commands(command_set)
-    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | egrep '{} Virtual Appliance'"
-                                            .format(appliance_title))
-    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | egrep '{} Database:'"
-                                            .format(appliance_title))
-    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | egrep '{} Version:'"
-                                            .format(appliance_title))
+    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Virtual Appliance'"
+                                            .format(appliance.product_name))
+    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Database:'"
+                                            .format(appliance.product_name))
+    assert appliance.ssh_client.run_command("cat /tmp/opt.txt | grep '{} Version:'"
+                                            .format(appliance.product_name))
 
 
 def test_black_console_set_hostname(appliance):
