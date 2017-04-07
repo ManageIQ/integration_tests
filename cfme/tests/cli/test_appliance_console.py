@@ -270,7 +270,8 @@ def test_black_console_scap_accounts(appliance_pre_scap):
         "cat /etc/login.defs | grep 'PASS_MIN_LEN     14'")
 
 
-def test_black_console_scap_audit(appliance_pre_scap):
+def test_black_console_scap_audit(appliance):
+    appliance_pre_scap = appliance
     """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
     configuration, '' complete."""
 
@@ -279,30 +280,56 @@ def test_black_console_scap_audit(appliance_pre_scap):
     else:
         command_set = ('ap', '', '17', '')
     appliance_pre_scap.appliance_console.run_commands(command_set)
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/security/limits.conf  | grep '* hard core 0'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/audit/audit.rules | grep '-w /etc/localtime -p wa -k audit_time_rules'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/audit/audit.rules | grep '-w /etc/group -p wa -k audit_account_changes'")
--w /etc/passwd -p wa -k audit_account_changes
--w /etc/gshadow -p wa -k audit_account_changes
--w /etc/shadow -p wa -k audit_account_changes
--w /etc/security/opasswd -p wa -k audit_account_changes
--w /etc/selinux/ -p wa -k MAC-policy
--w /etc/sudoers -p wa -k actions
--w /sbin/insmod -p x -k modules
--w /sbin/rmmod -p x -k modules
--w /sbin/modprobe -p x -k modules
--a always,exit -F arch=b64 -S init_module -S delete_module -k modules
--a always,exit -F arch=b64 -S settimeofday -S clock_settime -k audit_time_rules
--a always,exit -F arch=b64 -S adjtimex -k audit_time_rules
--a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=500 -F auid!=4294967295 -k access
--a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=500 -F auid!=4294967295 -k access
-'")
-    assert appliance_pre_scap.ssh_client.run_command(
-        "cat /etc/login.defs | grep 'PASS_MIN_LEN     14'")
-
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/security/limits.conf | grep"
+        " '*     hard   core    0'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k audit_time_rules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k audit_time_rules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k audit_time_rules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -k time-change'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/localtime -p wa -k audit_time_rules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/group -p wa -k audit_rules_usergroup_modification'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/passwd -p wa -k audit_rules_usergroup_modification'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/gshadow -p wa -k audit_rules_usergroup_modification'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/shadow -p wa -k audit_rules_usergroup_modification'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/security/opasswd -p wa -k audit_rules_usergroup_modification'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/selinux/ -p wa -k MAC-policy'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S"
+        " truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S"
+        " truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b64 -S creat -S open -S openat -S open_by_handle_at -S"
+        " truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b64 -S creat -S open -S openat -S open_by_handle_at -S"
+        " truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /etc/sudoers -p wa -k actions'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-a always,exit -F arch=b64 -S init_module -S delete_module -k modules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /usr/sbin/insmod -p x -k modules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /usr/sbin/rmmod -p x -k modules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/audit/audit.rules | grep --"
+        " '-w /usr/sbin/modprobe -p x -k modules'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/modprobe.d/sctp.conf | grep --"
+        " 'install sctp /bin/true'")
+    assert appliance_pre_scap.ssh_client.run_command("cat /etc/modprobe.d/dccp.conf | grep --"
+        " 'install dccp /bin/true'")
 
 
 def test_black_console_scap_boot(appliance_pre_scap):

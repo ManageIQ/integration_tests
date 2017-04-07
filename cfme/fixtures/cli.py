@@ -15,8 +15,9 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 @pytest.yield_fixture(scope="module")
 @pytest.mark.parametrize('scap_file', [('postlogin', '/etc/pam.d/'), ('pwquality.conf',
     'etc/security/'), ('useradd', '/etc/default/'), ('login.defs', '/etc/'),
-    ('limits.conf', '/etc/security/'), ('audit.rules', '/etc/audit')], ids=['postlogin',
-    'pwquality', 'useradd', 'login.defs', 'limits.conf', 'audit.rules'])
+    ('limits.conf', '/etc/security/'), ('audit.rules', '/etc/audit'),
+    ('dccp.conf', '/etc/modprobe.d/'), ('sctp.conf', '/etc/modprobe.d/')], ids=['postlogin',
+    'pwquality', 'useradd', 'login.defs', 'limits.conf', 'audit.rules', 'dccp.conf', 'sctp.conf'])
 def appliance_pre_scap(appliance):
     temp_appliance_preconfig = appliance
     temp_appliance_preconfig.ssh_client.put_file(
