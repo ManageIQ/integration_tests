@@ -2833,7 +2833,7 @@ class Quadicon(Pretty):
             if rtype == 'img':
                 try:
                     img_el = sel.element(
-                        './/img|./div[contains(@style, "background-image")]',
+                        './/img|.//div[contains(@style, "background-image")]',
                         root=el)
                 except sel_exceptions.NoSuchElementException:
                     raise NoSuchElementException(
