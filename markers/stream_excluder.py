@@ -10,11 +10,9 @@ It also provides a facility to check the appliance's version/stream for smoke te
 """
 import pytest
 
-from fixtures.terminalreporter import reporter
-from utils.version import appliance_is_downstream, current_version, current_stream
-
 
 def get_streams_id():
+    from utils.version import appliance_is_downstream, current_version
     if appliance_is_downstream():
         return {current_version().series(2), "downstream"}
     else:
@@ -71,11 +69,16 @@ def pytest_itemcollected(item):
 
 def pytest_collection_modifyitems(session, config, items):
     # Just to print out the appliance's streams
-    reporter(config).write("\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
+    from fixtures.terminalreporter import reporter
+
+    from utils.version import current_stream
+    reporter(config).write(
+        "\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
     # Bail out if the appliance stream or version do not match
     check_stream = config.getvalue("check_stream").lower().strip()
     if check_stream:
         curr = current_stream()
         if check_stream != curr:
             raise Exception(
-                "Stream mismatch - wanted {} but appliance is {}".format(check_stream, curr))
+                "Stream mismatch - wanted {} but appliance is {}".format(
+                    check_stream, curr))

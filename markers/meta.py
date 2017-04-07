@@ -54,7 +54,6 @@ from types import FunctionType
 import pytest
 
 from lya import AttrDict
-from utils.log import logger
 
 
 def pytest_configure(config):
@@ -80,6 +79,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 @pytest.mark.hookwrapper
 def pytest_collection_modifyitems(session, config, items):
+    from utils.log import logger
     for item in items:
         try:
             item._metadata = AttrDict(item.function.meta.kwargs)
@@ -131,6 +131,8 @@ if "plugin" not in globals():
 
 
 def run_plugins(item, when):
+
+    from utils.log import logger
     possible_plugins = []
     for plug in plugin._plugins:
         if all([meta in item._metadata.keys() for meta in plug.metas])\
