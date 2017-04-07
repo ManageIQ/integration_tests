@@ -25,14 +25,14 @@ def _name(docker_info):
 
 
 if os.getenv("DOCKER_MACHINE_NAME", "None") == "None":
-    dc = docker.Client(base_url='unix://var/run/docker.sock',
-                       version='1.12',
-                       timeout=10)
+    dc = docker.APIClient(
+        base_url='unix://var/run/docker.sock',
+        version='1.12', timeout=10)
 else:
     from docker.utils import kwargs_from_env
-    dc = docker.Client(version='1.12',
-                       timeout=10,
-                       **kwargs_from_env(assert_hostname=False))
+    dc = docker.APIClient(
+        version='1.12', timeout=10,
+        **kwargs_from_env(assert_hostname=False))
 
 
 class DockerInstance(object):
