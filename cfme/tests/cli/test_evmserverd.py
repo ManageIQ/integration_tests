@@ -2,7 +2,7 @@
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
 import re
-from utils.version import current_version, pick
+from utils import version
 
 
 @pytest.yield_fixture(scope="module")
@@ -31,8 +31,8 @@ def test_evmserverd_stop(appliance):
             stopping the service are present.
     """
 
-    server_name_key = pick({
-        current_version.LOWEST: 'Server Name',
+    server_name_key = version.pick({
+        version.LOWEST: 'Server Name',
         '5.8': 'Server'
     })
 
@@ -49,14 +49,14 @@ def test_evmserverd_stop(appliance):
                 return False
         return True
 
-    if current_version() >= "5.5":
+    if version.current_version() >= "5.5":
         status = appliance.ssh_client.run_command("systemctl status evmserverd")
         assert "Stopped EVM server daemon" in status.output
         assert "code=exited" in status.output
 
 
 @pytest.mark.tier(1)
-@pytest.mark.uncollectif(lambda: current_version() >= "5.5")
+@pytest.mark.uncollectif(lambda: version.current_version() >= "5.5")
 def test_evmserverd_start_twice(appliance):
     """If evmserverd start is ran twice, it will then tell that it is already running.
 
