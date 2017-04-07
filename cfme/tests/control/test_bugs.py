@@ -123,7 +123,7 @@ items = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def vmware_vm(request, virtualcenter_provider):
     vm = VM.factory(random_vm_name("control"), virtualcenter_provider)
     vm.create_on_provider(find_in_cfme=True)
