@@ -9,6 +9,7 @@ from cfme.containers.service import Service
 from cfme.containers.project import Project
 from cfme.containers.route import Route
 from cfme.containers.container import Container
+from cfme.containers.image_registry import ImageRegistryAll
 from cfme.containers.overview import ContainersOverview
 from cfme.web_ui import StatusBox
 from utils import testgen, version
@@ -32,6 +33,7 @@ DATA_SETS = [
     DataSet(Pod, 'Pods'),
     DataSet(Service, 'Services'),
     DataSet(Route, 'Routes'),
+    DataSet(ImageRegistryAll, 'Registries'),
     DataSet(ContainersProvider, 'Providers')
 ]
 
@@ -45,6 +47,7 @@ def get_api_object_counts(providers):
         Service: 0,
         Project: 0,
         Route: 0,
+        ImageRegistryAll: 0
     }
     for provider in providers:
         out[ContainersProvider] += 1
@@ -54,6 +57,7 @@ def get_api_object_counts(providers):
         out[Service] += len(provider.mgmt.list_service())
         out[Project] += len(provider.mgmt.list_project())
         out[Route] += len(provider.mgmt.list_route())
+        out[ImageRegistryAll] += len(provider.mgmt.list_image_registry())
     return out
 
 
@@ -72,7 +76,7 @@ def test_containers_overview_data_integrity(provider):
     # (until we find a better solution)
     # Since we collect images from Openshift and from the pods,
     # images are tested separately
-    # image registries are also tested separately
+
     time.sleep(2)
     statusbox_values = {data_set.object: int(StatusBox(data_set.name).value())
                         for data_set in DATA_SETS}
@@ -99,12 +103,6 @@ def test_containers_overview_data_integrity(provider):
 
     assert StatusBox('images').value() == version.pick({version.LOWEST: num_img_cfme_56,
                                                         '5.7': num_img_cfme_57})
-
-    list_all_rgstr = provider.mgmt.list_image_registry()
-    list_all_rgstr_revised = [i.host for i in list_all_rgstr]
-    list_all_rgstr_new = filter(lambda ch: 'openshift3' not in ch, list_all_rgstr_revised)
-
-    assert len(list_all_rgstr_new) == StatusBox('registries').value()
 
     results = {}
     for cls in DATA_SETS:

@@ -1,8 +1,8 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from utils import testgen, version
 from cfme.web_ui import toolbar as tb
+from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -19,11 +19,12 @@ def test_reload_button_provider(provider):
     """ This test verifies the data integrity of the fields in
         the Relationships table after clicking the "reload"
         button. Fields that are being verified as part of provider.validate.stats():
-        Projects, Routes, Container Services, Replicators, Pods, Containers, and Nodes.
+        Projects, Routes, Container Services, Replicators, Pods, Image Registries,
+        Containers, and Nodes.
         Images are being validated separately, since the total
-        number of images in CFME 5.7 includes all images from the OSE registry as well
+        number of images in CFME 5.7 and CFME 5.8 includes all images from the OSE registry as well
         as the images that are being created from the running pods. The images are searched
-        according to the @sha. Image Registries are also validated separately.
+        according to the @sha.
     """
 
     navigate_to(provider, 'Details')
@@ -52,12 +53,3 @@ def test_reload_button_provider(provider):
 
     assert num_img_in_cfme == version.pick({version.LOWEST: num_img_cfme_56,
                                             '5.7': num_img_cfme_57})
-
-    # validate the number of image registries
-    list_all_rgstr = provider.mgmt.list_image_registry()
-    list_all_rgstr_revised = [i.host for i in list_all_rgstr]
-    list_all_rgstr_new = filter(lambda ch: 'openshift3' not in ch, list_all_rgstr_revised)
-
-    num_rgstr_in_cfme = provider.summary.relationships.image_registries.value
-
-    assert len(list_all_rgstr_new) == num_rgstr_in_cfme
