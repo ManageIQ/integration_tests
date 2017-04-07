@@ -15,7 +15,7 @@ from cfme.web_ui import (
     DriftGrid
 )
 import cfme.web_ui.toolbar as tb
-from utils import version
+from utils import version, ParamClassName
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
@@ -139,6 +139,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
                      '5.7': 'Remove Virtual Machine'}
     RETIRE_DATE_FMT = {version.LOWEST: parsetime.american_date_only_format,
                        '5.7': parsetime.american_minutes_with_utc}
+    _param_name = ParamClassName('name')
 
     ###
     # Shared behaviour

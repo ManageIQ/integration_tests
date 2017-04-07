@@ -31,6 +31,7 @@ match_page = partial(match_location, controller='orchestration_stack',
 
 
 class Stack(Pretty, Navigatable):
+    _param_name = "Stack"
     pretty_attrs = ['name']
 
     def __init__(self, name, provider, quad_name=None, appliance=None):

@@ -24,6 +24,7 @@ class Flavor(Navigatable):
     """
     Flavor class to support navigation
     """
+    _param_name = "Flavor"
 
     def __init__(self, name, provider, appliance=None):
         self.name = name

@@ -6,6 +6,7 @@ Can be also used as a unit-test for page model coverage.
 
 TODO: * Multiple expression types entering. (extend the update tests)
 """
+from collections import namedtuple
 import fauxfactory
 import pytest
 import random
@@ -78,7 +79,11 @@ CONDITIONS = [
     conditions.ProviderCondition
 ]
 
-POLICIES_AND_CONDITIONS = zip(CONTROL_POLICIES, CONDITIONS)
+PolicyAndCondition = namedtuple('PolicyAndCondition', ['name', 'policy', 'condition'])
+POLICIES_AND_CONDITIONS = [
+    PolicyAndCondition(name=obj[0].__name__, policy=obj[0], condition=obj[1])
+    for obj in zip(CONTROL_POLICIES, CONDITIONS)
+]
 
 EVENTS = [
     "Datastore Analysis Complete",
@@ -317,9 +322,9 @@ def condition(request):
     return cond
 
 
-@pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item[0].__name__)
+@pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
 def policy_and_condition(request):
-    condition_class = request.param[1]
+    condition_class = request.param.condition
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
@@ -328,7 +333,7 @@ def policy_and_condition(request):
         fauxfactory.gen_alphanumeric(),
         expression=expression
     )
-    policy = request.param[0](fauxfactory.gen_alphanumeric())
+    policy = request.param.policy(fauxfactory.gen_alphanumeric())
     policy.create()
     condition.create()
     yield policy, condition

@@ -9,7 +9,7 @@ from widgetastic_patternfly import Button, Input
 from . import ControlExplorerView
 from utils.appliance import Navigatable
 from utils.update import Updateable
-from utils import version, deferred_verpick
+from utils import version, deferred_verpick, ParamClassName
 
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
@@ -135,6 +135,7 @@ class BaseCondition(Updateable, Navigatable, Pretty):
     TREE_NODE = None
     PRETTY = None
     FIELD_VALUE = None
+    _param_name = ParamClassName('description')
 
     def __init__(self, description, expression=None, scope=None, notes=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)

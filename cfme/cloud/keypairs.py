@@ -29,6 +29,7 @@ class KeyPair(Taggable, SummaryMixin, Navigatable):
     Args:
         name: Name of Keypairs.
     """
+    _param_name = "KeyPair"
 
     def __init__(self, name, provider, appliance=None):
         Navigatable.__init__(self, appliance=appliance)

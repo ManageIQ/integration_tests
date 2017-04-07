@@ -37,6 +37,8 @@ match_page = partial(match_location, controller='cloud_tenant', title='Cloud Ten
 
 
 class Tenant(Navigatable):
+    _param_name = "Tenant"
+
     def __init__(self, name, provider, appliance=None):
         """Base class for a Tenant"""
         self.name = name

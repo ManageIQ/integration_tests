@@ -30,6 +30,8 @@ class CloudAvailabilityZoneTimelinesView(TimelinesView, BaseLoggedInPage):
 
 
 class AvailabilityZone(Navigatable):
+    _param_name = "AvailabilityZone"
+
     def __init__(self, name, provider, appliance):
         self.name = name
         self.provider = provider
