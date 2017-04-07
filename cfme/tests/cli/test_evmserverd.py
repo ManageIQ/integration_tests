@@ -2,8 +2,7 @@
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
 import re
-import version
-from utils.version import current_version
+from utils.version import current_version, pick
 
 
 @pytest.yield_fixture(scope="module")
@@ -32,8 +31,8 @@ def test_evmserverd_stop(appliance):
             stopping the service are present.
     """
 
-    server_name_key = version.pick({
-        version.LOWEST: 'Server Name',
+    server_name_key = pick({
+        current_version.LOWEST: 'Server Name',
         '5.8': 'Server'
     })
 
