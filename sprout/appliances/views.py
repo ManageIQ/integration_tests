@@ -585,6 +585,19 @@ def delete_template_provider(request):
 
 
 @only_authenticated
+def clone_pool(request):
+    try:
+        count = int(request.POST["count"])
+        source_pool_id = int(request.POST["source_pool_id"])
+        pool = AppliancePool.objects.get(id=source_pool_id)
+        result_pool = pool.clone(num_appliances=count, owner=request.user)
+        messages.success(request, "Pool cloned - id {}".format(result_pool.id))
+    except Exception as e:
+        messages.warning(request, "{}: {}".format(type(e).__name__, e))
+    return go_back_or_home(request)
+
+
+@only_authenticated
 def request_pool(request):
     try:
         group = request.POST["stream"]

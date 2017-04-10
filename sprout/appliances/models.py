@@ -61,6 +61,19 @@ class MetadataMixin(models.Model):
     class Meta:
         abstract = True
     object_meta_data = models.TextField(default=yaml.dump({}))
+    created_on = models.DateTimeField(default=timezone.now, editable=False)
+    modified_on = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created_on = timezone.now()
+        if not kwargs.pop('ignore_modified', False):
+            self.modified_on = timezone.now()
+        return super(MetadataMixin, self).save(*args, **kwargs)
+
+    @property
+    def age(self):
+        return timezone.now() - self.created_on
 
     def reload(self):
         new_self = type(self).objects.get(pk=self.pk)
@@ -146,6 +159,9 @@ class Provider(MetadataMixin):
 
     custom_memory_limit = models.IntegerField(null=True, blank=True)
     custom_cpu_limit = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['id']
 
     def perf_sync(self):
         try:
@@ -382,6 +398,9 @@ class Group(MetadataMixin):
     templates_url = models.TextField(
         blank=True, null=True, help_text='Location of templates. Currently used for containers.')
 
+    class Meta:
+        ordering = ['id']
+
     @property
     def obsolete_templates(self):
         """Return a list of obsolete templates. Ignores the latest one even if it was obsolete by
@@ -446,6 +465,9 @@ class GroupShepherd(MetadataMixin):
         help_text="How many appliances to keep spinned for quick taking.")
     unconfigured_template_pool_size = models.IntegerField(default=0,
         help_text="How many appliances to keep spinned for quick taking - unconfigured ones.")
+
+    class Meta:
+        ordering = ['template_group', 'user_group', 'id']
 
     @property
     def appliances(self):
@@ -521,6 +543,9 @@ class Template(MetadataMixin):
             'Whether the appliance is located in a container in the VM. '
             'This then specifies the container name.'))
     ga_released = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['name', 'original_name', 'provider', 'id']
 
     @property
     def provider_api(self):
@@ -609,6 +634,7 @@ class Template(MetadataMixin):
 class Appliance(MetadataMixin):
     class Meta:
         permissions = (('can_modify_hw', 'Can modify HW configuration'), )
+        ordering = ['name', 'id']
 
     class Power(object):
         ON = "on"
@@ -707,6 +733,8 @@ class Appliance(MetadataMixin):
         """If possible, uploads some metadata to the provider VM object to be able to recover."""
         self._set_meta('id', self.id)
         self._set_meta('source_template_id', self.template.id)
+        self._set_meta('created_on', apply_if_not_none(self.created_on, "isoformat"))
+        self._set_meta('modified_on', apply_if_not_none(self.modified_on, "isoformat"))
         if self.appliance_pool is not None:
             self._set_meta('pool_id', self.appliance_pool.id)
             self._set_meta('pool_total_count', self.appliance_pool.total_count)
@@ -778,6 +806,8 @@ class Appliance(MetadataMixin):
             container=self.template.container,
             ram=self.ram,
             cpu=self.cpu,
+            created_on=apply_if_not_none(self.created_on, "isoformat"),
+            modified_on=apply_if_not_none(self.modified_on, "isoformat"),
         )
 
     @property
@@ -911,7 +941,6 @@ class Appliance(MetadataMixin):
                 self.class_logger(self.pk).info("Killing")
                 if not self.marked_for_deletion:
                     self.marked_for_deletion = True
-                    self.leased_until = None
                     self.save()
                     return kill_appliance.delay(self.id)
 
@@ -951,10 +980,6 @@ class Appliance(MetadataMixin):
             return "Expired!"
         else:
             return nice_seconds(seconds)
-
-    @property
-    def age(self):
-        return timezone.now() - self.datetime_leased
 
     @property
     def can_launch(self):
@@ -1028,17 +1053,65 @@ class AppliancePool(MetadataMixin):
     override_memory = models.IntegerField(null=True, blank=True)
     override_cpu = models.IntegerField(null=True, blank=True)
 
-    @property
-    def age(self):
-        try:
-            leased = Appliance.objects\
-                .filter(appliance_pool=self)\
-                .exclude(datetime_leased=None)\
-                .order_by('datetime_leased')\
-                .values('datetime_leased')[0]['datetime_leased']
-            return timezone.now() - leased
-        except IndexError:
-            return None
+    class Meta:
+        ordering = ['id']
+
+    def merge(self, source_pool):
+        if not self.finished:
+            raise Exception('Provisioning of the target pool has not finished yet.')
+        if not source_pool.finished:
+            raise Exception('Provisioning of the source pool has not finished yet.')
+        if self.not_needed_anymore:
+            raise Exception('Target pool is being deleted.')
+        if source_pool.not_needed_anymore:
+            raise Exception('Source pool is being deleted.')
+        if self.group != source_pool.group:
+            raise ValueError('The groups of the pools differ')
+        if self.provider != source_pool.provider:
+            raise ValueError('The provider of the pools differ')
+        if self.version != source_pool.version:
+            raise ValueError('The version of the pools differ')
+        if self.date != source_pool.date:
+            raise ValueError('The date of the pools differ')
+        if self.preconfigured != source_pool.preconfigured:
+            raise ValueError('The preconfigured of the pools differ')
+
+        if self.yum_update != source_pool.yum_update:
+            raise ValueError('The yum_update of the pools differ')
+
+        if self.is_container != source_pool.is_container:
+            raise ValueError('The is_container of the pools differ')
+
+        if self.override_memory != source_pool.override_memory:
+            raise ValueError('The override_memory of the pools differ')
+
+        if self.override_cpu != source_pool.override_cpu:
+            raise ValueError('The override_cpu of the pools differ')
+
+        with transaction.atomic():
+            for appliance in source_pool.appliances:
+                appliance.appliance_pool = self
+                appliance.save()
+                self.total_count += 1
+                self.save()
+            source_pool.delete()
+
+        return self
+
+    def clone(self, num_appliances=None, time_leased=60, owner=None):
+        return self.create(
+            owner or self.owner,
+            self.group,
+            version=self.version,
+            date=self.date,
+            provider=self.provider,
+            num_appliances=self.total_count if num_appliances is None else num_appliances,
+            time_leased=time_leased,
+            preconfigured=self.preconfigured,
+            yum_update=self.yum_update,
+            container=self.is_container,
+            ram=self.override_memory,
+            cpu=self.override_cpu)
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
@@ -1098,12 +1171,16 @@ class AppliancePool(MetadataMixin):
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update,
             is_container=container, override_memory=ram, override_cpu=cpu)
+        if num_appliances == 0:
+            req_params['finished'] = True
         req = cls(**req_params)
         if not req.possible_templates:
             raise Exception("No possible templates! (pool params: {})".format(str(req_params)))
         req.save()
         cls.class_logger(req.pk).info("Created")
-        request_appliance_pool.delay(req.id, time_leased)
+        if num_appliances > 0:
+            # Only if we have any appliances to request
+            request_appliance_pool.delay(req.id, time_leased)
         return req
 
     def delete(self, *args, **kwargs):
@@ -1229,10 +1306,11 @@ class AppliancePool(MetadataMixin):
                 with transaction.atomic():
                     with appliance.kill_lock:
                         if (
-                                save_lives and appliance.ready and appliance.leased_until is None
-                                and appliance.marked_for_deletion is False
-                                and not appliance.managed_providers
-                                and appliance.power_state not in appliance.BAD_POWER_STATES):
+                                save_lives and
+                                appliance.ready and
+                                appliance.marked_for_deletion is False and
+                                not appliance.managed_providers and
+                                appliance.power_state not in appliance.BAD_POWER_STATES):
                             appliance.appliance_pool = None
                             appliance.datetime_leased = None
                             appliance.save()

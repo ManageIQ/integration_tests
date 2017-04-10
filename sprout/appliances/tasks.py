@@ -149,7 +149,7 @@ def kill_unused_appliances(self):
     to prolong the lease time, this is the thing that will take the appliance off your hands
     and kill it."""
     with transaction.atomic():
-        for appliance in Appliance.objects.filter(marked_for_deletion=False, ready=True):
+        for appliance in Appliance.objects.filter(marked_for_deletion=False):
             if appliance.leased_until is not None and appliance.leased_until <= timezone.now():
                 self.logger.info("Watchdog found an appliance that is to be deleted: {}/{}".format(
                     appliance.id, appliance.name))
@@ -326,7 +326,7 @@ def poke_trackerbot(self):
                 # Kill all shepherd appliances if they were acidentally spun up
                 if not usability:
                     for appliance in Appliance.objects.filter(
-                            template=template, ready=True, marked_for_deletion=False,
+                            template=template, marked_for_deletion=False,
                             appliance_pool=None):
                         Appliance.kill(appliance)
 
@@ -1757,6 +1757,10 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
                 provider_api.get_meta_value(vm_name, 'sprout_leased_until'))
             construct['status_changed'] = parsedate(
                 provider_api.get_meta_value(vm_name, 'sprout_status_changed'))
+            construct['created_on'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_created_on'))
+            construct['modified_on'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_modified_on'))
         except KeyError as e:
             self.logger.error('Failed to reconstruct %d/%s', appliance_id, vm_name)
             self.logger.exception(e)

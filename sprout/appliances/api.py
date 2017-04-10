@@ -555,3 +555,30 @@ def appliance_disconnect_direct_lun(user, appliance):
     """
     appliance = get_appliance(appliance, user)
     return disconnect_direct_lun(appliance.id).task_id
+
+
+@jsonapi.authenticated_method
+def merge_pools(user, target_pool_id, source_pool_id):
+    """Set the pool's description"""
+    target_pool = AppliancePool.objects.get(id=target_pool_id)
+    source_pool = AppliancePool.objects.get(id=source_pool_id)
+    if not (user.is_staff or user.is_superuser):
+        if target_pool.owner != user:
+            raise Exception('Target pool {} is owner by different user'.format(target_pool_id))
+        if source_pool.owner != user:
+            raise Exception('Source pool {} is owner by different user'.format(source_pool_id))
+
+    return target_pool.merge(source_pool).id
+
+
+@jsonapi.authenticated_method
+def clone_pool(user, pool_id, count=None, lease_time=60):
+    pool = AppliancePool.objects.get(id=pool_id)
+    if not (user.is_staff or user.is_superuser):
+        if pool.owner != user:
+            raise Exception('Pool {} is owner by different user'.format(pool_id))
+    if pool.owner == user:
+        owner = None
+    else:
+        owner = user
+    return pool.clone(count, lease_time, owner).id
