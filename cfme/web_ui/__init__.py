@@ -1350,6 +1350,11 @@ def fill_select(slist, val):
     return prev_sel
 
 
+@fill.method(Selector, Anything)
+def _fill_selector(selector, data):
+    fill(selector.decide(), data)
+
+
 class Calendar(Pretty):
     """A CFME calendar form field
 
@@ -4073,12 +4078,6 @@ class CFMECheckbox(Selector):
             return BootstrapSwitch(self.input_id)
         else:
             return OldCheckbox(self.input_id)
-
-
-@fill.method((CFMECheckbox, bool))
-def fill_cfmecheckbox_switch(ob, val):
-    ob.fill(val)
-
 
 def breadcrumbs():
     """Returns a list of breadcrumbs names if names==True else return as elements.
