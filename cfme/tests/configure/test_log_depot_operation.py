@@ -5,6 +5,7 @@
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
+from datetime import datetime
 import fauxfactory
 import pytest
 import re
@@ -16,7 +17,6 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.ftp import FTPClient
 from utils.providers import get_mgmt
-from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
 
 
@@ -28,10 +28,9 @@ class LogDepotType(object):
         self.protocol = protocol
         self._param_name = self.protocol
         self.credentials = credentials
-        self.access_dir = access_dir
+        self.access_dir = access_dir if access_dir else ""
         self.path = path
         self.machine_ip = None
-        self.hostname = access_dir if access_dir else ""
 
     @property
     def ftp(self):
@@ -41,14 +40,12 @@ class LogDepotType(object):
             # case anonymous connection cfme works only with hardcoded "incoming" directory
             # incoming folder used for https://bugzilla.redhat.com/show_bug.cgi?id=1307019
             upload_dir = "incoming"
-            ftp_host_name = self.machine_ip + self.hostname
         else:
             ftp_user_name = self.credentials["username"]
             ftp_password = self.credentials["password"]
             # if it's not anonymous using predefined credentials
             upload_dir = "/"
-            ftp_host_name = self.machine_ip + self.hostname
-        return FTPClient(ftp_host_name,
+        return FTPClient(self.machine_ip,
                          ftp_user_name,
                          ftp_password,
                          upload_dir)
@@ -78,7 +75,7 @@ def pytest_generate_tests(metafunc):
         return
 
     fixtures = ['log_depot']
-    data = conf.cfme_data.get("log_db_operations_new", {})
+    data = conf.cfme_data.get("log_db_operations", {})
     depots = []
     ids = []
     creds = conf.credentials[data['credentials']]
@@ -92,7 +89,7 @@ def pytest_generate_tests(metafunc):
     return
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.yield_fixture(scope="module")
 def depot_machine_ip():
     """ Deploy vm for depot test
 
@@ -100,7 +97,7 @@ def depot_machine_ip():
     After test run vm deletes from provider
     """
     depot_machine_name = "test_long_log_depot_{}".format(fauxfactory.gen_alphanumeric())
-    data = conf.cfme_data.get("log_db_operations_new", {})
+    data = conf.cfme_data.get("log_db_operations", {})
     depot_provider_key = data["log_db_depot_template"]["provider"]
     depot_template_name = data["log_db_depot_template"]["template_name"]
     prov = get_mgmt(depot_provider_key)
@@ -112,7 +109,7 @@ def depot_machine_ip():
 
 
 @pytest.yield_fixture(scope="function")
-def configured_depot(log_depot,  depot_machine_ip):
+def configured_depot(log_depot, depot_machine_ip):
     """ Configure selected depot provider
 
     This fixture used the trick that the fixtures are cached for given function.
@@ -141,19 +138,16 @@ def check_ftp(ftp):
         assert zip_files, "No logs found!"
     # Check the times of the files by names
     datetimes = []
-    regexp = re.compile(
-        r"^.*?_(?P<y1>[0-9]{4})(?P<m1>[0-9]{2})(?P<d1>[0-9]{2})_"
-        r"(?P<h1>[0-9]{2})(?P<M1>[0-9]{2})(?P<S1>[0-9]{2})"
-        r"_(?P<y2>[0-9]{4})(?P<m2>[0-9]{2})(?P<d2>[0-9]{2})_"
-        r"(?P<h2>[0-9]{2})(?P<M2>[0-9]{2})(?P<S2>[0-9]{2})[.]zip$"
-    )
     for file in zip_files:
-        data = regexp.match(file.name)
-        assert data, "Wrong file matching of {}".format(file.name)
-        data = {key: int(value) for key, value in data.groupdict().iteritems()}
-        date_from = parsetime(
-            data["y1"], data["m1"], data["d1"], data["h1"], data["M1"], data["S1"])
-        date_to = parsetime(data["y2"], data["m2"], data["d2"], data["h2"], data["M2"], data["S2"])
+        date = file.name.split("_")
+        date_from = date[7] + date[8]
+        # removing ".zip" from last item
+        date_to = date[9] + date[10][:-4]
+        try:
+            date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
+            date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
+        except ValueError:
+            assert False, "Wrong file matching of {}".format(file.name)
         datetimes.append((date_from, date_to, file.name))
 
     # Check for the gaps
@@ -168,9 +162,9 @@ def check_ftp(ftp):
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
 @pytest.mark.meta(blockers=[BZ(1341502, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
-                            forced_streams=["5.6", "upstream"])]
+                            forced_streams=["5.6", "5.7", "5.8", "upstream"])]
                   )
-def test_collect_log_depot(log_depot,depot_configured, request):
+def test_collect_log_depot(log_depot, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
@@ -190,14 +184,14 @@ def test_collect_log_depot(log_depot,depot_configured, request):
         ftp.recursively_delete()
 
     # Start the collection
-    depot_configured.collect_all()
+    configured_depot.collect_all()
     # Check it on FTP
     check_ftp(log_depot.ftp)
 
 
 @pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
 @pytest.mark.tier(3)
-def test_collect_unconfigured(soft_assert, appliance):
+def test_collect_unconfigured(appliance):
     """ Test checking is collect button enable and disable after log depot was configured
 
     """

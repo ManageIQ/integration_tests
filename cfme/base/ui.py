@@ -390,16 +390,16 @@ class DiagnosticsCollectLogsView(ServerDiagnosticsView):
     collect = Dropdown(VersionPick({Version.lowest(): 'Collect Logs',
                        '5.7': 'Collect'}))
 
+    log_depot_uri = SummaryFormItem('Basic Info', 'Log Depot URI')
+    last_log_collection = SummaryFormItem('Basic Info', 'Last Log Collection')
+    last_log_message = SummaryFormItem('Basic Info', 'Last Message')
+
     @property
     def is_displayed(self):
         return (
             super(DiagnosticsCollectLogsView, self).is_displayed and
             self.view.collectlogs.is_displayed and
             self.view.collectlogs.is_active)
-
-    log_depot_uri = SummaryFormItem('Basic Info', 'Log Depot URI')
-    last_log_collection = SummaryFormItem('Basic Info', 'Last Log Collection')
-    last_log_message = SummaryFormItem('Basic Info', 'Last Message')
 
 
 @navigator.register(Server)
