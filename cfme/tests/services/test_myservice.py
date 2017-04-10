@@ -13,6 +13,8 @@ from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.wait import wait_for
+from utils.update import update
+
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name", "catalog_item"),
@@ -62,14 +64,12 @@ def myservice(setup_provider, provider, catalog_item, request):
     cleanup_vm(vm_name, provider)
 
 
-def test_retire_service(provider, myservice, register_event):
+def test_retire_service(provider, myservice):
     """Tests my service
 
     Metadata:
         test_flag: provision
     """
-    register_event(target_type='Service', target_name=myservice.service_name,
-                   event_type='service_retired')
     myservice.retire()
 
 
@@ -91,8 +91,8 @@ def test_crud_set_ownership_and_edit_tags(myservice):
     """
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
     myservice.edit_tags("Cost Center *", "Cost Center 001")
-    myservice.update(updates={'service_name': myservice.service_name + '_updated',
-                              'description': 'Updated service description'})
+    with update(myservice):
+        myservice.description = "my edited description"
     myservice.delete()
 
 

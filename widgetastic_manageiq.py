@@ -797,7 +797,19 @@ class Calendar(TextInput):
         name: "name" property of the readonly calendar field.
     """
 
+    # Expects: arguments[0] = element, arguments[1] = value to set
+    set_angularjs_value_script = """\
+        (function(elem, value){
+        var angular_elem = angular.element(elem);
+        var $parse = angular_elem.injector().get('$parse');
+        var getter = $parse(elem.getAttribute('ng-model'));
+        var setter = getter.assign;
+        angular_elem.scope().$apply(function($scope) { setter($scope, value); });
+    }(arguments[0], arguments[1]));
+    """
+
     def fill(self, value):
+        # input = self.browser.element(self.name)
         if isinstance(value, date):
             date_str = value.strftime('%m/%d/%Y')
         else:
@@ -805,8 +817,8 @@ class Calendar(TextInput):
         self.move_to()
         # need to write to a readonly field: resort to evil
         if self.browser.get_attribute("ng-model", self) is not None:
-            # self.set_angularjs_value(self, date_str)
-            raise NotImplementedError
+            self.browser.execute_script(self.set_angularjs_value_script, self.browser.element(self),
+             date_str)
         else:
             self.browser.set_attribute("value", date_str, self)
             # Now when we set the value, we need to simulate a change event.
