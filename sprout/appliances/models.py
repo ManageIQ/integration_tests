@@ -806,8 +806,8 @@ class Appliance(MetadataMixin):
             container=self.template.container,
             ram=self.ram,
             cpu=self.cpu,
-            created_on=self.created_on,
-            modified_on=self.modified_on,
+            created_on=apply_if_not_none(self.created_on, "isoformat"),
+            modified_on=apply_if_not_none(self.modified_on, "isoformat"),
         )
 
     @property
