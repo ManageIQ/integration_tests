@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from collections import namedtuple
 from datetime import date, timedelta, datetime
 
 from cfme import test_requirements
@@ -28,6 +29,14 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.long_running
 ]
+
+RetirementWarning = namedtuple('RetirementWarning', ['id', 'string'])
+
+warnings = [
+    RetirementWarning('no_warning', 'None'),
+    RetirementWarning('1_week_warning', '1 Week before retirement'),
+    RetirementWarning('2_week_warning', '2 Weeks before retirement'),
+    RetirementWarning('30_day_warning', '30 Days before retirement')]
 
 
 @pytest.yield_fixture(scope="function")
@@ -115,14 +124,15 @@ def test_retirement_now(test_vm):
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1419150, forced_streams='5.6',
                                unblock=lambda: current_version() >= '5.7')])
-def test_set_retirement_date(test_vm):
+@pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
+def test_set_retirement_date(test_vm, warn):
     """Tests setting retirement date and verifies configured date is reflected in UI
 
     Note we cannot control the retirement time, just day, so we cannot wait for the VM to retire
     """
     num_days = 2
     retire_date = generate_retirement_date(delta=num_days)
-    test_vm.set_retirement_date(retire_date, warn="1 Week before retirement")
+    test_vm.set_retirement_date(retire_date, warn=warn.string)
     verify_retirement_date(test_vm, expected_date=retire_date)
 
 
