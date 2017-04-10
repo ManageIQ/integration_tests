@@ -19,7 +19,7 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
 
 
 def test_host_role_association(provider, soft_assert):
-    navigate_to(Host, 'All')
+    navigate_to(provider, 'ProviderNodes')
     names = [q.name for q in list(Quadicon.all())]
     for node in names:
         host = Host(node, provider)
