@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 from cfme.web_ui import FileInput, Input, Radio, form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
+from utils import conf
 from utils.pretty import Pretty
 from utils.update import Updateable
+from widgetastic.utils import Fillable
 
 
-class Credential(Pretty, Updateable):
+class FromConfigMixin(object):
+    @classmethod
+    def from_config(cls, key):
+        return cls(**conf.credentials[key])
+
+
+class Credential(Pretty, Updateable, FromConfigMixin, Fillable):
     """
     A class to fill in credentials
 
@@ -16,7 +24,7 @@ class Credential(Pretty, Updateable):
     """
     pretty_attrs = ['principal', 'secret']
 
-    def __init__(self, principal, secret, verify_secret=None, domain=None, **ignore):
+    def __init__(self, principal, secret, verify_secret=None, domain=None):
         self.principal = principal
         self.secret = secret
         self.verify_secret = verify_secret
@@ -36,15 +44,15 @@ class Credential(Pretty, Updateable):
         else:
             return super(Credential, self).__getattribute__(attr)
 
-    def as_dict(self):
+    def as_fill_value(self):
         """
         used for filling forms like add/edit provider form
         Returns: dict
         """
         return {
-            'principal': self.principal,
-            'secret': self.secret,
-            'verify_secret': self.verify_secret
+            'username': self.principal,
+            'password': self.secret,
+            'confirm_password': self.verify_secret
         }
 
     @property
@@ -68,7 +76,7 @@ class SSHCredential(Credential):
     pass
 
 
-class TokenCredential(Pretty, Updateable):
+class TokenCredential(Pretty, Updateable, FromConfigMixin):
     """
     A class to fill in credentials
 
@@ -91,7 +99,7 @@ class TokenCredential(Pretty, Updateable):
         else:
             return super(TokenCredential, self).__getattribute__(attr)
 
-    def as_dict(self):
+    def as_fill_value(self):
         """
         used for filling forms like add/edit provider form
         Returns: dict
@@ -106,7 +114,7 @@ class TokenCredential(Pretty, Updateable):
         return provider_credential_form()
 
 
-class ServiceAccountCredential(Pretty, Updateable):
+class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin):
     """
     A class to fill in credentials
 
@@ -119,7 +127,7 @@ class ServiceAccountCredential(Pretty, Updateable):
         super(ServiceAccountCredential, self)
         self.service_account = service_account
 
-    def as_dict(self):
+    def as_fill_value(self):
         """
         used for filling forms like add/edit provider form
         Returns: dict
@@ -167,12 +175,10 @@ def provider_credential_form():
         ('validate_btn', form_buttons.validate),
     ]
 
-    tab_fields["Events"] = []
-    tab_fields["Events"].extend([
+    tab_fields["Events"] = [
         ('event_selection', Radio('event_stream_selection')),
         ('amqp_principal', Input("amqp_userid")),
         ('amqp_secret', Input("amqp_password")),
-        ('amqp_verify_secret', Input("amqp_verify")),
-    ])
+        ('amqp_verify_secret', Input("amqp_verify"))]
 
     return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
