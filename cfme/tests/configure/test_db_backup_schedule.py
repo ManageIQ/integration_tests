@@ -39,6 +39,7 @@ class DbBackupData(Pretty):
     pretty_attrs = ['machine_id', 'machine_data', 'protocol_type']
 
     def __init__(self, machine_id, machine_data, protocol_type):
+        self._param_name = protocol_type
         self.machine_id = machine_id
         self.protocol_type = protocol_type
         self.schedule_name = self._get_random_schedule_name()
