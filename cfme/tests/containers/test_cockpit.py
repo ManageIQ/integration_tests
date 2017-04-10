@@ -19,7 +19,7 @@ pytest_generate_tests = testgen.generate(
 
 
 @pytest.mark.polarion('CMP-10469')
-@pytest.mark.meta(blockers=[BZ(1406772)])
+@pytest.mark.meta(blockers=[BZ(1406772, forced_streams=["5.7", "5.8"])])
 def test_cockpit_button_access(provider, soft_assert):
     """ The test verifies the existence of cockpit "Web Console"
         button on master node, then presses on the button and

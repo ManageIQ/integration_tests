@@ -80,7 +80,6 @@ def test_pods_per_ready_status(soft_assert, pods_per_ready_status):
                         .format(name, pods_per_ready_status[name], readiness_ui))
 
 
-@pytest.mark.meta(blockers=[BZ(1435970, forced_streams=["5.8"])])
 @pytest.mark.polarion('CMP-9536')
 def test_report_nodes_by_capacity(appliance, soft_assert, node_hardwares_db_data):
 
