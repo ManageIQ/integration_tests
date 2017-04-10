@@ -383,7 +383,7 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
         extensions_mapping = {"txt": "Text", "csv": "CSV", "pdf": "PDF"}
         try:
             view.download("Download as {}".format(extensions_mapping[extension]))
-        except:
+        except NoSuchElementException:
             raise ValueError("Unknown extention. check the extentions_mapping")
 
 
@@ -593,7 +593,7 @@ class CustomSavedReportDetails(CFMENavigateStep):
             "Custom",
             self.obj.report.menu_name,
             self.obj.datetime_in_tree
-       )
+        )
 
 
 @navigator.register(CannedSavedReport, "Details")
