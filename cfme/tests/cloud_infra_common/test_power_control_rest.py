@@ -10,7 +10,6 @@ from utils.log import logger
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from utils.version import current_version
 
 
 pytestmark = [
@@ -172,7 +171,7 @@ def test_suspend(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_reset_vm(rest_api, vm_obj, verify_vm_running, from_detail):
+def test_reset_vm(rest_api, vm_obj, verify_vm_running, from_detail, appliance):
     """
     Test reset vm
 
@@ -199,7 +198,7 @@ def test_reset_vm(rest_api, vm_obj, verify_vm_running, from_detail):
     else:
         rest_api.collections.vms.action.reset(vm)
     success, message = verify_action_result(rest_api, assert_success=False)
-    if current_version() < '5.7':
+    if appliance.version < '5.7':
         unsupported_providers = (GCEProvider, EC2Provider, SCVMMProvider)
     else:
         unsupported_providers = (GCEProvider, EC2Provider)
