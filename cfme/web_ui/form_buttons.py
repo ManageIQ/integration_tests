@@ -145,6 +145,7 @@ class FormButton(Pretty):
 
 
 add = FormButton("Add")
+add_ng = FormButton('Add', ng_click='addClicked()')
 save = FormButton("Save Changes", dimmed_alt="Save", ng_click="saveClicked()")
 angular_save = FormButton("Save changes", ng_click="saveClicked()")
 cancel = FormButton("Cancel")
