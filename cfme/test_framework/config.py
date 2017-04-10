@@ -64,6 +64,10 @@ class DeprecatedConfigWrapper(object):
             )
         return self.configuration.get_config(key)
 
+    @property
+    def runtime(self):
+        return self.configuration.runtime
+
     def __getitem__(self, key):
         if self._warn:
             warnings.warn(
