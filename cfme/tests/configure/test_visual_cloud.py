@@ -11,7 +11,7 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.stack import Stack
 from cfme.cloud.tenant import Tenant
-from cfme.cloud.volume import Volume
+from cfme.storage.volume import Volume
 from cfme.web_ui import paginator, toolbar as tb, match_location
 from utils.appliance.implementations.ui import navigate_to
 from utils import version
