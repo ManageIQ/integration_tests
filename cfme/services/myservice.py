@@ -311,10 +311,11 @@ class MyServiceSetRetirement(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        if self.appliance.version > '5.8':
-            self.prerequisite_view.lifecycle_btn.item_select('Set Retirement Date for this Service')
-        else:
+        if self.appliance.version < '5.8':
             self.prerequisite_view.lifecycle_btn.item_select('Set Retirement Date')
+        else:
+            self.prerequisite_view.lifecycle_btn.item_select(
+                'Set Retirement Dates for this Service')
 
 
 @navigator.register(MyService, 'Reconfigure')
