@@ -607,18 +607,24 @@ class Template(MetadataMixin):
     @classmethod
     def get_versions(cls, *filters, **kwfilters):
         versions = []
-        for version in cls.objects.filter(*filters, **kwfilters).values('version').distinct():
-            v = version.values()[0]
-            if v is not None:
-                versions.append(v)
+        for version in cls.objects\
+                .filter(*filters, **kwfilters)\
+                .values_list('version', flat=True)\
+                .distinct()\
+                .order_by():
+            if version is not None:
+                versions.append(version)
         versions.sort(key=Version, reverse=True)
         return versions
 
     @classmethod
     def get_dates(cls, *filters, **kwfilters):
-        dates = map(
-            lambda d: d.values()[0],
-            cls.objects.filter(*filters, **kwfilters).values('date').distinct())
+        dates = list(
+            cls.objects
+            .filter(*filters, **kwfilters)
+            .values_list('date', flat=True)
+            .distinct()
+            .order_by())
         dates.sort(reverse=True)
         return dates
 
@@ -1227,7 +1233,7 @@ class AppliancePool(MetadataMixin):
         return Template.objects.filter(
             self.container_q,
             ready=True, exists=True, usable=True,
-            **self.filter_params).all().distinct()
+            **self.filter_params).all().distinct().order_by()
 
     @property
     def possible_provisioning_templates(self):
