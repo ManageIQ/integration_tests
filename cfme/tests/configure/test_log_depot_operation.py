@@ -28,7 +28,7 @@ class LogDepotType(object):
         self.protocol = protocol
         self._param_name = self.protocol
         self.credentials = credentials
-        self.access_dir = access_dir if access_dir else ""
+        self.access_dir = access_dir or ""
         self.path = path
         self.machine_ip = None
 
@@ -139,6 +139,8 @@ def check_ftp(ftp):
     # Check the times of the files by names
     datetimes = []
     for file in zip_files:
+        # files looks like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
+        # 20170127_043343 - date and time
         date = file.name.split("_")
         date_from = date[7] + date[8]
         # removing ".zip" from last item
