@@ -96,7 +96,7 @@ def template_name(image_link, image_ts, checksum_link, version=None):
         elif "stable" in image_link:
             # Handle named MIQ releases, dropping provider and capturing release and date
             if 'master' not in image_link:
-                pattern = re.compile(r'manageiq-[^\d]*?-(?P<release>[-\w]*?)'
+                pattern = re.compile(r'manageiq-[^\d]*?-(?P<release>[-.\w]*?)'
                                      r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
                 # Use match so we can use regex group names
                 result = pattern.match(image_name)
@@ -321,7 +321,8 @@ def main():
             if key != stream:
                 continue
         if upload_url:
-            if url != upload_url:
+            # strip trailing slashes just in case
+            if url.rstrip('/') != upload_url.rstrip('/'):
                 continue
         dir_files = browse_directory(url)
         if not dir_files:
