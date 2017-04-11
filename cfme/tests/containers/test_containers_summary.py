@@ -5,6 +5,7 @@ from cfme.web_ui import StatusBox
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
+from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -15,10 +16,10 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 container_object_types = \
-    ['routes', 'projects', 'container_images', 'image_registries',
+    ['persistent_volumes', 'routes', 'projects', 'container_images', 'image_registries',
      'container_services', 'containers', 'pods', 'nodes']
 container_object_types_lowest = \
-    ['routes', 'projects', 'images', 'image_registries',
+    ['persistent_volumes', 'routes', 'projects', 'images', 'image_registries',
      'services', 'containers', 'pods', 'nodes']
 objects_key = ({
     version.LOWEST: container_object_types_lowest,
@@ -27,6 +28,7 @@ objects_key = ({
 
 
 @pytest.mark.polarion('CMP-10575')
+@pytest.mark.meta(blockers=[BZ(1441196)])
 def test_containers_summary_objects(provider, soft_assert):
     """ Containers overview page > Widgets > Widgets summary
        This test checks that the amount of a selected object in the system is shown correctly
