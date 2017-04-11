@@ -14,6 +14,7 @@ from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.wait import wait_for
 from utils.update import update
+from utils.version import appliance_is_downstream
 
 
 pytestmark = [
@@ -97,6 +98,8 @@ def test_crud_set_ownership_and_edit_tags(myservice):
 
 
 @pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
+# PDF not present on upstream
+@pytest.mark.uncollectif(lambda filetype: filetype == 'PDF' and not appliance_is_downstream())
 def test_download_file(needs_firefox, myservice, filetype):
     """Tests my service download files
 
