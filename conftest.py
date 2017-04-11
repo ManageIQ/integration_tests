@@ -15,11 +15,15 @@ def pytest_addoption(parser):
 
 
 pytest_plugins = (
-    'cfme.test_framework.sprout.plugin',
+    'markers',
     'fixtures.pytest_store',
+    'cfme.test_framework.sprout.plugin',
     'cfme.test_framework.appliance_police',
 
     'fixtures.portset',
+
+
+    'markers.polarion',  # before artifactor
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',
 
@@ -73,4 +77,7 @@ pytest_plugins = (
 
     'cfme.metaplugins',
 )
-collect_ignore = ["tests/scenarios"]
+
+# work around pytest bug
+# https://github.com/pytest-dev/pytest/issues/2353
+pytest.register_assert_rewrite(*pytest_plugins)

@@ -52,12 +52,6 @@ Note:
 
 """
 import inspect
-import os
-
-from fixtures.pytest_store import store
-from utils.path import log_path
-from utils.log import logger
-from utils.pytest_shortcuts import extract_fixtures_values
 
 
 def uncollectif(item):
@@ -67,9 +61,12 @@ def uncollectif(item):
     if the item should be uncollected or not.
     """
 
+    from utils.pytest_shortcuts import extract_fixtures_values
     marker = item.get_marker('uncollectif')
     if marker:
-        log_msg = 'Trying uncollecting {}: {}'.format(item.name,
+        from utils.log import logger
+        log_msg = 'Trying uncollecting {}: {}'.format(
+            item.name,
             marker.kwargs.get('reason', 'No reason given'))
 
         try:
@@ -106,7 +103,8 @@ def pytest_collection_modifyitems(session, config, items):
 
     new_items = []
 
-    with open(os.path.join(log_path.strpath, 'uncollected.log'), 'w') as f:
+    from utils.path import log_path
+    with log_path.join('uncollected.log').open('w') as f:
         for item in items:
             # First filter out all items who have the uncollect mark
             if item.get_marker('uncollect') or not uncollectif(item):
@@ -132,5 +130,7 @@ def pytest_collection_modifyitems(session, config, items):
         # It might be good to write uncollected test names out via terminalreporter,
         # but I suspect it would be extremely spammy. It might be useful in the
         # --collect-only output?
+
+        from fixtures.pytest_store import store
         store.terminalreporter.write('collected %d items' % len_filtered, bold=True)
         store.terminalreporter.write(' (uncollected %d items)\n' % filtered_count)

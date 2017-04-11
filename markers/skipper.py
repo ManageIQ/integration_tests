@@ -6,7 +6,6 @@ This doesn't provide any special markers, but it does add behavor to marks defin
 """
 import pytest
 
-from fixtures.pytest_store import store
 
 #: List of (mark, commandline flag) tuples. When the given mark is used on a test, it will
 #: be skipped unless the commandline flag is used. If the mark is already found in py.test's
@@ -29,6 +28,8 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    from fixtures.pytest_store import store
+
     marks_to_skip = []
     mark_expr = [mark.strip(''''"()''') for mark in config.option.markexpr.split()]
     for dest, cmdline_opt in skip_marks:
