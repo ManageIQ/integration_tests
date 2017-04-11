@@ -43,7 +43,7 @@ import six
 from collections import defaultdict
 
 from cfme.common.provider import BaseProvider, all_types
-from fixtures.artifactor_plugin import art_client, get_test_idents
+from fixtures.artifactor_plugin import fire_art_test_hook
 from fixtures.pytest_store import store
 from fixtures.templateloader import TEMPLATES
 from utils.providers import ProviderFilter, list_providers
@@ -68,11 +68,11 @@ def pytest_addoption(parser):
 
 
 def _artifactor_skip_providers(request, providers, skip_msg):
-    node = request.node
-    name, location = get_test_idents(node)
-    skip_data = {'type': 'provider', 'reason': ', '.join([p.key for p in providers])}
-    art_client.fire_hook('skip_test', test_location=location, test_name=name,
-        skip_data=skip_data)
+    skip_data = {
+        'type': 'provider',
+        'reason': ', '.join(p.key for p in providers),
+    }
+    fire_art_test_hook(request.node, 'skip_test', skip_data=skip_data)
     pytest.skip(skip_msg)
 
 

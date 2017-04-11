@@ -1,8 +1,5 @@
-import os
-
 import pytest
-
-import fixtures.soft_assert
+from fixtures import artifactor_plugin
 from fixtures.soft_assert import SoftAssertionError, _soft_assert_cm
 
 
@@ -12,30 +9,30 @@ pytest_plugins = 'pytester'
 # the pytester plugin.
 
 test_file = """
-import imp
-
-soft_assert_path = '{}'
-imp.load_source('soft_assert', soft_assert_path)
-pytest_plugins = 'soft_assert'
+pytest_plugins = [
+    'fixtures.artifactor_plugin',
+    'fixtures.soft_assert',
+]
 
 
 def test_soft_assert(soft_assert):
     soft_assert(None)
     soft_assert(False, 'soft_assert message!')
-""".format(os.path.abspath(fixtures.soft_assert.__file__.replace('pyc', 'py')))
+"""
 
 test_output_match_lines = [
-    ">           raise SoftAssertionError(_thread_locals.caught_asserts)",
-    "E           SoftAssertionError: ",
-    "E           soft_assert(None) ({testfile}:9)",
-    "E           soft_assert message! ({testfile}:10)",
+    ">   *   raise SoftAssertionError(_thread_locals.caught_asserts)",
+    "E   *   SoftAssertionError: ",
+    "E   *   soft_assert(None) ({testfile}:*)",
+    "E   *   soft_assert message! ({testfile}:*)",
 ]
 
 
-def test_soft_assert_call_hook(testdir):
+def test_soft_assert_call_hook(testdir, monkeypatch):
+    monkeypatch.setattr(artifactor_plugin, 'UNDER_TEST', True)
     # create and run the pytest
     pyfile = testdir.makepyfile(test_file)
-    result = testdir.runpytest()
+    result = testdir.runpytest_subprocess()
     # replace the testfile name in the expected output names,
     # then check filename and lineno are correct in the failure output
     result.stdout.fnmatch_lines([s.format(testfile=pyfile) for s in test_output_match_lines])

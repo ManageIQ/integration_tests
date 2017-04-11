@@ -34,6 +34,8 @@ from utils.net import random_port, net_check
 from utils.wait import wait_for
 from utils import version
 
+UNDER_TEST = False  # set to true for artifactor using tests
+
 
 # Create a list of all our passwords for use with the sanitize request later in this module
 words = []
@@ -73,28 +75,35 @@ class DummyClient(object):
         return
 
     def __nonzero__(self):
-        # DummyClient is always False, so it's easy to see if we have an artiactor client
+        # DummyClient is always False,
+        # so it's easy to see if we have an artiactor client
         return False
 
 
-proc = None
-art_config = env.get('artifactor', {})
-
-if art_config:
-    # If server_port isn't set, pick a random port
-    if 'server_port' not in art_config:
-        port = random_port()
+def get_client(art_config, pytest_config):
+    if art_config and not UNDER_TEST:
+        port = getattr(pytest_config.option, 'artifactor_port', None) or \
+            art_config.get('server_port') or random_port()
+        pytest_config.option.artifactor_port = port
         art_config['server_port'] = port
-    art_client = ArtifactorClient(art_config['server_address'], art_config['server_port'])
-else:
-    art_client = DummyClient()
-
-SLAVEID = ""
-if env.get('slaveid', None):
-    SLAVEID = env['slaveid']
+        return ArtifactorClient(
+            art_config['server_address'], art_config['server_port'])
+    else:
+        return DummyClient()
 
 
-appliance_ip_address = urlparse(env['base_url']).netloc
+def spawn_server(config, art_client):
+    if store.slave_manager or UNDER_TEST:
+        return None
+    import subprocess
+    cmd = ['miq-artifactor-server', '--port', str(art_client.port)]
+    if config.getvalue('run_id'):
+        cmd.append('--run-id')
+        cmd.append(str(config.getvalue('run_id')))
+    proc = subprocess.Popen(cmd)
+    return proc
+
+
 session_ver = None
 session_build = None
 session_stream = None
@@ -107,22 +116,46 @@ def pytest_addoption(parser):
 
 @pytest.mark.tryfirst
 def pytest_configure(config):
-    global proc
-    if not SLAVEID and not proc and isinstance(art_client, ArtifactorClient):
-        import subprocess
-        cmd = ['miq-artifactor-server', '--port', str(art_client.port)]
-        if config.getvalue('run_id'):
-            cmd.append('--run-id')
-            cmd.append(str(config.getvalue('run_id')))
-        proc = subprocess.Popen(cmd)
-        wait_for(net_check, func_args=[art_client.port, '127.0.0.1'], func_kwargs={'force': True},
-                 num_sec=10, message="wait for artifactor to start")
-        config.option.artifactor_port = art_client.port
+    art_client = get_client(
+        art_config=env.get('artifactor', {}),
+        pytest_config=config)
+
+    # just in case
+    with diaper:
+        atexit.register(art_client.fire_hook, 'finish_session')
+        atexit.register(art_client.terminate)
+
+    if art_client:
+        config._art_proc = spawn_server(config, art_client)
+        wait_for(
+            net_check,
+            func_args=[art_client.port, '127.0.0.1'],
+            func_kwargs={'force': True},
+            num_sec=10, message="wait for artifactor to start")
         art_client.ready = True
-    elif isinstance(art_client, ArtifactorClient):
-        art_client.port = config.option.artifactor_port
-        art_client.ready = True
-    art_client.fire_hook('setup_merkyl', ip=appliance_ip_address)
+    else:
+        config._art_proc = None
+    from utils.log import artifactor_handler
+    artifactor_handler.artifactor = art_client
+    config._art_client = art_client
+    art_client.fire_hook('setup_merkyl', ip=urlparse(env['base_url']).netloc)
+
+
+def fire_art_hook(config, hook, **hook_args):
+    client = getattr(config, '_art_client', None)
+    if client is None:
+        assert UNDER_TEST, 'missing artifactor is only valid for inprocess tests'
+    else:
+        client.fire_hook(hook, **hook_args)
+
+
+def fire_art_test_hook(node, hook, **hook_args):
+    name, location = get_test_idents(node)
+    fire_art_hook(
+        node.config, hook,
+        test_name=name,
+        test_location=location,
+        **hook_args)
 
 
 @pytest.mark.hookwrapper
@@ -135,10 +168,12 @@ def pytest_runtest_protocol(item):
         session_ver = str(version.current_version())
         session_build = store.current_appliance.build
         session_stream = store.current_appliance.version.stream()
-        art_client.fire_hook('session_info', version=session_ver, build=session_build,
+        fire_art_hook(
+            item.config, 'session_info',
+            version=session_ver,
+            build=session_build,
             stream=session_stream)
 
-    name, location = get_test_idents(item)
     tier = item.get_marker('tier')
     if tier:
         tier = tier.args[0]
@@ -148,28 +183,34 @@ def pytest_runtest_protocol(item):
         param_dict = {p: get_name(v) for p, v in params.iteritems()}
     except:
         param_dict = {}
-
+    ip = urlparse(env['base_url']).netloc
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
-    art_client.fire_hook('pre_start_test', test_location=location, test_name=name,
-                         slaveid=SLAVEID, ip=appliance_ip_address)
-    art_client.fire_hook('start_test', test_location=location, test_name=name,
-                         slaveid=SLAVEID, ip=appliance_ip_address,
-                         tier=tier, param_dict=param_dict)
+    fire_art_test_hook(
+        item, 'pre_start_test',
+        slaveid=store.slaveid, ip=ip)
+    fire_art_test_hook(
+        item, 'start_test',
+        slaveid=store.slaveid, ip=ip,
+        tier=tier, param_dict=param_dict)
     yield
 
 
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
-    art_client.fire_hook('finish_test', test_location=location, test_name=name,
-                         slaveid=SLAVEID, ip=appliance_ip_address, grab_result=True)
-    art_client.fire_hook('sanitize', test_location=location, test_name=name, words=words)
-    art_client.fire_hook('ostriz_send', test_location=location, test_name=name,
-                         slaveid=SLAVEID, polarion_ids=extract_polarion_ids(item))
+    ip = urlparse(env['base_url']).netloc
+    fire_art_test_hook(
+        item, 'finish_test',
+        slaveid=store.slaveid, ip=ip, grab_result=True)
+    fire_art_test_hook(item, 'sanitize', words=words)
+    fire_art_test_hook(
+        item, 'ostriz_send',
+        slaveid=store.slaveid, polarion_ids=extract_polarion_ids(item))
 
 
 def pytest_runtest_logreport(report):
+    config = pytest.config  # tech debt
     name, location = get_test_idents(report)
     if hasattr(report, 'wasxfail'):
         xfail = True
@@ -182,31 +223,29 @@ def pytest_runtest_logreport(report):
                 contents = report.longrepr[2]
             except AttributeError:
                 contents = str(report.longrepr)
-            art_client.fire_hook('filedump', test_location=location, test_name=name,
-                                 description="Short traceback", contents=contents,
-                                 file_type="short_tb", group_id="skipped")
-    art_client.fire_hook('report_test', test_location=location,
-                         test_name=name, test_xfail=xfail, test_when=report.when,
-                         test_outcome=report.outcome)
-    art_client.fire_hook('build_report')
+            fire_art_hook(
+                config, 'filedump',
+                test_location=location, test_name=name,
+                description="Short traceback", contents=contents,
+                file_type="short_tb", group_id="skipped")
+    fire_art_hook(
+        config, 'report_test',
+        test_location=location, test_name=name,
+        test_xfail=xfail, test_when=report.when,
+        test_outcome=report.outcome)
+    fire_art_hook(config, 'build_report')
 
 
 @pytest.mark.hookwrapper
-def pytest_unconfigure():
-    global proc
+def pytest_unconfigure(config):
     yield
-    if not SLAVEID:
+    if not store.slave_manager:
         write_line('collecting artifacts')
-        art_client.fire_hook('finish_session')
-    art_client.fire_hook('teardown_merkyl', ip=appliance_ip_address)
-    if not SLAVEID:
-        art_client.terminate()
+        fire_art_hook(config, 'finish_session')
+    fire_art_hook(config, 'teardown_merkyl',
+                  ip=urlparse(env['base_url']).netloc)
+    if not store.slave_manager:
+        config._art_client.terminate()
+        proc = config._art_proc
         if proc:
             proc.wait()
-
-
-if not SLAVEID:
-    # juuuust in case
-    with diaper:
-        atexit.register(art_client.fire_hook, 'finish_session')
-        atexit.register(art_client.terminate)
