@@ -162,11 +162,11 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
                 command = ['engine-image-uploader']
         command.append("-u {}".format(username))
         command.append("-p {}".format(password))
+        command.append("-v -m --insecure")
         command.append("-r {}:443".format(rhevip))
         command.append("-N {}".format(temp_template_name))
         command.append("-e {}".format(edomain))
         command.append("upload {}".format(ovaname))
-        command.append("-m --insecure")
         command = ' '.join(command)
         print(
             'RHEVM:{} Executing command: {}'.format(
