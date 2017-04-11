@@ -38,14 +38,17 @@ class OpenStackInstance(Instance):
     STATE_ARCHIVED = "archived"
     STATE_TERMINATED = "terminated"
 
-    UI_POWERSTATES_AVAILABLE = {
-        'on': [SUSPEND, SOFT_REBOOT, HARD_REBOOT, TERMINATE],
-        'off': [START, TERMINATE]
-    }
-    UI_POWERSTATES_UNAVAILABLE = {
-        'on': [START],
-        'off': [SUSPEND, SOFT_REBOOT, HARD_REBOOT]
-    }
+    @property
+    def ui_powerstates_available(self):
+        return {
+            'on': [self.SUSPEND, self.SOFT_REBOOT, self.HARD_REBOOT, self.TERMINATE],
+            'off': [self.START, self.TERMINATE]}
+
+    @property
+    def ui_powerstates_unavailable(self):
+        return {
+            'on': [self.START],
+            'off': [self.SUSPEND, self.SOFT_REBOOT, self.HARD_REBOOT]}
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,
                instance_type=None, cancel=False, **prov_fill_kwargs):

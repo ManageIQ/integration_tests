@@ -27,14 +27,18 @@ class EC2Instance(Instance):
     STATE_TERMINATED = "terminated"
     STATE_ARCHIVED = "archived"
     STATE_UNKNOWN = "unknown"
-    UI_POWERSTATES_AVAILABLE = {
-        'on': [STOP, SOFT_REBOOT, TERMINATE],
-        'off': [START, TERMINATE]
-    }
-    UI_POWERSTATES_UNAVAILABLE = {
-        'on': [START],
-        'off': [STOP, SOFT_REBOOT]
-    }
+
+    @property
+    def ui_powerstates_available(self):
+        return {
+            'on': [self.STOP, self.SOFT_REBOOT, self.TERMINATE],
+            'off': [self.START, self.TERMINATE]}
+
+    @property
+    def ui_powerstates_unavailable(self):
+        return {
+            'on': [self.START],
+            'off': [self.STOP, self.SOFT_REBOOT]}
 
     def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
                security_groups=None, instance_type=None, guest_keypair=None, cancel=False,

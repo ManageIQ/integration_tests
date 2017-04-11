@@ -28,14 +28,17 @@ class GCEInstance(Instance):
     STATE_ARCHIVED = "archived"
     STATE_UNKNOWN = "unknown"
 
-    UI_POWERSTATES_AVAILABLE = {
-        'on': [STOP, SOFT_REBOOT, TERMINATE],
-        'off': [START, TERMINATE]
-    }
-    UI_POWERSTATES_UNAVAILABLE = {
-        'on': [START],
-        'off': [STOP, SOFT_REBOOT]
-    }
+    @property
+    def ui_powerstates_available(self):
+        return {
+            'on': [self.STOP, self.SOFT_REBOOT, self.TERMINATE],
+            'off': [self.START, self.TERMINATE]}
+
+    @property
+    def ui_powerstates_unavailable(self):
+        return {
+            'on': [self.START],
+            'off': [self.STOP, self.SOFT_REBOOT]}
 
     def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
                instance_type=None, cloud_network=None, boot_disk_size=None, cancel=False,

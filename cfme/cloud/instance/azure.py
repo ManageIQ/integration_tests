@@ -29,14 +29,17 @@ class AzureInstance(Instance):
     STATE_UNKNOWN = "unknown"
     STATE_ARCHIVED = "archived"
 
-    UI_POWERSTATES_AVAILABLE = {
-        'on': [STOP, SUSPEND, SOFT_REBOOT, TERMINATE],
-        'off': [START, TERMINATE]
-    }
-    UI_POWERSTATES_UNAVAILABLE = {
-        'on': [START],
-        'off': [STOP, SUSPEND, SOFT_REBOOT]
-    }
+    @property
+    def ui_powerstates_available(self):
+        return {
+            'on': [self.STOP, self.SUSPEND, self.SOFT_REBOOT, self.TERMINATE],
+            'off': [self.START, self.TERMINATE]}
+
+    @property
+    def ui_powerstates_unavailable(self):
+        return {
+            'on': [self.START],
+            'off': [self.STOP, self.SUSPEND, self.SOFT_REBOOT]}
 
     def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
                security_groups=None, instance_type=None, guest_keypair=None, cancel=False,
