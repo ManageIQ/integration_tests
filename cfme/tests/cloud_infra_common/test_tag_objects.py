@@ -5,7 +5,7 @@ import pytest
 
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.availability_zone import AvailabilityZone
-from cfme.cloud.flavor import Flavor
+# from cfme.cloud.flavor import Flavor # Replace when all targets support widgets
 from cfme.cloud.instance import Instance
 from cfme.cloud.tenant import Tenant
 from cfme.infrastructure.cluster import Cluster
@@ -28,7 +28,7 @@ param_classes = {
     'Cloud Providers': CloudProvider,
     'Cloud Instances': Instance,
     'Cloud Availabity Zones': AvailabilityZone,
-    'Cloud Flavors': Flavor,
+    # 'Cloud Flavors': Flavor, # Test needs to be refactored along with tag mixin for widgets
     'Cloud Tenants': Tenant
 }
 
