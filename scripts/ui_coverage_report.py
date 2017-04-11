@@ -59,23 +59,21 @@ verbose = False
 def parse_cmd_line():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--verbose', action="store_true",
-        help="Will print messages to terminal if active, otherwise just debug-level to log")
 
     subparsers = parser.add_subparsers(help='The 2 supported modes')
 
     parser_j = subparsers.add_parser('jenkins', help='To work with a jenkins server')
     parser_j.set_defaults(mode='jenkins')
-    parser_j.add_argument('--appliance-ip', required=True, type=str,
+    parser_j.add_argument('-a', '--appliance-ip', required=True, type=str,
         help='IP of appliance used to build the report (must match the stream of target version)')
-    parser_j.add_argument('--job-name', required=True, type=str,
+    parser_j.add_argument('-j', '--job-name', required=True, type=str,
         help='Name of the jenkins job')
-    parser_j.add_argument('--init-build-id', type=int,
+    parser_j.add_argument('-i', '--init-build-id', type=int,
         help='Number of the build to start from, default is last finished build')
-    parser_j.add_argument('--num-builds', default=5, type=int,
+    parser_j.add_argument('-n', '--num-builds', default=5, type=int,
         help='Number of finished builds with artifacts to take data from (going back), '
              'defaults to 5')
-    parser_j.add_argument('--build-ids', type=str,
+    parser_j.add_argument('-b', '--build-ids', type=str,
         help='Comma-separated IDs of builds to collect, overrides --init-build-id and --num-builds')
     parser_j.add_argument('--jenkins-url', type=str,
         help='Jenkins server URL (from yaml by default)')
@@ -86,38 +84,33 @@ def parse_cmd_line():
 
     parser_a = subparsers.add_parser('appliance', help='To work with a single appliance')
     parser_a.set_defaults(mode='appliance')
-    parser_a.add_argument('--appliance-ip', required=True, type=str,
+    parser_a.add_argument('-a', '--appliance-ip', required=True, type=str,
         help='IP of appliance to collect data from, must have UI coverage set up')
-    parser_a.add_argument('--setup-coverage', action="store_true",
+    parser_a.add_argument('-s', '--setup-coverage', action="store_true",
         help="Will only set up UI coverage on a chosen appliance")
+
+    for subparser in [parser_j, parser_a]:
+        subparser.add_argument('-v', '--verbose', action="store_true",
+            help="Will print messages to terminal if active, otherwise just debug-level to log")
 
     args = parser.parse_args()
     if vars(args)['verbose']:
-        print("Parsed args:", args)
+        logger.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     logger.debug("Parsed args: %s", args)
     return args
 
 
-def get_jenkins(kwargs):
-    if not (kwargs['jenkins_url'] and kwargs['jenkins_username'] and kwargs['jenkins_password']):
-        raise Exception("No jenkins-url / jenkins-username / jenkins-password passed")
-
-    def _jenkins_connect(kwargs):
-        return Jenkins(
-            kwargs['jenkins_url'],
-            username=kwargs['jenkins_username'],
-            password=kwargs['jenkins_password'],
-            ssl_verify=False)
+def get_jenkins(url, username, password):
 
     # We have to do this twice because first attempt sometimes fails with 401
     # Google suggest jenkins ldapurl misconfiguration
     # http://stackoverflow.com/questions/16774866/jenkins-just-login-at-the-second-attempt
     try:
-        jenkins = _jenkins_connect(kwargs)
+        jenkins = Jenkins(url, username=username, password=password, ssl_verify=False)
     except requests.exceptions.HTTPError:
-        jenkins = _jenkins_connect(kwargs)
+        jenkins = Jenkins(url, username=username, password=password, ssl_verify=False)
     if verbose:
-        print("Jenkins client:", jenkins)
+        logger.debug("Jenkins client:", jenkins)
     logger.debug("Jenkins client: %s", jenkins)
     return jenkins
 
@@ -140,8 +133,6 @@ def decide_build_ids(job, kwargs):
             # If the build doesn't have any artifacts, try another to collect the specified amount
             if build_id <= init_build_id and build.get_artifact_dict():
                 build_ids.append(build_id)
-    if verbose:
-        print("Build IDs:", build_ids)
     logger.debug("Builds IDs: %s", build_ids)
     return build_ids
 # =======
@@ -154,7 +145,7 @@ def setup_coverage(appliance_ip):
     return True
 
 
-def fetch_coverage_archives(job, build_ids, out_dir=default_out_dir):
+def fetch_archives(job, build_ids, out_dir=default_out_dir):
     """
     Fetches coverage archives from given jenkins job runs, if available
 
@@ -168,17 +159,25 @@ def fetch_coverage_archives(job, build_ids, out_dir=default_out_dir):
             cov_tgz = art_dict[coverage_archive_fn]
             out_fn = 'cov-{}-{}.tgz'.format(job.name, build_id)
             out_path = os.path.join(out_dir, out_fn)
-            cov_tgz.save(out_path)
+            try:
+                if not verbose:
+                    # Disable jenkinsapi error-level warnings
+                    # otherwise it will spam the wrong logger (root) with msgs of wrong level...
+                    rootLogger = logging.getLogger()
+                    orig_level = rootLogger.level
+                    rootLogger.setLevel(logging.CRITICAL)
+                cov_tgz.save(out_path)
+            finally:
+                if not verbose:
+                    rootLogger.setLevel(orig_level)
             out_paths.append(out_path)
-    if verbose:
-        print("Archives:", out_paths)
     logger.debug("Archives: %s", out_paths)
     return out_paths
 
 
-def compile_archives_and_upload(dest_archive_fn, src_archives, out_dir=default_out_dir):
+def merge_archives(dest_archive_fn, src_archives, out_dir=default_out_dir):
     """
-    Compiles all coverage archives from different runs into a single archive
+    Merges all coverage archives from different runs into a single archive
 
     Returns: Path to the full archive
     """
@@ -192,15 +191,13 @@ def compile_archives_and_upload(dest_archive_fn, src_archives, out_dir=default_o
                 dest_tgz.addfile(f, src_tgz.extractfile(f.name))
                 dest_names.append(f.name)
     dest_tgz.close()
-    if verbose:
-        print("Full archive:", dest_archive_path)
     logger.debug("Full archive: %s", dest_archive_path)
     return dest_archive_path
 
 
-def upload_and_prepare(ipappliance, full_archive):
+def upload_to_appliance(ipappliance, full_archive):
     """
-    Uploads the compiled archive to the appliance, extracts it and prepares the environment
+    Uploads the merged archive to the appliance, extracts it and prepares the environment
     """
     ssh = ipappliance.ssh_client
     remote_path = os.path.join(appliance_root_dir, os.path.basename(full_archive))
@@ -220,12 +217,12 @@ def process_and_fetch_report(ipappliance, out_dir=default_out_dir):
 
     Returns: Coverage percentage and path to the viewable report
     """
-    def _process_on_appliance():
+    def _process_on_appliance_and_download():
         ssh = ipappliance.ssh_client
         src_path = os.path.join(scripts_data_path.strpath, 'coverage', 'coverage_merger.rb')
         dest_path = os.path.join(appliance_root_dir, 'coverage_merger.rb')
         ssh.put_file(src_path, dest_path)
-        rc, out = ssh.run_rails_command(
+        rc, out = ssh.run_command(
             'cd {}; bin/rails runner coverage_merger.rb'.format(appliance_root_dir))
         if rc != 0:
             raise Exception("Unable to merge coverage files: {}".format(out))
@@ -237,7 +234,7 @@ def process_and_fetch_report(ipappliance, out_dir=default_out_dir):
         ssh.get_file(src_path, dest_path)
         return dest_path
 
-    processed_tgz_path = _process_on_appliance()
+    processed_tgz_path = _process_on_appliance_and_download()
     tgz = tarfile.open(processed_tgz_path)
     html_report_dir = os.path.join(out_dir, 'merged-report')
     tgz.extractall(html_report_dir)
@@ -265,12 +262,10 @@ def main(**kwargs):
 
     # Setup coverage on an appliance and quit
     if kwargs['mode'] == 'appliance' and kwargs.get('setup_coverage'):
-        if verbose:
-            print("Setting up UI coverage on {}; this will take a few minutes"
-                  .format(kwargs['appliance_ip']))
+        logger.info("Setting up UI coverage on {}; this will take a few minutes"
+              .format(kwargs['appliance_ip']))
         setup_coverage(kwargs)
-        if verbose:
-            print("Done, exiting...")
+        logger.info("Done, exiting...")
         return
 
     if kwargs['mode'] == 'jenkins':
@@ -289,29 +284,33 @@ def main(**kwargs):
             raise Exception(
                 "Jenkins URL / credentials not found (must be present in arguments or in yaml)")
 
+        jenkins = get_jenkins(jenkins_host, jenkins_user, jenkins_pass)
+
     ipappliance = IPAppliance(kwargs['appliance_ip'])
-    if verbose:
-        print("Stopping appliance's evmserverd service (need as much memory as possible)")
-    ipappliance.stop_evm_service()
+    logger.info("Stopping appliance's evmserverd service (need as much memory as possible)")
+    evm_was_running = ipappliance.is_evm_service_running()
+    if evm_was_running:
+        ipappliance.stop_evm_service()
 
     try:
         if kwargs['mode'] == 'jenkins':
-            jenkins = get_jenkins(kwargs)
             job = jenkins.get_job(kwargs['job_name'])
             build_ids = decide_build_ids(job, kwargs)
-            archives = fetch_coverage_archives(job, build_ids)
-            full_archive = compile_archives_and_upload('fullcov-{}.tgz'.format(job.name), archives)
-            # upload to appliance TODO
+            archives = fetch_archives(job, build_ids)
+            full_archive = merge_archives('fullcov-{}.tgz'.format(job.name), archives)
+            upload_to_appliance(ipappliance, full_archive)
 
-        percent, html_report_path = process_and_fetch_report(ipappliance, full_archive)
-        print(
-            "Coverage percentage for {}, builds {}, is {}%\n"
+        percent, html_report_path = process_and_fetch_report(ipappliance)
+        msg = (
+            "Coverage for {}, builds {}, is {}%\n"
             "To see the report, open {} using your browser"
             .format(job.name, build_ids, percent, html_report_path))
+        print(msg)
+        logger.info(msg)
     finally:
-        if verbose:
-            print("Starting appliance's evmserverd service back up, exiting")
-        ipappliance.start_evm_service()
+        logger.info("Starting appliance's evmserverd service back up, exiting")
+        if evm_was_running:
+            ipappliance.start_evm_service()
 
 
 if __name__ == "__main__":
@@ -320,10 +319,6 @@ if __name__ == "__main__":
     import requests
     requests.packages.urllib3.disable_warnings(
         requests.packages.urllib3.exceptions.InsecureRequestWarning)
-
-    # Disable jenkinsapi spam - unfortunately, some jenkinsapi ERRORs are actually WARNINGs
-    # so our only choice is to opt for CRITICAL only
-    jenkinsapi_logger = logging.getLogger('jenkinsapi').setLevel(logging.CRITICAL)
 
     args = parse_cmd_line()
     kwargs = dict(args._get_kwargs())
