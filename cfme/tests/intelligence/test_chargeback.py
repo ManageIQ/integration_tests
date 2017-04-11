@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-import cfme.intelligence.chargeback as cb
-import cfme.web_ui.flash as flash
-from utils import error
+import random
 
+
+import cfme.intelligence.chargeback as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
+from utils import error
+from utils.blockers import BZ
+from utils.version import current_version
 from utils.update import update
 from utils.wait import wait_for
 
@@ -16,33 +19,42 @@ pytestmark = [
     test_requirements.chargeback
 ]
 
+per_time = ['Hourly', 'Daily', 'Monthly', 'Weekly', 'Yearly'] if current_version() >= '5.7' \
+    else ['Hourly', 'Monthly']
+
 
 def new_compute_rate():
     return cb.ComputeRate(description='cb' + fauxfactory.gen_alphanumeric(),
-                          cpu_alloc=(1000, cb.HOURLY),
-                          disk_io=(10, cb.HOURLY),
-                          compute_fixed_1=(100, cb.HOURLY),
-                          compute_fixed_2=(200, cb.HOURLY),
-                          mem_alloc=(10000, cb.HOURLY),
-                          mem_used=(4000, cb.HOURLY),
-                          net_io=(6000, cb.HOURLY))
+                    fields={'Allocated CPU Count':
+                            {'per_time': random.choice(per_time), 'fixed_rate': '1000'},
+                            'Used Disk I/O':
+                            {'per_time': random.choice(per_time), 'fixed_rate': '10'},
+                            'Fixed Compute Cost 1':
+                            {'per_time': random.choice(per_time), 'fixed_rate': '100'},
+                            'Used Memory':
+                            {'per_time': random.choice(per_time), 'fixed_rate': '6000'},
+                            'Used CPU Cores': {'variable_rate': '0.05'}})
 
 
 def new_storage_rate():
     return cb.StorageRate(description='cb' + fauxfactory.gen_alphanumeric(),
-                          storage_fixed_2=(4000, cb.HOURLY),
-                          storage_alloc=(2000, cb.HOURLY),
-                          storage_used=(6000, cb.HOURLY))
+                    fields={'Fixed Storage Cost 1':
+                            {'per_time': random.choice(per_time), 'fixed_rate': '100'},
+                            'Fixed Storage Cost 2':
+                            {'per_time': random.choice(per_time), 'fixed_rate': '300'},
+                            'Allocated Disk Storage':
+                            {'per_time': random.choice(per_time), 'fixed_rate': '6000'},
+                            'Used Disk Storage':
+                            {'per_time': random.choice(per_time), 'variable_rate': '0.1'}})
 
 
 def test_add_new_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
-    flash.assert_message_match('Chargeback Rate "{}" was added'.format(ccb.description))
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1073366])
+@pytest.mark.meta(blockers=[BZ(1441152, forced_streams=["5.8"])])
 def test_compute_chargeback_duplicate_disallowed():
     ccb = new_compute_rate()
     ccb.create()
@@ -54,7 +66,6 @@ def test_compute_chargeback_duplicate_disallowed():
 def test_add_new_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
-    flash.assert_message_match('Chargeback Rate "{}" was added'.format(scb.description))
 
 
 @pytest.mark.tier(3)
@@ -63,14 +74,10 @@ def test_edit_compute_chargeback():
     ccb.create()
     with update(ccb):
         ccb.description = ccb.description + "-edited"
-        ccb.cpu_alloc = (5000, cb.HOURLY)
-        ccb.disk_io = (10, cb.HOURLY)
-        ccb.compute_fixed_1 = (200, cb.HOURLY)
-        ccb.compute_fixed_2 = (100, cb.HOURLY)
-        ccb.mem_alloc = (1, cb.HOURLY)
-        ccb.mem_used = (2000, cb.HOURLY)
-        ccb.net_io = (4000, cb.HOURLY)
-    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(ccb.description))
+        ccb.fields = {'Fixed Compute Cost 1':
+                      {'per_time': random.choice(per_time), 'fixed_rate': '500'},
+                      'Allocated CPU Count':
+                      {'per_time': random.choice(per_time), 'fixed_rate': '100'}}
 
 
 @pytest.mark.tier(3)
@@ -79,10 +86,10 @@ def test_edit_storage_chargeback():
     scb.create()
     with update(scb):
         scb.description = scb.description + "-edited"
-        scb.storage_fixed_2 = (2000, cb.HOURLY)
-        scb.storage_alloc = (3000, cb.HOURLY)
-        scb.storage_used = (6000, cb.HOURLY)
-    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(scb.description))
+        scb.fields = {'Fixed Storage Cost 1':
+                      {'per_time': random.choice(per_time), 'fixed_rate': '500'},
+                      'Allocated Disk Storage':
+                      {'per_time': random.choice(per_time), 'fixed_rate': '100'}}
 
 
 @pytest.mark.tier(3)
@@ -90,7 +97,6 @@ def test_delete_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
     ccb.delete()
-    flash.assert_message_match('Chargeback Rate "{}": Delete successful'.format(ccb.description))
 
 
 @pytest.mark.tier(3)
@@ -98,7 +104,6 @@ def test_delete_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
     scb.delete()
-    flash.assert_message_match('Chargeback Rate "{}": Delete successful'.format(scb.description))
 
 
 class TestRatesViaREST(object):
