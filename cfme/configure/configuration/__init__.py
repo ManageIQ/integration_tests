@@ -389,8 +389,9 @@ class ServerLogDepot(Pretty, Navigatable):
         # Initiate the collection
         tb.select("Collect", selection)
         view.flash.assert_success_message(
-            "Log collection for CFME MiqServer {} [{}] has been initiated".
-            format(self.appliance.server_name(), self.appliance.server_zone_id()))
+            "Log collection for {} MiqServer {} [{}] has been initiated".
+            format(self.appliance.product_name, self.appliance.server_name(),
+                   self.appliance.server_zone_id()))
 
         def _refresh():
             """ The page has no refresh button, so we'll switch between tabs.
