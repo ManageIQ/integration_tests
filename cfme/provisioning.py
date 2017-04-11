@@ -329,7 +329,6 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
     wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
 
-
     if smtp_test:
         # Wait for e-mails to appear
         def verify():
