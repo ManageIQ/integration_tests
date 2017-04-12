@@ -4,6 +4,8 @@ from wait_for import wait_for
 from utils import version
 from utils.log_validator import LogValidator
 from utils.path import data_path
+import lxml.etree
+import yaml
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
@@ -240,8 +242,8 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
-@pytest.fixture
-def run_scap(temp_appliance_preconfig):
+def test_black_console_scap(appliance):
+    temp_appliance_preconfig = appliance
     """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
     configuration, '' complete."""
 
@@ -251,16 +253,30 @@ def run_scap(temp_appliance_preconfig):
         command_set = ('ap', '', '17', '')
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
 
-
-def test_scap(temp_appliance_preconfig):
     temp_appliance_preconfig.ssh_client.put_file(
-        data_path.join("cli").join('scap.rb'), '/tmp/scap.rb')
-    # Sometimes you need to run it twice - go figure!
-    temp_appliance_preconfig.ssh_client.run_command('ruby /tmp/scap.rb')
-    temp_appliance_preconfig.ssh_client.run_command('ruby /tmp/scap.rb')
+        data_path.join("cli", "scap.rb").strpath, '/tmp/scap.rb')
+    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby /tmp/scap.rb')
+    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby /tmp/scap.rb')
     temp_appliance_preconfig.ssh_client.get_file(
         '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
+    temp_appliance_preconfig.ssh_client.get_file(
+        '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml',
+        '/tmp/scap_rules.yml')    # Get the scap rules (moves on 5.8)
 
-tree = ET.parse('scap-results.xccdf.xml')
-for item in root.findall('.//{http://checklists.nist.gov/xccdf/1.1}rule-result'):
-    print item.attrib.get('idref'), item.findall('./{http://checklists.nist.gov/xccdf/1.1}result')[0].text
+    with open('/tmp/scap_rules.yml') as f:
+        yml = yaml.load(f.read())    # read file and PARSE as yaml (hows rules that should be run)
+        rules = yml['rules']     # Pick the rules bit so we end up with a list of rules
+
+    tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')    # load and PARSE the xml file
+    root = tree.getroot()    # get the root level of the XML tree
+    for rule in rules:    # iterate over rules storing each result as idref attribute (rule name)
+        elements = root.findall(
+            './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
+        if elements:   # if we find any elements
+            result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
+            if result:  # if we find a result element "result" tag, passed, failed, etc
+                print "{}: {}".format(rule, result[0].text)  # print the result after the rule name
+            else:  # don't find a result print we can't find result, should be an exception
+                print "{}: no result".format(rule)
+        else:   # we didn't find a rule-result for the specific rule
+            print "{}: rule not found".format(rule)  # we can't find the rule (update scap.rb)
