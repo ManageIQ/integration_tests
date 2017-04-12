@@ -5,6 +5,7 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from fixtures.provider import setup_one_by_class_or_skip
@@ -30,6 +31,7 @@ _TEMPLATE_TORSO = """{
 
 
 def service_catalogs(request, rest_api, num=5):
+    """Create service catalogs using REST API."""
     scls_data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric()
@@ -40,6 +42,12 @@ def service_catalogs(request, rest_api, num=5):
         })
 
     return _creating_skeleton(request, rest_api, 'service_catalogs', scls_data, col_action='add')
+
+
+def service_catalog_obj(request, rest_api):
+    """Return service catalog object."""
+    rest_catalog = service_catalogs(request, rest_api, num=1)[0]
+    return Catalog(name=rest_catalog.name, description=rest_catalog.description)
 
 
 def categories(request, rest_api, num=1):
@@ -83,18 +91,25 @@ def dialog():
         description="my dialog",
         submit=True,
         cancel=True,
+        element_data=element_data,
         tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
         tab_desc="my tab desc",
         box_label="box_{}".format(fauxfactory.gen_alphanumeric()),
-        box_desc="my box desc")
-    service_dialog.create(element_data)
+        box_desc="my box desc"
+    )
+    service_dialog.create()
     return service_dialog
 
 
-def service_data(request, rest_api, a_provider, dialog, service_catalogs):
+def service_data(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
     """
     The attempt to add the service entities via web
     """
+    if not service_dialog:
+        service_dialog = dialog()
+    if not service_catalog:
+        service_catalog = service_catalog_obj(request, rest_api)
+
     template, host, datastore, vlan, catalog_item_type = map(
         a_provider.data.get('provisioning').get,
         ('template', 'host', 'datastore', 'vlan', 'catalog_item_type'))
@@ -117,24 +132,31 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
         version.LOWEST: provisioning_data['vm_name'] + '_0001',
         '5.7': provisioning_data['vm_name'] + '0001'})
 
-    catalog = service_catalogs[0].name
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                               description='my catalog', display_in=True,
-                               catalog=catalog,
-                               dialog=dialog.label,
-                               catalog_name=template,
-                               provider=a_provider,
-                               prov_data=provisioning_data)
+    catalog_item = CatalogItem(
+        item_type=catalog_item_type,
+        name=item_name,
+        description='my catalog',
+        display_in=True,
+        catalog=service_catalog,
+        dialog=service_dialog,
+        catalog_name=template,
+        provider=a_provider,
+        prov_data=provisioning_data
+    )
 
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, _ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=2000, delay=60)
     assert row.request_state.text == 'Finished'
+
+    # on 5.8 the service name visible via REST API is in form <assigned_name>-DATE-TIMESTAMP
+    # (i.e. 2ojnKgZRCJ-20170410-113646) for services created using UI
+    rest_service = rest_api.collections.services.get(name='{}%'.format(catalog_item.name))
 
     @request.addfinalizer
     def _finished():
@@ -144,16 +166,16 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
             # vm can be deleted/retired by test
             logger.warning("Failed to delete vm '{}'.".format(vm_name))
         try:
-            rest_api.collections.services.get(name=catalog_item.name).action.delete()
+            rest_api.collections.services.get(name=rest_service.name).action.delete()
         except ValueError:
             # service can be deleted by test
-            logger.warning("Failed to delete service '{}'.".format(catalog_item.name))
+            logger.warning("Failed to delete service '{}'.".format(rest_service.name))
 
-    return {'service_name': catalog_item.name, 'vm_name': vm_name}
+    return {'service_name': rest_service.name, 'vm_name': vm_name}
 
 
-def services(request, rest_api, a_provider, dialog, service_catalogs):
-    new_service = service_data(request, rest_api, a_provider, dialog, service_catalogs)
+def services(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
+    new_service = service_data(request, rest_api, a_provider, service_dialog, service_catalog)
     rest_service = rest_api.collections.services.get(name=new_service['service_name'])
     # tests expect iterable
     return [rest_service]
@@ -203,7 +225,12 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-def service_templates(request, rest_api, dialog, num=4):
+def service_templates(request, rest_api, service_dialog=None, service_catalog=None, num=4):
+    if not service_dialog:
+        service_dialog = dialog()
+    if not service_catalog:
+        service_catalog = service_catalog_obj(request, rest_api)
+
     catalog_items = []
     new_names = []
     for _ in range(num):
@@ -215,7 +242,9 @@ def service_templates(request, rest_api, dialog, num=4):
                 name=new_name,
                 description='my catalog',
                 display_in=True,
-                dialog=dialog.label)
+                catalog=service_catalog,
+                dialog=service_dialog
+            )
         )
 
     for catalog_item in catalog_items:

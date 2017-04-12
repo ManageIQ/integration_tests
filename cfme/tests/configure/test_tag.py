@@ -5,9 +5,7 @@ import pytest
 from cfme.configure.configuration import Category, Tag
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import categories as _categories
-from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import services as _services
-from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import tags as _tags
@@ -60,10 +58,6 @@ class TestTagsViaREST(object):
         return _tags(request, rest_api_modscope, categories_mod)
 
     @pytest.fixture(scope="module")
-    def service_catalogs(self, request, rest_api_modscope):
-        return _service_catalogs(request, rest_api_modscope)
-
-    @pytest.fixture(scope="module")
     def tenants(self, request, rest_api_modscope):
         return _tenants(request, rest_api_modscope, num=1)
 
@@ -72,13 +66,9 @@ class TestTagsViaREST(object):
         return _a_provider(request)
 
     @pytest.fixture(scope="module")
-    def dialog(self):
-        return _dialog()
-
-    @pytest.fixture(scope="module")
-    def services(self, request, rest_api_modscope, a_provider, dialog, service_catalogs):
+    def services(self, request, rest_api_modscope, a_provider):
         try:
-            return _services(request, rest_api_modscope, a_provider, dialog, service_catalogs)
+            return _services(request, rest_api_modscope, a_provider)
         except:
             pass
 
@@ -110,8 +100,8 @@ class TestTagsViaREST(object):
         return new_services
 
     @pytest.fixture(scope="module")
-    def service_templates(self, request, rest_api_modscope, dialog):
-        return _service_templates(request, rest_api_modscope, dialog)
+    def service_templates(self, request, rest_api_modscope):
+        return _service_templates(request, rest_api_modscope)
 
     @pytest.fixture(scope="module")
     def vm(self, request, a_provider, rest_api_modscope):
