@@ -3,6 +3,7 @@ from collections import namedtuple
 from wait_for import wait_for
 from utils import version
 from utils.log_validator import LogValidator
+from utils.log import logger
 from utils.path import data_path
 import lxml.etree
 import yaml
@@ -242,7 +243,7 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
-def test_black_console_scap(appliance):
+def test_black_console_scap(appliance, soft_assert):
     temp_appliance_preconfig = appliance
     """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
     configuration, '' complete."""
@@ -275,8 +276,9 @@ def test_black_console_scap(appliance):
         if elements:   # if we find any elements
             result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
             if result:  # if we find a result element "result" tag, passed, failed, etc
-                print "{}: {}".format(rule, result[0].text)  # print the result after the rule name
+                soft_assert(result == 'passed')
+                logger.info("{}: {}".format(rule, result[0].text))  # result after the rule name
             else:  # don't find a result print we can't find result, should be an exception
-                print "{}: no result".format(rule)
+                logger.info("{}: no result".format(rule))
         else:   # we didn't find a rule-result for the specific rule
-            print "{}: rule not found".format(rule)  # we can't find the rule (update scap.rb)
+            logger.info("{}: rule not found".format(rule))  # can't find the rule (update scap.rb)
