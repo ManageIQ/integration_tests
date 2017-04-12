@@ -275,7 +275,7 @@ def test_black_console_scap(temp_appliance_preconfig, soft_assert):
         if elements:   # if we find any elements
             result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
             if result:  # if we find a result element "result" tag, passed, failed, etc
-                soft_assert(result == 'passed')
+                soft_assert(result == 'pass')
                 logger.info("{}: {}".format(rule, result[0].text))  # result after the rule name
             else:  # don't find a result print we can't find result, should be an exception
                 logger.info("{}: no result".format(rule))
