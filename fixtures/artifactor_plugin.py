@@ -29,6 +29,7 @@ import pytest
 from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
+from threading import RLock
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.wait import wait_for
@@ -121,9 +122,9 @@ def pytest_configure(config):
         pytest_config=config)
 
     # just in case
-    with diaper:
-        atexit.register(art_client.fire_hook, 'finish_session')
-        atexit.register(art_client.terminate)
+    if not store.slave_manager:
+        with diaper:
+            atexit.register(shutdown, config)
 
     if art_client:
         config._art_proc = spawn_server(config, art_client)
@@ -239,13 +240,23 @@ def pytest_runtest_logreport(report):
 @pytest.mark.hookwrapper
 def pytest_unconfigure(config):
     yield
-    if not store.slave_manager:
-        write_line('collecting artifacts')
-        fire_art_hook(config, 'finish_session')
-    fire_art_hook(config, 'teardown_merkyl',
-                  ip=urlparse(env['base_url']).netloc)
-    if not store.slave_manager:
-        config._art_client.terminate()
+    shutdown(config)
+
+
+lock = RLock()
+
+
+def shutdown(config):
+    with lock:
         proc = config._art_proc
         if proc:
-            proc.wait()
+            if not store.slave_manager:
+                write_line('collecting artifacts')
+                fire_art_hook(config, 'finish_session')
+            fire_art_hook(config, 'teardown_merkyl',
+                          ip=urlparse(env['base_url']).netloc)
+            if not store.slave_manager:
+                config._art_client.terminate()
+                proc = config._art_proc
+                if proc:
+                    proc.wait()
