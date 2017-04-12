@@ -243,8 +243,7 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
-def test_black_console_scap(appliance, soft_assert):
-    temp_appliance_preconfig = appliance
+def test_black_console_scap(temp_appliance_preconfig, soft_assert):
     """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
     configuration, '' complete."""
 
