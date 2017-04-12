@@ -17,10 +17,10 @@ If the target appliance you will be testing is a container, you might like to co
 
 Setup
 -----
-You can use this shortcut to install the system and python dependencies which will leave you only
-with the need to copy the yamls and storing the key for the encrypted yaml files. Copy the code
-segment below to an executable file, place it in the ``cfme_tests`` repository
-(along ``conftest.py``):
+You can use this shortcut to install the system and python dependencies which will leave you with
+only the need to copy the yamls and store the key for the encrypted yaml files. Copy the code
+segment below to an executable file and place it in the ``cfme_tests`` repository root
+(along with ``conftest.py``):
 
 .. code-block:: bash
 
@@ -50,14 +50,15 @@ Detailed steps (manual environment setup):
     needs finishing touches.
 
 * Fork and Clone this repository
-* Get the shared encryption key for credentials (``*.eyaml``). Ask in CFME QE.
-* Make sure you set the shared secret for the credentials files encryption. There are two ways:
+* Get the shared encryption key for the credentials yaml (``*.eyaml``). Ask in CFME QE.
+* Set the shared secret for the encrypted credentials files used in automation.
+  This can be accomplished two ways:
 
   * create ``.yaml_key`` file in project root containing the key
     ``echo 'our shared key' > .yaml_key``
-    --OR--
-  * add ``export CFME_TESTS_KEY="our shared key"`` into the activate script. 
+  * add ``export CFME_TESTS_KEY="our shared key"`` into the virtualenv activate script. 
     If the environment variable ``CFME_TESTS_KEY`` exists, it will override any key in ``.yaml_key``
+
 
 * Ensure the following devel packages are installed (for building python dependencies):
 
