@@ -14,7 +14,7 @@ from widgetastic_patternfly import Input, Button, Dropdown
 from cfme import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as accordion
-from cfme.web_ui import Form, Tree, fill, flash, form_buttons, match_location
+from cfme.web_ui import Form, Tree, fill, flash, form_buttons, match_location, Select as Select_old
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
@@ -153,7 +153,7 @@ class AssignFormTable(Pretty):
     def select_from_row(self, row):
         el = pick({"5.6": "./td/select",
                    "5.7": "./td/div/select"})
-        return Select(sel.element(el, root=row))
+        return Select_old(sel.element(el, root=row))
 
     def select_by_name(self, name):
         return self.select_from_row(self.row_by_name(name))
@@ -171,11 +171,11 @@ def _fill_assignform_dict(form, d):
 
 assign_form = Form(
     fields=[
-        ("assign_to", Select("select#cbshow_typ")),
+        ("assign_to", Select_old("select#cbshow_typ")),
         # Enterprise
-        ("enterprise", Select("select#enterprise__1")),  # Simple shotcut, might explode one time
+        ("enterprise", Select_old("select#enterprise__1")),  # Simple shotcut, might explode once
         # Tagged DS
-        ("tag_category", Select("select#cbtag_cat")),
+        ("tag_category", Select_old("select#cbtag_cat")),
         # Common - selection table
         ("selections", AssignFormTable({
             LOWEST: (
