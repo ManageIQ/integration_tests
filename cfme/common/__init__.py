@@ -545,7 +545,7 @@ class TimelinesMixin(object):
         # Change Timelines showing interval Select
         timelines.change_interval('Hourly')
         # Change Timelines showing event group Select
-        timelines.change_event_groups('Application')
+        timelines.select_event_category('Application')
         # Change Level of showed Timelines
         timelines.change_level('Detail')
         # Check whether timelines contain particular event

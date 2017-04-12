@@ -1,19 +1,7 @@
 from datetime import datetime
-from cfme.web_ui import flash, jstimelines, Form, AngularSelect, Calendar, fill
+from utils.appliance.implementations.ui import navigate_to
 
 NONE_GROUP = 'NONE'
-
-timelines_form = Form(
-    fields=[
-        ('event_type', AngularSelect('tl_show')),
-        ('interval', AngularSelect('tl_typ')),
-        ('date', Calendar('miq_date_1')),
-        ('days_back', AngularSelect('tl_days')),
-        ('level', AngularSelect('tl_fl_typ')),
-        ('group1', AngularSelect('tl_fl_grp1')),
-        ('group2', AngularSelect('tl_fl_grp2')),
-        ('group3', AngularSelect('tl_fl_grp3')),
-    ])
 
 
 class Timelines(object):
@@ -27,9 +15,9 @@ class Timelines(object):
     whether particular event is displayed or not in timelines page.
 
     Usage:
-        timelines.change_interval('Hourly')
-        timelines.change_event_groups('Application')
-        timelines.change_level('Summary')
+        timelines.change_interval('Days')
+        timelines.select_event_category('Application')
+        timelines.check_detailed_events(True)
         timelines.contains_event('hawkular_deployment.ok')
     """
 
@@ -39,30 +27,28 @@ class Timelines(object):
         self.reload()
 
     def change_event_type(self, value):
-        self._change_select_value('event_type', value)
+        self.timelines_view.filter.event_type.select_by_visible_text(value)
+        self.timelines_view.filter.apply.click()
         self._reload_events()
 
     def change_interval(self, value):
-        self._change_select_value('interval', value)
+        self.timelines_view.filter.time_range.select_by_visible_text(value)
+        self.timelines_view.filter.apply.click()
         self._reload_events()
 
     def change_date(self, value):
-        fill(timelines_form, {'date': value})
+        self.timelines_view.filter.time_position.select_by_visible_text(value)
+        self.timelines_view.filter.apply.click()
         self._reload_events()
 
-    def change_days_back(self, value):
-        self._change_select_value('days_back', value)
+    def check_detailed_events(self, value):
+        self.timelines_view.filter.detailed_events.fill(value)
+        self.timelines_view.filter.apply.click()
         self._reload_events()
 
-    def change_level(self, value):
-        self._change_select_value('level', value)
-        self._reload_events()
-
-    def change_event_groups(self, new_group1, new_group2=NONE_GROUP, new_group3=NONE_GROUP):
-        # keep filling separetely, as page is reloaded after each select change
-        self._change_select_value('group1', new_group1)
-        self._change_select_value('group2', new_group2)
-        self._change_select_value('group3', new_group3)
+    def select_event_category(self, value):
+        self.timelines_view.filter.event_category.select_by_visible_text(value)
+        self.timelines_view.filter.apply.click()
         self._reload_events()
 
     def contains_event(self, event_type, date_after=datetime.min):
@@ -73,26 +59,14 @@ class Timelines(object):
         if date_after and not isinstance(date_after, datetime):
             raise KeyError("'date_after' should be an instance of date")
         for event in self._events:
-            if event['Event Type'] == event_type and datetime.strptime(
-                    event['Date Time'], '%Y-%m-%d %H:%M:%S %Z') >= date_after:
+            if event.event_type == event_type and datetime.strptime(
+                    event.date_time, '%Y-%m-%d %H:%M:%S %Z') >= date_after:
                 return True
         return False
 
-    def _change_select_value(self, field, value):
-        fill(timelines_form, {field: value})
-
     def reload(self):
-        self._object.load_timelines_page()
+        self.timelines_view = navigate_to(self._object, 'Timelines')
         self._reload_events()
 
     def _reload_events(self):
-        self._events = self._read_events()
-
-    def _read_events(self):
-        events = []
-        # need first to check if timelines are loaded
-        if not any(["No records found for this timeline"
-                    in fm.message for fm in flash.get_messages()]):
-            for event in jstimelines.events():
-                events.append(event.block_info())
-        return events
+        self._events = self.timelines_view.chart.get_events()
