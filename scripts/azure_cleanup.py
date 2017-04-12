@@ -25,19 +25,28 @@ def azure_cleanup(nic_template, pip_template, output):
     with open(output, 'w') as report:
         report.write('azure_cleanup.py, NICs and PIPs Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
-    try:
-        for provider_key in list_provider_keys('azure'):
-            provider_mgmt = get_mgmt(provider_key)
-            print ("----- Provider: {} -----".format(provider_key))
-            print ("Removing Nics with the name \"{}\"".format(nic_template))
-            provider_mgmt.remove_unused_nics(nic_template)
-            print ("Removing Public IPs with the name \"{}\"".format(pip_template))
-            provider_mgmt.remove_unused_pips(pip_template)
-        return True
-    except Exception:
-        print("Something bad happened during Azure cleanup")
-        tb.print_exc()
-        return False
+        try:
+            for provider_key in list_provider_keys('azure'):
+                provider_mgmt = get_mgmt(provider_key)
+                nic_list = provider_mgmt.list_free_nics(nic_template)
+                pip_list = provider_mgmt.list_free_pip(pip_template)
+                report.write("----- Provider: {} -----".format(provider_key))
+                if nic_list:
+                    report.write("\nRemoving Nics with the name \"{}\":\n".format(nic_template))
+                    report.write("\n".join(str(k) for k in nic_list))
+                    provider_mgmt.remove_nics_by_search(nic_template)
+                else:
+                    report.write("\nNo \"{}\" NICs were found\n".format(nic_template))
+                if pip_list:
+                    report.write("\nRemoving Public IPs with the name \"{}\": \n".format(pip_template))
+                    report.write("\n".join(str(k) for k in pip_list))
+                    provider_mgmt.remove_pips_by_search(pip_template)
+                else:
+                    report.write("\nNo \"{}\" Public IPs were found\n".format(pip_template))
+            return 0
+        except Exception:
+            print("Something bad happened during Azure cleanup")
+            tb.print_exc()
 
 
 if __name__ == "__main__":
