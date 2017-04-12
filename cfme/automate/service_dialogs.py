@@ -125,7 +125,10 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
         sel.wait_for_element(box_form.box_label)
         fill(box_form, {'box_label': self.box_label,
                         'box_desc': self.box_desc})
-        self.add_element(self.element_data)
+        if isinstance(self.element_data, (list, tuple)):
+            self.add_element(*self.element_data)
+        else:
+            self.add_element(self.element_data)
         sel.click(form_buttons.add)
         flash.assert_success_message('Dialog "{}" was added'.format(self.label))
 
