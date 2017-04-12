@@ -20,12 +20,13 @@ def test_create_service_dialog():
         'default_text_box': "Default text"
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
 
 
 def test_update_service_dialog():
@@ -37,12 +38,13 @@ def test_update_service_dialog():
         'default_text_box': "Default text"
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
     with update(dialog):
         dialog.description = "my edited description"
 
@@ -56,12 +58,13 @@ def test_delete_service_dialog():
         'default_text_box': "Default text"
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
     dialog.delete()
 
 
@@ -74,14 +77,15 @@ def test_service_dialog_duplicate_name():
         'default_text_box': "Default text"
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
     with error.expected("Label has already been taken"):
-        dialog.create(element_data)
+        dialog.create()
 
 
 def test_checkbox_dialog_element():
@@ -94,12 +98,13 @@ def test_checkbox_dialog_element():
         'field_required': True
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
 
 
 def test_datecontrol_dialog_element():
@@ -111,12 +116,13 @@ def test_datecontrol_dialog_element():
         'field_past_dates': True
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
 
 
 def test_dropdownlist_dialog_element():
@@ -127,12 +133,13 @@ def test_dropdownlist_dialog_element():
         'choose_type': "Drop Down List"
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
 
 
 def test_radiobutton_dialog_element():
@@ -143,12 +150,13 @@ def test_radiobutton_dialog_element():
         'choose_type': "Radio Button"
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
 
 
 def test_tagcontrol_dialog_element():
@@ -161,12 +169,13 @@ def test_tagcontrol_dialog_element():
         'field_required': True
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
 
 
 def test_textareabox_dialog_element():
@@ -178,12 +187,13 @@ def test_textareabox_dialog_element():
         'field_required': True
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_data)
+    dialog.create()
 
 
 def test_reorder_elements():
@@ -203,12 +213,13 @@ def test_reorder_elements():
         'field_required': True
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=(element_1_data, element_2_data),
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_1_data, element_2_data)
+    dialog.create()
     dialog.reorder_elements(dialog.tab_label, dialog.box_label, element_1_data, element_2_data)
 
 
@@ -230,10 +241,11 @@ def test_reorder_unsaved_elements():
         'field_required': True
     }
     dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           element_data=element_1_data,
                            description="my dialog", submit=True, cancel=True,
                            tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
-    dialog.create(element_1_data)
+    dialog.create()
     dialog.update_element(element_2_data, element_1_data)
