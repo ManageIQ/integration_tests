@@ -408,13 +408,26 @@ class DockerBot(object):
             self.args['pytest'] += ' --dev-branch {} --dev-repo {}'.format(branch, repo)
         print("  PYTEST Command: {}".format(self.args['pytest']))
 
-    def enc_key(self):
+    def enc_key(self, enc_key_file='.yaml_key', enc_key_env_var='CFME_TESTS_KEY'):
+        """
+        Retrieve the yaml encryption key from enc_key_file OR
+        the environment variable CFME_TESTS_KEY
+
+        :param enc_key_file: optional name of a file holding the key for encrypted
+            configuration files
+        :param enc_key_env_var: optional name of the environment variable holding
+            the key for encrypted configuration files. If this environment variable
+            exists, it will override the key specified in enc_key_file
+        """
+
         try:
-            with open('.yaml_key') as f:
+            with open(enc_key_file) as f:
                 key = f.read()
         except:
             key = None
-        return key
+
+        # Environment variable overrides the .yaml_key
+        return os.environ.get(enc_key_env_var) or key
 
     def create_pytest_envvars(self):
         self.env_details = {'BROWSER': self.args['browser'],
