@@ -10,7 +10,16 @@ from widgetastic.utils import Fillable
 class FromConfigMixin(object):
     @classmethod
     def from_config(cls, key):
-        return cls(**conf.credentials[key])
+        creds = conf.credentials[key]
+
+        # todo: fix this along with other credential fixes. code or credentials conf ?
+        to_rename = [('password', 'secret'), ('username', 'principal')]
+        for key1, key2 in to_rename:
+            if key1 in creds:
+                creds[key2] = creds[key1]
+                del creds[key1]
+
+        return cls(**creds)
 
 
 class Credential(Pretty, Updateable, FromConfigMixin, Fillable):
@@ -24,7 +33,7 @@ class Credential(Pretty, Updateable, FromConfigMixin, Fillable):
     """
     pretty_attrs = ['principal', 'secret']
 
-    def __init__(self, principal, secret, verify_secret=None, domain=None):
+    def __init__(self, principal, secret, verify_secret=None, domain=None, **ignore):
         self.principal = principal
         self.secret = secret
         self.verify_secret = verify_secret
@@ -60,7 +69,7 @@ class Credential(Pretty, Updateable, FromConfigMixin, Fillable):
         return provider_credential_form()
 
 
-class AMQPCredential(Credential):
+class EventsCredential(Credential):
     pass
 
 
@@ -73,10 +82,18 @@ class AzureCredential(Credential):
 
 
 class SSHCredential(Credential):
-    pass
+    def as_fill_value(self):
+        """
+        used for filling forms like add/edit provider form
+        Returns: dict
+        """
+        return {
+            'username': self.principal,
+            'private_key': self.secret,
+        }
 
 
-class TokenCredential(Pretty, Updateable, FromConfigMixin):
+class TokenCredential(Pretty, Updateable, FromConfigMixin, Fillable):
     """
     A class to fill in credentials
 
@@ -114,7 +131,7 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
         return provider_credential_form()
 
 
-class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin):
+class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin, Fillable):
     """
     A class to fill in credentials
 

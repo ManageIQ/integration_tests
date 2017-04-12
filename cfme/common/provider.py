@@ -3,8 +3,8 @@ from functools import partial
 
 from manageiq_client.api import APIException
 
-from cfme.base.credential import CANDUCredential, ServiceAccountCredential, TokenCredential, \
-    SSHCredential, AzureCredential, AMQPCredential, Credential
+from cfme.base.credential import Credential, EventsCredential, TokenCredential, SSHCredential, \
+    CANDUCredential, AzureCredential, ServiceAccountCredential
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
@@ -449,8 +449,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                               secret=credential_dict['password'],
                               domain=domain)
         elif cred_type == 'amqp':
-            return AMQPCredential(principal=credential_dict['username'],
-                                  secret=credential_dict['password'])
+            return EventsCredential(principal=credential_dict['username'],
+                                    secret=credential_dict['password'])
 
         elif cred_type == 'ssh':
             return SSHCredential(principal=credential_dict['username'],
@@ -648,7 +648,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
 
 
 @fill.method((Form, Credential))  # default credential
-@fill.method((Form, AMQPCredential))
+@fill.method((Form, EventsCredential))
 @fill.method((Form, CANDUCredential))
 @fill.method((Form, AzureCredential))
 @fill.method((Form, SSHCredential))
@@ -657,7 +657,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
-    if isinstance(cred, AMQPCredential):
+    if isinstance(cred, EventsCredential):
         fill(cred.form, {
             'event_selection': 'amqp',
             'amqp_principal': cred.principal,

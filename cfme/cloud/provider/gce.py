@@ -45,7 +45,7 @@ class GCEProvider(CloudProvider):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`cfme.base.credential.Credential` instance.
+            A :py:class:`cfme.base.credential.ServiceAccountCredential` instance.
         """
         service_account = credential_dict.get('service_account', None)
         service_account = cls.gce_service_account_formating(service_account)
