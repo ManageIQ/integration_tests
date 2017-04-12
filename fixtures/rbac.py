@@ -93,7 +93,8 @@ depending on if the test was run against *rhos* or *ec2*.
 from utils.log import logger
 from cfme.configure.access_control import User
 from cfme.login import logout
-from fixtures.artifactor_plugin import art_client, get_test_idents
+from fixtures.pytest_store import store
+from fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
 import traceback
@@ -105,7 +106,6 @@ enable_rbac = False
 
 
 def save_traceback_file(node, contents):
-    from fixtures.artifactor_plugin import SLAVEID
     """A convenience function for artifactor file sending
 
     This function simply takes the nodes id and the contents of the file and processes
@@ -115,27 +115,25 @@ def save_traceback_file(node, contents):
         node: A pytest node
         contents: The contents of the traceback file
     """
-    name, location = get_test_idents(node)
-    art_client.fire_hook('filedump', test_location=location, test_name=name,
-                         description="RBAC Traceback",
-                         contents=contents, file_type="rbac", group_id="RBAC", slaveid=SLAVEID)
+    fire_art_test_hook(
+        node, 'filedump',
+        description="RBAC Traceback",
+        contents=contents, file_type="rbac", group_id="RBAC", slaveid=store.slaveid)
 
 
 def save_screenshot(node, ss, sse):
-    name, location = get_test_idents(node)
-    from fixtures.artifactor_plugin import SLAVEID
     if ss:
-        art_client.fire_hook(
-            'filedump', test_location=location, test_name=name,
+        fire_art_test_hook(
+            node, 'filedump',
             description="RBAC Screenshot", file_type="rbac_screenshot", mode="wb",
             contents_base64=True, contents=ss, display_glyph="camera", group_id="RBAC",
-            slaveid=SLAVEID)
+            slaveid=store.slaveid)
     if sse:
-        art_client.fire_hook(
-            'filedump', test_location=location, test_name=name,
+        fire_art_test_hook(
+            node, 'filedump',
             description="RBAC Screenshot error", file_type="rbac_screenshot_error", mode="w",
             contents_base64=False, contents=sse, display_type="danger", group_id="RBAC",
-            slaveid=SLAVEID)
+            slaveid=store.slaveid)
 
 
 def really_logout():

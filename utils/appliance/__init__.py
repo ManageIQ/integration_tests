@@ -257,7 +257,11 @@ class IPAppliance(object):
         return self
 
     def _screenshot_capture_at_context_leave(self, exc_type, exc_val, exc_tb):
-        from fixtures import artifactor_plugin
+
+        from fixtures.artifactor_plugin import fire_art_hook
+        from pytest import config
+        from fixture.pytest_store import store
+
         if (
                 exc_type is not None and not RUNNING_UNDER_SPROUT):
             from cfme.fixtures.pytest_selenium import take_screenshot
@@ -269,19 +273,22 @@ class IPAppliance(object):
 
             g_id = "appliance-cm-screenshot-{}".format(fauxfactory.gen_alpha(length=6))
 
-            artifactor_plugin.art_client.fire_hook('filedump',
-                slaveid=artifactor_plugin.SLAVEID,
+            fire_art_hook(
+                config, 'filedump',
+                slaveid=store.slaveid,
                 description="Appliance CM error traceback", contents=full_tb, file_type="traceback",
                 display_type="danger", display_glyph="align-justify", group_id=g_id)
 
             if ss:
-                artifactor_plugin.art_client.fire_hook('filedump',
-                    slaveid=artifactor_plugin.SLAVEID, description="Appliance CM error screenshot",
+                fire_art_hook(
+                    config, 'filedump',
+                    slaveid=store.slaveid, description="Appliance CM error screenshot",
                     file_type="screenshot", mode="wb", contents_base64=True, contents=ss,
                     display_glyph="camera", group_id=g_id)
             if ss_error:
-                artifactor_plugin.art_client.fire_hook('filedump',
-                    slaveid=artifactor_plugin.SLAVEID,
+                fire_art_hook(
+                    config, 'filedump',
+                    slaveid=store.slaveid,
                     description="Appliance CM error screenshot failure", mode="w",
                     contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
         elif exc_type is not None:

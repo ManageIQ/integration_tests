@@ -3,7 +3,8 @@ import inspect
 import subprocess
 import re
 import operator
-from fixtures.artifactor_plugin import art_client, get_test_idents
+from fixtures.artifactor_plugin import fire_art_test_hook
+from fixtures.pytest_store import store
 
 
 def dig_code(node):
@@ -31,7 +32,6 @@ def dig_code(node):
 
 
 def pytest_runtest_teardown(item, nextitem):
-    name, location = get_test_idents(item)
     qa_string = "Unknown,None"
     if hasattr(item, "_metadata") and item._metadata.get('owner') is not None:
         # The owner is specified in metadata
@@ -46,8 +46,9 @@ def pytest_runtest_teardown(item, nextitem):
                 qa_string = "".join(qa_arr)
         except:
             pass
-    from fixtures.artifactor_plugin import SLAVEID
-    art_client.fire_hook(
-        'filedump', test_location=location, test_name=name, description="QA Contact",
-        contents=str(qa_string), file_type="qa_contact", group_id="qa-contact", slaveid=SLAVEID)
+    fire_art_test_hook(
+        item,
+        'filedump', description="QA Contact",
+        contents=str(qa_string), file_type="qa_contact", group_id="qa-contact",
+        slaveid=store.slaveid)
     # group_id is not used for qa contact now, but thinking into the future

@@ -135,6 +135,10 @@ class Store(object):
     def slave_manager(self):
         return self._maybe_get_plugin('slave_manager')
 
+    @property
+    def slaveid(self):
+        return getattr(self.slave_manager, 'slaveid', None)
+
     @cached_property
     def my_ip_address(self):
         try:
@@ -157,8 +161,10 @@ def pytest_namespace():
     return {'store': store}
 
 
-def pytest_configure(config):
-    store.config = config
+def pytest_plugin_registered(manager):
+    # config will be set at the second call to this hook
+    if store.config is None:
+        store.config = manager.getplugin('pytestconfig')
 
 
 def pytest_sessionstart(session):
