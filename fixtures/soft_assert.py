@@ -20,8 +20,9 @@ list by the context manager. Because the store is a :py:func:`list <python:list>
 will be reported in the order that they failed.
 
 """
+
+
 from contextlib import contextmanager
-from threading import local
 from functools import partial
 
 import fauxfactory
@@ -33,33 +34,6 @@ from utils.path import get_rel_path
 import sys
 import traceback
 import utils
-
-# Use a thread-local store for failed soft asserts, making it thread-safe
-# in parallel testing and shared among the functions in this module.
-_thread_locals = local()
-
-
-@pytest.mark.hookwrapper(tryfirst=True)
-def pytest_runtest_protocol(item, nextitem):
-    if 'soft_assert' in item.fixturenames:
-        with _soft_assert_cm():
-            yield
-    else:
-        yield
-
-
-@pytest.mark.hookwrapper(tryfirst=True)
-def pytest_runtest_teardown(item, nextitem):
-    """
-    pytest hook to handle :py:func:`soft_assert` fixture for case
-    when soft_assert is used in another fixture like register_event
-    """
-    try:
-        yield
-    finally:
-        if 'soft_assert' in item.fixturenames:
-            if _thread_locals.caught_asserts:
-                raise SoftAssertionError(_thread_locals.caught_asserts)
 
 
 class SoftAssertionError(AssertionError):
@@ -90,19 +64,9 @@ class SoftAssertionError(AssertionError):
         return '\n'.join(failmsgs)
 
 
-@contextmanager
-def _soft_assert_cm():
-    """soft assert context manager
-
-    * clears the thread-local caught asserts before a test run
-    * inspects the thread-local caught asserts after a test run, raising an error if needed
-
-    """
-    _thread_locals.caught_asserts = []
-    yield _thread_locals.caught_asserts
-
-
 def handle_assert_artifacts(request, fail_message=None):
+    if request is None:  # for unittests
+        return
     test_name = request.node.location[2]
     test_location = request.node.location[0]
 
@@ -151,33 +115,6 @@ def handle_assert_artifacts(request, fail_message=None):
             slaveid=SLAVEID)
 
 
-@contextmanager
-def _catch_assert_cm(request):
-    """assert catching context manager
-
-    * Catches a single AssertionError, and turns it into a soft assert
-
-    """
-    try:
-        yield
-    except AssertionError as ex:
-
-        handle_assert_artifacts(request)
-
-        caught_assert = _annotate_failure(str(ex))
-        _thread_locals.caught_asserts.append(caught_assert)
-
-
-# Some helper functions for creating or interacting with the caught asserts
-def _get_caught_asserts():
-    return _thread_locals.caught_asserts
-
-
-def _clear_caught_asserts():
-    # delete all items of the caught_asserts list
-    del _thread_locals.caught_asserts[:]
-
-
 def _annotate_failure(fail_message=''):
     # frames
     # 0: call to nth_frame_info
@@ -223,14 +160,15 @@ def soft_assert(request):
         soft_assert(None) (test_soft_assert.py:8)
 
     """
+    caught_errors = []
+
     def soft_assert_func(expr, fail_message=''):
         if not expr:
             handle_assert_artifacts(request, fail_message=fail_message)
             caught_assert = _annotate_failure(fail_message)
-            _thread_locals.caught_asserts.append(caught_assert)
+            caught_errors.append(caught_assert)
         return bool(expr)
-    # stash helper functions on soft_assert for easy access
-    soft_assert_func.catch_assert = partial(_catch_assert_cm, request)
-    soft_assert_func.caught_asserts = _get_caught_asserts
-    soft_assert_func.clear_asserts = _clear_caught_asserts
-    return soft_assert_func
+
+    yield soft_assert_func
+    if caught_errors:
+        raise SoftAssertionError(caught_errors)

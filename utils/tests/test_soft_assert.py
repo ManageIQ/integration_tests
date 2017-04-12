@@ -1,9 +1,20 @@
 import os
+import contextlib
 
-import pytest
+import fixtures
+from fixtures.soft_assert import soft_assert, SoftAssertionError
 
-import fixtures.soft_assert
-from fixtures.soft_assert import SoftAssertionError, _soft_assert_cm
+
+@contextlib.contextmanager
+def use_soft_assert():
+    assertion_record = []
+    gen = soft_assert(request=None)
+    try:
+        yield next(gen), assertion_record
+    except SoftAssertionError as e:
+        assertion_record.extend(e.failed_assertions)
+    except StopIteration:
+        pass
 
 
 pytest_plugins = 'pytester'
@@ -41,54 +52,27 @@ def test_soft_assert_call_hook(testdir):
     result.stdout.fnmatch_lines([s.format(testfile=pyfile) for s in test_output_match_lines])
 
 
-def test_soft_assert_cm(soft_assert):
-    with pytest.raises(AssertionError) as exc:
-        # Run the soft assert context manager by itself to make sure it's
-        # working right
-        with _soft_assert_cm():
-            soft_assert(None)
-            soft_assert(False, 'Value is False')
-            soft_assert(True, 'Value is True')
+def test_soft_assert_cm():
+    with use_soft_assert() as (soft_assert, assertion_record):
+        soft_assert(None)
+        soft_assert(False, 'Value is False')
+        soft_assert(True, 'Value is True')
 
-    # the AssertionError is related to soft assertions
-    assert isinstance(exc.value, SoftAssertionError)
 
     # the number of failed assertions is what we expect
-    assert len(exc.value.failed_assertions) == 2
+    assert len(assertion_record) == 2
 
-    exc_message = str(exc.value)
     # showing code context instead of the message where appropriate
-    assert 'soft_assert(None)' in exc_message
+    assert 'soft_assert(None)' in assertion_record
 
     # showing the message when it's passed in
-    assert 'Value is False' in exc_message
+    assert 'Value is False' in assertion_record
 
     # assertions that pass aren't reported
-    assert 'Value is True' not in exc_message
+    assert 'Value is True' not in assertion_record
 
     # assertions are cleared if soft_assert is used twice in a test
-    with _soft_assert_cm():
+    with use_soft_assert() as (soft_assert, assertion_record):
         # if assertions aren't cleared, this will erroneously raise AssertionError
         pass
-
-
-def test_soft_assert_helpers(soft_assert):
-    # catch_assert turns asserts into soft asserts
-    with pytest.raises(AssertionError):
-        with _soft_assert_cm():
-            with soft_assert.catch_assert():
-                assert False, 'message'
-
-            with soft_assert.catch_assert():
-                assert None
-
-    # get the caught asserts; there are two of them
-    caught_asserts = soft_assert.caught_asserts()
-    assert len(caught_asserts) == 2
-
-    # clear the asserts
-    # also has the side-effect/benefit of preventing the call hook from failing this test
-    soft_assert.clear_asserts()
-
-    # the caught_asserts identifier is now empty after calling clear_asserts
-    assert not caught_asserts
+    assert not assertion_record
