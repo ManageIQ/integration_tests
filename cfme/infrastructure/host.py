@@ -11,6 +11,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme
+
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
@@ -33,6 +34,7 @@ from utils.appliance import Navigatable
 from widgetastic_manageiq import TimelinesView
 
 from cfme.common import PolicyProfileAssignable
+from cfme.base.credentials import Credential as BaseCredential
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -161,7 +163,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
                 'ipmi_address_text': kwargs.get('ipmi_address'),
                 'mac_address_text': kwargs.get('mac_address')}
 
-    class Credential(cfme.Credential, Updateable):
+    class Credential(BaseCredential, Updateable):
         """Provider credentials
 
            Args:

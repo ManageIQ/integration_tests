@@ -7,7 +7,8 @@ import traceback
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
 from utils import error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import Credential, login, test_requirements
+from cfme import login, test_requirements
+from cfme.base.credentials import Credential
 from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
 from cfme.configure.access_control import set_group_order

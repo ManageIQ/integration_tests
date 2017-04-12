@@ -2,7 +2,6 @@ import datetime
 from functools import partial
 from manageiq_client.api import APIException
 
-import cfme
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
@@ -23,6 +22,7 @@ from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
 
+from cfme.base.credentials import Credential as BaseCredential
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -68,7 +68,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     save_button = None
     db_types = ["Providers"]
 
-    class Credential(cfme.Credential, Updateable):
+    class Credential(BaseCredential, Updateable):
         """Provider credentials
 
            Args:

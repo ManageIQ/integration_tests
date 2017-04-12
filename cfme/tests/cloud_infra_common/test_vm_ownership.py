@@ -1,7 +1,8 @@
 import cfme.configure.access_control as ac
 import fauxfactory
 import pytest
-from cfme import Credential, login, test_requirements
+from cfme import login, test_requirements
+from cfme.base.credentials import Credential
 from cfme.common.vm import VM
 from utils import testgen
 from utils.blockers import BZ
