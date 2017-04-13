@@ -16,6 +16,7 @@ def pytest_addoption(parser):
         default=False, help="Use a cached version of the templates and not redownload them")
 
 
+@pytest.mark.trylast
 def pytest_configure(config):
     if store.parallelizer_role == 'master' or trackerbot.conf.get('url') is None:
         return
