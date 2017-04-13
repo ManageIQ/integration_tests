@@ -139,6 +139,17 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
         sel.click(form_buttons.save)
         flash.assert_no_errors()
 
+    def update_dialog_element(self, element_data):
+        navigate_to(self, 'Edit')
+        if self.appliance.version > "5.5":
+            tree = accordion.tree("Dialog")
+        else:
+            tree = Tree("dialog_edit_treebox")
+        tree.click_path(self.label, self.tab_label, self.box_label)
+        self.add_element(element_data)
+        sel.click(form_buttons.save)
+        flash.assert_no_errors()
+
     def update_element(self, second_element, element_data):
         navigate_to(self, 'Edit')
         if self.appliance.version > "5.5":
