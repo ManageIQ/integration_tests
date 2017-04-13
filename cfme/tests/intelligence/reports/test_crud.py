@@ -5,7 +5,7 @@ import yaml
 
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
-# from cfme.intelligence.reports.schedules import Schedule
+from cfme.intelligence.reports.schedules import ScheduleCollection
 from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
 from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
 from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
@@ -50,15 +50,9 @@ def custom_report(request):
 
 
 @pytest.fixture(params=crud_files_schedules())
-def schedule(request):
+def schedule_data(request):
     with schedules_crud_dir.join(request.param).open(mode="r") as rep_yaml:
-        data = yaml.load(rep_yaml)
-        name = data.pop("name")
-        description = data.pop("description")
-        yfilter = data.pop("filter")
-        if '5.6' <= version.current_version() < '5.7.1.1':
-            yfilter[2] += ' - Sample 1'
-        return Schedule(name, description, yfilter, **data)
+        return yaml.load(rep_yaml)
 
 
 @pytest.mark.tier(3)
@@ -76,11 +70,12 @@ def test_custom_report_crud(custom_report):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
-def test_schedule_crud(schedule):
-    schedule.create()
+def test_schedule_crud(schedule_data):
+    schedules = ScheduleCollection()
+    schedule = schedules.create(**schedule_data)
     with update(schedule):
         schedule.description = "badger badger badger"
-    schedule.queue(wait_for_finish=True)
+    schedule.queue()
     schedule.delete()
 
 
