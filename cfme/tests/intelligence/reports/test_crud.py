@@ -13,7 +13,6 @@ from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
 from utils.path import data_path
 from utils.update import update
 from utils.blockers import BZ
-from utils import version
 from cfme import test_requirements
 
 from utils.wait import wait_for_decorator
