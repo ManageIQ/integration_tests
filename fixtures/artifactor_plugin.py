@@ -249,7 +249,7 @@ lock = RLock()
 def shutdown(config):
     with lock:
         proc = config._art_proc
-        if proc:
+        if proc.returncode is None:
             if not store.slave_manager:
                 write_line('collecting artifacts')
                 fire_art_hook(config, 'finish_session')
@@ -257,6 +257,5 @@ def shutdown(config):
                           ip=urlparse(env['base_url']).netloc)
             if not store.slave_manager:
                 config._art_client.terminate()
-                proc = config._art_proc
                 if proc:
                     proc.wait()
