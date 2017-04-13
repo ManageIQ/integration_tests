@@ -4,7 +4,6 @@ from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf
 from utils.pretty import Pretty
 from utils.update import Updateable
-from widgetastic.utils import Fillable
 
 
 class FromConfigMixin(object):
@@ -22,14 +21,15 @@ class FromConfigMixin(object):
         return cls(**creds)
 
 
-class Credential(Pretty, Updateable, FromConfigMixin, Fillable):
+class Credential(Pretty, Updateable, FromConfigMixin):
     """
     A class to fill in credentials
 
     Args:
-        principal: Something
-        secret: Something
-        verify_secret: Something
+        principal: user name
+        secret: password
+        verify_secret: password
+        domain: concatenated with principal if defined
     """
     pretty_attrs = ['principal', 'secret']
 
@@ -53,7 +53,8 @@ class Credential(Pretty, Updateable, FromConfigMixin, Fillable):
         else:
             return super(Credential, self).__getattribute__(attr)
 
-    def as_fill_value(self):
+    @property
+    def view_value_mapping(self):
         """
         used for filling forms like add/edit provider form
         Returns: dict
@@ -63,6 +64,13 @@ class Credential(Pretty, Updateable, FromConfigMixin, Fillable):
             'password': self.secret,
             'confirm_password': self.verify_secret
         }
+
+    def __eq__(self, other):
+        return self.principal == other.principal and self.secret == other.secret and \
+            self.verify_secret == other.verify_secret
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def form(self):
@@ -82,7 +90,8 @@ class AzureCredential(Credential):
 
 
 class SSHCredential(Credential):
-    def as_fill_value(self):
+    @property
+    def view_value_mapping(self):
         """
         used for filling forms like add/edit provider form
         Returns: dict
@@ -93,13 +102,13 @@ class SSHCredential(Credential):
         }
 
 
-class TokenCredential(Pretty, Updateable, FromConfigMixin, Fillable):
+class TokenCredential(Pretty, Updateable, FromConfigMixin):
     """
     A class to fill in credentials
 
     Args:
-        token: Something
-        verify_token: Something
+        token: identification token
+        verify_token: token once more
     """
     pretty_attrs = ['token']
 
@@ -116,7 +125,14 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin, Fillable):
         else:
             return super(TokenCredential, self).__getattribute__(attr)
 
-    def as_fill_value(self):
+    def __eq__(self, other):
+        return self.token == other.token and self.verify_token == other.verify_token
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    @property
+    def view_value_mapping(self):
         """
         used for filling forms like add/edit provider form
         Returns: dict
@@ -131,12 +147,12 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin, Fillable):
         return provider_credential_form()
 
 
-class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin, Fillable):
+class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin):
     """
     A class to fill in credentials
 
     Args:
-        service_account: Something
+        service_account: service account string
     """
     pretty_attrs = ['service_account']
 
@@ -144,7 +160,8 @@ class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin, Fillable):
         super(ServiceAccountCredential, self)
         self.service_account = service_account
 
-    def as_fill_value(self):
+    @property
+    def view_value_mapping(self):
         """
         used for filling forms like add/edit provider form
         Returns: dict
@@ -152,6 +169,12 @@ class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin, Fillable):
         return {
             'service_account': self.service_account
         }
+
+    def __eq__(self, other):
+        return self.service_account == other.service_account
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def form(self):
