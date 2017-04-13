@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+from widgetastic.utils import VersionPick, Version
+from widgetastic.widget import View, Text
+from widgetastic_patternfly import Dropdown, BootstrapSelect
+
+from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
@@ -13,11 +18,6 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Search,
                                   DynaTree,
                                   BootstrapTreeview)
-from widgetastic_patternfly import Dropdown, BootstrapSelect
-from widgetastic.widget import View, Text
-from widgetastic.utils import VersionPick, Version
-
-from cfme.base.login import BaseLoggedInPage
 
 
 class ProviderDetailsToolBar(View):
@@ -250,3 +250,51 @@ class ProvidersView(BaseLoggedInPage):
     sidebar = View.nested(ProviderSideBar)
     entities = View.nested(ProviderEntities)
     paginator = View.nested(PaginationPane)
+
+
+class BeforeFillMixin(object):
+    def before_fill(self):
+        if self.exists and not self.is_active():
+            self.select()
+
+
+class ProviderAddView(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
+    name = Input('name')
+    prov_type = BootstrapSelect(id='emstype')
+    api_version = BootstrapSelect(id='api_version')  # only for OpenStack
+    zone = Input('zone')
+
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    @View.nested
+    class endpoints(View):  # NOQA
+        # this is switchable view that gets replaced with concrete view.
+        # it gets changed according to currently chosen provider type
+        # look at cfme.common.provider.BaseProvider.create() method
+        pass
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == 'Add New Infrastructure Provider'
+
+
+class ProviderEditView(ProviderAddView):
+    prov_type = Text(locator='//label[@name="emstype"]')
+
+    # only in edit view
+    vnc_start_port = Input('host_default_vnc_port_start')
+    vnc_end_port = Input('host_default_vnc_port_end')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.title.text == 'Edit Infrastructure Provider'

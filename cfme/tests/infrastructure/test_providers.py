@@ -7,11 +7,11 @@ import pytest
 import cfme.web_ui.flash as flash
 from utils import error
 from cfme.base.credential import Credential
-import cfme.fixtures.pytest_selenium as sel
+from cfme.common.provider_views import ProviderAddView
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
 from utils import testgen, version
 from utils.update import update
 from utils.blockers import BZ
@@ -58,25 +58,21 @@ def test_add_cancelled_validation():
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
     prov = InfraProvider()
-    err = version.pick(
-        {version.LOWEST: 'Type is required',
-         '5.6': FlashMessageException})
-
-    with error.expected(err):
+    with error.expected(FlashMessageException):
         prov.create()
 
-    if version.current_version() >= 5.6:
-        assert prov.add_provider_button.is_dimmed
+    view = prov.create_view(ProviderAddView)
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
+    endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(5))
     prov = VMwareProvider(
         name=None,
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address='10.10.10.10')
+        endpoints=endpoint)
 
     err = version.pick(
         {version.LOWEST: "Name can't be blank",
@@ -85,30 +81,29 @@ def test_name_required_validation():
     with error.expected(err):
         prov.create()
 
-    if version.current_version() >= 5.6:
-        assert prov.properties_form.name_text.angular_help_block == "Required"
-        assert prov.add_provider_button.is_dimmed
+    view = prov.create_view(ProviderAddView)
+    assert view.name.help_block == "Required"
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
+    endpoint = VirtualCenterEndpoint(hostname=None)
     prov = VMwareProvider(
         name=fauxfactory.gen_alphanumeric(5),
-        hostname=None,
-        ip_address='10.10.10.11')
+        endpoints=endpoint)
 
-    err = version.pick(
-        {version.LOWEST: "Host Name can't be blank",
-         '5.6': FlashMessageException})
+    err = FlashMessageException
 
     with error.expected(err):
         prov.create()
 
-    if version.current_version() >= 5.6:
-        assert prov.properties_form.hostname_text.angular_help_block == "Required"
-        assert prov.add_provider_button.is_dimmed
+    view = prov.create_view(prov.endpoints_form)
+    assert view.hostname.help_block == "Required"
+    view = prov.create_view(ProviderAddView)
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
@@ -140,33 +135,30 @@ def test_name_max_character_validation(request, infra_provider):
 @test_requirements.provider_discovery
 def test_host_name_max_character_validation():
     """Test to validate max character for host name field"""
-    prov = VMwareProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(256),
-        ip_address='10.10.10.13')
+    endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(256))
+    prov = VMwareProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
     except FlashMessageException:
-        element = sel.move_to_element(prov.properties_form.locators["hostname_text"])
-        text = element.get_attribute('value')
-        assert text == prov.hostname[0:255]
+        view = prov.create_view(prov.endpoints_form)
+        assert view.hostname.value == prov.hostname[0:255]
 
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
-    prov = RHEVMProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address='10.10.10.15',
-        api_port=fauxfactory.gen_alphanumeric(16))
+    endpoint = RHEVMEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
+                             api_port=fauxfactory.gen_alphanumeric(16),
+                             verify_tls=None,
+                             ca_certs=None)
+    prov = RHEVMProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
     except FlashMessageException:
-        element = sel.move_to_element(prov.properties_form.locators["api_port"])
-        text = element.get_attribute('value')
-        assert text == prov.api_port[0:15]
+        view = prov.create_view(prov.endpoints_form)
+        text = view.default.api_port.value
+        assert text == prov.default_endpoint.api_port[0:15]
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')
@@ -194,7 +186,7 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
-    provider.credentials['default'] = Credential(
+    provider.default_endpoint.credentials = Credential(
         principal='bad',
         secret='reallybad',
         verify_secret='reallybad'

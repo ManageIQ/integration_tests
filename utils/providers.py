@@ -354,7 +354,11 @@ def get_mgmt(provider_key, providers=None, credentials=None):
 
     if credentials is None:
         # We need to handle the in-place credentials
-        credentials = provider_data['credentials']
+
+        if provider_data.get('endpoints'):
+            credentials = provider_data['endpoints']['default']['credentials']
+        else:
+            credentials = provider_data['credentials']
         # If it is not a mapping, it most likely points to a credentials yaml (as by default)
         if not isinstance(credentials, Mapping):
             credentials = conf.credentials[credentials]
@@ -364,6 +368,11 @@ def get_mgmt(provider_key, providers=None, credentials=None):
     # Let the provider do whatever they need with them
     provider_kwargs = provider_data.copy()
     provider_kwargs.update(credentials)
+
+    if not provider_kwargs.get('username') and provider_kwargs.get('principal'):
+        provider_kwargs['username'] = provider_kwargs['principal']
+        provider_kwargs['password'] = provider_kwargs['secret']
+
     if isinstance(provider_key, six.string_types):
         provider_kwargs['provider_key'] = provider_key
     provider_kwargs['logger'] = logger

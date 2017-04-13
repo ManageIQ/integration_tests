@@ -1,21 +1,16 @@
 """ A model of an Infrastructure Provider in CFME
-
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Providers pages.
-:var discover_form: A :py:class:`cfme.web_ui.Form` object describing the discover form.
-:var properties_form: A :py:class:`cfme.web_ui.Form` object describing the main add form.
-:var default_form: A :py:class:`cfme.web_ui.Form` object describing the default credentials form.
-:var candu_form: A :py:class:`cfme.web_ui.Form` object describing the C&U credentials form.
 """
 from functools import partial
+from widgetastic.utils import Fillable
 
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.provider_views import (ProviderDetailsView,
+from cfme.common.provider_views import (ProviderAddView,
+                                        ProviderEditView,
+                                        ProviderDetailsView,
                                         ProviderTimelinesView,
                                         ProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
@@ -24,70 +19,35 @@ from cfme.common.provider_views import (ProviderDetailsView,
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
-from cfme.web_ui import (
-    Region, Quadicon, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio, match_location, BootstrapSwitch)
-from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, version, deferred_verpick
+from cfme.web_ui import Quadicon, paginator, toolbar as tb, match_location
+from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
+from utils.net import resolve_hostname
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
 
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
-
-properties_form = TabStripForm(
-    fields=[
-        ('type_select', AngularSelect("emstype")),
-        ('name_text', Input("name")),
-        ("api_version", AngularSelect("api_version")),
-    ],
-    tab_fields={
-        "Default": [
-            ('hostname_text', Input("default_hostname")),
-            ('api_port', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
-            ('verify_tls_switch', BootstrapSwitch(input_id="default_tls_verify")),
-            ('ca_certs', Input('default_tls_ca_certs')),
-        ],
-        "Events": [
-            ('event_selection', Radio('event_stream_selection')),
-            ('amqp_hostname_text', Input("amqp_hostname")),
-            ('amqp_api_port', Input("amqp_api_port")),
-            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
-        ],
-        "C & U Database": [
-            ('candu_hostname_text', Input("metrics_hostname")),
-            ('acandu_api_port', Input("metrics_api_port")),
-        ]
-    })
-
-prop_region = Region(locators={'properties_form': properties_form})
-
-cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
-mon_btn = partial(tb.select, 'Monitoring')
 
 
-class InfraProvider(Pretty, CloudInfraProvider):
+class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
     Args:
         name: Name of the provider.
         details: a details record (see VMwareDetails, RHEVMDetails inner class).
-        credentials (:py:class:`Credential`): see Credential inner class.
         key: The CFME key of the provider in the yaml.
-        candu: C&U credentials if this is a RHEVMDetails class.
-
+        endpoints: one or several provider endpoints like DefaultEndpoint
     Usage:
-
+        credentials = Credential(principal='bad', secret='reallybad')
+        endpoint = DefaultEndpoint(hostname='some_host', api_port=65536, credentials=credentials)
         myprov = VMwareProvider(name='foo',
-                             region='us-west-1',
-                             credentials=Provider.Credential(principal='admin', secret='foobar'))
+                             region='us-west-1'
+                             endpoints=endpoint)
         myprov.create()
 
     """
@@ -100,27 +60,61 @@ class InfraProvider(Pretty, CloudInfraProvider):
     page_name = "infrastructure"
     templates_destination_name = "Templates"
     quad_name = "infra_prov"
-    _properties_region = prop_region  # This will get resolved in common to a real form
     db_types = ["InfraManager"]
-    add_provider_button = form_buttons.add
-    save_button = deferred_verpick({version.LOWEST: form_buttons.angular_save,
-                   '5.8': FormButton('Save')})
 
     def __init__(
-            self, name=None, credentials=None, key=None, zone=None, provider_data=None,
+            self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
-        if not credentials:
-            credentials = {}
+        if endpoints:
+            self.endpoints = endpoints if isinstance(endpoints, list) else [endpoints, ]
+        else:
+            self.endpoints = iter([])
         self.name = name
-        self.credentials = credentials
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
         self.template_name = "Templates"
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name')}
+    @property
+    def default_endpoint(self):
+        try:
+            return next(endp for endp in self.endpoints if endp.name == 'default')
+        except StopIteration:
+            return None
+
+    @property
+    def hostname(self):
+        if self.default_endpoint:
+            return self.default_endpoint.hostname
+        else:
+            return None
+
+    @hostname.setter
+    def hostname(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.hostname = value
+        else:
+            logger.warn("can't set hostname because default endpoint is absent")
+
+    @property
+    def ip_address(self):
+        if hasattr(self.default_endpoint, 'ipaddress'):
+            return self.default_endpoint.ipaddress
+        else:
+            if self.hostname:
+                return resolve_hostname(self.hostname)
+            else:
+                return None
+
+    @ip_address.setter
+    def ip_address(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.ipaddress = value
+        else:
+            logger.warn("can't set ipaddress because default endpoint is absent")
 
     @cached_property
     def vm_name(self):
@@ -237,9 +231,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
         for host in self.get_yaml_data().get("hosts", []):
             creds = conf.credentials.get(host["credentials"], {})
             cred = Host.Credential(
-                principal=creds["username"],
-                secret=creds["password"],
-                verify_secret=creds["password"],
+                principal=creds["principal"],
+                secret=creds["secret"],
+                verify_secret=creds["secret"],
             )
             result.append(Host(name=host["name"],
                                credentials=cred,
@@ -256,6 +250,13 @@ class InfraProvider(Pretty, CloudInfraProvider):
         for icon in icons:
             web_clusters.append(Cluster(icon.name, self))
         return web_clusters
+
+    def as_fill_value(self):
+        return self.name
+
+    @property
+    def view_value_mapping(self):
+        return {'name': self.name}
 
 
 @navigator.register(Server, 'InfraProviders')
@@ -280,10 +281,12 @@ class All(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
+    VIEW = ProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Infrastructure Provider')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Add a New Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
@@ -341,11 +344,13 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = ProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg_btn('Edit Selected Infrastructure Providers')
+        cfg = self.prerequisite_view.toolbar.configuration
+        cfg.item_select('Edit Selected Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Timelines')
