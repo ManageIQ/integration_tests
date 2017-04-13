@@ -12,6 +12,7 @@ from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
+from cfme.containers.volume import Volume
 
 from utils import testgen, version
 from utils.version import current_version
@@ -112,6 +113,20 @@ TEST_ITEMS = [
             Template,
             'CMP-10316',
             expected_fields=['name', 'creation_timestamp', 'resource_version']
+        )
+    ),
+    pytest.mark.polarion('CMP-10407')(
+        ContainersTestItem(Volume,
+            'CMP-10407',
+            expected_fields=[
+                'name',
+                'creation_timestamp',
+                'resource_version',
+                'access_modes',
+                'reclaim_policy',
+                'status_phase',
+                'nfs_server',
+                'volume_path']
         )
     )
 ]
