@@ -28,23 +28,25 @@ def pytest_configure(config):
     count = 0
 
     if not config.getoption('use_template_cache'):
-        write_line("Loading templates from trackerbot...")
+        store.terminalreporter.line("Loading templates from trackerbot...", green=True)
         provider_templates = trackerbot.provider_templates(trackerbot.api())
         for provider in list_provider_keys():
             TEMPLATES[provider] = provider_templates.get(provider, [])
             config.cache.set('miq-trackerbot/{}'.format(provider), TEMPLATES[provider])
             count += len(TEMPLATES[provider])
     else:
-        write_line("Using templates from cache...")
+        store.terminalreporter.line("Using templates from cache...", green=True)
         provider_templates = None
         for provider in list_provider_keys():
             templates = config.cache.get('miq-trackerbot/{}'.format(provider), None)
             if templates is None:
-                write_line("Loading templates for {} from source as not in cache".format(provider))
+                store.terminalreporter.line(
+                    "Loading templates for {} from source as not in cache".format(
+                        provider), green=True)
                 if not provider_templates:
                     provider_templates = trackerbot.provider_templates(trackerbot.api())
                 templates = provider_templates.get(provider, [])
                 config.cache.set('miq-trackerbot/{}'.format(provider), templates)
             count += len(templates)
             TEMPLATES[provider] = templates
-    write_line("  Loaded {} templates successfully!".format(count))
+    store.terminalreporter.line("  Loaded {} templates successfully!".format(count), green=True)
