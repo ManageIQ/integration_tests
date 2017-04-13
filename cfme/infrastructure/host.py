@@ -274,8 +274,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
         def _looking_for_state_change():
             tb.refresh()
-            return 'currentstate-' + desired_state in find_quadicon(self.name,
-                                                                    do_not_navigate=False).state
+            return 'currentstate-' + desired_state in find_quadicon(self).state
 
         navigate_and_select_all_hosts(self)
         return wait_for(_looking_for_state_change, num_sec=timeout)
@@ -609,17 +608,17 @@ def find_quadicon(host, do_not_navigate=False):
     """Find and return a quadicon belonging to a specific host
 
     Args:
-        host: Host name as displayed at the quadicon
+        host: Host object
     Returns: :py:class:`cfme.web_ui.Quadicon` instance
     """
     if not do_not_navigate:
-        navigate_to(Host, 'All')
+        navigate_to(host, 'All')
     for page in paginator.pages():
-        quadicon = Quadicon(host, "host")
+        quadicon = Quadicon(host.name, "host")
         if sel.is_displayed(quadicon):
             return quadicon
     else:
-        raise HostNotFound("Host '{}' not found in UI!".format(host))
+        raise HostNotFound("Host '{}' not found in UI!".format(host.name))
 
 
 def navigate_and_select_all_hosts(hosts):
