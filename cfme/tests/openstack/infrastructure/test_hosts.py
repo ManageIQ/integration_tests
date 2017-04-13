@@ -109,7 +109,7 @@ def test_host_smbios_data(provider, soft_assert):
     navigate_to(provider, 'ProviderNodes')
     names = [q.name for q in list(Quadicon.all())]
     for node in names:
-        host = Host(node, provider)
+        host = Host(node, provider=provider)
         navigate_to(host, 'Details')
         res = host.get_detail('Properties', 'Manufacturer / Model')
         soft_assert(res, 'Manufacturer / Model value are empty')
@@ -132,8 +132,8 @@ def test_host_zones_assigned(provider):
 def test_host_delete(provider):
     navigate_to(provider, 'ProviderNodes')
     quad_names = [q.name for q in Quadicon.all() if 'Compute' in q.name]
-    host_name = random.choice(quad_names).name
-    host = Host(host_name, provider)
+    host_name = random.choice(quad_names)
+    host = Host(host_name, provider=provider)
     host.delete(cancel=False)
     flash.assert_no_errors()
     wait_for_host_delete(host)

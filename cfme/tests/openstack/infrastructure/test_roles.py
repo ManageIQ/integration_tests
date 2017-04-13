@@ -22,7 +22,7 @@ def test_host_role_association(provider, soft_assert):
     navigate_to(provider, 'ProviderNodes')
     names = [q.name for q in list(Quadicon.all())]
     for node in names:
-        host = Host(node, provider)
+        host = Host(node, provider=provider)
         navigate_to(host, 'Details')
         role_name = summary_title().split()[1].translate(None, '()')
         role_name = 'Compute' if role_name == 'NovaCompute' else role_name
