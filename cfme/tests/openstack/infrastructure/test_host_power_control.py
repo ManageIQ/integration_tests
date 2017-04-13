@@ -53,12 +53,12 @@ def host_off(provider):
 def test_host_power_off(host_on):
     host_on.power_off()
     host_on.refresh()
-    result = host_on.wait_for_host_state_change('off', 1000, provider_crud=host_on.provider)
+    result = host_on.wait_for_host_state_change('off', 1000)
     assert result
 
 
 def test_host_power_on(host_off):
     host_off.power_on()
     host_off.refresh()
-    result = host_off.wait_for_host_state_change('on', 1000, provider_crud=host_off.provider)
+    result = host_off.wait_for_host_state_change('on', 1000)
     assert result
