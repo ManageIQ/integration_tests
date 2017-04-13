@@ -257,7 +257,6 @@ def test_black_console_scap(temp_appliance_preconfig, soft_assert):
     temp_appliance_preconfig.ssh_client.put_file(
         data_path.join("cli", "scap.rb").strpath, '/tmp/scap.rb')
     temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby /tmp/scap.rb')
-    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby /tmp/scap.rb')
     temp_appliance_preconfig.ssh_client.get_file(
         '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
     temp_appliance_preconfig.ssh_client.get_file(
@@ -265,20 +264,20 @@ def test_black_console_scap(temp_appliance_preconfig, soft_assert):
         '/tmp/scap_rules.yml')    # Get the scap rules (moves on 5.8)
 
     with open('/tmp/scap_rules.yml') as f:
-        yml = yaml.load(f.read())    # read file and PARSE as yaml (hows rules that should be run)
-        rules = yml['rules']     # Pick the rules bit so we end up with a list of rules
+        yml = yaml.load(f.read())
+        rules = yml['rules']
 
-    tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')    # load and PARSE the xml file
-    root = tree.getroot()    # get the root level of the XML tree
-    for rule in rules:    # iterate over rules storing each result as idref attribute (rule name)
+    tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
+    root = tree.getroot()
+    for rule in rules:
         elements = root.findall(
             './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
-        if elements:   # if we find any elements
+        if elements:
             result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
-            if result:  # if we find a result element "result" tag, passed, failed, etc
+            if result:
                 soft_assert(result[0].text == 'pass')
-                logger.info("{}: {}".format(rule, result[0].text))  # result after the rule name
-            else:  # don't find a result print we can't find result, should be an exception
+                logger.info("{}: {}".format(rule, result[0].text))
+            else:
                 logger.info("{}: no result".format(rule))
-        else:   # we didn't find a rule-result for the specific rule
-            logger.info("{}: rule not found".format(rule))  # can't find the rule (update scap.rb)
+        else:
+            logger.info("{}: rule not found".format(rule))
