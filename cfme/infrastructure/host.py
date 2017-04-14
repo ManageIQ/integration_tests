@@ -451,8 +451,9 @@ class All(CFMENavigateStep):
     def step(self):
         from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
         dest = 'Hosts'
-        if self.obj.provider and self.obj.provider.one_of(OpenstackInfraProvider):
-            dest = 'Nodes'
+        if hasattr(self.obj, 'provider') and self.obj.provider:
+            if self.obj.provider.one_of(OpenstackInfraProvider):
+                dest = 'Nodes'
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', dest)
 
     def resetter(self):
