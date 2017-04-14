@@ -3,7 +3,7 @@
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import Quadicon
+from cfme.web_ui import Quadicon, toolbar as tb
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
@@ -27,5 +27,6 @@ def test_credentials_quads(provider):
 
 def test_delete_provider(provider):
     provider.delete(cancel=False)
+    tb.refresh()
     navigate_to(provider, 'All')
     assert provider.name not in [q.name for q in Quadicon.all()]
