@@ -23,9 +23,9 @@ import datetime
 import sys
 import utils
 from contextlib import closing
-from utils import path
-
 from urllib2 import urlopen, HTTPError
+
+from utils import path, trackerbot
 from utils.conf import cfme_data
 
 CFME_BREW_ID = "cfme"
@@ -375,6 +375,12 @@ def main():
                 checksum_url,
                 get_version(url)
             )
+            if not stream:
+                # Stream is none, using automatic naming strategy, parse stream from template name
+                template_parser = trackerbot.parse_template(kwargs['template_name'])
+                if template_parser.stream:
+                    kwargs['stream'] = template_parser.group_name
+
         print("TEMPLATE_UPLOAD_ALL:-----Start of {} upload on: {}--------".format(
             kwargs['template_name'], provider_type))
 
