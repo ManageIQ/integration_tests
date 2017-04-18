@@ -86,8 +86,7 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_prov
 
 
 @pytest.mark.meta(blockers=[BZ(
-                                1422208,
-                                unblock=lambda provider: not provider.one_of(RHEVMProvider)
+    1422208, unblock=lambda provider: not provider.one_of(RHEVMProvider)
 )])
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
 def test_provision_approval(
