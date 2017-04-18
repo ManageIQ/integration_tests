@@ -5,8 +5,6 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.automate.service_dialogs import ServiceDialog
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
@@ -25,36 +23,6 @@ pytestmark = [
 
 pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=[['provisioning', 'image']], scope="module")
-
-
-@pytest.yield_fixture(scope="function")
-def dialog():
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
-    )
-    service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                                   element_data=element_data,
-                                   submit=True, cancel=True,
-                                   tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                                   tab_desc="my tab desc",
-                                   box_label="box_" + fauxfactory.gen_alphanumeric(),
-                                   box_desc="my box desc")
-    service_dialog.create()
-    flash.assert_success_message('Dialog "{}" was added'.format(dialog))
-    yield dialog
-
-
-@pytest.yield_fixture(scope="function")
-def catalog():
-    cat_name = "cat_" + fauxfactory.gen_alphanumeric()
-    catalog = Catalog(name=cat_name, description="my catalog")
-    catalog.create()
-    yield catalog
 
 
 def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
