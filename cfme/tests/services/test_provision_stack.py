@@ -146,7 +146,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     def _cleanup_vms():
         clean_up(stack_data, provider)
 
-    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
@@ -170,7 +170,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     def _cleanup_vms():
         clean_up(stack_data, provider)
 
-    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
@@ -192,7 +192,7 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     """
     catalog_item, item_name = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
@@ -214,7 +214,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     DefaultView.set_default_view("Stacks", "Grid View")
 
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
