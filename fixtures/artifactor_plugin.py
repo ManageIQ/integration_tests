@@ -57,12 +57,7 @@ def get_test_idents(item):
 
 
 def get_name(obj):
-    if hasattr(obj, '_param_name'):
-        return getattr(obj, obj._param_name)
-    elif hasattr(obj, 'name'):
-        return obj.name
-    else:
-        return str(obj)
+    return getattr(obj, '_param_name', None) or getattr(obj, 'name', None) or str(obj)
 
 
 class DummyClient(object):
