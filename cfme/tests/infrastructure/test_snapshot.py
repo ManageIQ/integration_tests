@@ -18,9 +18,11 @@ from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.long_running,
-              pytest.mark.tier(2),
-              test_requirements.snapshot]
+pytestmark = [
+    pytest.mark.long_running,
+    pytest.mark.tier(2),
+    test_requirements.snapshot
+]
 
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="module")
@@ -64,8 +66,8 @@ def new_snapshot(test_vm, has_name=True):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.type != 'virtualcenter' and (provider.type != 'rhevm' or
-          (provider.type == 'rhevm' and provider.version < 4)))
+    lambda provider: provider.type != 'virtualcenter' and
+    provider.type != 'rhevm' or provider.type == 'rhevm' and provider.version < 4)
 def test_snapshot_crud(test_vm, provider):
     """Tests snapshot crud
 
@@ -94,15 +96,19 @@ def test_delete_all_snapshots(test_vm, provider):
     snapshot2.delete_all()
 
 
-@pytest.mark.meta(blockers=[1333566])
-@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+@pytest.mark.uncollectif(
+    lambda provider: provider.type != 'virtualcenter' and
+    provider.type != 'rhevm' or provider.type == 'rhevm' and provider.version < 4)
 def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
 
     Metadata:
         test_flag: snapshot, provision
     """
-    snapshot1 = new_snapshot(test_vm)
+    if provider.type == 'rhevm':
+        snapshot1 = new_snapshot(test_vm, has_name=False)
+    else:
+        snapshot1 = new_snapshot(test_vm)
     ip = snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name)
     ssh_kwargs = {
         'username': credentials[provider.data['full_template']['creds']]['username'],
@@ -124,9 +130,21 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     register_event(target_type='VmOrTemplate', target_name=test_vm.name,
                    event_type='vm_snapshot')
     ssh_client.run_command('touch snapshot2.txt')
-    snapshot2 = new_snapshot(test_vm)
+
+    if provider.type == 'rhevm':
+        snapshot2 = new_snapshot(test_vm, has_name=False)
+    else:
+        snapshot2 = new_snapshot(test_vm)
     snapshot2.create()
+
+    if provider.type == 'rhevm':
+        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
+        navigate_to(test_vm.provider, 'Details')
+        test_vm.wait_for_vm_state_change(
+            desired_state=test_vm.STATE_OFF, timeout=900)
+
     snapshot1.revert_to()
+
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
     wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
@@ -148,10 +166,10 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         logger.info('Revert to snapshot %s successful', snapshot1.name)
     except:
         logger.exception('Revert to snapshot %s Failed', snapshot1.name)
+    ssh_client.close()
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
-@pytest.mark.meta(blockers=[1247664], automates=[1247664])
 def test_create_snapshot_via_ae(request, domain, test_vm):
     """This test checks whether the vm.create_snapshot works in AE.
 
