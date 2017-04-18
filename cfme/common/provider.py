@@ -712,7 +712,7 @@ def _fill_credential(form, cred, validate=None):
             'default_secret': cred.secret,
             'default_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    if validate and isinstance(cred, CANDUCredential):
+    if validate and not isinstance(cred, CANDUCredential):
         # because we already validated it for the specific case
         flash.assert_no_errors()
 
