@@ -1,7 +1,9 @@
 #!/usr/bin/env python2
-from utils.trackerbot import post_task_result
 import os
 import sys
+
+from utils import safe_string
+from utils.trackerbot import post_task_result
 
 with open("{}/setup.txt".format(os.environ['ARTIFACTOR_DIR'])) as f:
     data = f.read()
@@ -15,4 +17,4 @@ except:
     pass
 
 print sys.argv[1], sys.argv[2], coverage
-post_task_result(sys.argv[1], sys.argv[2], data, coverage)
+post_task_result(sys.argv[1], sys.argv[2], safe_string(data), coverage)
