@@ -78,10 +78,11 @@ def dialog():
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
+                     element_data=element_data,
                      submit=True, cancel=True,
                      tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="tab_desc",
                      box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="box_desc")
-    service_dialog.create(element_data)
+    service_dialog.create()
     yield dialog
 
 

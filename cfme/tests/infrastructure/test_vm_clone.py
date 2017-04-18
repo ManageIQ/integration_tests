@@ -38,10 +38,11 @@ def dialog():
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
+                     element_data=element_data,
                      submit=True, cancel=True,
                      tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
                      box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
-    service_dialog.create(element_data)
+    service_dialog.create()
     flash.assert_success_message('Dialog "{}" was added'.format(dialog))
     yield dialog
 
