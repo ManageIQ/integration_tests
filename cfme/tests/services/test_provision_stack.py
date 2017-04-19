@@ -6,6 +6,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.myservice import MyService
 from cfme.services import requests
 from cfme.cloud.provider import CloudProvider
@@ -16,6 +17,7 @@ from utils.path import orchestration_path
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.wait import wait_for
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -64,6 +66,22 @@ def dialog_name(provider):
 
 
 @pytest.yield_fixture(scope="function")
+def update_dialog(dialog_name):
+    service_name = fauxfactory.gen_alphanumeric()
+    element_data = dict(
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
+        ele_name="service_name",
+        ele_desc="my ele desc",
+        choose_type="Text Box",
+        default_text_box=service_name
+    )
+    service_dialog = ServiceDialog(label=dialog_name, tab_label="Basic Information",
+        box_label="Options", element_data=element_data)
+    service_dialog.update_dialog_element(element_data)
+    yield service_dialog
+
+
+@pytest.yield_fixture(scope="function")
 def catalog():
     cat_name = "cat_" + fauxfactory.gen_alphanumeric()
     catalog = Catalog(name=cat_name, description="my catalog")
@@ -72,15 +90,15 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(dialog_name, catalog, template, provider):
-    item_name = fauxfactory.gen_alphanumeric()
+def catalog_item(template, update_dialog, catalog, provider):
+    item_name = update_dialog.element_data.get("default_text_box")
 
     catalog_item = CatalogItem(item_type="Orchestration",
                                name=item_name,
                                description="my catalog",
                                display_in=True,
                                catalog=catalog,
-                               dialog=dialog_name,
+                               dialog=update_dialog.label,
                                orch_template=template,
                                provider=provider)
     catalog_item.create()
@@ -133,6 +151,8 @@ def prepare_stack_data(provider, provisioning):
     return stack_data
 
 
+# BZ 1439942 for ec2,so skipping for ec2
+@pytest.mark.uncollectif(lambda provider: provider.type == 'ec2')
 def test_provision_stack(setup_provider, provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -146,7 +166,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     def _cleanup_vms():
         clean_up(stack_data, provider)
 
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, item_name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
@@ -157,6 +177,10 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert 'Provisioned Successfully' in row.last_message.text
 
 
+# BZ 1439942 for ec2,so skipping for ec2
+@pytest.mark.meta(blockers=[BZ(1439942, forced_streams=["5.6", "5.7", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1442920, forced_streams=["5.7", "5.8", "upstream"])])
+@pytest.mark.uncollectif(lambda provider: provider.type == 'ec2')
 def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -170,7 +194,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     def _cleanup_vms():
         clean_up(stack_data, provider)
 
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, item_name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
@@ -184,6 +208,8 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     myservice.reconfigure_service()
 
 
+# BZ 1439942 for ec2,so skipping only for ec2
+@pytest.mark.uncollectif(lambda provider: provider.type == 'ec2')
 def test_remove_template_provisioning(provider, provisioning, catalog, catalog_item, template):
     """Tests stack provisioning
 
@@ -192,7 +218,7 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     """
     catalog_item, item_name = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, item_name, stack_data)
     service_catalogs.order()
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
@@ -204,6 +230,8 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
+# BZ 1439942 for ec2,so skipping for ec2
+@pytest.mark.uncollectif(lambda provider: provider.type == 'ec2')
 def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -214,7 +242,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     DefaultView.set_default_view("Stacks", "Grid View")
 
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, item_name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
