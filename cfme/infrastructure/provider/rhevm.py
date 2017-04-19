@@ -28,7 +28,8 @@ class RHEVMProvider(InfraProvider):
     def _form_mapping(self, create=None, **kwargs):
         provider_name = version.pick({
             version.LOWEST: 'Red Hat Enterprise Virtualization Manager',
-            '5.7.1': 'Red Hat Virtualization Manager'})
+            '5.7.1': 'Red Hat Virtualization Manager',
+            '5.8.0.10': 'Red Hat Virtualization'})
         verify_tls = version.pick({
             version.LOWEST: None,
             '5.8': kwargs.get('verify_tls', False)})
