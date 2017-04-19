@@ -12,7 +12,7 @@ from navmazing import NavigateToAttribute
 from cfme.intelligence.reports import CloudIntelReportsView
 
 
-class Widget(Updateable, Pretty, Navigatable):
+class ManageIQWidget(Updateable, Pretty, Navigatable):
 
     # This string is a title of a widget type in the tree
     TYPE = None
@@ -202,7 +202,7 @@ class NewDashboardWidget(CFMENavigateStep):
         self.view.configuration.item_select("Add a new Widget")
 
 
-@navigator.register(Widget, "Details")
+@navigator.register(ManageIQWidget, "Details")
 class DashboardWidgetDetails(CFMENavigateStep):
     VIEW = DashboardWidgetDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")

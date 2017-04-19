@@ -4,7 +4,7 @@ from widgetastic.widget import TextInput
 from widgetastic_manageiq import Calendar
 from widgetastic_patternfly import BootstrapSelect
 from utils.appliance.implementations.ui import navigator
-from . import (Widget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
+from . import (ManageIQWidget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
     NewDashboardWidgetView, EditDashboardWidgetView)
 
 
@@ -31,7 +31,7 @@ class EditRSSWidgetView(EditDashboardWidgetView, RSSWidgetFormCommon):
     pass
 
 
-class RSSFeedWidget(Widget):
+class RSSFeedWidget(ManageIQWidget):
 
     TYPE = "RSS Feeds"
     TITLE = "RSS Feed"

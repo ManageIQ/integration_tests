@@ -3,7 +3,7 @@
 from widgetastic_manageiq import Calendar
 from widgetastic_patternfly import BootstrapSelect
 from utils.appliance.implementations.ui import navigator
-from . import (Widget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
+from . import (ManageIQWidget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
     NewDashboardWidgetView, EditDashboardWidgetView)
 
 
@@ -35,7 +35,7 @@ class EditReportWidgetView(EditDashboardWidgetView, ReportWidgetFormCommon):
     pass
 
 
-class ReportWidget(Widget):
+class ReportWidget(ManageIQWidget):
 
     TYPE = "Reports"
     TITLE = "Report"

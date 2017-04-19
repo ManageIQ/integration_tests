@@ -2,7 +2,7 @@
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Menus"""
 from widgetastic_manageiq import MenuShortcutsPicker
 from utils.appliance.implementations.ui import navigator
-from . import (Widget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
+from . import (ManageIQWidget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
     NewDashboardWidgetView, EditDashboardWidgetView)
 
 
@@ -24,7 +24,7 @@ class EditMenuWidgetView(EditDashboardWidgetView, MenuWidgetFormCommon):
     pass
 
 
-class MenuWidget(Widget):
+class MenuWidget(ManageIQWidget):
 
     TYPE = "Menus"
     TITLE = "Menu"
