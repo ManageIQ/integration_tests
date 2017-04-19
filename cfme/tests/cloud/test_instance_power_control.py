@@ -111,11 +111,11 @@ def wait_for_termination(provider, instance):
 def check_power_options(soft_assert, instance, power_state):
     """ Checks if power options match given power state ('on', 'off')
     """
-    for pwr_option in instance.UI_POWERSTATES_AVAILABLE[power_state]:
+    for pwr_option in instance.ui_powerstates_available[power_state]:
         soft_assert(
             instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
             "{} must be available in current power state - {} ".format(pwr_option, power_state))
-    for pwr_option in instance.UI_POWERSTATES_UNAVAILABLE[power_state]:
+    for pwr_option in instance.ui_powerstates_unavailable[power_state]:
         soft_assert(
             not instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
             "{} must not be available in current power state - {} ".format(pwr_option, power_state))
