@@ -709,7 +709,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
 
 
 @fill.method((Form, BaseProvider.Credential))
-def _fill_credential(form, cred, validate=None):
+def _fill_credential(form, cred, validate=None, validate_hawkular=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
@@ -757,7 +757,7 @@ def _fill_credential(form, cred, validate=None):
                 'token_verify_secret': cred.verify_token,
                 'validate_btn': validate
             })
-            if validate:
+            if validate_hawkular:
                 # Validate default creds and move on to hawkular tab validation
                 flash.assert_no_errors()
                 fill(cred.form, {
