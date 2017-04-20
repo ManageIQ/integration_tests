@@ -100,6 +100,9 @@ class SSHClient(paramiko.SSHClient):
         self._container = connect_kwargs.pop('container', None)
         self.is_pod = connect_kwargs.pop('is_pod', False)
 
+        self.f_stdout = connect_kwargs.pop('stdout', sys.stdout)
+        self.f_stderr = connect_kwargs.pop('stderr', sys.stderr)
+
         # load the defaults for ssh
         default_connect_kwargs = {
             'timeout': 10,
@@ -258,13 +261,13 @@ class SSHClient(paramiko.SSHClient):
                     for line in stdout:
                         output.append(line)
                         if self._streaming:
-                            sys.stdout.write(line)
+                            self.f_stdout.write(line)
 
                 if session.recv_stderr_ready:
                     for line in stderr:
                         output.append(line)
                         if self._streaming:
-                            sys.stderr.write(line)
+                            self.f_stderr.write(line)
 
                 if session.exit_status_ready():
                     break
@@ -302,19 +305,18 @@ class SSHClient(paramiko.SSHClient):
             "do :; done & done".format(seconds, cpus), **kwargs)
 
     def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
-        logger.info("Running rails command `{command}`".format(command=command))
+        logger.info("Running rails command %r", command)
         return self.run_command('/var/www/miq/vmdb/bin/rails runner {command}'.format(
             command=command), timeout=timeout, **kwargs)
 
     def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
-        logger.info("Running rake command `{command}`".format(command=command))
+        logger.info("Running rake command %r", command)
         return self.run_command(
             '/var/www/miq/vmdb/bin/rake -f /var/www/miq/vmdb/Rakefile {command}'.format(
                 command=command), timeout=timeout, **kwargs)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
-        logger.info("Transferring local file {local_file} to remote {remote_file}".format(
-            local_file=local_file, remote_file=remote_file))
+        logger.info("Transferring local file %r to remote %r", local_file, remote_file)
         if self.is_container:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
@@ -354,8 +356,7 @@ class SSHClient(paramiko.SSHClient):
             return scp
 
     def get_file(self, remote_file, local_path='', **kwargs):
-        logger.info("Transferring remote file {remote_file} to local {local_path}".format(
-            remote_file=remote_file, local_path=local_path))
+        logger.info("Transferring remote file %r to local %r", remote_file, local_path)
         base_name = os_path.basename(remote_file)
         if self.is_container:
             tmp_file_name = 'temp_{}'.format(fauxfactory.gen_alpha())
@@ -412,7 +413,7 @@ class SSHClient(paramiko.SSHClient):
             not patched by the current patch-file, it will be used to restore it first.
             Recompiling assets and restarting appropriate services might be required.
         """
-        logger.info('Patching {remote_path}'.format(remote_path=remote_path))
+        logger.info('Patching %s', remote_path)
 
         # Upload diff to the appliance
         diff_remote_path = os_path.join('/tmp/', os_path.basename(remote_path))
@@ -427,22 +428,20 @@ class SSHClient(paramiko.SSHClient):
 
         # If we have a .bak file available, it means the file is already patched
         # by some older patch; in that case, replace the file-to-be-patched by the .bak first
-        logger.info("Checking if {}.bak is available".format(remote_path))
+        logger.info("Checking if %s.bak is available", remote_path)
         rc, out = self.run_command('test -e {}.bak'.format(remote_path))
         if rc == 0:
-            logger.info(
-                "{}.bak found; using it to replace {}".format(remote_path, remote_path))
+            logger.info("%s.bak found; using it to replace %s", remote_path, remote_path)
             rc, out = self.run_command('mv {}.bak {}'.format(remote_path, remote_path))
             if rc != 0:
                 raise Exception(
                     "Unable to replace {} with {}.bak".format(remote_path, remote_path))
         else:
-            logger.info("{}.bak not found".format(remote_path))
+            logger.info("%s.bak not found", remote_path)
 
         # If not patched and there's MD5 checksum available, check it
         if md5:
-            logger.info("MD5 sum check in progress for {remote_path}".format(
-                remote_path=remote_path))
+            logger.info("MD5 sum check in progress for %s", remote_path)
             rc, out = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
             if rc == 0:
                 logger.info('MD5 sum check result: file not changed')
