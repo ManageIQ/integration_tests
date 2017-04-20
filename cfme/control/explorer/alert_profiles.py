@@ -19,7 +19,7 @@ class AlertProfileFormCommon(ControlExplorerView):
     description = Input(name="description")
     notes = TextInput(name="notes")
     alerts = MultiBoxSelect(
-        "formtest",
+        ".//table[@id='formtest']",
         move_into=".//a[@data-submit='choices_chosen_div']/img",
         move_from=".//a[@data-submit='members_chosen_div']/img"
     )

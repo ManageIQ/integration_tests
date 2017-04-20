@@ -57,7 +57,7 @@ class EditPolicyConditionAssignments(ControlExplorerView):
     move_from_button = Button(title="Remove selected Conditions from this Policy")
 
     conditions = MultiBoxSelect(
-        "formtest",
+        ".//table[@id='formtest']",
         move_into=move_into_button,
         move_from=move_from_button
     )
@@ -189,8 +189,7 @@ class EditEventView(ControlExplorerView):
     title = Text("#explorer_title_text")
 
     true_actions = MultiBoxSelect(
-        "formtest",
-        number=1,
+        "(.//table[@id='formtest'])[1]",
         move_into=".//a[@data-submit='choices_chosen_true_div']/img",
         move_from=".//a[@data-submit='members_chosen_true_div']/img",
         available_items="choices_chosen_true",
@@ -198,8 +197,7 @@ class EditEventView(ControlExplorerView):
     )
 
     false_actions = MultiBoxSelect(
-        "formtest",
-        number=2,
+        "(.//table[@id='formtest'])[2]",
         move_into=".//a[@data-submit='choices_chosen_false_div']/img",
         move_from=".//a[@data-submit='members_chosen_false_div']/img",
         available_items="choices_chosen_false",

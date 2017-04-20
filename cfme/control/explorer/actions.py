@@ -33,7 +33,7 @@ class ActionFormCommon(ControlExplorerView):
     snapshot_name = Input("snapshot_name")
     analysis_profile = BootstrapSelect("analysis_profile")
     alerts_to_evaluate = MultiBoxSelect(
-        "formtest",
+        ".//table[@id='formtest']",
         move_into=".//a[@data-submit='choices_chosen_div']/img",
         move_from=".//a[@data-submit='members_chosen_div']/img"
     )
