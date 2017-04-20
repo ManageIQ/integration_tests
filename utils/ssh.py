@@ -96,7 +96,7 @@ class SSHClient(paramiko.SSHClient):
         self._streaming = stream_output
         # deprecated/useless karg, included for backward-compat
         self._keystate = connect_kwargs.pop('keystate', None)
-        # Container is used to store buth docker VM's container name and Openshift pod name.
+        # Container is used to store both docker VM's container name and Openshift pod name.
         self._container = connect_kwargs.pop('container', None)
         self.is_pod = connect_kwargs.pop('is_pod', False)
 
@@ -196,10 +196,7 @@ class SSHClient(paramiko.SSHClient):
         return super(SSHClient, self).open_sftp(*args, **kwargs)
 
     def get_transport(self, *args, **kwargs):
-        if self.connected:
-            logger.trace('reusing ssh transport')
-        else:
-            logger.trace('connecting new ssh transport')
+        if not self.connected:
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
@@ -242,7 +239,7 @@ class SSHClient(paramiko.SSHClient):
             uses_sudo = True
 
         if command != original_command:
-            logger.info("Actually running command %r", command)
+            logger.info("> Actually running command %r", command)
         command += '\n'
 
         output = []
@@ -273,20 +270,21 @@ class SSHClient(paramiko.SSHClient):
                     break
             exit_status = session.recv_exit_status()
             return SSHResult(exit_status, ''.join(output))
-        except paramiko.SSHException as exc:
+        except paramiko.SSHException:
             if reraise:
                 raise
             else:
-                logger.exception(exc)
-        except socket.timeout as e:
-            logger.error("Command `{command}` timed out.".format(command=command))
-            logger.exception(e)
-            logger.error("Output of the command before it failed was:\n{output}".format(
-                output=''.join(output)))
+                logger.exception('Exception happened during SSH call')
+        except socket.timeout:
+            logger.exception(
+                "Command %r timed out. Output before it failed was:\n%r",
+                command,
+                ''.join(output))
             raise
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
-        return SSHResult(1, None)
+        # Return whatever we have in the output
+        return SSHResult(1, ''.join(output))
 
     def cpu_spike(self, seconds=60, cpus=2, **kwargs):
         """Creates a CPU spike of specific length and processes.
