@@ -11,10 +11,10 @@ from utils.version import current_version
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
                                          scope='module')
 
-pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7')]
+pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+              pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-@pytest.mark.usefixtures("setup_provider_modscope")
 @pytest.fixture(scope='module')
 def host_on(provider):
     try:
@@ -32,7 +32,6 @@ def host_on(provider):
     return my_host_on
 
 
-@pytest.mark.usefixtures("setup_provider_modscope")
 @pytest.fixture(scope='module')
 def host_off(provider):
     try:
