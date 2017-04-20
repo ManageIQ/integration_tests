@@ -285,8 +285,8 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg = self.prerequisite_view.toolbar.configuration
-        cfg.item_select('Add a New Infrastructure Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                 'Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
@@ -295,8 +295,8 @@ class Discover(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg = self.prerequisite_view.toolbar.configuration
-        cfg.item_select('Discover Infrastructure Providers')
+        self.prerequisite_view.toolbar.configuration.item_select('Discover '
+                                                                 'Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')
@@ -305,7 +305,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
 
     def resetter(self):
         # Reset view and selection
@@ -321,7 +321,7 @@ class ManagePolicies(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
@@ -340,7 +340,7 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -359,9 +359,9 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg = self.prerequisite_view.toolbar.configuration
-        cfg.item_select('Edit Selected Infrastructure Providers')
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.configuration.item_select('Edit Selected '
+                                                                 'Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Timelines')
@@ -401,13 +401,7 @@ class Templates(CFMENavigateStep):
 def get_all_providers():
     """Returns list of all providers"""
     view = navigate_to(InfraProvider, 'All')
-    providers = set([])
-    link_marker = "ems_infra"
-    for _ in view.paginator.pages():
-        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'{}/show')]".format(link_marker)):
-            providers.add(sel.get_attribute(title, "title"))
-    return providers
+    return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
 def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None, end_ip=None):

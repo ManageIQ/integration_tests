@@ -19,14 +19,13 @@ def test_api_port(provider):
 
 
 def test_credentials_quads(provider):
-    navigate_to(provider, 'All')
-    quad = Quadicon(provider.name, qtype='infra_prov')
-    checked = str(quad.creds).split('-')[0]
-    assert checked == 'checkmark'
+    view = navigate_to(provider, 'All')
+    prov_item = view.items.get_item(by_name=provider.name)
+    assert prov_item.data.get('creds') and 'checkmark' in prov_item.data['creds']
 
 
 def test_delete_provider(provider):
     provider.delete(cancel=False)
     provider.wait_for_delete()
-    navigate_to(provider, 'All')
-    assert provider.name not in [q.name for q in Quadicon.all()]
+    view = navigate_to(provider, 'All')
+    assert provider.name not in [item.name for item in view.items.get_all(surf_page=True)]

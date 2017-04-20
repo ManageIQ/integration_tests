@@ -1783,23 +1783,17 @@ class BaseQuadIconItem(ParametrizedView, ClickableMixin):
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     label = Text(locator=ParametrizedLocator('./tbody/tr/td/a[contains(@title, {name|quote})]'))
     checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
-
+    QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img]'
 
     @property
     def is_checked(self):
         return self.checkbox.selected
 
     def check(self):
-        if not self.is_checked:
-            self.checkbox.click()
-            return True
-        return False
+        return self.checkbox.fill(True)
 
     def uncheck(self):
-        if self.is_checked:
-            self.checkbox.click()
-            return True
-        return False
+        return self.checkbox.fill(False)
 
     @property
     def href(self):
@@ -1828,8 +1822,12 @@ class BaseQuadIconItem(ParametrizedView, ClickableMixin):
 class ProviderQuadIconItem(BaseQuadIconItem):
     @property
     def data(self):
-        # todo: will be defined later
-        return {}
+        br = self.browser
+        return {
+            "no_host": br.text(self.QUADRANT.format(pos='a')),
+            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
+            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
+        }
 
 
 class BaseTileIconItem(ParametrizedView):
@@ -1874,12 +1872,13 @@ class BaseTileIconItem(ParametrizedView):
     def is_displayed(self):
         try:
             return super(BaseTileIconItem, self).is_displayed and \
-                   self.browser.is_displayed(self.LIST)
+                self.browser.is_displayed(self.LIST)
         except NoSuchElementException:
             return False
 
 
 class ProviderTileIconItem(BaseTileIconItem):
+    quad_icon = ParametrizedView.nested(ProviderQuadIconItem)
     pass
 
 
@@ -1895,16 +1894,10 @@ class BaseListItem(ParametrizedView, ClickableMixin):
         return self.checkbox.selected
 
     def check(self):
-        if not self.is_checked:
-            self.checkbox.click()
-            return True
-        return False
+        return self.checkbox.fill(True)
 
     def uncheck(self):
-        if self.is_checked:
-            self.checkbox.click()
-            return True
-        return False
+        return self.checkbox.fill(False)
 
     @property
     def href(self):
@@ -1930,9 +1923,9 @@ class ProviderListItem(BaseListItem):
 
 
 class ProviderItem(View):
-    quad_item = ParametrizedView.nested(ProviderQuadIconItem)
-    list_item = ParametrizedView.nested(ProviderListItem)
-    tile_item = ParametrizedView.nested(ProviderTileIconItem)
+    quad_item = ProviderQuadIconItem
+    list_item = ProviderListItem
+    tile_item = ProviderTileIconItem
 
     def __init__(self, parent, name, logger=None):
         View.__init__(self, parent, logger=logger)
@@ -1945,16 +1938,16 @@ class ProviderItem(View):
         else:
             raise NoSuchElementException("Item {name} isn't found on page".format(name=self.name))
 
-    # @property
-    # def is_checked(self):
-    #     return self._get_existing_item().is_checked
-    #
-    # def check(self):
-    #     return self._get_existing_item().check()
-    #
-    # def uncheck(self):
-    #     return self._get_existing_item().uncheck()
-
     def __getattr__(self, name):
-        if hasattr(self._get_existing_item(), name):
-            return getattr(self._get_existing_item(), name)
+        if name.startswith('__'):
+            return self.__dict__[name]
+
+        item = self._get_existing_item()
+        if hasattr(item, name):  # needed for is displayed
+            return getattr(item, name)
+
+    def __str__(self):
+        return str(self._get_existing_item())
+
+    def __repr__(self):
+        return repr(self._get_existing_item())
