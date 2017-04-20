@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import atexit
 import os
+<<<<<<< HEAD
 import re
+=======
+import six
+>>>>>>> Refactoring in widgetastic_manageiq. basestring replaced by six.string_types
 from collections import namedtuple
 from datetime import date
 from math import ceil
@@ -472,7 +476,7 @@ class MultiBoxSelect(View):
     def move_into_button(self):
         if isinstance(self._move_into, Button):
             button = self._move_into
-        elif isinstance(self._move_into, basestring):
+        elif isinstance(self._move_into, six.string_types):
             button = self.browser.element(self._move_into, self)
         return button
 
@@ -480,7 +484,7 @@ class MultiBoxSelect(View):
     def move_from_button(self):
         if isinstance(self._move_from, Button):
             button = self._move_from
-        elif isinstance(self._move_from, basestring):
+        elif isinstance(self._move_from, six.string_types):
             button = self.browser.element(self._move_from, self)
         return button
 
@@ -907,7 +911,7 @@ class SNMPHostsField(View):
 
     def fill(self, values):
         fields = self.host_fields
-        if isinstance(values, basestring):
+        if isinstance(values, six.string_types):
             values = [values]
         if len(values) > len(fields):
             raise ValueError("You cannot specify more hosts than the form allows!")
@@ -1547,7 +1551,7 @@ class AlertEmail(View):
         self.id = id
 
     def fill(self, values):
-        if isinstance(values, basestring):
+        if isinstance(values, six.string_types):
             values = [values]
         if self.all_emails == set(values):
             return False
@@ -2197,7 +2201,6 @@ class DashboardWidgetsPicker(View):
 
     def remove_widget(self, widget):
         self.browser.click(self.remove_locator.format(quote(widget)))
-        self.browser.plugin.ensure_page_safe()
 
     @property
     def all_elements(self):
@@ -2217,7 +2220,7 @@ class DashboardWidgetsPicker(View):
         return list(set(values) - set(self.all_widgets))
 
     def fill(self, values):
-        if isinstance(values, basestring):
+        if isinstance(values, six.string_types):
             values = [values]
         if set(values) == set(self.all_widgets):
             return False
@@ -2264,7 +2267,7 @@ class MenuShortcutsPicker(DashboardWidgetsPicker):
 
     def fill(self, values):
         dict_values = None
-        if isinstance(values, basestring):
+        if isinstance(values, six.string_types):
             values = [values]
         if isinstance(values, dict):
             dict_values = values
