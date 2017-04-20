@@ -28,58 +28,59 @@ def parse_cmd_line():
     parser.add_argument('--library', dest="library",
                         help="SCVMM Library Destination", default=None)
     parser.add_argument('--provider', dest="provider",
-                        help="Specify a vCenter connection", default=None)
+                        help="Specify a SCVMM connection. --provider scvmm", default=None)
     parser.add_argument('--template_name', dest="template_name",
                         help="Override/Provide name of template", default=None)
     args = parser.parse_args()
     return args
 
 
-def check_template_exists(client, name):
-    if name in client.list_template():
-        return True
-    else:
-        return False
-
-
 def upload_vhd(client, url, library, vhd):
 
     print("SCVMM: Downloading VHD file, then updating Library")
 
-    script11 = '(New-Object System.Net.WebClient).DownloadFile("{}", "{}{}");'.format(
-        url, library, vhd)
-    script11 += "$lib = Get-SCLibraryShare |  where {$_.name -eq 'MSSCVMMLibrary' };"
-    script11 += "Read-SCLibraryShare $lib[0];"
+    script = """
+        (New-Object System.Net.WebClient).DownloadFile("{}", "{}{}")
+    """.format(url, library, vhd)
+    print(str(script))
+    client.run_script(script)
+    client.update_scvmm_library()
 
-    print("Invoke-Command -scriptblock {{{}}}".format(script11))
-    client.run_script("Invoke-Command -scriptblock {{{}}}".format(script11))
 
+def make_template(client, host_fqdn, name, library, network, os_type, username_scvmm, cores, ram):
 
-def make_template(client, host_fqdn, name, library, network, ostype, username_scvmm, cores, ram):
-    src_path = "{}{}.vhd".format(library, name)
     print("SCVMM: Adding HW Resource File and Template to Library")
-    script2 = "$JobGroupId01 = [Guid]::NewGuid().ToString();"
-    script2 += "$LogNet = Get-SCLogicalNetwork -Name '" + network + "';"
-    script2 += "New-SCVirtualNetworkAdapter -JobGroup $JobGroupID01 \
-            -MACAddressType Dynamic -LogicalNetwork $LogNet -Synthetic;"
-    script2 += "New-SCVirtualSCSIAdapter -JobGroup $JobGroupID01 -AdapterID 6 -Shared $False;"
-    script2 += "New-SCHardwareProfile -Name '" + name + "' -Owner '" + username_scvmm + "' \
-        -Description 'Temp profile used to create a VM Template' -MemoryMB  " + str(ram) + " \
-            -CPUCount " + str(cores) + " -JobGroup $JobGroupID01;"
-    script2 += "$JobGroupId02 = [Guid]::NewGuid().ToString();"
-    script2 += "$VHD = Get-SCVirtualHardDisk | where {$_.Location -eq '" + src_path + "'} | \
-                where {$_.HostName -eq '" + host_fqdn + "'};"
-    script2 += "New-SCVirtualDiskDrive -IDE -Bus 0 -LUN 0 "
-    script2 += "-JobGroup $JobGroupID02 -VirtualHardDisk $VHD;"
-    script2 += "$HWProfile = Get-SCHardwareProfile | where { $_.Name -eq '" + name + "' };"
-    script2 += "$OS = Get-SCOperatingSystem | where "
-    script2 += "{$_.Name -eq 'Red Hat Enterprise Linux 7 (64 bit)'};"
-    script2 += "New-SCVMTemplate -Name '" + name + "' -Owner '" + username_scvmm + "' \
-                -HardwareProfile $HWProfile -JobGroup $JobGroupID02 \
-                -RunAsynchronously -Generation 1 -NoCustomization;"
-    script2 += "Remove-HardwareProfile -HardwareProfile '" + name + "';"
-    print("Invoke-Command -scriptblock {{{}}}".format(script2))
-    client.run_script("Invoke-Command -scriptblock {{{}}}".format(script2))
+
+    src_path = "{}{}.vhd".format(library, name)
+    script = """
+        $JobGroupId01 = [Guid]::NewGuid().ToString()
+        $LogNet = Get-SCLogicalNetwork -Name \"{network}\"
+        New-SCVirtualNetworkAdapter -JobGroup $JobGroupID01 -MACAddressType Dynamic `
+            -LogicalNetwork $LogNet -Synthetic
+        New-SCVirtualSCSIAdapter -JobGroup $JobGroupID01 -AdapterID 6 -Shared $False
+        New-SCHardwareProfile -Name \"{name}\" -Owner \"{username_scvmm}\" `
+            -Description 'Temp profile used to create a VM Template' -MemoryMB {ram} `
+            -CPUCount {cores} -JobGroup $JobGroupID01
+        $JobGroupId02 = [Guid]::NewGuid().ToString()
+        $VHD = Get-SCVirtualHardDisk | where {{ $_.Location -eq \"{src_path}\" }} | `
+            where {{ $_.HostName -eq \"{host_fqdn}\" }}
+        New-SCVirtualDiskDrive -IDE -Bus 0 -LUN 0 -JobGroup $JobGroupID02 -VirtualHardDisk $VHD
+        $HWProfile = Get-SCHardwareProfile | where {{ $_.Name -eq \"{name}\" }}
+        $OS = Get-SCOperatingSystem | where {{ $_.Name -eq \"{os_type}\" }}
+        New-SCVMTemplate -Name \"{name}\" -Owner \"{username_scvmm}\" -HardwareProfile $HWProfile `
+            -JobGroup $JobGroupID02 -RunAsynchronously -Generation 1 -NoCustomization
+        Remove-HardwareProfile -HardwareProfile \"{name}\"
+    """.format(
+        name=name,
+        network=network,
+        username_scvmm=username_scvmm,
+        ram=ram,
+        cores=cores,
+        src_path=src_path,
+        host_fqdn=host_fqdn,
+        os_type=os_type)
+    print(str(script))
+    client.run_script(script)
 
 
 def check_kwargs(**kwargs):
@@ -171,28 +172,26 @@ def run(**kwargs):
         if new_template_name is None:
             new_template_name = os.path.basename(url)[:-4]
 
-        print("SCVMM:{} started template {} upload".format(provider, new_template_name))
         print("SCVMM:{} Make Template out of the VHD {}".format(provider, new_template_name))
 
         # use_library is either user input or we use the cfme_data value
-        use_library = kwargs.get('library', None)
-        if use_library is None:
-            use_library = mgmt_sys['template_upload'].get('library', None) + "\\VHDS\\"
+        library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds', None))
 
-        print("SCVMM:{} Template Library: {}".format(provider, use_library))
+        print("SCVMM:{} Template Library: {}".format(provider, library))
 
         #  The VHD name changed, match the template_name.
         new_vhd_name = new_template_name + '.vhd'
 
-        use_network = mgmt_sys['template_upload'].get('network', None)
-        use_os_type = mgmt_sys['template_upload'].get('os_type', None)
+        network = mgmt_sys['template_upload'].get('network', None)
+        os_type = mgmt_sys['template_upload'].get('os_type', None)
         cores = mgmt_sys['template_upload'].get('cores', None)
         ram = mgmt_sys['template_upload'].get('ram', None)
 
         # Uses PowerShell Get-SCVMTemplate to return a list of  templates and aborts if exists.
-        if not check_template_exists(client, new_template_name):
+        if not client.does_template_exist(new_template_name):
             if kwargs.get('upload'):
-                upload_vhd(client, url, use_library, new_vhd_name)
+                print("SCVMM:{} Uploading VHD image to Library VHD folder.".format(provider))
+                upload_vhd(client, url, library, new_vhd_name)
             if kwargs.get('template'):
                 print("SCVMM:{} Make Template out of the VHD {}".format(
                     provider, new_template_name))
@@ -201,16 +200,16 @@ def run(**kwargs):
                     client,
                     host_fqdn,
                     new_template_name,
-                    use_library,
-                    use_network,
-                    use_os_type,
+                    library,
+                    network,
+                    os_type,
                     username_scvmm,
                     cores,
                     ram
                 )
             try:
-                wait_for(check_template_exists,
-                         [client, new_template_name], fail_condition=False, delay=5)
+                wait_for(lambda: client.does_template_exist(new_template_name),
+                         fail_condition=False, delay=5)
                 print("SCVMM:{} template {} uploaded successfully".format(
                     provider, new_template_name))
                 print("SCVMM:{} Adding template {} to trackerbot".format(
@@ -219,8 +218,8 @@ def run(**kwargs):
                                                             provider, kwargs.get('template_name'))
             except Exception as e:
                 print(e)
-                print("SCVMM:{} Exception occured while verifying the template {} upload".format(
-                    provider, new_template_name))
+                print("SCVMM:{} Exception occured while verifying the template {} upload".
+                    format(provider, new_template_name))
         else:
             print("SCVMM: A Template with that name already exists in the SCVMMLibrary")
 
