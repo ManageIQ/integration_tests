@@ -140,6 +140,7 @@ class CustomReportDetailsView(CloudIntelReportsView):
 
 class AllReportsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
+    reports_table = VanillaTable(".//div[@id='report_list_div']/table")
 
     @property
     def is_displayed(self):
@@ -147,7 +148,8 @@ class AllReportsView(CloudIntelReportsView):
             self.in_intel_reports and
             self.reports.is_opened and
             self.reports.tree.currently_selected == ["All Reports"] and
-            self.title.text == "All Reports"
+            self.title.text == "All Reports" and
+            self.reports_table.is_displayed
         )
 
 
@@ -613,3 +615,12 @@ class CannedReportInfo(CFMENavigateStep):
 
     def step(self):
         self.view.reports.tree.click_path("All Reports", *self.obj.path)
+
+
+@navigator.register(CustomReport, "All")
+class CustomReportAll(CFMENavigateStep):
+    VIEW = AllReportsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.reports.tree.click_path("All Reports")
