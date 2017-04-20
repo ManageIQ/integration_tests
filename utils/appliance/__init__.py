@@ -1945,12 +1945,13 @@ class IPAppliance(object):
                     # If there's only one server, it's the one we want
                     server = all_servers[0]
                 else:
-                    # Otherwise, filter based on id and guid
+                    # Otherwise, filter based on id and ip/guid
                     def server_filter(server):
                         return all([
                             server.id >= reg_min,
                             server.id < reg_max,
-                            server.guid == self.guid
+                            # second check because of openstack ip addresses
+                            server.ipaddress == self.db.hostname or server.guid == self.guid
                         ])
                     servers = filter(server_filter, all_servers)
                     if servers:
