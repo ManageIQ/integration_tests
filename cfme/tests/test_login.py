@@ -1,5 +1,5 @@
 import pytest
-from cfme import BaseLoggedInPage, login, Credential
+from cfme import BaseLoggedInPage, login, Credential, test_requirements
 from cfme.configure.access_control import User
 from utils import conf, error
 from utils.appliance.implementations.ui import navigate_to
@@ -7,7 +7,7 @@ from utils.appliance.implementations.ui import navigate_to
 pytestmark = pytest.mark.usefixtures('browser')
 
 
-@pytest.mark.requirement('drift')
+@test_requirements.drift
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.smoke
@@ -25,7 +25,7 @@ def test_login(method, appliance):
     assert login_page.is_displayed
 
 
-@pytest.mark.requirement('drift')
+@test_requirements.drift
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.smoke
@@ -50,6 +50,7 @@ def test_re_login(appliance):
     assert login_page.is_displayed
 
 
+@test_requirements.drift
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_bad_password(request, appliance):
