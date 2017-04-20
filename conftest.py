@@ -60,6 +60,7 @@ pytest_plugins = (
     'fixtures.video',
     'fixtures.virtual_machine',
     'fixtures.widgets',
+    'fixtures.xunit_tools',
 
     'markers',
 
