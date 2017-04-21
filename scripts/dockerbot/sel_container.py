@@ -4,8 +4,7 @@ import subprocess
 import socket
 from wait_for import wait_for
 
-from dockerbot import SeleniumDocker
-from utils.net import random_port
+from dockerbot import start_selenium, ports_from_selenium
 from utils.conf import docker as docker_conf
 
 
@@ -29,11 +28,11 @@ if __name__ == "__main__":
     interaction.add_argument('--watch', help='Opens VNC session',
                              action='store_true', default=False)
     interaction.add_argument('--vnc', help='Chooses VNC port',
-                             default=random_port())
+                             default=None)
     interaction.add_argument('--webdriver', help='Chooses WebDriver port',
-                             default=random_port())
+                             default=None)
     interaction.add_argument('--image', help='Chooses WebDriver port',
-                             default=docker_conf.get('selff', 'cfme/sel_ff_chrome'))
+                             default=docker_conf.get('selff', 'cfmeqe/sel_ff_chrome'))
     interaction.add_argument('--vncviewer', help='Chooses VNC viewer command',
                              default=docker_conf.get('vncviewer', None))
 
@@ -42,35 +41,39 @@ if __name__ == "__main__":
 
     print("Starting container...")
 
-    dkb = SeleniumDocker(bindings={'VNC_PORT': (5999, args.vnc),
-                                   'WEBDRIVER': (4444, args.webdriver)},
-                         image=args.image)
-    dkb.run()
+    container = start_selenium(
+        vnc_port=args.vnc,
+        expose_webdriver=True,
+        webdriver_port=args.webdriver,
+        image=args.image,
+    )
+    ports = ports_from_selenium
 
     if args.watch:
         print
         print("  Waiting for VNC port to open...")
-        wait_for(lambda: vnc_ready(ip, args.vnc), num_sec=60, delay=2)
+
+        wait_for(lambda: vnc_ready(ip, ports['vnc']), num_sec=60, delay=2)
 
         print("  Initiating VNC watching...")
         if args.vncviewer:
             viewer = args.vncviewer
             if '%I' in viewer or '%P' in viewer:
-                viewer = viewer.replace('%I', ip).replace('%P', str(args.vnc))
+                viewer = viewer.replace('%I', ip).replace('%P', str(ports['vnc']))
                 ipport = None
             else:
-                ipport = '{}:{}'.format(ip, args.vnc)
+                ipport = '{}:{}'.format(ip, ports['vnc'])
             cmd = viewer.split()
             if ipport:
                 cmd.append(ipport)
         else:
-            cmd = ['xdg-open', 'vnc://{}:{}'.format(ip, args.vnc)]
+            cmd = ['xdg-open', 'vnc://{}:{}'.format(ip, ports['vnc'])]
         subprocess.Popen(cmd)
 
     print(" Hit Ctrl+C to end container")
     try:
-        dkb.wait()
+        container.wait()
     except KeyboardInterrupt:
         print(" Killing Container.....please wait...")
-    dkb.kill()
-    dkb.remove()
+    container.kill()
+    container.remove()
