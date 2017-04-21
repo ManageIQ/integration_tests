@@ -1,9 +1,6 @@
 #!/usr/bin/env python2
 from utils.conf import docker as docker_conf
 from utils.net import random_port, my_ip_address
-import attr
-
-from cached_property import cached_property
 
 import argparse
 import fauxfactory
@@ -446,7 +443,7 @@ class DockerBot(object):
 
         self.env_details['JSON'] = sel_json
         self.env_details['SMTP'] = sel_smtp
-        return {'%s/tcp' % x: x for x in (sel_json, sel_smtp)}
+        return {'{}/tcp'.format(x): x for x in (sel_json, sel_smtp)}
 
     def handle_watch(self):
         if self.args['watch'] and not self.args['dry_run']:
