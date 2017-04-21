@@ -363,13 +363,16 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
 
     @ArtifactorBasePlugin.check_configured
     def start_test(
-            self, test_location, test_name, slaveid, tier=None, param_dict=None, requirement=None):
+            self, test_location, test_name, slaveid, tier=None, param_dict=None, requirement=None,
+            issues=None):
         if not param_dict:
             param_dict = {}
         test_ident = "{}/{}".format(test_location, test_name)
         return None, {'artifacts': {test_ident: {
             'start_time': time.time(), 'slaveid': slaveid, 'tier': tier or "N/A",
-            'params': param_dict, 'requirement': requirement or "None"}}
+            'params': param_dict, 'requirement': requirement or "None",
+            'test_module': test_location, 'test_name': test_name,
+            'issues': issues or []}}
         }
 
     @ArtifactorBasePlugin.check_configured
