@@ -144,9 +144,11 @@ class CFMENavigateStep(NavigateStep):
 
     def am_i_here(self):
         try:
-            return self.view.is_displayed
-        except (AttributeError, NoSuchElementException):
+            self.view.assert_is_displayed()
+        except (AttributeError, NoSuchElementException, AssertionError):
             return False
+        else:
+            return True
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
         if getattr(fn, '_can_skip_badness_test', False):
