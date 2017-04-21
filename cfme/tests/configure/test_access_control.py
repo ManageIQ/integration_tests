@@ -7,7 +7,7 @@ import traceback
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
 from utils import error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import Credential, login, test_requirements
+from cfme import Credential, login, test_requirements, BaseLoggedInPage
 from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
 from cfme.configure.access_control import set_group_order
@@ -641,7 +641,7 @@ def test_permissions_vm_provisioning():
 
 
 @pytest.mark.tier(2)
-def test_user_change_password(request):
+def test_user_change_password(request, appliance):
     user = User(
         name="user {}".format(fauxfactory.gen_alphanumeric()),
         credential=Credential(
@@ -656,10 +656,13 @@ def test_user_change_password(request):
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
     with user:
-        assert not login.logged_in()
-        login.login(user)
-        assert login.current_full_name() == user.name
-    login.login_admin()
+        log_in_view = appliance.browser.create_view(login.LoginPage)
+        assert log_in_view.logged_out
+        log_in_view.log_in(user)
+        logged_in_view = appliance.browser.create_view(BaseLoggedInPage)
+        assert logged_in_view.current_fullname == user.name
+    log_in_view = appliance.browser.create_view(login.LoginPage)
+    log_in_view.login_admin()
     with update(user):
         user.credential = Credential(
             principal=user.credential.principal,
@@ -667,9 +670,11 @@ def test_user_change_password(request):
             verify_secret="another_very_secret",
         )
     with user:
-        assert not login.logged_in()
-        login.login(user)
-        assert login.current_full_name() == user.name
+        log_in_view = appliance.browser.create_view(login.LoginPage)
+        assert log_in_view.logged_out
+        log_in_view.log_in(user)
+        logged_in_view = appliance.browser.create_view(BaseLoggedInPage)
+        assert logged_in_view.current_fullname == user.name
 
 
 # Tenant/Project test cases
