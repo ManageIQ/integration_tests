@@ -443,20 +443,16 @@ class SummaryFormItem(Widget):
 
 class MultiBoxSelect(View):
 
-    ROOT = ParametrizedLocator("(.//table[@id={@id|quote}]){@number}")
+    ROOT = ParametrizedLocator("{@root_loc}")
     available_options = Select(id=Parameter("@available_items"))
     chosen_options = Select(id=Parameter("@chosen_items"))
 
-    def __init__(self, parent, id, number="", move_into=None, move_from=None,
+    def __init__(self, parent, root_loc, move_into=None, move_from=None,
             available_items="choices_chosen", chosen_items="members_chosen", logger=None):
         View.__init__(self, parent, logger=logger)
         self.available_items = available_items
         self.chosen_items = chosen_items
-        self.id = id
-        if number:
-            self.number = "[{}]".format(number)
-        else:
-            self.number = number
+        self.root_loc = root_loc
         if isinstance(move_into, WidgetDescriptor):
             self._move_into = move_into.klass(self, **move_into.kwargs)
         else:
