@@ -13,9 +13,9 @@ def parse_cmd_line():
                         help='NIC Name template to be removed', default="test*", type=str)
     parser.add_argument('--pip-template',
                         help='PIP Name template to be removed', default="test*", type=str)
-    parser.add_argument('--days',
-                        help='days argument to find stack items older than X days ',
-                        default="-7", type=str)
+    parser.add_argument('--days-old',
+                        help='--days-old argument to find stack items older than X days ',
+                        default="7", type=int)
     parser.add_argument("--output", dest="output", help="target file name, default "
                                                         "'cleanup_azure.log' in "
                                                         "utils.path.log_path",
@@ -24,7 +24,7 @@ def parse_cmd_line():
     return args
 
 
-def azure_cleanup(nic_template, pip_template, days, output):
+def azure_cleanup(nic_template, pip_template, days_old, output):
     with open(output, 'w') as report:
         report.write('azure_cleanup.py, NICs and PIPs Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
@@ -33,7 +33,7 @@ def azure_cleanup(nic_template, pip_template, days, output):
                 provider_mgmt = get_mgmt(provider_key)
                 nic_list = provider_mgmt.list_free_nics(nic_template)
                 pip_list = provider_mgmt.list_free_pip(pip_template)
-                stack_list = provider_mgmt.list_stack(days=days)
+                stack_list = provider_mgmt.list_stack(days_old=days_old)
                 report.write("----- Provider: {} -----".format(provider_key))
                 if nic_list:
                     report.write("\nRemoving Nics with the name \"{}\":\n".format(nic_template))
@@ -50,12 +50,14 @@ def azure_cleanup(nic_template, pip_template, days, output):
                     report.write("\nNo \"{}\" Public IPs were found\n".format(pip_template))
                 if stack_list:
                     report.write(
-                        "\nRemoving Stacks older than \"{}\" days: \n".format(days))
-                    report.write("\n".join(str(k) for k in stack_list))
-                    provider_mgmt.delete_stack_by_date(days=days)
+                        "\nRemoving empty Stacks:")
+                    for stack in stack_list:
+                        if provider_mgmt.is_stack_empty(stack):
+                            provider_mgmt.delete_stack(stack)
+                            report.write("\nStack {} is empty - Removed".format(stack))
                 else:
                     report.write("\nNo stacks older than \"{}\" days were found\n".format(
-                        days))
+                        days_old))
             return 0
         except Exception:
             print("Something bad happened during Azure cleanup")
@@ -64,4 +66,4 @@ def azure_cleanup(nic_template, pip_template, days, output):
 
 if __name__ == "__main__":
     args = parse_cmd_line()
-    sys.exit(azure_cleanup(args.nic_template, args.pip_template, args.days, args.output))
+    sys.exit(azure_cleanup(args.nic_template, args.pip_template, args.days_old, args.output))
