@@ -894,6 +894,8 @@ def appliance_power_on(self, appliance_id):
                 # VM is running now.
                 sync_appliance_hw.delay(appliance.id)
                 sync_provider_hw.delay(appliance.template.provider.id)
+                # fixes time synchronization
+                appliance.ipapp.fix_ntp_clock()
                 return
             else:
                 # IP not present yet
@@ -907,9 +909,6 @@ def appliance_power_on(self, appliance_id):
             appliance.set_status("Powering on.")
             appliance.provider_api.start_vm(appliance.name)
             self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
-
-        # fixes time synchronization
-        appliance.ipapp.fix_ntp_clock()
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id, ), exc=e, countdown=20, max_retries=30)
