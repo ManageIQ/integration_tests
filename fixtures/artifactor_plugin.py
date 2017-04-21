@@ -174,6 +174,10 @@ def pytest_runtest_protocol(item):
     if tier:
         tier = tier.args[0]
 
+    requirement = item.get_marker('requirement')
+    if requirement:
+        requirement = requirement.args[0]
+
     try:
         params = item.callspec.params
         param_dict = {p: get_name(v) for p, v in params.iteritems()}
@@ -189,7 +193,7 @@ def pytest_runtest_protocol(item):
     fire_art_test_hook(
         item, 'start_test',
         slaveid=store.slaveid, ip=ip,
-        tier=tier, param_dict=param_dict)
+        tier=tier, requirement=requirement, param_dict=param_dict)
     yield
 
 
