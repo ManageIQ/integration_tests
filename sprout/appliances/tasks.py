@@ -909,8 +909,7 @@ def appliance_power_on(self, appliance_id):
             self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
 
         # fixes time synchronization
-        cfme_appliance = CFMEAppliance(appliance.provider_name, appliance.name)
-        cfme_appliance.fix_ntp_clock()
+        appliance.ipapp.fix_ntp_clock()
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id, ), exc=e, countdown=20, max_retries=30)
