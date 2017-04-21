@@ -218,7 +218,7 @@ def vm_reaper():
                         except Exception:
                             logger.info('Exception occured cleaning up')
 
-            containers = dockerbot.dc.containers.list(all=True, filters={'id': task.['tid']})
+            containers = dockerbot.dc.containers.list(all=True, filters={'id': task['tid']})
             for container in containers:
                 if task['tid'] in container.id:
                     logger.info('Cleaning up docker {}'.format(container))
