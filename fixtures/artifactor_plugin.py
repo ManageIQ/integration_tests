@@ -194,9 +194,9 @@ def pytest_runtest_protocol(item):
         blockers = []
         for blocker in blocker_spec:
             if isinstance(blocker, int):
-                blockers.append(BZ(blocker))
+                blockers.append(BZ(blocker).url)
             else:
-                blockers.append(Blocker.parse(blocker))
+                blockers.append(Blocker.parse(blocker).url)
     else:
         blockers = []
     fire_art_test_hook(
