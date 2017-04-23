@@ -94,7 +94,8 @@ def test_labels(provider, soft_assert):
         elif obj_list[3] in obj_list:
             url_obj = 'https://' + provider.hostname + \
                       ':8443/api/v1/namespaces/openshift-infra'
-            json_data = '{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"redhat":"essential"}}}'
+            json_data = '{"apiVersion":"v1","kind":"Namespace","metadata":' \
+                        '{"labels":{"redhat":"essential"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
         elif obj_list[4] in obj_list:
             url_obj = 'https://' + provider.hostname + ':8443/api/v1/nodes/' + provider.hostname
