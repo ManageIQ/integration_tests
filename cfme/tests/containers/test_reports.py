@@ -4,9 +4,10 @@ import re
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme.intelligence.reports.reports import CannedSavedReport
+from cfme.intelligence.reports.reports import CannedSavedReport, CustomReport, select
 from utils import testgen
 from utils.blockers import BZ
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -61,6 +62,25 @@ def get_report(menu_name):
     path_to_report = ['Configuration Management', 'Containers', menu_name]
     run_at = CannedSavedReport.queue_canned_report(path_to_report)
     return CannedSavedReport(path_to_report, run_at)
+
+
+@pytest.mark.polarion('CMP-10617')
+def test_container_reports_base_on_options(soft_assert):
+    navigate_to(CustomReport, 'New')
+    for base_on in (
+        'Chargeback Container Images',
+        'Container Images',
+        'Container Services',
+        'Container Templates',
+        'Containers',
+        re.compile('Performance - Container\s*Nodes'),
+        re.compile('Performance - Container\s*Projects'),
+        'Performance - Containers'
+    ):
+        compare = (base_on.match if hasattr(base_on, 'match') else base_on.__eq__)
+        option = [opt for opt in select(id="chosen_model").all_options
+                  if compare(str(opt.text))]
+        soft_assert(option, 'Could not find option "{}" for base report on.'.format(base_on))
 
 
 @pytest.mark.meta(blockers=[BZ(1435958, forced_streams=["5.8"])])
