@@ -109,9 +109,7 @@ def assign_compute_custom_rate(new_chargeback_fixed_rate, provider_name):
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_custom(rand_fake_metrics,
-                             setup_chargeback_generation_interval,
-                             assign_compute_custom_rate, provider_name):
+def chargeback_report_custom(assign_compute_custom_rate, provider_name):
     # Create a Chargeback report based on a custom Compute rate; Queue the report
     title = 'report_' + assign_compute_custom_rate
     data = {'menu_name': title,

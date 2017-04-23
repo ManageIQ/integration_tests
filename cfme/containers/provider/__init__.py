@@ -251,13 +251,6 @@ class ContainersProvider(BaseProvider, Pretty):
     def num_image_registry_ui(self):
         return int(self.get_detail("Relationships", "Image Registries"))
 
-    @property
-    def ems_id(self):
-        ext_management_systems = self.appliance.db.get('ext_management_systems')
-        return ext_management_systems.__table__.select().where(
-            ext_management_systems.name == self.name
-        ).execute().fetchall()[0].id
-
 
 @navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
