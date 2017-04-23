@@ -13,7 +13,7 @@ from functools import partial
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
-match_page = partial(match_location, controller='container_services', title='Services')
+match_page = partial(match_location, controller='container_service', title='Services')
 
 
 class Service(Taggable, SummaryMixin, Navigatable):
