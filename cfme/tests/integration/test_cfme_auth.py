@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import login
+from cfme.base.credential import Credential
 from cfme.configure.access_control import Group, User
-from cfme import Credential, login
 from utils import browser
 from utils.conf import cfme_data
 

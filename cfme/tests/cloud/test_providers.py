@@ -8,7 +8,7 @@ import pytest
 
 from utils import error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import Credential
+from cfme.base.credential import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, wait_for_a_provider,
     CloudProvider, prop_region)
@@ -108,7 +108,7 @@ def test_provider_add_with_bad_credentials(provider):
         flash = 'Login failed due to a bad username or password.'
         cred_args['principal'] = "bad"
 
-    provider.credentials['default'] = provider.Credential(**cred_args)
+    provider.credentials['default'] = Credential(**cred_args)
     with error.expected(flash):
         provider.create(validate_credentials=True)
 
@@ -245,7 +245,7 @@ def test_api_port_blank_validation(request):
 
 @pytest.mark.tier(3)
 def test_user_id_max_character_validation():
-    cred = Credential(principal=fauxfactory.gen_alphanumeric(51))
+    cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
     discover(cred, d_type="Amazon")
 
 

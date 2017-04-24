@@ -1,28 +1,28 @@
 import datetime
 from functools import partial
+
 from manageiq_client.api import APIException
 
-import cfme
+from cfme.base.credential import Credential, EventsCredential, TokenCredential, SSHCredential, \
+    CANDUCredential, AzureCredential, ServiceAccountCredential
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
     FlashMessageException)
 from cfme.web_ui import breadcrumbs_names, summary_title
-from cfme.web_ui import (flash, Quadicon, CheckboxTree, Region, fill, FileInput,
-                         Form, Input, Radio)
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form
 from cfme.web_ui import form_buttons, paginator
-from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, version, ParamClassName
+from utils import ParamClassName
+from cfme.web_ui import toolbar as tb
+from utils import conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
 from utils.log import logger
-from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
-
+from utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -67,77 +67,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     add_provider_button = None
     save_button = None
     db_types = ["Providers"]
-
-    class Credential(cfme.Credential, Updateable):
-        """Provider credentials
-
-           Args:
-             type: One of [amqp, candu, ssh, token] (optional)
-             domain: Domain for default credentials (optional)
-        """
-        @property
-        def form(self):
-            fields = [
-                ('token_secret_55', Input('bearer_token')),
-                ('google_service_account', Input('service_account')),
-            ]
-            tab_fields = {
-                ("Default", ('default_when_no_tabs', )): [
-                    ('default_principal', Input("default_userid")),
-                    ('default_secret', Input("default_password")),
-                    ('default_verify_secret', Input("default_verify")),
-                    ('token_secret', {
-                        version.LOWEST: Input('bearer_password'),
-                        '5.6': Input('default_password')
-                    }),
-                    ('token_verify_secret', {
-                        version.LOWEST: Input('bearer_verify'),
-                        '5.6': Input('default_verify')
-                    }),
-                ],
-
-                "RSA key pair": [
-                    ('ssh_user', Input("ssh_keypair_userid")),
-                    ('ssh_key', FileInput("ssh_keypair_password")),
-                ],
-
-                "C & U Database": [
-                    ('candu_principal', Input("metrics_userid")),
-                    ('candu_secret', Input("metrics_password")),
-                    ('candu_verify_secret', Input("metrics_verify")),
-                ],
-
-                "Hawkular": [
-                    ('hawkular_validate_btn', form_buttons.validate),
-                ]
-            }
-            fields_end = [
-                ('validate_btn', form_buttons.validate),
-            ]
-
-            if version.current_version() >= '5.6':
-                amevent = "Events"
-            else:
-                amevent = "AMQP"
-            tab_fields[amevent] = []
-            if version.current_version() >= "5.6":
-                tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
-            tab_fields[amevent].extend([
-                ('amqp_principal', Input("amqp_userid")),
-                ('amqp_secret', Input("amqp_password")),
-                ('amqp_verify_secret', Input("amqp_verify")),
-            ])
-
-            return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
-
-        def __init__(self, **kwargs):
-            super(BaseProvider.Credential, self).__init__(**kwargs)
-            self.type = kwargs.get('cred_type', None)
-            self.domain = kwargs.get('domain', None)
-            if self.type == 'token':
-                self.token = kwargs['token']
-            if self.type == 'service_account':
-                self.service_account = kwargs['service_account']
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -511,16 +440,26 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`BaseProvider.Credential` instance.
+            A :py:class:`cfme.base.credential.Credential` instance.
         """
         domain = credential_dict.get('domain', None)
         token = credential_dict.get('token', None)
-        return cls.Credential(
-            principal=credential_dict['username'],
-            secret=credential_dict['password'],
-            cred_type=cred_type,
-            domain=domain,
-            token=token)
+        if not cred_type:
+            return Credential(principal=credential_dict['username'],
+                              secret=credential_dict['password'],
+                              domain=domain)
+        elif cred_type == 'amqp':
+            return EventsCredential(principal=credential_dict['username'],
+                                    secret=credential_dict['password'])
+
+        elif cred_type == 'ssh':
+            return SSHCredential(principal=credential_dict['username'],
+                                 secret=credential_dict['password'])
+        elif cred_type == 'candu':
+            return CANDUCredential(principal=credential_dict['username'],
+                                   secret=credential_dict['password'])
+        elif cred_type == 'token':
+            return TokenCredential(token=token)
 
     @classmethod
     def get_credentials_from_config(cls, credential_config_name, cred_type=None):
@@ -531,7 +470,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`BaseProvider.Credential` instance.
+            A :py:class:`cfme.base.credential.Credential` instance.
         """
         creds = conf.credentials[credential_config_name]
         return cls.get_credentials(creds, cred_type=cred_type)
@@ -550,7 +489,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 considered as the credentials.
 
         Returns:
-            :py:class:`BaseProvider.Credentials` instance
+            :py:class:`cfme.base.credential.Credential` instance
         """
         if isinstance(cred_yaml_key, dict):
             return cls.get_credentials(cred_yaml_key, cred_type=cred_type)
@@ -708,18 +647,24 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             return True
 
 
-@fill.method((Form, BaseProvider.Credential))
+@fill.method((Form, Credential))  # default credential
+@fill.method((Form, EventsCredential))
+@fill.method((Form, CANDUCredential))
+@fill.method((Form, AzureCredential))
+@fill.method((Form, SSHCredential))
+@fill.method((Form, TokenCredential))
+@fill.method((Form, ServiceAccountCredential))
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
-    if cred.type == 'amqp':
+    if isinstance(cred, EventsCredential):
         fill(cred.form, {
             'event_selection': 'amqp',
             'amqp_principal': cred.principal,
             'amqp_secret': cred.secret,
             'amqp_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    elif cred.type == 'candu':
+    elif isinstance(cred, CANDUCredential):
         fill(cred.form, {'candu_principal': cred.principal,
             'candu_secret': cred.secret,
             'candu_verify_secret': cred.verify_secret,
@@ -742,39 +687,33 @@ def _fill_credential(form, cred, validate=None):
                 # ``exc`` must have some contents by now since at least one except had to happen.
                 raise exc
 
-    elif cred.type == 'azure':
+    elif isinstance(cred, AzureCredential):
         fill(cred.form, {'default_username': cred.principal,
                          'default_password': cred.secret,
                          'default_verify': cred.secret})
-    elif cred.type == 'ssh':
+    elif isinstance(cred, SSHCredential):
         fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
-    elif cred.type == 'token':
-        if version.current_version() < "5.6":
-            fill(cred.form, {'token_secret_55': cred.token, 'validate_btn': validate})
-        else:
+    elif isinstance(cred, TokenCredential):
+        fill(cred.form, {
+            'token_secret': cred.token,
+            'token_verify_secret': cred.verify_token,
+            'validate_btn': validate
+        })
+        if validate:
+            # Validate default creds and move on to hawkular tab validation
+            flash.assert_no_errors()
             fill(cred.form, {
-                'token_secret': cred.token,
-                'token_verify_secret': cred.verify_token,
-                'validate_btn': validate
+                'hawkular_validate_btn': validate
             })
-            if validate:
-                # Validate default creds and move on to hawkular tab validation
-                flash.assert_no_errors()
-                fill(cred.form, {
-                    'hawkular_validate_btn': validate
-                })
-    elif cred.type == 'service_account':
+    elif isinstance(cred, ServiceAccountCredential):
         fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
     else:
-        if cred.domain:
-            principal = r'{}\{}'.format(cred.domain, cred.principal)
-        else:
-            principal = cred.principal
-        fill(cred.form, {'default_principal': principal,
+        fill(cred.form, {'default_principal': cred.principal,
             'default_secret': cred.secret,
             'default_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    if validate and cred.type != 'candu':  # because we already validated it for the specific case
+    if validate and not isinstance(cred, CANDUCredential):
+        # because we already validated it for the specific case
         flash.assert_no_errors()
 
 

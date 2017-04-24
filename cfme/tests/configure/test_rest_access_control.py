@@ -2,17 +2,16 @@
 import fauxfactory
 import pytest
 
-from cfme import Credential
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.configure.access_control import User
 from cfme.login import login, login_admin
 from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import roles as _roles
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import users as _users
-from utils.wait import wait_for
 from utils import error
-
+from utils.wait import wait_for
 
 pytestmark = [
     test_requirements.auth

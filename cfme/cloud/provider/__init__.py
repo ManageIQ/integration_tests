@@ -130,14 +130,14 @@ class CloudProvider(Pretty, CloudInfraProvider):
     Args:
         name: Name of the provider.
         details: a details record (see EC2Details, OpenStackDetails inner class).
-        credentials (:py:class:`Credential`): see Credential inner class.
+        credentials (:py:class:`Credential`): see Credential class.
         key: The CFME key of the provider in the yaml.
 
     Usage:
 
         myprov = EC2Provider(name='foo',
                              region='us-west-1',
-                             credentials=Provider.Credential(principal='admin', secret='foobar'))
+                             credentials=Credential(principal='admin', secret='foobar'))
         myprov.create()
 
     """
@@ -313,7 +313,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
     wait for it to finish.
 
     Args:
-      credential (cfme.Credential):  Amazon discovery credentials.
+      credential (cfme.base.credential.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
     navigate_to(CloudProvider, 'Discover')

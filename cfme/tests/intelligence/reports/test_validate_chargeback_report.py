@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 
-import cfme.configure.access_control as ac
-import cfme.intelligence.chargeback as cb
+import re
+from datetime import date
+
 import fauxfactory
 import pytest
-import re
 
-from cfme import Credential
+import cfme.configure.access_control as ac
+import cfme.intelligence.chargeback as cb
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
-from datetime import date
 from utils import testgen
 from utils.blockers import BZ
 from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for
-
 
 pytestmark = [
     pytest.mark.tier(2),

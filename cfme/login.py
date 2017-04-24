@@ -8,16 +8,15 @@ the credentials in the cfme yamls.
 from __future__ import absolute_import
 
 import time
-from selenium.webdriver.common.keys import Keys
 
-from cfme import Credential
+from selenium.webdriver.common.keys import Keys
+from widgetastic.widget import Text, View
+
+from cfme.base.credential import Credential
+from fixtures.pytest_store import store
 from utils import conf
 from utils.log import logger
-from fixtures.pytest_store import store
-
-from widgetastic.widget import Text, View
 from widgetastic_patternfly import Button, Input, FlashMessages
-
 from . import BaseLoggedInPage
 
 
