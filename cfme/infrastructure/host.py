@@ -9,6 +9,7 @@
 
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
 
 import cfme
 from cfme.base.credential import Credential as BaseCredential
@@ -16,7 +17,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from utils import conf
-from cfme.exceptions import DestinationNotFound, HostNotFound
+from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
     form_buttons, paginator, Input, mixins, match_location
@@ -452,7 +453,7 @@ class All(CFMENavigateStep):
     def step(self):
         try:
             self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Hosts')
-        except DestinationNotFound:
+        except sel.NoSuchElementException:
             self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Nodes')
 
     def resetter(self):
