@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import atexit
 import os
-<<<<<<< HEAD
 import re
-=======
 import six
->>>>>>> Refactoring in widgetastic_manageiq. basestring replaced by six.string_types
 from collections import namedtuple
 from datetime import date
 from math import ceil
@@ -18,7 +15,7 @@ from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
-from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
+from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -2240,11 +2237,24 @@ class MenuShortcutsPicker(DashboardWidgetsPicker):
     (Cloud Intel/Reports/Dashobard Widgets/Menu).
 
     """
+    @ParametrizedView.nested
+    class shortcut(ParametrizedView):  # noqa
+        PARAMETERS = ("number",)
+        alias = Input(name=ParametrizedString("shortcut_desc_{number}"))
+        remove_button = Text(ParametrizedLocator(".//a[@id=s_{@number|quote}_close]"))
+
+        def fill(self, alias):
+            self.alias.fill(alias)
+
+        def remove(self):
+            self.remove_button.click()
+
     def add_shortcut(self, shortcut, alias):
+        # We need to get all options from the dropdown before picking
         mapping = self.mapping
         self.select.fill(shortcut)
         if shortcut != alias:
-            Input(self, "shortcut_desc_{}".format(mapping[shortcut])).fill(alias)
+            self.shortcut(mapping[shortcut]).fill(alias)
 
     @cached_property
     def mapping(self):
