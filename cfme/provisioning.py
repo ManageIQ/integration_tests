@@ -310,11 +310,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     if not wait:
         return
 
-    # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
-    logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
-    wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
-
-    # nav to requests page happens on successful provision
+    # Provision Re important in this test
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
     row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     cells = {'Description': row_description}
@@ -326,7 +322,12 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
         raise e
     assert normalize_text(row.status.text) == 'ok' \
                                               and normalize_text(
-        row.request_state.text) == 'finished'
+        row.request_state.text) == 'finished', \
+        "Provisioning failed with the message {}".format(row.last_message.text)
+
+    # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
+    logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
+    wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
 
     if smtp_test:
         # Wait for e-mails to appear

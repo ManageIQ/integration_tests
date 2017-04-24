@@ -71,7 +71,7 @@ class AzureInstance(Instance):
             instance_name=self.name,
             availability_zone=availability_zone,
             # not supporting multiselect now, just take first value
-            security_groups=security_groups[0],
+            security_groups=security_groups,
             instance_type=instance_type,
             guest_keypair=guest_keypair,
             **prov_fill_kwargs
