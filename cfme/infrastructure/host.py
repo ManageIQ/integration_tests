@@ -16,7 +16,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from utils import conf
-from cfme.exceptions import HostNotFound
+from cfme.exceptions import DestinationNotFound, HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
     form_buttons, paginator, Input, mixins, match_location
@@ -274,9 +274,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
         def _looking_for_state_change():
             tb.refresh()
-            return 'currentstate-' + desired_state in find_quadicon(self).state
+            return 'currentstate-' + desired_state in find_quadicon(self.name,
+                                                                    do_not_navigate=False).state
 
-        navigate_and_select_all_hosts(self)
+        navigate_and_select_all_hosts(self.name, self.provider)
         return wait_for(_looking_for_state_change, num_sec=timeout)
 
     def get_ipmi(self):
@@ -449,12 +450,10 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-        dest = 'Hosts'
-        if hasattr(self.obj, 'provider') and self.obj.provider:
-            if self.obj.provider.one_of(OpenstackInfraProvider):
-                dest = 'Nodes'
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', dest)
+        try:
+            self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Hosts')
+        except DestinationNotFound:
+            self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Nodes')
 
     def resetter(self):
         tb.select("Grid View")
@@ -609,25 +608,30 @@ def find_quadicon(host, do_not_navigate=False):
     """Find and return a quadicon belonging to a specific host
 
     Args:
-        host: Host object
+        host: Host name as displayed at the quadicon
     Returns: :py:class:`cfme.web_ui.Quadicon` instance
     """
     if not do_not_navigate:
-        navigate_to(host, 'All')
+        navigate_to(Host, 'All')
     for page in paginator.pages():
-        quadicon = Quadicon(host.name, "host")
+        quadicon = Quadicon(host, "host")
         if sel.is_displayed(quadicon):
             return quadicon
     else:
-        raise HostNotFound("Host '{}' not found in UI!".format(host.name))
+        raise HostNotFound("Host '{}' not found in UI!".format(host))
 
 
-def navigate_and_select_all_hosts(hosts):
+def navigate_and_select_all_hosts(host_names, provider):
     """ Reduces some redundant code shared between methods """
-    if not isinstance(hosts, list):
-        hosts = [hosts]
-    navigate_to(hosts[0], 'All')
+    if isinstance(host_names, basestring):
+        host_names = [host_names]
+
+    if provider:
+        navigate_to(provider, 'ProviderNodes')
+    else:
+        navigate_to(Host, 'All')
+
     if paginator.page_controls_exist():
         paginator.check_all()
-    for host in hosts:
-        sel.check(Quadicon(host.name, 'host').checkbox())
+    for host_name in host_names:
+        sel.check(Quadicon(host_name, 'host').checkbox())
