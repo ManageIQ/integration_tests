@@ -137,7 +137,7 @@ class ServiceRetirementView(ServiceRetirementForm):
 class ReconfigureServiceView(SetOwnershipForm):
     title = Text("#explorer_title_text")
 
-    save_button = Button('Save')
+    submit_button = Button('Submit')
 
     @property
     def is_displayed(self):
@@ -248,6 +248,12 @@ class MyService(Updateable, Navigatable):
     def download_file(self, extension):
         view = navigate_to(self, 'All')
         view.download_choice.item_select("Download as " + extension)
+        view.flash.assert_no_error()
+
+    def reconfigure_service(self):
+        view = navigate_to(self, 'Reconfigure')
+        view.submit_button.click()
+        # TODO - assert for request view after request widgetastic conversion
         view.flash.assert_no_error()
 
 
