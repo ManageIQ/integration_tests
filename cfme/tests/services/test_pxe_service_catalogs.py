@@ -4,8 +4,6 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.automate.service_dialogs import ServiceDialog
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
@@ -76,34 +74,6 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 
 
 @pytest.yield_fixture(scope="function")
-def dialog():
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
-    )
-    service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     element_data=element_data,
-                     submit=True, cancel=True,
-                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="tab_desc",
-                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="box_desc")
-    service_dialog.create()
-    yield dialog
-
-
-@pytest.yield_fixture(scope="function")
-def catalog():
-    catalog = "cat_" + fauxfactory.gen_alphanumeric()
-    cat = Catalog(name=catalog,
-                  description="my catalog")
-    cat.create()
-    yield catalog
-
-
-@pytest.yield_fixture(scope="function")
 def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_servers_vm_prov):
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
@@ -144,7 +114,7 @@ def test_pxe_servicecatalog(setup_provider, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
