@@ -453,7 +453,7 @@ class All(CFMENavigateStep):
     def step(self):
         try:
             self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Hosts')
-        except sel.NoSuchElementException:
+        except NoSuchElementException:
             self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Nodes')
 
     def resetter(self):
