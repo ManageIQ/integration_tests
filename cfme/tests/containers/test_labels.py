@@ -35,7 +35,8 @@ def check_labels(test_obj, list_ui, provider, soft_assert):
 
         soft_assert(
             discrepancy == 'observed',
-            'Expected value for discrepancy label is "observed", got {} instead'.format(discrepancy))
+            'Expected value for discrepancy label is "observed", '
+            'got {} instead'.format(discrepancy))
 
 
 @pytest.mark.polarion('CMP-10572')
@@ -69,7 +70,8 @@ def test_labels(provider, soft_assert):
     for _ in obj_list:
         if obj_list[0]:
             url_obj = 'https://' + provider.hostname + ':8443/api/v1/namespaces/logging'
-            json_data = '{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"discrepancy":"observed"}}}'
+            json_data = '{"apiVersion":"v1","kind":"Namespace","metadata":' \
+                        '{"labels":{"discrepancy":"observed"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
         elif obj_list[1]:
             url_obj = url + obj_list[1] + service_name
@@ -205,4 +207,5 @@ def test_labels(provider, soft_assert):
                 discrepancy = obj.summary.labels.discrepancy.text_value
                 soft_assert(
                     discrepancy == 'observed',
-                    'Expected value for discrepancy label is "observed", got {} instead'.format(discrepancy))
+                    'Expected value for discrepancy label is "observed", '
+                    'got {} instead'.format(discrepancy))
