@@ -1,10 +1,9 @@
 from utils import version
-from . import InfraProvider, prop_region
+from . import InfraProvider
 from mgmtsystem.rhevm import RHEVMSystem
 
 
 class RHEVMProvider(InfraProvider):
-    _properties_region = prop_region
     type_name = "rhevm"
     mgmt_class = RHEVMSystem
     db_types = ["Redhat::InfraManager"]
@@ -39,15 +38,25 @@ class RHEVMProvider(InfraProvider):
         ca_certs = version.pick({
             version.LOWEST: None,
             '5.8': kwargs.get('ca_certs', None)})
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and provider_name,
-                'hostname_text': kwargs.get('hostname'),
+
+        main_values = {
+            'name': kwargs.get('name'),
+            'prov_type': create and provider_name,
+        }
+
+        endpoint_values = {
+            'default': {
+                'hostname': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
-                'verify_tls_switch': verify_tls,
-                'ca_certs': ca_certs,
-                'ipaddress_text': kwargs.get('ip_address'),
-                'candu_hostname_text':
-                kwargs.get('hostname') if self.credentials.get('candu', None) else None}
+                # 'ipaddress_text': kwargs.get('ip_address'),
+                'verify_tls': verify_tls,
+                'ca_certs': ca_certs
+            },
+            'database': {
+                'hostname': kwargs.get('hostname') if self.credentials.get('candu', None) else None
+            }
+        }
+        return main_values, endpoint_values
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
