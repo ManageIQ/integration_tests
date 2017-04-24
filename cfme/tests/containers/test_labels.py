@@ -31,11 +31,11 @@ def check_labels(test_obj, list_ui, provider, soft_assert):
     for name in list_ui:
         obj = test_obj(name, provider)
         obj.summary.reload()
-        redhat = obj.summary.labels.redhat.text_value
+        discrepancy = obj.summary.labels.discrepancy.text_value
 
         soft_assert(
-            redhat == 'essential',
-            'Expected value for redhat label is "essential", got {} instead'.format(redhat))
+            discrepancy == 'observed',
+            'Expected value for discrepancy label is "observed", got {} instead'.format(discrepancy))
 
 
 @pytest.mark.polarion('CMP-10572')
@@ -43,7 +43,7 @@ def test_labels(provider, soft_assert):
     """ This test creates a new label for nodes, pods, replicators,
         services, images, routes and projects using Openshift API.
         Then we verify the newly created label in CFME.The label
-        that is being used is redhat=essential.
+        that is being used is discrepancy=observed.
 
     """
 
@@ -61,59 +61,57 @@ def test_labels(provider, soft_assert):
     template_name = str([x for y in list(provider.mgmt.list_template()) for x in y][0])
     image_name = 'sha256:ae500c8640bb43a6e028ccb81248deee0c2e36063d725c0d411d9a08f379b868'
 
-    # create a new route, it will be tested separately
-
-    url_route_new = url_openshift + '/routes'
-    json_label_route = '{"apiVersion":"v1","kind":"Route","metadata":{"name":"route-tester-one,' \
-                       '"namespace":"default","labels":{"redhat":"essential"}},' \
-                       '"spec":{"to":{"kind":"Service",' \
-                       '"name":"route-tester-one"}}}'
-    requests.post(url_route_new, headers=headers_route, verify=False, data=json_label_route)
-
     # object list
 
-    obj_list = ('/pods/', '/services/', '/replicationcontrollers/',
-                '/project/', '/node/', '/template/', '/image/')
+    obj_list = ('/project/', '/services/', '/replicationcontrollers/',
+                '/pod/', '/node/', '/image/', '/template/')
 
     for _ in obj_list:
-        if obj_list[0] in obj_list:
-            url_obj = url + obj_list[0] + pod_name
-            json_data = '{"apiVersion":"v1","kind":"Pod","metadata":' \
-                        '{"labels":{"redhat":"essential"}}}'
+        if obj_list[0]:
+            url_obj = 'https://' + provider.hostname + ':8443/api/v1/namespaces/logging'
+            json_data = '{"apiVersion":"v1","kind":"Namespace","metadata":{"labels":{"discrepancy":"observed"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
-        elif obj_list[1] in obj_list:
+        elif obj_list[1]:
             url_obj = url + obj_list[1] + service_name
             json_data = '{"apiVersion":"v1","kind":"Service","metadata":' \
-                        '{"labels":{"redhat":"essential"}}}'
+                        '{"labels":{"discrepancy":"observed"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
-        elif obj_list[2] in obj_list:
+        elif obj_list[2]:
             url_obj = url + obj_list[2] + rc_name
             json_data = '{"apiVersion":"v1","kind":"ReplicationController","metadata":{' \
-                        '"labels":{"redhat":"essential"}}}'
+                        '"labels":{"discrepancy":"observed"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
-        elif obj_list[3] in obj_list:
-            url_obj = 'https://' + provider.hostname + \
-                      ':8443/api/v1/namespaces/openshift-infra'
-            json_data = '{"apiVersion":"v1","kind":"Namespace","metadata":' \
-                        '{"labels":{"redhat":"essential"}}}'
+        elif obj_list[3]:
+            url_obj = url + obj_list[3] + pod_name
+            json_data = '{"apiVersion":"v1","kind":"Pod","metadata":' \
+                        '{"labels":{"discrepancy":"observed"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
-        elif obj_list[4] in obj_list:
+        elif obj_list[4]:
             url_obj = 'https://' + provider.hostname + ':8443/api/v1/nodes/' + provider.hostname
             json_data = '{"apiVersion":"v1","kind":"Node","metadata":' \
-                        '{"labels":{"redhat":"essential"}}}'
+                        '{"labels":{"discrepancy":"observed"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
-        elif obj_list[5] in obj_list:
-            url_obj = 'https://' + provider.hostname + \
-                      ':8443/oapi/v1/namespaces/openshift/templates/' + template_name
-            json_data = '{"apiVersion":"v1","kind":"Template","metadata":' \
-                        '{"labels":{"redhat":"essential"}}}'
-            requests.patch(url_obj, headers=headers, verify=False, data=json_data)
-        else:
+        elif obj_list[5]:
             url_obj = 'https://' + provider.hostname + \
                       ':8443/oapi/v1/images/' + image_name
             json_data = '{"apiVersion":"v1","kind":"Image","metadata":' \
-                        '{"labels":{"redhat":"essential"}}}'
+                        '{"labels":{"discrepancy":"observed"}}}'
             requests.patch(url_obj, headers=headers, verify=False, data=json_data)
+        else:
+            url_obj = 'https://' + provider.hostname + \
+                      ':8443/oapi/v1/namespaces/openshift/templates/' + template_name
+            json_data = '{"apiVersion":"v1","kind":"Template","metadata":' \
+                        '{"labels":{"discrepancy":"observed"}}}'
+            requests.patch(url_obj, headers=headers, verify=False, data=json_data)
+
+    # create a new route, it will be tested separately
+
+    url_route_new = url_openshift + '/routes'
+    json_label_route = '{"apiVersion":"v1","kind":"Route","metadata":{"name":"route-test-another,' \
+                       '"namespace":"default","labels":{"discrepancy":"observed"}},' \
+                       '"spec":{"to":{"kind":"Service",' \
+                       '"name":"route-test-another"}}}'
+    requests.post(url_route_new, headers=headers_route, verify=False, data=json_label_route)
 
     # verify the labels in CFME
 
@@ -125,7 +123,6 @@ def test_labels(provider, soft_assert):
     sel.handle_alert()
 
     tb.select('Reload Current Display')
-    provider.validate_stats(ui=True)
 
     pod_list_api = provider.mgmt.list_container_group()
     pod_default_api = [
@@ -188,13 +185,13 @@ def test_labels(provider, soft_assert):
         elif test_obj is Route:
             tb.select("List View")
             route_ui = [r.name.text for r in list_tbl.rows()]
-            route_selected_ui = filter(lambda ch: 'route-tester-one' in ch, route_ui)
+            route_selected_ui = filter(lambda ch: 'route-test-another' in ch, route_ui)
             check_labels(test_obj, route_selected_ui, provider, soft_assert)
 
         elif test_obj is Project:
             tb.select("List View")
             project_ui = [r.name.text for r in list_tbl.rows()]
-            project_selected_ui = filter(lambda ch: 'openshift-infra' in ch, project_ui)
+            project_selected_ui = filter(lambda ch: 'logging' in ch, project_ui)
             check_labels(test_obj, project_selected_ui, provider, soft_assert)
 
         else:
@@ -205,7 +202,7 @@ def test_labels(provider, soft_assert):
                 tag = ''
                 obj = Image(name, tag, provider)
                 obj.summary.reload()
-                redhat = obj.summary.labels.redhat.text_value
+                discrepancy = obj.summary.labels.discrepancy.text_value
                 soft_assert(
-                    redhat == 'essential',
-                    'Expected value for redhat label is "essential", got {} instead'.format(redhat))
+                    discrepancy == 'observed',
+                    'Expected value for discrepancy label is "observed", got {} instead'.format(discrepancy))
