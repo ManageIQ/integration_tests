@@ -3,6 +3,7 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
+from riggerlib import recursive_update
 
 from textwrap import dedent
 
@@ -30,7 +31,7 @@ pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=[['provisioning', 'image']], scope="function")
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     """ Fixture to prepare instance parameters for provisioning
     """
@@ -42,40 +43,74 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
 
     request.addfinalizer(instance.delete_from_provider)
 
-    inst_args = {
+    inst_args = dict()
+
+    # Base instance info
+    inst_args['request'] = {
         'email': 'image_provisioner@example.com',
         'first_name': 'Image',
         'last_name': 'Provisioner',
         'notes': note,
     }
     # TODO Move this into helpers on the provider classes
-    if not isinstance(provider, AzureProvider):
-        inst_args['instance_type'] = provisioning['instance_type']
-        inst_args['availability_zone'] = provisioning['availability_zone']
-        inst_args['security_groups'] = [provisioning['security_group']]
-        inst_args['guest_keypair'] = provisioning['guest_keypair']
 
+    recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
+
+    if not isinstance(provider, AzureProvider):
+        recursive_update(inst_args, {
+            'properties': {
+                'instance_type': provisioning['instance_type'],
+                'guest_keypair': provisioning['guest_keypair']},
+            'environment': {
+                'availability_zone': provisioning['availability_zone'],
+                # security group can be a list
+                'security_groups': [provisioning['security_group']]}
+        })
+
+    # Provider specific
     if isinstance(provider, OpenStackProvider):
-        inst_args['cloud_network'] = provisioning['cloud_network']
+        recursive_update(inst_args, {
+            'environment': {
+                'cloud_network': provisioning['cloud_network']
+            }
+        })
 
     if isinstance(provider, GCEProvider):
-        inst_args['cloud_network'] = provisioning['cloud_network']
-        inst_args['boot_disk_size'] = provisioning['boot_disk_size']
-        inst_args['is_preemtible'] = True if current_version() >= "5.7" else None
+        recursive_update(inst_args, {
+            'environment': {
+                'cloud_network': provisioning['cloud_network']
+            },
+            'properties': {
+                'boot_disk_size': provisioning['boot_disk_size'],
+                'is_preemptible': True if current_version() >= "5.7" else None}
+        })
 
     if isinstance(provider, AzureProvider):
-        inst_args['cloud_network'] = provisioning['virtual_net']
-        inst_args['cloud_subnet'] = provisioning['subnet_range']
-        inst_args['security_groups'] = provisioning['network_nsg']
-        inst_args['resource_groups'] = provisioning['resource_group']
-        inst_args['instance_type'] = provisioning['vm_size'].lower()
-        inst_args['admin_username'] = provisioning['vm_user']
-        inst_args['admin_password'] = provisioning['vm_password']
-    return instance, inst_args, image
+        # Azure uses different provisioning keys for some reason
+        recursive_update(inst_args, {
+            'environment': {
+                'cloud_network': provisioning['cloud_network'],
+                'cloud_subnet': provisioning['cloud_subnet'],
+                'security_groups': [provisioning['cloud_security_group']],
+                'resource_groups': provisioning['resource_group']},
+            'properties': {
+                'instance_type': provisioning['vm_size'].lower()},
+            'customize': {
+                'admin_username': provisioning['vm_user'],
+                'admin_password': provisioning['vm_password']}})
+
+    yield instance, inst_args, image
+
+    try:
+        if instance.does_vm_exist_on_provider():
+            instance.delete_from_provider()
+    except Exception as ex:
+        logger.warning('Exception while deleting instance fixture, continuing: {}'
+                       .format(ex.message))
 
 
 @pytest.fixture(scope="function")
-def vm_name(request, provider):
+def vm_name(request):
     return random_vm_name('prov')
 
 
@@ -384,25 +419,26 @@ def copy_domains(original_request_class, domain):
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-def test_provision_from_template_with_attached_disks(
-        request, setup_provider, provider, vm_name, provisioning,
-        disks, soft_assert, domain, modified_request_class, copy_domains):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+def test_provision_from_template_with_attached_disks(request, testing_instance, provider, disks,
+                                                     soft_assert, domain, modified_request_class,
+                                                     copy_domains, provisioning):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
         test_flag: provision
     """
-    image = provisioning['image']['name']
-    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
-        image, vm_name, provider.key))
+    instance, inst_args, image = testing_instance
+    # Modify availiability_zone for Azure provider
+    if provider.one_of(AzureProvider):
+        recursive_update(inst_args, {'environment': {'availability_zone': provisioning("av_set")}})
 
-    DEVICE_NAME = "/dev/sd{}"
+    device_name = "/dev/sd{}"
     device_mapping = []
 
     with provider.mgmt.with_volumes(1, n=disks) as volumes:
         for i, volume in enumerate(volumes):
-            device_mapping.append((volume, DEVICE_NAME.format(chr(ord("b") + i))))
+            device_mapping.append((volume, device_name.format(chr(ord("b") + i))))
         # Set up automate
 
         method = modified_request_class.methods.instantiate(name="openstack_PreProvision")
@@ -417,22 +453,6 @@ def test_provision_from_template_with_attached_disks(
             with update(method):
                 method.script = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
-        instance = Instance.factory(vm_name, provider, image)
-        request.addfinalizer(instance.delete_from_provider)
-        inst_args = {
-            'email': 'image_provisioner@example.com',
-            'first_name': 'Image',
-            'last_name': 'Provisioner',
-            'notes': note,
-            'instance_type': provisioning['instance_type'],
-            "availability_zone": provisioning["availability_zone"] if provider.type != "azure" else
-            provisioning["av_set"],
-            'security_groups': [provisioning['security_group']],
-            'guest_keypair': provisioning['guest_keypair']
-        }
-
-        if isinstance(provider, OpenStackProvider):
-            inst_args['cloud_network'] = provisioning['cloud_network']
 
         instance.create(**inst_args)
 
@@ -446,17 +466,15 @@ def test_provision_from_template_with_attached_disks(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
-        soft_assert, domain, copy_domains, provisioning, modified_request_class):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, copy_domains,
+                                    modified_request_class):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
         test_flag: provision, volumes
     """
-    image = provisioning['image']['name']
-    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
-        image, vm_name, provider.key))
+    instance, inst_args, image = testing_instance
 
     with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
         # Set up automate
@@ -482,21 +500,6 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
         def _finish_method():
             with update(method):
                 method.script = """prov = $evm.root["miq_provision"]"""
-        instance = Instance.factory(vm_name, provider, image)
-        request.addfinalizer(instance.delete_from_provider)
-        inst_args = {
-            'email': 'image_provisioner@example.com',
-            'first_name': 'Image',
-            'last_name': 'Provisioner',
-            'notes': note,
-            'instance_type': provisioning['instance_type'],
-            "availability_zone": provisioning["availability_zone"],
-            'security_groups': [provisioning['security_group']],
-            'guest_keypair': provisioning['guest_keypair']
-        }
-
-        if isinstance(provider, OpenStackProvider):
-            inst_args['cloud_network'] = provisioning['cloud_network']
 
         instance.create(**inst_args)
 
@@ -508,18 +511,16 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-def test_provision_with_additional_volume(request, setup_provider, provider, vm_name,
-        soft_assert, copy_domains, domain, provisioning, modified_request_class):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+def test_provision_with_additional_volume(request, testing_instance, provider, soft_assert,
+                                          copy_domains, domain, modified_request_class):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
     Metadata:
         test_flag: provision, volumes
     """
-    image = provisioning['image']['name']
-    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
-        image, vm_name, provider.key))
+    instance, inst_args, image = testing_instance
 
     # Set up automate
     method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
@@ -549,21 +550,6 @@ def test_provision_with_additional_volume(request, setup_provider, provider, vm_
         with update(method):
             method.script = """prov = $evm.root["miq_provision"]"""
     request.addfinalizer(_finish_method)
-    instance = Instance.factory(vm_name, provider, image)
-    request.addfinalizer(instance.delete_from_provider)
-    inst_args = {
-        'email': 'image_provisioner@example.com',
-        'first_name': 'Image',
-        'last_name': 'Provisioner',
-        'notes': note,
-        'instance_type': provisioning['instance_type'],
-        "availability_zone": provisioning["availability_zone"],
-        'security_groups': [provisioning['security_group']],
-        'guest_keypair': provisioning['guest_keypair']
-    }
-
-    if isinstance(provider, OpenStackProvider):
-        inst_args['cloud_network'] = provisioning['cloud_network']
 
     instance.create(**inst_args)
 

@@ -442,11 +442,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
 
         Args:
             timeout: time (in seconds) to wait for it to appear
-            from_details: when found, should it load the vm details
+            load_details: when found, should it load the vm details
         """
         wait_for(
             lambda: self.exists,
-            num_sec=timeout, delay=30, fail_func=sel.refresh,
+            num_sec=timeout, delay=30, fail_func=self.provider.refresh_provider_relationships,
             message="wait for vm to appear")
         if load_details:
             self.load_details()
@@ -658,6 +658,7 @@ class VM(BaseVM):
                 :py:class:`datetime.datetime` or :py:class:`utils.timeutil.parsetime`.
             warn: When to warn, fills the select in the form in case the ``when`` is specified.
         """
+        # TODO: refactor for retirement nav destinations and widget form fill when child classes
         self.load_details()
         lcl_btn("Set Retirement Date")
         if callable(self.retire_form.date_retire):

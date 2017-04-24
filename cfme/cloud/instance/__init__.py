@@ -1,77 +1,69 @@
-""" A model of Instances page in CFME."""
-from functools import partial
+from riggerlib import recursive_update
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from selenium.common.exceptions import NoSuchElementException
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.widget import View, Text
+from widgetastic_patternfly import Accordion, Dropdown, Button, Input, BootstrapSelect
+from widgetastic_manageiq import (
+    ManageIQTree, Table, CheckboxSelect, Calendar, PaginationPane, TimelinesView, SummaryTable,
+    ItemsToolBarViewSelector, VersionPick, Version, Select)
 
 from cfme import BaseLoggedInPage
 from cfme.common.vm import VM
-from cfme.exceptions import (
-    InstanceNotFound, OptionNotAvailable, DestinationNotFound,
-    BlockTypeUnknown, TemplateNotFound, ToolbarOptionGreyedOrUnavailable)
+from cfme.exceptions import InstanceNotFound, DestinationNotFound, TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import (
-    accordion, paginator, toolbar as tb, CheckboxTree, Region, InfoBlock,
-    Tree, Quadicon, match_location, Form, Table, PagedTable, form_buttons)
+from cfme.provisioning import ProvisioningForm
+from cfme.web_ui import flash, Quadicon
 from cfme.web_ui.search import search_box
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
-from utils.wait import wait_for
 from utils.log import logger
-from widgetastic_manageiq import TimelinesView
+from utils.wait import wait_for
 
 
-cfg_btn = partial(tb.select, 'Configuration')
-pwr_btn = partial(tb.select, 'Power')
-life_btn = partial(tb.select, 'Lifecycle')
-pol_btn = partial(tb.select, 'Policy')
-mon_btn = partial(tb.select, 'Monitoring')
+class CloudInstanceView(BaseLoggedInPage):
+    title = Text('#explorer_title_text')
 
-tree_inst_by_prov = partial(accordion.tree, "Instances by Provider")
-tree_instances = partial(accordion.tree, "Instances")
-tree_image_by_prov = partial(accordion.tree, "Images by Provider")
-tree_images = partial(accordion.tree, "Images")
+    reload = Button(title='Reload current display')
+    configuration = Dropdown('Configuration')
+    lifecycle = Dropdown('Lifecycle')
+    policy = Dropdown('Policy')
+    power = Dropdown('Power Operations')  # title on instance 'all' pages
+    monitoring = Dropdown('Monitoring')
 
-list_page = Region(title='Instances')
+    views = View.nested(ItemsToolBarViewSelector)
 
-policy_page = Region(
-    locators={
-        'policy_tree': Tree('//div[@class="containerTableStyle"]/table')
-    })
+    paginator = PaginationPane()
 
-image_select_form = Form(
-    fields=[
-        ('template_table', Table('//div[@id="pre_prov_div"]//table')),
-        ('cancel_button', form_buttons.cancel)
-    ]
-)
+    instance_table = Table("//div[@id='list_grid']//table")
 
-manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
-
-list_table = PagedTable(table_locator="//div[@id='list_grid']//table")
-
-match_page = partial(match_location, controller='vm_cloud', title='Instances')
-
-
-def details_page_check(name, provider):
-    title_match = match_page(summary='Instance "{}"'.format(name))
-    if title_match:
-        # Also check provider
-        try:
-            prov_match = InfoBlock.text('Relationships', 'Cloud Provider') == provider.name
-            return title_match and prov_match
-        except BlockTypeUnknown:
-            # Default to false since we can't identify which provider the image belongs to
-            return False
-
-
-class CloudInstanceTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
-    def is_displayed(self):
-        return self.logged_in_as_current_user and \
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Instances'] and \
-            super(TimelinesView, self).is_displayed
+    def in_cloud_instance(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Instances']
+        )
+
+    @View.nested
+    class instances_by_provider(Accordion):  # noqa
+        ACCORDION_NAME = 'Instances by Provider'
+        tree = ManageIQTree()
+
+    @View.nested
+    class images_by_provider(Accordion):  # noqa
+        ACCORDION_NAME = 'Images by Provider'
+        tree = ManageIQTree()
+
+    @View.nested
+    class instances(Accordion):  # noqa
+        ACCORDION_NAME = 'Instances'
+        tree = ManageIQTree()
+
+    @View.nested
+    class images(Accordion):  # noqa
+        ACCORDION_NAME = 'Images'
+        tree = ManageIQTree()
 
 
 class Instance(VM, Navigatable):
@@ -90,6 +82,9 @@ class Instance(VM, Navigatable):
     TO_RETIRE = "Retire this Instance"
     QUADICON_TYPE = "instance"
     VM_TYPE = "Instance"
+    PROVISION_CANCEL = 'Add of new VM Provision Request was cancelled by the user'
+    PROVISION_START = 'VM Provision Request was Submitted, ' \
+                      'you will be notified when your VMs are ready'
 
     REMOVE_SINGLE = {'5.6': 'Remove from the VMDB',
                      '5.7': 'Remove Instance'}
@@ -100,25 +95,60 @@ class Instance(VM, Navigatable):
         super(Instance, self).__init__(name=name, provider=provider, template_name=template_name)
         Navigatable.__init__(self, appliance=appliance)
 
-    def create(self):
+    def create(self, form_values, cancel=False):
         """Provisions an instance with the given properties through CFME
+
+        Args:
+            form_values: dictionary of form values for provisioning, structured into tabs
+
+        Note:
+            Calling create on a sub-class of instance will generate the properly formatted
+            dictionary when the correct fields are supplied.
         """
-        raise NotImplementedError('create is not implemented.')
+        view = navigate_to(self, 'Provision')
 
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        # BZ 1389299
-        # TODO: add refresh support back
+        # Only support 1 security group for now
+        # TODO: handle multiple
+        if 'environment' in form_values and 'security_groups' in form_values['environment'] and \
+                isinstance(form_values['environment']['security_groups'], (list, tuple)):
 
-    def get_detail(self, *args, **kwargs):
-        # TODO: remove when bug 1389299 is fixed to use common.vm.get_detail()
-        # Navigate to all first to force reload of details screen without using refresh
-        navigate_to(self, 'All')
-        self.load_details()
-        if kwargs.get('icon_href', False):
-            return InfoBlock.icon_href(*kwargs.get('properties'))
+            first_group = form_values['environment']['security_groups'][0]
+            recursive_update(form_values, {'environment': {'security_groups': first_group}})
+
+        view.form.fill(form_values)
+
+        if cancel:
+            view.form.cancel_button.click()
+            # Redirects to Instance All, but flash is defined in BaseLoggedInPage so use directly
+            view = self.browser.create_view(BaseLoggedInPage)
+            wait_for(func=view.flash.assert_success_message, func_arg=self.PROVISION_CANCEL,
+                     fail_condition=[], timeout=10, delay=2, message='wait for flash success')
         else:
-            return InfoBlock.text(*kwargs.get('properties'))
+            view.form.submit_button.click()
+            # TODO this redirects to service.request, create_view on it when it exists for flash
+            wait_for(flash.get_messages, fail_condition=[], timeout=10, delay=2,
+                     message='wait for Flash Success')
+            flash.assert_success_message(self.PROVISION_START)
+
+    def update(self, values, cancel=False, reset=False):
+        """Update cloud instance
+
+        Args:
+            values: Dictionary of form key/value pairs
+            cancel: Boolean, cancel the form submission
+            reset Boolean, reset form after fill - returns immediately after reset
+        Note:
+            The edit form contains a 'Reset' button - if this is c
+        """
+        view = navigate_to(self, 'Edit')
+        # form is the view's parent
+        view.form.fill(values)
+        if reset:
+            view.form.reset_button.click()
+            return
+        else:
+            button = view.form.cancel_button if cancel else view.form.submit_button
+            button.click()
 
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper instance details page.
@@ -127,12 +157,9 @@ class Instance(VM, Navigatable):
             If no provider is listed, default to False since we may be on the details page
             for an instance on the wrong provider.
         """
-
-        if details_page_check(name=self.name, provider=self.provider):
-            return True
-        elif not force:
-            return False
-        elif force:
+        if not force:
+            return self.browser.create_view(DetailsView).is_displayed()
+        else:
             navigate_to(self, 'Details')
             return True
 
@@ -159,7 +186,8 @@ class Instance(VM, Navigatable):
         """
 
         def _looking_for_state_change():
-            current_state = self.get_detail(properties=("Power Management", "Power State"))
+            view = navigate_to(self, 'Details')
+            current_state = view.power_detail.get_text_of("Power State")
             logger.debug('Current Instance state: {}'.format(current_state))
             logger.debug('Desired Instance state: {}'.format(desired_state))
             if isinstance(desired_state, (list, tuple)):
@@ -171,17 +199,20 @@ class Instance(VM, Navigatable):
                         message='Checking for instance state change',
                         fail_func=self.provider.refresh_provider_relationships)
 
-    def find_quadicon(self, *args, **kwargs):
+    def find_quadicon(self, **kwargs):
         """Find and return a quadicon belonging to a specific instance
 
         Args:
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
         """
+        # TODO refactor a bit when quadicon is widget
         if not kwargs.get('do_not_navigate', False):
             navigate_to(self, 'All')
 
-        tb.select('Grid View')
-        for page in paginator.pages():
+        # Make sure we're looking at the quad grid
+        view = self.browser.create_view(CloudInstanceView)
+        view.views.select('Grid View')
+        for _ in view.paginator.pages():
             quadicon = Quadicon(self.name, "instance")
             if quadicon.exists:
                 if kwargs.get('mark', False):
@@ -191,318 +222,604 @@ class Instance(VM, Navigatable):
             raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
 
     def power_control_from_cfme(self, *args, **kwargs):
-        """Power controls a VM from within CFME using instance details screen
+        """Power controls a VM from within CFME using details or collection
 
         Raises:
+            InstanceNotFound: the instance wasn't found when navigating
             OptionNotAvailable: option param is not visible or enabled
         """
-        # TODO push this to common.vm when infra and cloud have navmazing destinations
-
-        if kwargs.get('from_details', True):
-            navigate_to(self, 'Details')
-        else:
-            navigate_to(self, 'AllForProvider')
-            self.find_quadicon(mark=True)
+        # TODO push this to common.vm when infra vm classes have widgets
         if not kwargs.get('option'):
             raise ValueError('Need to provide option for power_control_from_cfme, no default.')
-        try:
-            if not pwr_btn(kwargs.get('option'), invokes_alert=True):
-                raise ToolbarOptionGreyedOrUnavailable('Failed to click power button')
-        except NoSuchElementException:
-            raise OptionNotAvailable(kwargs.get('option') + " is not visible or enabled")
 
-        sel.handle_alert(cancel=kwargs.get('cancel', False))
+        if kwargs.get('from_details', True):
+            view = navigate_to(self, 'Details')
+        else:
+            view = navigate_to(self, 'AllForProvider')
+            view.views.select('List View')
+            try:
+                row = view.paginator.find_row_on_pages(view.instance_table, name=self.name)
+            except NoSuchElementException:
+                raise InstanceNotFound('Failed to find instance in table: {}'.format(self.name))
+            row[0].check()
 
-
-###
-# Multi-object functions
-###
-def _method_setup(vm_names, provider_crud=None):
-    """ Reduces some redundant code shared between methods """
-    if isinstance(vm_names, basestring):
-        vm_names = [vm_names]
-
-    if provider_crud:
-        provider_crud.load_all_provider_instances()
-    else:
-        navigate_to(Instance, 'All')
-    if paginator.page_controls_exist():
-        paginator.results_per_page(1000)
-    for vm_name in vm_names:
-        sel.check(Quadicon(vm_name, 'instance').checkbox())
+        # cancel is the kwarg, when true we want item_select to dismiss the alert, so flip the bool
+        view.power.item_select(kwargs.get('option'), handle_alert=not kwargs.get('cancel', False))
 
 
-def get_all_instances(do_not_navigate=False):
-    """Returns list of all cloud instance names"""
-    if not do_not_navigate:
-        navigate_to(Instance, 'All')
-    vms = set([])
-    if not paginator.page_controls_exist():
-        return vms
-
-    # Cleaner to use list view and get names from rows than titles from Quadicons
-    tb.select('List View')
-    paginator.results_per_page(50)
-    for page in paginator.pages():
-        try:
-            for row in list_table.rows():
-                name = (row.__getattr__('Name')).text
-                if name:
-                    vms.add(name)
-        except sel.NoSuchElementException:
-            pass
-    return vms
-
-
-def remove(instance_names, cancel=True, provider_crud=None):
-    """Removes multiple instances from CFME VMDB
-
-    Args:
-        instance_names: List of instances to interact with
-        cancel: Whether to cancel the deletion, defaults to True
-        provider_crud: provider object where instances reside (optional)
-    """
-    _method_setup(instance_names, provider_crud)
-    cfg_btn(version.pick({
-        version.LOWEST: 'Remove selected items from the VMDB',
-        '5.7': 'Remove selected items'}), invokes_alert=True)
-    sel.handle_alert(cancel=cancel)
-
-
-def is_pwr_option_visible(vm_names, option, provider_crud=None):
-    """Returns whether a particular power option is visible.
-
-    Args:
-        vm_names: List of instances to interact with, if from_details=True is passed,
-                  only one instance can be passed in the list.
-        option: Power option param, see :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
-        provider_crud: provider object where instance resides (optional)
-    """
-    _method_setup(vm_names, provider_crud)
-    try:
-        tb.is_greyed('Power', option)
-        return True
-    except sel.NoSuchElementException:
-        return False
-
-
-def is_pwr_option_enabled(vm_names, option, provider_crud=None):
-    """Returns whether a particular power option is enabled
-
-    Args:
-        vm_names: List of instances to interact with
-        provider_crud: provider object where vm resides on (optional)
-        option: Power option param; for available power option, see
-                :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
-
-    Raises:
-        OptionNotAvailable: When unable to find the power option passed
-    """
-    _method_setup(vm_names, provider_crud)
-    try:
-        return not tb.is_greyed('Power', option)
-    except sel.NoSuchElementException:
-        raise OptionNotAvailable("No such power option (" + str(option) + ") is available")
-
-
-def select_provision_image(template_name, provider):
-    """
-    Navigate to provision and select the template+click continue, leaving UI on provision form
-
-    :param template_name: The image/template name to select
-    :param provider: Provider where the image/template resides
-    :return: none
-    """
-    logger.debug('Selecting an image {} from provider {} for provisioning'
-                 .format(template_name, provider.name))
-    navigate_to(Instance, 'Provision')
-    template = image_select_form.template_table.find_row_by_cells({
-        'Name': template_name,
-        'Provider': provider.name
-    })
-    if template:
-        sel.click(template)
-        # In order to mitigate the sometimes very long spinner timeout, raise the timeout
-        with sel.ajax_timeout(90):
-            sel.click(form_buttons.FormButton("Continue", force_click=True))
-
-    else:
-        raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
-            template_name, provider.key))
+class AllView(CloudInstanceView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_cloud_instance and
+            self.title.text == 'All Instances'
+        )
 
 
 @navigator.register(Instance, 'All')
-class InstanceAll(CFMENavigateStep):
+class All(CFMENavigateStep):
+    VIEW = AllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='All Instances')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
+        self.view.instances.tree.click_path('All Instances')
 
-        # use accordion
+    def resetter(self, *args, **kwargs):
         # If a filter was applied, it will persist through navigation and needs to be cleared
         if sel.is_displayed(search_box.clear_advanced_search):
             logger.debug('Clearing advanced search filter')
             sel.click(search_box.clear_advanced_search)
-        accordion.tree('Instances', 'All Instances')
+
+
+class ProviderAllView(CloudInstanceView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_cloud_instance and
+            self.title.text == 'Instances under Provider "{}"'
+                               .format(self.context['object'].provider.name)
+        )
 
 
 @navigator.register(Instance, 'AllForProvider')
-class InstanceAllForProvider(CFMENavigateStep):
+class AllForProvider(CFMENavigateStep):
+    VIEW = ProviderAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Instances under Provider "{}"'.format(self.obj.provider.name))
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
+        self.view.instances_by_provider.tree.click_path('Instances by Provider',
+                                                        self.obj.provider.name)
 
-        # use accordion
+    def resetter(self, *args, **kwargs):
         # If a filter was applied, it will persist through navigation and needs to be cleared
         if sel.is_displayed(search_box.clear_advanced_search):
             logger.debug('Clearing advanced search filter')
             sel.click(search_box.clear_advanced_search)
-        accordion.tree('Instances by Provider', 'Instances by Provider', self.obj.provider.name)
 
 
-@navigator.register(Instance, 'Details')
-class InstanceDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+class AddFloatIPView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        ip = Select(name='floating_ip')
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
 
-    def am_i_here(self):
-        return details_page_check(name=self.obj.name, provider=self.obj.provider)
-
-    def step(self):
-        # Use list view to match name and provider
-        tb.select('List View')
-        # Instance may be in a state where the provider is not displayed in the table
-        # Try first to match name and provider, fall back to just name
-        # Matching only on name has the potential to select the wrong instance
-        try:
-            return sel.click(list_table.find_row_by_cell_on_all_pages(
-                {'Name': self.obj.name,
-                 'Provider': self.obj.provider.name}))
-        except (NameError, TypeError):
-            logger.warning('Exception caught, could not match instance with name and provider')
-
-        # If name and provider weren't matched, look for just name
-        logger.warning('Matching instance only using name only: {}'.format(self.obj.name))
-        sel.click(list_table.find_row_by_cell_on_all_pages({'Name': self.obj.name}))
-
-
-@navigator.register(Instance, 'Provision')
-class InstanceProvision(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def am_i_here(self):
-        return match_page(summary='Provision Instances - Select an Image')
-
-    def step(self):
-        life_btn('Provision Instances')
-
-
-@navigator.register(Instance, 'Edit')
-class InstanceEdit(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    # No am_i_here because the page only indicates name and not provider
-
-    def step(self):
-        cfg_btn('Edit this instance')
-
-
-@navigator.register(Instance, 'SetOwnership')
-class InstanceOwnership(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    # No am_i_here because the page only indicates name and not provider
-
-    def step(self):
-        cfg_btn('Set Ownership')
-
-
-@navigator.register(Instance, 'EditMgmtEngineRelation')
-class InstanceEditMgmtEngineRelation(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    # No am_i_here because the page only indicates name and not provider
-
-    def step(self):
-        cfg_btn('Edit Management Engine Relationship')
-
-
-@navigator.register(Instance, 'AttachCloudVolume')
-class InstanceAttachVolume(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    # No am_i_here because the page only indicates name and not provider
-
-    def step(self):
-        cfg_btn('Attach a Cloud Volume to this instance')
-
-
-@navigator.register(Instance, 'DetachCloudVolume')
-class InstanceDetachVolume(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    # No am_i_here because the page only indicates name and not provider
-
-    def step(self):
-        cfg_btn('Detach a Cloud Volume to this instance')
-
-
-@navigator.register(Instance, 'Reconfigure')
-class InstanceReconfigure(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    # No am_i_here because the page only indicates name and not provider
-
-    def step(self):
-        cfg_btn('Reconfigure this Instance')
-
-
-@navigator.register(Instance, 'RightSize')
-class InstanceRightSize(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    # No am_i_here because the page only indicates name and not provider
-
-    def step(self):
-        cfg_btn('Right-Size Recommendations')
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
 
 
 @navigator.register(Instance, 'AddFloatingIP')
-class InstanceAddFloatingIP(CFMENavigateStep):
+class AddFloatingIP(CFMENavigateStep):
+    VIEW = AddFloatIPView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        if version.current_version() >= '5.7':
+            try:
+                self.prerequisite_view.configuration.item_select(
+                    'Associate a Floating IP with this Instance')
+            except NoSuchElementException:
+                raise DestinationNotFound('Add Floating IP option not available for instance')
+        else:
+            raise DestinationNotFound('Floating IP assignment not available for appliance version')
+
+
+class AttachVolumeView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        volume = BootstrapSelect('volume_id')
+        mountpoint = Input(name='device_path')
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
+
+
+@navigator.register(Instance, 'AttachCloudVolume')
+class AttachVolume(CFMENavigateStep):
+    VIEW = AttachVolumeView
     prerequisite = NavigateToSibling('Details')
 
     # No am_i_here because the page only indicates name and not provider
 
     def step(self):
-        if self.obj.appliance.version >= '5.7':
-            cfg_btn('Associate a Floating IP with this Instance')
-        else:
-            raise DestinationNotFound('Floating IP assignment not available for appliance version')
+        try:
+            self.prerequisite_view.configuration.item_select('Attach a Cloud Volume to '
+                                                             'this Instance')
+        except NoSuchElementException:
+            raise DestinationNotFound('Attach Cloud Volume option not available for instance')
 
 
-@navigator.register(Instance, 'RemoveFloatingIP')
-class InstanceRemoveFloatingIP(CFMENavigateStep):
+class DetailsView(CloudInstanceView):
+    # override power button, title changes
+    power = Dropdown('Instance Power Functions')
+
+    # Details tables
+    properties_detail = SummaryTable(title='Properties')
+    lifecycle_detail = SummaryTable(title='Lifecycle')
+    relationships_detail = SummaryTable(title='Relationships')
+    vmsafe_detail = SummaryTable(title='VMsafe')
+    compliance_detail = SummaryTable(title='Compliance')
+    power_detail = SummaryTable(title='Power Management')
+    security_detail = SummaryTable(title='Security')
+    configuration_detail = SummaryTable(title='Configuration')
+    diagnostics_detail = SummaryTable(title='Diagnostics')
+    # TODO Add tags when supported by SummaryTable
+
+    @property
+    def is_displayed(self):
+        title = self.title.text
+        try:
+            # Not displayed when the instance is archived
+            provider_name = self.relationships_detail.get_text_of('Cloud Provider')
+        except NameError:
+            logger.warning('Could not find "Cloud Provider" Relationship detail for instance')
+            return False
+        return (
+            self.in_cloud_instance and
+            title == 'Instance "{}"'.format(self.context['object'].name) and
+            provider_name == self.context['object'].provider.name)
+
+
+@navigator.register(Instance, 'Details')
+class Details(CFMENavigateStep):
+    VIEW = DetailsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        # Use list view to match name and provider
+        self.prerequisite_view.views.select('List View')
+        # Instance may be in a state where the provider is not displayed in the table
+        # Try first to match name and provider, fall back to just name
+        # Matching only on name has the potential to select the wrong instance
+
+        try:
+            row = self.prerequisite_view.paginator.find_row_on_pages(
+                self.prerequisite_view.instance_table,
+                name=self.obj.name,
+                provider=self.obj.provider.name)
+            self.log_message('Matched table row on instance name and provider')
+        except NoSuchElementException:
+            logger.warning('Could not match instance row using name "{}" and provider "{}"'
+                           .format(self.obj.name,
+                                   self.obj.provider.name))
+            row = None
+        if not row:
+            logger.warning('Attempting to match instance using name only: "{}"'
+                           .format(self.obj.name))
+            try:
+                row = self.prerequisite_view.paginator.find_row_on_pages(
+                    self.prerequisite_view.instance_table, name=self.obj.name)
+                self.log_message('Matched table row on instance name only')
+            except NoSuchElementException:
+                raise InstanceNotFound('Could not match instance by name only: {}'
+                                       .format(self.obj.name))
+
+        if row:
+            row.click()
+
+    def resetter(self, *args, **kwargs):
+        self.view.reload.click()
+
+
+class DetachVolumeView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        volume = BootstrapSelect('volume_id')
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
+
+
+@navigator.register(Instance, 'DetachCloudVolume')
+class DetachVolume(CFMENavigateStep):
+    VIEW = DetachVolumeView
     prerequisite = NavigateToSibling('Details')
 
     # No am_i_here because the page only indicates name and not provider
 
     def step(self):
-        if self.obj.appliance.version >= '5.7':
-            cfg_btn('Disassociate a Floating IP from this Instance')
-        else:
-            raise DestinationNotFound('Floating IP assignment not available for appliance version')
+        try:
+            self.prerequisite_view.configuration.item_select('Detach a Cloud Volume from this '
+                                                             'Instance')
+        except NoSuchElementException:
+            raise DestinationNotFound('Detach Cloud Volume option not available for instance')
 
 
-@navigator.register(Instance, 'Timelines')
-class InstanceTimelines(CFMENavigateStep):
-    VIEW = CloudInstanceTimelinesView
+class EditView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        custom_identifier = Input(name='custom_1')
+        description = Input(name='description')
+        parent_vm = BootstrapSelect('chosen_parent')
+        # MultiBoxSelect element on the form, but the table doesn't have an ID
+        # Potential workaround by setting the table locator using the preceding-sibling
+        # BZ 1414480
+        save_button = Button('Save')
+        reset_button = Button('Reset')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_cloud_instance and
+            self.title.text == 'Editing Instance "{}"'.format(self.context['object'].name)
+        )
+
+
+@navigator.register(Instance, 'Edit')
+class Edit(CFMENavigateStep):
+    VIEW = EditView
+    prerequisite = NavigateToSibling('Details')
+
+    # No am_i_here because the page only indicates name and not provider
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select('Edit this Instance')
+
+
+class MgmtEngRelView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        server = BootstrapSelect('server_id')
+        save_button = Button('Save')
+        reset_button = Button('Reset')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, could be wrong instance on different provider
+        return False
+
+
+@navigator.register(Instance, 'EditMgmtEngineRelation')
+class EditMgmtEngineRelation(CFMENavigateStep):
+    VIEW = MgmtEngRelView
+    prerequisite = NavigateToSibling('Details')
+
+    # No am_i_here because the page only indicates name and not provider
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select('Edit Management Engine Relationship')
+
+
+class EditTagsView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        tag_category = BootstrapSelect('tag_cat')
+        tag = BootstrapSelect('tag_add')
+        # TODO implement table element with ability to remove selected tags
+        save_button = Button('Save')
+        reset_button = Button('Reset')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # TODO match quadicon and title
+        return False
+
+
+@navigator.register(Instance, 'EditTags')
+class EditTags(CFMENavigateStep):
+    VIEW = EditTagsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        mon_btn('Timelines')
+        self.prerequisite_view.policy.item_select('Edit Tags')
+
+
+class EvacuateView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        auto_select = CheckboxSelect('auto_select_host')
+        shared_storage = CheckboxSelect('on_shared_storage')
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
+
+
+@navigator.register(Instance, 'Evacuate')
+class Evacuate(CFMENavigateStep):
+    VIEW = EvacuateView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        try:
+            self.prerequisite_view.lifecycle.item_select('Evacuate Instance')
+        except NoSuchElementException:
+            raise DestinationNotFound('Evacuate option not available for instance')
+
+
+class ManagePoliciesView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        policy_profiles = ManageIQTree(tree_id=VersionPick({
+            Version.lowest(): 'protect_treebox',
+            '5.7.0': 'protectbox'}))
+        save_button = Button('Save')
+        reset_button = Button('Reset')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # TODO match quadicon and title
+        return False
+
+
+@navigator.register(Instance, 'ManagePolicies')
+class ManagePolicies(CFMENavigateStep):
+    VIEW = ManagePoliciesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.policy.item_select('Manage Policies')
+
+
+class ProvisionView(CloudInstanceView):
+    title = Text('#explorer_title_text')
+
+    @View.nested
+    class form(ProvisioningForm):  # noqa
+        image_table = Table('//div[@id="pre_prov_div"]//table')
+        continue_button = Button('Continue')  # Continue button on 1st page, image selection
+        submit_button = Button('Submit')  # Submit for 2nd page, tabular form
+        cancel_button = Button('Cancel')
+
+        def before_fill(self, values):
+            # Provision from image is a two part form,
+            # this completes the image selection before the tabular parent form is filled
+            template_name = values.get('template_name',
+                                       self.parent_view.context['object'].template_name)
+            provider_name = self.parent_view.context['object'].provider.name
+            try:
+                row = self.image_table.row(name=template_name,
+                                           provider=provider_name)
+            except IndexError:
+                raise TemplateNotFound('Cannot find template "{}" for provider "{}"'
+                                       .format(template_name, provider_name))
+            row.click()
+            self.continue_button.click()
+            # TODO timing, wait_displayed is timing out and can't get it to stop in is_displayed
+            sel.sleep(3)
+            self.flush_widget_cache()
+
+    def is_displayed(self):
+        return False
+
+
+@navigator.register(Instance, 'Provision')
+class Provision(CFMENavigateStep):
+    VIEW = ProvisionView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.lifecycle.item_select('Provision Instances')
+
+    def am_i_here(self, *args, **kwargs):
+        return False
+
+
+class PolicySimulationView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        policy = BootstrapSelect('policy_id')
+        # TODO implement table element with ability to remove assigned policies
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # TODO match quadicon and title
+        return False
+
+
+@navigator.register(Instance, 'PolicySimulation')
+class PolicySimulation(CFMENavigateStep):
+    VIEW = PolicySimulationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.policy.item_select('Policy Simulation')
+
+
+class ReconfigureView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        flavor = BootstrapSelect('flavor')
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
+
+
+@navigator.register(Instance, 'Reconfigure')
+class Reconfigure(CFMENavigateStep):
+    VIEW = ReconfigureView
+    prerequisite = NavigateToSibling('Details')
+
+    # No am_i_here because the page only indicates name and not provider
+    def step(self):
+        try:
+            self.prerequisite_view.configuration.item_select('Reconfigure this Instance')
+        except NoSuchElementException:
+            raise DestinationNotFound('Reconfigure option not available for instance')
+
+
+class RightSizeView(CloudInstanceView):
+    # TODO test SummaryTable here for the right size tables
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
+
+
+@navigator.register(Instance, 'RightSize')
+class RightSize(CFMENavigateStep):
+    VIEW = RightSizeView
+    prerequisite = NavigateToSibling('Details')
+
+    # No am_i_here because the page only indicates name and not provider
+    def step(self):
+        try:
+            self.prerequisite_view.configuration.item_select('Right-Size Recommendations')
+        except NoSuchElementException:
+            raise DestinationNotFound('Right Size option not available for instance')
+
+
+class RemoveFloatIPView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        ip = Select('floating_ip')
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
+
+
+@navigator.register(Instance, 'RemoveFloatingIP')
+class RemoveFloatingIP(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        if version.current_version() >= '5.7':
+            try:
+                self.prerequisite_view.configuration.item_select(
+                    'Disassociate a Floating IP from this Instance')
+            except NoSuchElementException:
+                raise DestinationNotFound('Remove Floating IP option not available for instance')
+        else:
+            raise DestinationNotFound('Floating IP assignment not available for appliance version')
+
+
+class SetOwnershipView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        user_name = BootstrapSelect('user_name')
+        group_name = BootstrapSelect('group_name')
+        save_button = Button('Save')
+        reset_button = Button('Reset')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # TODO match quadicon and title
+        return False
+
+
+@navigator.register(Instance, 'SetOwnership')
+class SetOwnership(CFMENavigateStep):
+    VIEW = SetOwnershipView
+    prerequisite = NavigateToSibling('Details')
+
+    # No am_i_here because the page only indicates name and not provider
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.configuration.item_select('Set Ownership')
+
+
+class SetRetirementView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        # TODO: Calendar widget fill isn't playing nice in miq darga/euwe
+        retirement_date = Calendar(name='retirementDate')
+        retirement_warning = BootstrapSelect('retirementWarning')
+        save_button = Button('Save')
+        reset_button = Button('Reset')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # TODO match quadicon and title
+        return False
+
+
+@navigator.register(Instance, 'SetRetirement')
+class SetRetirement(CFMENavigateStep):
+    VIEW = SetRetirementView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.lifecycle.item_select('Set Retirement Date')
+
+
+class InstanceTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Instances'] and \
+            super(TimelinesView, self).is_displayed
+
+
+@navigator.register(Instance, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = InstanceTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.monitoring.item_select('Timelines')
+
+
+class MigrateView(CloudInstanceView):
+    @View.nested
+    class form(View):  # noqa
+        auto_select = CheckboxSelect('auto_select_host')
+        block_migration = CheckboxSelect('block_migration')
+        disk_overcommit = CheckboxSelect('disk_over_commit')
+        submit_button = Button('Submit')
+        cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        # Only the instance name is displayed, cannot confirm provider
+        return False
+
+
+@navigator.register(Instance, 'Migrate')
+class Migrate(CFMENavigateStep):
+    VIEW = MigrateView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        try:
+            self.prerequisite_view.lifecycle.item_select('Migrate Instance')
+        except NoSuchElementException:
+            raise DestinationNotFound('Migrate option not available for instance')

@@ -1,8 +1,7 @@
-from utils import version, deferred_verpick
+# -*- coding: utf-8 -*-
 from cfme.exceptions import OptionNotAvailable
-from cfme.web_ui import fill, flash
-from cfme.fixtures import pytest_selenium as sel
-from . import Instance, select_provision_image
+from utils import version, deferred_verpick
+from . import Instance
 
 
 class GCEInstance(Instance):
@@ -40,49 +39,18 @@ class GCEInstance(Instance):
             'on': [self.START],
             'off': [self.STOP, self.SOFT_REBOOT]}
 
-    def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
-               instance_type=None, cloud_network=None, boot_disk_size=None, cancel=False,
-               **prov_fill_kwargs):
+    def create(self, cancel=False, **prov_fill_kwargs):
         """Provisions an GCE instance with the given properties through CFME
 
         Args:
-            email: Email of the requester
-            first_name: Name of the requester
-            last_name: Surname of the requester
-            availability_zone: zone to deploy instance
-            cloud_network: Name of the cloud network the instance should belong to
-            instance_type: Type of the instance
-            boot_disk_size: size of root disk
             cancel: Clicks the cancel button if `True`, otherwise clicks the submit button
                     (Defaults to `False`)
+            prov_fill_kwargs: dictionary of provisioning field/value pairs
         Note:
             For more optional keyword arguments, see
-            :py:data:`cfme.cloud.provisioning.provisioning_form`
+            :py:data:`cfme.cloud.provisioning.ProvisioningForm`
         """
-        from cfme.provisioning import provisioning_form
-        # Nav to provision form and select image
-        select_provision_image(template_name=self.template_name, provider=self.provider)
-
-        fill(provisioning_form, dict(
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            instance_name=self.name,
-            availability_zone=availability_zone,
-            instance_type=instance_type,
-            cloud_network=cloud_network,
-            boot_disk_size=boot_disk_size,
-            **prov_fill_kwargs
-        ))
-
-        if cancel:
-            sel.click(provisioning_form.cancel_button)
-            flash.assert_success_message(
-                "Add of new VM Provision Request was cancelled by the user")
-        else:
-            sel.click(provisioning_form.submit_button)
-            flash.assert_success_message(
-                "VM Provision Request was Submitted, you will be notified when your VMs are ready")
+        super(GCEInstance, self).create(form_values=prov_fill_kwargs, cancel=cancel)
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
