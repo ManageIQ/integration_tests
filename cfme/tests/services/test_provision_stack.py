@@ -16,6 +16,7 @@ from utils.path import orchestration_path
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.wait import wait_for
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -157,6 +158,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert 'Provisioned Successfully' in row.last_message.text
 
 
+@pytest.mark.meta(blockers=[BZ(1442920, forced_streams=["5.7", "5.8", "upstream"])])
 def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -201,7 +203,8 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     wait_for(lambda: requests.find_request(cells), num_sec=500, delay=20)
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=1000, delay=20)
-    assert row.last_message.text == 'Service_Template_Provisioning failed'
+    assert row.last_message.text == 'Service_Template_Provisioning failed' or\
+        row.status.text == "Error"
 
 
 def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
