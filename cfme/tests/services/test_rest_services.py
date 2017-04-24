@@ -540,16 +540,29 @@ class TestServiceTemplateRESTAPI(object):
             test_flag: rest
         """
 
-        scl = service_catalogs[0]
         stpl = service_templates[0]
+        scl = service_catalogs[0]
+
+        # if the template is already assigned, unassign it first
+        stpl.reload()
+        if hasattr(stpl, 'service_template_catalog_id'):
+            scl_a = rest_api.collections.service_catalogs.get(id=stpl.service_template_catalog_id)
+            scl_a.service_templates.action.unassign(stpl)
+
         scl.service_templates.action.assign(stpl)
         assert rest_api.response.status_code == 200
         scl.reload()
+        stpl.reload()
         assert stpl.id in [st.id for st in scl.service_templates.all]
+        assert stpl.service_template_catalog_id == scl.id
+
         scl.service_templates.action.unassign(stpl)
         assert rest_api.response.status_code == 200
         scl.reload()
         assert stpl.id not in [st.id for st in scl.service_templates.all]
+        # load data again so we get rid of attributes that are no longer there
+        stpl = rest_api.collections.service_templates.get(id=stpl.id)
+        assert not hasattr(stpl, 'service_template_catalog_id')
 
     def test_edit_multiple_service_templates(self, rest_api, service_templates):
         """Tests editing multiple service catalogs at time.
