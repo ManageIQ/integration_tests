@@ -144,12 +144,19 @@ class IPAppliance(object):
 
     Args:
         ipaddress: The IP address of the provider
-        browser_streal: If True then then current browser is killed and the new appliance
+        browser_steal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
+        container: If the appliance is running as a container or as a pod, specifies its name.
+        openshift_creds: If the appliance runs as a project on openshift, provides credentials for
+            the openshift host so the framework can interact with the project.
+        db_host: If the database is located somewhere else than on the appliance itself, specify
+            the host here.
     """
     _nav_steps = {}
 
-    def __init__(self, address=None, browser_steal=False, container=None):
+    def __init__(
+            self, address=None, browser_steal=False, container=None, openshift_creds=None,
+            db_host=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -165,6 +172,8 @@ class IPAppliance(object):
                 self._url = address.geturl()
         self.browser_steal = browser_steal
         self.container = container
+        self.openshift_creds = openshift_creds or {}
+        self.db_host = db_host
         self._db_ssh_client = None
         self._user = None
         self.appliance_console = ApplianceConsole(self)
@@ -772,12 +781,22 @@ class IPAppliance(object):
             raise Exception('SSH is unavailable')
 
         # IPAppliance.ssh_client only connects to its address
-        connect_kwargs = {
-            'hostname': self.hostname,
-            'username': conf.credentials['ssh']['username'],
-            'password': conf.credentials['ssh']['password'],
-            'container': self.container,
-        }
+        if self.openshift_creds:
+            connect_kwargs = {
+                'hostname': self.openshift_creds['hostname'],
+                'username': self.openshift_creds['username'],
+                'password': self.openshift_creds['password'],
+                'container': self.container,
+                'is_pod': True,
+            }
+        else:
+            connect_kwargs = {
+                'hostname': self.hostname,
+                'username': conf.credentials['ssh']['username'],
+                'password': conf.credentials['ssh']['password'],
+                'container': self.container,
+                'is_pod': False,
+            }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
             ssh_client.get_transport().is_active()
@@ -1800,6 +1819,8 @@ class IPAppliance(object):
         # pulls the db address from the appliance by default, falling back to the appliance
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
+        if self.db_host:
+            return self.db_host
         try:
             db = self.wait_for_host_address()
             if db is None:
@@ -2059,10 +2080,11 @@ class IPAppliance(object):
         self.ssh_client.put_file(temp_ruby.name, dest_ruby)
 
         # Run it
-        if self.ssh_client.run_rails_command(dest_ruby):
+        result = self.ssh_client.run_rails_command(dest_ruby)
+        if result:
             self.server_details_changed()
         else:
-            raise Exception('Unable to set config')
+            raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
@@ -2557,7 +2579,15 @@ def get_or_create_current_appliance():
         base_url = conf.env['base_url']
         if base_url is None or str(base_url.lower()) == 'none':
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
-        stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
+        openshift_creds = conf.env.get('openshift', {})
+        db_host = conf.env.get('db_host', None)
+        if not isinstance(openshift_creds, dict):
+            raise TypeError('The openshift entry in env.yaml must be a dictionary')
+        stack.push(
+            IPAppliance(
+                urlparse(base_url),
+                container=conf.env.get('container', None),
+                openshift_creds=openshift_creds, db_host=db_host))
     return stack.top
 
 
