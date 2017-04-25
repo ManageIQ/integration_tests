@@ -50,11 +50,14 @@ class MiqBrowserPlugin(DefaultPlugin):
         }
         ''')
 
-    OBSERVED_FIELD_MARKERS = (
-        'data-miq_observe',
-        'data-miq_observe_date',
-        'data-miq_observe_checkbox',
-    )
+    OBSERVED_FIELD_DETECT = jsmin("""\
+        var attrs = ['data-miq_observe', 'data-miq_observe_date', 'data-miq_observe_checkbox'];
+        for(var i = 0; i < attrs.length; i++){
+            var value = arguments[0].getAttribute(attrs[i])
+            if(value !== null) return value;
+        }
+        return null;
+    """)
     DEFAULT_WAIT = .8
 
     def ensure_page_safe(self, timeout='10s'):
@@ -68,12 +71,9 @@ class MiqBrowserPlugin(DefaultPlugin):
         wait_for(_check, timeout=timeout, delay=0.2, silent_failure=True, very_quiet=True)
 
     def after_keyboard_input(self, element, keyboard_input):
-        observed_field_attr = None
-        for attr in self.OBSERVED_FIELD_MARKERS:
-            observed_field_attr = self.browser.get_attribute(attr, element)
-            if observed_field_attr is not None:
-                break
-        else:
+        observed_field_attr = self.browser.execute_script(
+            self.OBSERVED_FIELD_DETECT, element, silent=True)
+        if observed_field_attr is None:
             return
 
         try:
@@ -90,7 +90,8 @@ class MiqBrowserPlugin(DefaultPlugin):
             interval = self.DEFAULT_WAIT
 
         self.logger.debug('observed field detected, pausing for %.1f seconds', interval)
-        time.sleep(interval)
+        # Pad it by .1 just to be on the safe side
+        time.sleep(interval + 0.1)
         self.browser.plugin.ensure_page_safe()
 
 
