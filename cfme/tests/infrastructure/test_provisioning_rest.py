@@ -125,7 +125,7 @@ def test_create_pending_provision_requests(rest_api, provider, small_template):
         wait_for(
             lambda: prov_request.approval_state != 'pending_approval',
             fail_func=prov_request.reload,
-            num_sec=45,
+            num_sec=300,
             delay=10)
 
 
