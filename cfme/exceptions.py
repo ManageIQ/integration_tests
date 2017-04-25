@@ -379,6 +379,13 @@ class MiddlewareServerNotFound(CFMEException):
     pass
 
 
+class MiddlewareServerGroupNotFound(CFMEException):
+    """
+    Raised if a specific Middleware Server Group cannot be found.
+    """
+    pass
+
+
 class MiddlewareDomainNotFound(CFMEException):
     """
     Raised if a specific Middleware Domain cannot be found.

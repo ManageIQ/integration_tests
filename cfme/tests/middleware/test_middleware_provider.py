@@ -95,7 +95,7 @@ def test_provider_add_with_bad_hostname(provider):
 def test_required_fields_validation(provider, soft_assert):
     """Test to validate all required fields while adding a provider"""
     navigate_to(provider, 'Add')
-    cred = Credential()
+    cred = Credential('', '')
     fill(provider.properties_form, {"type_select": "Hawkular"})
     soft_assert(not provider.add_provider_button.can_be_clicked)
     soft_assert(not form_buttons.validate.can_be_clicked)

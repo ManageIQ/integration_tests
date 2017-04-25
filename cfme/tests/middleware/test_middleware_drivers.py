@@ -47,5 +47,6 @@ def test_deploy_driver(provider, driver):
                        driver_name=driver.driver_name,
                        module_name=driver.module_name,
                        driver_class=driver.driver_class,
+                       xa_class=driver.xa_class,
                        major_version=driver.major_version,
                        minor_version=driver.minor_version)

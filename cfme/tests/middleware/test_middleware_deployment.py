@@ -252,9 +252,10 @@ def test_undeploy_disabled(provider, archive_name):
     check_deployment_not_listed(provider, server, runtime_name)
 
 
+@pytest.mark.uncollect
 def test_redeploy_fail(provider):
     """Tests Redeployment of already deployed archive into EAP7 server
-
+    @TODO enable when "alert-warning" notifications are handled.
     Steps:
         * Get servers list from UI
         * Chooses JBoss EAP server from list
