@@ -144,8 +144,13 @@ class IPAppliance(object):
 
     Args:
         ipaddress: The IP address of the provider
-        browser_streal: If True then then current browser is killed and the new appliance
+        browser_steal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
+        container: If the appliance is running as a container or as a pod, specifies its name.
+        openshift_creds: If the appliance runs as a project on openshift, provides credentials for
+            the openshift host so the framework can interact with the project.
+        db_host: If the database is located somewhere else than on the appliance itself, specify
+            the host here.
     """
     _nav_steps = {}
 
