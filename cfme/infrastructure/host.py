@@ -622,7 +622,7 @@ def find_quadicon(host, do_not_navigate=False):
         raise HostNotFound("Host '{}' not found in UI!".format(host))
 
 
-def navigate_and_select_all_hosts(host_names, provider):
+def navigate_and_select_all_hosts(host_names, provider=None):
     """ Reduces some redundant code shared between methods """
     if isinstance(host_names, basestring):
         host_names = [host_names]
