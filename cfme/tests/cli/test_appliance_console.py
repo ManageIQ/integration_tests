@@ -48,9 +48,9 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
 
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 180), '')
+        command_set = ('ap', '', '5', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
     else:
-        command_set = ('ap', '', '8', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 180), '')
+        command_set = ('ap', '', '8', '1', '1', 'y', '1', 'n', '0', pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
@@ -64,9 +64,9 @@ def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_fun
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     if temp_appliance_preconfig_funcscope.version >= "5.8":
-        command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 180), '')
+        command_set = ('ap', '', '5', '4', 'y', TimedCommand('1', 360), '')
     else:
-        command_set = ('ap', '', '8', '4', 'y', TimedCommand('1', 180), '')
+        command_set = ('ap', '', '8', '4', 'y', TimedCommand('1', 360), '')
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_preconfig_funcscope.wait_for_evm_service()
@@ -81,9 +81,9 @@ def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds
 
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 180), '')
+        command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     else:
-        command_set = ('ap', '', '8', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 180), '')
+        command_set = ('ap', '', '8', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     wait_for(temp_appliance_unconfig_funcscope.is_dedicated_db_active)
 
@@ -99,10 +99,10 @@ def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds,
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
         command_set = ('ap', '', '5', '2', ip, '', pwd, '', '3', ip, '', '', '',
-            pwd, TimedCommand(pwd, 180), '')
+            pwd, TimedCommand(pwd, 360), '')
     else:
         command_set = ('ap', '', '8', '2', ip, '', pwd, '', '3', ip, '', '',
-            pwd, TimedCommand(pwd, 180), '')
+            pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
@@ -120,10 +120,10 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
         command_set = ('ap', '', '5', '1', '2', '0', 'y', ip, '', '', '', pwd,
-            TimedCommand(pwd, 180), '')
+            TimedCommand(pwd, 360), '')
     else:
         command_set = ('ap', '', '8', '1', '2', '0', 'y', ip, '', '', pwd,
-            TimedCommand(pwd, 180), '')
+            TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
