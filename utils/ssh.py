@@ -324,12 +324,14 @@ class SSHClient(paramiko.SSHClient):
         logger.info("Transferring local file %r to remote %r", local_file, remote_file)
         if self.is_container:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
+            logger.info('For this purpose, temporary file name is %r', tempfilename)
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tempfilename, **kwargs)
             self.run_command('mv {} {}'.format(tempfilename, remote_file))
             return scp
         elif self.is_pod:
             tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
+            logger.info('For this purpose, temporary folder name is /tmp/%s', tmp_folder_name)
             # Clean up container's temporary folder
             self.run_command('rm -rf /tmp/{0}'.format(tmp_folder_name))
             # Create/Clean up the host's temporary folder
@@ -354,6 +356,7 @@ class SSHClient(paramiko.SSHClient):
             # scp client is not sudo, may not work for non sudo
             tempfilename = '/home/{user_name}/temp_{random_alpha}'.format(
                 user_name=self.username, random_alpha=fauxfactory.gen_alpha())
+            logger.info('For this purpose, temporary file name is %r', tempfilename)
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
                 local_file, tempfilename, **kwargs)
             self.run_command('mv {temp_file} {remote_file}'.format(temp_file=tempfilename,
@@ -366,6 +369,7 @@ class SSHClient(paramiko.SSHClient):
         if self.is_container:
             tmp_file_name = 'temp_{}'.format(fauxfactory.gen_alpha())
             tempfilename = '/share/{}'.format(tmp_file_name)
+            logger.info('For this purpose, temporary file name is %r', tempfilename)
             self.run_command('cp {} {}'.format(remote_file, tempfilename))
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
                 tempfilename, local_path, **kwargs)
@@ -379,6 +383,7 @@ class SSHClient(paramiko.SSHClient):
             tmp_folder_name = 'automation-{}'.format(fauxfactory.gen_alpha().lower())
             tmp_file_name = 'file-{}'.format(fauxfactory.gen_alpha().lower())
             tmp_full_name = '/tmp/{}/{}'.format(tmp_folder_name, tmp_file_name)
+            logger.info('For this purpose, temporary file name is %r', tmp_full_name)
             # Clean up container's temporary folder
             self.run_command('rm -rf /tmp/{0}; mkdir -p /tmp/{0}'.format(tmp_folder_name))
             # Create/Clean up the host's temporary folder
