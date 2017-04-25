@@ -164,22 +164,30 @@ def abstract_test_chargeback_fixed_rate_cost(chargeback_report_custom,
                                 found_value, expected_value))
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10164')
 def test_project_chargeback_new_fixed_rate(new_chargeback_fixed_rate):
     flash.assert_success_message('Chargeback Rate "{}" was added'
                                  .format(new_chargeback_fixed_rate.description))
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10165')
 def test_project_chargeback_assign_compute_custom_rate(assign_compute_custom_rate):
     flash.assert_success_message('Rate Assignments saved')
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10166')
 def test_project_chargeback_fixed_rate(chargeback_report_custom, provider):
     assert chargeback_report_custom, 'Error in produced report, No records found'
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10185')
 def test_project_chargeback_fixed_rate_1_fixed_rate(chargeback_report_custom,
                                                     new_chargeback_fixed_rate, soft_assert):
@@ -188,6 +196,8 @@ def test_project_chargeback_fixed_rate_1_fixed_rate(chargeback_report_custom,
                                              'Fixed Compute Cost 1')
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10186')
 def test_project_chargeback_fixed_rate_2_fixed_rate(chargeback_report_custom,
                                                     new_chargeback_fixed_rate, soft_assert):
@@ -196,6 +206,8 @@ def test_project_chargeback_fixed_rate_2_fixed_rate(chargeback_report_custom,
                                              'Fixed Compute Cost 2')
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10187')
 def test_project_chargeback_cpu_cores_fixed_rate(chargeback_report_custom,
                                                  new_chargeback_fixed_rate, soft_assert):
@@ -204,6 +216,8 @@ def test_project_chargeback_cpu_cores_fixed_rate(chargeback_report_custom,
                                              'Used CPU Cores')
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10189')
 def test_project_chargeback_memory_used_fixed_rate(chargeback_report_custom,
                                                    new_chargeback_fixed_rate, soft_assert):
@@ -212,6 +226,8 @@ def test_project_chargeback_memory_used_fixed_rate(chargeback_report_custom,
                                              'Used Memory')
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10190')
 def test_project_chargeback_network_io_fixed_rate(chargeback_report_custom,
                                                   new_chargeback_fixed_rate, soft_assert):

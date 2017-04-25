@@ -15,6 +15,7 @@ from cfme.intelligence.reports.reports import CustomReport
 
 pytestmark = [
     pytest.mark.tier(3),
+    pytest.mark.long_running,
     pytest.mark.meta(
         server_roles='+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor'),
     pytest.mark.usefixtures('setup_provider')
@@ -115,6 +116,8 @@ def chargeback_report_custom(assign_compute_custom_rate, provider_name):
     report.delete()
 
 
+@pytest.mark.long_running_env
+@pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10432')
 def test_image_chargeback_fixed_rate(chargeback_report_custom, provider):
     assert chargeback_report_custom, 'Error in produced report, No records found'
