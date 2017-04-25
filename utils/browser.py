@@ -27,7 +27,7 @@ from fixtures.pytest_store import store, write_line
 from utils import conf, tries
 from utils.path import data_path
 
-from utils.log import logger as log  # TODO remove after artifactor handler
+from utils.log import StackedPrefixLoggerAdapter  # TODO remove after artifactor handler
 # log = logging.getLogger('cfme.browser')
 
 
@@ -35,33 +35,17 @@ FIVE_MINUTES = 5 * 60
 THIRTY_SECONDS = 30
 
 
-def _load_firefox_profile():
-    # create a firefox profile using the template in data/firefox_profile.js.template
-
-    # Make a new firefox profile dir if it's unset or doesn't exist for some reason
-    firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
-    log.debug("created firefox profile")
-    # Clean up tempdir at exit
-    atexit.register(rmtree, firefox_profile_tmpdir, ignore_errors=True)
-
-    template = data_path.join('firefox_profile.js.template').read()
-    profile_json = Template(template).substitute(profile_dir=firefox_profile_tmpdir)
-    profile_dict = json.loads(profile_json)
-
-    profile = FirefoxProfile(firefox_profile_tmpdir)
-    for pref in profile_dict.iteritems():
-        profile.set_preference(*pref)
-    profile.update_preferences()
-    return profile
-
-
 class Wharf(object):
     # class level to allow python level atomic removal of instance values
     docker_id = None
 
-    def __init__(self, wharf_url):
+    def __init__(self, wharf_url, logger=None):
         self.wharf_url = wharf_url
         self._renew_thread = None
+        if logger is None:
+            # TODO: Temporary solution
+            from utils.log import logger
+        self.logger = StackedPrefixLoggerAdapter(logger, {'item_type': 'WHARF'})
 
     def _get(self, *args):
 
@@ -80,8 +64,8 @@ class Wharf(object):
         checkout = self._get('checkout')
         self.docker_id, self.config = checkout.items()[0]
         self._start_renew_thread()
-        log.info('Checked out webdriver container %s', self.docker_id)
-        log.debug("%r", checkout)
+        self.logger.info('Checked out webdriver container %s', self.docker_id)
+        self.logger.debug("%r", checkout)
         return self.docker_id
 
     def checkin(self):
@@ -89,7 +73,7 @@ class Wharf(object):
         my_id = self.__dict__.pop('docker_id', None)
         if my_id:
             self._get('checkin', my_id)
-            log.info('Checked in webdriver container %s', my_id)
+            self.logger.info('Checked in webdriver container %s', my_id)
             self._renew_thread = None
 
     def _start_renew_thread(self):
@@ -100,18 +84,18 @@ class Wharf(object):
 
     def _renew_function(self):
         # If we have a docker id, renew_timer shouldn't still be None
-        log.debug("renew thread started")
+        self.logger.debug("renew thread started")
         while True:
             time.sleep(FIVE_MINUTES)
             if self._renew_thread is not threading.current_thread():
-                log.debug("renew done %s is not %s",
+                self.logger.debug("renew done %s is not %s",
                           self._renew_thread, threading.current_thread())
                 return
             if self.docker_id is None:
-                log.debug("renew done, docker id %s", self.docker_id)
+                self.logger.debug("renew done, docker id %s", self.docker_id)
             expiry_info = self._get('renew', self.docker_id)
             self.config.update(expiry_info)
-            log.info('Renewed webdriver container %s', self.docker_id)
+            self.logger.info('Renewed webdriver container %s', self.docker_id)
 
     def __nonzero__(self):
         return self.docker_id is not None
@@ -125,7 +109,10 @@ def web_driver_class_factory(base_class, lock):
 
 
 class BrowserFactory(object):
-    def __init__(self, webdriver_class, browser_kwargs):
+    def __init__(self, webdriver_class, browser_kwargs, logger=None):
+        if logger is None:
+            from utils.log import logger
+        self.logger = StackedPrefixLoggerAdapter(logger, {'item_type': type(self).__name__})
         self.lock = threading.RLock()
         self.webdriver_class = web_driver_class_factory(webdriver_class, self.lock)
         self.browser_kwargs = browser_kwargs
@@ -141,7 +128,23 @@ class BrowserFactory(object):
 
     @cached_property
     def _firefox_profile(self):
-        return _load_firefox_profile()
+        # create a firefox profile using the template in data/firefox_profile.js.template
+
+        # Make a new firefox profile dir if it's unset or doesn't exist for some reason
+        firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
+        self.logger.debug("created firefox profile")
+        # Clean up tempdir at exit
+        atexit.register(rmtree, firefox_profile_tmpdir, ignore_errors=True)
+
+        template = data_path.join('firefox_profile.js.template').read()
+        profile_json = Template(template).substitute(profile_dir=firefox_profile_tmpdir)
+        profile_dict = json.loads(profile_json)
+
+        profile = FirefoxProfile(firefox_profile_tmpdir)
+        for pref in profile_dict.iteritems():
+            profile.set_preference(*pref)
+        profile.update_preferences()
+        return profile
 
     def processed_browser_args(self):
         return self.browser_kwargs
@@ -171,8 +174,8 @@ class BrowserFactory(object):
 
 
 class WharfFactory(BrowserFactory):
-    def __init__(self, webdriver_class, browser_kwargs, wharf):
-        super(WharfFactory, self).__init__(webdriver_class, browser_kwargs)
+    def __init__(self, webdriver_class, browser_kwargs, wharf, logger=None):
+        super(WharfFactory, self).__init__(webdriver_class, browser_kwargs, logger=logger)
         self.wharf = wharf
 
         if browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
@@ -190,8 +193,8 @@ class WharfFactory(BrowserFactory):
         command_executor = self.wharf.config['webdriver_url']
         view_msg = 'tests can be viewed via vnc on display {}'.format(
             self.wharf.config['vnc_display'])
-        log.info('webdriver command executor set to %s', command_executor)
-        log.info(view_msg)
+        self.logger.info('webdriver command executor set to %s', command_executor)
+        self.logger.info(view_msg)
         write_line(view_msg, cyan=True)
         return dict(
             super(WharfFactory, self).processed_browser_args(),
@@ -204,11 +207,11 @@ class WharfFactory(BrowserFactory):
             try:
                 self.wharf.checkout()
                 return super(WharfFactory, self).create(url_key)
-            except urllib2.URLError as ex:
+            except urllib2.URLError:
                 # connection to selenum was refused for unknown reasons
-                log.error('URLError connecting to selenium; recycling container. URLError:')
+                self.logger.exception(
+                    'URLError connecting to selenium; recycling container. URLError:')
                 write_line('URLError caused container recycle, see log for details', red=True)
-                log.exception(ex)
                 self.wharf.checkin()
                 raise
         return tries(10, urllib2.URLError, inner)
@@ -224,8 +227,11 @@ class BrowserKeepAliveThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the stopped() condition."""
 
-    def __init__(self, manager):
+    def __init__(self, manager, logger=None):
         super(BrowserKeepAliveThread, self).__init__()
+        if logger is None:
+            from utils.log import logger
+        self.logger = StackedPrefixLoggerAdapter(logger, {'item_type': 'SEL-KEEPALIVE'})
         self._stop = threading.Event()
         self.manager = manager
 
@@ -240,12 +246,11 @@ class BrowserKeepAliveThread(threading.Thread):
                 # The break ensures we don't run the call more times than we need to.
                 for _ in range(2):
                     try:
-                        log.debug('renew')
+                        self.logger.debug('renew')
                         self.manager.browser.current_url
                         break
-                    except Exception as e:
-                        log.error('something bad happened')
-                        log.error(e)
+                    except Exception:
+                        self.logger.exception('something bad happened')
 
     def stop(self):
         self._stop.set()
@@ -255,7 +260,10 @@ class BrowserKeepAliveThread(threading.Thread):
 
 
 class BrowserManager(object):
-    def __init__(self, browser_factory):
+    def __init__(self, browser_factory, logger=None):
+        if logger is None:
+            from utils.log import logger
+        self.logger = StackedPrefixLoggerAdapter(logger, {'item_type': 'BrowserManager'})
         self.factory = browser_factory
         self.browser = None
         self._browser_renew_thread = None
@@ -278,20 +286,20 @@ class BrowserManager(object):
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
     def _browser_start_renew_thread(self):
-        log.debug('starting repeater')
-        self._browser_renew_thread = BrowserKeepAliveThread(self)
+        self.logger.debug('starting repeater')
+        self._browser_renew_thread = BrowserKeepAliveThread(self, logger=self.logger)
         self._browser_renew_thread.daemon = True
         self._browser_renew_thread.start()
 
     def _is_alive(self):
-        log.debug("alive check")
+        self.logger.debug("alive check")
         try:
             self.browser.current_url
         except UnexpectedAlertPresentException:
             # We shouldn't think that an Unexpected alert means the browser is dead
             return True
         except Exception:
-            log.exception("browser in unknown state, considering dead")
+            self.logger.exception("browser in unknown state, considering dead")
             return False
         return True
 
@@ -324,13 +332,12 @@ class BrowserManager(object):
 
     def quit(self):
         # TODO: figure if we want to log the url key here
-        log.info('closing browser')
+        self.logger.info('closing browser')
         self._consume_cleanups()
         try:
             self.factory.close(self.browser)
-        except Exception as e:
-            log.error('An exception happened during browser shutdown:')
-            log.exception(e)
+        except Exception:
+            self.logger.exception('An exception happened during browser shutdown:')
         finally:
             self.browser = None
             if self._browser_renew_thread:
@@ -338,7 +345,7 @@ class BrowserManager(object):
                 self._browser_renew_thread = None
 
     def start(self, url_key=None):
-        log.info('starting browser')
+        self.logger.info('starting browser')
         url_key = self.coerce_url_key(url_key)
         if self.browser is not None:
             self.quit()
@@ -347,7 +354,7 @@ class BrowserManager(object):
 
     def open_fresh(self, url_key=None):
         url_key = self.coerce_url_key(url_key)
-        log.info('starting browser for %r', url_key)
+        self.logger.info('starting browser for %r', url_key)
         assert self.browser is None
 
         self.browser = self.factory.create(url_key=url_key)

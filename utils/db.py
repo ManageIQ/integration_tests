@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import logging
 from collections import Mapping
 from contextlib import contextmanager
 from itertools import izip
@@ -9,9 +11,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
-from fixtures.pytest_store import store
-from utils import conf, ports
-from utils.log import logger
+from utils import conf
+
+
+class DBLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        return '[DB]: {}'.format(msg), kwargs
 
 
 @event.listens_for(Pool, "checkout")
@@ -69,14 +74,23 @@ class Db(Mapping):
         tables, like the mapping interface or :py:meth:`values`.
 
     """
-    def __init__(self, hostname=None, credentials=None):
+    def __init__(self, appliance, credentials=None):
         self._table_cache = {}
-        if hostname is None:
-            self.hostname = store.current_appliance.db_address
-        else:
-            self.hostname = hostname
+        self.appliance = appliance
 
         self.credentials = credentials or conf.credentials['database']
+
+    @property
+    def hostname(self):
+        return self.appliance.db_address
+
+    @property
+    def port(self):
+        return self.appliance.db_port
+
+    @cached_property
+    def logger(self):
+        return DBLoggerAdapter(self.appliance.logger, {})
 
     def __getitem__(self, table_name):
         """Access tables as items contained in this db
@@ -141,7 +155,7 @@ class Db(Mapping):
         """Check if this db is equal to another db"""
         try:
             return self.hostname == other.hostname
-        except:
+        except Exception:
             return False
 
     def __ne__(self, other):
@@ -194,8 +208,8 @@ class Db(Mapping):
     def db_url(self):
         """The connection URL for this database, including credentials"""
         template = "postgresql://{username}:{password}@{host}:{port}/vmdb_production"
-        result = template.format(host=self.hostname, port=ports.DB, **self.credentials)
-        logger.info("[DB] db_url is %s", result)
+        result = template.format(host=self.hostname, port=self.port, **self.credentials)
+        self.logger.info("db_url is %s", result)
         return result
 
     @cached_property
@@ -271,7 +285,7 @@ class Db(Mapping):
                 return table_cls
             except ArgumentError:
                 # This usually happens on join tables with no PKs
-                logger.info('Unable to create table class for table "{}"'.format(table_name))
+                self.logger.info('Unable to create table class for table %r', table_name)
                 return None
 
 
