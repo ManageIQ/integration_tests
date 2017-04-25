@@ -81,9 +81,9 @@ def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds
 
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
-        command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+        command_set = ('ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     else:
-        command_set = ('ap', '', '8', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+        command_set = ('ap', '', '8', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     wait_for(temp_appliance_unconfig_funcscope.is_dedicated_db_active)
 

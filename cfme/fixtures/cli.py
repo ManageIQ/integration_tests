@@ -17,9 +17,11 @@ def dedicated_db_appliance(app_creds, appliance):
         with temp_appliances(count=1, preconfigured=False) as apps:
             pwd = app_creds['password']
             if apps[0].version >= "5.8":
-                command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+                command_set = (
+                    'ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
             else:
-                command_set = ('ap', '', '8', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+                command_set = (
+                    'ap', '', '8', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
             apps[0].appliance_console.run_commands(command_set)
             wait_for(apps[0].is_dedicated_db_active)
             yield apps[0]
