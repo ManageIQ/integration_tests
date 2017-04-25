@@ -49,7 +49,7 @@ class VMwareProvider(InfraProvider):
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
         return cls(name=prov_config['name'],
-                   endpoints=endpoint,
+                   endpoints={endpoint.name: endpoint},
                    zone=prov_config['server_zone'],
                    key=prov_key,
                    start_ip=start_ip,

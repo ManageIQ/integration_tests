@@ -1,13 +1,14 @@
 """ A model of an Infrastructure Provider in CFME
 """
 from functools import partial
+from collections import Iterable
 from widgetastic.utils import Fillable
 
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
-from cfme.common.provider import CloudInfraProvider
+from cfme.common.provider import CloudInfraProvider, DefaultEndpoint
 from cfme.common.provider_views import (ProviderAddView,
                                         ProviderEditView,
                                         ProviderDetailsView,
@@ -41,7 +42,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         name: Name of the provider.
         details: a details record (see VMwareDetails, RHEVMDetails inner class).
         key: The CFME key of the provider in the yaml.
-        endpoints: one or several provider endpoints like DefaultEndpoint
+        endpoints: one or several provider endpoints like DefaultEndpoint. it should be either dict
+        in format dict{endpoint.name, endpoint, endpoint_n.name, endpoint_n}, list of endpoints or
+        mere one endpoint
     Usage:
         credentials = Credential(principal='bad', secret='reallybad')
         endpoint = DefaultEndpoint(hostname='some_host', api_port=65536, credentials=credentials)
@@ -66,11 +69,8 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
             self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
-        if endpoints:
-            self.endpoints = endpoints if isinstance(endpoints, list) else [endpoints, ]
-        else:
-            self.endpoints = iter([])
         self.name = name
+        self.endpoints = self._prepare_endpoints(endpoints)
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
@@ -79,9 +79,22 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     @property
     def default_endpoint(self):
         try:
-            return next(endp for endp in self.endpoints if endp.name == 'default')
-        except StopIteration:
+            return self.endpoints['default']
+        except KeyError:
             return None
+
+    @staticmethod
+    def _prepare_endpoints(endpoints):
+        if not endpoints:
+            return {}
+        elif isinstance(endpoints, dict):
+            return endpoints
+        elif isinstance(endpoints, Iterable):
+            return dict([(e.name, e) for e in endpoints])
+        elif isinstance(endpoints, DefaultEndpoint):
+            return {endpoints.name: endpoints}
+        else:
+            raise ValueError("Endpoints should be either dict or endpoint class")
 
     @property
     def hostname(self):

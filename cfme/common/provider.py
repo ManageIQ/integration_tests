@@ -161,30 +161,33 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 logger.info('Setting up Infra Provider: %s', self.key)
                 main_view = navigate_to(self, 'Add')
 
-                # filling main part of dialog
-                main_view.fill(self.view_value_mapping)
+                if not cancel or (cancel and any(self.view_value_mapping.values())):
+                    # filling main part of dialog
+                    main_view.fill(self.view_value_mapping)
 
-                # filling endpoints
-                for endpoint in self.endpoints:
-                    try:
-                        # every endpoint class has name like 'default', 'events', etc.
-                        # endpoints view can have multiple tabs, the code below tries
-                        # to find right tab by passing endpoint name to endpoints view
-                        endp_view = getattr(self.endpoints_form(parent=main_view), endpoint.name)
-                    except AttributeError:
-                        # tabs are absent in UI when there is only single (default) endpoint
-                        endp_view = self.endpoints_form(parent=main_view)
+                if not cancel or (cancel and self.endpoints):
+                    # filling endpoints
+                    for endpoint_name, endpoint in self.endpoints.items():
+                        try:
+                            # every endpoint class has name like 'default', 'events', etc.
+                            # endpoints view can have multiple tabs, the code below tries
+                            # to find right tab by passing endpoint name to endpoints view
+                            endp_view = getattr(self.endpoints_form(parent=main_view),
+                                                endpoint_name)
+                        except AttributeError:
+                            # tabs are absent in UI when there is only single (default) endpoint
+                            endp_view = self.endpoints_form(parent=main_view)
 
-                    endp_view.fill(endpoint.view_value_mapping)
+                        endp_view.fill(endpoint.view_value_mapping)
 
-                    # filling credentials
-                    if hasattr(endpoint, 'credentials'):
-                        endp_view.fill(endpoint.credentials.view_value_mapping)
+                        # filling credentials
+                        if hasattr(endpoint, 'credentials'):
+                            endp_view.fill(endpoint.credentials.view_value_mapping)
 
-                        if validate_credentials and hasattr(endp_view, 'validate'):
-                            # there are some endpoints which don't demand validation like
-                            #  RSA key pair
-                            endp_view.validate.click()
+                            if validate_credentials and hasattr(endp_view, 'validate'):
+                                # there are some endpoints which don't demand validation like
+                                #  RSA key pair
+                                endp_view.validate.click()
 
                 if cancel:
                     created = False
@@ -203,6 +206,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             return created
 
         else:
+            # other providers, old code
             if check_existing and self.exists:
                 created = False
             else:
@@ -229,7 +233,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
         Args:
            updates (dict): fields that are changing.
-           endpoints (list of Endpoints): objects which hold information about provider's endpoints
+           endpoints (dict/list or single Endpoint): objects which hold information about
+           provider's endpoints.
            cancel (boolean): whether to cancel out of the update.
            validate_credentials (boolean): whether credentials have to be validated
         """
@@ -244,9 +249,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
             # filling endpoints
             if endpoints:
-                endpoints = endpoints if isinstance(endpoints, list) else [endpoints, ]
+                endpoints = self._prepare_endpoints(endpoints)
 
-                for endpoint in endpoints:
+                for endpoint in endpoints.values():
                     # every endpoint class has name like 'default', 'events', etc.
                     # endpoints view can have multiple tabs, the code below tries
                     # to find right tab by passing endpoint name to endpoints view
@@ -257,8 +262,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     # the code below looks for existing endpoint equal to passed one and
                     # compares their credentials. it fills passed credentials
                     # if credentials are different
-                    cur_endpoint = next(
-                        endp for endp in self.endpoints if endp.name == endpoint.name)
+                    cur_endpoint = self.endpoints[endpoint.name]
                     if hasattr(endpoint, 'credentials'):
                         if not hasattr(cur_endpoint, 'credentials') or \
                                 endpoint.credentials != cur_endpoint.credentials:
@@ -282,7 +286,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             else:
                 main_view.save.click()
                 if endpoints:
-                    self.endpoints = endpoints
+                    for endp_name, endp in endpoints.items():
+                        self.endpoints[endp_name] = endp
                 if updates:
                     self.name = updates.get('name', self.name)
 
@@ -294,6 +299,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 flash.assert_message_match(
                     '{} Provider "{}" was saved'.format(self.string_name, self.name))
         else:
+            # other providers, old code
             navigate_to(self, 'Edit')
             fill(self.properties_form, self._form_mapping(**updates))
             for cred in self.credentials:
