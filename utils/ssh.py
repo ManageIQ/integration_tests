@@ -6,7 +6,7 @@ import socket
 import sys
 from collections import namedtuple
 from os import path as os_path
-from subprocess import call
+from subprocess import check_call
 from urlparse import urlparse
 
 import paramiko
@@ -374,7 +374,7 @@ class SSHClient(paramiko.SSHClient):
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
                 tempfilename, local_path, **kwargs)
             self.run_command('rm {}'.format(tempfilename))
-            call([
+            check_call([
                 'mv',
                 os_path.join(local_path, tmp_file_name),
                 os_path.join(local_path, base_name)])
@@ -398,7 +398,7 @@ class SSHClient(paramiko.SSHClient):
             # Now download the file to the openshift host
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
                 tmp_full_name, local_path, **kwargs)
-            call([
+            check_call([
                 'mv',
                 os_path.join(local_path, tmp_file_name),
                 os_path.join(local_path, base_name)])
