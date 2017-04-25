@@ -88,8 +88,13 @@ class SSHClient(paramiko.SSHClient):
     Allows copying/overriding and use as a context manager
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
 
-    If ``container`` param is specified, then it is assumed that the VM hosts a container of CFME.
-    The ``container`` param then contains the name of the container.
+    Keywords:
+        container: If specified, then it is assumed that the VM hosts a container of CFME. The
+            param then contains the name of the container.
+        is_pod: If specified and True, then it is assumed that the target is a podified openshift
+            app and ``container`` then specifies the name of the pod to interact with.
+        stdout: If specified, overrides the system stdout file for streaming output.
+        stderr: If specified, overrides the system stderr file for streaming output.
     """
     def __init__(self, stream_output=False, **connect_kwargs):
         super(SSHClient, self).__init__()
