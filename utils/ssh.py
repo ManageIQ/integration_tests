@@ -239,8 +239,6 @@ class SSHClient(paramiko.SSHClient):
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
                 'source /etc/default/evm; ' + command))
 
-        command = '{}\n'.format(command)
-
         if self.username != 'root' and not ensure_user:
             # We need sudo
             command = 'sudo -i bash -c {command}'.format(command=quote(command))
