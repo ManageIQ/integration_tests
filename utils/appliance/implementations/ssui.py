@@ -85,11 +85,13 @@ class SSUINavigateStep(NavigateStep):
             logger.debug("SSUI-NAVIGATE: Already at {}".format(self._name))
         else:
             logger.debug("SSUI-NAVIGATE: I'm not at {}".format(self._name))
-            self.prerequisite()
+            self.prerequisite_view = self.prerequisite()
             logger.debug("SSUI-NAVIGATE: Heading to destination {}".format(self._name))
             self.do_nav(_tries)
         self.resetter()
         self.post_navigate(_tries)
+        if self.VIEW is not None:
+            return self.view
 
 
 navigator = Navigate()

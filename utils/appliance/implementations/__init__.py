@@ -25,6 +25,12 @@ class Implementation(object):
         except AttributeError:
             pass
 
+    def _reset_cache(self):
+        try:
+            del self.widgetastic
+        except AttributeError:
+            pass
+
     def create_view(self, view_class, additional_context=None):
         """Method that is used to instantiate a Widgetastic View.
 
