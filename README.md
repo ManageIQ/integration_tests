@@ -1,9 +1,6 @@
 ManageIQ - Integration tests
 ============================
 
-# PRT Outage
-A PRT outage is ongoing, and PR check results will not be updated as a result. This message will be removed when the service is back online
-
 [![Code Health](https://landscape.io/github/ManageIQ/integration_tests/master/landscape.svg?style=flat-square)](https://landscape.io/github/ManageIQ/integration_tests/master)
 [![Dependency Status](https://gemnasium.com/ManageIQ/integration_tests.svg)](https://gemnasium.com/ManageIQ/integration_tests)
 [![Join the public chat at https://gitter.im/ManageIQ/integration_tests](https://badges.gitter.im/ManageIQ/integration_tests.svg)](https://gitter.im/ManageIQ/integration_tests?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
