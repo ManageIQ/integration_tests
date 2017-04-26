@@ -328,6 +328,9 @@ def poke_trackerbot(self):
                     for appliance in Appliance.objects.filter(
                             template=template, marked_for_deletion=False,
                             appliance_pool=None):
+                        self.logger.info(
+                            'Killing an appliance {}/{} because its template was marked as unusable'
+                            .format(appliance.id, appliance.name))
                         Appliance.kill(appliance)
 
 
@@ -607,7 +610,9 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
             pool.save()
     else:
         # Look whether we can swap any provisioning appliance with some in shepherd
-        unfinished = list(Appliance.objects.filter(appliance_pool=pool, ready=False).all())
+        unfinished = list(
+            Appliance.objects.filter(
+                appliance_pool=pool, ready=False, marked_for_deletion=False).all())
         random.shuffle(unfinished)
         if len(unfinished) > 0:
             n = Appliance.give_to_pool(pool, len(unfinished))
@@ -656,7 +661,11 @@ def process_delayed_provision_tasks(self):
                         task.pool.appliance_container_q,
                         **task.pool.appliance_filter_params)
                     if appliances:
-                        Appliance.kill(random.choice(appliances))
+                        appl = random.choice(appliances)
+                        self.logger.info(
+                            'Freeing some space in provider by killing appliance {}/{}'
+                            .format(appl.id, appl.name))
+                        Appliance.kill(appl)
                         break  # Just one
         else:
             # There was a free appliance in shepherd, so we took it and we don't need this task more
@@ -1149,13 +1158,9 @@ def delete_nonexistent_appliances(self):
     # And now - if something happened during appliance deletion, call kill again
     for appliance in Appliance.objects.filter(
             marked_for_deletion=True, status_changed__lt=expiration_time).all():
-        with transaction.atomic():
-            appl = Appliance.objects.get(pk=appliance.pk)
-            appl.marked_for_deletion = False
-            appl.save()
         self.logger.info(
             "Trying to kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
-        Appliance.kill(appl)
+        Appliance.kill(appl, force_delete=True)
 
 
 def generic_shepherd(self, preconfigured):

@@ -887,7 +887,7 @@ class Appliance(MetadataMixin):
 
     @classmethod
     def unassigned(cls):
-        return cls.objects.filter(appliance_pool=None, ready=True)
+        return cls.objects.filter(appliance_pool=None, ready=True, marked_for_deletion=False)
 
     @classmethod
     def give_to_pool(cls, pool, custom_limit=None, cpu=None, ram=None):
@@ -934,7 +934,7 @@ class Appliance(MetadataMixin):
         return len(appliances)
 
     @classmethod
-    def kill(cls, appliance_or_id):
+    def kill(cls, appliance_or_id, force_delete=False):
         # Completely delete appliance from provider
         from appliances.tasks import kill_appliance
         if isinstance(appliance_or_id, cls):
@@ -945,7 +945,7 @@ class Appliance(MetadataMixin):
             with transaction.atomic():
                 self = type(self).objects.get(pk=self.pk)
                 self.class_logger(self.pk).info("Killing")
-                if not self.marked_for_deletion:
+                if not self.marked_for_deletion or force_delete:
                     self.marked_for_deletion = True
                     self.save()
                     return kill_appliance.delay(self.id)
