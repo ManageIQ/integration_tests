@@ -36,7 +36,6 @@ from sprout.log import create_logger
 from utils import conf
 from utils.appliance import Appliance as CFMEAppliance
 from utils.path import project_path
-from utils.providers import get_mgmt
 from utils.timeutil import parsetime
 from utils.trackerbot import api, depaginate, parse_template
 from utils.version import Version
@@ -1160,7 +1159,7 @@ def delete_nonexistent_appliances(self):
             marked_for_deletion=True, status_changed__lt=expiration_time).all():
         self.logger.info(
             "Trying to kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
-        Appliance.kill(appl, force_delete=True)
+        Appliance.kill(appliance, force_delete=True)
 
 
 def generic_shepherd(self, preconfigured):
@@ -1311,26 +1310,26 @@ def wait_appliance_ready(self, appliance_id):
 
 @singleton_task()
 def anyvm_power_on(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.start_vm(vm)
+    provider = Provider.objects.get(id=provider)
+    provider.api.start_vm(vm)
 
 
 @singleton_task()
 def anyvm_power_off(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.stop_vm(vm)
+    provider = Provider.objects.get(id=provider)
+    provider.api.stop_vm(vm)
 
 
 @singleton_task()
 def anyvm_suspend(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.suspend_vm(vm)
+    provider = Provider.objects.get(id=provider)
+    provider.api.suspend_vm(vm)
 
 
 @singleton_task()
 def anyvm_delete(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.delete_vm(vm)
+    provider = Provider.objects.get(id=provider)
+    provider.api.delete_vm(vm)
 
 
 @singleton_task()

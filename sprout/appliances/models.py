@@ -188,7 +188,11 @@ class Provider(MetadataMixin):
 
     @property
     def api(self):
-        return get_mgmt(self.id)
+        provider_data = self.metadata.get('provider_data', None)
+        if provider_data:
+            return get_mgmt(provider_data)
+        else:
+            return get_mgmt(self.id)
 
     @property
     def num_currently_provisioning(self):
