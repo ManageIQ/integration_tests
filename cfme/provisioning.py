@@ -286,7 +286,9 @@ provisioning_form = tabstrip.TabStripForm(
             # Infra
             ('stateless', ui.Input('schedule__stateless')),
         ])
-    ])
+    ]),
+    order=['Request', 'Purpose', 'Catalog', 'Environment', 'Hardware', 'Network', 'Properties',
+           'Customize', 'Schedule']
 )
 
 
