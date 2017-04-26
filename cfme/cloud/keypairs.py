@@ -194,7 +194,7 @@ class KeyPair(Taggable, SummaryMixin, Navigatable):
         view = self.create_view(KeyPairAllView)
         # TODO BZ 1444520 causing ridiculous redirection times after submitting the form
         wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=120, delay=3,
-                 fail_func=lambda: view.flush_widget_cache())
+                 fail_func=lambda: view.flush_widget_cache(), handle_exception=True)
         view = self.create_view(KeyPairAllView)
         view.entities.flash.assert_no_error()
         view.entities.flash.assert_success_message(flash_message)
