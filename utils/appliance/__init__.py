@@ -21,7 +21,7 @@ from werkzeug.local import LocalStack, LocalProxy
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
 from utils import clear_property_cache
-from utils import conf, datafile, db, ssh, ports, version
+from utils import conf, datafile, db, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventListener
 from utils.log import logger, create_sublogger, logger_wrap
@@ -367,8 +367,17 @@ class IPAppliance(object):
                 key_address=key_address,
                 log_callback=log_callback)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
+
+            # Some conditionally ran items require the evm service be
+            # restarted:
+            restart_evm = False
             if loosen_pgssl:
                 self.loosen_pgssl(log_callback=log_callback)
+                restart_evm = True
+            if self.version >= '5.8':
+                self.configure_vm_console_cert(log_callback=log_callback)
+                restart_evm = True
+            if restart_evm:
                 self.restart_evm_service(log_callback=log_callback)
             self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
@@ -2202,6 +2211,56 @@ class IPAppliance(object):
         self.ssh_client.run_command(
             'setenforce 0 && systemctl restart sssd && systemctl restart httpd')
         self.wait_for_web_ui()
+
+    @logger_wrap("Configuring VM Console: {}")
+    def configure_vm_console_cert(self, log_callback=None):
+        """This method generates a self signed SSL cert and installs it
+           in the miq/vmdb/certs dir.   This cert will be used by the
+           HTML 5 VM Console feature.  Note evmserverd needs to be restarted
+           after running this.
+        """
+        log_callback('Installing SSL certificate')
+
+        cert = conf.cfme_data['vm_console'].get('cert')
+        if cert is None:
+            raise Exception('vm_console:cert does not exist in cfme_data.yaml')
+
+        cert_file = os.path.join(cert.install_dir, 'server.cer')
+        key_file = os.path.join(cert.install_dir, 'server.cer.key')
+        cert_generator = scripts_path.join('gen_ssl_cert.py').strpath
+        remote_cert_generator = os.path.join('/usr/bin', 'gen_ssl_cert.py')
+
+        # Copy self signed SSL certificate generator to the appliance
+        # because it needs to get the FQDN for the cert it generates.
+        self.ssh_client.put_file(cert_generator, remote_cert_generator)
+
+        # Generate cert
+        command = '''
+            {cert_generator} \\
+                --C="{country}" \\
+                --ST="{state}" \\
+                --L="{city}" \\
+                --O="{organization}" \\
+                --OU="{organizational_unit}" \\
+                --keyFile="{key}" \\
+                --certFile="{cert}"
+        '''.format(
+            cert_generator=remote_cert_generator,
+            country=cert.country,
+            state=cert.state,
+            city=cert.city,
+            organization=cert.organization,
+            organizational_unit=cert.organizational_unit,
+            key=key_file,
+            cert=cert_file,
+        )
+        result = self.ssh_client.run_command(command)
+        if not result == 0:
+            raise Exception(
+                'Failed to generate self-signed SSL cert on appliance: {}'.format(
+                    result[1]
+                )
+            )
 
 
 class Appliance(IPAppliance):
