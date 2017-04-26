@@ -86,7 +86,7 @@ def test_add_vm_to_service(myservice, request, copy_domain):
     $evm.log("info", "===========================================")
 
     add_to_service
-    """.format(myservice.service_name)
+    """.format(myservice.name)
     method = copy_domain\
         .namespaces.instantiate(name='System')\
         .classes.instantiate(name='Request')\
