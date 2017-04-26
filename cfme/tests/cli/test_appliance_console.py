@@ -44,7 +44,7 @@ def test_black_console_set_hostname(appliance):
 def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
-    db region number, 'pwd' db password, 'pwd' confirm db password + wait 45 secs and '' finish."""
+    db region number, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
@@ -59,7 +59,7 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
-    confirm db reset, '1' db region number + wait 90 secs, '' continue, '' clear info screen,
+    confirm db reset, '1' db region number + wait 360 secs, '' continue, '' clear info screen,
     '15/19' start evm and 'y' confirm start."""
 
     temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
@@ -76,8 +76,8 @@ def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_fun
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
-    '1' selects internal db, '1' use partition, 'y' create dedicated db, 'pwd' db password, 'pwd'
-    confirm db password + wait 45 secs and '' finish."""
+    '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
+    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
     pwd = app_creds['password']
     if temp_appliance_unconfig_funcscope.version >= "5.8":
@@ -92,7 +92,7 @@ def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds,
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '2' fetch v2_key,
     'ip' address to fetch from, '' default username, 'pwd' db password, '' default v2_key location,
     '3' join external region, 'ip' address of joining region, '' default port number, '' use defult
-    db name, '' default username, 'pwd' db password, 'pwd' confirm db password + wait 45 secs and
+    db name, '' default username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and
     '' finish."""
 
     ip = appliance.address
@@ -114,7 +114,7 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' create v2_key,
     '2' create region in external db, '0' db region number, 'y' confirm create region in external db
     'ip' address of dedicated db, '' default port number, '' use defult db name, '' default
-    username, 'pwd' db password, 'pwd' confirm db password + wait 45 secs and '' finish."""
+    username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
     ip = dedicated_db_appliance.address
     pwd = app_creds['password']
