@@ -119,8 +119,7 @@ def pf_select(root, sub=None, invokes_alert=False):
                         "return $('button:contains({})').trigger('click')".format(q_root))
                 except sel.NoSuchElementException:
                     # The view selection buttons?
-                    sel.click("//li/a[@title={}]/*[self::i or self::img]/../..".format(q_root))
-
+                    sel.click("//li/a[@title={}]/*[self::i or self::img]/..".format(q_root))
     if not invokes_alert:
         sel.wait_for_ajax()
     return True
