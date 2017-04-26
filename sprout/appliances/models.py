@@ -272,7 +272,11 @@ class Provider(MetadataMixin):
 
     @property
     def provider_data(self):
-        return cfme_data.get("management_systems", {}).get(self.id, {})
+        data = self.metadata.get('provider_data', None)
+        if data:
+            return data
+        else:
+            return cfme_data.get("management_systems", {}).get(self.id, {})
 
     @property
     def ip_address(self):
