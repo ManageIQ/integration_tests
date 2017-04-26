@@ -2234,7 +2234,7 @@ class DashboardWidgetsPicker(View):
 
 class MenuShortcutsPicker(DashboardWidgetsPicker):
     """ Represents shortcut picker in Menu Widget editing screen
-    (Cloud Intel/Reports/Dashobard Widgets/Menu).
+    (Cloud Intel/Reports/Dashboard Widgets/Menus).
 
     """
     @ParametrizedView.nested
@@ -2251,14 +2251,13 @@ class MenuShortcutsPicker(DashboardWidgetsPicker):
 
     def add_shortcut(self, shortcut, alias):
         # We need to get all options from the dropdown before picking
-        mapping = self.mapping
+        mapping = self.get_mapping()
         self.select.fill(shortcut)
         if shortcut != alias:
             self.shortcut(mapping[shortcut]).fill(alias)
 
-    @cached_property
-    def mapping(self):
-        return {option["text"]: option["value"] for option in self.select.all_available_options}
+    def get_mapping(self):
+        return {option.text: option.value for option in self.select.all_options}
 
     @property
     def all_shortcuts(self):
