@@ -32,13 +32,15 @@ class FormButton(Pretty):
 
     class Button:
         """Holds pieces of the XPath to be assembled."""
-        TAG_TYPES = "//a | //button | //img | //input"
+        TAG_TYPES = "//a | //button | //img | //input | //miq-button"
         TYPE_CONDITION = (
-            "(contains(@class, 'button') or contains(@class, 'btn') or contains(@src, 'button'))"
+            "(contains(@class, 'button') or contains(@class, 'btn') or contains(@src, 'button') "
+            "or contains(@class,'ng-isolate-scope'))"
         )
         DIMMED = "(contains(@class, 'dimmed') " \
             "or contains(@class, 'disabled') " \
-            "or contains(@class, 'btn-disabled'))"
+            "or contains(@class, 'btn-disabled')" \
+            "or contains(@class, 'ng-isolate-scope ng-hide'))"
         NOT_DIMMED = "not{}".format(DIMMED)
         IS_DISPLAYED = (
             "not(ancestor::*[contains(@style, 'display:none') "
