@@ -633,6 +633,8 @@ def navigate_and_select_all_hosts(host_names, provider=None):
         navigate_to(Host, 'All')
 
     if paginator.page_controls_exist():
-        paginator.check_all()
-    for host_name in host_names:
-        sel.check(Quadicon(host_name, 'host').checkbox())
+        paginator.results_per_page(1000)
+        sel.click(paginator.check_all())
+    else:
+        for host_name in host_names:
+            sel.check(Quadicon(host_name, 'host').checkbox())
