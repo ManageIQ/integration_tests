@@ -3,6 +3,7 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
@@ -17,7 +18,8 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [VMwareProvider])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider, RHEVMProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
