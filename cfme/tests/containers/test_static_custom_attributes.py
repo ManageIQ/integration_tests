@@ -10,7 +10,6 @@ from utils.version import current_version
 from utils import testgen
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider.openshift import CustomAttribute
-from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -159,15 +158,9 @@ def test_delete_non_exist_attribute(provider):
 
 
 @pytest.mark.polarion('CMP-10542')
-@pytest.mark.meta(blockers=[BZ(1416797, forced_streams=['5.7']),
-                            BZ(1429228, forced_streams=['5.8'])])
 def test_add_already_exist_attribute(provider):
     ca = choice(ATTRIBUTES_DATASET)
-    with pytest.raises(APIException):
-        provider.add_custom_attributes(ca)
-        pytest.fail('You tried to add a custom attribute that already exists'
-                    '({}) and didn\'t get an error!'
-                    .format(ca.value))
+    provider.add_custom_attributes(ca)
 
 
 @pytest.mark.polarion('CMP-10540')
