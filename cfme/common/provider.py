@@ -1,6 +1,7 @@
 import datetime
 from functools import partial
 
+
 from manageiq_client.api import APIException
 
 from cfme.base.credential import Credential, EventsCredential, TokenCredential, SSHCredential, \
@@ -20,6 +21,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.stats import tol_check
+from utils.ssh import SSHClient
 from utils.update import Updateable
 from utils.varmeth import variable
 from utils.wait import wait_for, RefreshTimer
@@ -724,3 +726,26 @@ def cleanup_vm(vm_name, provider):
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)
+
+
+# def get_provider_certificate(self, sec_protocol=None, cert_source=None, prov_config=None):
+#     creds = conf.credentials['openshift-3']
+#     provider_user = self.get_credentials_from_config(credential_config_name='openshift-3', cred_type='token')
+#     provider_pass = self.get_credentials_from_config(credential_config_name='openshift-3', cred_type='token')
+#     # provider_user = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials']).principal
+#     # provider_user = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
+#     # provider_pass = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials']).secret
+#     # The Hawkular Cert part will probably change. Awaiting details on Hawkular certs
+#     if sec_protocol != 'SSL trusting custom CA':
+#         return None
+#     else:
+#         ip = cert_source
+#         ssh_kwargs = {
+#             'username': provider_user,
+#             'password': provider_pass,
+#             'hostname': ip \
+#             }
+#         ssh = SSHClient(**ssh_kwargs)
+#         cert = ssh.run_command('cat /etc/origin/master/ca.crt')
+#         assert cert
+#         return str(cert)
