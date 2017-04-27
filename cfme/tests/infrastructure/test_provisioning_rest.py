@@ -7,7 +7,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils.wait import wait_for
 from utils import testgen
 from utils.version import current_version
-from utils.blockers import BZ
 
 
 pytestmark = [test_requirements.provision]
@@ -103,11 +102,11 @@ def test_provision(request, provision_data, provider, rest_api):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1437689, forced_streams=['5.6', '5.7', '5.8', 'upstream'])])
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
 def test_create_pending_provision_requests(rest_api, provider, small_template):
-    """Tests creation of pending provision request using /api/provision_requests.
+    """Tests creation and and auto-approval of pending provision request
+    using /api/provision_requests.
 
     Metadata:
         test_flag: rest, provision
@@ -115,18 +114,19 @@ def test_create_pending_provision_requests(rest_api, provider, small_template):
     provision_data = get_provision_data(rest_api, provider, small_template, auto_approve=False)
     response = rest_api.collections.provision_requests.action.create(**provision_data)
     assert rest_api.response.status_code == 200
-    provision_request = response[0]
-    assert provision_request.options['auto_approve'] is False
-    # The `approval_state` is `pending_approval`. Wait to see that
-    # it does NOT change - that would mean the request was auto-approved.
-    # The `wait_for` is expected to fail.
-    wait_for(
-        lambda: provision_request.approval_state != 'pending_approval',
-        fail_func=provision_request.reload,
-        num_sec=30,
-        delay=10,
-        silent_failure=True)
-    assert provision_request.approval_state == 'pending_approval'
+    # check that the `approval_state` is pending_approval
+    for prov_request in response:
+        assert prov_request.options['auto_approve'] is False
+        assert prov_request.approval_state == 'pending_approval'
+    # The Automate approval process is running as part of the request workflow.
+    # The request is within the specified parameters so it shall be auto-approved.
+    for prov_request in response:
+        prov_request.reload()
+        wait_for(
+            lambda: prov_request.approval_state == 'approved',
+            fail_func=prov_request.reload,
+            num_sec=300,
+            delay=10)
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
