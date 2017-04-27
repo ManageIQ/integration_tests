@@ -249,7 +249,7 @@ class Vm(BaseVM):
             "host_name": {"name": prov_data.get("host")},
         }
         if not self.provider.type == 'rhevm':
-            provisioning_data["datastore_name" ] = {"name": prov_data.get("datastore")}
+            provisioning_data["datastore_name"] = {"name": prov_data.get("datastore")}
         from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
 
