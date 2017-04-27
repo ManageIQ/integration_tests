@@ -17,6 +17,7 @@ from cfme.web_ui import toolbar as tb
 from utils import conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.stats import tol_check
@@ -188,6 +189,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         self._submit(cancel, self.save_button)
         name = updates.get('name', self.name)
         if not cancel:
+            if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
+                logger.warning('Skipping flash message verification because of BZ 1436341')
+                return
             flash.assert_message_match(
                 '{} Provider "{}" was saved'.format(self.string_name, name))
 
