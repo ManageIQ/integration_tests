@@ -27,6 +27,7 @@ from cfme.infrastructure.host import Host
 from cfme.web_ui import (
     Region, Quadicon, form_buttons, paginator, Input,
     AngularSelect, toolbar as tb, Radio, match_location, BootstrapSwitch)
+from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, version, deferred_verpick
 from utils.appliance import Navigatable
