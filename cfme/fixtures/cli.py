@@ -13,13 +13,18 @@ TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 
 @pytest.yield_fixture(scope="function")
 def dedicated_db_appliance(app_creds, appliance):
+    """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
+    '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
+    db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
     if appliance.version > '5.7':
         with temp_appliances(count=1, preconfigured=False) as apps:
             pwd = app_creds['password']
             if apps[0].version >= "5.8":
-                command_set = ('ap', '', '5', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 45), '')
+                command_set = (
+                    'ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
             else:
-                command_set = ('ap', '', '8', '1', '1', '1', 'y', pwd, TimedCommand(pwd, 45), '')
+                command_set = (
+                    'ap', '', '8', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
             apps[0].appliance_console.run_commands(command_set)
             wait_for(apps[0].is_dedicated_db_active)
             yield apps[0]
