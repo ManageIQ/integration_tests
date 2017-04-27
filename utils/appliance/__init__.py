@@ -84,8 +84,8 @@ class ApplianceConsole(object):
             try:
                 while True:
                     result += channel.recv(1)
-                    if result == 'Press any key to continue':
-                        pass
+                    if 'Press any key to continue' in result:
+                        break
             except socket.timeout:
                 pass
             logger.debug(result)
