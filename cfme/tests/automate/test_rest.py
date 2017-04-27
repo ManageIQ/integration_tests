@@ -10,7 +10,9 @@ pytestmark = [test_requirements.rest]
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_rest_search_automate(rest_api):
+def test_rest_search_automate(appliance):
+    rest_api = appliance.rest_api
+
     def _do_query(**kwargs):
         response = rest_api.collections.automate.query_string(**kwargs)
         assert rest_api.response.status_code == 200
