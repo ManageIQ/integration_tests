@@ -84,6 +84,8 @@ class ApplianceConsole(object):
             try:
                 while True:
                     result += channel.recv(1)
+                    if 'Press any key to continue' in result:
+                        break
             except socket.timeout:
                 pass
             logger.debug(result)
@@ -99,32 +101,37 @@ class ApplianceConsoleCli(object):
             "appliance_console_cli {}".format(appliance_console_cli_command))
 
     def set_hostname(self, hostname):
-        self._run("-H {host}".format(host=hostname))
+        self._run("--host {host}".format(host=hostname))
 
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self._run("-h {dbhostname} -U {username} -p {password} -d {dbname} -v -K {fetch_key} "
-            "-s {sshlogin} -a {sshpass}".format(dbhostname=dbhostname, username=username,
+        self._run("--hostname {dbhostname} --username {username} --password {password}"
+            "--dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
+            " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
                 password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
                 sshpass=sshpass))
 
     def configure_appliance_external_create(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self._run("-r {region} -h {dbhostname} -U {username} -p {password} "
-            "-d {dbname} -v -K {fetch_key} -s {sshlogin} -a {sshpass}".format(
+        self._run("--region {region} --hostname {dbhostname} --username {username}"
+            " --password {password} --dbname {dbname} --verbose --fetch-key {fetch_key}"
+            " --sshlogin {sshlogin} --sshpassword {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
                 dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self._run("-r {region} -i -h {dbhostname} -U {username} -p {password} "
-            "-d {dbname} -v -K {fetch_key} -s {sshlogin} -a {sshpass}".format(
+        self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
+            " --password {password} --dbname {dbname} --verbose --fetch-key {fetch_key}"
+            " --sshlogin {sshlogin} --sshpassword {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
                 dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
-        self._run("-e {ipaserver} -n {username} -w {password} -o {domain} -l {realm}".format(
-            ipaserver=ipaserver, username=username, password=password, domain=domain, realm=realm))
+        self._run("--ipaserver {ipaserver} --ipaprincipal {username} --ipapassword {password}"
+            " --ipadomain {domain} --iparealm {realm}".format(
+                ipaserver=ipaserver, username=username, password=password, domain=domain,
+                realm=realm))
         assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
         return_code, output = self.appliance.ssh_client.run_command(
             "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
