@@ -343,30 +343,7 @@ class IPAppliance(object):
         log_callback("Configuring appliance {}".format(self.address))
         with self as ipapp:
             ipapp.wait_for_ssh()
-            configure_function = pick({
-                '5.2': self._configure_5_2,
-                '5.3': self._configure_5_3,
-                LATEST: self._configure_upstream,
-            })
-            configure_function(log_callback=log_callback)
-
-    # When calling any of these methods, `with self:` context must be entered.
-    def _configure_5_2(self, log_callback=None):
-        self.deploy_merkyl(start=True, log_callback=log_callback)
-        self.fix_ntp_clock(log_callback=log_callback)
-        self.enable_internal_db(log_callback=log_callback)
-        # need to skip_broken here until/unless we see a newer 52z build
-        self.update_rhel(log_callback=log_callback, skip_broken=True)
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-    def _configure_5_3(self, log_callback=None):
-        self.deploy_merkyl(start=True, log_callback=log_callback)
-        self.fix_ntp_clock(log_callback=log_callback)
-        self.enable_internal_db(log_callback=log_callback)
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        self.loosen_pgssl(log_callback=log_callback)
-        # self.ipapp.update_rhel(log_callback=log_callback)
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+            self._configure_upstream(log_callback=log_callback)
 
     def _configure_upstream(self, log_callback=None):
         self.wait_for_evm_service(timeout=1200, log_callback=log_callback)

@@ -2451,13 +2451,8 @@ class InfoBlock(Pretty):
     def root(self):
         possible_locators = [
             # Detail type
-            version.pick({
-                '5.3': '//table//th[contains(normalize-space(.), "{}")]/../../../..'.format(
-                    self.title),
-                version.LOWEST:
-                '//div[@class="modbox"]/h2[@class="modtitle"]'
-                '[contains(normalize-space(.), "{}")]/..'.format(self.title)
-            }),
+            '//table//th[contains(normalize-space(.), "{}")]/../../../..'.format(
+                self.title),
             # Form type
             (
                 '//*[p[@class="legend"][contains(normalize-space(.), "{}")] and table/tbody/tr/td['
@@ -3450,13 +3445,8 @@ class DriftGrid(Pretty):
                 return True
         # or text
         except NoSuchElementException:
-            if version.current_version() <= '5.3':
-                cell_textdiv = sel.element("./div", root=cell)
-                if 'mark' in sel.get_attribute(cell_textdiv, 'class'):
-                    return True
-            else:  # LOWEST
-                if 'color: rgb(33, 160, 236)' in sel.get_attribute(cell, 'style'):
-                    return True
+            if 'color: rgb(33, 160, 236)' in sel.get_attribute(cell, 'style'):
+                return True
         return False
 
     def expand_all_sections(self):
