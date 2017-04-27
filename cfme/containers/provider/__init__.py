@@ -364,7 +364,8 @@ class ContainersTestItem(object):
             self.polarion_id)
 
 
-def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable):
+def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
+                          silent_failure=False):
     """Get <count> random rows from the obj list table,
     if <count> is greater that the number of rows, return number of rows.
 
@@ -373,11 +374,15 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable):
         obj: the containers object
         table: the object's Table object
         count: number of random rows to return
+        silent_failure: If True and no records found for obj, it'll
+                        return None instead of raise exception
 
     return: list of rows"""
 
     navigate_to(obj, 'All')
     tb.select('List View')
+    if sel.is_displayed_text("No Records Found.") and silent_failure:
+        return
     paginator.results_per_page(1000)
     table = table_class(table_locator="//div[@id='list_grid']//table")
     rows = table.rows_as_list()

@@ -38,7 +38,7 @@ TEST_ITEMS = [
             'CMP-9945',
             expected_fields=[
                 'name', 'state', 'last_state', 'restart_count',
-                'backing_ref_container_id', 'privileged', 'selinux_level'
+                'backing_ref_container_id', 'privileged'
             ]
         )
     ),
@@ -83,9 +83,9 @@ TEST_ITEMS = [
             Image,
             'CMP-9978',
             expected_fields={
-                version.LOWEST: ['name', 'tag', 'image_id', 'full_name'],
+                version.LOWEST: ['name', 'image_id', 'full_name'],
                 '5.7': [
-                    'name', 'tag', 'image_id', 'full_name', 'architecture', 'author',
+                    'name', 'image_id', 'full_name', 'architecture', 'author',
                     'entrypoint', 'docker_version', 'exposed_ports', 'size'
                 ]
             }
@@ -139,7 +139,7 @@ def test_properties(provider, test_item, soft_assert):
     if current_version() < "5.7" and test_item.obj == Template:
         pytest.skip('Templates are not exist in CFME version lower than 5.7. skipping...')
 
-    rows = navigate_and_get_rows(provider, test_item.obj, 2)
+    rows = navigate_and_get_rows(provider, test_item.obj, 2, silent_failure=True)
 
     if not rows:
         pytest.skip('No records found for {}s. Skipping...'.format(test_item.obj.__name__))
