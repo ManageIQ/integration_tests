@@ -36,7 +36,7 @@ TEST_ITEMS = [
     ),
     pytest.mark.polarion('CMP-9875')(
         ContainersTestItem(
-            Route, 'CMP-9875', fields_to_verify=['provider', 'project_name']
+            Route, 'CMP-10651', fields_to_verify=['provider', 'project_name']
         )
     ),
     pytest.mark.polarion('CMP-9943')(
@@ -84,7 +84,7 @@ TEST_ITEMS = [
             ImageRegistry, 'CMP-9985', fields_to_verify=['port', 'provider']
         )
     ),
-    pytest.mark.polarion('CMP-9886')(
+    pytest.mark.polarion('CMP-10652')(
         ContainersTestItem(
             Project, 'CMP-9886', fields_to_verify=[
                 'provider', 'container_routes', 'container_services',

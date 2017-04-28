@@ -46,7 +46,7 @@ DATA_SETS = [
 ]
 
 
-@pytest.mark.polarion('CMP-10567')
+@pytest.mark.polarion('CMP-10576')
 def test_breadcrumbs(provider, soft_assert):
 
     for dataset in DATA_SETS:
