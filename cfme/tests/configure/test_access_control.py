@@ -399,6 +399,8 @@ def test_delete_roles_with_assigned_group():
     group.create()
     with error.expected(flash_msg.format(role.name)):
         role.delete()
+    group.delete()
+    role.delete()
 
 
 @pytest.mark.tier(3)
