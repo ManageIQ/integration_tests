@@ -204,12 +204,6 @@ def find_request(cells, partial_check=False):
     """
     navigate_to(Request, 'All')
     for page in paginator.pages():
-        # We check only for the SplitTable. Can't think of better detection.
-        if version.current_version() < "5.5.0.8"\
-                and sel.elements(fields.request_list._header_loc) and\
-                not sel.is_displayed(fields.request_list):
-            # The table exists but it is hidden - no cells
-            return False
         results = fields.request_list.find_rows_by_cells(cells, partial_check)
         if len(results) == 0:
             # row not on this page, assume it has yet to appear
