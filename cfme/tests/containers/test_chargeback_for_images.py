@@ -7,7 +7,6 @@ import pytest
 
 from utils import testgen
 from utils.log import logger
-from utils.providers import list_providers_by_class
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence import chargeback as cb
 from cfme.intelligence.reports.reports import CustomReport
@@ -18,9 +17,9 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(
         server_roles='+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor'),
-    pytest.mark.usefixtures('setup_provider')
+    pytest.mark.usefixtures('setup_provider_modscope')
 ]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 
 
 def new_chargeback_rate(appliance, include_variable_rates=True):
@@ -54,13 +53,6 @@ def new_chargeback_rate(appliance, include_variable_rates=True):
     return ccb
 
 
-@pytest.fixture(scope='module')
-def provider_name():
-    # Since 'provider' fixture is a 'function' scoped, we use this
-    # fixture to yield the provider name
-    return list_providers_by_class(ContainersProvider)[-1].name
-
-
 @pytest.yield_fixture(scope="module")
 def new_chargeback_fixed_rate(appliance):
     # Create a new Chargeback compute fixed rate
@@ -70,7 +62,7 @@ def new_chargeback_fixed_rate(appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def assign_compute_custom_rate(new_chargeback_fixed_rate, provider_name):
+def assign_compute_custom_rate(new_chargeback_fixed_rate, provider):
     # Assign custom Compute rate to the Selected Containers Provider
     asignment = cb.Assign(
         assign_to="Labeled Container Images",
@@ -86,13 +78,13 @@ def assign_compute_custom_rate(new_chargeback_fixed_rate, provider_name):
     asignment = cb.Assign(
         assign_to="Selected Containers Providers",
         selections={
-            provider_name: "Default"
+            provider.name: "Default"
         })
     asignment.computeassign()
 
 
 @pytest.yield_fixture(scope="module")
-def chargeback_report_custom(assign_compute_custom_rate, provider_name):
+def chargeback_report_custom(assign_compute_custom_rate, provider):
     # Create a Chargeback report based on a custom Compute rate; Queue the report
     title = 'report_' + assign_compute_custom_rate
     data = {'menu_name': title,
@@ -105,7 +97,7 @@ def chargeback_report_custom(assign_compute_custom_rate, provider_name):
                               'Memory Used', 'Memory Used Cost',
                               'Provider Name', 'Fixed Total Cost', 'Total Cost'],
             'filter_show_costs': 'Container Image',
-            'provider': provider_name}
+            'provider': provider.name}
     report = CustomReport(is_candu=True, **data)
     report.create()
 
@@ -119,5 +111,5 @@ def chargeback_report_custom(assign_compute_custom_rate, provider_name):
 @pytest.mark.long_running_env
 @pytest.mark.long_running_provider
 @pytest.mark.polarion('CMP-10432')
-def test_image_chargeback_fixed_rate(chargeback_report_custom, provider):
+def test_image_chargeback_fixed_rate(chargeback_report_custom):
     assert chargeback_report_custom, 'Error in produced report, No records found'
