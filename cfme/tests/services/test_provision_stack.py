@@ -200,7 +200,6 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     template.delete()
     row_description = 'Provisioning Service [{}] from [{}]'.format(item_name, item_name)
     cells = {'Description': row_description}
-    wait_for(lambda: requests.find_request(cells), num_sec=500, delay=20)
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=1000, delay=20)
     assert row.last_message.text == 'Service_Template_Provisioning failed' or\

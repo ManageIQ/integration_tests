@@ -224,6 +224,10 @@ def find_request(cells, partial_check=False):
     return row
 
 
+def if_exists(cells, partial_check=False):
+    return True if find_request(cells, partial_check) else False
+
+
 def go_to_request(cells, partial_check=False):
     """Finds the request and opens the page
 
