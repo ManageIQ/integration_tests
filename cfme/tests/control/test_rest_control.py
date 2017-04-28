@@ -17,27 +17,27 @@ pytestmark = [
 
 class TestConditionsRESTAPI(object):
     @pytest.fixture(scope='function')
-    def conditions(self, request, rest_api):
+    def conditions(self, request, appliance):
         num_conditions = 2
-        response = _conditions(request, rest_api, num=num_conditions)
-        assert rest_api.response.status_code == 200
+        response = _conditions(request, appliance.rest_api, num=num_conditions)
+        assert appliance.rest_api.response.status_code == 200
         assert len(response) == num_conditions
         return response
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-    def test_create_conditions(self, rest_api, conditions):
+    def test_create_conditions(self, appliance, conditions):
         """Tests create conditions.
 
         Metadata:
             test_flag: rest
         """
         for condition in conditions:
-            record = rest_api.collections.conditions.get(id=condition.id)
+            record = appliance.rest_api.collections.conditions.get(id=condition.id)
             assert record.description == condition.description
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_conditions_from_detail(self, conditions, rest_api, method):
+    def test_delete_conditions_from_detail(self, conditions, appliance, method):
         """Tests delete conditions from detail.
 
         Metadata:
@@ -46,30 +46,30 @@ class TestConditionsRESTAPI(object):
         status = 204 if method == 'delete' else 200
         for condition in conditions:
             condition.action.delete(force_method=method)
-            assert rest_api.response.status_code == status
+            assert appliance.rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
                 condition.action.delete(force_method=method)
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-    def test_delete_conditions_from_collection(self, conditions, rest_api):
+    def test_delete_conditions_from_collection(self, conditions, appliance):
         """Tests delete conditions from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = rest_api.collections.conditions
+        collection = appliance.rest_api.collections.conditions
         collection.action.delete(*conditions)
-        assert rest_api.response.status_code == 200
+        assert appliance.rest_api.response.status_code == 200
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*conditions)
-        assert rest_api.response.status_code == 404
+        assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_edit_conditions(self, conditions, rest_api, from_detail):
+    def test_edit_conditions(self, conditions, appliance, from_detail):
         """Tests edit conditions.
 
         Metadata:
@@ -82,12 +82,12 @@ class TestConditionsRESTAPI(object):
             edited = []
             for i in range(num_conditions):
                 edited.append(conditions[i].action.edit(**new[i]))
-                assert rest_api.response.status_code == 200
+                assert appliance.rest_api.response.status_code == 200
         else:
             for i in range(num_conditions):
                 new[i].update(conditions[i]._ref_repr())
-            edited = rest_api.collections.conditions.action.edit(*new)
-            assert rest_api.response.status_code == 200
+            edited = appliance.rest_api.collections.conditions.action.edit(*new)
+            assert appliance.rest_api.response.status_code == 200
         assert len(edited) == num_conditions
         for i in range(num_conditions):
             assert edited[i].description == new[i]['description']
@@ -95,26 +95,26 @@ class TestConditionsRESTAPI(object):
 
 class TestPoliciesRESTAPI(object):
     @pytest.fixture(scope='function')
-    def policies(self, request, rest_api):
+    def policies(self, request, appliance):
         num_policies = 2
-        response = _policies(request, rest_api, num=num_policies)
-        assert rest_api.response.status_code == 200
+        response = _policies(request, appliance.rest_api, num=num_policies)
+        assert appliance.rest_api.response.status_code == 200
         assert len(response) == num_policies
         return response
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-    def test_create_policies(self, rest_api, policies):
+    def test_create_policies(self, appliance, policies):
         """Tests create policies.
 
         Metadata:
             test_flag: rest
         """
         for policy in policies:
-            record = rest_api.collections.policies.get(id=policy.id)
+            record = appliance.rest_api.collections.policies.get(id=policy.id)
             assert record.description == policy.description
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-    def test_delete_policies_from_detail_post(self, policies, rest_api):
+    def test_delete_policies_from_detail_post(self, policies, appliance):
         """Tests delete policies from detail using POST method.
 
         Metadata:
@@ -122,14 +122,14 @@ class TestPoliciesRESTAPI(object):
         """
         for policy in policies:
             policy.action.delete(force_method='post')
-            assert rest_api.response.status_code == 200
+            assert appliance.rest_api.response.status_code == 200
             with error.expected('ActiveRecord::RecordNotFound'):
                 policy.action.delete(force_method='post')
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.meta(blockers=[BZ(1435773, forced_streams=['5.8', 'upstream'])])
-    def test_delete_policies_from_detail_delete(self, policies, rest_api):
+    def test_delete_policies_from_detail_delete(self, policies, appliance):
         """Tests delete policies from detail using DELETE method.
 
         Metadata:
@@ -137,31 +137,31 @@ class TestPoliciesRESTAPI(object):
         """
         for policy in policies:
             policy.action.delete(force_method='delete')
-            assert rest_api.response.status_code == 204
+            assert appliance.rest_api.response.status_code == 204
             with error.expected('ActiveRecord::RecordNotFound'):
                 policy.action.delete(force_method='delete')
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-    def test_delete_policies_from_collection(self, policies, rest_api):
+    def test_delete_policies_from_collection(self, policies, appliance):
         """Tests delete policies from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = rest_api.collections.policies
+        collection = appliance.rest_api.collections.policies
         collection.action.delete(*policies)
-        assert rest_api.response.status_code == 200
+        assert appliance.rest_api.response.status_code == 200
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*policies)
-        assert rest_api.response.status_code == 404
+        assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.meta(blockers=[BZ(1435777, forced_streams=['5.8', 'upstream'])])
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_edit_policies(self, policies, rest_api, from_detail):
+    def test_edit_policies(self, policies, appliance, from_detail):
         """Tests edit policies.
 
         Metadata:
@@ -174,12 +174,12 @@ class TestPoliciesRESTAPI(object):
             edited = []
             for i in range(num_policies):
                 edited.append(policies[i].action.edit(**new[i]))
-                assert rest_api.response.status_code == 200
+                assert appliance.rest_api.response.status_code == 200
         else:
             for i in range(num_policies):
                 new[i].update(policies[i]._ref_repr())
-            edited = rest_api.collections.policies.action.edit(*new)
-            assert rest_api.response.status_code == 200
+            edited = appliance.rest_api.collections.policies.action.edit(*new)
+            assert appliance.rest_api.response.status_code == 200
         assert len(edited) == num_policies
         for i in range(num_policies):
             assert edited[i].description == new[i]['description']
