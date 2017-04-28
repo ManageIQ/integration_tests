@@ -323,7 +323,6 @@ class TestServiceRESTAPI(object):
         _action_and_check('start', 'on')
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    @pytest.mark.meta(blockers=[BZ(1416146, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_create_service_from_parent(self, request, rest_api):
         """Tests creation of new service that reference existing service.
 
@@ -334,7 +333,11 @@ class TestServiceRESTAPI(object):
         service = collection.action.create(service_body())[0]
         request.addfinalizer(service.action.delete)
         bodies = []
-        for ref in {'id': service.id}, {'href': service.href}:
+        references = [{'id': service.id}]
+        if version.current_version() >= '5.8':
+            # referencing using href is not supported in versions < 5.8
+            references.append({'href': service.href})
+        for ref in references:
             bodies.append(service_body(parent_service=ref))
         response = collection.action.create(*bodies)
         assert rest_api.response.status_code == 200
