@@ -34,7 +34,7 @@ TEST_ITEMS = [
             ContainersProvider, 'CMP-9859', fields_to_verify=['hostname', 'port', 'type']
         )
     ),
-    pytest.mark.polarion('CMP-9875')(
+    pytest.mark.polarion('CMP-10651')(
         ContainersTestItem(
             Route, 'CMP-10651', fields_to_verify=['provider', 'project_name']
         )
