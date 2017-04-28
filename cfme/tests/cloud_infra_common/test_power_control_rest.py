@@ -76,7 +76,7 @@ def verify_action_result(rest_api, assert_success=True):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["cfrom_detail", "from_collection"])
-def test_stop(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
+def test_stop(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test stop of vm
 
     Prerequisities:
@@ -93,6 +93,7 @@ def test_stop(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
     Metadata:
         test_flag: rest
     """
+    rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
     vm = rest_api.collections.vms.get(name=vm_obj.name)
 
@@ -106,7 +107,7 @@ def test_stop(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_start(rest_api, vm_obj, verify_vm_stopped, soft_assert, from_detail):
+def test_start(appliance, vm_obj, verify_vm_stopped, soft_assert, from_detail):
     """Test start vm
 
     Prerequisities:
@@ -123,6 +124,7 @@ def test_start(rest_api, vm_obj, verify_vm_stopped, soft_assert, from_detail):
     Metadata:
         test_flag: rest
     """
+    rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_OFF, timeout=1200)
     vm = rest_api.collections.vms.get(name=vm_obj.name)
 
@@ -136,7 +138,7 @@ def test_start(rest_api, vm_obj, verify_vm_stopped, soft_assert, from_detail):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_suspend(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
+def test_suspend(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test suspend vm
 
     Prerequisities:
@@ -153,6 +155,7 @@ def test_suspend(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
     Metadata:
         test_flag: rest
     """
+    rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
     vm = rest_api.collections.vms.get(name=vm_obj.name)
 
@@ -171,7 +174,7 @@ def test_suspend(rest_api, vm_obj, verify_vm_running, soft_assert, from_detail):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_reset_vm(rest_api, vm_obj, verify_vm_running, from_detail, appliance):
+def test_reset_vm(vm_obj, verify_vm_running, from_detail, appliance):
     """
     Test reset vm
 
@@ -189,6 +192,7 @@ def test_reset_vm(rest_api, vm_obj, verify_vm_running, from_detail, appliance):
     Metadata:
         test_flag: rest
     """
+    rest_api = appliance.rest_api
     vm_obj.wait_for_vm_state_change(desired_state=vm_obj.STATE_ON)
     vm = rest_api.collections.vms.get(name=vm_obj.name)
 
