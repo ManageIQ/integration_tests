@@ -62,7 +62,7 @@ def db_restore(temp_appliance_extended_db):
         app.wait_for_web_ui()
 
 
-@pytest.mark.tier(1)
+@pytest.mark.tier(2)
 def test_bottlenecks_event_groups(temp_appliance_extended_db, db_restore, db_tbl, db_events):
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
@@ -77,7 +77,7 @@ def test_bottlenecks_event_groups(temp_appliance_extended_db, db_restore, db_tbl
         assert sum(1 for row in rows) == db_events.filter(db_tbl.event_type != 'DiskUsage').count()
 
 
-@pytest.mark.tier(1)
+@pytest.mark.tier(2)
 def test_bottlenecks_show_host_events(temp_appliance_extended_db, db_restore, db_events):
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
@@ -91,7 +91,7 @@ def test_bottlenecks_show_host_events(temp_appliance_extended_db, db_restore, db
         assert sum(1 for row in rows) == db_events.count()
 
 
-@pytest.mark.tier(1)
+@pytest.mark.tier(2)
 def test_bottlenecks_time_zome(temp_appliance_extended_db, db_restore, db_tbl, db_events):
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
