@@ -5,6 +5,7 @@ from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.generators import random_vm_name
@@ -15,7 +16,8 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.tier(2),
               pytest.mark.uncollectif(lambda: version.current_version() < '5.7'),
               pytest.mark.usefixtures("setup_provider_modscope")]
-pytest_generate_tests = testgen.generate([AzureProvider, OpenStackProvider], scope="module")
+pytest_generate_tests = testgen.generate([AzureProvider, OpenStackProvider, EC2Provider],
+                                         scope="module")
 
 
 @pytest.fixture(scope="module")
