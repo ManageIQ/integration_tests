@@ -131,7 +131,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
             'state': 'finished'
         },
         'host': {
-            'tab': 'MyOther',
+            'tab': 'MyOtherTasks',
             'task': "SmartState Analysis for '{}'",
             'state': 'Finished'
         },

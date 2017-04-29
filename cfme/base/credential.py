@@ -66,6 +66,8 @@ class Credential(Pretty, Updateable, FromConfigMixin):
         }
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.principal == other.principal and self.secret == other.secret and \
             self.verify_secret == other.verify_secret
 
