@@ -22,27 +22,13 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-10320')(
-        ContainersTestItem(Template, 'CMP-10320')
-    ),
-    pytest.mark.polarion('CMP-9992')(
-        ContainersTestItem(ImageRegistry, 'CMP-9992')
-    ),
-    pytest.mark.polarion('CMP-9981')(
-        ContainersTestItem(Image, 'CMP-9981')
-    ),
-    pytest.mark.polarion('CMP-9964')(
-        ContainersTestItem(Node, 'CMP-9964')
-    ),
-    pytest.mark.polarion('CMP-9932')(
-        ContainersTestItem(Pod, 'CMP-9932')
-    ),
-    pytest.mark.polarion('CMP-9870')(
-        ContainersTestItem(Project, 'CMP-9870')
-    ),
-    pytest.mark.polarion('CMP-9854')(
-        ContainersTestItem(ContainersProvider, 'CMP-9854')
-    )
+    pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320', additinal_params={})),
+    pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992', additinal_params={})),
+    pytest.mark.polarion('CMP-9981')(ContainersTestItem(Image, 'CMP-9981', additinal_params={"tag":None})),
+    pytest.mark.polarion('CMP-9964')(ContainersTestItem(Node, 'CMP-9964', additinal_params={})),
+    pytest.mark.polarion('CMP-9932')(ContainersTestItem(Pod, 'CMP-9932', additinal_params={})),
+    pytest.mark.polarion('CMP-9870')(ContainersTestItem(Project, 'CMP-9870', additinal_params={})),
+    pytest.mark.polarion('CMP-9854')(ContainersTestItem(ContainersProvider, 'CMP-9854', additinal_params={}))
 ]
 
 
@@ -60,7 +46,7 @@ def set_random_tag(instance):
     random_tag = random.choice(tag_selector.all_options).text
     tag_selector.select_by_visible_text(random_tag)
 
-    # Save tog configuration
+    # Save tag conig
     form_buttons.save()
 
     return Tag(display_name=random_tag, category=random_cat)
@@ -72,18 +58,19 @@ def test_smart_management_add_tag(provider, test_item):
 
     # Select random project
     navigate_to(test_item.obj, 'All')
+    toolbar.select('List View')
     chosen_row = random.choice(paged_tbl.rows_as_list())
 
     # validate no tag set to project
-    obj_inst = test_item.obj(chosen_row.name.text, provider)
+    obj_inst = test_item.obj(name=chosen_row.name.text, provider=provider, **test_item.additinal_params)
 
     # Remove all previous configured tags for given object
     obj_inst.remove_tags(obj_inst.get_tags())
 
     # Config random tag for object
-    random_sag_setted = set_random_tag(obj_inst)
+    random_tag_setted = set_random_tag(obj_inst)
     actual_tags_on_instance = obj_inst.get_tags().pop()
 
     # Validate tag configuration
-    assert actual_tags_on_instance.display_name == random_sag_setted.display_name, \
+    assert actual_tags_on_instance.display_name == random_tag_setted.display_name, \
         "Display name not correctly configured"
