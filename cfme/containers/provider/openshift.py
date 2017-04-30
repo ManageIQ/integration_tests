@@ -78,8 +78,6 @@ class OpenshiftProvider(ContainersProvider):
     def from_config(prov_config, prov_key, appliance=None):
         token_creds = OpenshiftProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
-        # provider_user = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials']).principal
-        # provider_pass = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials']).secret
         return OpenshiftProvider(
             name=prov_config['name'],
             credentials={'token': token_creds},
