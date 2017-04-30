@@ -14,7 +14,8 @@ from utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.tier(2),
-              pytest.mark.uncollectif(lambda: version.current_version() < '5.7'),
+              pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider) and
+                                      version.current_version() < '5.8'),
               pytest.mark.usefixtures("setup_provider_modscope")]
 pytest_generate_tests = testgen.generate([AzureProvider, OpenStackProvider, EC2Provider],
                                          scope="module")
