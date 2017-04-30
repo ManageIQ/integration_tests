@@ -45,7 +45,7 @@ def test_add_provider_ssl(provider, default_sec_protocols, soft_assert):
 @pytest.mark.polarion('CMP-10586')
 def test_add_hawkular_provider_ssl(provider, default_sec_protocols,
                                    hawkular_sec_protocols, soft_assert):
-    """This test checks adding container providers with 3 different security protocols:
+    """This test checks adding container providers  with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     The test checks the Default Endpoint as well as the Hawkular Endpoint
         """
