@@ -131,9 +131,9 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     forced_saved = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton(
-            "Save Changes", dimmed_alt="Save", force_click=True),
-         '5.5': form_buttons.FormButton(
-            "Save changes", dimmed_alt="Save changes", force_click=True)})
+            "Save changes", dimmed_alt="Save changes", force_click=True),
+         '5.8': form_buttons.FormButton(
+            "Save", dimmed_alt="Save", force_click=True)})
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
