@@ -125,6 +125,8 @@ class ContainersProvider(BaseProvider, Pretty):
             port=None,
             sec_protocol=None,
             hawkular_sec_protocol=None,
+            hawkular_hostname=None,
+            hawkular_api_port=None,
             provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -139,6 +141,9 @@ class ContainersProvider(BaseProvider, Pretty):
         self.sec_protocol = sec_protocol
         self.hawkular_sec_protocol = hawkular_sec_protocol
         self.provider_data = provider_data
+        self.hawkular_hostname = hawkular_hostname
+        self.hawkular_api_port = hawkular_api_port
+
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
