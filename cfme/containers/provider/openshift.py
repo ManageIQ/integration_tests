@@ -19,9 +19,9 @@ class OpenshiftProvider(ContainersProvider):
     mgmt_class = Openshift
     db_types = ["Openshift::ContainerManager"]
 
-    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None, hawkular_hostname=None,
-                 port=None, hawkular_api_port=None, sec_protocol=None, hawkular_sec_protocol=None,
-                 provider_data=None, appliance=None):
+    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
+                 hawkular_hostname=None, port=None, hawkular_api_port=None, sec_protocol=None,
+                 hawkular_sec_protocol=None, provider_data=None, appliance=None):
         super(OpenshiftProvider, self).__init__(
             name=name, credentials=credentials, key=key, zone=zone, hostname=hostname,
             hawkular_hostname=hawkular_hostname, port=port, hawkular_api_port=hawkular_api_port,
