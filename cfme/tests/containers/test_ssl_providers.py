@@ -59,7 +59,7 @@ def test_add_hawkular_provider_ssl(provider, default_sec_protocols,
             provider._submit(False, provider.add_provider_button)
             flash.assert_message_contain('Containers Providers "' + provider.name + '" was saved')
         except:
-            # The refresh is a workaround for
+            # The refresh is workaround for
             # https://github.com/ManageIQ/integration_tests/issues/4478
             sel.refresh()
             soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
