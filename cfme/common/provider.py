@@ -728,24 +728,20 @@ def cleanup_vm(vm_name, provider):
         logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)
 
 
-# def get_provider_certificate(self, sec_protocol=None, cert_source=None, prov_config=None):
-#     creds = conf.credentials['openshift-3']
-#     provider_user = self.get_credentials_from_config(credential_config_name='openshift-3', cred_type='token')
-#     provider_pass = self.get_credentials_from_config(credential_config_name='openshift-3', cred_type='token')
-#     # provider_user = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials']).principal
-#     # provider_user = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials'], cred_type='token')
-#     # provider_pass = OpenshiftProvider.process_credential_yaml_key(prov_config['credentials']).secret
-#     # The Hawkular Cert part will probably change. Awaiting details on Hawkular certs
-#     if sec_protocol != 'SSL trusting custom CA':
-#         return None
-#     else:
-#         ip = cert_source
-#         ssh_kwargs = {
-#             'username': provider_user,
-#             'password': provider_pass,
-#             'hostname': ip \
-#             }
-#         ssh = SSHClient(**ssh_kwargs)
-#         cert = ssh.run_command('cat /etc/origin/master/ca.crt')
-#         assert cert
-#         return str(cert)
+def get_certificate(provider, sec_protocol=None, cert_source=None):
+    provider_user = conf.credentials[provider.key].username
+    provider_pass = conf.credentials[provider.key].password
+    # The Hawkular Cert part will probably change. Awaiting details on Hawkular certs
+    if sec_protocol != 'SSL trusting custom CA':
+        return None
+    else:
+        ip = cert_source
+        ssh_kwargs = {
+            'username': provider_user,
+            'password': provider_pass,
+            'hostname': ip
+        }
+        ssh = SSHClient(**ssh_kwargs)
+        cert = ssh.run_command('cat /etc/origin/master/ca.crt')
+        assert cert
+        return str(cert)
