@@ -13,6 +13,7 @@ from cfme.containers.pod import Pod
 from cfme.containers.template import Template
 from cfme.containers.provider import navigate_and_get_rows
 import random
+import re
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -77,11 +78,20 @@ def test_smart_management_add_tag(provider, test_item):
     # validate no tag set to project
     obj_inst = obj_factory(test_item.obj, chosen_row, provider)
 
+    # Validate old tags formating (my not do anything besause no tag was set)
+    regex = r"(\w+:([\w\s|\-|\*])+)|(No.*assigned)"
+    assert re.match(regex, obj_inst.summary.smart_management.my_company_tags.text_value), \
+        "Tag formmting is invalid!"
+
     # Remove all previous configured tags for given object
     obj_inst.remove_tags(obj_inst.get_tags())
 
     # Config random tag for object\
     random_tag_setted = set_random_tag(obj_inst)
+
+    # validate new tag format
+    assert re.match(regex, obj_inst.summary.smart_management.my_company_tags.text_value), \
+        "Tag formmting is invalid!"
     actual_tags_on_instance = obj_inst.get_tags()
 
     # Validate tag seted successfully
