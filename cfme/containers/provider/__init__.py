@@ -256,6 +256,9 @@ class ContainersProvider(BaseProvider, Pretty):
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
+    def am_i_here(self):
+        return match_page(summary='Pods')
+
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Providers')
 
