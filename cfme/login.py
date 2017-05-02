@@ -14,14 +14,17 @@ from widgetastic.widget import Text, View
 
 from cfme.base.credential import Credential
 from fixtures.pytest_store import store
-from utils import conf
+from utils import conf, version
 from utils.log import logger
 from widgetastic_patternfly import Button, Input, FlashMessages
+from widgetastic.utils import VersionPick
 from .base.login import BaseLoggedInPage
 
 
 class LoginPage(View):
-    flash = FlashMessages('div#flash_text_div')
+    flash = VersionPick({
+        version.LOWEST: FlashMessages('div#flash_text_div'),
+        '5.8': FlashMessages('div.flash_text_div')})
 
     class details(View):  # noqa
         region = Text('.//p[normalize-space(text())="Region:"]/span')
