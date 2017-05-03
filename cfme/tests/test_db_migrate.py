@@ -37,7 +37,7 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
         version.get_stream(db_version) == version.current_stream())
 @pytest.mark.meta(
     blockers=[BZ(1354466, unblock=lambda db_url: 'ldap' not in db_url)])
-def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
+def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, db_desc):
     app = temp_appliance_extended_db
 
     # Download the database
@@ -97,6 +97,10 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
         except AssertionError:
             rc, out = ssh.run_command("fix_auth -i invalid", timeout=45)
             assert rc == 0, "Failed to change invalid passwords: {}".format(out)
+        # fix db password
+        rc, out = ssh.run_command("fix_auth --databaseyml -i {}".format(
+            app_creds['password']), timeout=45)
+        assert rc == 0, "Failed to change invalid password: {}".format(out)
     # start evmserverd, wait for web UI to start and try to log in
     try:
         app.start_evm_service()
