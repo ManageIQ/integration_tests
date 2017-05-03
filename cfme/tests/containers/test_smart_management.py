@@ -1,3 +1,5 @@
+import re
+import random
 import pytest
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -12,16 +14,12 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
 from cfme.containers.provider import navigate_and_get_rows
-import random
-import re
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda: current_version() < "5.6"),
+    pytest.mark.uncollectif(lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
-
 
 TEST_ITEMS = [
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
@@ -45,7 +43,7 @@ def set_random_tag(instance):
 
     # select random tag tag
     tag_selector = AngularSelect("tag_add")
-    random_tag = random.choice(filter(lambda op: op.value != "select", tag_selector.all_options))
+    random_tag = random.choice([op for op in tag_selector.all_options if op.value != "select"])
     tag_selector.select_by_value(random_tag.value)
 
     # Save tag conig
@@ -77,21 +75,24 @@ def test_smart_management_add_tag(provider, test_item):
 
     # validate no tag set to project
     obj_inst = obj_factory(test_item.obj, chosen_row, provider)
-
-    # Validate old tags formating (my not do anything besause no tag was set)
-    regex = r"(\w+:([\w\s|\-|\*])+)|(No.*assigned)"
-    assert re.match(regex, obj_inst.summary.smart_management.my_company_tags.text_value), \
-        "Tag formmting is invalid!"
-
-    # Remove all previous configured tags for given object
-    obj_inst.remove_tags(obj_inst.get_tags())
+    regex = r"([\w\s|\-|\*]+:([\w\s|\-|\*])+)|(No.*assigned)"
+    try:
+        # Remove all previous configured tags for given object
+        obj_inst.remove_tags(obj_inst.get_tags())
+    except RuntimeError:
+        # Validate old tags formatting
+        assert re.match(regex, obj_inst.summary.smart_management.my_company_tags.text_value), \
+            "Tag formatting is invalid! "
 
     # Config random tag for object\
     random_tag_setted = set_random_tag(obj_inst)
 
     # validate new tag format
-    assert re.match(regex, obj_inst.summary.smart_management.my_company_tags.text_value), \
-        "Tag formmting is invalid!"
+    obj_inst.summary.reload()
+    tag_display_text = obj_inst.summary.smart_management.my_company_tags.pop()
+    tag_display_text = tag_display_text.text_value
+
+    assert re.match(regex, tag_display_text), "Tag formatting is invalid! "
     actual_tags_on_instance = obj_inst.get_tags()
 
     # Validate tag seted successfully
@@ -101,4 +102,4 @@ def test_smart_management_add_tag(provider, test_item):
 
     # Validate tag value
     assert actual_tags_on_instance.display_name == random_tag_setted.display_name, \
-        "Display name not correctly configured"
+        "Tag value not correctly configured"
