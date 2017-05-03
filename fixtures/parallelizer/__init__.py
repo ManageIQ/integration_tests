@@ -270,6 +270,7 @@ class ParallelSession(object):
 
     def monitor_shutdown(self, slave):
         # non-daemon so slaves get every opportunity to shut down cleanly
+        self.config.hook.pytest_miq_node_shutdown(config=self.config, nodeinfo=slave.url)
         shutdown_thread = Thread(target=self._monitor_shutdown_t,
                                  args=(slave.id, slave.process))
         shutdown_thread.start()
