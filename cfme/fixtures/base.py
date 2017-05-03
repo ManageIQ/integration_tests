@@ -3,13 +3,11 @@ import pytest
 from utils.appliance import get_or_create_current_appliance
 from utils.appliance import ApplianceException
 from cfme.configure import configuration
-from urlparse import urlparse
 
 from fixtures.artifactor_plugin import fire_art_hook
 
 from utils.log import logger
 from utils.path import data_path
-from utils.conf import env
 
 
 def pytest_sessionstart(session):
@@ -56,7 +54,10 @@ def fix_merkyl_workaround(request, appliance):
         remote_file = "/etc/init.d/merkyl"
         ssh_client.put_file(local_file.strpath, remote_file)
         ssh_client.run_command("service merkyl restart")
-        fire_art_hook(request.config, 'setup_merkyl', ip=urlparse(env['base_url']).netloc)
+        fire_art_hook(
+            request.config,
+            'setup_merkyl',
+            ip=appliance.address)
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -1,8 +1,10 @@
+import json
 import logging
 import os
 import re
 import socket
 import traceback
+import warnings
 from copy import copy
 from tempfile import NamedTemporaryFile
 from time import sleep
@@ -163,15 +165,42 @@ class IPAppliance(object):
             the openshift host so the framework can interact with the project.
         db_host: If the database is located somewhere else than on the appliance itself, specify
             the host here.
+        db_port: Database port.
+        ssh_port: SSH port.
     """
     _nav_steps = {}
 
     evmserverd = SystemdService.declare(unit_name='evmserverd')
     db = ApplianceDB.declare()
 
+    CONFIG_MAPPING = {
+        'base_url': 'address',
+        'browser_steal': 'browser_steal',
+        'container': 'container',
+        'pod': 'container',
+        'openshift_creds': 'openshift_creds',
+        'db_host': 'db_host',
+        'db_port': 'db_port',
+        'ssh_port': 'ssh_port',
+    }
+    CONFIG_NONGLOBAL = {'base_url'}
+
+    @property
+    def as_json(self):
+        """Dumps the arguments that can create this appliance as a JSON. None values are ignored."""
+        return json.dumps({
+            k: getattr(self, k)
+            for k in set(self.CONFIG_MAPPING.values())})
+
+    @classmethod
+    def from_json(cls, json_string):
+        return cls(**json.loads(json_string))
+
     def __init__(
             self, address=None, browser_steal=False, container=None, openshift_creds=None,
-            db_host=None):
+            db_host=None, db_port=None, ssh_port=None):
+        self.ssh_port = ssh_port or ports.SSH
+        self.db_port = db_port or ports.DB
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -268,7 +297,9 @@ class IPAppliance(object):
         return self
 
     def __repr__(self):
-        return '{}({})'.format(type(self).__name__, repr(self.address))
+        return '{}(address={!r}, container={!r}, db_host={!r}, db_port={!r}, ssh_port={!r})'.format(
+            type(self).__name__, self.address, self.container, self.db_host, self.db_port,
+            self.ssh_port)
 
     def __call__(self, **kwargs):
         """Syntactic sugar for overriding certain instance variables for context managers.
@@ -779,6 +810,7 @@ class IPAppliance(object):
                 'password': self.openshift_creds['password'],
                 'container': self.container,
                 'is_pod': True,
+                'port': self.ssh_port,
             }
             self.is_pod = True
         else:
@@ -788,6 +820,7 @@ class IPAppliance(object):
                 'password': conf.credentials['ssh']['password'],
                 'container': self.container,
                 'is_pod': False,
+                'port': self.ssh_port,
             }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
@@ -2031,6 +2064,14 @@ class Appliance(IPAppliance):
 
     _default_name = 'EVM'
 
+    # For JSON Serialization
+    CONFIG_MAPPING = {
+        'provider_name': 'provider_name',
+        'vm_name': 'vm_name',
+        'container': 'container',
+    }
+    CONFIG_NONGLOBAL = {'vm_name'}
+
     def __init__(self, provider_name, vm_name, browser_steal=False, container=None):
         """Initializes a deployed appliance VM
         """
@@ -2404,20 +2445,65 @@ class ApplianceStack(LocalStack):
 stack = ApplianceStack()
 
 
+def load_appliances(appliance_list, global_kwargs):
+    """Instantiate a list of appliances from configuration data.
+
+    Args:
+        appliance_list: List of dictionaries that contain parameters for :py:class:`IPAppliance`
+        global_kwargs: Arguments that will be defined for each appliances. Appliance can override.
+
+    Result:
+        List of :py:class:`IPAppliance`
+    """
+    result = []
+    for appliance_kwargs in appliance_list:
+        kwargs = {}
+        kwargs.update(global_kwargs)
+        kwargs.update(appliance_kwargs)
+        if not kwargs.get('base_url'):
+            raise ValueError('Appliance definition {!r} is missing base_url'.format(kwargs))
+
+        result.append(IPAppliance(**{IPAppliance.CONFIG_MAPPING[k]: v for k, v in kwargs.items()}))
+    return result
+
+
+def load_appliances_from_config(config):
+    """Backwards-compatible config loader.
+
+    The ``config`` contains some global values and ``appliances`` key which contains a list of dicts
+    that have the same keys as ``IPAppliance.CONFIG_MAPPING``'s keys. If ``appliances`` key is not
+    present, it is assumed it is old-format definition and the whole dict is used as a reference
+    for one single appliance.
+
+    The global values in the root of the dict (in case of ``appliances`` present) have lesser
+    priority than the values in appliance definitions themselves
+
+    Args:
+        config: A dictionary with the configuration
+    """
+    if 'appliances' not in config:
+        # old-style setup
+        warnings.warn(
+            'Your conf.env has old-style base_url', category=DeprecationWarning, stacklevel=2)
+        appliances = [{
+            k: config[k]
+            for k in IPAppliance.CONFIG_MAPPING.keys()
+            if k in config}]
+        global_kwargs = {}
+    else:
+        # new-style setup
+        appliances = config['appliances']
+        global_kwargs = {
+            k: config[k]
+            for k in IPAppliance.CONFIG_MAPPING.keys()
+            if k not in IPAppliance.CONFIG_NONGLOBAL and k in config}
+
+    return load_appliances(appliances, global_kwargs)
+
+
 def get_or_create_current_appliance():
     if stack.top is None:
-        base_url = conf.env['base_url']
-        if base_url is None or str(base_url.lower()) == 'none':
-            raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
-        openshift_creds = conf.env.get('openshift', {})
-        db_host = conf.env.get('db_host')
-        if not isinstance(openshift_creds, dict):
-            raise TypeError('The openshift entry in env.yaml must be a dictionary')
-        stack.push(
-            IPAppliance(
-                urlparse(base_url),
-                container=conf.env.get('container'),
-                openshift_creds=openshift_creds, db_host=db_host))
+        stack.push(load_appliances_from_config(conf.env)[0])
     return stack.top
 
 

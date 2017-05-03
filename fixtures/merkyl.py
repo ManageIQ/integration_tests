@@ -1,9 +1,8 @@
 import pytest
 
-from urlparse import urlparse
 from fixtures.artifactor_plugin import fire_art_test_hook
 
-from utils.conf import env
+from utils.appliance import get_or_create_current_appliance
 
 
 class MerkylInspector(object):
@@ -16,7 +15,7 @@ class MerkylInspector(object):
         and does nothing special.
         """
         self.node = request.node
-        self.ip = urlparse(env['base_url']).netloc
+        self.ip = get_or_create_current_appliance().address
 
     def get_log(self, log_name):
         """ A simple getter for log files.

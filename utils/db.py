@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
 from fixtures.pytest_store import store
-from utils import conf, ports
+from utils import conf
 from utils.log import logger
 
 
@@ -69,12 +69,10 @@ class Db(Mapping):
         tables, like the mapping interface or :py:meth:`values`.
 
     """
-    def __init__(self, hostname=None, credentials=None):
+    def __init__(self, hostname=None, credentials=None, port=None):
         self._table_cache = {}
-        if hostname is None:
-            self.hostname = store.current_appliance.db.address
-        else:
-            self.hostname = hostname
+        self.hostname = hostname or store.current_appliance.db.address
+        self.port = port or store.current_appliance.db_port
 
         self.credentials = credentials or conf.credentials['database']
 
@@ -194,7 +192,7 @@ class Db(Mapping):
     def db_url(self):
         """The connection URL for this database, including credentials"""
         template = "postgresql://{username}:{password}@{host}:{port}/vmdb_production"
-        result = template.format(host=self.hostname, port=ports.DB, **self.credentials)
+        result = template.format(host=self.hostname, port=self.port, **self.credentials)
         logger.info("[DB] db_url is %s", result)
         return result
 

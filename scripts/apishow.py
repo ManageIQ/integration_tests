@@ -15,6 +15,7 @@ import warnings
 
 from collections import namedtuple
 from utils import conf
+from utils.appliances import get_or_create_current_appliance
 from utils.path import log_path
 from manageiq_client.api import ManageIQClient as MiqApi
 
@@ -222,7 +223,7 @@ if __name__ == '__main__':
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         '--address',
-        default=conf.env.get('base_url'),
+        default=None,
         help="hostname or ip address of target appliance, "
              "default pulled from local environment conf")
     parser.add_argument(
@@ -232,16 +233,18 @@ if __name__ == '__main__':
         help="path to cfme log file, default: %(default)s")
     args = parser.parse_args()
 
+    address = args.address or get_or_create_current_appliance().address
+
     # we are really not interested in any warnings and "warnings.simplefilter('ignore')"
     # doesn't work when it's redefined later in the REST API client
     warnings.showwarning = lambda *args, **kwargs: None
 
     api = MiqApi(
-        '{}/api'.format(args.address.rstrip('/')),
+        '{}/api'.format(address.rstrip('/')),
         (conf.credentials['default']['username'], conf.credentials['default']['password']),
         verify_ssl=False)
 
-    print("Appliance IP: {}".format(args.address))
+    print("Appliance IP: {}".format(address))
 
     store = {}
 

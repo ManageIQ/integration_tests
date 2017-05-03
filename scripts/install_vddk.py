@@ -6,8 +6,7 @@
 import argparse
 import sys
 from urlparse import urlparse
-from utils.appliance import IPAppliance
-from utils.conf import env
+from utils.appliance import IPAppliance, get_or_create_current_appliance
 
 
 def log(message):
@@ -19,7 +18,7 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         '--address',
-        help='hostname or ip address of target appliance', default=env.get("base_url"))
+        help='hostname or ip address of target appliance', default=None)
     parser.add_argument('--vddk_url', help='url to download vddk pkg')
     parser.add_argument('--reboot', help='reboot after installation ' +
                         '(required for proper operation)', action="store_true")
@@ -28,9 +27,11 @@ def main():
 
     args = parser.parse_args()
 
-    address = urlparse(args.address).netloc
+    if not args.address:
+        appliance = get_or_create_current_appliance()
+    else:
+        appliance = IPAppliance(address=urlparse(args.address).netloc)
 
-    appliance = IPAppliance(address=address)
     appliance.install_vddk(
         reboot=args.reboot, force=args.force, vddk_url=args.vddk_url, log_callback=log)
 
