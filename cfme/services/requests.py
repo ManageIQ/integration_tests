@@ -7,7 +7,6 @@ from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Input, Region, Table, fill, flash, paginator, toolbar, match_location)
-from utils import version
 from utils.log import logger
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -217,11 +216,10 @@ def find_request(cells, partial_check=False):
             # found the row!
             row = results[0]
             logger.debug(' Request Message: %s', row.last_message.text)
-            break
+            return row
     else:
         # Request not found at all, can't continue
         return False
-    return row
 
 
 def if_exists(cells, partial_check=False):
@@ -237,12 +235,11 @@ def go_to_request(cells, partial_check=False):
         cells: Search data for the requests table.
     Returns: Success of the action.
     """
-    try:
-        row = find_request(cells, partial_check)
+    row = find_request(cells, partial_check)
+    if row:
         sel.click(row)
         return True
-    except Exception as e:
-        logger.exception(e)
+    else:
         return False
 
 
