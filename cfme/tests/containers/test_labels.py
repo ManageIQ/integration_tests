@@ -132,8 +132,8 @@ def create_api_data(provider):
         key_label = fauxfactory.gen_alphanumeric(6)
         value_label = fauxfactory.gen_alphanumeric(6)
         json_payload_format = '{"apiVersion":"v1","kind":' + obj_name + \
-                              ',"metadata":{"labels":{' + '"%s"' % key_label + ':' \
-                              + '"%s"' % value_label + '}}}'
+                              ',"metadata":{"labels":{' + '"{}"'.format(key_label) + ':' \
+                              + '"{}"'.format(value_label) + '}}}'
         json_new_payload.append(json_payload_format)
 
     # create lists of keys and values from newly generated labels for each
@@ -190,6 +190,11 @@ def create_api_data(provider):
 
 @pytest.mark.polarion('CMP-10572')
 def test_labels(provider, soft_assert):
+    """ The test executes the PATCH request on selected objects, then
+        verifies their existence in CFME. Since the labels are different
+        for each object, each label is verified separately.
+
+    """
 
     json_api_payload, obj_api_names, obj_api_endpoints, obj_api_keys, obj_api_values \
         = create_api_data(provider)
