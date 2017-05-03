@@ -12,7 +12,7 @@ from cfme.exceptions import (
 from cfme.web_ui import breadcrumbs_names, summary_title
 from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form
 from cfme.web_ui import form_buttons, paginator
-from utils import ParamClassName
+from utils import ParamClassName, version
 from cfme.web_ui import toolbar as tb
 from utils import conf
 from utils.appliance import Navigatable

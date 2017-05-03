@@ -6,6 +6,7 @@ import pytest
 
 import cfme.web_ui.flash as flash
 from utils import error
+from cfme.base.credential import Credential
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
@@ -192,7 +193,7 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
-    provider.credentials['default'] = provider.Credential(
+    provider.credentials['default'] = Credential(
         principal='bad',
         secret='reallybad',
         verify_secret='reallybad'
@@ -201,13 +202,7 @@ def test_provider_add_with_bad_credentials(provider):
         with error.expected('Cannot complete login due to an incorrect user name or password.'):
             provider.create(validate_credentials=True)
     elif isinstance(provider, RHEVMProvider):
-        error_message = version.pick({
-            '5.4': '401 Unauthorized',
-            '5.5': ('Credential validation was not successful: '
-                'Login failed due to a bad username or password.'),
-            '5.6': ('Credential validation was not successful: '
-                'Incorrect user name or password.'),
-        })
+        error_message = 'Credential validation was not successful: Incorrect user name or password.'
         with error.expected(error_message):
             provider.create(validate_credentials=True)
 
