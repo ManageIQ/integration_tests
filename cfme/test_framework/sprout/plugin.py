@@ -264,7 +264,7 @@ def pytest_addhooks(pluginmanager):
 
 def pytest_miq_node_shutdown(config, nodeinfo):
     netloc = urlparse(nodeinfo).netloc
-    ip_address = netloc[:netloc.find(":")]
+    ip_address = netloc.split(":")[0]
     log.debug("Trying to end appliance {}".format(ip_address))
     try:
         log.debug(config._sprout_mgr.client.call_method('appliance_data', ip_address))
