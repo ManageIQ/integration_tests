@@ -4,14 +4,19 @@ Top-level conftest.py does a couple of things:
 1) Add cfme_pages repo to the sys.path automatically
 2) Load a number of plugins and fixtures automatically
 """
-
 import pytest
 
 
-@pytest.mark.tryfirst
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
+
+
+def pytest_plugin_registered(plugin, manager):
+    # work around pytest not running consider_module on setuptools loaded plugins
+    # https://github.com/pytest-dev/pytest/issues/2391
+    if getattr(plugin, '__name__', None) == __name__:
+        manager.consider_module(plugin)
 
 
 pytest_plugins = (
