@@ -118,7 +118,7 @@ class ProviderNodes(CFMENavigateStep):
     def step(self):
         view = self.prerequisite_view
         try:
-            view.contents.relationships.click_at('Hosts / Nodes')
+            view.contents.relationships.click_at('Nodes')
         except NameError:
             raise DestinationNotFound("Nodes aren't present on details page of this provider")
 

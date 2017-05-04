@@ -27,5 +27,6 @@ def test_credentials_quads(provider):
 
 def test_delete_provider(provider):
     provider.delete(cancel=False)
+    provider.wait_for_delete()
     navigate_to(provider, 'All')
     assert provider.name not in [q.name for q in Quadicon.all()]

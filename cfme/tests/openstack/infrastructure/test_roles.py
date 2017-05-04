@@ -1,12 +1,14 @@
 import pytest
 from random import choice
 
+from cfme.configure.tasks import is_host_analysis_finished
 from cfme.infrastructure.deployment_roles import DeploymentRoles
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import flash, Quadicon, summary_title
+from cfme.web_ui import flash, Quadicon, summary_title, toolbar
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
@@ -19,10 +21,13 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
 
 
 def test_host_role_association(provider, soft_assert):
-    navigate_to(Host, 'All')
+    navigate_to(provider, 'ProviderNodes')
     names = [q.name for q in list(Quadicon.all())]
     for node in names:
-        host = Host(node, provider)
+        host = Host(node, provider=provider)
+        host.run_smartstate_analysis()
+        wait_for(is_host_analysis_finished, [host.name], delay=15,
+                 timeout="10m", fail_func=toolbar.refresh)
         navigate_to(host, 'Details')
         role_name = summary_title().split()[1].translate(None, '()')
         role_name = 'Compute' if role_name == 'NovaCompute' else role_name

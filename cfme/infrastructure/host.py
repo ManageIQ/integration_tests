@@ -9,6 +9,7 @@
 
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
 
 import cfme
 from cfme.base.credential import Credential as BaseCredential
@@ -264,23 +265,20 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
-    # TODO remove provider_crud when issue #4137 fixed,host linked with provider
-    def wait_for_host_state_change(self, desired_state, timeout=300, provider_crud=None):
+    def wait_for_host_state_change(self, desired_state, timeout=300):
         """Wait for Host to come to desired state.
         This function waits just the needed amount of time thanks to wait_for.
         Args:
-            self: self
             desired_state: 'on' or 'off'
             timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
-            provider_crud: provider object where vm resides on (optional)
         """
 
         def _looking_for_state_change():
             tb.refresh()
-            return 'currentstate-' + desired_state in find_quadicon(
-                self.name, do_not_navigate=False).state
+            return 'currentstate-' + desired_state in find_quadicon(self.name,
+                                                                    do_not_navigate=False).state
 
-        navigate_and_select_all_hosts(self.name, provider_crud)
+        navigate_and_select_all_hosts(self.name, self.provider)
         return wait_for(_looking_for_state_change, num_sec=timeout)
 
     def get_ipmi(self):
@@ -453,7 +451,10 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Hosts')
+        try:
+            self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Hosts')
+        except NoSuchElementException:
+            self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Nodes')
 
     def resetter(self):
         tb.select("Grid View")
@@ -621,16 +622,19 @@ def find_quadicon(host, do_not_navigate=False):
         raise HostNotFound("Host '{}' not found in UI!".format(host))
 
 
-def navigate_and_select_all_hosts(host_names, provider_crud=None):
+def navigate_and_select_all_hosts(host_names, provider=None):
     """ Reduces some redundant code shared between methods """
     if isinstance(host_names, basestring):
         host_names = [host_names]
 
-    if provider_crud:
-        navigate_to(provider_crud, 'ProviderNodes')
+    if provider:
+        navigate_to(provider, 'ProviderNodes')
     else:
         navigate_to(Host, 'All')
+
     if paginator.page_controls_exist():
         paginator.results_per_page(1000)
-    for host_name in host_names:
-        sel.check(Quadicon(host_name, 'host').checkbox())
+        sel.click(paginator.check_all())
+    else:
+        for host_name in host_names:
+            sel.check(Quadicon(host_name, 'host').checkbox())
