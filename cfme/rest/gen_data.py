@@ -220,7 +220,7 @@ def vm(request, a_provider, rest_api):
 
     provider_rest.action.refresh()
     wait_for(
-        lambda: len(rest_api.collections.vms.find_by(name=vm_name)) > 0,
+        lambda: rest_api.collections.vms.find_by(name=vm_name) or False,
         num_sec=600, delay=5)
     return vm_name
 
@@ -253,7 +253,7 @@ def service_templates(request, rest_api, service_dialog=None, service_catalog=No
     collection = rest_api.collections.service_templates
 
     for new_name in new_names:
-        wait_for(lambda: collection.find_by(name=new_name), num_sec=180, delay=10)
+        wait_for(lambda: collection.find_by(name=new_name) or False, num_sec=180, delay=10)
 
     s_tpls = [ent for ent in collection if ent.name in new_names]
 
@@ -378,10 +378,11 @@ def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create
     action_status = rest_api.response.status_code
     for entity in col_data:
         if entity.get('name', None):
-            wait_for(lambda: collection.find_by(name=entity.get('name')), num_sec=180, delay=10)
+            wait_for(lambda: collection.find_by(
+                name=entity.get('name')) or False, num_sec=180, delay=10)
         elif entity.get('description', None):
             wait_for(lambda: collection.find_by(
-                description=entity.get('description')), num_sec=180, delay=10)
+                description=entity.get('description')) or False, num_sec=180, delay=10)
         else:
             raise NotImplementedError
 
