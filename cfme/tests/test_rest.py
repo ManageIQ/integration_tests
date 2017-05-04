@@ -188,7 +188,6 @@ def test_add_picture_invalid_extension(appliance):
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-@pytest.mark.meta(blockers=[BZ(1438587, forced_streams=['5.8', 'upstream'])])
 def test_add_picture_invalid_data(appliance):
     """Tests adding picture with invalid content.
 
@@ -197,7 +196,7 @@ def test_add_picture_invalid_data(appliance):
     """
     collection = appliance.rest_api.collections.pictures
     count = collection.count
-    with error.expected('Invalid content'):  # change once the BZ1438587 is fixed
+    with error.expected('invalid base64'):
         collection.action.create({
             "extension": "png",
             "content": "invalid"})
