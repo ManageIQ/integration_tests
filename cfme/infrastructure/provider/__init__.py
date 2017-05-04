@@ -164,15 +164,18 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @num_host.variant('ui')
     def num_host_ui(self):
-        host_src = "host-"
-        node_src = "node-"
-
         try:
-            num = int(self.get_detail("Relationships", host_src, use_icon=True))
+            if self.appliance.version > '5.8':
+                num = self.get_detail("Relationships", 'Hosts')
+            else:
+                num = self.get_detail("Relationships", "host-", use_icon=True)
         except sel.NoSuchElementException:
             logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
-            num = int(self.get_detail("Relationships", node_src, use_icon=True))
-        return num
+            if self.appliance.version > '5.8':
+                num = self.get_detail("Relationships", 'Nodes')
+            else:
+                num = self.get_detail("Relationships", "node-", use_icon=True)
+        return int(num)
 
     @variable(alias='rest')
     def num_cluster(self):
@@ -196,7 +199,11 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @num_cluster.variant('ui')
     def num_cluster_ui(self):
-        return int(self.get_detail("Relationships", "cluster-", use_icon=True))
+        if self.appliance.version > '5.8':
+            num = self.get_detail("Relationships", 'Clusters')
+        else:
+            num = self.get_detail("Relationships", "cluster-", use_icon=True)
+        return int(num)
 
     def discover(self):  # todo: move this to provider collections
         """
