@@ -75,6 +75,7 @@ def test_smart_management_add_tag(provider, test_item):
 
     # validate no tag set to project
     obj_inst = obj_factory(test_item.obj, chosen_row, provider)
+
     regex = r"([\w\s|\-|\*]+:([\w\s|\-|\*])+)|(No.*assigned)"
     try:
         # Remove all previous configured tags for given object
@@ -96,8 +97,8 @@ def test_smart_management_add_tag(provider, test_item):
     actual_tags_on_instance = obj_inst.get_tags()
 
     # Validate tag seted successfully
-    assert len(actual_tags_on_instance) == 1, \
-        "Fail to set a tag for {type}".format(type=test_item.obj.__module__.title().split(".")[-1])
+    assert len(actual_tags_on_instance) == 1, "Fail to set a tag for {obj_type}".format(
+        obj_type=test_item.obj.__module__.title().split(".")[-1])
     actual_tags_on_instance = actual_tags_on_instance.pop()
 
     # Validate tag value
