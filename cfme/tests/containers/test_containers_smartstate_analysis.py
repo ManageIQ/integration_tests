@@ -47,12 +47,28 @@ TEST_ITEMS = (
 )
 
 
+@pytest.mark.polarion('10030')
+def test_manage_policies_navigation(provider):
+    chosen_row = navigate_and_get_rows(provider, Image, 1).pop()
+    image_obj = Image(chosen_row.name.text, chosen_row.tag.text, provider)
+
+    image_obj.assign_policy_profiles('OpenSCAP profile')
+
+
+@pytest.mark.polarion('10031')
+def test_check_compliance(provider):
+    chosen_row = navigate_and_get_rows(provider, Image, 1).pop()
+    image_obj = Image(chosen_row.name.text, chosen_row.tag.text, provider)
+    image_obj.assign_policy_profiles('OpenSCAP profile')
+    image_obj.check_compliance()
+
+
 @pytest.mark.meta(blockers=[BZ(1382326), BZ(1408255), BZ(1371896),
-                            BZ(1437128, forced_streams=['5.6', '5.7'])])
+                            BZ(1447655, forced_streams=['5.6', '5.7', '5.8', 'upstream'])])
 @pytest.mark.parametrize(('test_item'), TEST_ITEMS)
 def test_containers_smartstate_analysis(provider, test_item, soft_assert):
 
-    chosen_row = navigate_and_get_rows(provider, Image, 1)[0]
+    chosen_row = navigate_and_get_rows(provider, Image, 1).pop()
     image_obj = Image(chosen_row.name.text, chosen_row.tag.text, provider)
 
     if test_item.is_openscap:

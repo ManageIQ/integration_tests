@@ -10,7 +10,7 @@ from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location,
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
 from cfme.configure import tasks
-from wait_for import TimedOutError
+from utils.wait import wait_for, TimedOutError
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -58,6 +58,44 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(ssa_timeout))
+
+    def check_compliance(self, timeout=240):
+        """Initiates compliance check and waits for it to finish."""
+        navigate_to(self, 'Details')
+        original_state = self.compliance_status
+        tb.select('Policy',
+                  "Check Compliance of Last Known Configuration",
+                  invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+        wait_for(
+            lambda: self.compliance_status != original_state,
+            num_sec=timeout, delay=5, fail_func=sel.refresh,
+            message="compliance of {} checked".format(self.name)
+        )
+        return self.compliant
+
+    @property
+    def compliance_status(self):
+        self.summary.reload()
+        return self.summary.compliance.status.value
+
+    @property
+    def compliant(self):
+        """Check if the image is compliant
+
+        Returns:
+            :py:class:`NoneType` if the image was never verified, otherwise :py:class:`bool`
+        """
+        text = self.compliance_status.strip().lower()
+        if text == "never verified":
+            return None
+        elif text.startswith("non-compliant"):
+            return False
+        elif text.startswith("compliant"):
+            return True
+        else:
+            raise ValueError("{} is not a known state for compliance".format(text))
 
 
 @navigator.register(Image, 'All')
