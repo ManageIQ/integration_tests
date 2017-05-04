@@ -38,7 +38,7 @@ class EditReportMenusView(CloudIntelReportsView):
             self.title.text == 'Editing EVM Group "{}"'.format(self.context["object"].group) and
             self.edit_report_menus.is_opened and
             self.edit_report_menus.tree.currently_selected == [
-                "All EVM Grouops",
+                "All EVM Groups",
                 self.context["object"].group
             ]
         )
@@ -179,6 +179,6 @@ class EditReportMenus(CFMENavigateStep):
 
     def step(self):
         self.view.edit_report_menus.tree.click_path(
-            "All EVM Grouops",
+            "All EVM Groups",
             self.obj.group
         )
