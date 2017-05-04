@@ -2,6 +2,7 @@
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, Checkbox, Table, View
 from widgetastic_patternfly import Tab, BootstrapSelect
+from widgetastic_manageiq import TimelinesChart
 
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -30,6 +31,7 @@ class BottlenecksTabsView(BottlenecksView):
         event_groups = BootstrapSelect('tl_summ_fl_grp1')
         show_host_events = Checkbox(locator='//input[@name="tl_summ_hosts"]')
         time_zone = BootstrapSelect("tl_summ_tz")
+        chart = TimelinesChart(locator='//div/*[@class="timeline-pf-chart"]')
 
     @View.nested
     class report(Tab):     # noqa
@@ -54,3 +56,5 @@ class All(CFMENavigateStep):
     def resetter(self):
         self.view.report.event_groups.fill('<ALL>')
         self.view.report.show_host_events.fill(False)
+        self.view.summary.event_groups.fill('<ALL>')
+        self.view.summary.show_host_events.fill(False)

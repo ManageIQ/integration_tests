@@ -67,7 +67,7 @@ def db_restore(temp_appliance_extended_db):
 
 
 @pytest.mark.tier(2)
-def test_bottlenecks_event_groups(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+def test_bottlenecks_report_event_groups(temp_appliance_extended_db, db_restore, db_tbl, db_events):
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         # Enabling this option to show all possible values
@@ -82,7 +82,7 @@ def test_bottlenecks_event_groups(temp_appliance_extended_db, db_restore, db_tbl
 
 
 @pytest.mark.tier(2)
-def test_bottlenecks_show_host_events(temp_appliance_extended_db, db_restore, db_events):
+def test_bottlenecks_report_show_host_events(temp_appliance_extended_db, db_restore, db_events):
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         view.report.show_host_events.fill(False)
@@ -96,7 +96,7 @@ def test_bottlenecks_show_host_events(temp_appliance_extended_db, db_restore, db
 
 
 @pytest.mark.tier(2)
-def test_bottlenecks_time_zome(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+def test_bottlenecks_report_time_zome(temp_appliance_extended_db, db_restore, db_tbl, db_events):
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         row = view.report.event_details[0]
@@ -105,6 +105,52 @@ def test_bottlenecks_time_zome(temp_appliance_extended_db, db_restore, db_tbl, d
         # Compare bottleneck's table timestamp with db
         assert row[0].text == db_row[0][0].strftime("%m/%d/%y %H:%M:%S UTC")
         # Changing time zone
-        view.report.time_zone.fill('(GMT-04:00) La Paz')
+        view.report.time_zone.fill('(GMT+02:00) Kyiv')
         row = view.report.event_details[0]
-        assert row[0].text == (db_row[0][0] - timedelta(hours=4)).strftime("%m/%d/%y %H:%M:%S BOT")
+        assert row[0].text == (db_row[0][0] - timedelta(hours=4)).strftime("%m/%d/%y %H:%M:%S EEST")
+
+
+@pytest.mark.tier(2)
+def test_bottlenecks_summary_event_groups(temp_appliance_extended_db, db_restore, db_tbl,
+                                          db_events):
+    with temp_appliance_extended_db:
+        view = navigate_to(Bottlenecks, 'All')
+        # Enabling this option to show all possible values
+        view.summary.show_host_events.fill(True)
+        view.summary.event_groups.fill('Capacity')
+        events = view.summary.chart.get_events()
+        # Compare number of events in chart with number of rows in db
+        assert len(events) == db_events.filter(db_tbl.event_type == 'DiskUsage').count()
+        view.summary.event_groups.fill('Utilization')
+        events = view.summary.chart.get_events()
+        assert len(events) == db_events.filter(db_tbl.event_type != 'DiskUsage').count()
+
+
+@pytest.mark.tier(2)
+def test_bottlenecks_summary_show_host_events(temp_appliance_extended_db, db_restore, db_events):
+    with temp_appliance_extended_db:
+        view = navigate_to(Bottlenecks, 'All')
+        view.summary.show_host_events.fill(False)
+        # Checking that events with value 'Host / Node' absent in table
+        events = view.summary.chart.get_events()
+        assert not sum(1 for event in events if event.type == 'Host')
+        view.summary.show_host_events.fill(True)
+        events = view.summary.chart.get_events()
+        # Compare number of events in chart with number of rows in db
+        assert len(events) == db_events.count()
+
+
+@pytest.mark.tier(2)
+def test_bottlenecks_summary_time_zome(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+    with temp_appliance_extended_db:
+        view = navigate_to(Bottlenecks, 'All')
+        events = view.summary.chart.get_events()
+        # Selecting row by uniq value
+        db_row = db_events.filter(db_tbl.message == events[0].message)
+        # Compare event timestamp with db
+        assert events[0].time_stamp == db_row[0][0].strftime("%Y-%m-%d %H:%M:%S UTC")
+        # Changing time zone
+        view.report.time_zone.fill('(GMT+02:00) Kyiv')
+        events = view.summary.chart.get_events()
+        assert events[0].time_stamp == (db_row[0][0] - timedelta(hours=4)).strftime("%Y-%m-%d "
+                                                                                    "%H:%M:%S EEST")
