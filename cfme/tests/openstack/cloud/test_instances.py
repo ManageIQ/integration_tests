@@ -17,7 +17,7 @@ pytest_generate_tests = testgen.generate([OpenStackProvider],
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def new_instance(provider):
     prov_data = provider.get_yaml_data()['provisioning']
     instance = OpenStackInstance(fauxfactory.gen_alpha(), provider,
@@ -28,9 +28,13 @@ def new_instance(provider):
                     prov_data['instance_type'], False,
                     security_groups='default',
                     availability_zone=prov_data['availability_zone'],
-                    cloud_tenant=prov_data['tenant'])
+                    cloud_tenant=prov_data['cloud_tenant'])
     instance.wait_to_appear()
-    return instance
+    yield instance
+    try:
+        instance.power_control_from_provider(OpenStackInstance.TERMINATE)
+    except:
+        pass
 
 
 def test_create_instance(new_instance, soft_assert):
@@ -47,7 +51,7 @@ def test_create_instance(new_instance, soft_assert):
 
     # Assert other relationships in a loop
     props = [('Availability Zone', 'availability_zone'),
-             ('Cloud Tenants', 'tenant'),
+             ('Cloud Tenants', 'cloud_tenant'),
              ('Flavor', 'instance_type')]
 
     if current_version() >= '5.7':

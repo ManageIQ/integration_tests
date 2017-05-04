@@ -11,10 +11,10 @@ from utils.version import current_version
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
                                          scope='module')
 
-pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7')]
+pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+              pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-@pytest.mark.usefixtures("setup_provider_modscope")
 @pytest.fixture(scope='module')
 def host_on(provider):
     try:
@@ -24,7 +24,7 @@ def host_on(provider):
 
     my_quads = list(Quadicon.all())
     quad = my_quads[0]
-    my_host_on = Host(name=quad.name)
+    my_host_on = Host(name=quad.name, provider=provider)
 
     if my_host_on.get_power_state() == 'off':
         my_host_on.power_on()
@@ -32,7 +32,6 @@ def host_on(provider):
     return my_host_on
 
 
-@pytest.mark.usefixtures("setup_provider_modscope")
 @pytest.fixture(scope='module')
 def host_off(provider):
     try:
@@ -42,7 +41,7 @@ def host_off(provider):
 
     my_quads = list(Quadicon.all())
     quad = my_quads[0]
-    my_host_off = Host(name=quad.name)
+    my_host_off = Host(name=quad.name, provider=provider)
 
     if my_host_off.get_power_state() == 'on':
         my_host_off.power_off()
@@ -58,7 +57,6 @@ def test_host_power_off(host_on):
 
 
 def test_host_power_on(host_off):
-
     host_off.power_on()
     host_off.refresh()
     result = host_off.wait_for_host_state_change('on', 1000)
