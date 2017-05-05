@@ -116,6 +116,7 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     snapshot2 = new_snapshot(test_vm)
     snapshot2.create()
     snapshot1.revert_to()
+    ssh.close()
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
     wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
@@ -135,6 +136,7 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         logger.info('Revert to snapshot %s successful', snapshot1.name)
     except:
         logger.info('Revert to snapshot %s Failed', snapshot1.name)
+    client.close()
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')

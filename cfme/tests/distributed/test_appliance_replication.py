@@ -48,6 +48,7 @@ def stop_db_process(address):
         assert ssh.run_command('service {}-postgresql stop'.format(
             current_appliance.postgres_version))[0] == 0,\
             "Could not stop postgres process on {}".format(address)
+    ssh.close()
 
 
 def start_db_process(address):
@@ -55,12 +56,14 @@ def start_db_process(address):
         assert ssh.run_command('systemctl start {}-postgresql'
             .format(current_appliance.postgres_version))[0] == 0,\
             "Could not start postgres process on {}".format(address)
+    ssh.close()
 
 
 def update_appliance_uuid(address):
     with get_ssh_client(address) as ssh:
         assert ssh.run_command('uuidgen > /var/www/miq/vmdb/GUID')[0] == 0,\
             "Could not update appliance's uuid on {}".format(address)
+    ssh.close()
 
 
 def get_replication_appliances():

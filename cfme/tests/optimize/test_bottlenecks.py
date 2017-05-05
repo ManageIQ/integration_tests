@@ -50,6 +50,7 @@ def db_restore(temp_appliance_extended_db):
         ssh.get_file("/home/backups/otsuman_db_bottlenecks/REGION{}".format(ver), region_filename)
         guid_filename = "/tmp/GUID_{}".format(fauxfactory.gen_alphanumeric())
         ssh.get_file("/home/backups/otsuman_db_bottlenecks/GUID{}".format(ver), guid_filename)
+    db_storage.close()
 
     with app.ssh_client as ssh:
         ssh.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")

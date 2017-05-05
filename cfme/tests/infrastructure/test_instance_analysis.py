@@ -208,7 +208,7 @@ def vm_analysis_data(provider, analysis_type):
     return provisioning_data
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data, appliance):
     """ Fixture to provision instance on the provider """
 
@@ -265,7 +265,12 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data,
         cfme_rel = Vm.CfmeRelationship(vm)
         server_name = appliance.server_name()
         cfme_rel.set_relationship(str(server_name), configuration.server_id())
-    return vm
+
+    yield vm
+
+    # Close the SSH client if we have one
+    if vm.ssh:
+        vm.ssh.close()
 
 
 @pytest.fixture(scope="module")

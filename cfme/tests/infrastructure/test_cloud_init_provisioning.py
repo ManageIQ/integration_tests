@@ -85,3 +85,4 @@ def test_provision_cloud_init(setup_provider, provider, setup_ci_template,
     sshclient = ssh.SSHClient(hostname=connect_ip, username=provisioning['ci-username'],
                               password=provisioning['ci-pass'])
     wait_for(sshclient.uptime, num_sec=200, handle_exception=True)
+    sshclient.close()

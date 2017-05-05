@@ -92,11 +92,13 @@ def rhsm_unregister():
         ssh.run_command('subscription-manager remove --all')
         ssh.run_command('subscription-manager unregister')
         ssh.run_command('subscription-manager clean')
+    ssh.close()
 
 
 def sat5_unregister():
     with SSHClient() as ssh:
         ssh.run_command('rm -f /etc/sysconfig/rhn/systemid')
+    ssh.close()
 
 
 def sat6_unregister():
@@ -106,6 +108,7 @@ def sat6_unregister():
         ssh.run_command('subscription-manager clean')
         ssh.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
         ssh.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
+    ssh.close()
 
 
 def is_registration_complete(used_repo_or_channel):
@@ -117,6 +120,7 @@ def is_registration_complete(used_repo_or_channel):
             if (repo_or_channel not in out) or (not re.search(r'repolist: [^0]', out)):
                 return False
         return True
+    ssh.close()
 
 
 @pytest.mark.ignore_stream("upstream")

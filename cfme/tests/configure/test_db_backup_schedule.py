@@ -212,6 +212,8 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
     def delete_sched_and_files():
         with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh:
             ssh.run_command('rm -rf {}'.format(full_path), ensure_user=True)
+        ssh.close()
+
         sched.delete()
         flash.assert_message_contain(
             'Schedule "{}": Delete successful'.format(db_backup_data.schedule_description)
@@ -244,4 +246,6 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
             num_sec=60,
             message="File '{}' not found on share".format(full_path)
         )
+
+    ssh.close()
     # ----
