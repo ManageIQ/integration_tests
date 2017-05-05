@@ -26,7 +26,7 @@ def parse_cmd_line():
 
 def azure_cleanup(nic_template, pip_template, days_old, output):
     with open(output, 'w') as report:
-        report.write('azure_cleanup.py, NICs and PIPs Cleanup')
+        report.write('azure_cleanup.py, NICs, PIPs and Stack Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
         try:
             for provider_key in list_provider_keys('azure'):
@@ -34,34 +34,35 @@ def azure_cleanup(nic_template, pip_template, days_old, output):
                 nic_list = provider_mgmt.list_free_nics(nic_template)
                 pip_list = provider_mgmt.list_free_pip(pip_template)
                 stack_list = provider_mgmt.list_stack(days_old=days_old)
-                report.write("----- Provider: {} -----".format(provider_key))
+                report.write("----- Provider: {} -----\n".format(provider_key))
                 if nic_list:
-                    report.write("\nRemoving Nics with the name \"{}\":\n".format(nic_template))
+                    report.write("Removing Nics with the name \'{}\':\n".format(nic_template))
                     report.write("\n".join(str(k) for k in nic_list))
                     provider_mgmt.remove_nics_by_search(nic_template)
                 else:
-                    report.write("\nNo \"{}\" NICs were found\n".format(nic_template))
+                    report.write("No \'{}\' NICs were found\n".format(nic_template))
                 if pip_list:
-                    report.write("\nRemoving Public IPs with the name \"{}\":\n".
+                    report.write("Removing Public IPs with the name \'{}\':\n".
                                  format(pip_template))
                     report.write("\n".join(str(k) for k in pip_list))
                     provider_mgmt.remove_pips_by_search(pip_template)
                 else:
-                    report.write("\nNo \"{}\" Public IPs were found\n".format(pip_template))
+                    report.write("No \'{}\' Public IPs were found\n".format(pip_template))
                 if stack_list:
                     report.write(
-                        "\nRemoving empty Stacks:")
+                        "Removing empty Stacks:\n")
                     for stack in stack_list:
                         if provider_mgmt.is_stack_empty(stack):
                             provider_mgmt.delete_stack(stack)
-                            report.write("\nStack {} is empty - Removed".format(stack))
+                            report.write("Stack {} is empty - Removed\n".format(stack))
                 else:
-                    report.write("\nNo stacks older than \"{}\" days were found\n".format(
+                    report.write("No stacks older than \'{}\' days were found\n".format(
                         days_old))
             return 0
         except Exception:
-            print("Something bad happened during Azure cleanup")
-            tb.print_exc()
+            report.write("Something bad happened during Azure cleanup\n")
+            report.write(tb.format_exc())
+            return 1
 
 
 if __name__ == "__main__":
