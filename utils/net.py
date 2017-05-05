@@ -110,6 +110,7 @@ sys.exit(0)
                 _ports[addr][port] = True
             else:
                 _ports[addr][port] = False
+        ssh.close()
     return _ports[addr][port]
 
 

@@ -753,7 +753,10 @@ class IPAppliance(object):
             'username': conf.credentials['ssh']['ssh-user'],
             'key_filename': conf_path.join('appliance_private_key').strpath,
         }
-        return ssh.SSHClient(**connect_kwargs)
+        ssh_client = ssh.SSHClient(**connect_kwargs)
+        # FIXME: propperly store ssh clients we made
+        store.ssh_clients_to_close.append(ssh_client)
+        return ssh_client
 
     @cached_property
     def ssh_client(self):

@@ -60,6 +60,7 @@ def setup_external_auth_ipa(**data):
         "appliance_console_cli --ipaserver {ipaserver} --iparealm {iparealm} "
         "--ipaprincipal {principal} --ipapassword {password}".format(**data)
     )
+    ssh.close()
     login_admin()
 
 
@@ -106,6 +107,7 @@ def disable_external_auth_ipa():
     auth.update()
     assert ssh.run_command("appliance_console_cli --uninstall-ipa")
     appliance.IPAppliance().wait_for_web_ui()
+    ssh.close()
     logout()
 
 
@@ -122,4 +124,5 @@ def disable_external_auth_openldap():
     assert ssh.run_command(command)
     ssh.run_command('systemctl restart evmserverd')
     appliance.IPAppliance().wait_for_web_ui()
+    ssh.close()
     logout()
