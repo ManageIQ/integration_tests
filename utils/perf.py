@@ -80,6 +80,7 @@ def get_worker_pid(worker_type):
     ssh_client = SSHClient()
     exit_status, out = ssh_client.run_command('systemctl status evmserverd 2> /dev/null | grep '
         '-m 1 \'{}\' | awk \'{{print $7}}\''.format(worker_type))
+    ssh_client.close()
     worker_pid = str(out).strip()
     if out:
         logger.info('Obtained {} PID: {}'.format(worker_type, worker_pid))
@@ -121,5 +122,6 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
             # Note the error in the logger but continue as the appliance could be slow at logging
             # that the log level changed
             logger.error('Could not detect log level_rails change.')
+        evm_tail.close()
     else:
         logger.info('Log level_rails already set to {}'.format(level))

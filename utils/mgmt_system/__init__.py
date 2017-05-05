@@ -140,6 +140,7 @@ class RHEVMSystem(RHEVMSystemBase):
             }
             client = SSHClient(**ssh_kwargs)
             status, out = client.run_command('pvscan', timeout=5 * 60)
+            client.close()
 
         # remove it
         else:
