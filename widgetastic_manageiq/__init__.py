@@ -2251,12 +2251,13 @@ class MenuShortcutsPicker(DashboardWidgetsPicker):
 
     def add_shortcut(self, shortcut, alias):
         # We need to get all options from the dropdown before picking
-        mapping = self.get_mapping()
+        mapping = self.mapping
         self.select.fill(shortcut)
         if shortcut != alias:
             self.shortcut(mapping[shortcut]).fill(alias)
 
-    def get_mapping(self):
+    @cached_property
+    def mapping(self):
         return {option.text: option.value for option in self.select.all_options}
 
     @property
