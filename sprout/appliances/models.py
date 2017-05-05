@@ -1219,6 +1219,8 @@ class AppliancePool(MetadataMixin):
             "template_group": self.group,
             "preconfigured": self.preconfigured,
             'provider__user_groups__in': self.owner.groups.all(),
+            'provider__working': True,
+            'provider__disabled': False,
         }
         if self.version is not None:
             filter_params["version"] = self.version
@@ -1253,7 +1255,7 @@ class AppliancePool(MetadataMixin):
     @property
     def possible_providers(self):
         """Which providers contain a template that could be used for provisioning?."""
-        return set(tpl.provider for tpl in self.possible_templates)
+        return set(tpl.provider for tpl in self.possible_templates if tpl.provider.is_working)
 
     @property
     def appliances(self):
