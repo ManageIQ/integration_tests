@@ -52,6 +52,8 @@ def set_random_tag(instance):
     return Tag(display_name=random_tag.text, category=random_cat.text)
 
 
+get_object_name = lambda obj:obj.__module__.title().split(".")[-1]
+
 def obj_factory(obj_creator, row, provider):
 
     factory = {"Provider": lambda row: {"name": row.name.text},
@@ -63,11 +65,11 @@ def obj_factory(obj_creator, row, provider):
                                      "tag": row.tag.text, "provider": provider},
                "Image_Registry": lambda row: {"host": row.host.text, "provider": provider}}
 
-    return obj_creator(**factory[obj_creator.__module__.title().split(".")[-1]](row))
+    return obj_creator(**factory[get_object_name(obj_creator)](row))
 
 
 @pytest.mark.parametrize('test_item',
-                         TEST_ITEMS, ids=[testItem.args[1].pretty_id() for testItem in TEST_ITEMS])
+                         TEST_ITEMS, ids=[test_item.args[1].pretty_id() for test_item in TEST_ITEMS])
 def test_smart_management_add_tag(provider, test_item):
 
     # Select random instanse from instanse table
@@ -98,7 +100,7 @@ def test_smart_management_add_tag(provider, test_item):
 
     # Validate tag seted successfully
     assert len(actual_tags_on_instance) == 1, "Fail to set a tag for {obj_type}".format(
-        obj_type=test_item.obj.__module__.title().split(".")[-1])
+        obj_type=get_object_name(test_item))
     actual_tags_on_instance = actual_tags_on_instance.pop()
 
     # Validate tag value
