@@ -2,6 +2,7 @@ import re
 import pytest
 import random
 import attr
+from urlparse import urlparse
 from threading import Timer
 from utils import at_exit, conf
 from utils.appliance import IPAppliance, stack as appliance_stack
@@ -255,3 +256,24 @@ class SproutManager(object):
             timeout = 60 + random.randint(0, 10)
         finally:
             self.reset_timer(timeout=timeout)
+
+
+def pytest_addhooks(pluginmanager):
+    pluginmanager.add_hookspecs(NewHooks)
+
+
+def pytest_miq_node_shutdown(config, nodeinfo):
+    netloc = urlparse(nodeinfo).netloc
+    ip_address = netloc.split(":")[0]
+    log.debug("Trying to end appliance {}".format(ip_address))
+    try:
+        log.debug(config._sprout_mgr.client.call_method('appliance_data', ip_address))
+        log.debug(config._sprout_mgr.client.call_method('destroy_appliance', ip_address))
+    except Exception as e:
+        log.debug('Error trying to end sprout appliance %s', ip_address)
+        log.debug(e)
+
+
+class NewHooks(object):
+    def pytest_miq_node_shutdown(self, config, nodeinfo):
+        pass
