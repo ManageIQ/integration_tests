@@ -32,6 +32,10 @@ TEST_ITEMS = [
 ]
 
 
+def get_object_name(obj):
+    return obj.__module__.title().split(".")[-1]
+
+
 def set_random_tag(instance):
     navigate_to(instance, 'Details')
     toolbar.select('Policy', 'Edit Tags')
@@ -52,8 +56,6 @@ def set_random_tag(instance):
     return Tag(display_name=random_tag.text, category=random_cat.text)
 
 
-get_object_name = lambda obj:obj.__module__.title().split(".")[-1]
-
 def obj_factory(obj_creator, row, provider):
 
     factory = {"Provider": lambda row: {"name": row.name.text},
@@ -69,7 +71,7 @@ def obj_factory(obj_creator, row, provider):
 
 
 @pytest.mark.parametrize('test_item',
-                         TEST_ITEMS, ids=[test_item.args[1].pretty_id() for test_item in TEST_ITEMS])
+                         TEST_ITEMS, ids=[item.args[1].pretty_id() for item in TEST_ITEMS])
 def test_smart_management_add_tag(provider, test_item):
 
     # Select random instanse from instanse table
@@ -100,7 +102,7 @@ def test_smart_management_add_tag(provider, test_item):
 
     # Validate tag seted successfully
     assert len(actual_tags_on_instance) == 1, "Fail to set a tag for {obj_type}".format(
-        obj_type=get_object_name(test_item))
+        obj_type=get_object_name(test_item.obj))
     actual_tags_on_instance = actual_tags_on_instance.pop()
 
     # Validate tag value
