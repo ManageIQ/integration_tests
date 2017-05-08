@@ -4,7 +4,7 @@ from wait_for import wait_for
 from utils import version
 from utils.log_validator import LogValidator
 from utils.log import logger
-import conf
+from utils.conf import hidden
 import tempfile
 import lxml.etree
 import yaml
@@ -256,7 +256,7 @@ def test_black_console_scap(temp_appliance_preconfig, soft_assert):
     temp_appliance_preconfig.appliance_console.run_commands(command_set)
 
     with tempfile.NamedTemporaryFile('w') as f:
-        f.write(conf.hidden['scap.rb'])
+        f.write(hidden['scap.rb'])
         temp_appliance_preconfig.ssh_client.put_file(
             f.name, '/tmp/scap.rb')
     temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby /tmp/scap.rb')
