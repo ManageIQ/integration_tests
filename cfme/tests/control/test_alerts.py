@@ -172,9 +172,9 @@ def vm_name(request, initialize_provider, full_template):
 @pytest.yield_fixture(scope="function")
 def ssh(provider, full_template, vm_name):
     with SSHClient(
-        username=credentials[full_template['creds']]['username'],
-        password=credentials[full_template['creds']]['password'],
-        hostname=provider.mgmt.get_ip_address(vm_name)) as ssh_client:
+            username=credentials[full_template['creds']]['username'],
+            password=credentials[full_template['creds']]['password'],
+            hostname=provider.mgmt.get_ip_address(vm_name)) as ssh_client:
         yield ssh_client
 
 
