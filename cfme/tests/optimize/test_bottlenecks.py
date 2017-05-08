@@ -43,13 +43,17 @@ def db_restore(temp_appliance_extended_db):
         # Different files for different versions
         ver = "_56" if current_version() < '5.7' else ""
         rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
-        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver), rand_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver),
+                            rand_filename)
         dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
-        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/db.backup{}".format(ver), dump_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/db.backup{}".format(ver), 
+                            dump_filename)
         region_filename = "/tmp/REGION_{}".format(fauxfactory.gen_alphanumeric())
-        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/REGION{}".format(ver), region_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/REGION{}".format(ver),
+                            region_filename)
         guid_filename = "/tmp/GUID_{}".format(fauxfactory.gen_alphanumeric())
-        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/GUID{}".format(ver), guid_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/GUID{}".format(ver),
+                            guid_filename)
 
     with app.ssh_client as ssh_client:
         ssh_client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
