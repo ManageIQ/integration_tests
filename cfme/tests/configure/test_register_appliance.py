@@ -88,39 +88,35 @@ def unset_org_id():
 
 
 def rhsm_unregister():
-    with SSHClient() as ssh:
-        ssh.run_command('subscription-manager remove --all')
-        ssh.run_command('subscription-manager unregister')
-        ssh.run_command('subscription-manager clean')
-    ssh.close()
+    with SSHClient() as ssh_client:
+        ssh_client.run_command('subscription-manager remove --all')
+        ssh_client.run_command('subscription-manager unregister')
+        ssh_client.run_command('subscription-manager clean')
 
 
 def sat5_unregister():
-    with SSHClient() as ssh:
-        ssh.run_command('rm -f /etc/sysconfig/rhn/systemid')
-    ssh.close()
+    with SSHClient() as ssh_client:
+        ssh_client.run_command('rm -f /etc/sysconfig/rhn/systemid')
 
 
 def sat6_unregister():
-    with SSHClient() as ssh:
-        ssh.run_command('subscription-manager remove --all')
-        ssh.run_command('subscription-manager unregister')
-        ssh.run_command('subscription-manager clean')
-        ssh.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
-        ssh.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
-    ssh.close()
+    with SSHClient() as ssh_client:
+        ssh_client.run_command('subscription-manager remove --all')
+        ssh_client.run_command('subscription-manager unregister')
+        ssh_client.run_command('subscription-manager clean')
+        ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
+        ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
 
 
 def is_registration_complete(used_repo_or_channel):
-    with SSHClient() as ssh:
-        ret, out = ssh.run_command('yum repolist enabled')
+    with SSHClient() as ssh_client:
+        ret, out = ssh_client.run_command('yum repolist enabled')
         # Check that the specified (or default) repo (can be multiple, separated by a space)
         # is enabled and that there are packages available
         for repo_or_channel in used_repo_or_channel.split(' '):
             if (repo_or_channel not in out) or (not re.search(r'repolist: [^0]', out)):
                 return False
         return True
-    ssh.close()
 
 
 @pytest.mark.ignore_stream("upstream")

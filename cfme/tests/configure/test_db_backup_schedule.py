@@ -210,9 +210,8 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
 
     # ---- Add cleanup finalizer
     def delete_sched_and_files():
-        with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh:
-            ssh.run_command('rm -rf {}'.format(full_path), ensure_user=True)
-        ssh.close()
+        with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
+            ssh_client.run_command('rm -rf {}'.format(full_path), ensure_user=True)
 
         sched.delete()
         flash.assert_message_contain(
@@ -233,9 +232,9 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
     # ----
 
     # ---- Check if the db backup file exists
-    with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh:
+    with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
 
-        assert ssh.run_command('cd "{}"'.format(path_on_host), ensure_user=True)[0] == 0,\
+        assert ssh_client.run_command('cd "{}"'.format(path_on_host), ensure_user=True)[0] == 0,\
             "Could not cd into '{}' over ssh".format(path_on_host)
         # Find files no more than 5 minutes old, count them and remove newline
         file_check_cmd = "find {}/* -cmin -5 | wc -l | tr -d '\n' ".format(full_path)
@@ -247,5 +246,4 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
             message="File '{}' not found on share".format(full_path)
         )
 
-    ssh.close()
     # ----

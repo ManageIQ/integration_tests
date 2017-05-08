@@ -44,26 +44,23 @@ def get_ssh_client(hostname):
 # TODO: These calls here should not be separate functions, the functions should be on the appliance
 # and we should be using the with context manager, they are being used incorrectly below
 def stop_db_process(address):
-    with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service {}-postgresql stop'.format(
+    with get_ssh_client(address) as ssh_client:
+        assert ssh_client.run_command('service {}-postgresql stop'.format(
             current_appliance.postgres_version))[0] == 0,\
             "Could not stop postgres process on {}".format(address)
-    ssh.close()
 
 
 def start_db_process(address):
-    with get_ssh_client(address) as ssh:
-        assert ssh.run_command('systemctl start {}-postgresql'
+    with get_ssh_client(address) as ssh_client:
+        assert ssh_client.run_command('systemctl start {}-postgresql'
             .format(current_appliance.postgres_version))[0] == 0,\
             "Could not start postgres process on {}".format(address)
-    ssh.close()
 
 
 def update_appliance_uuid(address):
-    with get_ssh_client(address) as ssh:
-        assert ssh.run_command('uuidgen > /var/www/miq/vmdb/GUID')[0] == 0,\
+    with get_ssh_client(address) as ssh_client:
+        assert ssh_client.run_command('uuidgen > /var/www/miq/vmdb/GUID')[0] == 0,\
             "Could not update appliance's uuid on {}".format(address)
-    ssh.close()
 
 
 def get_replication_appliances():

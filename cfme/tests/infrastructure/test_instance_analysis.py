@@ -269,7 +269,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data,
     yield vm
 
     # Close the SSH client if we have one
-    if vm.ssh:
+    if getattr(vm, 'ssh', None):
         vm.ssh.close()
 
 
