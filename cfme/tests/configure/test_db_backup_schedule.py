@@ -240,7 +240,7 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
         file_check_cmd = "find {}/* -cmin -5 | wc -l | tr -d '\n' ".format(full_path)
 
         wait_for(
-            lambda: ssh.run_command(file_check_cmd, ensure_user=True)[1] == '1',
+            lambda: ssh_client.run_command(file_check_cmd, ensure_user=True)[1] == '1',
             delay=5,
             num_sec=60,
             message="File '{}' not found on share".format(full_path)
