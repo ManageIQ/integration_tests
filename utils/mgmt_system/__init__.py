@@ -138,9 +138,8 @@ class RHEVMSystem(RHEVMSystemBase):
                 'password': conf.credentials['ssh']['password'],
                 'hostname': ip_addr
             }
-            client = SSHClient(**ssh_kwargs)
-            status, out = client.run_command('pvscan', timeout=5 * 60)
-            client.close()
+            with SSHClient(**ssh_kwargs) as ssh_client:
+                status, out = ssh_client.run_command('pvscan', timeout=5 * 60)
 
         # remove it
         else:
