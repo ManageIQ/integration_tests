@@ -38,7 +38,7 @@ def db_restore(temp_appliance_extended_db):
     app.stop_evm_service()
     app.drop_database()
     db_storage_hostname = conf.cfme_data['bottlenecks']['hostname']
-    db_storage_ssh = SSHClient(hostname=db_storage_ssh_hostname, **conf.credentials['bottlenecks'])
+    db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])
     with db_storage_ssh as ssh_client:
         # Different files for different versions
         ver = "_56" if current_version() < '5.7' else ""
