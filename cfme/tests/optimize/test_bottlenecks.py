@@ -46,7 +46,7 @@ def db_restore(temp_appliance_extended_db):
         ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver),
                             rand_filename)
         dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
-        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/db.backup{}".format(ver), 
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/db.backup{}".format(ver),
                             dump_filename)
         region_filename = "/tmp/REGION_{}".format(fauxfactory.gen_alphanumeric())
         ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/REGION{}".format(ver),
