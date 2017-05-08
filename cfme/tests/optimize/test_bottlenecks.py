@@ -38,24 +38,24 @@ def db_restore(temp_appliance_extended_db):
     app.stop_evm_service()
     app.drop_database()
     db_storage_hostname = conf.cfme_data['bottlenecks']['hostname']
-    db_storage = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])
-    with db_storage as ssh:
+    db_storage_ssh = SSHClient(hostname=db_storage_ssh_hostname, **conf.credentials['bottlenecks'])
+    with db_storage_ssh as ssh_client:
         # Different files for different versions
         ver = "_56" if current_version() < '5.7' else ""
         rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver), rand_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver), rand_filename)
         dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottlenecks/db.backup{}".format(ver), dump_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/db.backup{}".format(ver), dump_filename)
         region_filename = "/tmp/REGION_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottlenecks/REGION{}".format(ver), region_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/REGION{}".format(ver), region_filename)
         guid_filename = "/tmp/GUID_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottlenecks/GUID{}".format(ver), guid_filename)
+        ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/GUID{}".format(ver), guid_filename)
 
-    with app.ssh_client as ssh:
-        ssh.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
-        ssh.put_file(dump_filename, "/tmp/evm_db.backup")
-        ssh.put_file(region_filename, "/var/www/miq/vmdb/REGION")
-        ssh.put_file(guid_filename, "/var/www/miq/vmdb/GUID")
+    with app.ssh_client as ssh_client:
+        ssh_client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
+        ssh_client.put_file(dump_filename, "/tmp/evm_db.backup")
+        ssh_client.put_file(region_filename, "/var/www/miq/vmdb/REGION")
+        ssh_client.put_file(guid_filename, "/var/www/miq/vmdb/GUID")
 
         app.restore_database()
         app.start_evm_service()
