@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from fixtures.pytest_store import store
 from functools import partial
 
-from cfme.base.ui import Server, Region, ConfigurationView
+from cfme.base.ui import Server, Region, ConfigurationView, Zone
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
@@ -315,17 +315,24 @@ class ServerLogDepot(Pretty, Navigatable):
     """
 
     def __init__(self, depot_type, depot_name=None, uri=None, username=None, password=None,
-                 appliance=None):
+                 zone_collect=False, second_server_collect=False, appliance=None):
         self.depot_name = depot_name
         self.uri = uri
         self.username = username
         self.password = password
         self.depot_type = depot_types[depot_type]
+        self.zone_collect = zone_collect
+        self.second_server_collect = second_server_collect
         Navigatable.__init__(self, appliance=appliance)
+
+        self.obj_type = Zone(self.appliance) if self.zone_collect else self.appliance.server
 
     def create(self, cancel=False):
         self.clear()
-        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEdit')
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEditSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogsEdit')
         view.fill({'depot_type': self.depot_type})
         if self.depot_type != 'Red Hat Dropbox':
             view.fill({'depot_name': self.depot_name,
@@ -345,7 +352,10 @@ class ServerLogDepot(Pretty, Navigatable):
 
     @property
     def last_collection(self):
-        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogs')
         text = view.last_log_collection.text
         if text.lower() == "never":
             return None
@@ -357,12 +367,18 @@ class ServerLogDepot(Pretty, Navigatable):
 
     @property
     def last_message(self):
-        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
+        if self.second_server_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
         return view.last_log_message.text
 
     @property
     def is_cleared(self):
-        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogs')
         return view.log_depot_uri.text == "N/A"
 
     def clear(self):
@@ -370,7 +386,10 @@ class ServerLogDepot(Pretty, Navigatable):
 
         """
         if not self.is_cleared:
-            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEdit')
+            if self.second_server_collect and not self.zone_collect:
+                view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEditSlave')
+            else:
+                view = navigate_to(self.obj_type, 'DiagnosticsCollectLogsEdit')
             if BZ.bugzilla.get_bug(1436326).is_opened:
                 wait_for(lambda: view.depot_type.selected_option != '<No Depot>', num_sec=5)
             view.depot_type.fill('<No Depot>')
@@ -384,14 +403,24 @@ class ServerLogDepot(Pretty, Navigatable):
             selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
         """
 
-        view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogs')
         last_collection = self.last_collection
         # Initiate the collection
         tb.select("Collect", selection)
+        if self.zone_collect:
+            message = "Zone {}".format(self.obj_type.name)
+        elif self.second_server_collect:
+            message = "MiqServer {} [{}]".format(
+                self.appliance.slave_server_name(), self.appliance.slave_server_zone_id())
+        else:
+            message = "MiqServer {} [{}]".format(
+                self.appliance.server_name(), self.appliance.server_zone_id())
         view.flash.assert_success_message(
-            "Log collection for {} MiqServer {} [{}] has been initiated".
-            format(self.appliance.product_name, self.appliance.server_name(),
-                   self.appliance.server_zone_id()))
+            "Log collection for {} {} has been initiated".
+            format(self.appliance.product_name, message))
 
         def _refresh():
             """ The page has no refresh button, so we'll switch between tabs.
@@ -399,8 +428,14 @@ class ServerLogDepot(Pretty, Navigatable):
             Why this? Selenium's refresh() is way too slow. This is much faster.
 
             """
-            navigate_to(self.appliance.server, 'Workers')
-            navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
+            if self.zone_collect:
+                navigate_to(self.obj_type, 'Servers')
+            else:
+                navigate_to(self.obj_type, 'Workers')
+            if self.second_server_collect:
+                navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+            else:
+                navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
 
         # Wait for start
         if last_collection is not None:
