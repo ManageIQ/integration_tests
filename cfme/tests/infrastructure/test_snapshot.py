@@ -131,7 +131,8 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
     with SSHClient(**ssh_kwargs) as ssh_client:
         try:
-            wait_for(lambda: ssh_client.run_command('test -e snapshot2.txt')[1] == 0, fail_condition=False)
+            wait_for(lambda: ssh_client.run_command('test -e snapshot2.txt')[1] == 0,
+                     fail_condition=False)
             logger.info('Revert to snapshot %s successful', snapshot1.name)
         except:
             logger.info('Revert to snapshot %s Failed', snapshot1.name)
