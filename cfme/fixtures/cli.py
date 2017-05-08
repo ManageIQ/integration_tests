@@ -80,6 +80,16 @@ def app_creds():
     }
 
 
+@pytest.fixture(scope="module")
+def app_creds_modscope():
+    return {
+        'username': credentials['database']['username'],
+        'password': credentials['database']['password'],
+        'sshlogin': credentials['ssh']['username'],
+        'sshpass': credentials['ssh']['password']
+    }
+
+
 @pytest.fixture()
 def ipa_creds():
     fqdn = cfme_data['auth_modes']['ext_ipa']['ipaserver'].split('.', 1)

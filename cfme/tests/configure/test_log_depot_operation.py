@@ -17,6 +17,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.ftp import FTPClient
 from utils.providers import get_mgmt
+from utils.version import current_version
 from utils.virtual_machines import deploy_template
 
 
@@ -85,6 +86,10 @@ def pytest_generate_tests(metafunc):
                 protocol, creds,
                 proto_data.get('sub_folder', None), proto_data.get('path_on_host', None))])
             ids.append(protocol)
+    if metafunc.function.__name__ in ['test_collect_multiple_servers',
+                                      "test_collect_single_servers"]:
+        ids = ids[:1]
+        depots = depots[:1]
     testgen.parametrize(metafunc, fixtures, depots, ids=ids, scope="function")
     return
 
@@ -106,6 +111,19 @@ def depot_machine_ip():
                     template_name=depot_template_name)
     yield prov.get_ip_address(depot_machine_name)
     prov.delete_vm(depot_machine_name)
+
+
+@pytest.fixture(scope="module")
+def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
+                                  temp_appliance_unconfig):
+    hostname = temp_appliance_preconfig.address
+    temp_appliance_unconfig.appliance_console_cli.configure_appliance_external_join(hostname,
+        app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
+        hostname, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])
+    temp_appliance_unconfig.start_evm_service()
+    temp_appliance_unconfig.wait_for_evm_service()
+    temp_appliance_unconfig.wait_for_web_ui()
+    return temp_appliance_unconfig
 
 
 @pytest.yield_fixture(scope="function")
@@ -131,10 +149,12 @@ def configured_depot(log_depot, depot_machine_ip):
     log_depot.clear()
 
 
-def check_ftp(ftp):
+def check_ftp(ftp, server_name, server_zone_id):
+    server_string = server_name + "_" + str(server_zone_id)
     with ftp:
-        # Files must have been created after start
-        zip_files = ftp.filesystem.search(re.compile(r"^.*?[.]zip$"), directories=False)
+        # Files must have been created after start with server string in it (for ex. EVM_1)
+        zip_files = ftp.filesystem.search(re.compile(r"^.*{}.*?[.]zip$".format(server_string)),
+                                          directories=False)
         assert zip_files, "No logs found!"
     # Check the times of the files by names
     datetimes = []
@@ -166,7 +186,7 @@ def check_ftp(ftp):
 @pytest.mark.meta(blockers=[BZ(1341502, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
                             forced_streams=["5.6", "5.7", "5.8", "upstream"])]
                   )
-def test_collect_log_depot(log_depot, configured_depot, request):
+def test_collect_log_depot(log_depot, appliance, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
@@ -188,7 +208,7 @@ def test_collect_log_depot(log_depot, configured_depot, request):
     # Start the collection
     configured_depot.collect_all()
     # Check it on FTP
-    check_ftp(log_depot.ftp)
+    check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
 
 
 @pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
@@ -208,3 +228,95 @@ def test_collect_unconfigured(appliance):
     log_credentials.clear()
     # check button is disable after removing log depot
     assert view.collect.item_enabled('Collect all logs') is False
+
+
+@pytest.mark.uncollectif(lambda from_slave: from_slave and
+                         BZ.bugzilla.get_bug(1443927).is_opened and current_version() >= '5.8')
+@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
+@pytest.mark.parametrize('from_slave', [True, False], ids=['from_slave', 'from_master'])
+@pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
+@pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
+@pytest.mark.tier(3)
+def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_machine_ip, request,
+                                  configured_external_appliance, zone_collect, collect_type,
+                                  from_slave):
+
+    appliance = temp_appliance_preconfig
+    log_depot.machine_ip = depot_machine_ip
+
+    @request.addfinalizer
+    def _clear_ftp():
+        with log_depot.ftp as ftp:
+            ftp.cwd(ftp.upload_dir)
+            ftp.recursively_delete()
+
+    # Prepare empty workspace
+    with log_depot.ftp as ftp:
+        # move to upload folder
+        ftp.cwd(ftp.upload_dir)
+        # delete all files
+        ftp.recursively_delete()
+
+    with appliance:
+        uri = log_depot.machine_ip + log_depot.access_dir
+        depot = configure.ServerLogDepot(log_depot.protocol,
+                                         depot_name=fauxfactory.gen_alphanumeric(),
+                                         uri=uri,
+                                         username=log_depot.credentials["username"],
+                                         password=log_depot.credentials["password"],
+                                         second_server_collect=from_slave,
+                                         zone_collect=zone_collect
+                                         )
+        depot.create()
+
+        if collect_type == 'all':
+            depot.collect_all()
+        else:
+            depot.collect_current()
+
+    if from_slave and zone_collect:
+        check_ftp(log_depot.ftp, appliance.slave_server_name(), appliance.slave_server_zone_id())
+        check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+    elif from_slave:
+        check_ftp(log_depot.ftp, appliance.slave_server_name(), appliance.slave_server_zone_id())
+    else:
+        check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+
+
+@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
+@pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
+@pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
+@pytest.mark.tier(3)
+def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request, zone_collect,
+                                collect_type):
+    log_depot.machine_ip = depot_machine_ip
+
+    @request.addfinalizer
+    def _clear_ftp():
+        with log_depot.ftp as ftp:
+            ftp.cwd(ftp.upload_dir)
+            ftp.recursively_delete()
+
+    # Prepare empty workspace
+    with log_depot.ftp as ftp:
+        # move to upload folder
+        ftp.cwd(ftp.upload_dir)
+        # delete all files
+        ftp.recursively_delete()
+
+    uri = log_depot.machine_ip + log_depot.access_dir
+    depot = configure.ServerLogDepot(log_depot.protocol,
+                                     depot_name=fauxfactory.gen_alphanumeric(),
+                                     uri=uri,
+                                     username=log_depot.credentials["username"],
+                                     password=log_depot.credentials["password"],
+                                     zone_collect=zone_collect
+                                     )
+
+    depot.create()
+    if collect_type == 'all':
+        depot.collect_all()
+    else:
+        depot.collect_current()
+
+    check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())

@@ -106,7 +106,7 @@ class ApplianceConsoleCli(object):
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
         self._run("--hostname {dbhostname} --username {username} --password {password}"
-            "--dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
+            " --dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
             " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
                 password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
                 sshpass=sshpass))
@@ -2018,6 +2018,21 @@ class IPAppliance(object):
         r = self.server_region()
         return "{} Region: Region {} [{}]".format(
             self.product_name, r, r)
+
+    def slave_server_zone_id(self):
+        table = self.db["miq_servers"]
+        try:
+            return self.db.session.query(table.id).filter(table.is_master == 'false').first()[0]
+        except TypeError:
+            return None
+
+    def slave_server_name(self):
+        table = self.db["miq_servers"]
+        try:
+            return self.db.session.query(table.name).filter(
+                table.id == self.slave_server_zone_id()).first()[0]
+        except TypeError:
+            return None
 
     @cached_property
     def company_name(self):
