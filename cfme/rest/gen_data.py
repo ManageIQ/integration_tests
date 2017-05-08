@@ -153,6 +153,8 @@ def service_data(request, rest_api, a_provider, service_dialog=None, service_cat
     row, _ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=2000, delay=60)
     assert row.request_state.text == 'Finished'
+    assert row.status.text != 'Error', "Provisioning failed with the message `{}`".format(
+        row.last_message.text)
 
     # on 5.8 the service name visible via REST API is in form <assigned_name>-DATE-TIMESTAMP
     # (i.e. 2ojnKgZRCJ-20170410-113646) for services created using UI
