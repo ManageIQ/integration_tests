@@ -270,7 +270,6 @@ class ParallelSession(object):
 
     def monitor_shutdown(self, slave):
         # non-daemon so slaves get every opportunity to shut down cleanly
-        self.config.hook.pytest_miq_node_shutdown(config=self.config, nodeinfo=slave.url)
         shutdown_thread = Thread(target=self._monitor_shutdown_t,
                                  args=(slave.id, slave.process))
         shutdown_thread.start()
@@ -321,6 +320,8 @@ class ParallelSession(object):
 
     def interrupt(self, slave, **kwargs):
         """Nicely ask a slave to terminate"""
+
+        self.notify_appliance_loss(slave.url)
         slave.url = None
         if slave.poll() is None:
             slave.process.send_signal(subprocess.signal.SIGINT)
@@ -328,10 +329,18 @@ class ParallelSession(object):
 
     def kill(self, slave, **kwargs):
         """Rudely kill a slave"""
+
+        self.notify_appliance_loss(slave.url)
         slave.url = None
         if slave.poll() is None:
             slave.process.kill()
             self.monitor_shutdown(slave, **kwargs)
+
+    def notify_applinace_loss(self, url):
+    	# FIXME: refactor slaveinfo usage patterns in order to elevate
+    	# the need to have a slave
+    	self.config.hook.pytest_miq_node_shutdown(config=self.config, nodeinfo=url)
+
 
     def send_tests(self, slave):
         """Send a slave a group of tests"""
@@ -452,6 +461,7 @@ class ParallelSession(object):
                 elif event_name == 'shutdown':
                     self.ack(slave, event_name)
                     del self.slaves[slave.id]
+                    self.notify_appliance_loss(slave.url)
                     self.monitor_shutdown(slave)
 
                 # total slave spawn count * 3, to allow for each slave's initial spawn
