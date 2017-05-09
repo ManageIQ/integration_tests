@@ -2,7 +2,7 @@ from navmazing import NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_manageiq import Accordion, ManageIQTree
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.base import Server
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 

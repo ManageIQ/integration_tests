@@ -17,7 +17,7 @@ from fixtures.pytest_store import store
 from utils import conf
 from utils.log import logger
 from widgetastic_patternfly import Button, Input, FlashMessages
-from . import BaseLoggedInPage
+from .base.login import BaseLoggedInPage
 
 
 class LoginPage(View):

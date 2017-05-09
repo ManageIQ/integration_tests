@@ -9,7 +9,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
 from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
