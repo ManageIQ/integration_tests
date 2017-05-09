@@ -26,15 +26,14 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
         preconfigured: True if the appliance should be already configured, False otherwise
         lease_time: Lease time in minutes (3 hours by default)
     """
-    try:
-        sprout_client = SproutClient.from_config()
-        apps, request_id = sprout_client.provision_appliances(
-            count=count, lease_time=lease_time, preconfigured=preconfigured)
-        yield apps
-    finally:
-        for app in apps:
-            app.ssh_client.close()
-        sprout_client.destroy_pool(request_id)
+    sprout_client = SproutClient.from_config()
+    apps, request_id = sprout_client.provision_appliances(
+        count=count, lease_time=lease_time, preconfigured=preconfigured)
+    yield apps
+
+    for app in apps:
+        app.ssh_client.close()
+    sprout_client.destroy_pool(request_id)
 
 
 # Single appliance, configured
