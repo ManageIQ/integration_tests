@@ -15,13 +15,16 @@ class Configuration(object):
     def __init__(self):
         self.yaycl_config = None
 
-    def configure(self, config_dir, crypt_key_file=None):
+    def configure(self, config_dir, crypt_key_file=None, crypt_key_env_var='CFME_TESTS_KEY'):
         """
         do the defered initial loading of the configuration
 
         :param config_dir: path to the folder with configuration files
         :param crypt_key_file: optional name of a file holding the key for encrypted
             configuration files
+        :param crypt_key_env_var: optional name of the environment variable holding
+            the key for encrypted configuration files. If this environment variable
+            exists, it will override the key specified by crypt_key_file
 
         :raises: AssertionError if called more than once
 
@@ -29,7 +32,11 @@ class Configuration(object):
         """
 
         assert self.yaycl_config is None
-        if crypt_key_file and os.path.exists(crypt_key_file):
+        if crypt_key_env_var in os.environ:
+            self.yaycl_config = yaycl.Config(
+                config_dir=config_dir,
+                crypt_key=os.environ[crypt_key_env_var])
+        elif crypt_key_file and os.path.exists(crypt_key_file):
             self.yaycl_config = yaycl.Config(
                 config_dir=config_dir,
                 crypt_key_file=crypt_key_file)
