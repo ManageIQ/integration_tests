@@ -64,17 +64,6 @@ def testcase_gen(
     return testcase
 
 
-prop_dict = {
-    'testrun-template-id': xunit['testrun_template_id'],
-    'testrun-title': xunit['testrun_title'],
-    'testrun-id': xunit['testrun_id'],
-    'project-id': xunit['project_id'],
-    'dry-run': xunit['dry_run'],
-    'testrun-status-id': xunit['testrun_status_id'],
-    'lookup-method': xunit['lookup_method']
-}
-
-
 def testresult_gen(test_name, parameters=None, result=None):
     testcase = etree.Element('testcase', name=test_name)
     extra = None
@@ -99,6 +88,16 @@ def testresult_gen(test_name, parameters=None, result=None):
 
 
 def testrun_gen(tests, filename, collectonly=True):
+    prop_dict = {
+        'testrun-template-id': xunit['testrun_template_id'],
+        'testrun-title': xunit['testrun_title'],
+        'testrun-id': xunit['testrun_id'],
+        'project-id': xunit['project_id'],
+        'dry-run': xunit['dry_run'],
+        'testrun-status-id': xunit['testrun_status_id'],
+        'lookup-method': xunit['lookup_method']
+    }
+
     testsuites = etree.Element("testsuites")
     testsuite = etree.Element("testsuite")
     properties = etree.Element("properties")
