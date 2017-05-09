@@ -244,6 +244,7 @@ def date_for_group_and_version(request):
                 "usable": True,
                 "preconfigured": preconfigured,
                 "provider__working": True,
+                'provider__disabled': False,
                 "provider__user_groups__in": request.user.groups.all(),
             }
             if version == "latest":
@@ -292,6 +293,7 @@ def providers_for_date_group_and_version(request):
                 "usable": True,
                 "preconfigured": preconfigured,
                 "provider__working": True,
+                "provider__disabled": False,
                 "provider__user_groups__in": request.user.groups.all(),
             }
             if version == "latest":
