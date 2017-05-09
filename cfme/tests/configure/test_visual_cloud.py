@@ -20,6 +20,7 @@ pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
               pytest.mark.usefixtures("openstack_provider")]
 
+# TODO When all of these classes have widgets and views use them in the tests
 grid_pages = version.pick({
     version.LOWEST: [CloudProvider,
                      AvailabilityZone,
