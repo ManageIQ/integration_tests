@@ -3,7 +3,6 @@
 
 # INCLUDE_GLOBS is eager, and tries to get all the rubies
 INCLUDE_GLOBS = [
-  '../lib/**/*.rb',
   'lib/**/*.rb',
   'app/**/*.rb',
 ]
@@ -13,8 +12,7 @@ INCLUDE_GLOBS = [
 # appliance console.
 # Models are loaded separately, so they're also excluded here.
 EXCLUDE_GLOBS = [
-  '../lib/appliance_console*',
-  '../lib/coverage_hook*',
+  'lib/coverage_hook*',
   'lib/extensions/**',
   'lib/db_administration/**',
   'lib/miq_automation_engine/**',
@@ -32,9 +30,7 @@ def touch_all_the_things
   excludes = Dir.glob(EXCLUDE_GLOBS)
 
   includes.each do |file|
-    if excludes.include?(file)
-      next
-    end
+    next if excludes.include?(file)
     begin
       require File.basename(file, ".rb")
       puts "#{file} touched"
