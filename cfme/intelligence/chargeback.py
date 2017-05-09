@@ -11,7 +11,7 @@ from widgetastic.widget import Text, ParametrizedView
 from widgetastic_manageiq import Select
 from widgetastic_patternfly import Input, Button, Dropdown
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as accordion
 from cfme.web_ui import Form, Tree, fill, flash, form_buttons, match_location, Select as Select_old

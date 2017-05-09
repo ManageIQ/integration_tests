@@ -13,7 +13,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui import form_buttons, CFMECheckbox

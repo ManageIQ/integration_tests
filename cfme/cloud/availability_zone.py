@@ -5,7 +5,7 @@ from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import AvailabilityZoneNotFound
 from cfme.web_ui import match_location
 from utils.appliance import Navigatable

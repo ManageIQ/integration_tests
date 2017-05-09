@@ -2,7 +2,7 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from utils import testgen
 from utils.version import current_version
 from utils.appliance.implementations.ui import navigate_to

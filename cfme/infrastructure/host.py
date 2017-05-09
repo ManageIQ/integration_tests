@@ -11,7 +11,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
-import cfme
+from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential as BaseCredential
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
@@ -97,7 +97,7 @@ match_page = partial(match_location, controller='host',
                      title='Hosts')
 
 
-class InfraHostTimelinesView(TimelinesView, cfme.BaseLoggedInPage):
+class InfraHostTimelinesView(TimelinesView, BaseLoggedInPage):
 
     @property
     def is_displayed(self):
