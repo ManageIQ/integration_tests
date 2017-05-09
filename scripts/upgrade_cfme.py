@@ -35,7 +35,7 @@ class cfme_upgrade_maneger(IPAppliance):
             print "rpm updating failed\n\n error log:\n"
             print out
         else:
-            print "rpm updating succeeded"
+            print "rpm updating succeeded!"
         print "================================================================="
 
     def stop_cfme(self):

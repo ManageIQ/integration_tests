@@ -6,6 +6,6 @@ repo:
   - http://pulp-read.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/os/
   - http://pulp-read.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/rhscl/1/os/
   - http://pulp-read.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/rh-common/os/
-  - http://download-node-02.eng.bos.redhat.com/rel-eng/CloudForms/4.5/latest/RH7-CFME-5.8/x86_64/os/
+  - http://download-node-02.eng.bos.redhat.com/rel-eng/CloudForms/4.5/latest/RH7-CFME-5.8/x86_64/os/ 
 
 
