@@ -72,10 +72,11 @@ def main():
         '{}+merged:>{}'.format(docker['gh_owner'], docker['gh_repo'], string_start),
         headers=headers)
     items += result.json()['items']
-    while re.findall('\<(.*)\>; rel="next"', result.headers['Link']):
-        result = requests.get(re.findall('\<(.*)\>; rel="next"', result.headers['Link'])[0],
-                              headers=headers)
-        items += result.json()['items']
+    if 'Link' in result.headers:
+        while re.findall('\<(.*)\>; rel="next"', result.headers['Link']):
+            result = requests.get(re.findall('\<(.*)\>; rel="next"', result.headers['Link'])[0],
+                                  headers=headers)
+            items += result.json()['items']
 
     prs = {}
     pr_nums_without_label = []
