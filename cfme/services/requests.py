@@ -7,7 +7,6 @@ from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Input, Region, Table, fill, flash, paginator, toolbar, match_location)
-from utils import version
 from utils.log import logger
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -180,30 +179,7 @@ def wait_for_request(cells, partial_check=False):
     Returns:
          The matching :py:class:`cfme.web_ui.Table.Row` if found, ``False`` otherwise.
     """
-    for page in paginator.pages():
-        # We check only for the SplitTable. Can't think of better detection.
-        if version.current_version() < "5.5.0.8"\
-                and sel.elements(fields.request_list._header_loc) and\
-                not sel.is_displayed(fields.request_list):
-            # The table exists but it is hidden - no cells
-            return False
-        results = fields.request_list.find_rows_by_cells(cells, partial_check)
-        if len(results) == 0:
-            # row not on this page, assume it has yet to appear
-            continue
-        elif len(results) > 1:
-            raise RequestException(
-                'Multiple requests with matching content found - be more specific!'
-            )
-        else:
-            # found the row!
-            row = results[0]
-            logger.debug(' Request Message: %s', row.last_message.text)
-            break
-    else:
-        # Request not found at all, can't continue
-        return False
-
+    row = find_request(cells, partial_check)
     if row.request_state.text in REQUEST_FINISHED_STATES:
         return row
     else:
@@ -217,25 +193,30 @@ def debug_requests():
             logger.debug(' %s', row)
 
 
-def find_request(cells):
-    """Finds the request and opens the page
-
-    See :py:func:`wait_for_request` for futher details.
+def find_request(cells, partial_check=False):
+    """Finds the request and returns the row element
 
     Args:
         cells: Search data for the requests table.
-    Returns: Success of the action.
+        partial_check: If to use the ``in`` operator rather than ``==`` in find_rows_by_cells().
+    Returns: row
     """
     navigate_to(Request, 'All')
     for page in paginator.pages():
-        try:
-            # found the row!
-            row, = fields.request_list.find_rows_by_cells(cells)
-            return True
-        except ValueError:
+        results = fields.request_list.find_rows_by_cells(cells, partial_check)
+        if len(results) == 0:
             # row not on this page, assume it has yet to appear
             # it might be nice to add an option to fail at this point
             continue
+        elif len(results) > 1:
+            raise RequestException(
+                'Multiple requests with matching content found - be more specific!'
+            )
+        else:
+            # found the row!
+            row = results[0]
+            logger.debug(' Request Message: %s', row.last_message.text)
+            return row
     else:
         # Request not found at all, can't continue
         return False
@@ -250,19 +231,11 @@ def go_to_request(cells, partial_check=False):
         cells: Search data for the requests table.
     Returns: Success of the action.
     """
-    navigate_to(Request, 'All')
-    for page in paginator.pages():
-        try:
-            # found the row!
-            row, = fields.request_list.find_rows_by_cells(cells, partial_check)
-            sel.click(row)
-            return True
-        except ValueError:
-            # row not on this page, assume it has yet to appear
-            # it might be nice to add an option to fail at this point
-            continue
+    row = find_request(cells, partial_check)
+    if row:
+        sel.click(row)
+        return True
     else:
-        # Request not found at all, can't continue
         return False
 
 
