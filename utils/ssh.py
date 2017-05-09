@@ -309,13 +309,13 @@ class SSHClient(paramiko.SSHClient):
 
     def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
         logger.info("Running rails command %r", command)
-        return self.run_command('/var/www/miq/vmdb/bin/rails runner {command}'.format(
+        return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {command}'.format(
             command=command), timeout=timeout, **kwargs)
 
     def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
         logger.info("Running rake command %r", command)
         return self.run_command(
-            '/var/www/miq/vmdb/bin/rake -f /var/www/miq/vmdb/Rakefile {command}'.format(
+            'cd /var/www/miq/vmdb; bin/rake -f /var/www/miq/vmdb/Rakefile {command}'.format(
                 command=command), timeout=timeout, **kwargs)
 
     def put_file(self, local_file, remote_file='.', **kwargs):

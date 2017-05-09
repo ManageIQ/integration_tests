@@ -72,7 +72,8 @@ appliance_coverage_root = rails_root.join('coverage')
 
 # local
 coverage_data = scripts_data_path.join('coverage')
-gemfile = coverage_data.join('Gemfile.dev.rb')
+gemfile = coverage_data.join('coverage_gem.rb')
+bundler_d = rails_root.join('bundler.d')
 coverage_hook_lowest = coverage_data.join('coverage_hook_lowest.rb')
 coverage_hook_55 = coverage_data.join('coverage_hook_55.rb')
 coverage_hook_out_fn = 'coverage_hook.rb'
@@ -169,7 +170,7 @@ class CoverageManager(object):
 
     def _install_simplecov(self):
         self.log.info('Installing coverage gem on appliance')
-        self.ipapp.ssh_client.put_file(gemfile.strpath, rails_root.strpath)
+        self.ipapp.ssh_client.put_file(gemfile.strpath, bundler_d.strpath)
 
         # gem install for more recent downstream builds
         def _gem_install():
@@ -183,7 +184,6 @@ class CoverageManager(object):
         version.pick({
             version.LOWEST: _bundle_install,
             '5.4': _gem_install,
-            '5.5': _gem_install,
             version.LATEST: _bundle_install,
         })()
 
@@ -198,9 +198,9 @@ class CoverageManager(object):
         })
         # Put the coverage hook in the miq lib path
         self.ipapp.ssh_client.put_file(coverage_hook.strpath, rails_root.join(
-            '..', 'lib', coverage_hook_out_fn).strpath)
+            'lib', coverage_hook_out_fn).strpath)
         replacements = {
-            'require': r"require 'coverage_hook'",
+            'require': r"require_relative '../lib/coverage_hook'",
             'config': rails_root.join('config').strpath
         }
         # grep/echo to try to add the require line only once
