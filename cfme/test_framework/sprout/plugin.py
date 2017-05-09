@@ -263,15 +263,18 @@ def pytest_addhooks(pluginmanager):
 
 
 def pytest_miq_node_shutdown(config, nodeinfo):
-    netloc = urlparse(nodeinfo).netloc
-    ip_address = netloc.split(":")[0]
-    log.debug("Trying to end appliance {}".format(ip_address))
-    try:
-        log.debug(config._sprout_mgr.client.call_method('appliance_data', ip_address))
-        log.debug(config._sprout_mgr.client.call_method('destroy_appliance', ip_address))
-    except Exception as e:
-        log.debug('Error trying to end sprout appliance %s', ip_address)
-        log.debug(e)
+    if nodeinfo:
+        netloc = urlparse(nodeinfo).netloc
+        ip_address = netloc.split(":")[0]
+        log.debug("Trying to end appliance {}".format(ip_address))
+        try:
+            log.debug(config._sprout_mgr.client.call_method('appliance_data', ip_address))
+            log.debug(config._sprout_mgr.client.call_method('destroy_appliance', ip_address))
+        except Exception as e:
+            log.debug('Error trying to end sprout appliance %s', ip_address)
+            log.debug(e)
+    else:
+        log.debug('The IP address was not present - not terminating any appliance')
 
 
 class NewHooks(object):
