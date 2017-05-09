@@ -7,7 +7,7 @@ from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
 from cfme.intelligence.rss import RSSView

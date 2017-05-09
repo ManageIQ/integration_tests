@@ -4,7 +4,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.exceptions import (
     InstanceNotFound, OptionNotAvailable, DestinationNotFound,

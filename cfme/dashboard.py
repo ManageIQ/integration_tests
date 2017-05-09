@@ -12,7 +12,7 @@ from utils.pretty import Pretty
 from utils.wait import wait_for
 from utils.appliance.implementations.ui import navigate_to
 
-from . import BaseLoggedInPage
+from .base.login import BaseLoggedInPage
 
 page = Region(
     title="Dashboard",

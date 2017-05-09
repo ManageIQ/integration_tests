@@ -1,6 +1,7 @@
 import pytest
 
-from cfme import BaseLoggedInPage, login, test_requirements
+from cfme import login, test_requirements
+from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
 from utils import conf, error

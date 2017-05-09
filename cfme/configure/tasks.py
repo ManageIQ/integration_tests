@@ -9,7 +9,8 @@ from widgetastic.widget import View
 from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 from widgetastic_patternfly import Dropdown, Tab, FlashMessages
 
-from cfme import web_ui as ui, BaseLoggedInPage
+from cfme import web_ui as ui
+from cfme.base.login import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
 from utils.appliance import Navigatable

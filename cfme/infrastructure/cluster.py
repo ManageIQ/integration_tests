@@ -7,7 +7,7 @@
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.fixtures import pytest_selenium as sel
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable

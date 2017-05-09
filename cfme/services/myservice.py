@@ -4,7 +4,7 @@ from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, Can
 from cfme.web_ui import toolbar as tb, Quadicon
 from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToAttribute, NavigateToSibling
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from utils.update import Updateable
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to

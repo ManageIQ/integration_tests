@@ -6,7 +6,7 @@ from widgetastic_patternfly import Tab, BootstrapSelect, Input, BootstrapTreevie
 from widgetastic_manageiq import VersionPick, Version, CheckboxSelect, Table, Calendar
 
 from cfme import web_ui as ui
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services import requests

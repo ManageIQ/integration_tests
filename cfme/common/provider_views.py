@@ -17,7 +17,7 @@ from widgetastic_patternfly import Dropdown, BootstrapSelect
 from widgetastic.widget import View, Text
 from widgetastic.utils import VersionPick, Version
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 
 
 class ProviderDetailsToolBar(View):
