@@ -270,9 +270,13 @@ class IPAppliance(object):
 
     def _screenshot_capture_at_context_leave(self, exc_type, exc_val, exc_tb):
 
-        from fixtures.artifactor_plugin import fire_art_hook
-        from pytest import config
-        from fixture.pytest_store import store
+        try:
+            from fixtures.artifactor_plugin import fire_art_hook
+            from pytest import config
+            from fixture.pytest_store import store
+        except ImportError:
+            logger.info('Not inside pytest run, ignoring')
+            return
 
         if (
                 exc_type is not None and not RUNNING_UNDER_SPROUT):
@@ -335,6 +339,9 @@ class IPAppliance(object):
 
         Utility method to make things easier.
 
+        Note:
+            db_address, name_to_set are not used currently.
+
         Args:
             db_address: Address of external database if set, internal database if ``None``
                         (default ``None``)
@@ -348,18 +355,25 @@ class IPAppliance(object):
         """
 
         log_callback("Configuring appliance {}".format(self.address))
+        loosen_pgssl = kwargs.pop('loosen_pgssl', True)
+        fix_ntp_clock = kwargs.pop('fix_ntp_clock', True)
+        region = kwargs.pop('region', 0)
+        key_address = kwargs.pop('key_address', None)
         with self as ipapp:
             ipapp.wait_for_ssh()
-            self._configure_upstream(log_callback=log_callback)
-
-    def _configure_upstream(self, log_callback=None):
-        self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
-        self.deploy_merkyl(start=True, log_callback=log_callback)
-        self.fix_ntp_clock(log_callback=log_callback)
-        self.setup_upstream_db(log_callback=log_callback)
-        self.loosen_pgssl(log_callback=log_callback)
-        self.restart_evm_service(log_callback=log_callback)
-        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+            self.deploy_merkyl(start=True, log_callback=log_callback)
+            if fix_ntp_clock:
+                self.fix_ntp_clock(log_callback=log_callback)
+                # TODO: Handle external DB setup. Also in setup_database
+            self.setup_database(
+                region=region,
+                key_address=key_address,
+                log_callback=log_callback)
+            self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
+            if loosen_pgssl:
+                self.loosen_pgssl(log_callback=log_callback)
+                self.restart_evm_service(log_callback=log_callback)
+            self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     # TODO: this method eventually needs to be moved to provider class..
     @logger_wrap("Configure GCE IPAppliance: {}")
@@ -1047,18 +1061,19 @@ class IPAppliance(object):
             log_callback(msg)
             raise ApplianceException(msg)
 
-    @logger_wrap("Setup upstream DB: {}")
-    def setup_upstream_db(self, log_callback=None):
-        """Configure upstream database
+    @logger_wrap("Database setup: {}")
+    def setup_database(self, log_callback=None, **kwargs):
+        """Configure database
 
-        Note:
-            This is a workaround put in place to get upstream appliance provisioning working again
+        On downstream appliances, invokes the internal database setup.
+        On all appliances waits for database to be ready.
 
         """
+        log_callback('Starting DB setup')
         if self.version != LATEST:
-            return
-
-        log_callback('Starting upstream db setup')
+            # We only execute this on downstream appliances.
+            # TODO: Handle external DB setup. Probably pop the db_address and decide on that one.
+            self.enable_internal_db(log_callback=log_callback, **kwargs)
 
         # Make sure the database is ready
         wait_for(func=lambda: self.is_db_ready,
