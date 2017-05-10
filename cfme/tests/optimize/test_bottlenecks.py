@@ -61,9 +61,9 @@ def db_restore(temp_appliance_extended_db):
         ssh_client.put_file(region_filename, "/var/www/miq/vmdb/REGION")
         ssh_client.put_file(guid_filename, "/var/www/miq/vmdb/GUID")
 
-        app.restore_database()
-        app.start_evm_service()
-        app.wait_for_web_ui()
+    app.restore_database()
+    app.start_evm_service()
+    app.wait_for_web_ui()
 
 
 @pytest.mark.tier(2)
