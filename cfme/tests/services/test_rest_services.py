@@ -40,7 +40,7 @@ def a_provider(request):
 def wait_for_vm_power_state(vm, resulting_state):
     wait_for(
         lambda: vm.power_state == resulting_state,
-        num_sec=600, delay=20, fail_func=vm.reload,
+        num_sec=1200, delay=45, fail_func=vm.reload,
         message='Wait for VM to {} (current state: {})'.format(
             resulting_state, vm.power_state))
 
