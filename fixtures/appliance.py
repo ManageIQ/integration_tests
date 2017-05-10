@@ -14,6 +14,7 @@ from contextlib import contextmanager
 
 import pytest
 
+from utils.log import logger
 from cfme.test_framework.sprout.client import SproutClient
 
 
@@ -26,14 +27,18 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
         preconfigured: True if the appliance should be already configured, False otherwise
         lease_time: Lease time in minutes (3 hours by default)
     """
-    sprout_client = SproutClient.from_config()
-    apps, request_id = sprout_client.provision_appliances(
-        count=count, lease_time=lease_time, preconfigured=preconfigured)
-    yield apps
-
-    for app in apps:
-        app.ssh_client.close()
-    sprout_client.destroy_pool(request_id)
+    apps = None
+    try:
+        sprout_client = SproutClient.from_config()
+        apps, request_id = sprout_client.provision_appliances(
+            count=count, lease_time=lease_time, preconfigured=preconfigured)
+        yield apps
+    except Exception as e:
+        logger.info('Exception detected: %s', str(e))
+    finally:
+        for app in apps:
+            app.ssh_client.close()
+        sprout_client.destroy_pool(request_id)
 
 
 # Single appliance, configured
