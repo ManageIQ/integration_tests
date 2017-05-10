@@ -21,6 +21,7 @@ already been used, it will die
 
 """
 import atexit
+import os
 from urlparse import urlparse
 
 import diaper
@@ -204,9 +205,15 @@ def pytest_runtest_teardown(item, nextitem):
         item, 'finish_test',
         slaveid=store.slaveid, ip=ip, grab_result=True)
     fire_art_test_hook(item, 'sanitize', words=words)
+    jenkins_data = {
+        'build_url': os.environ.get('BUILD_URL', None),
+        'build_number': os.environ.get('BUILD_NUMBER', None),
+        'git_commit': os.environ.get('GIT_COMMIT', None),
+        'job_name': os.environ.get('JOB_NAME', None)
+    }
     fire_art_test_hook(
         item, 'ostriz_send',
-        slaveid=store.slaveid, polarion_ids=extract_polarion_ids(item))
+        slaveid=store.slaveid, polarion_ids=extract_polarion_ids(item), jenkins_data=jenkins_data)
 
 
 def pytest_runtest_logreport(report):
