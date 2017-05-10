@@ -16,29 +16,27 @@ from utils.log import logger
 from utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.tier(2),
-              pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [pytest.mark.tier(2), pytest.mark.usefixtures("setup_provider_modscope")]
 pytest_generate_tests = testgen.generate([InfraProvider], scope='module')
 
 
-@pytest.fixture(scope="module")
-def test_vm(request, provider):
+@pytest.yield_fixture(scope="module")
+def test_vm(provider):
     vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
+    yield vm
 
-    request.addfinalizer(vm.delete_from_provider)
-
-    if not provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    return vm
+    vm.delete_from_provider()
 
 
 @pytest.fixture(scope="module")
-def gen_events(test_vm):
-    logger.debug('Starting, stopping VM')
+def gen_vm_event(test_vm, event):
     mgmt = test_vm.provider.mgmt
-    mgmt.stop_vm(test_vm.name)
-    mgmt.start_vm(test_vm.name)
+    if event == 'create':
+        test_vm.create_on_provider(allow_skip="default", find_in_cfme=True)
+    elif event == 'stop':
+        mgmt.stop_vm(test_vm.name)
+    elif event == 'start':
+        mgmt.start_vm(test_vm.name)
 
 
 def count_events(target, vm):
@@ -58,8 +56,7 @@ def count_events(target, vm):
     return len(found_events)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_provider_event(gen_events, test_vm):
+def test_provider_event(gen_vm_event, test_vm):
     """Tests provider event on timelines
 
     Metadata:
@@ -70,7 +67,6 @@ def test_provider_event(gen_events, test_vm):
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_host_event(gen_events, test_vm):
     """Tests host event on timelines
 
@@ -84,7 +80,6 @@ def test_host_event(gen_events, test_vm):
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_vm_event(gen_events, test_vm):
     """Tests vm event on timelines
 
@@ -96,7 +91,6 @@ def test_vm_event(gen_events, test_vm):
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_cluster_event(gen_events, test_vm):
     """Tests cluster event on timelines
 
