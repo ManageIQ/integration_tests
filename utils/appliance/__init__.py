@@ -207,11 +207,7 @@ class IPAppliance(object):
     def postgres_version(self):
         # postgres's version is in the service name and file paths when we pull it from SCL,
         # so this is a little resolver to help keep the version picking centralized
-        return version.pick({
-            version.LOWEST: 'postgresql92',
-            '5.5': 'rh-postgresql94',
-            '5.7': 'rh-postgresql95'
-        })
+        return 'rh-postgresql95'
 
     @property
     def default_zone(self):
