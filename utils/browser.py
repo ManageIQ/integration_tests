@@ -109,6 +109,7 @@ class Wharf(object):
                 return
             if self.docker_id is None:
                 log.debug("renew done, docker id %s", self.docker_id)
+                return
             expiry_info = self._get('renew', self.docker_id)
             self.config.update(expiry_info)
             log.info('Renewed webdriver container %s', self.docker_id)
