@@ -3,7 +3,7 @@ import collections
 import pytest
 
 from utils import log
-
+from utils.pytest_shortcuts import report_safe_longrepr
 
 #: A dict of tests, and their state at various test phases
 test_tracking = collections.defaultdict(dict)
@@ -57,13 +57,7 @@ def pytest_runtest_logreport(report):
                 test_status)),
             extra={'source_file': path, 'source_lineno': lineno})
     if report.outcome == "skipped":
-        # Usualy longrepr's a tuple, other times it isn't... :(
-        try:
-            longrepr = report.longrepr[-1]
-        except AttributeError:
-            longrepr = str(report.longrepr)
-
-        logger().info(log.format_marker(longrepr))
+        logger().info(log.format_marker(report_safe_longrepr(report)))
 
 
 def pytest_exception_interact(node, call, report):
