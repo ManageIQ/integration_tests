@@ -36,9 +36,10 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
     except Exception as e:
         logger.info('Exception detected: %s', str(e))
     finally:
-        for app in apps:
-            app.ssh_client.close()
-        sprout_client.destroy_pool(request_id)
+        if apps:
+            for app in apps:
+                app.ssh_client.close()
+            sprout_client.destroy_pool(request_id)
 
 
 # Single appliance, configured
