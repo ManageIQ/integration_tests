@@ -1,7 +1,8 @@
 import argparse
 import yaml
 import copy
-
+import time
+import threading
 from utils.appliance import IPAppliance
 
 
@@ -27,10 +28,17 @@ class cfme_upgrade_maneger(IPAppliance):
             print result.output
 
     def update_yum(self):
+        def monitor_yum():
+            status = False
+            while not status.rc:
+                time.sleep(10)
+                print "yum still runnig"
+                status = self.ssh_client.run_command(""" ps -ef | grep "yum update" """)
 
         print "=== Initiating yum update ======================================="
         self.ssh_client.run_command("rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-*")
-
+        monitor = threading.Thread(target=monitor_yum())
+        monitor.start()
         status, out = self.ssh_client.run_command("yum update -y")
         if status:
             print "rpm updating failed\n\n error log:\n"
@@ -48,7 +56,6 @@ class cfme_upgrade_maneger(IPAppliance):
                                                  "grep Active: | awk {'print $2'}")
             if "inactive" not in result.output:
                 raise RuntimeError("Fail to stop cfme engine")
-        print result.output
         print "================================================================="
 
     def start_cfme(self):
@@ -78,10 +85,19 @@ class cfme_upgrade_maneger(IPAppliance):
         pass
 
     def restart_components(self):
+        print "=== Restarting componates =================================================="
+        print "Resrart appliance DB"
         self.ssh_client.run_command("systemctl restart $APPLIANCE_PG_SERVICE")
+
+        print "Runnig migrate to latest version"
         self.ssh_client.run_rake_command("db:migrate")
+
+        print "Initiate evm restart"
         self.ssh_client.run_rake_command("evm:automate:reset")
-        self.ssh_client.run_rake_command("systemctl restart $APPLIANCE_PG_SERVICE")
+
+        print "Restart the DB"
+        self.ssh_client.run_rake_command("systemctl restart rh-postgresql95-postgresql")
+        print "============================================================================"
 
 
 def main():
