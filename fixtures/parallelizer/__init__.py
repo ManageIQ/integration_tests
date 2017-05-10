@@ -32,6 +32,7 @@ The Workflow
 """
 from itertools import groupby
 
+
 import difflib
 import json
 import os
@@ -100,8 +101,8 @@ class SlaveDetail(object):
     slaveid_generator = ('slave{:02d}'.format(i) for i in count())
 
     url = attr.ib()
-    id = attr.ib(
-        default=attr.Factory(lambda: next(SlaveDetail.slaveid_generator)))
+    id = attr.ib(default=attr.Factory(
+        lambda: next(SlaveDetail.slaveid_generator)))
 
     tests = attr.ib(default=attr.Factory(set), repr=False)
     process = attr.ib(default=None, repr=False)
@@ -115,11 +116,9 @@ class SlaveDetail(object):
 
         # worker output redirected to null; useful info comes via messages and logs
         self.process = subprocess.Popen(
-            [
-                'python', remote.__file__, self.id, self.url,
-                conf.runtime['env']['ts']
-            ],
-            stdout=devnull, )
+            ['python', remote.__file__, self.id, self.url, conf.runtime['env']['ts']],
+            stdout=devnull,
+        )
         at_exit(self.process.kill)
 
     def poll(self):
@@ -145,8 +144,8 @@ class ParallelSession(object):
 
         self._pool = []
         from utils.conf import cfme_data
-        self.provs = sorted(
-            set(cfme_data['management_systems'].keys()), key=len, reverse=True)
+        self.provs = sorted(set(cfme_data['management_systems'].keys()),
+                            key=len, reverse=True)
         self.used_prov = set()
 
         self.failed_slave_test_groups = deque()
@@ -172,10 +171,8 @@ class ParallelSession(object):
             'zmq_endpoint': zmq_endpoint,
         }
         if hasattr(self, "slave_appliances_data"):
-            conf.runtime['slave_config'][
-                "appliance_data"] = self.slave_appliances_data
-        conf.runtime['slave_config']['options'][
-            'use_sprout'] = False  # Slaves don't use sprout
+            conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
+        conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
         conf.save('slave_config')
 
         for base_url in self.appliances:
@@ -183,10 +180,8 @@ class ParallelSession(object):
             self.slaves[slave_data.id] = slave_data
 
         for slave in sorted(self.slaves):
-            self.print_message(
-                "using appliance {}".format(self.slaves[slave].url),
-                slave,
-                green=True)
+            self.print_message("using appliance {}".format(self.slaves[slave].url),
+                slave, green=True)
 
     def _slave_audit(self):
         # XXX: There is currently no mechanism to add or remove slave_urls, short of
@@ -207,8 +202,7 @@ class ParallelSession(object):
                     failed_tests, slave.tests = slave.tests, set()
                     num_failed_tests = len(failed_tests)
                     self.sent_tests -= num_failed_tests
-                    msg += ' and redistributing {} tests'.format(
-                        num_failed_tests)
+                    msg += ' and redistributing {} tests'.format(num_failed_tests)
                     self.failed_slave_test_groups.append(failed_tests)
                 self.print_message(msg, purple=True)
 
@@ -220,8 +214,7 @@ class ParallelSession(object):
                     del self.slaves[slave.id]
                 else:
                     self.print_message(
-                        "{}'s appliance has died, deactivating slave".format(
-                            slave.id))
+                        "{}'s appliance has died, deactivating slave".format(slave.id))
                     self.interrupt(slave)
             else:
                 if slave.process is None:
@@ -247,8 +240,8 @@ class ParallelSession(object):
         event_data = json.loads(event_json)
         event_name = event_data.pop('_event_name')
         if slaveid not in self.slaves:
-            self.log.error("message from terminated worker %s %s %s", slaveid,
-                           event_name, event_data)
+            self.log.error("message from terminated worker %s %s %s",
+                           slaveid, event_name, event_data)
             return None, None, None
         return self.slaves[slaveid], event_data, event_name
 
@@ -268,8 +261,8 @@ class ParallelSession(object):
             else:
                 markup = {'cyan': True}
         stamp = datetime.now().strftime("%Y%m%d %H:%M:%S")
-        self.terminal.write_ensure_prefix('({})[{}] '.format(prefix, stamp),
-                                          message, **markup)
+        self.terminal.write_ensure_prefix(
+            '({})[{}] '.format(prefix, stamp), message, **markup)
 
     def ack(self, slave, event_name):
         """Acknowledge a slave's message"""
@@ -277,15 +270,15 @@ class ParallelSession(object):
 
     def monitor_shutdown(self, slave):
         # non-daemon so slaves get every opportunity to shut down cleanly
-        shutdown_thread = Thread(
-            target=self._monitor_shutdown_t, args=(slave.id, slave.process))
+        self.config.hook.pytest_miq_node_shutdown(config=self.config, nodeinfo=slave.url)
+        shutdown_thread = Thread(target=self._monitor_shutdown_t,
+                                 args=(slave.id, slave.process))
         shutdown_thread.start()
 
     def _monitor_shutdown_t(self, slaveid, process):
         # a KeyError here means self.slaves got mangled, indicating a problem elsewhere
         if process is None:
-            self.log.warning(
-                'Slave was missing when trying to monitor shutdown')
+            self.log.warning('Slave was missing when trying to monitor shutdown')
 
         def sleep_and_poll():
             start_time = time()
@@ -306,9 +299,8 @@ class ParallelSession(object):
                     remaining_time = int(poll_num_sec - (time() - start_time))
                     self.print_message(
                         '{} still shutting down, '
-                        'will continue polling for {} seconds '.format(
-                            slaveid, remaining_time),
-                        blue=True)
+                        'will continue polling for {} seconds '
+                        .format(slaveid, remaining_time), blue=True)
                 sleep(poll_sleep_time)
 
         # start the poll
@@ -323,15 +315,12 @@ class ParallelSession(object):
                     self.print_message('{} died'.format(slaveid), red=True)
                 break
         else:
-            self.print_message(
-                '{} failed to shut down gracefully; killed'.format(slaveid),
+            self.print_message('{} failed to shut down gracefully; killed'.format(slaveid),
                 red=True)
             process.kill()
 
     def interrupt(self, slave, **kwargs):
         """Nicely ask a slave to terminate"""
-
-        self.notify_appliance_loss(slave.url)
         slave.url = None
         if slave.poll() is None:
             slave.process.send_signal(subprocess.signal.SIGINT)
@@ -339,18 +328,10 @@ class ParallelSession(object):
 
     def kill(self, slave, **kwargs):
         """Rudely kill a slave"""
-
-        self.notify_appliance_loss(slave.url)
         slave.url = None
         if slave.poll() is None:
             slave.process.kill()
             self.monitor_shutdown(slave, **kwargs)
-
-    def notify_applinace_loss(self, url):
-        # FIXME: refactor slaveinfo usage patterns in order to elevate
-        # the need to have a slave
-        self.config.hook.pytest_miq_node_shutdown(
-            config=self.config, nodeinfo=url)
 
     def send_tests(self, slave):
         """Send a slave a group of tests"""
@@ -366,7 +347,8 @@ class ParallelSession(object):
         if tests:
             self.print_message('sent {} tests to {} ({}/{}, {:.1f}%)'.format(
                 tests_len, slave.id, self.sent_tests, collect_len,
-                self.sent_tests * 100. / collect_len))
+                self.sent_tests * 100. / collect_len
+            ))
         return tests
 
     def pytest_sessionstart(self, session):
@@ -407,8 +389,7 @@ class ParallelSession(object):
             slave.start()
 
         try:
-            self.print_message(
-                "Waiting for {} slave collections".format(len(self.slaves)),
+            self.print_message("Waiting for {} slave collections".format(len(self.slaves)),
                 red=True)
 
             # Turn off the terminal reporter to suppress the builtin logstart printing
@@ -441,8 +422,7 @@ class ParallelSession(object):
                         slave.id, self.collection, slave_collection)
                     if diff_err:
                         self.print_message(
-                            'collection differs, respawning',
-                            slave.id,
+                            'collection differs, respawning', slave.id,
                             purple=True)
                         self.print_message(diff_err, purple=True)
                         self.log.error('{}'.format(diff_err))
@@ -456,7 +436,9 @@ class ParallelSession(object):
                 elif event_name == 'runtest_logstart':
                     self.ack(slave, event_name)
                     self.trdist.runtest_logstart(
-                        slave.id, event_data['nodeid'], event_data['location'])
+                        slave.id,
+                        event_data['nodeid'],
+                        event_data['location'])
                 elif event_name == 'runtest_logreport':
                     self.ack(slave, event_name)
                     report = unserialize_report(event_data['report'])
@@ -465,13 +447,11 @@ class ParallelSession(object):
                     self.trdist.runtest_logreport(slave.id, report)
                 elif event_name == 'internalerror':
                     self.ack(slave, event_name)
-                    self.print_message(
-                        event_data['message'], slave, purple=True)
+                    self.print_message(event_data['message'], slave, purple=True)
                     self.kill(slave)
                 elif event_name == 'shutdown':
                     self.ack(slave, event_name)
                     del self.slaves[slave.id]
-                    self.notify_appliance_loss(slave.url)
                     self.monitor_shutdown(slave)
 
                 # total slave spawn count * 3, to allow for each slave's initial spawn
@@ -479,10 +459,8 @@ class ParallelSession(object):
                 if self.slave_spawn_count >= len(self.appliances) * 3:
                     self.print_message(
                         'too many slave respawns, exiting',
-                        red=True,
-                        bold=True)
-                    raise KeyboardInterrupt(
-                        'Interrupted due to slave failures')
+                        red=True, bold=True)
+                    raise KeyboardInterrupt('Interrupted due to slave failures')
         except Exception as ex:
             self.log.error('Exception in runtest loop:')
             self.log.exception(ex)
@@ -529,11 +507,11 @@ class ParallelSession(object):
 
         for id, tests in parametrized_ids.items():
             if tests:
-                self.log.info(
-                    'sent tests with param {} {!r}'.format(id, tests))
+                self.log.info('sent tests with param {} {!r}'.format(id, tests))
                 yield tests
 
     def get(self, slave):
+
         def provs_of_tests(test_group):
             found = set()
             for test in test_group:
@@ -584,11 +562,13 @@ class ParallelSession(object):
                 app_url = slave.url
                 app_ip = urlparse(app_url).netloc
                 app = IPAppliance(app_ip)
-                self.print_message('cleansing appliance', slave, purple=True)
+                self.print_message(
+                    'cleansing appliance', slave, purple=True)
                 try:
                     app.delete_all_providers()
                 except Exception as e:
-                    self.print_message('cloud not cleanse', slave, red=True)
+                    self.print_message(
+                        'cloud not cleanse', slave, red=True)
                     self.print_message('error:', e, red=True)
             slave.provider_allocation = [prov]
             self._pool.remove(test_group)
@@ -607,8 +587,7 @@ def report_collection_diff(slaveid, from_collection, to_collection):
         This function will sort functions before comparing them.
 
     """
-    from_collection, to_collection = sorted(from_collection), sorted(
-        to_collection)
+    from_collection, to_collection = sorted(from_collection), sorted(to_collection)
     if from_collection == to_collection:
         # Well, that was easy.
         return
@@ -618,7 +597,8 @@ def report_collection_diff(slaveid, from_collection, to_collection):
         from_collection,
         to_collection,
         fromfile='master',
-        tofile=slaveid, )
+        tofile=slaveid,
+    )
 
     # diff is a line generator, stringify it
     diff = '\n'.join([line.rstrip() for line in diff])
@@ -638,7 +618,6 @@ class TerminalDistReporter(object):
     slave ID. These hooks are called in :py:class:`ParallelSession`'s runtestloop hook.
 
     """
-
     def __init__(self, config, terminal):
         self.config = config
         self.tr = terminal
@@ -648,16 +627,14 @@ class TerminalDistReporter(object):
         test = self.tr._locationline(nodeid, *location)
         prefix = '({}) {}'.format(slaveid, test)
         self.tr.write_ensure_prefix(prefix, 'running', blue=True)
-        self.config.hook.pytest_runtest_logstart(
-            nodeid=nodeid, location=location)
+        self.config.hook.pytest_runtest_logstart(nodeid=nodeid, location=location)
 
     def runtest_logreport(self, slaveid, report):
         # Run all the normal logreport hooks
         self.config.hook.pytest_runtest_logreport(report=report)
 
         # Now do what the terminal reporter would normally do, but include parallelizer info
-        outcome, letter, word = self.config.hook.pytest_report_teststatus(
-            report=report)
+        outcome, letter, word = self.config.hook.pytest_report_teststatus(report=report)
         # Stash stats on the terminal reporter so it reports properly
         # after it's reenabled at the end of runtestloop
         self.tr.stats.setdefault(outcome, []).append(report)
