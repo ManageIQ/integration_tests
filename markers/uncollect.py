@@ -52,6 +52,17 @@ Note:
 
 """
 import inspect
+import pytest
+
+MARKDECORATOR_TYPE = type(pytest.mark.slip)
+
+
+# work around https://github.com/pytest-dev/pytest/issues/2400
+def get_uncollect_function(marker_or_markdecorator):
+    if isinstance(marker_or_markdecorator, MARKDECORATOR_TYPE):
+        return marker_or_markdecorator.args[0]
+    else:
+        return list(marker_or_markdecorator)[0].args[0]
 
 
 def uncollectif(item):
@@ -70,7 +81,7 @@ def uncollectif(item):
             marker.kwargs.get('reason', 'No reason given'))
 
         try:
-            arg_names = inspect.getargspec(marker._arglist[0][0][0]).args
+            arg_names = inspect.getargspec(get_uncollect_function(marker)).args
         except TypeError:
             logger.debug(log_msg)
             return not bool(marker.args[0])

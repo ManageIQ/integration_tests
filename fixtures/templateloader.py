@@ -2,7 +2,7 @@
 """Preloads all templates on all providers that were selected for testing. Useful for test collect.
 """
 import pytest
-from fixtures.pytest_store import store, write_line
+from fixtures.pytest_store import store
 from utils import trackerbot
 from utils.providers import list_provider_keys
 
