@@ -226,6 +226,9 @@ def link_config_files(src, dest):
                 if os.readlink(target) != source:
                     print("WARNING:", target, "does not point to", source)
                     print("         please verify this is intended")
+            elif os.path.isfile(target):
+                print('ERROR: You have', element, 'copied into your conf/ folder. Remove it.')
+                exit(1)
             else:
                 os.symlink(source, target)
 
