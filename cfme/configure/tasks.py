@@ -97,6 +97,11 @@ def is_cluster_analysis_finished(name, **kwargs):
     return is_analysis_finished(name=name, task_type='cluster', **kwargs)
 
 
+def delete_all_tasks(destination):
+    view = navigate_to(Tasks, destination)
+    view.delete.item_select('Delete All', handle_alert=True)
+
+
 def is_task_finished(destination, task_name, expected_status, clear_tasks_after_success=True):
     view = navigate_to(Tasks, destination)
     tab_view = getattr(view.tabs, destination.lower())
@@ -107,12 +112,17 @@ def is_task_finished(destination, task_name, expected_status, clear_tasks_after_
         return False
 
     # throw exception if error in message
-    if 'error' in row.message.text.lower():
-        raise Exception("Task {} error".format(task_name))
+    message = row.message.text.lower()
+    if 'error' in message:
+        raise Exception("Task {} error: {}".format(task_name, message))
+    elif 'timed out' in message:
+        raise TimedOutError("Task {} timed out: {}".format(task_name, message))
+    elif 'failed' in message:
+        raise Exception("Task {} has a failure: {}".format(task_name, message))
 
     if clear_tasks_after_success:
         # Remove all finished tasks so they wouldn't poison other tests
-        view.delete.item_select('Delete All', handle_alert=True)
+        delete_all_tasks(destination)
 
     return True
 

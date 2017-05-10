@@ -22,9 +22,9 @@ match_page = partial(match_location, controller='container_image',
 
 class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
 
-    def __init__(self, name, tag, provider, appliance=None):
+    def __init__(self, name, id_, provider, appliance=None):
         self.name = name
-        self.tag = tag
+        self.id = id_
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
 
@@ -51,7 +51,7 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
         sel.handle_alert()
         flash.assert_message_contain('Analysis successfully initiated')
         if wait_for_finish:
-            ssa_timeout = '10M'
+            ssa_timeout = '20M'
             try:
                 tasks.wait_analysis_finished('Container image analysis',
                                              'container', timeout=ssa_timeout)
@@ -59,7 +59,7 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(ssa_timeout))
 
-    def check_compliance(self, timeout=240):
+    def check_compliance(self, wait_for_finish=True, timeout=240):
         """Initiates compliance check and waits for it to finish."""
         navigate_to(self, 'Details')
         original_state = self.compliance_status
@@ -68,11 +68,13 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
                   invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
-        wait_for(
-            lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, fail_func=sel.refresh,
-            message="compliance of {} checked".format(self.name)
-        )
+        if wait_for_finish:
+            wait_for(
+                lambda: self.compliance_status != original_state,
+                num_sec=timeout, delay=5, fail_func=sel.refresh,
+                message='compliance state of {} still matches {}'
+                        .format(self.name, original_state)
+            )
         return self.compliant
 
     @property
@@ -102,6 +104,9 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
+    def am_i_here(self):
+        return match_page()
+
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Images')
 
@@ -120,5 +125,5 @@ class Details(CFMENavigateStep):
 
     def step(self):
         tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name,
-                                                           'Tag': self.obj.tag}))
+        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Provider': self.obj.provider.name,
+                                                           'Id': self.obj.id}))
