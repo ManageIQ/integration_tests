@@ -21,24 +21,17 @@ pytestmark = [pytest.mark.tier(3),
               pytest.mark.usefixtures("openstack_provider")]
 
 # TODO When all of these classes have widgets and views use them in the tests
-grid_pages = version.pick({
-    version.LOWEST: [CloudProvider,
-                     AvailabilityZone,
-                     Tenant,
-                     Volume,
-                     Flavor,
-                     Instance,
-                     Stack,
-                     KeyPair],
-    # Volume was removed in 5.7
-    '5.7': [CloudProvider,
-            AvailabilityZone,
-            Tenant,
-            Flavor,
-            Instance,
-            Stack,
-            KeyPair]
-})
+grid_pages = [
+    CloudProvider,
+    AvailabilityZone,
+    Tenant,
+    # TODO: use pytest.marked after pytest 3.1
+    pytest.mark.uncollectif(Volume, lambda: version.current_version() >= "5.7"),
+    Flavor,
+    Instance,
+    Stack,
+    KeyPair,
+]
 
 # Dict values are kwargs for cfme.web_ui.match_location
 landing_pages = {
