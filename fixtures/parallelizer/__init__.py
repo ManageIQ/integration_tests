@@ -270,7 +270,6 @@ class ParallelSession(object):
 
     def monitor_shutdown(self, slave):
         # non-daemon so slaves get every opportunity to shut down cleanly
-        self.config.hook.pytest_miq_node_shutdown(config=self.config, nodeinfo=slave.url)
         shutdown_thread = Thread(target=self._monitor_shutdown_t,
                                  args=(slave.id, slave.process))
         shutdown_thread.start()
@@ -450,6 +449,8 @@ class ParallelSession(object):
                     self.print_message(event_data['message'], slave, purple=True)
                     self.kill(slave)
                 elif event_name == 'shutdown':
+                    self.config.hook.pytest_miq_node_shutdown(
+                        config=self.config, nodeinfo=slave.url)
                     self.ack(slave, event_name)
                     del self.slaves[slave.id]
                     self.monitor_shutdown(slave)
