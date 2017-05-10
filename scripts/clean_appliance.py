@@ -22,13 +22,13 @@ from utils.ssh import SSHClient
 
 def main():
     parser = argparse.ArgumentParser(epilog=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('hostname', nargs='?', default=None,
-        help='hostname or ip address of target appliance')
+                        help='hostname or ip address of target appliance')
     parser.add_argument('username', nargs='?', default=credentials['ssh']['username'],
-        help='SSH username for target appliance')
+                        help='SSH username for target appliance')
     parser.add_argument('password', nargs='?', default=credentials['ssh']['password'],
-        help='SSH password for target appliance')
+                        help='SSH password for target appliance')
 
     args = parser.parse_args()
 
@@ -39,23 +39,22 @@ def main():
     if args.hostname is not None:
         ssh_kwargs['hostname'] = args.hostname
 
-    client = SSHClient(stream_output=True, **ssh_kwargs)
+    with SSHClient(stream_output=True, **ssh_kwargs) as ssh_client:
 
-    # `systemctl stop evmserverd` is a little slow, and we're destroying the
-    # db, so rudely killing ruby speeds things up significantly
-    print('Stopping ruby processes...')
-    client.run_command('killall ruby')
-    client.run_rake_command('evm:db:reset')
-    client.run_command('systemctl start evmserverd')
+        # `systemctl stop evmserverd` is a little slow, and we're destroying the
+        # db, so rudely killing ruby speeds things up significantly
+        print('Stopping ruby processes...')
+        ssh_client.run_command('killall ruby')
+        ssh_client.run_rake_command('evm:db:reset')
+        ssh_client.run_command('systemctl start evmserverd')
 
-    print('Waiting for appliance UI...')
-    args = [
-        scripts_path.join('wait_for_appliance_ui.py').strpath,
         # SSHClient has the smarts to get our hostname if none was provided
         # Soon, utils.appliance.Appliance will be able to do all of this
         # and this will be made good
-        'http://{}'.format(client._connect_kwargs['hostname'])
-    ]
+        hostname = ssh_client._connect_kwargs['hostname']
+
+    print('Waiting for appliance UI...')
+    args = [scripts_path.join('wait_for_appliance_ui.py').strpath, 'http://{}'.format(hostname)]
     return subprocess.call(args)
 
 
