@@ -33,8 +33,7 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
         apps, request_id = sprout_client.provision_appliances(
             count=count, lease_time=lease_time, preconfigured=preconfigured)
         yield apps
-    except Exception as e:
-        logger.info('Exception detected: %s', str(e))
+        logger.exception('Error detected during appliance provision')
     finally:
         if apps:
             for app in apps:
