@@ -1926,9 +1926,19 @@ def process_docker_images_from_url_group(self, group_id, version, docker_version
         date = datetime.strptime(date, '%Y%m%d%H%M%S').date()  # noqa
     except AttributeError:
         raise ValueError('Could not parse date from {}'.format(docker_version))
-    for provider in Provider.objects.exclude(
-            Q(container_base_template=None) | Q(container_base_template='')).filter(
-                working=True, disabled=False):
+    if group.template_obsolete_days is not None:
+        today = datetime.now().date()
+        age = today - date
+        if age > group.template_obsolete_days:
+            self.logger.info('Ignoring old template {} (age {} days)'.format(pull_url, age))
+            return
+    for provider in Provider.objects.filter(working=True, disabled=False):
+        if not provider.container_base_template:
+            # 11:30 PM, TODO put this check in a query
+            continue
+        if provider.remaining_configuring_slots < 1:
+            # Will do it later ...
+            continue
         try:
             Template.objects.get(
                 ~Q(container=None), template_group=group, provider=provider, version=version,
