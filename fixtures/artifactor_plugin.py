@@ -34,6 +34,7 @@ from utils.blockers import BZ, Blocker
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.wait import wait_for
+from utils.pytest_shortcuts import report_safe_longrepr
 from utils import version
 
 UNDER_TEST = False  # set to true for artifactor using tests
@@ -231,10 +232,7 @@ def pytest_runtest_logreport(report):
 
     if hasattr(report, 'skipped'):
         if report.skipped:
-            try:
-                contents = report.longrepr[2]
-            except AttributeError:
-                contents = str(report.longrepr)
+            contents = report_safe_longrepr(report)
             fire_art_hook(
                 config, 'filedump',
                 test_location=location, test_name=name,

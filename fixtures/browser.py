@@ -33,7 +33,7 @@ def pytest_exception_interact(node, call, report):
     from httplib import BadStatusLine
     from socket import error
     from utils.browser import WharfFactory
-
+    from utils.pytest_shortcuts import report_safe_longrepr
     import urllib2
 
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
@@ -48,9 +48,10 @@ def pytest_exception_interact(node, call, report):
 
     short_tb = '{}\n{}'.format(
         call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
+    longrepr = report_safe_longrepr(report)
     fire_art_test_hook(
         node, 'filedump',
-        description="Traceback", contents=str(report.longrepr), file_type="traceback",
+        description="Traceback", contents=longrepr, file_type="traceback",
         display_type="danger", display_glyph="align-justify", group_id="pytest-exception",
         slaveid=store.slaveid)
     fire_art_test_hook(
@@ -60,7 +61,7 @@ def pytest_exception_interact(node, call, report):
         slaveid=store.slaveid)
 
     # base64 encoded to go into a data uri, same for screenshots
-    full_tb = str(report.longrepr).encode('base64').strip()
+    full_tb = longrepr.encode('base64').strip()
     # errors are when exceptions are thrown outside of the test call phase
     report.when = getattr(report, 'when', 'setup')
     is_error = report.when != 'call'
