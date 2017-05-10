@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from time import sleep
 
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.instance import Instance
@@ -21,6 +22,13 @@ pytest_generate_tests = testgen.generate([AzureProvider, OpenStackProvider, EC2P
                                          scope="module")
 
 
+def ec2_sleep():
+    # CFME currently obtains events from AWS Config thru AWS SNS
+    # EC2 Config creates config diffs apprx. every 10 minutes
+    # This workaround is needed until CFME starts using CloudWatch + CloudTrail instead
+    sleep(900)
+
+
 @pytest.fixture(scope="module")
 def test_instance(request, provider):
     instance = Instance.factory(random_vm_name("timelines", max_length=16), provider)
@@ -30,6 +38,8 @@ def test_instance(request, provider):
     if not provider.mgmt.does_vm_exist(instance.name):
         logger.info("deploying %s on provider %s", instance.name, provider.key)
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+        if instance.provider.one_of(EC2Provider):
+            ec2_sleep()
     return instance
 
 
@@ -38,7 +48,11 @@ def gen_events(test_instance):
     logger.debug('Starting, stopping VM')
     mgmt = test_instance.provider.mgmt
     mgmt.stop_vm(test_instance.name)
+    if test_instance.provider.one_of(EC2Provider):
+        ec2_sleep()
     mgmt.start_vm(test_instance.name)
+    if test_instance.provider.one_of(EC2Provider):
+        ec2_sleep()
 
 
 def count_events(target, vm):
