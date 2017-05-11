@@ -516,6 +516,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 # Provider is already gone (usually caused by NetworkManager objs)
                 if 'RecordNotFound' not in str(ex):
                     raise ex
+                else:
+                    logger.warning('unhandled api exception: %s', str(ex))
         app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
