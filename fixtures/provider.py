@@ -76,13 +76,13 @@ def _artifactor_skip_providers(request, providers, skip_msg):
     pytest.skip(skip_msg)
 
 
-def _setup_provider_verbose(request, provider):
+def _setup_provider_verbose(request, provider, appliance=None):
+    if appliance is None:
+        appliance = store.current_appliance
     try:
         if request.config.option.provider_limit > 0:
-            # TODO: Use appliance.
             existing_providers = [
-                p for p in list_providers(use_global_filters=False)
-                if p.exists and p.key != provider.key]
+                p for p in appliance.managed_known_providers if p.key != provider.key]
             random.shuffle(existing_providers)
             maximum_current_providers = request.config.option.provider_limit - 1
             if len(existing_providers) > maximum_current_providers:
