@@ -598,14 +598,14 @@ class SMTPSettings(Updateable):
         fill(self.smtp_settings, self.details, action=form_buttons.save)
 
     @classmethod
-    def send_test_email(self, to_address):
+    def send_test_email(cls, to_address):
         """ Send a testing e-mail on specified address. Needs configured SMTP.
 
         Args:
             to_address: Destination address.
         """
         navigate_to(current_appliance.server, 'Server')
-        fill(self.smtp_settings, dict(to_email=to_address), action=self.buttons.test)
+        fill(cls.smtp_settings, dict(to_email=to_address), action=cls.buttons.test)
 
 
 class AuthSetting(Updateable, Pretty):
