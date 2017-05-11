@@ -499,6 +499,10 @@ class CloudProviderEditView(ProviderEditView):
     """
      represents Cloud Provider Edit View
     """
+    
+    validate = Button('Validate')
+    cancel = Button('Cancel')
+
     @property
     def is_displayed(self):
         return (super(CloudProviderEditView, self).is_displayed and
