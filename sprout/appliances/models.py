@@ -680,14 +680,14 @@ class Appliance(MetadataMixin):
         Power.ERROR}
 
     POWER_STATES_MAPPING = {
+        # Common to vsphere + rhev
+        "suspended": Power.SUSPENDED,
         # vSphere
         "poweredOn": Power.ON,
         "poweredOff": Power.OFF,
-        "suspended": Power.SUSPENDED,
         # RHEV
         "up": Power.ON,
         "down": Power.OFF,
-        "suspended": Power.SUSPENDED,
         "image_locked": Power.LOCKED,
         # Openstack
         "ACTIVE": Power.ON,
