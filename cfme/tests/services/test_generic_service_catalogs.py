@@ -131,11 +131,11 @@ def test_delete_dialog_before_parent_item(catalog_item):
 
 class TestServiceCatalogViaREST(object):
     @pytest.fixture(scope="function")
-    def service_catalogs(self, request, rest_api):
-        return _service_catalogs(request, rest_api)
+    def service_catalogs(self, request, appliance):
+        return _service_catalogs(request, appliance.rest_api)
 
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_service_catalog(self, rest_api, service_catalogs, method):
+    def test_delete_service_catalog(self, appliance, service_catalogs, method):
         """Tests delete service catalog via rest.
 
         Metadata:
@@ -144,24 +144,24 @@ class TestServiceCatalogViaREST(object):
         status = 204 if method == "delete" else 200
         for scl in service_catalogs:
             scl.action.delete(force_method=method)
-            assert rest_api.response.status_code == status
+            assert appliance.rest_api.response.status_code == status
             with error.expected("ActiveRecord::RecordNotFound"):
                 scl.action.delete(force_method=method)
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
-    def test_delete_service_catalogs(self, rest_api, service_catalogs):
+    def test_delete_service_catalogs(self, appliance, service_catalogs):
         """Tests delete service catalogs via rest.
 
         Metadata:
             test_flag: rest
         """
-        rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-        assert rest_api.response.status_code == 200
+        appliance.rest_api.collections.service_catalogs.action.delete(*service_catalogs)
+        assert appliance.rest_api.response.status_code == 200
         with error.expected("ActiveRecord::RecordNotFound"):
-            rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-        assert rest_api.response.status_code == 404
+            appliance.rest_api.collections.service_catalogs.action.delete(*service_catalogs)
+        assert appliance.rest_api.response.status_code == 404
 
-    def test_edit_service_catalog(self, rest_api, service_catalogs):
+    def test_edit_service_catalog(self, appliance, service_catalogs):
         """Tests editing a service catalog via rest.
         Prerequisities:
             * An appliance with ``/api`` available.
@@ -174,12 +174,12 @@ class TestServiceCatalogViaREST(object):
         for ctl in service_catalogs:
             new_name = fauxfactory.gen_alphanumeric()
             response = ctl.action.edit(name=new_name)
-            assert rest_api.response.status_code == 200
+            assert appliance.rest_api.response.status_code == 200
             assert response.name == new_name
             ctl.reload()
             assert ctl.name == new_name
 
-    def test_edit_multiple_service_catalogs(self, rest_api, service_catalogs):
+    def test_edit_multiple_service_catalogs(self, appliance, service_catalogs):
         """Tests editing multiple service catalogs at time.
         Prerequisities:
             * An appliance with ``/api`` available.
@@ -200,8 +200,9 @@ class TestServiceCatalogViaREST(object):
                 "href": scl.href,
                 "name": new_name,
             })
-        response = rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
-        assert rest_api.response.status_code == 200
+        response = appliance.rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
+        assert appliance.rest_api.response.status_code == 200
+        assert len(response) == len(new_names)
         for index, resource in enumerate(response):
             assert resource.name == new_names[index]
             scl = service_catalogs[index]
