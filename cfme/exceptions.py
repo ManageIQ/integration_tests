@@ -13,6 +13,30 @@ class CFMEException(Exception):
     pass
 
 
+class ConsoleNotSupported(CFMEException):
+    """Raised by functions in :py:mod:`cfme.configure.configuration` when an invalid
+    console type is given"""
+    def __init__(self, product_name, version):
+        self.product_name = product_name
+        self.version = version
+
+    def __str__(self):
+        return "Console not supported on current version: {} {}".format(
+            self.product_name,
+            self.version
+        )
+
+
+class ConsoleTypeNotSupported(CFMEException):
+    """Raised by functions in :py:mod:`cfme.configure.configuration` when an invalid
+    console type is given"""
+    def __init__(self, console_type):
+        self.console_type = console_type
+
+    def __str__(self):
+        return "Console type not supported: {}".format(self.console_type)
+
+
 class FlashMessageException(CFMEException):
     """Raised by functions in :py:mod:`cfme.web_ui.flash`"""
 
