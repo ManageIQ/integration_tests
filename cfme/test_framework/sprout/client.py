@@ -111,7 +111,8 @@ class SproutClient(object):
             group=stream, provider=provider, lease_time=lease_time, ram=ram, cpu=cpu, count=count
         )
         wait_for(
-            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300)
+            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300,
+            message='provision {} appliance(s) from sprout'.format(count))
         data = self.call_method('request_check', str(request_id))
         logger.debug(data)
         appliances = []
