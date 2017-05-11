@@ -26,6 +26,7 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
         preconfigured: True if the appliance should be already configured, False otherwise
         lease_time: Lease time in minutes (3 hours by default)
     """
+    apps = []
     try:
         sprout_client = SproutClient.from_config()
         apps, request_id = sprout_client.provision_appliances(
