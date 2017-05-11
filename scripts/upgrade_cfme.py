@@ -3,101 +3,86 @@ import yaml
 import copy
 import time
 import threading
+import requests
 from utils.appliance import IPAppliance
 
 
 class cfme_upgrade_maneger(IPAppliance):
 
-    def __init__(self, appliance_ip, repo_list):
+    def __init__(self, appliance_ip, repo_list, dest_version):
         super(cfme_upgrade_maneger, self).__init__(address=appliance_ip)
         self.repo_list = repo_list
+        self.dest_version = dest_version
+
+    def exec_commaned(self, cmd, expect_failure=False, ignore_failure=False):
+        result = self.ssh_client.run_command(cmd)
+        if bool(result.rc) != expect_failure and not ignore_failure:
+            raise RuntimeError(
+                "command {cmd} failed!!\n\n\n{command_output}".format(cmd=cmd,
+                                                                      command_output=result.output))
+        return result
 
     def add_yum_repo(self):
-
+        print "adding repositories to yum"
         for curr_repo_url in self.repo_list:
             # Add all the repos to yum repo
-            result = self.ssh_client.run_command(
-                "yum-config-manager --add-repo {repo_url}".format(repo_url=curr_repo_url))
-
-            # Validate repo added sussefully
-            if not result.rc:
-                print "Fail to add {repo_name} to yum repo list".format(repo_name=curr_repo_url)
-            else:
-                print"repo {repo_name} added succsefully".format(repo_name=curr_repo_url)
-
-            print result.output
+            self.exec_commaned("yum-config-manager "
+                               "--add-repo {repo_url}".format(repo_url=curr_repo_url))
 
     def update_yum(self):
+
         def monitor_yum():
-            status = False
-            while not status.rc:
+            time.sleep(5)
+            # do as long yum is runnig on the appliance
+            while bool(self.exec_commaned(""" ps -ef | grep "yum update" """,
+                                          ignore_failure=True).rc):
                 time.sleep(10)
                 print "yum still runnig"
-                status = self.ssh_client.run_command(""" ps -ef | grep "yum update" """)
 
-        print "=== Initiating yum update ======================================="
+        print "importing all gpg keys for yum repositories"
         self.ssh_client.run_command("rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-*")
-        monitor = threading.Thread(target=monitor_yum())
+
+        monitor = threading.Thread(target=monitor_yum)
         monitor.start()
-        status, out = self.ssh_client.run_command("yum update -y")
-        if status:
-            print "rpm updating failed\n\n error log:\n"
-            print out
-        else:
-            print "rpm updating succeeded!"
-        print "================================================================="
+        print "initiating yum update"
+        self.ssh_client.run_command("yum update -y")
 
     def stop_cfme(self):
-        print "=== stopping the cfme engine (evmserverd) ======================="
+        print "stopping the cfme engine (evmserverd)"
 
-        result = self.ssh_client.run_command("systemctl stop evmserverd")
-        if not result.rc:
-            result = self.ssh_client.run_command("systemctl status evmserverd | "
-                                                 "grep Active: | awk {'print $2'}")
-            if "inactive" not in result.output:
-                raise RuntimeError("Fail to stop cfme engine")
-        print "================================================================="
+        result = self.exec_commaned("systemctl status evmserverd | "
+                                    "grep Active: | awk {'print $2'}", ignore_failure=True)
+
+        if "active" in result.output:
+            self.exec_commaned("systemctl stop evmserverd")
 
     def start_cfme(self):
-        print "=== starting the cfme engine (evmserverd) ======================="
+        result = self.exec_commaned("systemctl status evmserverd | grep Active: | awk {'print $2'}",
+                                    ignore_failure=True)
 
-        result = self.ssh_client.run_command("systemctl start evmserverd")
-        if not result.rc:
-            result = self.ssh_client.run_command("systemctl status evmserverd | "
-                                                 "grep Active: | awk {'print $2'}")
-            if "inactive" not in result.output:
-                raise RuntimeError("Fail to stop cfme engine")
-        print result.output
-        print "================================================================="
+        if "inactive" in result.output:
+            self.exec_commaned("systemctl start evmserverd")
 
     def yum_register(self, username, password):
-        result = self.ssh_client.run_command(
-            "subscription-manager register "
-            "--username={username} --password={password} --force".format(
-                username=username, password=password))
-        if result.rc:
-            raise RuntimeError(
-                "yum fail to register with {username}:{password}\n\n"
-                "full error details:\n{full_error}".format(
-                    username=username, password=password, full_error=result.output))
+        self.exec_commaned("subscription-manager register --username={username} "
+                           "--password={password} "
+                           "--force".format(username=username, password=password))
 
     def validate_cfme_version(self):
-        pass
+        api_url = "https://{ip}/api/".format(ip=self.address)
+        auth = ("admin", "smartvm")
+        si = requests.get(api_url, verify=False, auth=auth).json()["server_info"]
+        assert si['version'].split("-", 1)[0] == self.dest_version, "The upgrade filed!"
+        print "The upgrade finished successfully"
 
     def restart_components(self):
-        print "=== Restarting componates =================================================="
-        print "Resrart appliance DB"
-        self.ssh_client.run_command("systemctl restart $APPLIANCE_PG_SERVICE")
+        print "restarting componates after updating components"
 
-        print "Runnig migrate to latest version"
+        self.exec_commaned("systemctl restart $APPLIANCE_PG_SERVICE")
+
         self.ssh_client.run_rake_command("db:migrate")
-
-        print "Initiate evm restart"
         self.ssh_client.run_rake_command("evm:automate:reset")
-
-        print "Restart the DB"
-        self.ssh_client.run_rake_command("systemctl restart rh-postgresql95-postgresql")
-        print "============================================================================"
+        self.exec_commaned("systemctl restart rh-postgresql95-postgresql")
 
 
 def main():
@@ -117,6 +102,7 @@ def main():
 
     params = {}
     if args.config:
+        print "loading config file"
         with open(args.config, 'r') as stream:
             try:
                 params = yaml.load(stream)
@@ -125,6 +111,7 @@ def main():
     else:
         params = copy.deepcopy(args.__dict__)
 
+    print "Startinf system upgrade"
     cfme_upgrader = cfme_upgrade_maneger(params["address"], repo_list=params["repo"])
     cfme_upgrader.add_yum_repo()
     cfme_upgrader.stop_cfme()
