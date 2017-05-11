@@ -1556,6 +1556,7 @@ class TimelinesFilter(View):
     time_period = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
     time_range = BootstrapSelect(id='tl_range')
     time_position = BootstrapSelect(id='tl_timepivot')
+    calendar = TextInput(locator='.//input[@class="form-control"]')
     # todo: implement correct switch between management/policy views when switchable views done
     apply = Text(locator='.//div[contains(@class, "timeline-apply")]')
     # management controls

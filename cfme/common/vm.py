@@ -366,8 +366,12 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         cfg_btn(self.TO_OPEN_EDIT)
 
     def open_timelines(self):
-        self.load_details(refresh=True)
-        mon_btn("Timelines")
+        """Navigates to an VM's timeline page.
+
+        Returns:
+            :py:class:`TimelinesView` object
+        """
+        return navigate_to(self, 'Timelines')
 
     def rediscover(self):
         """Deletes the VM from the provider and lets it discover again"""

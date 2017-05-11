@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from datetime import datetime, timedelta
 
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
@@ -8,7 +9,6 @@ from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.provider import InfraProvider
-from cfme.web_ui import flash, jstimelines
 from utils import ports, testgen
 from utils.conf import credentials
 from utils.log import logger
@@ -17,7 +17,6 @@ from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
 from cfme import test_requirements
-from fixtures.pytest_store import store
 
 pytestmark = [
     pytest.mark.long_running,
@@ -117,6 +116,17 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         policy.assign_actions_to_event(event, [action])
         provider.assign_policy_profiles(policy_profile.description)
         request.addfinalizer(lambda: provider.unassign_policy_profiles(policy_profile.description))
+
+
+@pytest.yield_fixture(scope="module")
+def set_performance_capture_threshold(appliance):
+    yaml = appliance.get_yaml_config()
+    yaml["performance"]["capture_threshold_with_alerts"]["vm"] = "3.minutes"
+    appliance.set_yaml_config(yaml)
+    yield
+    yaml = appliance.get_yaml_config()
+    yaml["performance"]["capture_threshold_with_alerts"]["vm"] = "20.minutes"
+    appliance.set_yaml_config(yaml)
 
 
 @pytest.yield_fixture(scope="module")
@@ -271,7 +281,8 @@ def test_alert_rtp(request, vm_name, smtp_test, provider):
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
+def test_alert_timeline_cpu(request, vm_name, set_performance_capture_threshold, provider, ssh,
+        vm_crud):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
     a CPU spike in the machine to trigger the threshold. The alert is displayed in the timelines.
 
@@ -286,40 +297,37 @@ def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
             "Real Time Performance",
             {
                 "performance_field": "CPU - % Used",
-                "performance_field_operator": ">",
-                "performance_field_value": "20",
+                "performance_field_operator": ">=",
+                "performance_field_value": "10",
                 "performance_trend": "Don't Care",
                 "performance_time_threshold": "2 Minutes",
             }),
-        notification_frequency="5 Minutes",
+        notification_frequency="1 Minute",
         timeline_event=True,
     )
     alert.create()
     request.addfinalizer(alert.delete)
 
-    setup_for_alerts(request, [alert])
-    # Generate a 100% CPU spike for 5 minutes, that should be noticed by CFME.
-    ssh.cpu_spike(seconds=5 * 60, cpus=4)
-
-    def _timeline_event_present():
-        vm_crud.open_timelines()
-        select = pytest.sel.Select("//select[@name='tl_fl_grp2']")  # TODO: Make a timelines module?
-        pytest.sel.select(select, "Alarm/Status change/Errors")
-        for event in jstimelines.events():
-            info = event.block_info()
-            if info.get("Event Type") != "EVMAlertEvent":
-                continue
-            if info.get("Event Source") != "MiqAlert":
-                continue
-            if info["Source VM"] == vm_name:
-                return True
-        return False
-
-    wait_for(_timeline_event_present, num_sec=30 * 60, delay=15, message="timeline event present")
+    setup_for_alerts(request, [alert], vm_name=vm_name)
+    # Generate a 100% CPU spike for 15 minutes, that should be noticed by CFME.
+    ssh.cpu_spike(seconds=60 * 15, cpus=2, ensure_user=True)
+    timeline = vm_crud.open_timelines()
+    timeline.filter.fill({
+        "event_category": "Alarm/Status Change/Errors",
+        "time_range": "Days",
+        "calendar": "{dt.month}/{dt.day}/{dt.year}".format(dt=datetime.now() + timedelta(days=1))
+    })
+    timeline.filter.apply.click()
+    events = timeline.chart.get_events()
+    for event in events:
+        if alert.description in event.message:
+            break
+    else:
+        pytest.fail("The event has not been found on the timeline. Event list: {}".format(events))
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_snmp(request, vm_name, snmp, provider):
+def test_alert_snmp(request, vm_name, snmp, provider, appliance):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
@@ -355,7 +363,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
     setup_for_alerts(request, [alert])
 
     def _snmp_arrived():
-        rc, stdout = store.current_appliance.ssh_client.run_command(
+        rc, stdout = appliance.ssh_client.run_command(
             "journalctl --no-pager /usr/sbin/snmptrapd | grep {}".format(match_string))
         if rc != 0:
             return False
