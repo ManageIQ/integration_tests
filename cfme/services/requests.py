@@ -46,7 +46,7 @@ class Request(Navigatable):
 class RequestAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def am_i_here(self):
+    def am_i_here(self, *args, **kwargs):
         return match_page(summary='Requests')
 
     def step(self, *args, **kwargs):
