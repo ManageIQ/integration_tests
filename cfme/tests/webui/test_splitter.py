@@ -1,7 +1,6 @@
 import pytest
 from xml.sax.saxutils import quoteattr, unescape
 
-from cfme.control import explorer  # noqa
 from cfme.exceptions import CannotScrollException
 from cfme.base.ui import Server
 from cfme.cloud.instance import Instance
@@ -11,10 +10,7 @@ from cfme.infrastructure.pxe import ISODatastore
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.intelligence.chargeback import ComputeRate
 from cfme.intelligence.reports.reports import CustomReport
-from cfme.services.catalogs import service_catalogs # noqa
 from cfme.services.myservice import MyService
-from cfme.services import workloads  # noqa
-from cfme.automate import explorer # noqa
 from cfme.optimize.utilization import Utilization
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.infrastructure.networking import InfraNetworking
