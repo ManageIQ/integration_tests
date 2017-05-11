@@ -506,18 +506,18 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """ Clear all providers of given class on the appliance """
         from utils.appliance import current_appliance as app
         app.rest_api.collections.providers.reload()
+        logger.info('appliance ip: %s', str(app.address))
         for prov in app.rest_api.collections.providers.all:
             try:
                 if any([True for db_type in cls.db_types if db_type in prov.type]):
                     logger.info('Deleting provider: %s', prov.name)
+                    logger.info('Provider data: %s', str(prov.data))
                     prov.action.delete()
                     prov.wait_not_exists()
             except APIException as ex:
                 # Provider is already gone (usually caused by NetworkManager objs)
                 if 'RecordNotFound' not in str(ex):
                     raise ex
-                else:
-                    logger.warning('unhandled api exception: %s', str(ex))
         app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
