@@ -1,7 +1,7 @@
 import pytest
 from collections import namedtuple
 from wait_for import wait_for
-from utils import version
+from utils import version, os
 from utils.log_validator import LogValidator
 from utils.log import logger
 from utils.conf import hidden
@@ -257,13 +257,16 @@ def test_black_console_scap(temp_appliance_preconfig, soft_assert):
 
     with tempfile.NamedTemporaryFile('w') as f:
         f.write(hidden['scap.rb'])
+        f.flush()
+        os.fsync(f.fileno())
         temp_appliance_preconfig.ssh_client.put_file(
             f.name, '/tmp/scap.rb')
-    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby /tmp/scap.rb')
+    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby scap.rb '
+        '--rulesfile=/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml')
     temp_appliance_preconfig.ssh_client.get_file(
         '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
     temp_appliance_preconfig.ssh_client.get_file(
-        '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml',
+        '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml',
         '/tmp/scap_rules.yml')    # Get the scap rules (moves on 5.8)
 
     with open('/tmp/scap_rules.yml') as f:
