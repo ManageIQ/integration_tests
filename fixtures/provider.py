@@ -80,6 +80,8 @@ def _setup_provider_verbose(request, provider, appliance=None):
     if appliance is None:
         appliance = store.current_appliance
     try:
+        logger.info('appliance ip: %s', appliance.address)
+        logger.info('appliances managed providers: %s', str(appliance.managed_known_providers))
         if request.config.option.provider_limit > 0:
             existing_providers = [
                 p for p in appliance.managed_known_providers if p.key != provider.key]
