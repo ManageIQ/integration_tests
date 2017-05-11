@@ -34,8 +34,8 @@ class cfme_upgrade_maneger(IPAppliance):
         def monitor_yum():
             time.sleep(5)
             # do as long yum is runnig on the appliance
-            while bool(self.exec_commaned(""" ps -ef | grep "yum update" """,
-                                          ignore_failure=True).rc):
+            while not bool(self.exec_commaned(""" ps -ef | grep "yum update" | grep -v grep """,
+                                              ignore_failure=True).rc):
                 time.sleep(10)
                 print "yum still runnig"
 
@@ -57,6 +57,8 @@ class cfme_upgrade_maneger(IPAppliance):
             self.exec_commaned("systemctl stop evmserverd")
 
     def start_cfme(self):
+
+        print "starting the cfme engine (evmserverd)"
         result = self.exec_commaned("systemctl status evmserverd | grep Active: | awk {'print $2'}",
                                     ignore_failure=True)
 
@@ -69,6 +71,9 @@ class cfme_upgrade_maneger(IPAppliance):
                            "--force".format(username=username, password=password))
 
     def validate_cfme_version(self):
+        print "waiting for 120 seconds for main proccess to load before runnig verrsion valiadation"
+        time.sleep(120)
+        print "start CFME version validation"
         api_url = "https://{ip}/api/".format(ip=self.address)
         auth = ("admin", "smartvm")
         si = requests.get(api_url, verify=False, auth=auth).json()["server_info"]
@@ -98,6 +103,11 @@ def main():
                         dest="username", action="store", default="qa@redhat.com")
     parser.add_argument("-p", "--password", help="password for yum register",
                         dest="password", action="store")
+    parser.add_argument("-d", "--dest_version",
+                        help="destination version (use for final validation",
+                        dest="dest_version", action="store")
+    parser.add_argument("-s", "--skip_validation", help="skip destanation version validation",
+                        dest="skip_validation", action="store_true", default=False)
     args = parser.parse_args()
 
     params = {}
@@ -111,14 +121,21 @@ def main():
     else:
         params = copy.deepcopy(args.__dict__)
 
-    print "Startinf system upgrade"
-    cfme_upgrader = cfme_upgrade_maneger(params["address"], repo_list=params["repo"])
+
+    print "Starting system upgrade"
+    cfme_upgrader = cfme_upgrade_maneger(params["address"],
+                                         repo_list=params["repo"],
+                                         dest_version=params["dest_version"])
+
     cfme_upgrader.add_yum_repo()
     cfme_upgrader.stop_cfme()
     cfme_upgrader.yum_register(params["username"], params["password"])
     cfme_upgrader.update_yum()
     cfme_upgrader.restart_components()
     cfme_upgrader.start_cfme()
+
+    if params["skip_validation"]:
+        cfme_upgrader.validate_cfme_version()
 
 
 if __name__ == '__main__':
