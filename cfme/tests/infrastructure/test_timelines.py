@@ -154,7 +154,7 @@ class TestVmEventRESTAPI(object):
             events.message == event["event_message"],
             events.event_type == event["event_type"],
         ))
-        assert len(events_list) == 1, "Could not find the event in the database"
+        assert events_list, "Could not find the event in the database"
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_vm_add_lifecycle_event(self, vm, from_detail, appliance):
@@ -195,4 +195,4 @@ class TestVmEventRESTAPI(object):
             lifecycle_events.status == event["status"],
             lifecycle_events.event == event["event"],
         ))
-        assert len(events_list) == 1, "Could not find the lifecycle event in the database"
+        assert events_list, "Could not find the lifecycle event in the database"
