@@ -497,7 +497,6 @@ class IPAppliance(object):
         except Exception as ex:
             self.log.warning("Unable to query DB for managed providers: %s", str(ex))
             return []
-        logger.info('EMS LIST FROM DB: %s', str(ems_list))
         known_ems_list = []
         for ems in ems_list:
             # Skip any EMS types that we don't care about / can't recognize safely
