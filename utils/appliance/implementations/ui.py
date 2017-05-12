@@ -2,6 +2,7 @@
 import json
 import time
 from jsmin import jsmin
+from inspect import isclass
 
 from utils.log import logger, create_sublogger
 from cfme import exceptions
@@ -354,7 +355,8 @@ class CFMENavigateStep(NavigateStep):
         pass
 
     def log_message(self, msg, level="debug"):
-        str_msg = "[UI-NAV/{}/{}]: {}".format(self.obj.__class__.__name__, self._name, msg)
+        class_name = self.obj.__name__ if isclass(self.obj) else self.obj.__class__.__name__
+        str_msg = "[UI-NAV/{}/{}]: {}".format(class_name, self._name, msg)
         getattr(logger, level)(str_msg)
 
     def construst_message(self, here, resetter, view, duration):
