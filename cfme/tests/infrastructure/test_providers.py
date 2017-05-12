@@ -210,6 +210,7 @@ def test_provider_add_with_bad_credentials(provider):
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @test_requirements.provider_discovery
+@pytest.mark.meta(blockers=[BZ(1450527, unblock=lambda provider: provider.type != 'scvmm')])
 def test_provider_crud(provider):
     """Tests provider add with good credentials
 
