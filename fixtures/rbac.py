@@ -92,12 +92,12 @@ depending on if the test was run against *rhos* or *ec2*.
 """
 from utils.log import logger
 from cfme.configure.access_control import User
-from cfme.login import logout
 from fixtures.pytest_store import store
 from fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
 import traceback
+from utils.appliance import current_appliance
 from utils.browser import browser, ensure_browser_open
 from utils import conf, testgen
 
@@ -143,7 +143,7 @@ def really_logout():
     ready for use.
     """
     try:
-        logout()
+        current_appliance.server.logout()
     except AttributeError:
         try:
             browser().quit()

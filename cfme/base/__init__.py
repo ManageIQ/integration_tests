@@ -1,6 +1,6 @@
 import sentaku
 
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, Parent
 from utils.pretty import Pretty
 
 
@@ -12,6 +12,17 @@ class Server(Navigatable, sentaku.Element):
         self.sid = sid
         self.zone.servers.add(self)
         self.parent = self.appliance.context
+
+    parent = Parent()
+
+    address = sentaku.ContextualMethod()
+    login = sentaku.ContextualMethod()
+    login_admin = sentaku.ContextualMethod()
+    logout = sentaku.ContextualMethod()
+    update_password = sentaku.ContextualMethod()
+    logged_in = sentaku.ContextualMethod()
+    current_full_name = sentaku.ContextualMethod()
+    current_username = sentaku.ContextualMethod()
 
 
 class ZoneCollection(Navigatable, sentaku.Element):
