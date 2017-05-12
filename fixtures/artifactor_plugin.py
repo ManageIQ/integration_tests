@@ -226,7 +226,7 @@ def pytest_runtest_teardown(item, nextitem):
     }
     fire_art_test_hook(
         item, 'ostriz_send',
-        slaveid=store.slaveid, polarion_ids=extract_polarion_ids(item), jenkins_data=jenkins_data)
+        slaveid=store.slaveid, polarion_ids=extract_polarion_ids(item), jenkins=jenkins_data)
 
 
 def pytest_runtest_logreport(report):
