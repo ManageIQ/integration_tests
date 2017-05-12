@@ -14,6 +14,7 @@ from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
 from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services import requests
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
@@ -248,7 +249,7 @@ class Vm(BaseVM):
             "email": email,
             "host_name": {"name": prov_data.get("host")},
         }
-        if not self.provider.type == 'rhevm':
+        if not self.provider.one_of(RHEVMProvider):
             provisioning_data["datastore_name"] = {"name": prov_data.get("datastore")}
         from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
