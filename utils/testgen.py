@@ -268,6 +268,8 @@ def providers(metafunc, filters=None):
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
             argnames.append('provider')
+        if metafunc.config.getoption('sauce'):
+            break
 
     return argnames, argvalues, idlist
 
