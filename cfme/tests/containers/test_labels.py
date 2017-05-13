@@ -1,13 +1,9 @@
 import json
 import random
 import time
-
 from itertools import chain
-
 import fauxfactory
-
 import pytest
-
 import requests
 
 from cfme.containers.image import Image
