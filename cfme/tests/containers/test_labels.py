@@ -1,14 +1,14 @@
 import json
 import random
-import re
 import time
+
+from itertools import chain
 
 import fauxfactory
 
 import pytest
 
 import requests
-
 
 from cfme.containers.image import Image
 from cfme.containers.node import Node
@@ -39,13 +39,14 @@ TEST_OBJECTS = [Project, Service, Replicator, Pod, Node, Image, Template]
 objects_ocp = ['"Namespace"', '"Service"', '"ReplicationController"', '"Pod"',
                '"Node"', '"Image"', '"Template"']
 
+labels_for_objs = ['project', 'service', 'rc', 'pod', 'node', 'image', 'template']
+
 
 def create_api_data(provider):
 
     object_names = []
-    obj_keys_list = []
-    obj_values_list = []
     obj_endpoints = []
+    json_new_payload = []
 
     # pick a random project name
     # [0] is used to pick a name from the list, not necessarily the first item
@@ -102,8 +103,6 @@ def create_api_data(provider):
     obj_endpoints.extend([project_endpoint, service_endpoint, rc_endpoint, pod_endpoint,
                           node_endpoint, image_endpoint, template_endpoint])
 
-    json_new_payload = []
-
     # use different label for each object and generate json
     for obj_name in objects_ocp:
         key_label = fauxfactory.gen_alphanumeric(6)
@@ -113,88 +112,43 @@ def create_api_data(provider):
                               + '"{}"'.format(value_label) + '}}}'
         json_new_payload.append(json_payload_format)
 
-    # create lists of keys and values from newly generated labels
-    project = (json.loads(json_new_payload[0])).values()[2]
-    project_key_value = str(project.values()[0])
-    project_kv_list = re.findall(r"'(\w+)'", project_key_value)
-
-    service = (json.loads(json_new_payload[1])).values()[2]
-    service_key_value = str(service.values()[0])
-    service_kv_list = re.findall(r"'(\w+)'", service_key_value)
-
-    rc = (json.loads(json_new_payload[2])).values()[2]
-    rc_key_value = str(rc.values()[0])
-    rc_kv_list = re.findall(r"'(\w+)'", rc_key_value)
-
-    pod = (json.loads(json_new_payload[3])).values()[2]
-    pod_key_value = str(pod.values()[0])
-    pod_kv_list = re.findall(r"'(\w+)'", pod_key_value)
-
-    node = (json.loads(json_new_payload[4])).values()[2]
-    node_key_value = str(node.values()[0])
-    node_kv_list = re.findall(r"'(\w+)'", node_key_value)
-
-    image = (json.loads(json_new_payload[5])).values()[2]
-    image_key_value = str(image.values()[0])
-    image_kv_list = re.findall(r"'(\w+)'", image_key_value)
-
-    template = (json.loads(json_new_payload[6])).values()[2]
-    template_key_value = str(template.values()[0])
-    template_kv_list = re.findall(r"'(\w+)'", template_key_value)
-
-    # extracted list of keys
-    obj_keys_list.extend([project_kv_list[0], service_kv_list[0], rc_kv_list[0], pod_kv_list[0],
-                          node_kv_list[0], image_kv_list[0], template_kv_list[0]])
-
-    # extracted list of values
-    obj_values_list.extend([project_kv_list[1], service_kv_list[1], rc_kv_list[1], pod_kv_list[1],
-                            node_kv_list[1], image_kv_list[1], template_kv_list[1]])
-
-    return json_new_payload, object_names, obj_endpoints, obj_keys_list, obj_values_list
+    return json_new_payload, object_names, obj_endpoints
 
 
-@pytest.mark.polarion('CMP-10572')
-def test_labels(provider, soft_assert):
-    """ The test executes the PATCH request on selected objects, then
-        verifies their existence in CFME. Since the labels are different
-        for each object, each label is verified separately.
+def check_request_status(provider):
+    json_api_payload, obj_api_names, obj_api_endpoints = create_api_data(provider)
 
-    """
-
-    json_api_payload, obj_api_names, obj_api_endpoints, obj_api_keys, obj_api_values \
-        = create_api_data(provider)
+    endpoints_json_dict = dict(zip(obj_api_endpoints, json_api_payload))
 
     headers = {'Authorization': 'Bearer' + ' ' + provider.mgmt.auth,
                'Content-Type': 'application/strategic-merge-patch+json'}
 
-    # execute the PATCH request and check the status
-    create_label_project = requests.patch(obj_api_endpoints[0], headers=headers,
-                                          verify=False, data=json_api_payload[0])
-    assert create_label_project.status_code == 200
+    for key, value in endpoints_json_dict.iteritems():
+        req = requests.patch(key, headers=headers, verify=False, data=value)
+        assert req.status_code == 200
 
-    create_label_service = requests.patch(obj_api_endpoints[1], headers=headers,
-                                          verify=False, data=json_api_payload[1])
-    assert create_label_service.status_code == 200
+    new_lbls_list = []
 
-    create_label_rc = requests.patch(obj_api_endpoints[2], headers=headers,
-                                     verify=False, data=json_api_payload[2])
-    assert create_label_rc.status_code == 200
+    for index in range(len(json_api_payload)):
+        obj = (json.loads(json_api_payload[index])).values()[2]
+        new_lbls_list.append(obj)
 
-    create_label_pod = requests.patch(obj_api_endpoints[3], headers=headers,
-                                      verify=False, data=json_api_payload[3])
-    assert create_label_pod.status_code == 200
+    # create list of keys and list of values
+    new_lbls_list_revised = [x['labels'] for x in new_lbls_list]
+    obj_keys_list = list(chain.from_iterable([d.keys() for d in new_lbls_list_revised]))
+    obj_values_list = list(chain.from_iterable([d.values() for d in new_lbls_list_revised]))
 
-    create_label_node = requests.patch(obj_api_endpoints[4], headers=headers,
-                                       verify=False, data=json_api_payload[4])
-    assert create_label_node.status_code == 200
+    return obj_keys_list, obj_values_list, json_api_payload, obj_api_names
 
-    create_label_image = requests.patch(obj_api_endpoints[5], headers=headers,
-                                        verify=False, data=json_api_payload[5])
-    assert create_label_image.status_code == 200
 
-    create_label_template = requests.patch(obj_api_endpoints[6], headers=headers,
-                                           verify=False, data=json_api_payload[6])
-    assert create_label_template.status_code == 200
+@pytest.mark.polarion('CMP-10572')
+def test_labels(provider, soft_assert):
+    obj_keys_list, obj_values_list, json_api_payload, obj_api_names = check_request_status(provider)
+
+    obj_k = map(str, obj_keys_list)
+    obj_v = map(str, obj_values_list)
+
+    obj_k_api = [item.lower() for item in obj_k]
 
     # verify the created labels in CFME
     navigate_to(provider, 'Details')
@@ -210,99 +164,95 @@ def test_labels(provider, soft_assert):
 
     for test_obj in TEST_OBJECTS:
         navigate_to(test_obj, 'All')
+        tb.select("List View")
+        list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
         if test_obj is Project:
-            tb.select("List View")
-            list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-            project_ui = [r.name.text for r in list_tbl.rows() if r.name.text ==
-                          obj_api_names[0]]
+            project_ui = [r.name.text for r in list_tbl.rows() if r.name.text == obj_api_names[0]]
             for name in project_ui:
                 obj = Project(name, provider)
                 obj.summary.reload()
                 ui_labels = obj.summary.labels.items()
-                label_key = obj_api_keys[0]
-                label_value = obj_api_values[0]
+                label_key = obj_k_api[0]
+                label_value = obj_v[0]
+                elem = str(ui_labels[label_key])
+                elem_v = elem[1:-1]
                 if label_key in ui_labels:
-                    soft_assert(label_value == ui_labels[label_key], "No label found")
+                    soft_assert(label_value == elem_v, "No label found")
 
         if test_obj is Service:
-            tb.select("List View")
-            list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-            service_ui = [r.name.text for r in list_tbl.rows() if r.name.text ==
-                          obj_api_names[1]]
+            service_ui = [r.name.text for r in list_tbl.rows() if r.name.text == obj_api_names[1]]
             for name in service_ui:
                 obj = Service(name, provider)
                 obj.summary.reload()
                 ui_labels = obj.summary.labels.items()
-                label_key = obj_api_keys[1]
-                label_value = obj_api_values[1]
+                label_key = obj_k_api[1]
+                label_value = obj_v[1]
+                elem = str(ui_labels[label_key])
+                elem_v = elem[1:-1]
                 if label_key in ui_labels:
-                    soft_assert(label_value == ui_labels[label_key], "No label found")
+                    soft_assert(label_value == elem_v, "No label found")
 
         if test_obj is Replicator:
-            tb.select("List View")
-            list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-            rc_ui = [r.name.text for r in list_tbl.rows() if r.name.text ==
-                     obj_api_names[2]]
+            rc_ui = [r.name.text for r in list_tbl.rows() if r.name.text == obj_api_names[2]]
             for name in rc_ui:
                 obj = Replicator(name, provider)
                 obj.summary.reload()
                 ui_labels = obj.summary.labels.items()
-                label_key = obj_api_keys[2]
-                label_value = obj_api_values[2]
+                label_key = obj_k_api[2]
+                label_value = obj_v[2]
+                elem = str(ui_labels[label_key])
+                elem_v = elem[1:-1]
                 if label_key in ui_labels:
-                    soft_assert(label_value == ui_labels[label_key], "No label found")
+                    soft_assert(label_value == elem_v, "No label found")
 
         if test_obj is Pod:
-            tb.select("List View")
-            list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-            pod_ui = [r.name.text for r in list_tbl.rows() if r.name.text ==
-                      obj_api_names[3]]
+            pod_ui = [r.name.text for r in list_tbl.rows() if r.name.text == obj_api_names[3]]
             for name in pod_ui:
                 obj = Pod(name, provider)
                 obj.summary.reload()
                 ui_labels = obj.summary.labels.items()
-                label_key = obj_api_keys[3]
-                label_value = obj_api_values[3]
+                label_key = obj_k_api[3]
+                label_value = obj_v[3]
+                elem = str(ui_labels[label_key])
+                elem_v = elem[1:-1]
                 if label_key in ui_labels:
-                    soft_assert(label_value == ui_labels[label_key], "No label found")
+                    soft_assert(label_value == elem_v, "No label found")
 
         if test_obj is Node:
-            tb.select("List View")
-            list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-            node_ui = [r.name.text for r in list_tbl.rows() if r.name.text ==
-                       obj_api_names[4]]
+            node_ui = [r.name.text for r in list_tbl.rows() if r.name.text == obj_api_names[4]]
             for name in node_ui:
                 obj = Node(name, provider)
                 obj.summary.reload()
                 ui_labels = obj.summary.labels.items()
-                label_key = obj_api_keys[4]
-                label_value = obj_api_values[4]
+                label_key = obj_k_api[4]
+                label_value = obj_v[4]
+                elem = str(ui_labels[label_key])
+                elem_v = elem[1:-1]
                 if label_key in ui_labels:
-                    soft_assert(label_value == ui_labels[label_key], "No label found")
+                    soft_assert(label_value == elem_v, "No label found")
 
         if test_obj is Image:
-            tb.select("List View")
-            list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-            image_ui = [r for r in list_tbl.rows() if obj_api_names[5] in str(r.id.text)]
-            for img in image_ui:
+            img_ui = [r for r in list_tbl.rows() if obj_api_names[5] in str(r.id.text)]
+            for img in img_ui:
                 obj = Image(img.name.text, img.tag.text, provider)
                 ui_labels = obj.summary.labels.items()
-                label_key = obj_api_keys[5]
-                label_value = obj_api_values[5]
+                label_key = obj_k[5]
+                label_value = obj_v[5]
+                elem = str(ui_labels[label_key])
+                elem_v = elem[1:-1]
                 if label_key in ui_labels:
-                    soft_assert(label_value == ui_labels[label_key], "No label found")
+                    soft_assert(label_value == elem_v, "No label found")
 
         if test_obj is Template:
-            tb.select("List View")
-            list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-            template_ui = [r.name.text for r in list_tbl.rows() if
-                           r.name.text == obj_api_names[6]]
+            template_ui = [r.name.text for r in list_tbl.rows() if r.name.text == obj_api_names[6]]
             for name in template_ui:
                 obj = Template(name, provider)
                 obj.summary.reload()
                 ui_labels = obj.summary.labels.items()
-                label_key = obj_api_keys[6]
-                label_value = obj_api_values[6]
+                label_key = obj_k_api[6]
+                label_value = obj_v[6]
+                elem = str(ui_labels[label_key])
+                elem_v = elem[1:-1]
                 if label_key in ui_labels:
-                    soft_assert(label_value == ui_labels[label_key], "No label found")
+                    soft_assert(label_value == elem_v, "No label found")
