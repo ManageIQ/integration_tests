@@ -248,9 +248,9 @@ class SummaryTable(object):
 
     def __repr__(self):
         if self._multitable:
-            "<SummaryTable {main_table_name} {sub_tables}>".format(
+            return "<SummaryTable {main_table_name}:\n\t {sub_tables}>".format(
                 main_table_name=self._text,
-                sub_tables="\n\t".join([repr(getattr(self, key)) for key in self._keys]))
+                sub_tables='\n\t'.join([repr(getattr(self, key)) for key in self._keys]))
 
         return "<SummaryTable {} {}>".format(
             repr(self._text),
@@ -267,13 +267,14 @@ class SummaryTable(object):
 
             # parsing table titels
             table_titles = sel.elements('./td', root=table_rows[0])
-            table_titles_text = [el.text for el in table_titles]
+            table_titles_text = [el.text.replace(" ", "_") for el in table_titles]
 
             # match each line values with the relevant title
             for row in table_rows[1:]:
                 # creating mapping between titel and row values
                 row_mapping = dict(zip(table_titles_text,
                                        [el.text for el in sel.elements('./td', root=row)]))
+
                 # set the value of the "name" colume to be the key of the entier table,
                 # if "name" is not avliable setting themost left element to be the key
                 row_key = row_mapping.get("Name", row_mapping.keys()[0])
