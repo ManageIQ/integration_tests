@@ -242,11 +242,16 @@ class SummaryTable(object):
         self._entry = entry
         self._raw_keys = []
         self._keys = []
-
+        self._multitable = False
         if not skip_load:
             self.load()
 
     def __repr__(self):
+        if self._multitable:
+            "<SummaryTable {main_table_name} {sub_tables}>".format(
+                main_table_name=self._text,
+                sub_tables="\n\t".join([repr(getattr(self, key)) for key in self._keys]))
+
         return "<SummaryTable {} {}>".format(
             repr(self._text),
             " ".join("{}={}".format(key, repr(getattr(self, key))) for key in self._keys))
@@ -256,22 +261,41 @@ class SummaryTable(object):
         self._keys = []
         key_values = []
         if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
-            # WE cannot process this kind of table yet.
+            self._multitable = True
+            # get all table rows (include titles)
             table_rows = sel.elements(self.ROWS, root=self._entry)
+
+            # parsing table titels
             table_titles = sel.elements('./td', root=table_rows[0])
-            table_titles_text = [el.text for el in sel.elements('./td', root=table_titles)]
+            table_titles_text = [el.text for el in table_titles]
+
+            # match each line values with the relevant title
             for row in table_rows[1:]:
+                # creating mapping between titel and row values
                 row_mapping = dict(zip(table_titles_text,
                                        [el.text for el in sel.elements('./td', root=row)]))
+                # set the value of the "name" colume to be the key of the entier table,
+                # if "name" is not avliable setting themost left element to be the key
+                row_key = row_mapping.get("Name", row_mapping.keys()[0])
+
+                # creating empty table to populate the row data as regular table
                 table = SummaryTable(self._object,
-                                     row_mapping.get("Name", row_mapping.keys().pop()),
+                                     row_key,
                                      row, skip_load=True)
+                # set the keys of the table to table object
                 table._keys = row_mapping.keys()
+
+                # add attr for each key
                 for key in row_mapping.keys():
                     setattr(table, key, row_mapping[key])
-                self._keys = row_mapping.get("Name", row_mapping.key().pop())
-                setattr(self, setattr(table, key, row_mapping[key]), table)
+
+                # add the entier table to parent table keys
+                self._keys.append(row_key)
+
+                # add attr to parent table
+                setattr(self, row_key, table)
             return
+
         for row in sel.elements(self.ROWS, root=self._entry):
             tds = sel.elements('./td', root=row)
             key = tds[0]
