@@ -179,15 +179,13 @@ def test_pods_conditions(provider, soft_assert):
 
     for pod_name in selected_pods_cfme:
         cfme_pod = selected_pods_cfme[pod_name]
-        s = cfme_pod.summary
-        print s.conditions
+
         ose_pod = selected_pods_ose[pod_name]
 
         ose_pod_condition = {cond["type"]: cond["status"] for cond in
                              ose_pod['status']['conditions']}
-        cfme_pod_condition = {}
+        cfme_pod_condition = {type: getattr(getattr(cfme_pod.summary.conditions, type), "Status")
+                              for type in ose_pod_condition}
 
-        for item in cfme_pod_condition.items():
-            # Just using the vars for flake8 test will pass
-            # line have to change to real assestion
-            soft_assert(cfme_pod, ose_pod_condition)
+        for item in cfme_pod_condition:
+            soft_assert(ose_pod_condition[item], cfme_pod_condition[item])
