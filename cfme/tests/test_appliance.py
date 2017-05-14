@@ -2,7 +2,7 @@
 """Tests around the appliance"""
 
 import pytest
-
+from fixtures.pytest_store import store
 from utils import version
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
@@ -46,7 +46,9 @@ def _rpms_present_packages():
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.parametrize(('package'), _rpms_present_packages())
+@pytest.mark.parametrize('package', _rpms_present_packages())
+@pytest.mark.uncollectif(
+    lambda package: "rhn" in package and store.current_appliance.is_pod)
 def test_rpms_present(appliance, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
     exit, stdout = appliance.ssh_client.run_command('rpm -q {}'.format(package))
@@ -54,7 +56,7 @@ def test_rpms_present(appliance, package):
     assert exit == 0
 
 
-# this is going to fail on 5.1
+@pytest.mark.uncollectif(store.current_appliance.is_pod)
 def test_selinux_enabled(appliance):
     """Verifies selinux is enabled"""
     stdout = appliance.ssh_client.run_command('getenforce')[1]
@@ -62,6 +64,7 @@ def test_selinux_enabled(appliance):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= '5.6', reason='Only valid for <5.6')
+@pytest.mark.uncollectif(store.current_appliance.is_pod)
 def test_iptables_running(appliance):
     """Verifies iptables service is running on the appliance"""
     stdout = appliance.ssh_client.run_command('systemctl status iptables')[1]
@@ -69,6 +72,7 @@ def test_iptables_running(appliance):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.6', reason='Only valid for >5.7')
+@pytest.mark.uncollectif(store.current_appliance.is_pod)
 def test_firewalld_running(appliance):
     """Verifies iptables service is running on the appliance"""
     stdout = appliance.ssh_client.run_command('systemctl status firewalld')[1]
@@ -81,12 +85,14 @@ def test_evm_running(appliance):
     assert 'active (running)' in stdout
 
 
-@pytest.mark.parametrize(('service'), [
+@pytest.mark.parametrize('service', [
     'evmserverd',
     'evminit',
     'sshd',
     'postgresql',
 ])
+@pytest.mark.uncollectif(
+    lambda service: service in ['sshd', 'postgresql'] and store.current_appliance.is_pod)
 def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up"""
     if service == 'postgresql':
@@ -100,7 +106,8 @@ def test_service_enabled(appliance, service):
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.parametrize(('proto,port'), [
+@pytest.mark.uncollectif(store.current_appliance.is_pod)
+@pytest.mark.parametrize('proto,port', [
     ('tcp', 22),
     ('tcp', 80),
     ('tcp', 443),
