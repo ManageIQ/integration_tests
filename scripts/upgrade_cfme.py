@@ -4,7 +4,7 @@ import copy
 import time
 import threading
 import requests
-from utils.appliance import IPAppliance
+
 
 
 class cfme_upgrade_maneger(IPAppliance):
