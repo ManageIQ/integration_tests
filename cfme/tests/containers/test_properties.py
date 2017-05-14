@@ -179,6 +179,8 @@ def test_pods_conditions(provider, soft_assert):
 
     for pod_name in selected_pods_cfme:
         cfme_pod = selected_pods_cfme[pod_name]
+        s = cfme_pod.summary
+        print s.conditions
         ose_pod = selected_pods_ose[pod_name]
 
         ose_pod_condition = {cond["type"]: cond["status"] for cond in

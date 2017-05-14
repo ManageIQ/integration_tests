@@ -236,13 +236,15 @@ class SummaryTable(object):
 
     MULTIKEY_LOC = '../../../tbody/tr[1]/td/strong'
 
-    def __init__(self, o, text, entry):
+    def __init__(self, o, text, entry, skip_load=False):
         self._object = o
         self._text = text
         self._entry = entry
         self._raw_keys = []
         self._keys = []
-        self.load()
+
+        if not skip_load:
+            self.load()
 
     def __repr__(self):
         return "<SummaryTable {} {}>".format(
@@ -255,6 +257,20 @@ class SummaryTable(object):
         key_values = []
         if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
             # WE cannot process this kind of table yet.
+            table_rows = sel.elements(self.ROWS, root=self._entry)
+            table_titles = sel.elements('./td', root=table_rows[0])
+            table_titles_text = [el.text for el in sel.elements('./td', root=table_titles)]
+            for row in table_rows[1:]:
+                row_mapping = dict(zip(table_titles_text,
+                                       [el.text for el in sel.elements('./td', root=row)]))
+                table = SummaryTable(self._object,
+                                     row_mapping.get("Name", row_mapping.keys().pop()),
+                                     row, skip_load=True)
+                table._keys = row_mapping.keys()
+                for key in row_mapping.keys():
+                    setattr(table, key, row_mapping[key])
+                self._keys = row_mapping.get("Name", row_mapping.key().pop())
+                setattr(self, setattr(table, key, row_mapping[key]), table)
             return
         for row in sel.elements(self.ROWS, root=self._entry):
             tds = sel.elements('./td', root=row)
