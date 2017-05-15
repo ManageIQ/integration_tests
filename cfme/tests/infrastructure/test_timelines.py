@@ -25,8 +25,6 @@ def test_vm(provider):
     vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
     yield vm
 
-    vm.delete_from_provider()
-
 
 @pytest.fixture(scope="module")
 def gen_vm_event(test_vm, event):
@@ -35,11 +33,15 @@ def gen_vm_event(test_vm, event):
         test_vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     elif event == 'stop':
         mgmt.stop_vm(test_vm.name)
-    elif event == 'start':
+    elif event == ('start', 'resume'):
         mgmt.start_vm(test_vm.name)
+    elif event == 'suspend':
+        mgmt.suspend_vm(test_vm.name)
+    elif event == 'delete':
+        mgmt.delete_vm(test_vm.name)
 
 
-def count_events(target, vm):
+def check_event_in_timelines(target, vm, vm_name):
     timelines_view = navigate_to(target, 'Timelines')
     timelines_view.filter.time_position.select_by_visible_text('centered')
     timelines_view.filter.apply.click()
@@ -54,6 +56,16 @@ def count_events(target, vm):
 
     logger.info("found events: {evt}".format(evt="\n".join([repr(e) for e in found_events])))
     return len(found_events)
+
+@pytest.mark.parametrize(['create'])
+def test_event(gen_vm_event, test_vm):
+    # gen event
+    # check event itself
+    # check vm timelines
+    # check host timelines
+    # check cluster timelines
+    # check provider timelines
+    pass
 
 
 def test_provider_event(gen_vm_event, test_vm):
