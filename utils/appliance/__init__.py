@@ -189,6 +189,7 @@ class IPAppliance(object):
         self.context = ImplementationContext.from_instances(
             [self.browser])
         self._server = None
+        self.is_pod = False
 
     def get(self, cls, *args, **kwargs):
         """A generic getter for instantiation of Collection classes
@@ -786,6 +787,7 @@ class IPAppliance(object):
                 'container': self.container,
                 'is_pod': True,
             }
+            self.is_pod = True
         else:
             connect_kwargs = {
                 'hostname': self.hostname,
