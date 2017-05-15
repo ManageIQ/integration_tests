@@ -1,12 +1,15 @@
 
 
 def pytest_addoption(parser):
+    """Adds options for the composite uncollection system"""
     parser.addoption("--composite-uncollect", action="store_true", default=False,
                      help="Enables composite uncollecting")
     parser.addoption("--composite-job-name", action="store", default=None,
                      help="Overrides the default job name which is derived from the appliance")
     parser.addoption("--composite-template-name", action="store", default=None,
                      help="Overrides the default template name which is obtained from trackerbot")
+    parser.addoption("--composite-source", action="store", default=None,
+                     help="Narrow down composite uncollection by providing a source")
 
 
 def pytest_collection_modifyitems(session, config, items):
@@ -25,7 +28,9 @@ def pytest_collection_modifyitems(session, config, items):
 
     build = store.current_appliance.build
 
-    pl = composite_uncollect(build)
+    source = config.getoption('composite_source', None)
+
+    pl = composite_uncollect(build, source)
 
     if pl:
         for test in pl['tests']:

@@ -307,10 +307,11 @@ def depaginate(api, result):
     }
 
 
-def composite_uncollect(build):
+def composite_uncollect(build, source='jenkins'):
     """Composite build function"""
     since = env.get('ts', time.time())
-    url = "{}?build={}&source=jenkins&since={}".format(conf['ostriz'], urllib.quote(build), since)
+    url = "{0}?build={1}&source={2}&since={3}".format(
+        conf['ostriz'], urllib.quote(build), urllib.quote(source), urllib.quote(since))
     try:
         resp = requests.get(url, timeout=10)
         return resp.json()
