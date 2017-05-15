@@ -13,6 +13,7 @@ from cfme.rest.gen_data import vm as _vm
 from utils.update import update
 from utils.wait import wait_for
 from utils.version import current_version
+from utils.blockers import BZ
 from utils import error
 
 
@@ -200,6 +201,7 @@ class TestTagsViaREST(object):
         assert appliance.rest_api.response.status_code == 400
 
     @pytest.mark.tier(3)
+    @pytest.mark.meta(blockers=[BZ(1451025)])
     @pytest.mark.parametrize(
         "collection_name", ["clusters", "hosts", "data_stores", "providers", "resource_pools",
         "services", "service_templates", "tenants", "vms"])
