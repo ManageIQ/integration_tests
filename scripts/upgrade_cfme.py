@@ -3,6 +3,8 @@ import yaml
 import time
 import threading
 import requests
+import logging
+import datetime
 from utils.appliance import IPAppliance
 
 
@@ -13,7 +15,13 @@ class cfme_upgrade_maneger(IPAppliance):
         self.repo_list = repo_list
         self.dest_version = dest_version
 
+        self.logger = logging.basicConfig(
+            filename='/log/cfme-upgrade-{date}.log'.format(
+                date=datetime.datetime.now().strftime("%d/%m/%y-%H:%M:%S")),
+            level=logging.INFO)
+        self.logger.getLogger().addHandler(logging.StreamHandler())
     def exec_commaned(self, cmd, expect_failure=False, ignore_failure=False):
+
         result = self.ssh_client.run_command(cmd)
         if bool(result.rc) != expect_failure and not ignore_failure:
             raise RuntimeError(
@@ -118,8 +126,9 @@ def main():
                        "skip_validation": {"msg": "skip validation key not found on config file, "
                                            "assuming version validation is required",
                                            "is_mandatory": False, "default": True},
-                       "dest_version": {"msg": "destination version is missing",
-                                        "is_mandatory": params.get("skip_validation", True),
+                       "dest_version": {"msg": "destination version is missing"
+                       if not params.get("skip_validation", False) else "",
+                                        "is_mandatory": not params.get("skip_validation", False),
                                         "default": None},
                        "repo": {"msg": "repolist is missing",
                                 "is_mandatory": True, "default": None}}
@@ -128,7 +137,6 @@ def main():
             if requierd_fildes[key]["is_mandatory"]:
                 raise RuntimeError(requierd_fildes.get(key).get("msg"))
             else:
-                print
                 params.update({key: requierd_fildes.get(key).get("default")})
 
     print "Starting system upgrade"
