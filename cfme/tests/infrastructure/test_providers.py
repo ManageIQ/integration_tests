@@ -14,6 +14,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, version
 from utils.update import update
+from utils.blockers import BZ
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
