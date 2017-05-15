@@ -244,7 +244,6 @@ def test_black_console_external_auth_all(app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_scap(temp_appliance_preconfig, soft_assert):
     """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
     configuration, '' complete."""
@@ -262,21 +261,16 @@ def test_black_console_scap(temp_appliance_preconfig, soft_assert):
         temp_appliance_preconfig.ssh_client.put_file(
             f.name, '/tmp/scap.rb')
     if temp_appliance_preconfig.version >= "5.8":
-        temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby scap.rb '
-            '--rulesfile=/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml')
-        temp_appliance_preconfig.ssh_client.get_file(
-            '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
-        temp_appliance_preconfig.ssh_client.get_file(
-            '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml',
-            '/tmp/scap_rules.yml')    # Get the scap rules
+        rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
     else:
-        temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby scap.rb '
-            '--rulesfile=/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml')
-        temp_appliance_preconfig.ssh_client.get_file(
-            '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
-        temp_appliance_preconfig.ssh_client.get_file(
-            '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml',
-            '/tmp/scap_rules.yml')    # Get the scap rules
+        rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
+
+    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby scap.rb '
+        '--rulesfile={rules}'.format(rules=rules))
+    temp_appliance_preconfig.ssh_client.get_file(
+        '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
+    temp_appliance_preconfig.ssh_client.get_file(
+        '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')    # Get the scap rules
 
     with open('/tmp/scap_rules.yml') as f:
         yml = yaml.load(f.read())
