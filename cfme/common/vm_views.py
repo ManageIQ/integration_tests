@@ -4,6 +4,7 @@ from time import sleep
 from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, FlashMessages, Tab, Input, BootstrapTreeview)
+from widgetastic_manageiq import BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
@@ -110,15 +111,136 @@ class VMDetailsEntities(View):
     smart_management = SummaryTable(title='Smart Management')
 
 
+class BasicProvisionFormView(View):
+
+    @View.nested
+    class request(Tab):  # noqa
+        TAB_NAME = 'Request'
+        email = Input(name='requester__owner_email')
+        first_name = Input(name='requester__owner_first_name')
+        last_name = Input(name='requester__owner_last_name')
+        notes = Input(name='requester__request_notes')
+        manager_name = Input(name='requester__owner_manager')
+
+    @View.nested
+    class purpose(Tab):  # noqa
+        TAB_NAME = 'Purpose'
+        apply_tags = VersionPick({
+            Version.lowest(): CheckboxSelect('//div[@id="all_tags_treebox"]//ul'),
+            '5.7': BootstrapTreeview('all_tags_treebox')})
+
+    @View.nested
+    class catalog(Tab):  # noqa
+        TAB_NAME = 'Catalog'
+        num_instances = BootstrapSelect('service__number_of_vms')
+        vm_name = Input(name='service__vm_name')
+        vm_description = Input(name='service__vm_description')
+        vm_filter = BootstrapSelect('service__vm_filter')
+        num_vms = BootstrapSelect('service__number_of_vms')
+        catalog_name = Table('//div[@id="prov_vm_div"]/table')
+        provision_type = BootstrapSelect('service__provision_type')
+        linked_clone = Input(name='service__linked_clone')
+        pxe_server = BootstrapSelect('service__pxe_server_id')
+        pxe_image = Table('//div[@id="prov_pxe_img_div"]/table')
+        iso_file = Table('//div[@id="prov_iso_img_div"]/table')
+
+    @View.nested
+    class environment(Tab):  # noqa
+        TAB_NAME = 'Environment'
+
+        automatic_placement = Checkbox(id='environment__placement_auto')
+        # Cloud
+        availability_zone = BootstrapSelect('environment__placement_availability_zone')
+        cloud_network = BootstrapSelect('environment__cloud_network')
+        cloud_subnet = BootstrapSelect('environment__cloud_subnet')
+        security_groups = BootstrapSelect('environment__security_groups')
+        resource_groups = BootstrapSelect('environment__resource_group')
+        public_ip_address = BootstrapSelect('environment__floating_ip_address')
+        # Infra
+        provider_name = BootstrapSelect('environment__placement_ems_name')
+        datacenter = BootstrapSelect('environment__placement_dc_name')
+        cluster = BootstrapSelect('environment__placement_cluster_name')
+        resource_pool = BootstrapSelect('environment__placement_rp_name')
+        folder = BootstrapSelect('environment__placement_folder_name')
+        host_filter = BootstrapSelect('environment__host_filter')
+        host_name = Table('//div[@id="prov_host_div"]/table')
+        datastore_create = Input('environment__new_datastore_create')
+        datastore_filter = BootstrapSelect('environment__ds_filter')
+        datastore_name = Table('//div[@id="prov_ds_div"]/table')
+
+    @View.nested
+    class hardware(Tab):  # noqa
+        TAB_NAME = 'Hardware'
+        num_sockets = BootstrapSelect('hardware__number_of_sockets')
+        cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
+        num_cpus = BootstrapSelect('hardware__number_of_cpus')
+        memory = BootstrapSelect('hardware__vm_memory')
+        # TODO patternfly radio widget, RadioGroup doesn't apply here
+        #  disk_format, hardware__disk_format')
+        vm_limit_cpu = Input(name='hardware__cpu_limit')
+        vm_limit_memory = Input(name='hardware__memory_limit')
+        vm_reserve_cpu = Input(name='hardware__cpu_reserve')
+        vm_reserve_memory = Input(name='hardware__memory_reserve')
+
+    @View.nested
+    class network(Tab):  # noqa
+        TAB_NAME = 'Network'
+        vlan = BootstrapSelect('network__vlan')
+
+    @View.nested
+    class properties(Tab):  # noqa
+        TAB_NAME = 'Properties'
+        instance_type = BootstrapSelect('hardware__instance_type')
+        guest_keypair = BootstrapSelect('hardware__guest_access_key_pair')
+        hardware_monitoring = BootstrapSelect('hardware__monitoring')
+        boot_disk_size = BootstrapSelect('hardware__boot_disk_size')
+        # GCE
+        is_preemtible = VersionPick({
+            Version.lowest(): None, '5.7': Input(name='hardware__is_preemptible')})
+
+    @View.nested
+    class customize(Tab):  # noqa
+        TAB_NAME = 'Customize'
+        # Common
+        dns_servers = Input(name='customize__dns_servers')
+        dns_suffixes = Input(name='customize__dns_suffixes')
+        customize_type = BootstrapSelect('customize__sysprep_enabled')
+        specification_name = Table('//div[@id="prov_vc_div"]/table')
+        admin_username = Input(name='customize__root_username')
+        admin_password = Input(name='customize__root_password')
+        linux_host_name = Input(name='customize__linux_host_name')
+        linux_domain_name = Input(name='customize__linux_domain_name')
+        ip_address = Input(name='customize__ip_addr')
+        subnet_mask = Input(name='customize__subnet_mask')
+        gateway = Input(name='customize__gateway')
+        custom_template = Table('//div[@id="prov_template_div"]/table')
+        hostname = Input(name='customize__hostname')
+
+    @View.nested
+    class schedule(Tab):  # noqa
+        TAB_NAME = 'Schedule'
+        # Common
+        # TODO radio widget # schedule_type = Radio('schedule__schedule_type')
+        provision_date = Calendar('miq_date_1')
+        provision_start_hour = BootstrapSelect('start_hour')
+        provision_start_min = BootstrapSelect('start_min')
+        power_on = Input(name='schedule__vm_auto_start')
+        retirement = BootstrapSelect('schedule__retirement')
+        retirement_warning = BootstrapSelect('schedule__retirement_warn')
+        # Infra
+        stateless = Input(name='schedule__stateless')
+
+
 class ProvisionView(BaseLoggedInPage):
     """
     The provisioning view, with nested ProvisioningForm as `form` attribute.
     Handles template selection before Provisioning form with `before_fill` method
     """
     title = Text('#explorer_title_text')
+    breadcrumb = BreadCrumb()
 
     @View.nested
-    class form(View):  # noqa
+    class form(BasicProvisionFormView):  # noqa
         """First page of provision form is image selection
         Second page of form is tabbed with nested views
         """
@@ -144,123 +266,6 @@ class ProvisionView(BaseLoggedInPage):
             # TODO timing, wait_displayed is timing out and can't get it to stop in is_displayed
             sleep(3)
             self.flush_widget_cache()
-
-        @View.nested
-        class request(Tab):  # noqa
-            TAB_NAME = 'Request'
-            email = Input(name='requester__owner_email')
-            first_name = Input(name='requester__owner_first_name')
-            last_name = Input(name='requester__owner_last_name')
-            notes = Input(name='requester__request_notes')
-            manager_name = Input(name='requester__owner_manager')
-
-        @View.nested
-        class purpose(Tab):  # noqa
-            TAB_NAME = 'Purpose'
-            apply_tags = VersionPick({
-                Version.lowest(): CheckboxSelect('//div[@id="all_tags_treebox"]//ul'),
-                '5.7': BootstrapTreeview('all_tags_treebox')})
-
-        @View.nested
-        class catalog(Tab):  # noqa
-            TAB_NAME = 'Catalog'
-            num_instances = BootstrapSelect('service__number_of_vms')
-            vm_name = Input(name='service__vm_name')
-            vm_description = Input(name='service__vm_description')
-            vm_filter = BootstrapSelect('service__vm_filter')
-            num_vms = BootstrapSelect('service__number_of_vms')
-            catalog_name = Table('//div[@id="prov_vm_div"]/table')
-            provision_type = BootstrapSelect('service__provision_type')
-            linked_clone = Input(name='service__linked_clone')
-            pxe_server = BootstrapSelect('service__pxe_server_id')
-            pxe_image = Table('//div[@id="prov_pxe_img_div"]/table')
-            iso_file = Table('//div[@id="prov_iso_img_div"]/table')
-
-        @View.nested
-        class environment(Tab):  # noqa
-            TAB_NAME = 'Environment'
-
-            automatic_placement = Checkbox(id='environment__placement_auto')
-            # Cloud
-            availability_zone = BootstrapSelect('environment__placement_availability_zone')
-            cloud_network = BootstrapSelect('environment__cloud_network')
-            cloud_subnet = BootstrapSelect('environment__cloud_subnet')
-            security_groups = BootstrapSelect('environment__security_groups')
-            resource_groups = BootstrapSelect('environment__resource_group')
-            public_ip_address = BootstrapSelect('environment__floating_ip_address')
-            # Infra
-            provider_name = BootstrapSelect('environment__placement_ems_name')
-            datacenter = BootstrapSelect('environment__placement_dc_name')
-            cluster = BootstrapSelect('environment__placement_cluster_name')
-            resource_pool = BootstrapSelect('environment__placement_rp_name')
-            folder = BootstrapSelect('environment__placement_folder_name')
-            host_filter = BootstrapSelect('environment__host_filter')
-            host_name = Table('//div[@id="prov_host_div"]/table')
-            datastore_create = Input('environment__new_datastore_create')
-            datastore_filter = BootstrapSelect('environment__ds_filter')
-            datastore_name = Table('//div[@id="prov_ds_div"]/table')
-
-        @View.nested
-        class hardware(Tab):  # noqa
-            TAB_NAME = 'Hardware'
-            num_sockets = BootstrapSelect('hardware__number_of_sockets')
-            cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
-            num_cpus = BootstrapSelect('hardware__number_of_cpus')
-            memory = BootstrapSelect('hardware__vm_memory')
-            # TODO patternfly radio widget, RadioGroup doesn't apply here
-            #  disk_format, hardware__disk_format')
-            vm_limit_cpu = Input(name='hardware__cpu_limit')
-            vm_limit_memory = Input(name='hardware__memory_limit')
-            vm_reserve_cpu = Input(name='hardware__cpu_reserve')
-            vm_reserve_memory = Input(name='hardware__memory_reserve')
-
-        @View.nested
-        class network(Tab):  # noqa
-            TAB_NAME = 'Network'
-            vlan = BootstrapSelect('network__vlan')
-
-        @View.nested
-        class properties(Tab):  # noqa
-            TAB_NAME = 'Properties'
-            instance_type = BootstrapSelect('hardware__instance_type')
-            guest_keypair = BootstrapSelect('hardware__guest_access_key_pair')
-            hardware_monitoring = BootstrapSelect('hardware__monitoring')
-            boot_disk_size = BootstrapSelect('hardware__boot_disk_size')
-            # GCE
-            is_preemtible = VersionPick({
-                Version.lowest(): None, '5.7': Input(name='hardware__is_preemptible')})
-
-        @View.nested
-        class customize(Tab):  # noqa
-            TAB_NAME = 'Customize'
-            # Common
-            dns_servers = Input(name='customize__dns_servers')
-            dns_suffixes = Input(name='customize__dns_suffixes')
-            customize_type = BootstrapSelect('customize__sysprep_enabled')
-            specification_name = Table('//div[@id="prov_vc_div"]/table')
-            admin_username = Input(name='customize__root_username')
-            admin_password = Input(name='customize__root_password')
-            linux_host_name = Input(name='customize__linux_host_name')
-            linux_domain_name = Input(name='customize__linux_domain_name')
-            ip_address = Input(name='customize__ip_addr')
-            subnet_mask = Input(name='customize__subnet_mask')
-            gateway = Input(name='customize__gateway')
-            custom_template = Table('//div[@id="prov_template_div"]/table')
-            hostname = Input(name='customize__hostname')
-
-        @View.nested
-        class schedule(Tab):  # noqa
-            TAB_NAME = 'Schedule'
-            # Common
-            # TODO radio widget # schedule_type = Radio('schedule__schedule_type')
-            provision_date = Calendar('miq_date_1')
-            provision_start_hour = BootstrapSelect('start_hour')
-            provision_start_min = BootstrapSelect('start_min')
-            power_on = Input(name='schedule__vm_auto_start')
-            retirement = BootstrapSelect('schedule__retirement')
-            retirement_warning = BootstrapSelect('schedule__retirement_warn')
-            # Infra
-            stateless = Input(name='schedule__stateless')
 
     @property
     def is_displayed(self):
