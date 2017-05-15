@@ -235,8 +235,8 @@ def test_provider_crud(provider):
 
 class TestProvidersRESTAPI(object):
     @pytest.yield_fixture(scope="function")
-    def custom_attributes(self, rest_api, infra_provider):
-        provider = rest_api.collections.providers.get(name=infra_provider.name)
+    def custom_attributes(self, appliance, infra_provider):
+        provider = appliance.rest_api.collections.providers.get(name=infra_provider.name)
         body = []
         attrs_num = 2
         for _ in range(attrs_num):
@@ -259,7 +259,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_add_custom_attributes(self, rest_api, custom_attributes):
+    def test_add_custom_attributes(self, appliance, custom_attributes):
         """Test adding custom attributes to provider using REST API.
 
         Metadata:
@@ -268,7 +268,7 @@ class TestProvidersRESTAPI(object):
         attributes, provider = custom_attributes
         for attr in attributes:
             record = provider.custom_attributes.get(id=attr.id)
-            assert rest_api.response.status_code == 200
+            assert appliance.rest_api.response.status_code == 200
             assert record.name == attr.name
             assert record.value == attr.value
 
@@ -276,7 +276,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.tier(3)
     @test_requirements.rest
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_custom_attributes_from_detail(self, rest_api, custom_attributes, method):
+    def test_delete_custom_attributes_from_detail(self, appliance, custom_attributes, method):
         """Test deleting custom attributes from detail using REST API.
 
         Metadata:
@@ -286,15 +286,15 @@ class TestProvidersRESTAPI(object):
         attributes, _ = custom_attributes
         for entity in attributes:
             entity.action.delete(force_method=method)
-            assert rest_api.response.status_code == status
+            assert appliance.rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
                 entity.action.delete(force_method=method)
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_delete_custom_attributes_from_collection(self, rest_api, custom_attributes):
+    def test_delete_custom_attributes_from_collection(self, appliance, custom_attributes):
         """Test deleting custom attributes from collection using REST API.
 
         Metadata:
@@ -302,15 +302,15 @@ class TestProvidersRESTAPI(object):
         """
         attributes, provider = custom_attributes
         provider.custom_attributes.action.delete(*attributes)
-        assert rest_api.response.status_code == 200
+        assert appliance.rest_api.response.status_code == 200
         with error.expected('ActiveRecord::RecordNotFound'):
             provider.custom_attributes.action.delete(*attributes)
-        assert rest_api.response.status_code == 404
+        assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_delete_single_custom_attribute_from_collection(self, rest_api, custom_attributes):
+    def test_delete_single_custom_attribute_from_collection(self, appliance, custom_attributes):
         """Test deleting single custom attribute from collection using REST API.
 
         Metadata:
@@ -319,16 +319,16 @@ class TestProvidersRESTAPI(object):
         attributes, provider = custom_attributes
         attribute = attributes[0]
         provider.custom_attributes.action.delete(attribute)
-        assert rest_api.response.status_code == 200
+        assert appliance.rest_api.response.status_code == 200
         with error.expected('ActiveRecord::RecordNotFound'):
             provider.custom_attributes.action.delete(attribute)
-        assert rest_api.response.status_code == 404
+        assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_edit_custom_attributes(self, rest_api, custom_attributes, from_detail):
+    def test_edit_custom_attributes(self, appliance, custom_attributes, from_detail):
         """Test editing custom attributes using REST API.
 
         Metadata:
@@ -348,12 +348,12 @@ class TestProvidersRESTAPI(object):
             edited = []
             for i in range(response_len):
                 edited.append(attributes[i].action.edit(**body[i]))
-                assert rest_api.response.status_code == 200
+                assert appliance.rest_api.response.status_code == 200
         else:
             for i in range(response_len):
                 body[i].update(attributes[i]._ref_repr())
             edited = provider.custom_attributes.action.edit(*body)
-            assert rest_api.response.status_code == 200
+            assert appliance.rest_api.response.status_code == 200
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].name == body[i]['name']
@@ -363,7 +363,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.tier(3)
     @test_requirements.rest
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_edit_custom_attributes_bad_section(self, rest_api, custom_attributes, from_detail):
+    def test_edit_custom_attributes_bad_section(self, appliance, custom_attributes, from_detail):
         """Test that editing custom attributes using REST API and adding invalid section fails.
 
         Metadata:
@@ -378,25 +378,25 @@ class TestProvidersRESTAPI(object):
             for i in range(response_len):
                 with error.expected('Api::BadRequestError'):
                     attributes[i].action.edit(**body[i])
-                assert rest_api.response.status_code == 400
+                assert appliance.rest_api.response.status_code == 400
         else:
             for i in range(response_len):
                 body[i].update(attributes[i]._ref_repr())
             with error.expected('Api::BadRequestError'):
                 provider.custom_attributes.action.edit(*body)
-            assert rest_api.response.status_code == 400
+            assert appliance.rest_api.response.status_code == 400
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_add_custom_attributes_bad_section(self, rest_api, infra_provider):
+    def test_add_custom_attributes_bad_section(self, appliance, infra_provider):
         """Test that adding custom attributes with invalid section
         to provider using REST API fails.
 
         Metadata:
             test_flag: rest
         """
-        provider = rest_api.collections.providers.get(name=infra_provider.name)
+        provider = appliance.rest_api.collections.providers.get(name=infra_provider.name)
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
             'name': 'ca_name_{}'.format(uid),
@@ -405,4 +405,4 @@ class TestProvidersRESTAPI(object):
         }
         with error.expected('Api::BadRequestError'):
             provider.custom_attributes.action.add(body)
-        assert rest_api.response.status_code == 400
+        assert appliance.rest_api.response.status_code == 400
