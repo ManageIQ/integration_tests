@@ -1,10 +1,9 @@
 import argparse
 import yaml
-import copy
 import time
 import threading
 import requests
-
+from utils.appliance import IPAppliance
 
 
 class cfme_upgrade_maneger(IPAppliance):
@@ -33,11 +32,14 @@ class cfme_upgrade_maneger(IPAppliance):
 
         def monitor_yum():
             time.sleep(5)
-            # do as long yum is runnig on the appliance
-            while not bool(self.exec_commaned(""" ps -ef | grep "yum update" | grep -v grep """,
-                                              ignore_failure=True).rc):
+            # do as long yum is running on the appliance
+            res = self.exec_commaned(""" ps -ef | grep "yum update" | grep -v grep """,
+                                     ignore_failure=True)
+            while not bool(res.rc):
+                print "yum still running"
                 time.sleep(10)
-                print "yum still runnig"
+                res = self.exec_commaned(""" ps -ef | grep "yum update" | grep -v grep """,
+                                         ignore_failure=True)
 
         print "importing all gpg keys for yum repositories"
         self.ssh_client.run_command("rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-*")
@@ -93,34 +95,41 @@ class cfme_upgrade_maneger(IPAppliance):
 def main():
     parser = argparse.ArgumentParser(epilog=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-a", '--address', dest="address",
-                        action="store", help='hostname or ip address of target appliance')
-    parser.add_argument("-r", "--repo", help="url for yum repo with the relevant rpm",
-                        dest="repo", action="append")
-    parser.add_argument("-c", "--config", help="yaml file with configurtations",
+    parser.add_argument("-c", "--config", help="yaml file with configurations",
                         dest="config", action="store", default=False)
-    parser.add_argument("-u", "--username", help="username for yum register default:qa@redhat.com",
-                        dest="username", action="store", default="qa@redhat.com")
-    parser.add_argument("-p", "--password", help="password for yum register",
-                        dest="password", action="store")
-    parser.add_argument("-d", "--dest_version",
-                        help="destination version (use for final validation",
-                        dest="dest_version", action="store")
-    parser.add_argument("-s", "--skip_validation", help="skip destanation version validation",
-                        dest="skip_validation", action="store_true", default=False)
     args = parser.parse_args()
 
     params = {}
-    if args.config:
-        print "loading config file"
-        with open(args.config, 'r') as stream:
-            try:
-                params = yaml.load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
-    else:
-        params = copy.deepcopy(args.__dict__)
 
+    print "loading config file"
+    with open(args.config, 'r') as stream:
+        try:
+            params = yaml.load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    # filed name: (error msg, is mandatory, default value)
+    requierd_fildes = {"address": {"msg": "Appliance address is missing",
+                                   "is_mandatory": True, "default": None},
+                       "username": {"msg": "subscription manager user name is missing",
+                                    "is_mandatory": True, "default": None},
+                       "password": {"msg": "subscription manager password is missing",
+                                    "is_mandatory": True, "default": None},
+                       "skip_validation": {"msg": "skip validation key not found on config file, "
+                                           "assuming version validation is required",
+                                           "is_mandatory": False, "default": True},
+                       "dest_version": {"msg": "destination version is missing",
+                                        "is_mandatory": params.get("skip_validation", True),
+                                        "default": None},
+                       "repo": {"msg": "repolist is missing",
+                                "is_mandatory": True, "default": None}}
+    for key in requierd_fildes:
+        if key not in params:
+            if requierd_fildes[key]["is_mandatory"]:
+                raise RuntimeError(requierd_fildes.get(key).get("msg"))
+            else:
+                print
+                params.update({key: requierd_fildes.get(key).get("default")})
 
     print "Starting system upgrade"
     cfme_upgrader = cfme_upgrade_maneger(params["address"],
