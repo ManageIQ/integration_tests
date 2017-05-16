@@ -124,6 +124,8 @@ class ContainersProvider(BaseProvider, Pretty):
             hostname=None,
             port=None,
             sec_protocol=None,
+            hawkular_hostname=None,
+            hawkular_api_port=None,
             hawkular_sec_protocol=None,
             provider_data=None,
             appliance=None):
@@ -137,6 +139,8 @@ class ContainersProvider(BaseProvider, Pretty):
         self.hostname = hostname
         self.port = port
         self.sec_protocol = sec_protocol
+        self.hawkular_hostname = hawkular_hostname
+        self.hawkular_api_port = hawkular_api_port
         self.hawkular_sec_protocol = hawkular_sec_protocol
         self.provider_data = provider_data
 
