@@ -26,5 +26,5 @@ def test_basic_metrics(provider):
         .get('hostname', [])
     host_url = 'https://' + hostname + '/hawkular/metrics/'
     command = 'curl -X GET ' + host_url + ' --insecure'
-    ssh_client = SSHClient(hostname=hostname, username=username, password=password)
-    assert re.search("Hawkular[ -]Metrics", str(ssh_client.run_command(command)))
+    with SSHClient(hostname=hostname, username=username, password=password) as ssh_client:
+        assert re.search("Hawkular[ -]Metrics", str(ssh_client.run_command(command)))

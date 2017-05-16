@@ -109,13 +109,13 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         'password': credentials[provider.data['full_template']['creds']]['password'],
         'hostname': ip
     }
-    ssh = SSHClient(**ssh_kwargs)
-    ssh.run_command('touch snapshot1.txt')
-    snapshot1.create()
-    ssh.run_command('touch snapshot2.txt')
-    snapshot2 = new_snapshot(test_vm)
-    snapshot2.create()
-    snapshot1.revert_to()
+    with SSHClient(**ssh_kwargs) as ssh_client:
+        ssh_client.run_command('touch snapshot1.txt')
+        snapshot1.create()
+        ssh_client.run_command('touch snapshot2.txt')
+        snapshot2 = new_snapshot(test_vm)
+        snapshot2.create()
+        snapshot1.revert_to()
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
     wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
@@ -129,12 +129,13 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     soft_assert(test_vm.find_quadicon().state == 'currentstate-on')
     soft_assert(
         test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
-    client = SSHClient(**ssh_kwargs)
-    try:
-        wait_for(lambda: client.run_command('test -e snapshot2.txt')[1] == 0, fail_condition=False)
-        logger.info('Revert to snapshot %s successful', snapshot1.name)
-    except:
-        logger.info('Revert to snapshot %s Failed', snapshot1.name)
+    with SSHClient(**ssh_kwargs) as ssh_client:
+        try:
+            wait_for(lambda: ssh_client.run_command('test -e snapshot2.txt')[1] == 0,
+                     fail_condition=False)
+            logger.info('Revert to snapshot %s successful', snapshot1.name)
+        except:
+            logger.info('Revert to snapshot %s Failed', snapshot1.name)
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
