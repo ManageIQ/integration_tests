@@ -1,8 +1,13 @@
 import pytest
 from collections import namedtuple
 from wait_for import wait_for
-from utils import version
+from utils import version, os
 from utils.log_validator import LogValidator
+from utils.log import logger
+from utils.conf import hidden
+import tempfile
+import lxml.etree
+import yaml
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 LoginOption = namedtuple('LoginOption', ['name', 'option', 'index'])
@@ -202,3 +207,86 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
         command_set = ('ap', '', '15', auth_type.index, '4')
     ipa_crud.appliance_console.run_commands(command_set)
     evm_tail.validate_logs()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_black_console_external_auth_all(app_creds, ipa_crud):
+    """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
+    'auth_type' auth type to change, '4' apply changes."""
+
+    evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                            matched_patterns=['.*sso_enabled to true.*', '.*saml_enabled to true.*',
+                                '.*local_login_disabled to true.*'],
+                            hostname=ipa_crud.address,
+                            username=app_creds['sshlogin'],
+                            password=app_creds['password'])
+    evm_tail.fix_before_start()
+    if ipa_crud.version >= "5.8":
+        command_set = ('ap', '', '12', '1', '2', '3', '4')
+    else:
+        command_set = ('ap', '', '15', '1', '2', '3', '4')
+    ipa_crud.appliance_console.run_commands(command_set)
+    evm_tail.validate_logs()
+
+    evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                            matched_patterns=['.*sso_enabled to false.*',
+                                '.*saml_enabled to false.*', '.*local_login_disabled to false.*'],
+                            hostname=ipa_crud.address,
+                            username=app_creds['sshlogin'],
+                            password=app_creds['password'])
+
+    evm_tail.fix_before_start()
+    if ipa_crud.version >= "5.8":
+        command_set = ('ap', '', '12', '1', '2', '3', '4')
+    else:
+        command_set = ('ap', '', '15', '1', '2', '3', '4')
+    ipa_crud.appliance_console.run_commands(command_set)
+    evm_tail.validate_logs()
+
+
+def test_black_console_scap(temp_appliance_preconfig, soft_assert):
+    """'ap' launches appliance_console, '' clears info screen, '14/17' Hardens appliance using SCAP
+    configuration, '' complete."""
+
+    if temp_appliance_preconfig.version >= "5.8":
+        command_set = ('ap', '', '14', '')
+    else:
+        command_set = ('ap', '', '17', '')
+    temp_appliance_preconfig.appliance_console.run_commands(command_set)
+
+    with tempfile.NamedTemporaryFile('w') as f:
+        f.write(hidden['scap.rb'])
+        f.flush()
+        os.fsync(f.fileno())
+        temp_appliance_preconfig.ssh_client.put_file(
+            f.name, '/tmp/scap.rb')
+    if temp_appliance_preconfig.version >= "5.8":
+        rules = '/var/www/miq/vmdb/productization/appliance_console/config/scap_rules.yml'
+    else:
+        rules = '/var/www/miq/vmdb/gems/pending/appliance_console/config/scap_rules.yml'
+
+    temp_appliance_preconfig.ssh_client.run_command('cd /tmp/ && ruby scap.rb '
+        '--rulesfile={rules}'.format(rules=rules))
+    temp_appliance_preconfig.ssh_client.get_file(
+        '/tmp/scap-results.xccdf.xml', '/tmp/scap-results.xccdf.xml')
+    temp_appliance_preconfig.ssh_client.get_file(
+        '{rules}'.format(rules=rules), '/tmp/scap_rules.yml')    # Get the scap rules
+
+    with open('/tmp/scap_rules.yml') as f:
+        yml = yaml.load(f.read())
+        rules = yml['rules']
+
+    tree = lxml.etree.parse('/tmp/scap-results.xccdf.xml')
+    root = tree.getroot()
+    for rule in rules:
+        elements = root.findall(
+            './/{{http://checklists.nist.gov/xccdf/1.1}}rule-result[@idref="{}"]'.format(rule))
+        if elements:
+            result = elements[0].findall('./{http://checklists.nist.gov/xccdf/1.1}result')
+            if result:
+                soft_assert(result[0].text == 'pass')
+                logger.info("{}: {}".format(rule, result[0].text))
+            else:
+                logger.info("{}: no result".format(rule))
+        else:
+            logger.info("{}: rule not found".format(rule))
