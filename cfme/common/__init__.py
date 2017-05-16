@@ -268,25 +268,25 @@ class SummaryTable(object):
         key_values = []
         if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
             logger.warning(
-                "Parent SummaryTable created for {talbe_name}, "
-                "it might create few un-inilized SummaryTable".format(
-                    talbe_name=self._text))
+                "Parent SummaryTable created for {table_name}, "
+                "it might create few un-initialized SummaryTable".format(
+                    table_name=self._text))
             self._multitable = True
             # get all table rows (include titles)
             table_rows = sel.elements(self.ROWS, root=self._entry)
 
-            # parsing table titels
+            # parsing table titles
             table_titles = sel.elements('./td', root=table_rows[0])
             table_titles_text = [el.text.replace(" ", "_") for el in table_titles]
 
             # match each line values with the relevant title
             for row in table_rows[1:]:
-                # creating mapping between titel and row values
+                # creating mapping between title and row values
                 row_mapping = dict(zip(table_titles_text,
                                        [el.text for el in sel.elements('./td', root=row)]))
 
-                # set the value of the "name" colume to be the key of the entier table,
-                # if "name" is not avliable setting themost left element to be the key
+                # set the value of the "name" column to be the key of the entire table,
+                # if "name" is not available setting the most left element to be the key
                 row_key = row_mapping.get("Name", row_mapping.keys()[0])
 
                 # creating empty table to populate the row data as regular table
@@ -300,7 +300,7 @@ class SummaryTable(object):
                 for key in row_mapping.keys():
                     setattr(table, key, row_mapping[key])
 
-                # add the entier table to parent table keys
+                # add the entire table to parent table keys
                 self._keys.append(row_key)
 
                 # add attr to parent table
