@@ -13,6 +13,7 @@ from sqlalchemy.orm import aliased
 from utils import attributize_string, version, deferred_verpick
 from utils.units import Unit
 from utils.varmeth import variable
+from utils.log import logger
 
 pol_btn = partial(toolbar.select, "Policy")
 
@@ -245,6 +246,11 @@ class SummaryTable(object):
         self._multitable = False
         if not skip_load:
             self.load()
+        else:
+            logger.warning(
+                "Child SummaryTable created for {table_name}, "
+                "this table wasn't initialized due to skip_load value".format(
+                    table_name=self._text))
 
     def __repr__(self):
         if self._multitable:
@@ -261,6 +267,10 @@ class SummaryTable(object):
         self._keys = []
         key_values = []
         if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
+            logger.warning(
+                "Parent SummaryTable created for {talbe_name}, "
+                "it might create few un-inilized SummaryTable".format(
+                    talbe_name=self._text))
             self._multitable = True
             # get all table rows (include titles)
             table_rows = sel.elements(self.ROWS, root=self._entry)
