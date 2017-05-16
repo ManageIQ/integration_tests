@@ -22,8 +22,8 @@ def a_provider(request):
 
 
 @pytest.fixture(scope='module')
-def vm(request, a_provider, rest_api_modscope):
-    return _vm(request, a_provider, rest_api_modscope)
+def vm(request, a_provider, appliance):
+    return _vm(request, a_provider, appliance.rest_api)
 
 
 def wait_for_requests(requests):
@@ -121,133 +121,135 @@ class TestAutomationRequestsRESTAPI(object):
     """Tests using /api/automation_requests."""
 
     @pytest.fixture(scope='function')
-    def collection(self, rest_api):
-        return rest_api.collections.automation_requests
+    def collection(self, appliance):
+        return appliance.rest_api.collections.automation_requests
 
     @pytest.fixture(scope='function')
     def automation_requests_data(self, vm):
         return _automation_requests_data(vm)
 
     @pytest.fixture(scope='function')
-    def requests_pending(self, rest_api, vm):
-        return gen_pending_requests(rest_api.collections.automation_requests, rest_api, vm)
+    def requests_pending(self, appliance, vm):
+        return gen_pending_requests(
+            appliance.rest_api.collections.automation_requests, appliance.rest_api, vm)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'multiple', [False, True],
         ids=['one_request', 'multiple_requests'])
-    def test_create_requests(self, collection, rest_api, automation_requests_data, multiple):
+    def test_create_requests(self, collection, appliance, automation_requests_data, multiple):
         """Test adding the automation request using /api/automation_requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        create_requests(collection, rest_api, automation_requests_data, multiple)
+        create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
 
     @pytest.mark.tier(3)
-    def test_create_pending_requests(self, rest_api, requests_pending, collection):
+    def test_create_pending_requests(self, appliance, requests_pending, collection):
         """Tests creating pending requests using /api/automation_requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        create_pending_requests(collection, rest_api, requests_pending)
+        create_pending_requests(collection, appliance.rest_api, requests_pending)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_approve_requests(self, collection, rest_api, requests_pending, from_detail):
+    def test_approve_requests(self, collection, appliance, requests_pending, from_detail):
         """Tests approving automation requests using /api/automation_requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        approve_requests(collection, rest_api, requests_pending, from_detail)
+        approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_deny_requests(self, collection, rest_api, requests_pending, from_detail):
+    def test_deny_requests(self, collection, appliance, requests_pending, from_detail):
         """Tests denying automation requests using /api/automation_requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        deny_requests(collection, rest_api, requests_pending, from_detail)
+        deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
 
 class TestAutomationRequestsCommonRESTAPI(object):
     """Tests using /api/requests (common collection for all requests types)."""
 
     @pytest.fixture(scope='function')
-    def collection(self, rest_api):
-        return rest_api.collections.requests
+    def collection(self, appliance):
+        return appliance.rest_api.collections.requests
 
     @pytest.fixture(scope='function')
     def automation_requests_data(self, vm):
         return _automation_requests_data(vm, requests_collection=True)
 
     @pytest.fixture(scope='function')
-    def requests_pending(self, rest_api, vm):
-        return gen_pending_requests(rest_api.collections.requests, rest_api, vm, requests=True)
+    def requests_pending(self, appliance, vm):
+        return gen_pending_requests(
+            appliance.rest_api.collections.requests, appliance.rest_api, vm, requests=True)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'multiple', [False, True],
         ids=['one_request', 'multiple_requests'])
-    def test_create_requests(self, collection, rest_api, automation_requests_data, multiple):
+    def test_create_requests(self, collection, appliance, automation_requests_data, multiple):
         """Test adding the automation request using /api/requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        create_requests(collection, rest_api, automation_requests_data, multiple)
+        create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
-    def test_create_pending_requests(self, collection, rest_api, requests_pending):
+    def test_create_pending_requests(self, collection, appliance, requests_pending):
         """Tests creating pending requests using /api/requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        create_pending_requests(collection, rest_api, requests_pending)
+        create_pending_requests(collection, appliance.rest_api, requests_pending)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_approve_requests(self, collection, rest_api, requests_pending, from_detail):
+    def test_approve_requests(self, collection, appliance, requests_pending, from_detail):
         """Tests approving automation requests using /api/requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        approve_requests(collection, rest_api, requests_pending, from_detail)
+        approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_deny_requests(self, collection, rest_api, requests_pending, from_detail):
+    def test_deny_requests(self, collection, appliance, requests_pending, from_detail):
         """Tests denying automation requests using /api/requests.
 
         Metadata:
             test_flag: rest, requests
         """
-        deny_requests(collection, rest_api, requests_pending, from_detail)
+        deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_edit_requests(self, collection, rest_api, requests_pending, from_detail):
+    def test_edit_requests(self, collection, appliance, requests_pending, from_detail):
         """Tests editing requests using /api/requests.
 
         Metadata:
@@ -260,29 +262,29 @@ class TestAutomationRequestsCommonRESTAPI(object):
                 pytest.skip("Affected by BZ1418331, cannot test.")
             for request in requests_pending:
                 request.action.edit(**body)
-                assert rest_api.response.status_code == 200
+                assert appliance.rest_api.response.status_code == 200
         else:
             identifiers = []
             for i, resource in enumerate(requests_pending):
                 loc = ({'id': resource.id}, {'href': '{}/{}'.format(collection._href, resource.id)})
                 identifiers.append(loc[i % 2])
             collection.action.edit(*identifiers, **body)
-            assert rest_api.response.status_code == 200
+            assert appliance.rest_api.response.status_code == 200
 
         for request in requests_pending:
             request.reload()
             assert request.options['arbitrary_key_allowed'] == 'test_rest'
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
-    def test_create_requests_parallel(self, rest_api):
+    def test_create_requests_parallel(self, appliance):
         """Create automation requests in parallel.
 
         Metadata:
             test_flag: rest, requests
         """
         output = mp.Queue()
-        entry_point = rest_api._entry_point
-        auth = rest_api._auth
+        entry_point = appliance.rest_api._entry_point
+        auth = appliance.rest_api._auth
 
         def _gen_automation_requests(output):
             api = MiqApi(entry_point, auth, verify_ssl=False)
