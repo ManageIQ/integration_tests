@@ -7,7 +7,8 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, paginator, match_location,\
     PagedTable, CheckboxTable
-from cfme.containers.provider import details_page, Labelable
+from cfme.containers.provider import details_page, Labelable,\
+    ContainerObjectAllBaseView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
@@ -58,9 +59,14 @@ class Pod(Taggable, Labelable, SummaryMixin, Navigatable):
                 for obj in itertools.islice(pod_list, count)]
 
 
+class PodAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Pods'
+
+
 @navigator.register(Pod, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = PodAllView
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Pods')

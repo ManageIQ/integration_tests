@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 import random
 import itertools
+from functools import partial
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, paginator, match_location,\
     PagedTable, CheckboxTable
-from cfme.containers.provider import details_page, Labelable
+from cfme.containers.provider import details_page, Labelable,\
+    ContainerObjectAllBaseView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
-from functools import partial
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -57,9 +58,14 @@ class Replicator(Taggable, Labelable, SummaryMixin, Navigatable):
                 for obj in itertools.islice(rc_list, count)]
 
 
+class ReplicatorAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Replicators'
+
+
 @navigator.register(Replicator, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = ReplicatorAllView
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Replicators')

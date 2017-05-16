@@ -5,14 +5,14 @@ import random
 import itertools
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import View, Text
+from widgetastic.widget import View
 from widgetastic_manageiq import (
     BootstrapSelect, Button, Table, Accordion, ManageIQTree, PaginationPane)
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable, SummaryMixin
-from cfme.containers.provider import ContainersProvider, Labelable
+from cfme.containers.provider import ContainersProvider, Labelable,\
+    ContainerObjectAllBaseView
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
@@ -27,14 +27,15 @@ match_page = partial(match_location, controller='container_node', title='Nodes')
 resource_locator = "//div[@id='records_div']/table//span[@title='{}']"
 
 
-class NodeView(BaseLoggedInPage):
-    title = Text('#explorer_title_text')
+class NodeView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Nodes'
 
     monitor = Dropdown('Monitoring')
-    policy = Dropdown('Policy')
-    download = Dropdown('Download')
-
     nodes = Table(locator="//div[@id='list_grid']//table")
+
+    @property
+    def table(self):
+        return self.nodes
 
     @property
     def in_cloud_instance(self):

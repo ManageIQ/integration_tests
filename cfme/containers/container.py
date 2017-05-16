@@ -4,8 +4,12 @@ import random
 import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+
 from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
 from widgetastic_patternfly import VerticalNavigation
+from widgetastic.widget import Text
+from widgetastic.xpath import quote
+from widgetastic.utils import Version, VersionPick
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.containers.provider import details_page, pol_btn, mon_btn
@@ -15,9 +19,6 @@ from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location,
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils import version
-from widgetastic.widget import Text
-from widgetastic.xpath import quote
-from widgetastic.utils import Version, VersionPick
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -73,6 +74,10 @@ class ContainerAllView(BaseLoggedInPage):
         '5.8': '//h1[normalize-space(.) = {}]'.format(quote('Containers'))
     }))
     containers = Table(locator="//div[@id='list_grid']//table")
+
+    @property
+    def table(self):
+        return self.containers
 
     @View.nested
     class Filters(Accordion):  # noqa
