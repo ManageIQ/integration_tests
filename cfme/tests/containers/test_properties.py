@@ -166,3 +166,26 @@ def test_properties(provider, test_item, soft_assert):
             except AttributeError:
                 soft_assert(False, '{} "{}" properties table has missing field - "{}"'
                                    .format(test_item.obj.__name__, name, field))
+
+
+def test_pods_conditions(provider, soft_assert):
+
+    #  TODO: Add later this logic to mgmtsystem
+    selected_pods_cfme = {row.name.text: Pod(name=row.name.text, provider=provider) for row in
+                          navigate_and_get_rows(provider, Pod, 3)}
+    selected_pods_ose = {pod["metadata"]["name"]: pod for pod in
+                         provider.mgmt.api.get('pod')[1]['items'] if pod["metadata"]["name"] in
+                         selected_pods_cfme}
+
+    for pod_name in selected_pods_cfme:
+        cfme_pod = selected_pods_cfme[pod_name]
+
+        ose_pod = selected_pods_ose[pod_name]
+
+        ose_pod_condition = {cond["type"]: cond["status"] for cond in
+                             ose_pod['status']['conditions']}
+        cfme_pod_condition = {type: getattr(getattr(cfme_pod.summary.conditions, type), "Status")
+                              for type in ose_pod_condition}
+
+        for item in cfme_pod_condition:
+            soft_assert(ose_pod_condition[item], cfme_pod_condition[item])
