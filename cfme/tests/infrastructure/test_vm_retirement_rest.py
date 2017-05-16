@@ -17,15 +17,15 @@ def a_provider(request):
 
 
 @pytest.fixture(scope="function")
-def vm(request, a_provider, rest_api):
-    return _vm(request, a_provider, rest_api)
+def vm(request, a_provider, appliance):
+    return _vm(request, a_provider, appliance.rest_api)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     "from_collection", [True, False],
     ids=["from_collection", "from_detail"])
-def test_retire_vm_now(rest_api, vm, from_collection):
+def test_retire_vm_now(appliance, vm, from_collection):
     """Test retirement of vm
 
     Prerequisities:
@@ -42,12 +42,12 @@ def test_retire_vm_now(rest_api, vm, from_collection):
     Metadata:
         test_flag: rest
     """
-    retire_vm = rest_api.collections.vms.get(name=vm)
+    retire_vm = appliance.rest_api.collections.vms.get(name=vm)
     if from_collection:
-        rest_api.collections.vms.action.retire(retire_vm)
+        appliance.rest_api.collections.vms.action.retire(retire_vm)
     else:
         retire_vm.action.retire()
-    assert rest_api.response.status_code == 200
+    assert appliance.rest_api.response.status_code == 200
 
     def _finished():
         retire_vm.reload()
@@ -66,7 +66,7 @@ def test_retire_vm_now(rest_api, vm, from_collection):
 @pytest.mark.parametrize(
     "from_collection", [True, False],
     ids=["from_collection", "from_detail"])
-def test_retire_vm_future(rest_api, vm, from_collection):
+def test_retire_vm_future(appliance, vm, from_collection):
     """Test retirement of vm
 
     Prerequisities:
@@ -83,7 +83,7 @@ def test_retire_vm_future(rest_api, vm, from_collection):
     Metadata:
         test_flag: rest
     """
-    retire_vm = rest_api.collections.vms.get(name=vm)
+    retire_vm = appliance.rest_api.collections.vms.get(name=vm)
     date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%Y/%m/%d")
     future = {
         "date": date,
@@ -91,10 +91,10 @@ def test_retire_vm_future(rest_api, vm, from_collection):
     }
     if from_collection:
         future.update(retire_vm._ref_repr())
-        rest_api.collections.vms.action.retire(future)
+        appliance.rest_api.collections.vms.action.retire(future)
     else:
         retire_vm.action.retire(**future)
-    assert rest_api.response.status_code == 200
+    assert appliance.rest_api.response.status_code == 200
 
     def _finished():
         retire_vm.reload()
