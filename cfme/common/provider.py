@@ -20,6 +20,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.browser import ensure_browser_open
 from utils.log import logger
+from utils.ssh import SSHClient
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
@@ -728,3 +729,22 @@ def cleanup_vm(vm_name, provider):
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)
+
+
+def get_certificate(provider, sec_protocol=None, cert_source=None):
+    provider_user = conf.credentials[provider.key].username
+    provider_pass = conf.credentials[provider.key].password
+    # The Hawkular Cert part will probably change. Awaiting details on Hawkular certs
+    if sec_protocol != 'SSL trusting custom CA':
+        return None
+    else:
+        ip = cert_source
+        ssh_kwargs = {
+            'username': provider_user,
+            'password': provider_pass,
+            'hostname': ip
+        }
+        ssh = SSHClient(**ssh_kwargs)
+        cert = ssh.run_command('cat /etc/origin/master/ca.crt')
+        assert cert
+        return str(cert)

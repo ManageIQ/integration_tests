@@ -19,10 +19,12 @@ class OpenshiftProvider(ContainersProvider):
     mgmt_class = Openshift
     db_types = ["Openshift::ContainerManager"]
 
-    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None, port=None,
-                 sec_protocol=None, hawkular_sec_protocol=None, provider_data=None, appliance=None):
+    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
+                 hawkular_hostname=None, port=None, hawkular_api_port=None, sec_protocol=None,
+                 hawkular_sec_protocol=None, provider_data=None, appliance=None):
         super(OpenshiftProvider, self).__init__(
-            name=name, credentials=credentials, key=key, zone=zone, hostname=hostname, port=port,
+            name=name, credentials=credentials, key=key, zone=zone, hostname=hostname,
+            hawkular_hostname=hawkular_hostname, port=port, hawkular_api_port=hawkular_api_port,
             sec_protocol=sec_protocol, hawkular_sec_protocol=hawkular_sec_protocol,
             provider_data=provider_data, appliance=appliance)
 
@@ -33,16 +35,19 @@ class OpenshiftProvider(ContainersProvider):
     def _form_mapping(self, create=None, hawkular=False, **kwargs):
         if self.appliance.version > '5.8.0.3' and hawkular:
             sec_protocol = kwargs.get('sec_protocol'),
-            hawkular_hostname = kwargs.get('hostname')
+            hawkular_hostname = kwargs.get('hawkular_hostname')
+            hawkular_api_port = kwargs.get('hawkular_api_port')
             hawkular_sec_protocol = kwargs.get('hawkular_sec_protocol')
         elif self.appliance.version > '5.8.0.3' and not hawkular:
             sec_protocol = kwargs.get('sec_protocol')
             hawkular_hostname = None
             hawkular_sec_protocol = None
+            hawkular_api_port = None
         else:
             sec_protocol = None
             hawkular_hostname = None
             hawkular_sec_protocol = None
+            hawkular_api_port = None
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'OpenShift',
                 'hostname_text': kwargs.get('hostname'),
@@ -50,6 +55,7 @@ class OpenshiftProvider(ContainersProvider):
                 'sec_protocol': sec_protocol,
                 'zone_select': kwargs.get('zone'),
                 'hawkular_hostname': hawkular_hostname,
+                'hawkular_api_port': hawkular_api_port,
                 'hawkular_sec_protocol': hawkular_sec_protocol}
 
     @variable(alias='db')
@@ -78,7 +84,9 @@ class OpenshiftProvider(ContainersProvider):
             key=prov_key,
             zone=prov_config['server_zone'],
             hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
+            hawkular_hostname=prov_config.get('hawkular_hostname'),
             port=prov_config['port'],
+            hawkular_api_port=prov_config['hawkular_api_port'],
             sec_protocol=prov_config.get('sec_protocol', None),
             hawkular_sec_protocol=prov_config.get('hawkular_sec_protocol'),
             provider_data=prov_config,
