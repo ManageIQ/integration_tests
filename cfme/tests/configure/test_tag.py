@@ -68,10 +68,7 @@ class TestTagsViaREST(object):
 
     @pytest.fixture(scope="module")
     def services(self, request, appliance, a_provider):
-        try:
-            return _services(request, appliance.rest_api, a_provider)
-        except Exception:
-            pass
+        return _services(request, appliance.rest_api, a_provider)
 
     def service_body(self, **kwargs):
         uid = fauxfactory.gen_alphanumeric(5)
@@ -201,7 +198,7 @@ class TestTagsViaREST(object):
         assert appliance.rest_api.response.status_code == 400
 
     @pytest.mark.tier(3)
-    @pytest.mark.meta(blockers=[BZ(1451025)])
+    @pytest.mark.meta(blockers=[BZ(1451025, forced_streams=['5.7'])])
     @pytest.mark.parametrize(
         "collection_name", ["clusters", "hosts", "data_stores", "providers", "resource_pools",
         "services", "service_templates", "tenants", "vms"])
