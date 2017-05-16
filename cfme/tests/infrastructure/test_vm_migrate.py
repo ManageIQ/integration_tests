@@ -52,7 +52,7 @@ def test_vm_migrate(setup_provider, test_vm, provider):
     test_vm.migrate_vm("email@xyz.com", "first", "last")
     flash.assert_no_errors()
     row_description = test_vm.name
-    cells = {'Description': row_description}
+    cells = {'Description': row_description, 'Request Type': 'Migrate'}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.request_state.text == 'Migrated'
