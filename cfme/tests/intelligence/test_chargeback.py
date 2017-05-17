@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import random
 import fauxfactory
 import pytest
-import random
 
 
 import cfme.intelligence.chargeback as cb
@@ -108,71 +108,67 @@ def test_delete_storage_chargeback():
 
 class TestRatesViaREST(object):
     @pytest.fixture(scope="function")
-    def rates(self, request, rest_api):
-        response = _rates(request, rest_api)
-        assert rest_api.response.status_code == 200
+    def rates(self, request, appliance):
+        response = _rates(request, appliance.rest_api)
+        assert appliance.rest_api.response.status_code == 200
         return response
 
     @pytest.mark.tier(3)
-    def test_create_rates(self, rest_api, rates):
+    def test_create_rates(self, appliance, rates):
         """Tests creating rates.
 
         Metadata:
             test_flag: rest
         """
         for rate in rates:
-            record = rest_api.collections.rates.get(id=rate.id)
-            assert rest_api.response.status_code == 200
+            record = appliance.rest_api.collections.rates.get(id=rate.id)
+            assert appliance.rest_api.response.status_code == 200
             assert record.description == rate.description
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])
-    def test_edit_rates(self, rest_api, rates, multiple):
+    def test_edit_rates(self, appliance, rates, multiple):
         """Tests editing rates.
 
         Metadata:
             test_flag: rest
         """
+        new_descriptions = []
         if multiple:
-            new_descriptions = []
             rates_data_edited = []
             for rate in rates:
-                new_description = "test_category_{}".format(fauxfactory.gen_alphanumeric().lower())
+                new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
                 new_descriptions.append(new_description)
                 rate.reload()
                 rates_data_edited.append({
                     "href": rate.href,
                     "description": new_description,
                 })
-            rest_api.collections.rates.action.edit(*rates_data_edited)
-            assert rest_api.response.status_code == 200
-            for new_description in new_descriptions:
-                wait_for(
-                    lambda: rest_api.collections.rates.find_by(description=new_description),
-                    num_sec=180,
-                    delay=10,
-                )
-            for i, rate in enumerate(rates):
-                rate.reload()
-                assert rate.description == new_descriptions[i]
+            edited = appliance.rest_api.collections.rates.action.edit(*rates_data_edited)
+            assert appliance.rest_api.response.status_code == 200
         else:
-            rate = rates[0]
-            new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
-            rate.action.edit(description=new_description)
-            assert rest_api.response.status_code == 200
-            wait_for(
-                lambda: rest_api.collections.rates.find_by(description=new_description),
+            edited = []
+            for rate in rates:
+                new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
+                new_descriptions.append(new_description)
+                edited.append(rate.action.edit(description=new_description))
+                assert appliance.rest_api.response.status_code == 200
+        assert len(edited) == len(rates)
+        for index, rate in enumerate(rates):
+            rate.reload()
+            record, _ = wait_for(
+                lambda: appliance.rest_api.collections.rates.find_by(
+                    description=new_descriptions[index]) or False,
                 num_sec=180,
                 delay=10,
             )
-            rate.reload()
-            assert rate.description == new_description
+            assert rate.description == edited[index].description == record[0].description
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
-    def test_delete_rates_from_detil(self, rest_api, rates, method):
+    def test_delete_rates_from_detil(self, appliance, rates, method):
         """Tests deleting rates from detail.
 
         Metadata:
@@ -181,20 +177,20 @@ class TestRatesViaREST(object):
         status = 204 if method == "delete" else 200
         for rate in rates:
             rate.action.delete(force_method=method)
-            assert rest_api.response.status_code == status
+            assert appliance.rest_api.response.status_code == status
             with error.expected("ActiveRecord::RecordNotFound"):
                 rate.action.delete(force_method=method)
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    def test_delete_rates_from_collection(self, rest_api, rates):
+    def test_delete_rates_from_collection(self, appliance, rates):
         """Tests deleting rates from collection.
 
         Metadata:
             test_flag: rest
         """
-        rest_api.collections.rates.action.delete(*rates)
-        assert rest_api.response.status_code == 200
+        appliance.rest_api.collections.rates.action.delete(*rates)
+        assert appliance.rest_api.response.status_code == 200
         with error.expected("ActiveRecord::RecordNotFound"):
-            rest_api.collections.rates.action.delete(*rates)
-        assert rest_api.response.status_code == 404
+            appliance.rest_api.collections.rates.action.delete(*rates)
+        assert appliance.rest_api.response.status_code == 404
