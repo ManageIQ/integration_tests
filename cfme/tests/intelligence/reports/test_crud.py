@@ -65,7 +65,7 @@ def test_custom_report_crud(custom_report):
         custom_report.title += fauxfactory.gen_alphanumeric()
     custom_report.queue(wait_for_finish=True)
     for report in custom_report.get_saved_reports():
-        report.data  # touch the results
+        assert hasattr(report, 'data')
     custom_report.delete()
 
 
