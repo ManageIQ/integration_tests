@@ -4,11 +4,11 @@ from collections import namedtuple
 from datetime import date, timedelta, datetime
 
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import toolbar as tb
-
 from utils import testgen
 from utils.blockers import BZ
 from utils.generators import random_vm_name
@@ -52,15 +52,29 @@ def test_vm(small_template, provider):
         logger.warning('Failed to delete vm from provider: {}'.format(vm.name))
 
 
+@pytest.yield_fixture(scope="function")
+def test_ec2_s3_vm(provider):
+    vm = VM.factory(random_vm_name('retire'), provider,
+                    template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    yield vm
+
+    try:
+        if provider.mgmt.does_vm_exist(vm.name):
+            provider.mgmt.delete_vm(vm.name)
+    except Exception:
+        logger.warning('Failed to delete vm from provider: {}'.format(vm.name))
+
+
 def verify_retirement_state(test_vm):
     # wait for the info block showing a date as retired date
     # Use lambda for is_retired since its a property
     assert wait_for(lambda: test_vm.is_retired, delay=5, num_sec=10 * 60, fail_func=tb.refresh,
              message="Wait for VM '{}' to enter retired state".format(test_vm.name))
 
+    retirement_states = ['off', 'suspended', 'unknown', 'terminated']
     # TODO: remove dependency on SummaryMixin and use widgetastic when available
-    assert test_vm.summary.power_management.power_state.text_value in ['off', 'suspended',
-                                                                       'unknown']
+    assert test_vm.summary.power_management.power_state.text_value in retirement_states
 
 
 def verify_retirement_date(test_vm, expected_date='Never'):
@@ -102,7 +116,7 @@ def generate_retirement_date_now():
 
 
 @test_requirements.retirement
-@pytest.mark.tier(2)
+@pytest.mark.tier(1)
 def test_retirement_now(test_vm):
     """Tests on-demand retirement of an instance/vm
     """
@@ -113,15 +127,44 @@ def test_retirement_now(test_vm):
     test_vm.retire()
     verify_retirement_state(test_vm)
     retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
-    if current_version() < '5.7':
-        verify_retirement_date(test_vm,
-                               expected_date=parsetime.now().to_american_date_only())
-    else:
-        verify_retirement_date(test_vm, expected_date=retire_times)
+    verify_retirement_date(test_vm, expected_date=retire_times)
 
 
 @test_requirements.retirement
-@pytest.mark.tier(2)
+@pytest.mark.tier(1)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider),
+                         reason='Only valid for EC2 provider')
+@pytest.mark.parametrize('tagged', [True, False], ids=['tagged', 'untagged'])
+def test_retirement_now_ec2_instance_backed(test_ec2_s3_vm, tagged):
+    """Tests on-demand retirement of an instance/vm
+
+    S3 (instance-backed) EC2 instances that aren't lifecycle tagged won't get shut down
+       """
+    # Tag the VM with lifecycle for full retirement based on parameter
+    if tagged:
+        test_ec2_s3_vm.add_tag(('LifeCycle', 'Fully retire VM and remove from Provider'),
+                               single_value=True)
+        expected_power_state = ['terminated']
+    else:
+        # no tagging
+        expected_power_state = ['on']
+
+    # For 5.7+ capture two times to assert the retire time is within a window.
+    # Too finicky to get it down to minute precision, nor is it really needed here
+    retire_times = dict()
+    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
+    test_ec2_s3_vm.retire()
+    assert wait_for(lambda: test_ec2_s3_vm.is_retired,
+                    delay=5, num_sec=10 * 60, fail_func=tb.refresh,
+                    message="Wait for VM '{}' to enter retired state"
+                    .format(test_ec2_s3_vm.name))
+    assert test_ec2_s3_vm.summary.power_management.power_state.text_value in expected_power_state
+    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
+    verify_retirement_date(test_ec2_s3_vm, expected_date=retire_times)
+
+
+@test_requirements.retirement
+@pytest.mark.tier(1)
 @pytest.mark.meta(blockers=[BZ(1419150, forced_streams='5.6',
                                unblock=lambda: current_version() >= '5.7')])
 @pytest.mark.parametrize('warn', warnings, ids=[warning.id for warning in warnings])
@@ -137,7 +180,7 @@ def test_set_retirement_date(test_vm, warn):
 
 
 @test_requirements.retirement
-@pytest.mark.tier(2)
+@pytest.mark.tier(1)
 def test_unset_retirement_date(test_vm):
     """Tests cancelling a scheduled retirement by removing the set date
     """
@@ -155,6 +198,7 @@ def test_unset_retirement_date(test_vm):
 
 
 @test_requirements.retirement
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1306471, unblock=lambda provider: provider.one_of(InfraProvider)),
                             BZ(1430373, forced_streams=['5.6'],
                                unblock=lambda provider: provider.one_of(InfraProvider))])
