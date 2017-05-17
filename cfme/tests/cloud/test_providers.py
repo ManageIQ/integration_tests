@@ -211,20 +211,6 @@ def test_host_name_required_validation(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
-def test_ip_address_required_validation(request):
-    """Test to validate the ip address while adding a provider"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=None)
-
-    request.addfinalizer(prov.delete_if_exists)
-    with error.expected("IP Address can't be blank"):
-        prov.create()
-
-
-@pytest.mark.tier(3)
 def test_api_port_blank_validation(request):
     """Test to validate blank api port while adding a provider"""
     prov = OpenStackProvider(
@@ -271,7 +257,7 @@ def test_name_max_character_validation(request, cloud_provider):
 
 
 @pytest.mark.tier(3)
-def test_hostname_max_character_validation(request):
+def test_hostname_max_character_validation():
     """Test to validate max character for hostname field"""
     prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
@@ -287,7 +273,7 @@ def test_hostname_max_character_validation(request):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_api_port_max_character_validation(request):
+def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
     prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
@@ -303,8 +289,6 @@ def test_api_port_max_character_validation(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
-@pytest.mark.meta(blockers=[1278036])
 def test_openstack_provider_has_api_version():
     """Check whether the Keystone API version field is present for Openstack."""
     prov = CloudProvider()
