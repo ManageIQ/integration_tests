@@ -41,7 +41,7 @@ def db_restore(temp_appliance_extended_db):
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])
     with db_storage_ssh as ssh_client:
         # Different files for different versions
-        ver = "_56" if current_version() < '5.7' else ""
+        ver = "_58" if current_version() > '5.7' else ""
         rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
         ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver),
                             rand_filename)
@@ -105,9 +105,9 @@ def test_bottlenecks_report_time_zome(temp_appliance_extended_db, db_restore, db
         # Compare bottleneck's table timestamp with db
         assert row[0].text == db_row[0][0].strftime("%m/%d/%y %H:%M:%S UTC")
         # Changing time zone
-        view.report.time_zone.fill('(GMT+02:00) Kyiv')
+        view.report.time_zone.fill('(GMT-04:00) La Paz')
         row = view.report.event_details[0]
-        assert row[0].text == (db_row[0][0] - timedelta(hours=4)).strftime("%m/%d/%y %H:%M:%S EEST")
+        assert row[0].text == (db_row[0][0] - timedelta(hours=4)).strftime("%m/%d/%y %H:%M:%S -04")
 
 
 @pytest.mark.tier(2)
@@ -150,7 +150,7 @@ def test_bottlenecks_summary_time_zome(temp_appliance_extended_db, db_restore, d
         # Compare event timestamp with db
         assert events[0].time_stamp == db_row[0][0].strftime("%Y-%m-%d %H:%M:%S UTC")
         # Changing time zone
-        view.report.time_zone.fill('(GMT+02:00) Kyiv')
+        view.summary.time_zone.fill('(GMT-04:00) La Paz')
         events = view.summary.chart.get_events()
         assert events[0].time_stamp == (db_row[0][0] - timedelta(hours=4)).strftime("%Y-%m-%d "
-                                                                                    "%H:%M:%S EEST")
+                                                                                    "%H:%M:%S -04")
