@@ -75,6 +75,14 @@ class SSHResult(namedtuple("SSHResult", ["rc", "output"])):
         else:
             raise ValueError('You can only compare SSHResult with str or int')
 
+    @property
+    def success(self):
+        return self.rc == 0
+
+    @property
+    def failed(self):
+        return self.rc != 0
+
 
 _ssh_key_file = project_path.join('.generated_ssh_key')
 _ssh_pubkey_file = project_path.join('.generated_ssh_key.pub')
