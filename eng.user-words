@@ -1,0 +1,14 @@
+root@photon-machine
+touch
+blather
+Welcome
+to
+Photon
+1.0
+(x86_64)
+-
+Kernel
+4.4.71-1.ph1-esx
+tty1
+$ touch blather
+cubswin:)

@@ -3,6 +3,7 @@ from wrapanapi.openstack import OpenstackSystem
 from . import CloudProvider
 from cfme.common.provider import EventsEndpoint
 from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStackInfraEndpointForm
+from cfme.exceptions import ItemNotFound
 
 
 class OpenStackProvider(CloudProvider):
@@ -14,6 +15,10 @@ class OpenStackProvider(CloudProvider):
     mgmt_class = OpenstackSystem
     db_types = ["Openstack::CloudManager"]
     endpoints_form = OpenStackInfraEndpointForm
+    # xpath locators for elements, to be used by selenium
+    _console_connection_status_element = '//*[@id="noVNC_status"]'
+    _canvas_element = '//*[@id="noVNC_canvas"]'
+    _ctrl_alt_del_xpath = '//*[@id="sendCtrlAltDelButton"]'
 
     def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
@@ -85,3 +90,27 @@ class OpenStackProvider(CloudProvider):
                    tenant_mapping=prov_config.get('tenant_mapping', False),
                    infra_provider=infra_provider,
                    appliance=appliance)
+
+    # Following methods will only work if the remote console window is open
+    # and if selenium focused on it. These will not work if the selenium is
+    # focused on Appliance window.
+    def get_console_connection_status(self):
+        try:
+            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
+                self._console_connection_status_element).text
+        except:
+            raise ItemNotFound("Element not found on screen, is current focus on console window?")
+
+    def get_remote_console_canvas(self):
+        try:
+            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
+                self._canvas_element)
+        except:
+            raise ItemNotFound("Element not found on screen, is current focus on console window?")
+
+    def get_console_ctrl_alt_del_btn(self):
+        try:
+            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
+                self._ctrl_alt_del_xpath)
+        except:
+            raise ItemNotFound("Element not found on screen, is current focus on console window?")

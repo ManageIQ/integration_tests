@@ -718,6 +718,16 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         else:
             raise ValueError("Endpoints should be either dict or endpoint class")
 
+    # These methods need to be overridden in the provider specific classes
+    def get_console_connection_status(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
+    def get_remote_console_canvas(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
+    def get_console_ctrl_alt_del_btn(self):
+        raise NotImplementedError("This method is not implemented for given provider")
+
 
 def get_paginator_value():
     return paginator.rec_total()

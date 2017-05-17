@@ -136,6 +136,7 @@ class MiqBrowser(Browser):
             plugin_class=MiqBrowserPlugin,
             logger=create_sublogger('MiqBrowser'),
             extra_objects=extra_objects)
+        self.window_handle = selenium.current_window_handle
 
     @property
     def appliance(self):
