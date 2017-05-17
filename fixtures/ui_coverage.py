@@ -74,9 +74,8 @@ appliance_coverage_root = rails_root.join('coverage')
 coverage_data = scripts_data_path.join('coverage')
 gemfile = coverage_data.join('coverage_gem.rb')
 bundler_d = rails_root.join('bundler.d')
-coverage_hook_lowest = coverage_data.join('coverage_hook_lowest.rb')
-coverage_hook_55 = coverage_data.join('coverage_hook_55.rb')
-coverage_hook_out_fn = 'coverage_hook.rb'
+coverage_hook_file_name = 'coverage_hook.rb'
+coverage_hook = coverage_data.join(coverage_hook_file_name)
 coverage_merger = coverage_data.join('coverage_merger.rb')
 thing_toucher = coverage_data.join('thing_toucher.rb')
 coverage_output_dir = log_path.join('coverage')
@@ -192,13 +191,9 @@ class CoverageManager(object):
         self.ipapp.ssh_client.run_command('rm -rf {}'.format(
             appliance_coverage_root.strpath))
         # Decide which coverage hook file to use based on version
-        coverage_hook = version.pick({
-            version.LOWEST: coverage_hook_lowest,
-            '5.5': coverage_hook_55
-        })
         # Put the coverage hook in the miq lib path
         self.ipapp.ssh_client.put_file(coverage_hook.strpath, rails_root.join(
-            'lib', coverage_hook_out_fn).strpath)
+            'lib', coverage_hook_file_name).strpath)
         replacements = {
             'require': r"require_relative '../lib/coverage_hook'",
             'config': rails_root.join('config').strpath
