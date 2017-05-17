@@ -50,7 +50,7 @@ def test_vm_migrate(new_vm, provider):
     """
     # auto_test_services should exist to test migrate VM
     vm_host = new_vm.get_detail(properties=('Relationships', 'Host'))
-    migrate_to = [vds.name for vds in provider.hosts if vds.name != vm_host][0]
+    migrate_to = [vds.name() for vds in provider.hosts if vds.name != vm_host][0]
     new_vm.migrate_vm("email@xyz.com", "first", "last", host_name=migrate_to)
     flash.assert_no_errors()
     row_description = new_vm.name
