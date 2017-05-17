@@ -74,7 +74,7 @@ def tags(request, rest_api, categories):
             'category': refs[index % 3]
         })
 
-    return _creating_skeleton(request, rest_api, 'tags', tags)
+    return _creating_skeleton(request, rest_api, 'tags', tags, substr_search=True)
 
 
 def dialog():
@@ -368,7 +368,8 @@ def users(request, rest_api, num=1):
     return users
 
 
-def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create'):
+def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create',
+        substr_search=False):
     collection = getattr(rest_api.collections, col_name)
     try:
         action = getattr(collection.action, col_action)
@@ -378,13 +379,15 @@ def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create
 
     entities = action(*col_data)
     action_status = rest_api.response.status_code
+    search_str = '%{}%' if substr_search else '{}'
     for entity in col_data:
         if entity.get('name', None):
             wait_for(lambda: collection.find_by(
-                name=entity.get('name')) or False, num_sec=180, delay=10)
+                name=search_str.format(entity.get('name'))) or False, num_sec=180, delay=10)
         elif entity.get('description', None):
             wait_for(lambda: collection.find_by(
-                description=entity.get('description')) or False, num_sec=180, delay=10)
+                description=search_str.format(entity.get('description'))) or False,
+                num_sec=180, delay=10)
         else:
             raise NotImplementedError
 
