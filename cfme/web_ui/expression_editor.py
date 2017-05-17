@@ -40,7 +40,9 @@ buttons = Region(
                 '5.7': "//button[@title='Commit expression element changes']"},
         discard={version.LOWEST: "//img[@alt='Discard expression element changes']",
                  '5.7': "//button[@title='Discard expression element changes']"},
-        remove="//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']",
+        remove={version.LOWEST: "//span[not(contains(@style, 'none'))]//img[@='Remove this "
+                               "expression element']",
+                '5.7': "//button[@title='Remove this expression element']"},
         NOT="//span[not(contains(@style, 'none'))]" +
             "//img[@alt='Wrap this expression element with a NOT']",
         OR="//span[not(contains(@style, 'none'))]//img[@alt='OR with a new expression element']",
@@ -245,13 +247,16 @@ def fill_count(count=None, key=None, value=None):
         value: Value to check against.
     Returns: See :py:func:`cfme.web_ui.fill`.
     """
+    if value:
+        value = int(value)
+
     fill(
         count_form,
         dict(
             type="Count of",
             count=count,
             key=key,
-            value=int(value),
+            value=value,
         ),
     )
     # In case of advanced search box
