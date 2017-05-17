@@ -23,9 +23,9 @@ def crud_files_reports():
     result = []
     if not report_crud_dir.exists():
         report_crud_dir.mkdir()
-    for file in report_crud_dir.listdir():
-        if file.isfile() and file.basename.endswith(".yaml"):
-            result.append(file.basename)
+    for file_name in report_crud_dir.listdir():
+        if file_name.isfile() and file_name.basename.endswith(".yaml"):
+            result.append(file_name.basename)
     return result
 
 
@@ -33,9 +33,9 @@ def crud_files_schedules():
     result = []
     if not schedules_crud_dir.exists():
         schedules_crud_dir.mkdir()
-    for file in schedules_crud_dir.listdir():
-        if file.isfile() and file.basename.endswith(".yaml"):
-            result.append(file.basename)
+    for file_name in schedules_crud_dir.listdir():
+        if file_name.isfile() and file_name.basename.endswith(".yaml"):
+            result.append(file_name.basename)
     return result
 
 
