@@ -13,6 +13,7 @@ from cfme import BaseLoggedInPage
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
 from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
+from cfme.infrastructure.host import Host
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 import cfme.web_ui.toolbar as tb
@@ -348,6 +349,17 @@ class Vm(BaseVM):
         """returns id of cluster current vm belongs to"""
         vm = self.get_vm_via_rest()
         return int(vm.ems_cluster_id)
+
+    @property
+    def cluster(self):
+        all_clusters = self.provider.get_clusters()
+        return next(cl for cl in all_clusters if cl.id == self.cluster_id)
+
+    @property
+    def host(self):
+        self.load_details()
+        host_name = InfoBlock.text('Relationships', 'Host')
+        return Host(name=host_name, provider=self.provider)
 
     class CfmeRelationship(object):
         relationship_form = Form(
