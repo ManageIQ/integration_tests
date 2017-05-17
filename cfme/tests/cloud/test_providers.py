@@ -317,10 +317,11 @@ def test_openstack_provider_has_api_version():
 
 class TestProvidersRESTAPI(object):
     @pytest.fixture(scope="function")
-    def arbitration_profiles(self, request, rest_api, cloud_provider):
+    def arbitration_profiles(self, request, appliance, cloud_provider):
         num_profiles = 2
-        response = _arbitration_profiles(request, rest_api, cloud_provider, num=num_profiles)
-        assert rest_api.response.status_code == 200
+        response = _arbitration_profiles(
+            request, appliance.rest_api, cloud_provider, num=num_profiles)
+        assert appliance.rest_api.response.status_code == 200
         assert len(response) == num_profiles
 
         return response
@@ -328,57 +329,59 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_cloud_networks_query(self, cloud_provider, rest_api, from_detail):
+    def test_cloud_networks_query(self, cloud_provider, appliance, from_detail):
         """Tests querying cloud providers and cloud_networks collection for network info.
 
         Metadata:
             test_flag: rest
         """
         if from_detail:
-            networks = rest_api.collections.providers.get(name=cloud_provider.name).cloud_networks
+            networks = appliance.rest_api.collections.providers.get(
+                name=cloud_provider.name).cloud_networks
         else:
-            networks = rest_api.collections.cloud_networks
-        assert rest_api.response.status_code == 200
-        assert len(networks) > 0
+            networks = appliance.rest_api.collections.cloud_networks
+        assert appliance.rest_api.response.status_code == 200
+        assert networks
         assert len(networks) == networks.subcount
         assert len(networks.find_by(enabled=True)) >= 1
         assert 'CloudNetwork' in networks[0].type
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_security_groups_query(self, cloud_provider, rest_api):
+    def test_security_groups_query(self, cloud_provider, appliance):
         """Tests querying cloud networks subcollection for security groups info.
 
         Metadata:
             test_flag: rest
         """
-        network = rest_api.collections.providers.get(name=cloud_provider.name).cloud_networks[0]
+        network = appliance.rest_api.collections.providers.get(
+            name=cloud_provider.name).cloud_networks[0]
         network.reload(attributes='security_groups')
         security_groups = network.security_groups
         # "security_groups" needs to be present, even if it's just an empty list
         assert isinstance(security_groups, list)
         # if it's not empty, check type
-        if len(security_groups) > 0:
+        if security_groups:
             assert 'SecurityGroup' in security_groups[0]['type']
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_create_arbitration_profiles(self, rest_api, arbitration_profiles):
+    def test_create_arbitration_profiles(self, appliance, arbitration_profiles):
         """Tests creation of arbitration profiles.
 
         Metadata:
             test_flag: rest
         """
         for profile in arbitration_profiles:
-            record = rest_api.collections.arbitration_profiles.get(id=profile.id)
-            assert rest_api.response.status_code == 200
+            record = appliance.rest_api.collections.arbitration_profiles.get(id=profile.id)
+            assert appliance.rest_api.response.status_code == 200
             assert record._data == profile._data
             assert 'ArbitrationProfile' in profile.type
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
-    def test_delete_arbitration_profiles_from_detail(self, rest_api, arbitration_profiles, method):
+    def test_delete_arbitration_profiles_from_detail(self, appliance, arbitration_profiles, method):
         """Tests delete arbitration profiles from detail.
 
         Metadata:
@@ -387,56 +390,56 @@ class TestProvidersRESTAPI(object):
         status = 204 if method == 'delete' else 200
         for entity in arbitration_profiles:
             entity.action.delete(force_method=method)
-            assert rest_api.response.status_code == status
+            assert appliance.rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
                 entity.action.delete(force_method=method)
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_delete_arbitration_profiles_from_collection(self, rest_api, arbitration_profiles):
+    def test_delete_arbitration_profiles_from_collection(self, appliance, arbitration_profiles):
         """Tests delete arbitration profiles from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = rest_api.collections.arbitration_profiles
+        collection = appliance.rest_api.collections.arbitration_profiles
         collection.action.delete(*arbitration_profiles)
-        assert rest_api.response.status_code == 200
+        assert appliance.rest_api.response.status_code == 200
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_profiles)
-        assert rest_api.response.status_code == 404
+        assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_edit_arbitration_profiles(self, rest_api, arbitration_profiles, from_detail):
+    def test_edit_arbitration_profiles(self, appliance, arbitration_profiles, from_detail):
         """Tests editing of arbitration profiles.
 
         Metadata:
             test_flag: rest
         """
         response_len = len(arbitration_profiles)
-        zone = rest_api.collections.availability_zones[-1]
+        zone = appliance.rest_api.collections.availability_zones[-1]
         locators = [{'id': zone.id}, {'href': zone.href}]
         new = [{'availability_zone': locators[i % 2]} for i in range(response_len)]
         if from_detail:
             edited = []
             for i in range(response_len):
                 edited.append(arbitration_profiles[i].action.edit(**new[i]))
-                assert rest_api.response.status_code == 200
+                assert appliance.rest_api.response.status_code == 200
         else:
             for i in range(response_len):
                 new[i].update(arbitration_profiles[i]._ref_repr())
-            edited = rest_api.collections.arbitration_profiles.action.edit(*new)
-            assert rest_api.response.status_code == 200
+            edited = appliance.rest_api.collections.arbitration_profiles.action.edit(*new)
+            assert appliance.rest_api.response.status_code == 200
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].availability_zone_id == zone.id
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
-    def test_create_arbitration_rules_with_profile(self, request, rest_api, arbitration_profiles):
+    def test_create_arbitration_rules_with_profile(self, request, appliance, arbitration_profiles):
         """Tests creation of arbitration rules referencing arbitration profiles.
 
         Metadata:
@@ -454,16 +457,16 @@ class TestProvidersRESTAPI(object):
                 'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
             })
 
-        response = creating_skeleton(request, rest_api, 'arbitration_rules', data)
-        assert rest_api.response.status_code == 200
+        response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
+        assert appliance.rest_api.response.status_code == 200
         assert len(response) == num_rules
         for rule in response:
-            record = rest_api.collections.arbitration_rules.get(id=rule.id)
+            record = appliance.rest_api.collections.arbitration_rules.get(id=rule.id)
             assert record.arbitration_profile_id == rule.arbitration_profile_id == profile.id
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
-    def test_create_arbitration_rule_with_invalid_profile(self, request, rest_api):
+    def test_create_arbitration_rule_with_invalid_profile(self, request, appliance):
         """Tests creation of arbitration rule referencing invalid arbitration profile.
 
         Metadata:
@@ -476,8 +479,8 @@ class TestProvidersRESTAPI(object):
             'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
         }]
 
-        response = creating_skeleton(request, rest_api, 'arbitration_rules', data)
+        response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
         # this will fail once BZ 1433477 is fixed - change and expand the test accordingly
-        assert rest_api.response.status_code == 200
+        assert appliance.rest_api.response.status_code == 200
         for rule in response:
             assert not hasattr(rule, 'arbitration_profile_id')
