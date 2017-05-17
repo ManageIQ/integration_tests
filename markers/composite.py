@@ -28,7 +28,10 @@ def pytest_collection_modifyitems(session, config, items):
 
     build = store.current_appliance.build
 
-    source = config.getoption('composite_source', None)
+    source = config.getoption('composite_source', 'jenkins')
+
+    store.terminalreporter.write(
+        'Attempting Uncollect for build: {} and source: {}'.format(build, source), bold=True)
 
     pl = composite_uncollect(build, source)
 
