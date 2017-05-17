@@ -7,7 +7,6 @@ from selenium.common.exceptions import NoSuchElementException
 from multimethods import singledispatch
 
 from utils.wait import wait_for, TimedOutError
-from utils import version
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Anything, Calendar, Form, Input, Region, AngularSelect, fill
 import re
@@ -36,17 +35,15 @@ def _expressions_root():
 # Buttons container
 buttons = Region(
     locators=dict(
-        commit={version.LOWEST: "//img[@alt='Commit expression element changes']",
-                '5.7': "//button[@title='Commit expression element changes']"},
-        discard={version.LOWEST: "//img[@alt='Discard expression element changes']",
-                 '5.7': "//button[@title='Discard expression element changes']"},
-        remove="//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']",
+        commit="//button[@title='Commit expression element changes']",
+        discard="//button[@title='Discard expression element changes']",
+        remove="//span[@id='exp_buttons_on']//*[@title='Remove this expression element']",
         NOT="//span[not(contains(@style, 'none'))]" +
             "//img[@alt='Wrap this expression element with a NOT']",
         OR="//span[not(contains(@style, 'none'))]//img[@alt='OR with a new expression element']",
         AND="//span[not(contains(@style, 'none'))]//img[@alt='AND with a new expression element']",
-        redo="//img[@alt='Redo']",
-        undo="//img[@alt='Undo']",
+        redo="(//button | //a)[@title='Re-apply the previous change']",
+        undo="(//button | //a)[@title='Undo the last change']",
         select_specific="//img[@alt='Click to change to a specific Date/Time format']",
         select_relative="//img[@alt='Click to change to a relative Date/Time format']",
     )
@@ -251,7 +248,7 @@ def fill_count(count=None, key=None, value=None):
             type="Count of",
             count=count,
             key=key,
-            value=int(value),
+            value=int(value) if value is not None else value,
         ),
     )
     # In case of advanced search box

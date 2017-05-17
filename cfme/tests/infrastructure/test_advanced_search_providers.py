@@ -200,7 +200,6 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1320244])
 def test_delete_button_should_appear_after_save(rails_delete_filter):
     """Delete button appears only after load, not after save"""
     # bind filter_name to the function for fixture cleanup
@@ -212,7 +211,6 @@ def test_delete_button_should_appear_after_save(rails_delete_filter):
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150, 1320244])
 def test_cannot_delete_more_than_once():
     """When Delete button appars, it does not want to go away"""
     filter_name = fauxfactory.gen_alphanumeric()

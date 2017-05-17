@@ -16,10 +16,8 @@ search_box = Region(
         search_field=Input("search_text", "search[text]"),
 
         # The icon buttons for searching
-        search_icon={
-            "5.4":
-            "//div[@id='searchbox']//div[contains(@class, 'form-group')]"
-            "/*[self::a or (self::button and @type='submit')]"},
+        search_icon='(//button | //a)[(@type="submit" or @data-submit="searchbox") '
+                    'and span[contains(@class, "fa-search")]]',
 
         # The arrow opening/closing the advanced search box
         toggle_advanced="(//button | //a)[@id='adv_search']",
@@ -30,49 +28,40 @@ search_box = Region(
         advanced_search_box_visible="//div[@id='advsearchModal' and @class='modal fade in']"
                                     "//div[@class='modal-content']",
 
-        # Alt text is missing for some buttons, locators where FormButton won't work
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1380430
-        # Can remove locators when alt-text is consistent, and use FormButtons
-        load_filter='//button[(normalize-space(@alt)="Load a filter")]',
-        load_filter_disabled='//button[(normalize-space(@alt)="No saved filters or report '
-                                    'filters are available to load")]',
-
-        reset_filter='(//button | //a)[@title="Reset the filter"]',
-        reset_filter_disabled='//button[contains(@class, "btn-disabled") and '
-                              'normalize-space(text())="Reset"]',
-
-        apply_filter='(//button | //a)[@title="Apply the filter"]',
-        apply_filter_disabled='//button[contains(@class, "btn-disabled") and '
-                              'normalize-space(text())="Apply"]',
-
-
         # Buttons on main view
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1380430
-        # TODO: update dimmed/disabled alt-text as 1380430 is fixed
-        apply_filter_button=FormButton("Apply the current filter"),
+        apply_filter_button=FormButton(alt="Apply the current filter",
+                                       dimmed_alt='No filter available'),
         load_filter_button=FormButton(alt="Load a filter",
                                       dimmed_alt="No saved filters or report filters are "
                                                  "available to load"),
         delete_filter_button=FormButton("Delete the filter named", partial_alt=True),
-        save_filter_button=FormButton("Save the current filter"),
-        reset_filter_button=FormButton("Reset the filter"),
+        # No dimmed state for delete button, its removed/added to UI as it becomes relevant
+        save_filter_button=FormButton(alt="Save the current filter",
+                                      dimmed_alt='No filter available'),
+        reset_filter_button=FormButton(alt="Reset the filter",
+                                       dimmed_alt='No filter available'),
+
         # There are multiple close button divs, and they swap visibility with @style none/block
         close_button="//div[(@id='advsearchModal' or 'quicksearchbox') "
                      "and (normalize-space(@style)='display: block;')]//button[@class='close']"
                      "/span[normalize-space(.)='×']",
 
         # Buttons in the "next step"
-        load_filter_dialog_button=FormButton("Load the filter shown above"),
-        cancel_load_filter_dialog_button=FormButton("Cancel the load"),
-        save_filter_dialog_button=FormButton("Save the current search"),
-        cancel_save_filter_dialog_button=FormButton("Cancel the save"),
+        load_filter_dialog_button=FormButton(alt="Load the filter shown above",
+                                             dimmed_alt='Choose a saved filter or report filter '
+                                                        'to load'),
+        # No dimmed state in UI for save or cancel
+        cancel_load_filter_dialog_button=FormButton(alt="Cancel the load"),
+        save_filter_dialog_button=FormButton(alt="Save the current search"),
+        cancel_save_filter_dialog_button=FormButton(alt="Cancel the save"),
 
         # If user input requested, this window appears
         quick_search_box="//div[@id='quicksearchbox']",
 
         # With these buttons
-        userinput_apply_filter_button=FormButton("Apply the current filter (Enter)"),
-        userinput_cancel_button=FormButton("Cancel (Esc)"),
+        userinput_apply_filter_button=FormButton(alt="Apply the current filter (Enter)",
+                                                 dimmed_alt='No input to apply'),
+        userinput_cancel_button=FormButton(alt="Cancel (Esc)"),
 
         # Elements in Load dialog
         # Selects for selecting the filter
@@ -202,7 +191,7 @@ def reset_filter():
         Returns false when reset is button is disabled
     """
     ensure_advanced_search_open()
-    if sel.is_displayed(search_box.reset_filter):
+    if not search_box.reset_filter_button.is_dimmed:
         out = sel.click(search_box.reset_filter_button)
     else:
         out = False
@@ -214,7 +203,7 @@ def reset_filter():
 def apply_filter():
     """Applies an existing filter"""
     ensure_advanced_search_open()
-    if sel.is_displayed(search_box.apply_filter):
+    if not search_box.apply_filter_button.is_dimmed:
         return sel.click(search_box.apply_filter_button)
     else:
         return False
@@ -285,9 +274,9 @@ def load_filter(saved_filter=None, report_filter=None, cancel=False):
         cancel: Whether to cancel the load dialog without loading
     """
     ensure_advanced_search_open()
-    if sel.is_displayed(search_box.load_filter_disabled):
-        raise DisabledButtonException('Load Filter button disabled, '
-            'cannot load filter: {}'.format(saved_filter))
+    if search_box.load_filter_button.is_dimmed:
+        raise DisabledButtonException('Load Filter button disabled, cannot load filter: {}'
+                                      .format(saved_filter))
     assert saved_filter is not None or report_filter is not None, "At least 1 param required!"
     assert (saved_filter is not None) ^ (report_filter is not None), "You must provide just one!"
 
