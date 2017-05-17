@@ -132,6 +132,7 @@ def create_image(template_name, image_description, bucket_name, key_name):
     with make_ssh_client(*ssh_args) as ssh_client:
 
         print("AMAZON EC2: Creating JSON file beofre importing the image ...")
+        # TODO do this with the json module so it doesn't look so awful
         upload_json = """[
       {{
         "Description": "{description}",
