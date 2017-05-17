@@ -115,11 +115,11 @@ class TestVmEventRESTAPI(object):
         return _a_provider(request)
 
     @pytest.fixture(scope="module")
-    def vm(self, request, a_provider, rest_api_modscope):
-        return _vm(request, a_provider, rest_api_modscope)
+    def vm(self, request, a_provider, appliance):
+        return _vm(request, a_provider, appliance.rest_api)
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-    def test_vm_add_event(self, rest_api, vm, from_detail, appliance):
+    def test_vm_add_event(self, vm, from_detail, appliance):
         """Test that checks whether adding a event using the REST API works.
         Prerequisities:
             * A VM
@@ -139,12 +139,12 @@ class TestVmEventRESTAPI(object):
             "event_type": "BadUserNameSessionEvent",
             "event_message": "Cannot login user@test.domain {}".format(from_detail)
         }
-        rest_vm = rest_api.collections.vms.get(name=vm)
+        rest_vm = appliance.rest_api.collections.vms.get(name=vm)
         if from_detail:
             responses = [rest_vm.action.add_event(**event)]
         else:
-            responses = rest_api.collections.vms.action.add_event(rest_vm, **event)
-        assert rest_api.response.status_code == 200
+            responses = appliance.rest_api.collections.vms.action.add_event(rest_vm, **event)
+        assert appliance.rest_api.response.status_code == 200
         for response in responses:
             assert response["success"] is True, "Could not add event"
 
@@ -154,10 +154,10 @@ class TestVmEventRESTAPI(object):
             events.message == event["event_message"],
             events.event_type == event["event_type"],
         ))
-        assert len(events_list) == 1, "Could not find the event in the database"
+        assert events_list, "Could not find the event in the database"
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-    def test_vm_add_lifecycle_event(self, request, rest_api, vm, from_detail, appliance):
+    def test_vm_add_lifecycle_event(self, vm, from_detail, appliance):
         """Test that checks whether adding a lifecycle event using the REST API works.
         Prerequisities:
             * A VM
@@ -173,7 +173,7 @@ class TestVmEventRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        rest_vm = rest_api.collections.vms.get(name=vm)
+        rest_vm = appliance.rest_api.collections.vms.get(name=vm)
         event = dict(
             status=fauxfactory.gen_alphanumeric(),
             message=fauxfactory.gen_alphanumeric(),
@@ -182,8 +182,9 @@ class TestVmEventRESTAPI(object):
         if from_detail:
             responses = [rest_vm.action.add_lifecycle_event(**event)]
         else:
-            responses = rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)
-        assert rest_api.response.status_code == 200
+            responses = appliance.rest_api.collections.vms.action.add_lifecycle_event(
+                rest_vm, **event)
+        assert appliance.rest_api.response.status_code == 200
         for response in responses:
             assert response["success"] is True, "Could not add event"
 
@@ -194,4 +195,4 @@ class TestVmEventRESTAPI(object):
             lifecycle_events.status == event["status"],
             lifecycle_events.event == event["event"],
         ))
-        assert len(events_list) == 1, "Could not find the lifecycle event in the database"
+        assert events_list, "Could not find the lifecycle event in the database"
