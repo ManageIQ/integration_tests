@@ -45,19 +45,25 @@ def test_vm_reconfigure_add_remove_hw(
     orig_config = small_vm.get_configuration()
 
     new_config = orig_config.copy()
-    if change_type in ('cores_per_socket', 'sockets'):
-        updates = {change_type: new_config.hw[change_type] + 1}
+    if change_type == 'cores_per_socket':
+        new_config.hw.cores_per_socket = new_config.hw.cores_per_socket + 1
+    elif change_type == 'sockets':
+        new_config.hw.sockets = new_config.hw.sockets + 1
     elif change_type == 'memory':
-        updates = {'mem_size': new_config.hw['mem_size'] + 512}
-    new_config.update_hw(**updates)
+        new_config.hw.mem_size = new_config.hw.mem_size_mb + 512
+        new_config.hw.mem_size_unit = 'MB'
 
-    # Add hardware
     small_vm.reconfigure(new_config)
-    wait_for(lambda: small_vm.get_configuration() == new_config, timeout=360, delay=45)
+    wait_for(
+        lambda: small_vm.get_configuration() == new_config, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that HW was added")
 
-    # Remove hardware
     small_vm.reconfigure(orig_config)
-    wait_for(lambda: small_vm.get_configuration() == orig_config, timeout=360, delay=45)
+    wait_for(
+        lambda: small_vm.get_configuration() == orig_config, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that previously-added HW was removed")
 
 
 @pytest.mark.parametrize('power_type', ['hot', 'cold'])
@@ -78,10 +84,14 @@ def test_vm_reconfigure_add_remove_disk(
     new_config.add_disk(
         size=5, size_unit='GB', type_=disk_type, mode=disk_mode, dependent=disk_dependent)
 
-    # Add disk
     small_vm.reconfigure(new_config)
-    wait_for(lambda: small_vm.get_configuration() == new_config, timeout=360, delay=45)
+    wait_for(
+        lambda: small_vm.get_configuration() == new_config, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that disk was added")
 
-    # Remove disk
     small_vm.reconfigure(orig_config)
-    wait_for(lambda: small_vm.get_configuration() == orig_config, timeout=360, delay=45)
+    wait_for(
+        lambda: small_vm.get_configuration() == orig_config, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that previously-added disk was removed")

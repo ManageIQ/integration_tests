@@ -2,6 +2,7 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+from copy import copy
 from collections import namedtuple
 import fauxfactory
 from functools import partial
@@ -113,9 +114,9 @@ class InfraVmReconfigureView(BaseLoggedInPage):
     title = Text('#explorer_title_text')
 
     memory = BootstrapSwitch(name='cb_memory')
-    # memory set to True unlocks the following:
-    mem_size = WInput(id='memory_value')
+    # memory set to True unlocks the following (order matters - first type then value!):
     mem_size_unit = BootstrapSelect(id='mem_type')
+    mem_size = WInput(id='memory_value')
 
     cpu = BootstrapSwitch(name='cb_cpu')
     # cpu set to True unlocks the following:
@@ -209,11 +210,11 @@ class VMConfiguration(Pretty):
         ).all()
         for disk_data in disks_data:
             # In DB stored in bytes, but UI default is GB
-            size_GB = disk_data.size / (1024 ** 3)
+            size_gb = disk_data.size / (1024 ** 3)
             self.disks.append(
                 VMDisk(
                     filename=disk_data.filename,
-                    size=size_GB,
+                    size=size_gb,
                     size_unit='GB',
                     type=disk_data.disk_type,
                     mode=disk_data.mode,
@@ -222,17 +223,11 @@ class VMConfiguration(Pretty):
 
     def copy(self):
         config = VMConfiguration.__new__(VMConfiguration)
-        config.hw = self.hw.copy()
+        config.hw = copy(self.hw)
         # We can just make shallow copy here because disks can be only added or deleted, not edited
         config.disks = self.disks[:]
         config._vm = self._vm
         return config
-
-    def update_hw(self, cores_per_socket=None, sockets=None, mem_size=None, mem_size_unit=None):
-        self.hw['cores_per_socket'] = cores_per_socket or self.hw['cores_per_socket']
-        self.hw['sockets'] = sockets or self.hw['sockets']
-        self.hw['mem_size'] = mem_size or self.hw['mem_size']
-        self.hw['mem_size_unit'] = mem_size_unit or self.hw['mem_size_unit']
 
     def add_disk(self, size, size_unit='GB', type='thin', mode='persistent', dependent=True):
         # New disk doesn't have a filename, until actually added
@@ -262,10 +257,10 @@ class VMConfiguration(Pretty):
         '''
         changes = {}
         changes['disks'] = []
-        for key in self.hw:
-            if self.hw[key] != other_configuration.hw[key]:
+        for key in ['cores_per_socket', 'sockets', 'mem_size', 'mem_size_unit']:
+            if getattr(self.hw, key) != getattr(other_configuration.hw, key):
                 # We don't want to fill numbers...
-                changes[key] = str(other_configuration.hw[key])
+                changes[key] = str(getattr(other_configuration.hw, key))
         if {'mem_size', 'mem_size_unit'} & set(changes):
             changes['memory'] = True
         if {'cores_per_socket', 'sockets'} & set(changes):
