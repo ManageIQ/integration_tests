@@ -8,7 +8,7 @@ from cfme import test_requirements
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash, fill
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import browser
@@ -88,19 +88,21 @@ def generated_request(appliance,
     request_cells = {
         "Description": "Provision from [{}] to [{}###]".format(template_name, vm_name),
     }
-    yield request_cells
+    request_row = Request(cells=request_cells)
+    yield request_row
 
     browser().get(store.base_url)
     appliance.server.login_admin()
 
-    requests.delete_request(request_cells)
+    request_row.delete_request()
     flash.assert_no_errors()
 
 
 @pytest.mark.tier(3)
 def test_services_request_direct_url(generated_request):
     """Go to the request page, save the url and try to access it directly."""
-    assert requests.go_to_request(generated_request), "could not find the request!"
+
+    assert generated_request.load_details(), "could not find the request!"
     request_url = sel.current_url()
     sel.get(sel.base_url())    # I need to flip it with something different here
     sel.get(request_url)        # Ok, direct access now.
@@ -118,8 +120,6 @@ def test_copy_request(request, generated_request, vm_name, template_name):
     new_vm_name = fauxfactory.gen_alphanumeric(length=16)
     cfme.provisioning.copy_request_by_vm_and_template_name(
         vm_name, template_name, {"vm_name": new_vm_name}, multi=True)
-    request.addfinalizer(lambda: requests.delete_request({
-        "Description": "Provision from [{}] to [{}###]".format(template_name, new_vm_name),
-    }))
-    assert cfme.provisioning.go_to_request_by_vm_and_template_name(
-        new_vm_name, template_name, multi=True)
+    request_row = Request(row_description=new_vm_name, partial_check=True)
+    request.addfinalizer(request_row.delete_request())
+    assert request_row.load_details()

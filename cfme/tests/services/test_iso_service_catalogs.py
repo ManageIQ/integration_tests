@@ -7,7 +7,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
@@ -107,7 +107,6 @@ def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=3100, delay=20)
-    assert row.last_message.text == 'Request complete'
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=3100, delay=20)
+    assert request_row.if_succeeded()

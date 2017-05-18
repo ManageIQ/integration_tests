@@ -7,7 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
+from cfme.services.requests import Request
 from fixtures.provider import setup_one_by_class_or_skip
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
@@ -149,12 +149,11 @@ def service_data(request, rest_api, a_provider, service_dialog=None, service_cat
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, _ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2000, delay=60)
-    assert row.request_state.text == 'Finished'
-    assert row.status.text != 'Error', "Provisioning failed with the message `{}`".format(
-        row.last_message.text)
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request.reload, num_sec=2000, delay=60)
+    assert request_row.is_finished()
+    assert request_row.row.status.text != 'Error', \
+        "Provisioning failed with the message `{}`".format(request_row.row.last_message.text)
 
     # on 5.8 the service name visible via REST API is in form <assigned_name>-DATE-TIMESTAMP
     # (i.e. 2ojnKgZRCJ-20170410-113646) for services created using UI

@@ -11,7 +11,7 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import provisioning_form
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import InfoBlock, fill, flash
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -87,10 +87,10 @@ def provisioner(request, setup_provider, provider, vm_name):
         if delayed is not None:
             total_seconds = (delayed - datetime.utcnow()).total_seconds()
             row_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
-            cells = {'Description': row_description}
+            request_row = Request(row_description)
             try:
-                row, __ = wait_for(requests.wait_for_request, [cells],
-                                   fail_func=requests.reload, num_sec=total_seconds, delay=5)
+                wait_for(request_row.is_finished,
+                         fail_func=request_row.reload, num_sec=total_seconds, delay=5)
                 pytest.fail("The provisioning was not postponed")
             except TimedOutError:
                 pass
@@ -100,10 +100,9 @@ def provisioner(request, setup_provider, provider, vm_name):
         # nav to requests page happens on successful provision
         logger.info('Waiting for cfme provision request for vm %s', vm_name)
         row_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
-        cells = {'Description': row_description}
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=900, delay=20)
-        assert 'Successfully' in row.last_message.text and row.status.text != 'Error'
+        request_row = Request(row_description)
+        wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=900, delay=20)
+        assert request_row.if_succeeded()
         return vm
 
     return _provisioner

@@ -11,13 +11,13 @@ from widgetastic_patternfly import Dropdown, Tab, FlashMessages
 
 from cfme import web_ui as ui
 from cfme.base.login import BaseLoggedInPage
+from cfme.web_ui import toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
-from cfme.services import requests
 
 buttons = Region(
     locators={
@@ -165,7 +165,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
 def wait_analysis_finished(task_name, task_type, delay=5, timeout='5M'):
     """ Wait until analysis is finished (or timeout exceeded)"""
     wait_for(lambda: is_analysis_finished(task_name, task_type),
-             delay=delay, timeout=timeout, fail_func=requests.reload)
+             delay=delay, timeout=timeout, fail_func=tb.refresh())
 
 
 class TasksView(BaseLoggedInPage):
