@@ -57,13 +57,13 @@ def test_vm_reconfigure_add_remove_hw(
     wait_for(
         lambda: small_vm.get_configuration() == new_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
-        message="confirm that HW was added")
+        message="confirm that {} was added".format(change_type))
 
     small_vm.reconfigure(orig_config)
     wait_for(
         lambda: small_vm.get_configuration() == orig_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
-        message="confirm that previously-added HW was removed")
+        message="confirm that previously-added {} was removed".format(change_type))
 
 
 @pytest.mark.parametrize('power_type', ['hot', 'cold'])
@@ -82,7 +82,7 @@ def test_vm_reconfigure_add_remove_disk(
 
     new_config = orig_config.copy()
     new_config.add_disk(
-        size=5, size_unit='GB', type_=disk_type, mode=disk_mode, dependent=disk_dependent)
+        size=5, size_unit='GB', type=disk_type, mode=disk_mode, dependent=disk_dependent)
 
     small_vm.reconfigure(new_config)
     wait_for(
