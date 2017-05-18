@@ -1,3 +1,5 @@
+#!/bin/python
+
 import argparse
 import yaml
 import time
@@ -21,10 +23,10 @@ console_handler.setFormatter(logging.Formatter(formatter))
 logger.addHandler(console_handler)
 
 
-class cfmeUpgradeManeger(IPAppliance):
+class CfmeUpgradeManeger(IPAppliance):
 
     def __init__(self, appliance_ip, repo_list, dest_version):
-        super(cfmeUpgradeManeger, self).__init__(address=appliance_ip)
+        super(CfmeUpgradeManeger, self).__init__(address=appliance_ip)
         self.repo_list = repo_list
         self.dest_version = dest_version
 
@@ -198,7 +200,7 @@ def main():
                 params.update({key: requierd_fildes.get(key).get("default")})
 
     logger.info("Starting system upgrade")
-    cfme_upgrader = cfmeUpgradeManeger(params["address"],
+    cfme_upgrader = CfmeUpgradeManeger(params["address"],
                                        repo_list=params["repo"],
                                        dest_version=params["dest_version"])
 
