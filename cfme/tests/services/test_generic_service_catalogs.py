@@ -7,7 +7,7 @@ from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
 from selenium.common.exceptions import NoSuchElementException
@@ -81,14 +81,9 @@ def test_service_generic_catalog_bundle(catalog_item):
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=900, delay=20)
-    # Success message differs between 5.6 and 5.7
-    if version.current_version() >= '5.7':
-        assert 'Provisioned Successfully' in row.last_message.text
-    else:
-        assert row.last_message.text == 'Request complete'
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=900, delay=20)
+    assert request_row.if_succeeded()
 
 
 def test_bundles_in_bundle(catalog_item):
@@ -112,14 +107,9 @@ def test_bundles_in_bundle(catalog_item):
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = third_bundle_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=900, delay=20)
-    # Success message differs between 5.6 and 5.7
-    if version.current_version() >= '5.7':
-        assert 'Provisioned Successfully' in row.last_message.text
-    else:
-        assert row.last_message.text == 'Request complete'
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=900, delay=20)
+    assert request_row.if_succeeded()
 
 
 def test_delete_dialog_before_parent_item(catalog_item):

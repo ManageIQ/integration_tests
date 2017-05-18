@@ -17,7 +17,7 @@ from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.services import requests
+from cfme.services.requests import Request
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
@@ -517,8 +517,9 @@ class Vm(BaseVM):
         from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         cells = {'Description': 'Publish from [{}] to [{}]'.format(self.name, template_name)}
-        row, __ = wait_for(
-            requests.wait_for_request, [cells], fail_func=requests.reload, num_sec=900, delay=20)
+        request_row = Request(cells=cells)
+        wait_for(
+            request_row.is_finished, fail_func=request_row.reload, num_sec=900, delay=20)
         return Template(template_name, self.provider)
 
     @property

@@ -119,7 +119,7 @@ def test_pxe_servicecatalog(setup_provider, provider, catalog_item, request):
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
-    request = Request(row_description, partial_check=True)
-    wait_for(request.is_finished, fail_func=request.reload, num_sec=3100, delay=20,
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=3100, delay=20,
              message='Waiting for request to finish')
-    assert request.row.last_message.text == 'Request complete'
+    assert request_row.if_succeeded()

@@ -219,44 +219,44 @@ class RequestDetailsToolBar(RequestView):
 class RequestDetailsView(RequestView):
     # TODO Add Request details elements
     @View.nested
-    class details(View):
+    class details(View): # noqa
         # Form ? or just test values
         pass
 
     @View.nested
-    class request(Tab):
+    class request(Tab):  # noqa
         pass
 
     @View.nested
-    class purpose(Tab):
+    class purpose(Tab): # noqa
         pass
 
     @View.nested
-    class catalog(Tab):
+    class catalog(Tab): # noqa
         pass
 
     @View.nested
-    class environment(Tab):
+    class environment(Tab): # noqa
         pass
 
     @View.nested
-    class hardware(Tab):
+    class hardware(Tab): # noqa
         pass
 
     @View.nested
-    class network(Tab):
+    class network(Tab): # noqa
         pass
 
     @View.nested
-    class properties(Tab):
+    class properties(Tab): # noqa
         pass
 
     @View.nested
-    class customize(Tab):
+    class customize(Tab): # noqa
         pass
 
     @View.nested
-    class schedule(Tab):
+    class schedule(Tab): # noqa
         pass
 
     breadcrumb = BreadCrumb()

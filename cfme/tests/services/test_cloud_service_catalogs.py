@@ -8,7 +8,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
 from utils import testgen
@@ -104,7 +104,6 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=1200, delay=20)
-    assert row.request_state.text == 'Finished'
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=1200, delay=20)
+    assert request_row.if_succeeded()

@@ -9,7 +9,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash
 from utils.wait import wait_for
 from utils import testgen
@@ -96,10 +96,9 @@ def create_vm(provider, setup_provider, catalog_item, request):
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1400, delay=20)
-    assert row.last_message.text == 'Request complete'
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=1400, delay=20)
+    assert request_row.if_succeeded()
     return vm_name
 
 
@@ -118,7 +117,6 @@ def test_vm_clone(provider, clone_vm_name, request, create_vm):
         provision_type = 'VMware'
     vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
     row_description = clone_vm_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=4000, delay=20)
-    assert row.last_message.text == 'Vm Provisioned Successfully'
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=4000, delay=20)
+    assert request_row.if_succeeded()
