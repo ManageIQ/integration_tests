@@ -17,13 +17,13 @@ pytestmark = [pytest.mark.tier(2), pytest.mark.usefixtures("setup_provider_modsc
 pytest_generate_tests = testgen.generate([InfraProvider], scope='module')
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.yield_fixture(scope='session')
 def new_vm(provider):
+    logger.warn('new_vm setup')
     vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
     yield vm
 
-    if vm.exists:
-        vm.delete()
+    logger.warn('new_vm teardown')
 
 
 class VMEvent(object):
@@ -87,15 +87,29 @@ class VMEvent(object):
         pass
 
 
-@pytest.mark.parametrize('vm_event', ('create', 'stop', 'start', 'suspend', 'resume', 'delete'))
-def test_event(new_vm, vm_event):
-    event = VMEvent(vm=new_vm, event=vm_event)
+@pytest.mark.parametrize('vm_event', ['create', 'stop', 'start', 'suspend', 'resume', 'delete'], ids=['create', 'stop', 'start', 'suspend', 'resume', 'delete'])
+def test_event(vm_event, new_vm):
+    # event = VMEvent(vm=new_vm, event=vm_event)
     # gen event
-    event.emit()
+    # event.emit()
     # check event in db
-    event.catch_in_db()
+    # event.catch_in_db()
     # check vm/host/cluster/provider timelines
-    event.catch_in_timelines()
+    # event.catch_in_timelines()
+    logger.warn(new_vm.name)
+    pass
+
+
+def test_event_blabla(new_vm):
+    # event = VMEvent(vm=new_vm, event=vm_event)
+    # gen event
+    # event.emit()
+    # check event in db
+    # event.catch_in_db()
+    # check vm/host/cluster/provider timelines
+    # event.catch_in_timelines()
+    logger.warn(new_vm.name)
+    pass
 
 
 class TestVmEventRESTAPI(object):
