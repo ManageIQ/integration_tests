@@ -13,7 +13,8 @@ pytest_generate_tests = testgen.generate(
     required_fields=['small_template'],
     scope="module")
 
-pytestmark = [pytest.mark.usefixtures('setup_provider')]
+pytestmark = [
+    pytest.mark.usefixtures('setup_provider'), pytest.mark.long_running, pytest.mark.tier(2)]
 
 
 @pytest.yield_fixture(scope='module')
@@ -37,7 +38,8 @@ def ensure_power_state(small_vm, power_type):
         small_vm.wait_for_vm_state_change(small_vm.STATE_ON)
 
 
-@pytest.mark.parametrize('power_type', ['hot', 'cold'])
+# TODO power_type 'hot'
+@pytest.mark.parametrize('power_type', ['cold'])
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfigure_add_remove_hw(
         provider, small_vm, ensure_power_state, power_type, change_type):
@@ -66,17 +68,17 @@ def test_vm_reconfigure_add_remove_hw(
         message="confirm that previously-added {} was removed".format(change_type))
 
 
-@pytest.mark.parametrize('power_type', ['hot', 'cold'])
+# TODO power_type 'hot'
+@pytest.mark.parametrize('power_type', ['cold'])
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
-# Mode and Depeendent are put together because we don't want nonpersistent-independent combo
-@pytest.mark.parametrize(
-    'disk_mode_dependent',
-    [['persistent', True], ['persistent', False], ['nonpersistent', True]],
-    ids=['persistent-dependent', 'persistent-independent', 'nonpersistent-dependent'])
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
+@pytest.mark.parametrize('disk_mode', ['persistent', 'nonpersistent'])
+@pytest.mark.parametrize('disk_dependent', [True, False])
+@pytest.mark.uncollectif(
+    lambda provider, disk_mode, disk_dependent:
+        provider.one_of(RHEVMProvider) or
+        (disk_mode == 'nonpersistent' and disk_dependent is False))
 def test_vm_reconfigure_add_remove_disk(
-        provider, small_vm, ensure_power_state, power_type, disk_type, disk_mode_dependent):
-    disk_mode, disk_dependent = disk_mode_dependent
+        provider, small_vm, ensure_power_state, power_type, disk_type, disk_mode, disk_dependent):
 
     orig_config = small_vm.get_configuration()
 
