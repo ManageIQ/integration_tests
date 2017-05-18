@@ -112,11 +112,10 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         'password': credentials[provider.data['full_template']['creds']]['password'],
         'hostname': ip
     }
-<<<<<<< HEAD
     with SSHClient(**ssh_kwargs) as ssh_client:
-        ssh.run_command('touch snapshot1.txt')
+        ssh_client.run_command('touch snapshot1.txt')
         snapshot1.create()
-        ssh.run_command('touch snapshot2.txt')
+        ssh_client.run_command('touch snapshot2.txt')
         if provider.type == 'rhevm':
             snapshot2 = new_snapshot(test_vm, has_name=False)
         else:
