@@ -3,12 +3,9 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
-from cfme.web_ui import InfoBlock
 from utils import version, testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.generators import random_vm_name
@@ -16,97 +13,103 @@ from utils.log import logger
 from utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.tier(2),
-              pytest.mark.usefixtures("setup_provider_modscope")]
+pytestmark = [pytest.mark.tier(2), pytest.mark.usefixtures("setup_provider_modscope")]
 pytest_generate_tests = testgen.generate([InfraProvider], scope='module')
 
 
-@pytest.fixture(scope="module")
-def test_vm(request, provider):
+@pytest.yield_fixture(scope='session')
+def new_vm(provider):
+    logger.warn('new_vm setup')
     vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
+    yield vm
 
-    request.addfinalizer(vm.delete_from_provider)
-
-    if not provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
-    return vm
+    logger.warn('new_vm teardown')
 
 
-@pytest.fixture(scope="module")
-def gen_events(test_vm):
-    logger.debug('Starting, stopping VM')
-    mgmt = test_vm.provider.mgmt
-    mgmt.stop_vm(test_vm.name)
-    mgmt.start_vm(test_vm.name)
+class VMEvent(object):
+    def __init__(self, vm, event):
+        self.vm = vm
+
+        self.action = event
+        if self.action == 'create':
+            self.tl_event = 'VmDeployedEvent'
+            self.tl_category = 'Creation/Addition'
+            self.db_event = ''
+            self.emit_cmd = lambda: self.vm.create_on_provider(allow_skip="default",
+                                                               find_in_cfme=True)
+        elif self.action == 'stop':
+            self.tl_event = 'VmPoweredOffEvent'
+            self.tl_category = 'Power Activity'
+            self.db_event = ''
+            self.emit_cmd = lambda: self.vm.provider.mgmt.stop_vm(self.vm.name)
+        elif self.action == ('start', 'resume'):
+            self.tl_event = 'VmPoweredOnEvent'
+            self.tl_category = 'Power Activity'
+            self.db_event = ''
+            self.emit_cmd = lambda: self.vm.provider.mgmt.start_vm(self.vm.name)
+        elif self.action == 'suspend':
+            self.tl_event = 'VmSuspendedEvent'
+            self.tl_category = 'Power Activity'
+            self.db_event = ''
+            self.emit_cmd = lambda: self.vm.provider.mgmt.suspend_vm(self.vm.name)
+        elif self.action == 'delete':
+            self.tl_event = 'VmRemovedEvent'
+            self.tl_category = 'Deletion/Removal'
+            self.db_event = ''
+            self.emit_cmd = lambda: self.vm.provider.mgmt.delete_vm(self.vm.name)
+
+    def emit(self):
+        self.emit_cmd()
+
+    def catch_in_timelines(self):
+        for target in (self.vm, self.vm.host, self.vm.cluster, self.vm.provider):
+            wait_for(self._check_timelines, [target], timeout='5m', fail_condition=0,
+                     message="events to appear")
+
+    def _check_timelines(self, target):
+        timelines_view = navigate_to(target, 'Timelines')
+        timelines_view.filter.time_position.select_by_visible_text('centered')
+        timelines_view.filter.apply.click()
+        found_events = []
+        for evt in timelines_view.chart.get_events():
+            if not hasattr(evt, 'source_vm'):
+                # BZ(1428797)
+                logger.warn(
+                    "event {evt} doesn't have source_vm field. Probably issue".format(evt=evt))
+                continue
+            elif evt.source_vm == self.vm.name and evt.event_type == self.tl_event:
+                found_events.append(evt)
+
+        logger.info("found events: {evt}".format(evt="\n".join([repr(e) for e in found_events])))
+        return len(found_events)
+
+    def catch_in_db(self):
+        pass
 
 
-def count_events(target, vm):
-    timelines_view = navigate_to(target, 'Timelines')
-    timelines_view.filter.time_position.select_by_visible_text('centered')
-    timelines_view.filter.apply.click()
-    found_events = []
-    for evt in timelines_view.chart.get_events():
-        if not hasattr(evt, 'source_vm'):
-            # BZ(1428797)
-            logger.warn("event {evt} doesn't have source_vm field. Probably issue".format(evt=evt))
-            continue
-        elif evt.source_vm == vm.name:
-            found_events.append(evt)
-
-    logger.info("found events: {evt}".format(evt="\n".join([repr(e) for e in found_events])))
-    return len(found_events)
+@pytest.mark.parametrize('vm_event', ['create', 'stop', 'start', 'suspend', 'resume', 'delete'], ids=['create', 'stop', 'start', 'suspend', 'resume', 'delete'])
+def test_event(vm_event, new_vm):
+    # event = VMEvent(vm=new_vm, event=vm_event)
+    # gen event
+    # event.emit()
+    # check event in db
+    # event.catch_in_db()
+    # check vm/host/cluster/provider timelines
+    # event.catch_in_timelines()
+    logger.warn(new_vm.name)
+    pass
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_provider_event(gen_events, test_vm):
-    """Tests provider event on timelines
-
-    Metadata:
-        test_flag: timelines, provision
-    """
-
-    wait_for(count_events, [test_vm.provider, test_vm], timeout='5m', fail_condition=0,
-             message="events to appear")
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_host_event(gen_events, test_vm):
-    """Tests host event on timelines
-
-    Metadata:
-        test_flag: timelines, provision
-    """
-    test_vm.load_details()
-    host_name = InfoBlock.text('Relationships', 'Host')
-    host = Host(name=host_name, provider=test_vm.provider)
-    wait_for(count_events, [host, test_vm], timeout='10m', fail_condition=0,
-             message="events to appear")
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_vm_event(gen_events, test_vm):
-    """Tests vm event on timelines
-
-    Metadata:
-        test_flag: timelines, provision
-    """
-
-    wait_for(count_events, [test_vm, test_vm], timeout='3m', fail_condition=0,
-             message="events to appear")
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_cluster_event(gen_events, test_vm):
-    """Tests cluster event on timelines
-
-    Metadata:
-        test_flag: timelines, provision
-    """
-    all_clusters = test_vm.provider.get_clusters()
-    cluster = next(cl for cl in all_clusters if cl.id == test_vm.cluster_id)
-    wait_for(count_events, [cluster, test_vm], timeout='5m',
-             fail_condition=0, message="events to appear")
+def test_event_blabla(new_vm):
+    # event = VMEvent(vm=new_vm, event=vm_event)
+    # gen event
+    # event.emit()
+    # check event in db
+    # event.catch_in_db()
+    # check vm/host/cluster/provider timelines
+    # event.catch_in_timelines()
+    logger.warn(new_vm.name)
+    pass
 
 
 class TestVmEventRESTAPI(object):
