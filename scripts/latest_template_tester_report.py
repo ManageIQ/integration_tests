@@ -37,6 +37,7 @@ def parse_cmd_line():
     return args
 
 
+# TODO is this completely unused?
 def make_ssh_client(rhevip, sshname, sshpass):
     connect_kwargs = {
         'username': sshname,
