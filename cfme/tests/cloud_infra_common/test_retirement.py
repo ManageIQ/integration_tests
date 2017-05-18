@@ -41,6 +41,12 @@ warnings = [
 
 @pytest.yield_fixture(scope="function")
 def test_vm(small_template, provider):
+    """Fixture for creating a generic vm/instance
+
+    Args:
+        small_template: small template fixture, template on provider
+        provider: provider crud object from fixture
+    """
     vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     yield vm
@@ -54,6 +60,11 @@ def test_vm(small_template, provider):
 
 @pytest.yield_fixture(scope="function")
 def test_ec2_s3_vm(provider):
+    """Fixture for creating an S3 backed paravirtual instance, template is a public ec2 AMI
+
+    Args:
+        provider: provider crud object from fixture
+    """
     vm = VM.factory(random_vm_name('retire'), provider,
                     template_name='amzn-ami-pv-2015.03.rc-1.x86_64-s3')
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -67,6 +78,11 @@ def test_ec2_s3_vm(provider):
 
 
 def verify_retirement_state(test_vm):
+    """Verify the vm/instance is in the 'retired' state in the UI and assert its power state
+
+    Args:
+        test_vm: vm/instance object
+    """
     # wait for the info block showing a date as retired date
     # Use lambda for is_retired since its a property
     assert wait_for(lambda: test_vm.is_retired, delay=5, num_sec=10 * 60, fail_func=tb.refresh,
@@ -105,6 +121,12 @@ def verify_retirement_date(test_vm, expected_date='Never'):
 
 
 def generate_retirement_date(delta=None):
+    """Generate a retirement date that can be used by the VM.retire() method, adding delta
+
+    Args:
+        delta: a :py:class: `int` that will be added to today's date
+    Returns: a :py:class: `datetime.date` object including delta as an offset from today
+    """
     gen_date = date.today()
     if delta:
         gen_date += timedelta(days=delta)
@@ -112,6 +134,9 @@ def generate_retirement_date(delta=None):
 
 
 def generate_retirement_date_now():
+    """Generate a UTC datetime object for now
+    Returns: a :py:class: `datetime.datetime` object for the current UTC date + time
+    """
     return datetime.utcnow()
 
 
@@ -139,7 +164,7 @@ def test_retirement_now_ec2_instance_backed(test_ec2_s3_vm, tagged):
     """Tests on-demand retirement of an instance/vm
 
     S3 (instance-backed) EC2 instances that aren't lifecycle tagged won't get shut down
-       """
+    """
     # Tag the VM with lifecycle for full retirement based on parameter
     if tagged:
         test_ec2_s3_vm.add_tag(('LifeCycle', 'Fully retire VM and remove from Provider'),
