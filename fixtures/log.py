@@ -94,7 +94,7 @@ def _test_status(test_name):
         return 'skipped'
     # Otherwise, report the call phase outcome (passed, skipped, or failed)
     else:
-        return test_phase['call']
+        return test_phase.get('call', 'skipped')
 
 
 def _format_nodeid(nodeid, strip_filename=True):
