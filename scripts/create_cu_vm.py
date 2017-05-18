@@ -80,9 +80,11 @@ def cu_vm(provider, vm_name, template):
     Deploys CU VM
     """
     provider_dict = cfme_data['management_systems'][provider]
+    # TODO this key isn't in cfme qe yamls
     datastore = provider_dict['cap_and_util']['allowed_datastores']
     resource_pool = provider_dict['cap_and_util']['resource_pool']
 
+    # TODO methods deploy_template calls don't accept resourcepool and  allowed_datastores as kwargs
     deploy_template(provider, vm_name, template,
         resourcepool=resource_pool, allowed_datastores=datastore)
 
@@ -90,17 +92,19 @@ def cu_vm(provider, vm_name, template):
     vm_running(prov_mgmt, vm_name)
     ip = prov_mgmt.get_ip_address(vm_name)
 
+    # TODO this key isn't in cfme qe yamls
     vm_ssh_creds = provider_dict['capandu_vm_creds']
     sshname = credentials[vm_ssh_creds]['username']
     sshpass = credentials[vm_ssh_creds]['password']
 
     # Create cron jobs to generate disk and network activity on the CU VM.
-    ssh_client = make_ssh_client(ip, sshname, sshpass)
-    try:
-        config_cu_vm(ssh_client)
-    except CUCommandException:
-        _vm_cleanup(prov_mgmt, vm_name)
-        raise
+    with make_ssh_client(ip, sshname, sshpass) as ssh_client:
+        try:
+            config_cu_vm(ssh_client)
+        except CUCommandException:
+            _vm_cleanup(prov_mgmt, vm_name)
+            raise
+
     vm_running(prov_mgmt, vm_name)
 
 
