@@ -53,7 +53,7 @@ class Tenant(Navigatable):
         sel.click(form_buttons.cancel if cancel else create_tenant_form.save_button)
 
         if cancel:
-            return flash.assert_success_message('Add of new Cloud Tenant was cancelled by the user')
+            return flash.assert_no_errors()
         else:
             return flash.assert_success_message('Cloud Tenant "{}" created'.format(self.name))
 
