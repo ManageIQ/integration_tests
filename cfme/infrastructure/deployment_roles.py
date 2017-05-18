@@ -65,18 +65,17 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
+        nav_select = partial(self.prerequisite_view.navigation.select, 'Compute', 'Infrastructure')
         try:
-            self.prerequisite_view.navigation.select('Compute', 'Infrastructure',
-                                                     'Deployment Roles')
+            nav_select('Deployment Roles')
         except NoSuchElementException:
-            self.prerequisite_view.navigation.select('Compute', 'Infrastructure',
-                                                     'Clusters / Deployment Roles')
+            nav_select('Clusters / Deployment Roles')
 
     def am_i_here(self):
-        option1 = match_page(title='Deployment Roles', summary='Deployment Roles')
-        option2 = match_page(title='Clusers / Deployment Roles',
-                             summary='Clusers / Deployment Roles')
-        return option1 or option2
+        def match(option):
+            return match_page(title=option, summary=option)
+
+        return match('Clusters / Deployment Roles') or match('Deployment Roles')
 
 
 @navigator.register(DeploymentRoles, 'AllForProvider')
@@ -86,12 +85,14 @@ class AllForProvider(CFMENavigateStep):
         navigate_to(self.obj.provider, 'Details')
 
     def step(self):
+        def list_acc_select(option):
+            list_acc.select('Relationships', 'Show all managed {}'.format(option), by_title=True,
+                            partial=False)
+
         try:
-            list_acc.select('Relationships', 'Show all managed Deployment Roles',
-                            by_title=True, partial=False)
+            list_acc_select('Deployment Roles')
         except ListAccordionLinkNotFound:
-            list_acc.select('Relationships', 'Show all managed Clusters / Deployment Roles',
-                            by_title=True, partial=False)
+            list_acc_select('Clusters / Deployment Roles')
 
     def am_i_here(self):
         def match(option):
