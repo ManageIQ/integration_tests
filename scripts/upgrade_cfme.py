@@ -87,15 +87,12 @@ class CfmeUpgradeManeger(IPAppliance):
                 res = self.exec_commaned(""" ps -ef | grep "yum update" | grep -v grep """,
                                          ignore_failure=True)
 
-        logger.info("importing all gpg keys for yum repositories")
-        self.ssh_client.run_command("rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-*")
-
         # start thr monitoring thread
         monitor = threading.Thread(target=monitor_yum)
         monitor.start()
 
         logger.info("initiating yum update")
-        self.ssh_client.run_command("yum update -y")
+        self.ssh_client.run_command("yum update -y --nogpgcheck")
 
     def stop_cfme(self):
         '''
