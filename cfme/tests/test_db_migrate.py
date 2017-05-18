@@ -114,4 +114,8 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
         .format(app.user.credential.secret))
     assert rc == 0, "Failed to change UI password of {} to {}:" \
                     .format(app.user.credential.principal, app.user.credential.secret, out)
+
     login(app.user)
+
+    for prov in app.managed_known_providers:
+        prov.validate_stats(ui=True)
