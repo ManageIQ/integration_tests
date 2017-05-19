@@ -84,3 +84,6 @@ conf/README
 
 # virtual env
 .cfme/
+
+# custom imports
+conf/miq_python_startup.py
