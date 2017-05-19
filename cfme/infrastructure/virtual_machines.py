@@ -262,7 +262,7 @@ class VMConfiguration(Pretty):
                 changes[key] = str(getattr(other_configuration.hw, key))
                 changes['cpu'] = True
         if self.hw.mem_size != other_configuration.hw.mem_size \
-                or self.hw.mem_size_unit != other_configuration.mem_size_unit:
+                or self.hw.mem_size_unit != other_configuration.hw.mem_size_unit:
             changes['memory'] = True
             changes['mem_size'] = other_configuration.hw.mem_size
             changes['mem_size_unit'] = other_configuration.hw.mem_size_unit
