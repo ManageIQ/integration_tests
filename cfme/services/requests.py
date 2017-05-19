@@ -2,11 +2,11 @@
 from contextlib import contextmanager
 from functools import partial
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Table
-from widgetastic_manageiq import BreadCrumb
-from widgetastic_patternfly import Button, View, Input, Tab
+from widgetastic.widget import Text, Table, Checkbox
+from widgetastic_manageiq import BreadCrumb, SummaryFormItem
+from widgetastic_patternfly import Button, View, Input, Tab, BootstrapTreeview
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
@@ -16,19 +16,6 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
-"""
-buttons = Region(
-    locators=dict(
-        approve="//*[@title='Approve this Request']",
-        deny="//*[@title='Deny this Request']",
-        copy="//*[@title='Copy original Request']",
-        edit="//*[@title='Edit the original Request']",
-        delete="//*[@title='Delete this Request']",
-        submit="//span[@id='buttons_on']/a[@title='Submit']",
-        cancel="//a[@title='Cancel']",
-    )
-)
-"""
 request_table = PagedTable(table_locator='//*[@id="list_grid"]/table')
 
 fields = Region(
@@ -70,7 +57,6 @@ def find_request(cells, partial_check=False):
         return False
 
 
-# TODO Refactor these module methods and their callers for a proper request class
 class Request(Navigatable):
     def __init__(self, row_description=None, cells=None, partial_check=False, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -93,6 +79,8 @@ class Request(Navigatable):
         toolbar.refresh()
 
     def update_row(self):
+        """Updates Request object details - last message, status etc
+        """
         self.row = find_request(self.cells, self.partial_check)
 
     def approve_request(self, reason, cancel=False):
@@ -127,13 +115,7 @@ class Request(Navigatable):
         view.delete(cancel)
 
     def is_finished(self):
-        """helper function checks if a request is complete
-
-        Raises:
-            RequestException: if multiple matching requests were found
-
-        Returns:
-             The matching :py:class:`cfme.web_ui.Table.Row` if found, ``False`` otherwise.
+        """Helper function checks if a request is completed
         """
         self.update_row()
         self.row = find_request(self.cells, self.partial_check)
@@ -217,47 +199,113 @@ class RequestDetailsToolBar(RequestView):
 
 
 class RequestDetailsView(RequestView):
-    # TODO Add Request details elements
     @View.nested
-    class details(View): # noqa
-        # Form ? or just test values
-        pass
+    class details(View):  # noqa
+        request_id = SummaryFormItem('Request Details', 'Request ID')
+        status = SummaryFormItem('Request Details', 'Status')
+        request_state = SummaryFormItem('Request Details', 'Request State')
+        requester = SummaryFormItem('Request Details', 'Requester')
+        request_type = SummaryFormItem('Request Details', 'Request Type')
+        description = SummaryFormItem('Request Details', 'Description')
+        last_message = SummaryFormItem('Request Details', 'Last Message')
+        created_on = SummaryFormItem('Request Details', 'Created On')
+        last_update = SummaryFormItem('Request Details', 'Last Update')
+        completed = SummaryFormItem('Request Details', 'Completed')
+        approval_state = SummaryFormItem('Request Details', 'Approval State')
+        approved_by = SummaryFormItem('Request Details', 'Approved/Denied by')
+        approved_on = SummaryFormItem('Request Details', 'Approved/Denied on')
+        reason = SummaryFormItem('Request Details', 'Reason')
+        provisioned_vms = SummaryFormItem('Request Details', 'Provisioned VMs')
 
     @View.nested
     class request(Tab):  # noqa
-        pass
+        TAB_NAME = 'Request'
+        email = SummaryFormItem('Request Information', 'E-Mail')
+        first_name = SummaryFormItem('Request Information', 'First Name')
+        last_name = SummaryFormItem('Request Information', 'Last Name')
+        notes = SummaryFormItem('Request Information', 'Notes')
+        manager_name = SummaryFormItem('Manager', 'Name')
 
     @View.nested
-    class purpose(Tab): # noqa
-        pass
+    class purpose(Tab):  # noqa
+        TAB_NAME = 'Purpose'
+        apply_tags = BootstrapTreeview('all_tags_treebox')
 
     @View.nested
-    class catalog(Tab): # noqa
-        pass
+    class catalog(Tab):  # noqa
+        TAB_NAME = 'Catalog'
+        filter = SummaryFormItem('Select', 'Filter')
+        name = SummaryFormItem('Select', 'Name')
+        provision_type = SummaryFormItem('Select', 'Provision Type')
+        linked_clone = Checkbox(id='service__linked_clone')
+        vm_count = SummaryFormItem('Number of VMs', 'Count')
+        instance_count = SummaryFormItem('Number of Instances', 'Count')
+        vm_name = SummaryFormItem('Naming', 'VM Name')
+        instance_name = SummaryFormItem('Naming', 'Instance Name')
+        vm_description = SummaryFormItem('Naming', 'VM Description')
 
     @View.nested
-    class environment(Tab): # noqa
-        pass
+    class environment(Tab):  # noqa
+        TAB_NAME = 'Environment'
+
+        automatic_placement = Checkbox(name='environment__placement_auto')
+        # Azure
+        virtual_private_cloud = SummaryFormItem('Placement - Options', 'Virtual Private Cloud')
+        cloud_subnet = SummaryFormItem('Placement - Options', 'Cloud Subnet')
+        security_groups = SummaryFormItem('Placement - Options', 'Security Groups')
+        resource_groups = SummaryFormItem('Placement - Options', 'Resource Groups')
+        public_ip_address = SummaryFormItem('Placement - Options', 'Public IP Address ')
+        # GCE
+        availability_zone = SummaryFormItem('Placement - Options', 'Availability Zones')
+        cloud_network = SummaryFormItem('Placement - Options', 'Cloud Network')
+        # Infra
+        datacenter = SummaryFormItem('Datacenter', 'Name')
+        cluster = SummaryFormItem('Cluster', 'Name')
+        resource_pool = SummaryFormItem('Resource Pool', 'Name')
+        folder = SummaryFormItem('Folder', 'Name')
+        host_filter = SummaryFormItem('Host', 'Filter')
+        host_name = SummaryFormItem('Host', 'Name')
+        datastore_storage_profile = SummaryFormItem('Datastore', 'Storage Profile')
+        datastore_filter = SummaryFormItem('Datastore', 'Filter')
+        datastore_name = SummaryFormItem('Datastore', 'Name')
 
     @View.nested
-    class hardware(Tab): # noqa
-        pass
+    class hardware(Tab):  # noqa
+        num_cpus = SummaryFormItem('Hardware', 'Number of CPUS')
+        memory = SummaryFormItem('Hardware', 'Startup Memory (MB)')
+        dynamic_memory = SummaryFormItem('Hardware', 'Dynamic Memory')
+        vm_limit_cpu = SummaryFormItem('VM Limits', 'CPU (%)')
+        vm_reserve_cpu = SummaryFormItem('VM Reservations', 'CPU (%)')
 
     @View.nested
-    class network(Tab): # noqa
-        pass
+    class network(Tab):  # noqa
+        vlan = SummaryFormItem('Network Adapter Information', 'vLan')
 
     @View.nested
-    class properties(Tab): # noqa
-        pass
+    class properties(Tab):  # noqa
+        instance_type = SummaryFormItem('Properties', 'Instance Type')
+        boot_disk_size = SummaryFormItem('Properties', 'Boot Disk Size ')
+        is_preemtible = Checkbox(name='hardware__is_preemptible')
 
     @View.nested
-    class customize(Tab): # noqa
-        pass
+    class customize(Tab):  # noqa
+        username = SummaryFormItem('Credentials', 'Username')
+        ip_mode = SummaryFormItem('IP Address Information', 'Address Mode')
+        hostname = SummaryFormItem('IP Address Information', 'Address Mode')
+        subnet_mask = SummaryFormItem('IP Address Information', 'Subnet Mask')
+        gateway = SummaryFormItem('IP Address Information', 'Gateway')
+        dns_server_list = SummaryFormItem('DNS', 'DNS Server list')
+        dns_suffix_list = SummaryFormItem('DNS', 'DNS Suffix list')
+        subnet_mask = SummaryFormItem('IP Address Information', 'Subnet Mask')
+        customize_template = SummaryFormItem('Customize Template', 'Script Name')
 
     @View.nested
-    class schedule(Tab): # noqa
-        pass
+    class schedule(Tab):  # noqa
+        when_provision = SummaryFormItem('Schedule Info', 'When to Provision')
+        stateless = Checkbox(name='shedule__stateless')
+        power_on = SummaryFormItem('Lifespan', 'Power on virtual machines after creation')
+        retirement = SummaryFormItem('Lifespan', 'Time until Retirement')
+        retirement_warning = SummaryFormItem('Lifespan', 'Retirement Warning')
 
     breadcrumb = BreadCrumb()
     toolbar = RequestDetailsToolBar()

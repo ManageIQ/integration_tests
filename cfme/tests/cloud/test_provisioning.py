@@ -139,7 +139,7 @@ def test_provision_from_template(provider, testing_instance, soft_assert):
     try:
         wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=1500, delay=20)
     except Exception as e:
-        request_row.debug_requests()
+        request_row.debug_request()
         raise e
     assert request_row.if_succeeded(), \
         "Provisioning failed with the message {}".format(request_row.row.last_message.text)
