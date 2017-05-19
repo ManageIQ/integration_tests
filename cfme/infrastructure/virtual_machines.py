@@ -135,15 +135,20 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
 
 class VMDisk(
-        # Use namedtuple because disk can't be modified, once created
         namedtuple('VMDisk', ['filename', 'size', 'size_unit', 'type', 'mode', 'dependent'])):
+    """Represents a single VM disk
+
+    Note:
+        Cannot be changed once created.
+    """
+    EQUAL_ATTRS = {'type', 'mode', 'dependent', 'size_mb'}
 
     def __eq__(self, other):
         # If both have filename, it's easy
         if self.filename and other.filename:
             return self.filename == other.filename
         # If one of filenames is None (before disk is created), compare the rest
-        for attr in ['type', 'mode', 'dependent', 'size_mb']:
+        for attr in self.EQUAL_ATTRS:
             if getattr(self, attr) != getattr(other, attr):
                 return False
         return True
@@ -154,6 +159,9 @@ class VMDisk(
 
 
 class VMHardware(object):
+    """Represents VM's hardware, i.e. CPU (cores, sockets) and memory
+    """
+    EQUAL_ATTRS = {'cores_per_socket', 'sockets', 'mem_size_mb'}
 
     def __init__(self, cores_per_socket=None, sockets=None, mem_size=None, mem_size_unit='MB'):
         self.cores_per_socket = cores_per_socket
@@ -162,7 +170,7 @@ class VMHardware(object):
         self.mem_size_unit = mem_size_unit
 
     def __eq__(self, other):
-        for attr in ['cores_per_socket', 'sockets', 'mem_size_mb']:
+        for attr in self.EQUAL_ATTRS:
             if getattr(self, attr) != getattr(other, attr):
                 return False
         return True
@@ -173,29 +181,37 @@ class VMHardware(object):
 
 
 class VMConfiguration(Pretty):
+    """Represents VM's full configuration - hardware, disks and so forth
 
+    Args:
+        vm: VM that exists within current appliance
+
+    Note:
+        It can be only instantiated by fetching an existing VM's configuration, as it is designed
+        to be used to reconfigure an existing VM.
+    """
     pretty_attrs = ['hw', 'num_disks']
 
     def __init__(self, vm):
         self.hw = VMHardware()
         self.disks = []
-        self._vm = vm
+        self.vm = vm
         self._load()
 
     def __eq__(self, other):
         return (self.hw == other.hw) and (self.disks == other.disks)
 
     def _load(self):
-        appl_db = self._vm.appliance.db
+        appl_db = self.vm.appliance.db
 
         # Hardware
         ems = appl_db['ext_management_systems']
         vms = appl_db['vms']
         hws = appl_db['hardwares']
         hw_data = appl_db.session.query(ems, vms, hws).filter(
-            ems.name == self._vm.provider.name).filter(
+            ems.name == self.vm.provider.name).filter(
             vms.ems_id == ems.id).filter(
-            vms.name == self._vm.name).filter(
+            vms.name == self.vm.name).filter(
             hws.vm_or_template_id == vms.id
         ).first().hardwares
         self.hw = VMHardware(
@@ -226,7 +242,7 @@ class VMConfiguration(Pretty):
         config.hw = copy(self.hw)
         # We can just make shallow copy here because disks can be only added or deleted, not edited
         config.disks = self.disks[:]
-        config._vm = self._vm
+        config.vm = self.vm
         return config
 
     def add_disk(self, size, size_unit='GB', type='thin', mode='persistent', dependent=True):
@@ -250,11 +266,11 @@ class VMConfiguration(Pretty):
         return len(self.disks)
 
     def get_changes_to_fill(self, other_configuration):
-        ''' Returns changes to be applied to this config to reach the other config
+        """ Returns changes to be applied to this config to reach the other config
 
         Note:
             Result of this method is used for form filling by VM's reconfigure method.
-        '''
+        """
         changes = {}
         changes['disks'] = []
         for key in ['cores_per_socket', 'sockets']:

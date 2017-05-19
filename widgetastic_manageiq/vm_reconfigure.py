@@ -1,4 +1,4 @@
-from widgetastic.widget import Table as VanillaTable, Text
+from widgetastic.widget import Table as VanillaTable
 from widgetastic.xpath import quote
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, Input
 
@@ -9,6 +9,7 @@ class DisksButton(Button):
     BTN_CONTAINER_LOC = "../h3//td[contains(@align, 'right') and contains(@id, 'buttons_on')]"
 
     def __locator__(self):
+        # Don't EVER do this, unless you are 100% sure that you have to! This is an exception!
         btn_loc = super(DisksButton, self).__locator__()
         loc = '{}/{}//{}'.format(self.parent.__locator__(), self.BTN_CONTAINER_LOC, btn_loc)
         return loc
@@ -21,7 +22,6 @@ class DisksTable(VanillaTable):
     add_disk_btn = DisksButton('contains', 'Add Disk', classes=[Button.PRIMARY])
     cancel_add_btn = DisksButton('contains', 'Cancel Add', classes=[Button.DEFAULT])
     column_widgets = {
-        'Name': Text(),  # can be empty!
         'Type': BootstrapSelect(id='hdType'),
         'Mode': BootstrapSelect(id='hdMode'),
         'Size': Input(id='dvcSize'),
