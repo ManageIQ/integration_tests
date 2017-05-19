@@ -382,7 +382,7 @@ def test_delete_default_roles():
 @pytest.mark.tier(3)
 def test_edit_default_roles():
     role = Role(name='EvmRole-auditor')
-    navigate_to(role, 'Edit')
+    navigate_to(role, 'EditViaSummary')
     flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
 
 

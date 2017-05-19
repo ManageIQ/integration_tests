@@ -29,6 +29,7 @@ edit_tags_form = Form(
 
 tag_table = Table("//div[@id='assignments_div']//table")
 users_table = Table("//div[@id='records_div']//table")
+roles_table = Table("//div[@id='records_div']//table")
 
 group_order_selector = UpDownSelect(
     "select#seq_fields",
@@ -474,6 +475,15 @@ class RoleEdit(CFMENavigateStep):
 
     def step(self):
         tb_select('Edit this Role')
+
+
+@navigator.register(Role, 'EditViaSummary')
+class RoleEditViaSummary(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        roles_table.click_row_by_cells({'name': self.obj.name})
+        tb_select('Edit the selected Role')
 
 
 class Tenant(Updateable, Pretty, Navigatable):
