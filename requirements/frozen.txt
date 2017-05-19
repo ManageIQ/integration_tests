@@ -141,7 +141,7 @@ requests==2.13.0
 requests-ntlm==1.0.0
 requestsexceptions==1.1.3
 rfc3986==0.4.1
-riggerlib==3.0.0
+riggerlib==3.0.2
 rsa==3.4.2
 ruamel.ordereddict==0.4.9
 ruamel.yaml==0.13.14
