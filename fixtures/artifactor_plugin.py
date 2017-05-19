@@ -218,6 +218,8 @@ def pytest_runtest_teardown(item, nextitem):
 
 
 def pytest_runtest_logreport(report):
+    if store.slave_manager:
+        return  # each node does its own reporting
     config = pytest.config  # tech debt
     name, location = get_test_idents(report)
     if hasattr(report, 'wasxfail'):
