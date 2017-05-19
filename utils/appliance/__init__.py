@@ -1948,6 +1948,50 @@ class IPAppliance(object):
         return result.output
 
     @cached_property
+    def evm_id(self):
+        miq_servers = self.db['miq_servers']
+        return self.db.session.query(miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
+
+    @property
+    def server_roles(self):
+        """Return a dictionary of server roles from database"""
+        asr = self.db['assigned_server_roles']
+        sr = self.db['server_roles']
+        all_role_names = {row[0] for row in self.db.session.query(sr.name)}
+        # Query all active server roles assigned to this server
+        query = self.db.session\
+            .query(sr.name)\
+            .join(asr, asr.server_role_id == sr.id)\
+            .filter(asr.miq_server_id == self.evm_id)\
+            .filter(asr.active == True)  # noqa
+        active_roles = {row[0] for row in query}
+        roles = {role_name: role_name in active_roles for role_name in all_role_names}
+        dead_keys = ['database_owner', 'vdi_inventory']
+        for key in roles:
+            if not self.is_storage_enabled:
+                if key.startswith('storage'):
+                    dead_keys.append(key)
+                if key == 'vmdb_storage_bridge':
+                    dead_keys.append(key)
+        for key in dead_keys:
+            try:
+                del roles[key]
+            except KeyError:
+                pass
+        return roles
+
+    @server_roles.setter
+    def server_roles(self, roles):
+        """Sets the server roles. Requires a dictionary full of the role keys with bool values."""
+        if self.server_roles == roles:
+            self.log.debug(' Roles already match, returning...')
+            return
+        yaml = self.get_yaml_config()
+        yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
+        self.set_yaml_config(yaml)
+        wait_for(lambda: self.server_roles == roles, num_sec=60, delay=5)
+
+    @cached_property
     def configuration_details(self):
         """Return details that are necessary to navigate through Configuration accordions.
 

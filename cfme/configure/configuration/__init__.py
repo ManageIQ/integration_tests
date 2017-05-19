@@ -1445,14 +1445,11 @@ def set_server_roles(db=True, **roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    yaml = store.current_appliance.get_yaml_config()
     if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
     if db:
-        yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
-        store.current_appliance.set_yaml_config(yaml)
-        wait_for(lambda: get_server_roles() == roles, num_sec=60)
+        store.current_appliance.server_roles = roles
     else:
         navigate_to(current_appliance.server, 'Server')
         fill(server_roles, roles, action=form_buttons.save)
@@ -1465,28 +1462,7 @@ def get_server_roles(navigate=True, db=True):
         accepts as kwargs.
     """
     if db:
-        asr = store.current_appliance.db['assigned_server_roles']
-        sr = store.current_appliance.db['server_roles']
-        roles = list(store.current_appliance.db.session.query(sr.name))
-        roles_set = list(store.current_appliance.db.session.query(sr.name)
-                         .join(asr, asr.server_role_id == sr.id))
-        role_set = [role_set[0] for role_set in roles_set]
-        roles_with_bool = {role[0]: role[0] in role_set for role in roles}
-
-        dead_keys = ['database_owner', 'vdi_inventory']
-        for key in roles_with_bool:
-            if not store.current_appliance.is_storage_enabled:
-                if key.startswith('storage'):
-                    dead_keys.append(key)
-                if key == 'vmdb_storage_bridge':
-                    dead_keys.append(key)
-
-        for key in dead_keys:
-            try:
-                del roles_with_bool[key]
-            except:
-                pass
-        return roles_with_bool
+        return store.current_appliance.server_roles
     else:
         if navigate:
             navigate_to(current_appliance.server, 'Server')
