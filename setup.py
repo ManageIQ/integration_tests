@@ -19,6 +19,7 @@ setup(
             'miq-release = scripts.release:main',
             'miq-artifactor-server = artifactor.__main__:main',
             'miq-runtest = cfme.scripting.runtest:main',
+            'miq-ipython = cfme.scripting.ipyshell:main',
         ],
         'pytest11': [
             'miq_testing = cfme.test_framework.pytest_plugin',
