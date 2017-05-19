@@ -257,14 +257,15 @@ class VMConfiguration(Pretty):
         '''
         changes = {}
         changes['disks'] = []
-        for key in ['cores_per_socket', 'sockets', 'mem_size', 'mem_size_unit']:
+        for key in ['cores_per_socket', 'sockets']:
             if getattr(self.hw, key) != getattr(other_configuration.hw, key):
-                # We don't want to fill numbers...
                 changes[key] = str(getattr(other_configuration.hw, key))
-        if {'mem_size', 'mem_size_unit'} & set(changes):
+                changes['cpu'] = True
+        if self.hw.mem_size != other_configuration.hw.mem_size \
+                or self.hw.mem_size_unit != other_configuration.mem_size_unit:
             changes['memory'] = True
-        if {'cores_per_socket', 'sockets'} & set(changes):
-            changes['cpu'] = True
+            changes['mem_size'] = other_configuration.hw.mem_size
+            changes['mem_size_unit'] = other_configuration.hw.mem_size_unit
         for disk in self.disks + other_configuration.disks:
             if disk in self.disks and disk not in other_configuration.disks:
                 changes['disks'].append({'action': 'delete', 'disk': disk, 'delete_backing': None})
