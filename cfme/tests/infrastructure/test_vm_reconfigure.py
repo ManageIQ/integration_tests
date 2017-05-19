@@ -44,7 +44,7 @@ def ensure_power_state(small_vm, power_type):
 def test_vm_reconfigure_add_remove_hw(
         provider, small_vm, ensure_power_state, power_type, change_type):
 
-    orig_config = small_vm.get_configuration()
+    orig_config = small_vm.configuration
 
     new_config = orig_config.copy()
     if change_type == 'cores_per_socket':
@@ -57,13 +57,13 @@ def test_vm_reconfigure_add_remove_hw(
 
     small_vm.reconfigure(new_config)
     wait_for(
-        lambda: small_vm.get_configuration() == new_config, timeout=360, delay=45,
+        lambda: small_vm.configuration == new_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that {} was added".format(change_type))
 
     small_vm.reconfigure(orig_config)
     wait_for(
-        lambda: small_vm.get_configuration() == orig_config, timeout=360, delay=45,
+        lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that previously-added {} was removed".format(change_type))
 
@@ -80,7 +80,7 @@ def test_vm_reconfigure_add_remove_hw(
 def test_vm_reconfigure_add_remove_disk(
         provider, small_vm, ensure_power_state, power_type, disk_type, disk_mode, disk_dependent):
 
-    orig_config = small_vm.get_configuration()
+    orig_config = small_vm.configuration
 
     new_config = orig_config.copy()
     new_config.add_disk(
@@ -88,12 +88,12 @@ def test_vm_reconfigure_add_remove_disk(
 
     small_vm.reconfigure(new_config)
     wait_for(
-        lambda: small_vm.get_configuration() == new_config, timeout=360, delay=45,
+        lambda: small_vm.configuration == new_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that disk was added")
 
     small_vm.reconfigure(orig_config)
     wait_for(
-        lambda: small_vm.get_configuration() == orig_config, timeout=360, delay=45,
+        lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that previously-added disk was removed")

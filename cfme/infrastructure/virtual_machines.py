@@ -558,7 +558,8 @@ class Vm(BaseVM):
                     "Save Changes", dimmed_alt="Save", force_click=True))
                 flash.assert_success_message("Management Engine Relationship saved")
 
-    def get_configuration(self):
+    @property
+    def configuration(self):
         return VMConfiguration(self)
 
     def reconfigure(self, new_configuration=None, changes=None, cancel=False):
@@ -567,7 +568,7 @@ class Vm(BaseVM):
                 "You must provide either new configuration or changes to apply.")
 
         if new_configuration:
-            changes = self.get_configuration().get_changes_to_fill(new_configuration)
+            changes = self.configuration.get_changes_to_fill(new_configuration)
 
         any_changes = any([v not in [None, []] for v in changes.values()])
         if not any_changes and not cancel:
