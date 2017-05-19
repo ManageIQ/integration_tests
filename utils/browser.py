@@ -8,6 +8,7 @@ import threading
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
+import warnings
 
 # import logging
 
@@ -145,6 +146,13 @@ class BrowserFactory(object):
         return _load_firefox_profile()
 
     def processed_browser_args(self):
+        if 'keep_alive' in self.browser_kwargs:
+            warnings.warn(
+                "forcing browser keep_alive to False due to selenium bugs\n"
+                "we are aware of the performance cost and hope to redeem",
+                category=RuntimeWarning,
+            )
+            return dict(self.browser_kwargs, keep_alive=False)
         return self.browser_kwargs
 
     def create(self, url_key):
