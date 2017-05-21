@@ -180,6 +180,17 @@ class ComputeRate(Updateable, Pretty, Navigatable):
         view.flash.assert_success_message('Chargeback Rate "{}" was added'.format(
             self.description))
 
+    def copy(self, *args, **kwargs):
+        new_rate = ComputeRate(*args, **kwargs)
+        add_view = navigate_to(self, 'Copy')
+        add_view.fill_with({'description': new_rate.description,
+                            'currency': new_rate.currency,
+                            'fields': new_rate.fields},
+                           on_change=add_view.add_button,
+                           no_change=add_view.cancel_button)
+
+        return new_rate
+
     def update(self, updates):
         # Update a rate in UI
         view = navigate_to(self, 'Edit')
@@ -235,6 +246,15 @@ class ComputeRateDetails(CFMENavigateStep):
             "Rates",
             "Compute", self.obj.description
         )
+
+
+@navigator.register(ComputeRate, 'Copy')
+class ComputeRateCopy(CFMENavigateStep):
+    VIEW = AddComputeChargebackView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.view.configuration.item_select('Copy this Chargeback Rate')
 
 
 @navigator.register(ComputeRate, 'Edit')
