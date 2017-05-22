@@ -48,6 +48,7 @@ page = Region(locators={
 add_manager_btn = form_buttons.FormButton('Add')
 edit_manager_btn = form_buttons.FormButton('Save changes')
 cfg_btn = partial(tb.select, 'Configuration')
+RELOAD_LOC = "//button[@name='summary_reload']"
 
 
 match_page = partial(match_location, controller='provider_foreman',
@@ -197,7 +198,9 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def _refresh_flash_msg(self):
-        return 'Refresh Provider initiated for 1 provider ({})'.format(self.type)
+        return version.pick({'5.7': 'Refresh Provider initiated for 1 provider ({})'.
+                                    format(self.type),
+                             '5.8': 'Refresh Provider initiated for 1 provider'})
 
     @property
     def exists(self):
@@ -226,6 +229,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     def config_profiles(self):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
         navigate_to(self, 'Details')
+        # TODO - remove it later.Workaround for BZ 1452425
+        sel.click(RELOAD_LOC)
         tb.select('List View')
         wait_for(self._does_profile_exist, num_sec=300, delay=20, fail_func=sel.refresh)
         return [ConfigProfile(row['name'].text, self) for row in
@@ -256,7 +261,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def quad_name(self):
-        return '{} Configuration Manager'.format(self.name)
+        return version.pick({'5.7': '{} Configuration Manager'.format(self.name),
+                             '5.8': '{} Automation Manager'.format(self.name)})
 
 
 def get_config_manager_from_config(cfg_mgr_key):
