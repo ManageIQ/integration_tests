@@ -11,27 +11,21 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.stack import Stack
 from cfme.cloud.tenant import Tenant
-from cfme.cloud.volume import Volume
 from cfme.web_ui import paginator, toolbar as tb, match_location
 from utils.appliance.implementations.ui import navigate_to
-from utils import version
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
               pytest.mark.usefixtures("openstack_provider")]
 
 # TODO When all of these classes have widgets and views use them in the tests
-grid_pages = [
-    CloudProvider,
-    AvailabilityZone,
-    Tenant,
-    # TODO: use pytest.marked after pytest 3.1
-    pytest.mark.uncollectif(Volume, lambda: version.current_version() >= "5.7"),
-    Flavor,
-    Instance,
-    Stack,
-    KeyPair,
-]
+grid_pages = [CloudProvider,
+              AvailabilityZone,
+              Tenant,
+              Flavor,
+              Instance,
+              Stack,
+              KeyPair]
 
 # Dict values are kwargs for cfme.web_ui.match_location
 landing_pages = {
