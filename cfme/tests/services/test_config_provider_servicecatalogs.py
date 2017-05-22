@@ -6,10 +6,9 @@ from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
-from utils import testgen
+from utils import testgen, version
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import BZ
 
 
 pytestmark = [
@@ -49,12 +48,10 @@ def config_manager(config_manager_obj):
 @pytest.fixture(scope="function")
 def catalog_item(request, config_manager, dialog, catalog):
     config_manager_obj = config_manager
+    provider_name = config_manager_obj.yaml_data.get('name')
     provisioning_data = config_manager_obj.yaml_data['provisioning_data']
-    item_type, provider_type, provider, template = map(provisioning_data.get,
-                                                       ('item_type',
-                                                        'provider_type',
-                                                        'provider',
-                                                        'template'))
+    item_type, provider_type, template = map(provisioning_data.get,
+                                            ('item_type', 'provider_type', 'template'))
     item_name = dialog.element_data.get("default_text_box")
     catalog_item = CatalogItem(item_type=item_type,
                                name=item_name,
@@ -62,7 +59,9 @@ def catalog_item(request, config_manager, dialog, catalog):
                                display_in=True,
                                catalog=catalog,
                                dialog=dialog,
-                               provider=provider,
+                               provider=version.pick({
+                                   '5.7': '{} Configuration Manager'.format(provider_name),
+                                   '5.8': '{} Automation Manager'.format(provider_name)}),
                                provider_type=provider_type,
                                config_template=template)
     request.addfinalizer(catalog_item.delete)
@@ -71,8 +70,7 @@ def catalog_item(request, config_manager, dialog, catalog):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(blockers=[BZ(1437686, forced_streams=["5.8"])])
-def test_order_catalog_item(catalog_item, request):
+def test_order_tower_catalog_item(catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -90,7 +88,6 @@ def test_order_catalog_item(catalog_item, request):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(blockers=[BZ(1437686, forced_streams=["5.8"])])
 def test_retire_ansible_service(catalog_item, request):
     """Tests order catalog item
     Metadata:
