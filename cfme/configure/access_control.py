@@ -1,6 +1,10 @@
 from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import Text, Checkbox
+from widgetastic_patternfly import BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview
+from widgetastic_manageiq import UpDownSelect, SummaryFormItem
+from widgetastic.widget import View
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
@@ -16,6 +20,8 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
+
+from . import ConfigurationView
 
 
 tb_select = partial(tb.select, "Configuration")
@@ -211,107 +217,215 @@ class UserEdit(CFMENavigateStep):
         tb_select('Edit this User')
 
 
+class GroupForm(ConfigurationView):
+    title = Text('#explorer_title_text')
+
+    ldap_groups_for_user = BootstrapSelect('ldap_groups_user')
+    description_txt = Input(name='description')
+    lookup_ldap_groups_chk = Checkbox('lookup')
+    role_select = BootstrapSelect(id='group_role')
+    group_tenant = BootstrapSelect(id='group_tenant')
+    user_to_look_up = Input('user')
+    username = Input('user_id')
+    password = Input('password')
+
+    tag = SummaryFormItem('Smart Management', 'My Company Tags')
+
+    cancel_button = Button('Cancel')
+    retrieve_button = Button('Retrieve')
+
+    @View.nested
+    class my_company_tags(Tab):
+        TAB_NAME = "My Company Tags"
+        tag_tree = CheckableBootstrapTreeview('tags_treebox')
+
+    @View.nested
+    class hosts_and_clusters(Tab):
+        TAB_NAME = "Hosts & Clusters"
+        hosts_clusters_tree = CheckableBootstrapTreeview('hac_treebox')
+
+    @View.nested
+    class vms_and_templates(Tab):
+        TAB_NAME = "VMs & Templates"
+        vms_templates_tree = CheckableBootstrapTreeview('vat_treebox')
+
+
+class AddGroupView(GroupForm):
+    add_button = Button("Add")
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+               self.title.text == "Adding a new Group"
+
+
+class DetailsGroupView(GroupForm):
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+               self.title.text == 'EVM Group "{}"'.format(self.obj.description)
+
+
+class EditGroupView(GroupForm):
+    save_button = Button("Save")
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+               self.title.text == 'Editing Group "{}"'.format(self.obj.description)
+
+
+class GroupAllView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+               self.title.text == 'Access Control EVM Groups'
+
+
+class EditGroupSequenceView(GroupForm):
+    title = Text('#explorer_title_text')
+
+    domains = UpDownSelect(
+        '#seq_fields',
+        './/a[@title="Move selected fields up"]/img',
+        './/a[@title="Move selected fields down"]/img')
+
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+    cancel_button = Button('Cancel')
+
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+               self.title.text == "Editing Sequence of User Groups"
+
+
+class GroupEditTagsView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
+    #TODO remove comment, when widget is done
+    #tag_table = Table("//div[@id='assignments_div']//table")
+
+    select_tag = BootstrapSelect('tag_cat')
+    select_value = BootstrapSelect('tag_add')
+
+    save_button = Button('Save')
+    cancel_button = Button('Cancel')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+               self.title.text == 'Editing My Company Tags for "EVM Groups"'
+
+
 class Group(Updateable, Pretty, Navigatable):
-    group_form = Form(
-        fields=[
-            ('ldap_groups_for_user', AngularSelect("ldap_groups_user")),
-            ('description_txt', Input('description')),
-            ('lookup_ldap_groups_chk', Input('lookup')),
-            ('role_select', AngularSelect("group_role")),
-            ('group_tenant', AngularSelect("group_tenant"), {"appeared_in": "5.5"}),
-            ('user_to_look_up', Input('user')),
-            ('username', Input('user_id')),
-            ('password', Input('password')),
-        ])
     pretty_attrs = ['description', 'role']
 
     def __init__(self, description=None, role=None, tenant="My Company", user_to_lookup=None,
-            ldap_credentials=None, appliance=None):
+            ldap_credentials=None, appliance=None, tag=None, host_cluster=None, vm_template=None):
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.role = role
         self.tenant = tenant
         self.ldap_credentials = ldap_credentials
         self.user_to_lookup = user_to_lookup
+        self.tag = tag
+        self.host_cluster = host_cluster
+        self.vm_template = vm_template
 
     def create(self):
-        navigate_to(self, 'Add')
-        fill(self.group_form, {'description_txt': self.description,
-                               'role_select': self.role,
-                               'group_tenant': self.tenant},
-             action=form_buttons.add)
-        flash.assert_success_message('Group "{}" was saved'.format(self.description))
+        view = navigate_to(self, 'Add')
+        view.fill({'description_txt': self.description,
+                   'role_select': self.role,
+                   'group_tenant': self.tenant})
+        if self.tag is not None:
+            view.my_company_tags.tag_tree.fill(self.tag)
+        if self.host_cluster is not None:
+            view.my_company_tags.hosts_clusters_tree.fill(self.host_cluster)
+        if self.vm_template is not None:
+            view.my_company_tags.vms_templates_tree.fill(self.vm_template)
+        view.add_button.click()
+        view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def _retrieve_ldap_user_groups(self):
-        navigate_to(self, 'Add')
-        fill(self.group_form, {'lookup_ldap_groups_chk': True,
-                               'user_to_look_up': self.user_to_lookup,
-                               'username': self.ldap_credentials.principal,
-                               'password': self.ldap_credentials.secret,
-                               },)
-        sel.wait_for_element(form_buttons.retrieve)
-        sel.click(form_buttons.retrieve)
+        view = navigate_to(self, 'Add')
+        view.fill({'lookup_ldap_groups_chk': True,
+                   'user_to_look_up': self.user_to_lookup,
+                   'username': self.ldap_credentials.principal,
+                   'password': self.ldap_credentials.secret})
+        view.retrieve_button.click()
+        return view
 
     def _retrieve_ext_auth_user_groups(self):
-        navigate_to(self, 'Add')
-        fill(self.group_form, {'lookup_ldap_groups_chk': True,
-                               'user_to_look_up': self.user_to_lookup,
-                               },)
-        sel.wait_for_element(form_buttons.retrieve)
-        sel.click(form_buttons.retrieve)
+        view = navigate_to(self, 'Add')
+        view.fill({'lookup_ldap_groups_chk': True,
+                   'user_to_look_up': self.user_to_lookup})
+        view.retrieve_button.click()
+        return view
+
+    def _fill_ldap_group_lookup(self, view):
+        view.fill({'ldap_groups_for_user': self.description,
+                   'description_txt': self.description,
+                   'role_select': self.role,
+                   'group_tenant': self.tenant})
+        view.add_button.click()
+        view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def add_group_from_ldap_lookup(self):
-        self._retrieve_ldap_user_groups()
-        sel.wait_for_ajax()
-        fill(self.group_form, {'ldap_groups_for_user': self.description,
-                               'description_txt': self.description,
-                               'role_select': self.role,
-                               'group_tenant': self.tenant,
-                               },
-             action=form_buttons.add)
-        flash.assert_success_message('Group "{}" was saved'.format(self.description))
+        view = self._retrieve_ldap_user_groups()
+        self._fill_ldap_group_lookup(view)
+
 
     def add_group_from_ext_auth_lookup(self):
-        self._retrieve_ext_auth_user_groups()
-        fill(self.group_form, {'ldap_groups_for_user': self.description,
-                               'description_txt': self.description,
-                               'role_select': self.role,
-                               'group_tenant': self.tenant,
-                               },
-             action=form_buttons.add)
-        flash.assert_success_message('Group "{}" was saved'.format(self.description))
+        view = self._retrieve_ext_auth_user_groups()
+        self._fill_ldap_group_lookup(view)
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(self.group_form, {'description_txt': updates.get('description'),
-                               'role_select': updates.get('role'),
-                               'group_tenant': updates.get('tenant')},
-             action=form_buttons.save)
-        flash.assert_success_message(
-            'Group "{}" was saved'.format(updates.get('description', self.description)))
+        view = navigate_to(self, 'Edit')
+        view.fill({'description_txt': updates.get('description'),
+                             'role_select': updates.get('role'),
+                             'group_tenant': updates.get('tenant')})
+        view.save_button.click()
+        view.flash.assert_message(
+                'Group "{}" was saved'.format(updates.get('description', self.description)))
 
     def delete(self):
-        navigate_to(self, 'Details')
-        tb_select('Delete this Group', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('EVM Group "{}": Delete successful'.format(self.description))
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Delete this Group', handle_alert=True)
+        view = self.create_view(GroupAllView)
+        view.flash.assert_success_message('EVM Group "{}": Delete successful'.format(self.description))
 
     def edit_tags(self, tag, value):
-        navigate_to(self, 'Details')
-        pol_btn("Edit 'My Company' Tags for this Group", invokes_alert=True)
-        fill(edit_tags_form, {'select_tag': tag,
-                              'select_value': value},
-             action=form_buttons.save)
-        flash.assert_success_message('Tag edits were successfully saved')
+        view = navigate_to(self, 'EditTags')
+        view.fill({'select_tag': tag,
+                   'select_value': value})
+        view.save_button.click()
+        view.flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
-        navigate_to(self, 'Details')
-        pol_btn("Edit 'My Company' Tags for this Group", invokes_alert=True)
-        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
-                                          partial_check=True)
+        view = navigate_to(self, 'EditTags')
+        # TODO replace with widget, when ready
+        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value}, partial_check=True)
         sel.click(row[0])
-        form_buttons.save()
-        flash.assert_success_message('Tag edits were successfully saved')
+        view.save_button.click()
+        view.flash.assert_success_message('Tag edits were successfully saved')
+
+    def get_group_order(self):
+        view = navigate_to(Group, 'EditGroupSequence')
+        return view.group_order_selector.items
+
+    def set_group_order(self, items):
+        original_order = self.get_group_order()
+        view = self.create_view(EditGroupSequenceForm)
+        # We pick only the same amount of items for comparing
+        original_order = original_order[:len(items)]
+        if items == original_order:
+            return  # Ignore that, would cause error on Save click
+        view.group_order_selector.fill(items)
+        view.save_button.click()
 
     @property
     def exists(self):
@@ -324,66 +438,58 @@ class Group(Updateable, Pretty, Navigatable):
 
 @navigator.register(Group, 'All')
 class GroupAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
+    VIEW = GroupAllView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        accordion.tree("Access Control", self.obj.appliance.server_region_string(), "Groups")
-
-    def resetter(self):
-        accordion.refresh("Access Control")
+        self.view.settings.select_item('Configuration')
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(), 'Groups')
 
 
 @navigator.register(Group, 'Add')
 class GroupAdd(CFMENavigateStep):
+    VIEW = AddGroupView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        tb_select("Add a new Group")
+        self.prerequisite_view.configuration.item_select("Add a new Group")
 
 
 @navigator.register(Group, 'EditGroupSequence')
 class EditGroupSequence(CFMENavigateStep):
+    VIEW = EditGroupSequenceView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        tb_select('Edit Sequence of User Groups for LDAP Look Up')
+        self.prerequisite_view.configuration.item_select('Edit Sequence of User Groups for LDAP Look Up')
 
 
 @navigator.register(Group, 'Details')
 class GroupDetails(CFMENavigateStep):
+    VIEW = DetailsGroupView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        accordion.tree(
-            "Access Control", self.obj.appliance.server_region_string(),
-            "Groups", self.obj.description
-        )
-
-    def resetter(self):
-        accordion.refresh("Access Control")
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(), 'Groups',
+                                                 self.obj.description)
 
 
 @navigator.register(Group, 'Edit')
 class GroupEdit(CFMENavigateStep):
+    VIEW = EditGroupView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb_select('Edit this Group')
+        self.view.configuration.item_select('Edit this Group')
 
+@navigator.register(Group, 'EditTags')
+class GroupTagsEdit(CFMENavigateStep):
+    VIEW = GroupEditTagsView
 
-def get_group_order():
-    navigate_to(Group, 'EditGroupSequence')
-    return group_order_selector.get_items()
+    prerequisite = NavigateToSibling('Details')
 
-
-def set_group_order(items):
-    original_order = get_group_order()
-    # We pick only the same amount of items for comparing
-    original_order = original_order[:len(items)]
-    if items == original_order:
-        return  # Ignore that, would cause error on Save click
-    fill(group_order_selector, items)
-    sel.click(form_buttons.save)
+    def step(self):
+        self.view.policy.item_select("Edit 'My Company' Tags for this Group")
 
 
 class Role(Updateable, Pretty, Navigatable):
