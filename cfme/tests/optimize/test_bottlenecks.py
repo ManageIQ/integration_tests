@@ -7,7 +7,6 @@ from cfme.optimize.bottlenecks import Bottlenecks
 from utils import conf
 from utils.appliance.implementations.ui import navigate_to
 from utils.ssh import SSHClient
-from utils.version import current_version
 
 
 @pytest.fixture(scope="module")
@@ -41,7 +40,7 @@ def db_restore(temp_appliance_extended_db):
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])
     with db_storage_ssh as ssh_client:
         # Different files for different versions
-        ver = "_58" if current_version() > '5.7' else ""
+        ver = "_58" if temp_appliance_extended_db.version > '5.7' else ""
         rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
         ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver),
                             rand_filename)
@@ -68,6 +67,7 @@ def db_restore(temp_appliance_extended_db):
 
 @pytest.mark.tier(2)
 def test_bottlenecks_report_event_groups(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+    """ Checks event_groups selectbox in report tab. It should filter events by type """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         # Enabling this option to show all possible values
@@ -83,6 +83,7 @@ def test_bottlenecks_report_event_groups(temp_appliance_extended_db, db_restore,
 
 @pytest.mark.tier(2)
 def test_bottlenecks_report_show_host_events(temp_appliance_extended_db, db_restore, db_events):
+    """ Checks host_events checkbox in report tab. It should show or not host events """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         view.report.show_host_events.fill(False)
@@ -96,7 +97,8 @@ def test_bottlenecks_report_show_host_events(temp_appliance_extended_db, db_rest
 
 
 @pytest.mark.tier(2)
-def test_bottlenecks_report_time_zome(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+def test_bottlenecks_report_time_zone(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+    """ Checks time zone selectbox in report tab. It should change time zone of events in table """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         row = view.report.event_details[0]
@@ -113,6 +115,7 @@ def test_bottlenecks_report_time_zome(temp_appliance_extended_db, db_restore, db
 @pytest.mark.tier(2)
 def test_bottlenecks_summary_event_groups(temp_appliance_extended_db, db_restore, db_tbl,
                                           db_events):
+    """ Checks event_groups selectbox in summary tab. It should filter events by type """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         # Enabling this option to show all possible values
@@ -128,6 +131,7 @@ def test_bottlenecks_summary_event_groups(temp_appliance_extended_db, db_restore
 
 @pytest.mark.tier(2)
 def test_bottlenecks_summary_show_host_events(temp_appliance_extended_db, db_restore, db_events):
+    """ Checks host_events checkbox in summary tab. It should show or not host events """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         view.summary.show_host_events.fill(False)
@@ -141,7 +145,8 @@ def test_bottlenecks_summary_show_host_events(temp_appliance_extended_db, db_res
 
 
 @pytest.mark.tier(2)
-def test_bottlenecks_summary_time_zome(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+def test_bottlenecks_summary_time_zone(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+    """ Checks time zone selectbox in summary tab. It should change time zone of events in chart """
     with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         events = view.summary.chart.get_events()
