@@ -235,17 +235,17 @@ class GroupForm(ConfigurationView):
     retrieve_button = Button('Retrieve')
 
     @View.nested
-    class my_company_tags(Tab):
+    class my_company_tags(Tab):     # noqa
         TAB_NAME = "My Company Tags"
         tag_tree = CheckableBootstrapTreeview('tags_treebox')
 
     @View.nested
-    class hosts_and_clusters(Tab):
+    class hosts_and_clusters(Tab):      # noqa
         TAB_NAME = "Hosts & Clusters"
         hosts_clusters_tree = CheckableBootstrapTreeview('hac_treebox')
 
     @View.nested
-    class vms_and_templates(Tab):
+    class vms_and_templates(Tab):       # noqa
         TAB_NAME = "VMs & Templates"
         vms_templates_tree = CheckableBootstrapTreeview('vat_treebox')
 
@@ -256,14 +256,14 @@ class AddGroupView(GroupForm):
     @property
     def is_displayed(self):
         return self.in_explorer and self.access_control.is_opened and \
-               self.title.text == "Adding a new Group"
+            self.title.text == "Adding a new Group"
 
 
 class DetailsGroupView(GroupForm):
     @property
     def is_displayed(self):
         return self.in_explorer and self.access_control.is_opened and \
-               self.title.text == 'EVM Group "{}"'.format(self.obj.description)
+            self.title.text == 'EVM Group "{}"'.format(self.obj.description)
 
 
 class EditGroupView(GroupForm):
@@ -273,7 +273,7 @@ class EditGroupView(GroupForm):
     @property
     def is_displayed(self):
         return self.in_explorer and self.access_control.is_opened and \
-               self.title.text == 'Editing Group "{}"'.format(self.obj.description)
+            self.title.text == 'Editing Group "{}"'.format(self.obj.description)
 
 
 class GroupAllView(ConfigurationView):
@@ -282,7 +282,7 @@ class GroupAllView(ConfigurationView):
     @property
     def is_displayed(self):
         return self.in_explorer and self.access_control.is_opened and \
-               self.title.text == 'Access Control EVM Groups'
+            self.title.text == 'Access Control EVM Groups'
 
 
 class EditGroupSequenceView(GroupForm):
@@ -299,14 +299,14 @@ class EditGroupSequenceView(GroupForm):
 
     def is_displayed(self):
         return self.in_explorer and self.access_control.is_opened and \
-               self.title.text == "Editing Sequence of User Groups"
+            self.title.text == "Editing Sequence of User Groups"
 
 
 class GroupEditTagsView(ConfigurationView):
     title = Text('#explorer_title_text')
 
-    #TODO remove comment, when widget is done
-    #tag_table = Table("//div[@id='assignments_div']//table")
+# TODO remove comment, when widget is done
+# tag_table = Table("//div[@id='assignments_div']//table")
 
     select_tag = BootstrapSelect('tag_cat')
     select_value = BootstrapSelect('tag_add')
@@ -318,7 +318,7 @@ class GroupEditTagsView(ConfigurationView):
     @property
     def is_displayed(self):
         return self.in_explorer and self.access_control.is_opened and \
-               self.title.text == 'Editing My Company Tags for "EVM Groups"'
+            self.title.text == 'Editing My Company Tags for "EVM Groups"'
 
 
 class Group(Updateable, Pretty, Navigatable):
@@ -386,17 +386,18 @@ class Group(Updateable, Pretty, Navigatable):
     def update(self, updates):
         view = navigate_to(self, 'Edit')
         view.fill({'description_txt': updates.get('description'),
-                             'role_select': updates.get('role'),
-                             'group_tenant': updates.get('tenant')})
+                   'role_select': updates.get('role'),
+                   'group_tenant': updates.get('tenant')})
         view.save_button.click()
         view.flash.assert_message(
-                'Group "{}" was saved'.format(updates.get('description', self.description)))
+            'Group "{}" was saved'.format(updates.get('description', self.description)))
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Group', handle_alert=True)
         view = self.create_view(GroupAllView)
-        view.flash.assert_success_message('EVM Group "{}": Delete successful'.format(self.description))
+        view.flash.assert_success_message(
+            'EVM Group "{}": Delete successful'.format(self.description))
 
     def edit_tags(self, tag, value):
         view = navigate_to(self, 'EditTags')
@@ -407,8 +408,9 @@ class Group(Updateable, Pretty, Navigatable):
 
     def remove_tag(self, tag, value):
         view = navigate_to(self, 'EditTags')
-        # TODO replace with widget, when ready
-        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value}, partial_check=True)
+# TODO replace with widget, when ready
+        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
+                                          partial_check=True)
         sel.click(row[0])
         view.save_button.click()
         view.flash.assert_success_message('Tag edits were successfully saved')
@@ -419,7 +421,7 @@ class Group(Updateable, Pretty, Navigatable):
 
     def set_group_order(self, items):
         original_order = self.get_group_order()
-        view = self.create_view(EditGroupSequenceForm)
+        view = self.create_view(EditGroupSequenceView)
         # We pick only the same amount of items for comparing
         original_order = original_order[:len(items)]
         if items == original_order:
@@ -443,7 +445,8 @@ class GroupAll(CFMENavigateStep):
 
     def step(self):
         self.view.settings.select_item('Configuration')
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(), 'Groups')
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Groups')
 
 
 @navigator.register(Group, 'Add')
@@ -461,7 +464,8 @@ class EditGroupSequence(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit Sequence of User Groups for LDAP Look Up')
+        self.prerequisite_view.configuration.item_select(
+            'Edit Sequence of User Groups for LDAP Look Up')
 
 
 @navigator.register(Group, 'Details')
@@ -470,8 +474,8 @@ class GroupDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(), 'Groups',
-                                                 self.obj.description)
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Groups', self.obj.description)
 
 
 @navigator.register(Group, 'Edit')
@@ -481,6 +485,7 @@ class GroupEdit(CFMENavigateStep):
 
     def step(self):
         self.view.configuration.item_select('Edit this Group')
+
 
 @navigator.register(Group, 'EditTags')
 class GroupTagsEdit(CFMENavigateStep):

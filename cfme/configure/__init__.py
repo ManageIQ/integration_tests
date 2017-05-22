@@ -16,7 +16,6 @@ class ConfigurationView(BaseLoggedInPage):
     def is_displayed(self):
         return self.in_explorer and not self.access_control.is_dimmed
 
-
     @View.nested
     class access_control(Accordion):        # noqa
         ACCORDION_NAME = "Access Control"
