@@ -74,7 +74,7 @@ class Tenant(Navigatable):
 
     def wait_for_appear(self, timeout=600):
         return wait_for(self.exists, timeout=timeout, message='Wait for cloud tenant to appear',
-                        delay=10)
+                        delay=10, fail_func=sel.refresh)
 
     def update(self, updates, wait=True):
         navigate_to(self, 'Edit')
