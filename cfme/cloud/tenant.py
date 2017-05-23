@@ -14,6 +14,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     PagedTable, CheckboxTable, toolbar as tb, match_location, Form, AngularSelect, Input,
     form_buttons, flash, paginator)
+from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.log import logger
@@ -23,7 +24,8 @@ create_tenant_form = Form(
     fields=[
         ('prov_select', AngularSelect("ems_id")),
         ('name', Input('name')),
-        ('save_button', form_buttons.angular_save),
+        ('save_button', {version.LOWEST: form_buttons.angular_save,
+                         '5.8': form_buttons.simple_save}),
         ('reset_button', form_buttons.reset)
     ])
 
@@ -53,7 +55,9 @@ class Tenant(Navigatable):
         sel.click(form_buttons.cancel if cancel else create_tenant_form.save_button)
 
         if cancel:
-            return flash.assert_success_message('Add of new Cloud Tenant was cancelled by the user')
+            msg = version.pick({version.LOWEST: 'Add of new Cloud Tenant was cancelled by the user',
+                                '5.8': 'Add of Cloud Tenant was cancelled by the user'})
+            return flash.assert_success_message(msg)
         else:
             return flash.assert_success_message('Cloud Tenant "{}" created'.format(self.name))
 
@@ -68,10 +72,9 @@ class Tenant(Navigatable):
         except TimedOutError:
             logger.error('Timed out waiting for tenant to disappear, continuing')
 
-    # def wait_for(self, timeout=600):
-    #     return wait_for(self.exists, fail_condition=False, timeout=timeout,
-    #                     message='Wait for cloud tenant to appear', delay=10,
-    #                     fail_func=sel.refresh)
+    def wait_for_appear(self, timeout=600):
+        return wait_for(self.exists, timeout=timeout, message='Wait for cloud tenant to appear',
+                        delay=10)
 
     def update(self, updates, wait=True):
         navigate_to(self, 'Edit')
@@ -145,6 +148,9 @@ class TenantAll(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Tenants')
+
+    def resetter(self):
+        sel.refresh()
 
 
 @navigator.register(Tenant, 'Details')

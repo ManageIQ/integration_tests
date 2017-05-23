@@ -37,6 +37,7 @@ def test_tenant_crud(tenant):
     assert not tenant.exists()
 
     tenant.create()
+    tenant.wait_for_appear()
     assert tenant.exists()
 
     with update(tenant):
