@@ -160,7 +160,7 @@ retrieve = FormButton("LDAP Group Lookup")
 
 
 _stored_pw_script = '//a[contains(@id, "change_stored_password")]'
-_stored_pw_angular = "//a[@ng-hide='bChangeStoredPassword']"
+_stored_pw_angular = "//a[contains(@ng-hide, 'bChangeStoredPassword')]"
 
 
 def change_stored_password():
