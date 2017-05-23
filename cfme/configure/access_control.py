@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.base.credential import Credential
 from cfme.exceptions import (
-        CandidateNotFound, OptionNotAvailable, FlashMessageException, RBACOperationBlocked)
+    CandidateNotFound, OptionNotAvailable, FlashMessageException, RBACOperationBlocked)
 from cfme.web_ui import (
     AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
@@ -294,16 +294,15 @@ class Group(Updateable, Pretty, Navigatable):
 
     def is_delete_locked(self):
         flash_msg = "EVM Group \"{}\": Error during delete: " \
-        "A read only group cannot be deleted."
+            "A read only group cannot be deleted."
 
         try:
             if self.appliance.version < "5.7":
                 flash.assert_message_match(flash_msg.format(self.description))
-        except FlashMessageException as fme:
+        except FlashMessageException:
             raise RBACOperationBlocked
 
     def _delete_using_all_selection(self):
-        flash_success_msg = 'EVM Group "{}": Delete successful'.format(self.description)
         flash_blocked_msg = "EVM Group \"{}\": Error during delete: " \
             "A read only group cannot be deleted."
 
@@ -328,20 +327,24 @@ class Group(Updateable, Pretty, Navigatable):
         return False
 
     def delete(self):
-        flash_success_msg = "EVM Group \"{}\": Delete successful"
-        flash_fail_msg = "EVM Group \"{}\": Error during delete: " \
-            "A read only group cannot be deleted."
+        flash_success_msg = "EVM Group \"{}\": Delete successful".format(self.description)
         delete_result = False
 
         if self.appliance.version < "5.7":
             delete_result = self._delete_using_all_selection()
         else:
             navigate_to(self, 'Details')
+
+            if tb.is_greyed('Configuration', 'Delete this Group'):
+                raise RBACOperationBlocked
+
             tb_select('Delete this Group', invokes_alert=True)
             sel.handle_alert()
-            flash.assert_success_message(
-                'EVM Group "{}": Delete successful'.format(self.description))
-            delete_result = True
+            try:
+                flash.assert_message_match(flash_success_msg)
+                delete_result = True
+            except FlashMessageException:
+                pass
 
         return delete_result
 

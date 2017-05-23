@@ -281,25 +281,7 @@ def test_group_description_required_error_validation():
 
 @pytest.mark.tier(3)
 def test_delete_default_group():
-    flash_msg = "EVM Group \"{}\": Error during delete: A read only group cannot be deleted."
     group = Group(description='EvmGroup-administrator')
-    #navigate_to(Group, 'All')
-    #row = group_table.find_row_by_cells({'Name': group.description})
-    #sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    #sleep(10)  # todo: temporary fix of js issue, to remove when switch to widgetastic
-    #tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_match(flash_msg.format(group.description))
-
-def test_delete_default_group_landon():
-    from cfme.exceptions import FlashMessageException
-    flash_msg = "EVM Group \"{}\": Error during delete: A read only group cannot be deleted."
-    ############################################################################
-    #DELETE THIS
-    #pytest.set_trace()
-    ############################################################################
-    group = Group(description='EvmGroup-administrator')
-    #group = Group(description='FooGroup-administrator')
     with pytest.raises(RBACOperationBlocked):
         group.delete()
 

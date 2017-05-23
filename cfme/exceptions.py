@@ -408,4 +408,4 @@ class ManyItemsFound(CFMEException):
 
 
 class RBACOperationBlocked(CFMEException):
-    """Raised when a Role Based Access Control operation is blocked""" 
+    """Raised when a Role Based Access Control operation is blocked"""
