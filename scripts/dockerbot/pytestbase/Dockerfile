@@ -8,3 +8,4 @@ ADD setup.sh /setup.sh
 ADD post_result.py /post_result.py
 ADD get_keys.py /get_keys.py
 ADD verify_commit.py /verify_commit.py
+ENTRYPOINT ["sh", "setup.sh"]
