@@ -2,6 +2,8 @@
 
 import fauxfactory
 import pytest
+from selenium.common.exceptions import TimeoutException
+from wait_for import TimedOutError
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -9,6 +11,7 @@ from cfme.infrastructure.host import Host
 from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.log import logger
 from utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenStackProvider],
@@ -91,7 +94,11 @@ def test_pause_instance(new_instance):
 def test_shelve_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
-    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
+    try:
+        new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
+    except TimedOutError:
+        logger.warning("Timeout when waiting for instance state: 'shelved'. Skipping")
+
     state = new_instance.get_detail(properties=('Power Management',
                                                 'Power State'))
     assert state in (OpenStackInstance.STATE_SHELVED_OFFLOAD,
@@ -101,8 +108,13 @@ def test_shelve_instance(new_instance):
 def test_shelve_offload_instance(new_instance):
     new_instance.power_control_from_cfme(from_details=True,
                                          option=OpenStackInstance.SHELVE)
-    new_instance.power_control_from_cfme(from_details=True,
-                                         option=OpenStackInstance.SHELVE_OFFLOAD)
+    new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED)
+    try:
+        new_instance.power_control_from_cfme(from_details=True,
+                                             option=OpenStackInstance.SHELVE_OFFLOAD)
+    except TimeoutException:
+        logger.warning("Timeout when initiating power state 'Shelve Offload'. Skipping")
+
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_SHELVED_OFFLOAD)
     state = new_instance.get_detail(properties=('Power Management',
                                                 'Power State'))
