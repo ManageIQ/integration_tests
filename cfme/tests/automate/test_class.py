@@ -133,7 +133,8 @@ def test_same_class_name_different_namespace(request, domain):
 
 @pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
-def test_display_name_unset_from_ui(request, namespace):
+@pytest.mark.polarion('RHCF3-3455')
+def test_class_display_name_unset_from_ui(request, namespace):
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
