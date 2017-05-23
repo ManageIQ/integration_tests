@@ -14,7 +14,7 @@ from cfme.rest.gen_data import automation_requests_data
 from fixtures.provider import setup_one_or_skip
 from utils.providers import ProviderFilter
 from utils.version import current_version
-from utils.wait import wait_for
+from utils.wait import wait_for, wait_for_decorator
 from utils.blockers import BZ
 
 
@@ -55,7 +55,7 @@ def test_vm_scan(appliance, vm, from_detail):
         response, = appliance.rest_api.collections.vms.action.scan(rest_vm)
     assert appliance.rest_api.response.status_code == 200
 
-    @pytest.wait_for(timeout="5m", delay=5, message="REST running scanning vm finishes")
+    @wait_for_decorator(timeout="5m", delay=5, message="REST running scanning vm finishes")
     def _finished():
         response.task.reload()
         if response.task.status.lower() in {"error"}:

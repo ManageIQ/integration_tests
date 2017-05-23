@@ -11,7 +11,7 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
 from utils.log import logger
-from utils.wait import wait_for
+from utils.wait import wait_for, wait_for_decorator
 from utils import testgen, error
 
 
@@ -73,7 +73,7 @@ def test_order_catalog_item_via_rest(
     req = template.action.order()
     assert rest_api.response.status_code == 200
 
-    @pytest.wait_for(timeout="15m", delay=5)
+    @wait_for_decorator(timeout="15m", delay=5)
     def request_finished():
         req.reload()
         logger.info("Request status: {}, Request state: {}, Request message: {}".format(

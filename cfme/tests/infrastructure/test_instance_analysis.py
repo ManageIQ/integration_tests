@@ -20,7 +20,7 @@ from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from utils import testgen, ssh, safe_string, error
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.wait import wait_for
+from utils.wait import wait_for, wait_for_decorator
 
 pytestmark = [pytest.mark.tier(3), test_requirements.smartstate]
 
@@ -226,7 +226,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data,
 
     mgmt_system = provider.get_mgmt_system()
 
-    @pytest.wait_for(timeout="20m", delay=5)
+    @wait_for_decorator(timeout="20m", delay=5)
     def get_ip_address():
         logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
             vm_name, mgmt_system.vm_status(vm_name), mgmt_system.is_vm_stopped(vm_name)))
