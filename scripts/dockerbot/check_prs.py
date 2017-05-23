@@ -146,14 +146,10 @@ def run_tasks():
     it proceeds to grab a pending task from the list and provision an appliance. The appliance
     is then configured before being handed off to Dockerbot for the running of the PR.
     """
-    cont_count = 0
-    for container in dockerbot.dc.containers():
-        if "py_test_base" in container['Image']:
-            cont_count += 1
-    while cont_count < CONT_LIMIT:
-        tasks = tapi.task().get(limit=1, result='pending')['objects']
-        if tasks:
-            task = tasks[0]
+    cont_count = len(dockerbot.dc.containers.list(filters={'ancestor': 'py_test_base'}))
+    if cont_count < CONT_LIMIT:
+        tasks = tapi.task().get(limit=CONT_LIMIT - cont_count, result='pending')['objects']
+        for task in tasks:
             stream = task['stream']
             try:
                 # Get the latest available template and provision/configure an appliance
@@ -186,14 +182,10 @@ def run_tasks():
                                     sprout=True,
                                     sprout_stream=stream,
                                     sprout_description=task['tid'])
-                cont_count += 1
                 tapi.task(task['tid']).patch({'result': 'running'})
             except Exception:
                 output = traceback.format_exc()
                 tapi.task(task['tid']).patch({'result': 'failed', 'output': output})
-        else:
-            # No tasks to process - Happy Days!
-            break
 
 
 def vm_reaper():
@@ -226,10 +218,10 @@ def vm_reaper():
                         except Exception:
                             logger.info('Exception occured cleaning up')
 
-            containers = dockerbot.dc.containers(all=True)
+            containers = dockerbot.dc.containers.list(all=True, filters={'id': task['tid']})
             for container in containers:
-                if task['tid'] in container['Names'][0]:
-                    logger.info('Cleaning up docker container {}'.format(container['Id']))
+                if task['tid'] in container.id:
+                    logger.info('Cleaning up docker {}'.format(container))
                     dockerbot.dc.remove_container(container['Id'], force=True)
                     docker_cleanup = True
                     break

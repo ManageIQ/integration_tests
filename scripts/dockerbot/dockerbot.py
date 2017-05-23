@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from utils.conf import docker as docker_conf
 from utils.net import random_port, my_ip_address
+
 import argparse
 import fauxfactory
 import requests
@@ -25,97 +26,58 @@ def _name(docker_info):
 
 
 if os.getenv("DOCKER_MACHINE_NAME", "None") == "None":
-    dc = docker.Client(base_url='unix://var/run/docker.sock',
-                       version='1.12',
-                       timeout=10)
+    dc = docker.DockerClient(
+        base_url='unix://var/run/docker.sock',
+        version='1.15', timeout=10)
 else:
-    from docker.utils import kwargs_from_env
-    dc = docker.Client(version='1.12',
-                       timeout=10,
-                       **kwargs_from_env(assert_hostname=False))
+    dc = docker.from_env(
+        version='1.15', timeout=10,
+        assert_hostname=False)
 
 
-class DockerInstance(object):
-    def process_bindings(self, bindings):
-        self.port_bindings = {}
-        self.ports = []
-        for bind in bindings:
-            self.port_bindings[bindings[bind][0]] = bindings[bind][1]
-            print("  {}: {}".format(bind, bindings[bind][1]))
-            self.ports.append(bindings[bind][1])
-
-    def wait(self):
-        if not self.dry_run:
-            dc.wait(self.container_id)
-        else:
-            print("Waiting for container")
-
-    def stop(self):
-        if not self.dry_run:
-            dc.stop(self.container_id)
-        else:
-            print("Stopping container")
-
-    def remove(self):
-        if not self.dry_run:
-            dc.remove_container(self.container_id, v=True)
-        else:
-            print("Removing container")
-
-    def kill(self):
-        if not self.dry_run:
-            dc.kill(self.container_id)
-        else:
-            print("Killing container")
+def start_selenium(image, vnc_port=None,
+                   expose_webdriver=False, webdriver_port=None):
+    sel_name = 'cfmeqe-selenium-' + fauxfactory.gen_alphanumeric(8)
+    ports = {'5999/tcp': vnc_port}
+    if expose_webdriver:
+        ports['4444/tcp'] = webdriver_port
+    selenium_container = dc.containers.run(
+        image=image,
+        tty=True,
+        name=sel_name,
+        detach=True,
+        ports=ports,
+    )
+    selenium_container.reload()
+    return selenium_container
 
 
-class SeleniumDocker(DockerInstance):
-    def __init__(self, bindings, image, dry_run=False):
-        self.dry_run = dry_run
-        sel_name = fauxfactory.gen_alphanumeric(8)
-        if not self.dry_run:
-            sel_create_info = dc.create_container(image, tty=True, name=sel_name)
-            self.container_id = _dgci(sel_create_info, 'id')
-            sel_container_info = dc.inspect_container(self.container_id)
-            self.sel_name = _name(sel_container_info)
-        else:
-            self.sel_name = "SEL_FF_CHROME_TEST"
-        self.process_bindings(bindings)
+def ports_from_selenium(container):
+    container.reload()
+    port_settings = container.attrs[u'NetworkSettings'][u'Ports']
 
-    def run(self):
-        if not self.dry_run:
-            dc.start(self.container_id, privileged=True, port_bindings=self.port_bindings)
-        else:
-            print("Dry run running sel_ff_chrome")
+    def maybe_firstport(key):
+        x = port_settings.get(key)
+        return x and x[0][u'HostPort']
+
+    return {
+        'vnc': maybe_firstport('5999/tcp'),
+        'webdriver': maybe_firstport('4444/tcp')
+
+    }
 
 
-class PytestDocker(DockerInstance):
-    def __init__(self, name, bindings, env, log_path, links, pytest_con, artifactor_dir,
-                 dry_run=False):
-        self.dry_run = dry_run
-        self.links = links
-        self.log_path = log_path
-        self.artifactor_dir = artifactor_dir
-        self.process_bindings(bindings)
-
-        if not self.dry_run:
-            pt_name = name
-            pt_create_info = dc.create_container(pytest_con, tty=True,
-                                                 name=pt_name, environment=env,
-                                                 command='sh /setup.sh',
-                                                 volumes=[artifactor_dir],
-                                                 ports=self.ports)
-            self.container_id = _dgci(pt_create_info, 'id')
-            pt_container_info = dc.inspect_container(self.container_id)
-            pt_name = _name(pt_container_info)
-
-    def run(self):
-        if not self.dry_run:
-            dc.start(self.container_id, privileged=True, links=self.links,
-                     binds={self.log_path: {'bind': self.artifactor_dir, 'ro': False}},
-                     port_bindings=self.port_bindings)
-        else:
-            print("Dry run running pytest")
+def start_pytest(name, env, log_path, selenium,
+                 pytest_con, artifactor_dir, ports):
+    return dc.containers.run(
+        image=pytest_con,
+        command='sh /setup.sh',
+        name=name,
+        environment=env,
+        detach=True,
+        volumes={log_path: {'bind': artifactor_dir, 'mode': 'ro'}},
+        ports=ports,
+    )
 
 
 class DockerBot(object):
@@ -128,13 +90,11 @@ class DockerBot(object):
         self.process_appliance()
         self.cache_files()
         self.create_pytest_command()
-        if not self.args['use_wharf']:
-            self.sel_vnc_port = random_port()
-            sel = SeleniumDocker(bindings={'VNC_PORT': (5999, self.sel_vnc_port)},
-                                 image=self.args['selff'], dry_run=self.args['dry_run'])
-            sel.run()
-            sel_container_name = sel.sel_name
-            links = [(sel_container_name, 'selff')]
+        if not self.args['use_wharf'] and not self.args['dry_run']:
+            sel = start_selenium(
+                image=self.args['selff'],
+            )
+            links = [(sel.sel_name, 'selff')]
         self.pytest_name = self.args['test_id']
         self.create_pytest_envvars()
         self.handle_pr()
@@ -146,13 +106,13 @@ class DockerBot(object):
                 print('export {}="{}"'.format(i, self.env_details[i]))
             print(self.env_details)
 
-        pytest = PytestDocker(name=self.pytest_name, bindings=self.pytest_bindings,
-                              env=self.env_details, log_path=self.log_path,
-                              links=links,
-                              pytest_con=self.args['pytest_con'],
-                              artifactor_dir=self.args['artifactor_dir'],
-                              dry_run=self.args['dry_run'])
-        pytest.run()
+        pytest = start_pytest(
+            name=self.pytest_name, bindings=self.pytest_bindings,
+            env=self.env_details, log_path=self.log_path,
+            links=links,
+            pytest_con=self.args['pytest_con'],
+            artifactor_dir=self.args['artifactor_dir'],
+            dry_run=self.args['dry_run'])
 
         if not self.args['nowait']:
             self.handle_watch()
@@ -164,7 +124,6 @@ class DockerBot(object):
                 pytest.wait()
             except KeyboardInterrupt:
                 print("  TEST INTERRUPTED....KILLING ALL THE THINGS")
-                pass
             pytest.kill()
             pytest.remove()
             if not self.args['use_wharf']:
@@ -310,7 +269,7 @@ class DockerBot(object):
             print("You must supply a CFME Credentials REPO")
             ec += 1
 
-        self.check_arg('selff', 'cfme/sel_ff_chrome')
+        self.check_arg('selff', 'cfmeqe/sel_ff_chrome')
 
         self.check_arg('gh_token', None)
         self.check_arg('gh_owner', None)
@@ -481,10 +440,10 @@ class DockerBot(object):
     def create_pytest_bindings(self):
         sel_json = random_port()
         sel_smtp = random_port()
-        bindings = {'JSON': (sel_json, sel_json), 'SMTP': (sel_smtp, sel_smtp)}
+
         self.env_details['JSON'] = sel_json
         self.env_details['SMTP'] = sel_smtp
-        return bindings
+        return {'{}/tcp'.format(x): x for x in (sel_json, sel_smtp)}
 
     def handle_watch(self):
         if self.args['watch'] and not self.args['dry_run']:

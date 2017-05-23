@@ -22,7 +22,7 @@ dateparser==0.5.1
 debtcollector==1.11.0
 decorator==4.0.11
 diaper==1.3
-docker-py==1.10.6
+docker==2.2.1
 docker-pycreds==0.2.1
 docutils==0.13.1
 dogpile.cache==0.6.2
