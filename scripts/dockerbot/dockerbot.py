@@ -102,7 +102,6 @@ class PytestDocker(DockerInstance):
             pt_name = name
             pt_create_info = dc.create_container(pytest_con, tty=True,
                                                  name=pt_name, environment=env,
-                                                 command='sh /setup.sh',
                                                  volumes=[artifactor_dir],
                                                  ports=self.ports)
             self.container_id = _dgci(pt_create_info, 'id')
