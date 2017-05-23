@@ -3,6 +3,7 @@
 import pytest
 import re
 from utils import version
+from utils.wait import wait_for_decorator
 
 
 @pytest.yield_fixture(scope="module")
@@ -39,7 +40,7 @@ def test_evmserverd_stop(appliance):
     server_names = {server[server_name_key] for server in appliance.ssh_client.status["servers"]}
     assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
 
-    @pytest.wait_for(timeout="2m", delay=5)
+    @wait_for_decorator(timeout="2m", delay=5)
     def servers_stopped():
         status = {
             server[server_name_key]: server for server in appliance.ssh_client.status["servers"]

@@ -33,7 +33,7 @@ from utils.generators import random_vm_name
 from utils.log import logger
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
-from utils.wait import wait_for, TimedOutError
+from utils.wait import wait_for, wait_for_decorator, TimedOutError
 from utils.pretty import Pretty
 from cfme import test_requirements
 
@@ -656,7 +656,7 @@ def test_action_initiate_smartstate_analysis(
 
     # Check that analyse job has appeared in the list
     # Wait for the task to finish
-    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
+    @wait_for_decorator(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
