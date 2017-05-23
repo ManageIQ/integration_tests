@@ -283,7 +283,12 @@ def test_group_description_required_error_validation():
 def test_delete_default_group():
     group = Group(description='EvmGroup-administrator')
     with pytest.raises(RBACOperationBlocked):
-        group.delete()
+        all_group_selection = False
+
+        if version.current_version() < "5.7":
+            all_group_selection = True
+
+        group.delete(all_group_selection=all_group_selection)
 
 
 @pytest.mark.tier(3)

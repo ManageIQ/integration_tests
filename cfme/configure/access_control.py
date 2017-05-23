@@ -326,11 +326,23 @@ class Group(Updateable, Pretty, Navigatable):
 
         return False
 
-    def delete(self):
+    def delete(self, all_group_selection=False):
+        """
+        Delete the group referenced by this object
+
+        Args:
+            all_group_selection: Attempt to use the selection list by clicking
+                on the Access Control "Groups" header
+
+        Returns: True if group was deleted successfully
+
+        Exception:
+            RBACOperationBlocked - If the delete operation is disabled
+        """
         flash_success_msg = "EVM Group \"{}\": Delete successful".format(self.description)
         delete_result = False
 
-        if self.appliance.version < "5.7":
+        if all_group_selection:
             delete_result = self._delete_using_all_selection()
         else:
             navigate_to(self, 'Details')
@@ -339,6 +351,7 @@ class Group(Updateable, Pretty, Navigatable):
                 raise RBACOperationBlocked
 
             tb_select('Delete this Group', invokes_alert=True)
+            sleep(10)
             sel.handle_alert()
             try:
                 flash.assert_message_match(flash_success_msg)
