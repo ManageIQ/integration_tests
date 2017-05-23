@@ -38,6 +38,7 @@ def test_tenant_crud(tenant):
 
     tenant.create()
     tenant.wait_for_appear()
+    assert tenant.exists()
 
     with update(tenant):
         tenant.name = fauxfactory.gen_alphanumeric(8)
