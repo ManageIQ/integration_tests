@@ -1,5 +1,8 @@
 #!/usr/bin/env python2
-from utils import conf
+try:
+    from cfme.utils import conf
+except ImportError:
+    from utils import conf
 import subprocess
 import sys
 import re
