@@ -47,17 +47,73 @@ def simple_user(userid, password):
     return User(name=userid, credential=creds)
 
 
-class User(Updateable, Pretty, Navigatable):
-    user_form = Form(
-        fields=[
-            ('name_txt', Input('name')),
-            ('userid_txt', Input('userid')),
-            ('password_txt', Input('password')),
-            ('password_verify_txt', Input('verify')),
-            ('email_txt', Input('email')),
-            ('user_group_select', AngularSelect('chosen_group')),
-        ])
+class UserForm(ConfigurationView):
+    title = Text('#explorer_title_text')
 
+    name_txt = Input(name='name')
+    userid_txt = Input(name='userid')
+    password_txt = Input(id='password')
+    password_verify_txt = Input(id='verify')
+    email_txt = Input('email')
+    user_group_select = BootstrapSelect(id='chosen_group')
+
+    add_button = Button('Add')
+    cancel_button = Button('Cancel')
+
+
+class AllUserView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+            self.title.text == 'Access Control EVM Users'
+
+
+class AddUserView(UserForm):
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+            self.title.text == "Adding a new User"
+
+
+class DetailsUserView(UserForm):
+    @property
+    def is_displayed(self):
+        return self.title.text == 'EVM User "{}"'.format(self.obj.name) and \
+            self.access_control.is_opened
+
+
+class EditUserView(UserForm):
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return self.title.text == 'Editing User "{}"'.format(self.obj.name) and \
+            self.access_control.is_opened
+
+
+class EditTagsUserView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
+# TODO remove comment, when widget is done
+# tag_table = Table("//div[@id='assignments_div']//table")
+
+    select_tag = BootstrapSelect('tag_cat')
+    select_value = BootstrapSelect('tag_add')
+
+    save_button = Button('Save')
+    cancel_button = Button('Cancel')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+            self.title.text == 'Editing My Company Tags for "EVM Users"'
+
+
+class User(Updateable, Pretty, Navigatable):
     pretty_attrs = ['name', 'group']
 
     def __init__(self, name=None, credential=None, email=None, group=None, cost_center=None,
@@ -88,19 +144,18 @@ class User(Updateable, Pretty, Navigatable):
             self._restore_user = None
 
     def create(self):
-        navigate_to(self, 'Add')
-        fill(self.user_form, {'name_txt': self.name,
-                              'userid_txt': self.credential.principal,
-                              'password_txt': self.credential.secret,
-                              'password_verify_txt': self.credential.verify_secret,
-                              'email_txt': self.email,
-                              'user_group_select': getattr(self.group,
-                                                           'description', None)},
-             action=form_buttons.add)
-        flash.assert_success_message('User "{}" was saved'.format(self.name))
+        view = navigate_to(self, 'Add')
+        view.fill({'name_txt': self.name,
+                   'userid_txt': self.credential.principal,
+                   'password_txt': self.credential.secret,
+                   'password_verify_txt': self.credential.verify_secret,
+                   'email_txt': self.email,
+                   'user_group_select': getattr(self.group, 'description', None)})
+        view.add_button.click()
+        view.flash.assert_success_message('User "{}" was saved'.format(self.name))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
+        view = navigate_to(self, 'Edit')
         change_stored_password()
         new_updates = {}
         if 'credential' in updates:
@@ -109,8 +164,6 @@ class User(Updateable, Pretty, Navigatable):
                 'password_txt': updates.get('credential').secret,
                 'password_verify_txt': updates.get('credential').verify_secret
             })
-            if self.appliance.version >= '5.7':
-                self.name = updates.get('credential').principal
         new_updates.update({
             'name_txt': updates.get('name'),
             'email_txt': updates.get('email'),
@@ -118,46 +171,50 @@ class User(Updateable, Pretty, Navigatable):
                 updates.get('group'),
                 'description', None)
         })
-        fill(self.user_form, new_updates, action=form_buttons.save)
-        flash.assert_success_message(
+        view.fill({'name_txt': new_updates.get('name_txt'),
+                   'userid_txt': new_updates.get('userid_txt'),
+                   'password_txt': new_updates.get('password_txt'),
+                   'password_verify_txt': new_updates.get('password_verify_txt'),
+                   'email_txt': new_updates.get('email_txt'),
+                   'user_group_select': new_updates.get('user_group_select')})
+        view.save_button.click()
+        view.flash.assert_success_message(
             'User "{}" was saved'.format(updates.get('name', self.name)))
 
     def copy(self):
-        navigate_to(self, 'Details')
-        tb.select('Configuration', 'Copy this User to a new User')
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Copy this User to a new User')
+        view = self.create_view(AddUserView)
         new_user = User(name=self.name + "copy",
                         credential=Credential(principal='redhat', secret='redhat'))
         change_stored_password()
-        fill(self.user_form, {'name_txt': new_user.name,
-                              'userid_txt': new_user.credential.principal,
-                              'password_txt': new_user.credential.secret,
-                              'password_verify_txt': new_user.credential.verify_secret},
-             action=form_buttons.add)
-        flash.assert_success_message('User "{}" was saved'.format(new_user.name))
+        view.fill({'name_txt': new_user.name,
+                   'userid_txt': new_user.credential.principal,
+                   'password_txt': new_user.credential.secret,
+                   'password_verify_txt': new_user.credential.verify_secret})
+        view.add_button.click()
+        view.flash.assert_success_message('User "{}" was saved'.format(new_user.name))
         return new_user
 
     def delete(self):
-        navigate_to(self, 'Details')
-        tb.select('Configuration', 'Delete this User', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Delete this User', handle_alert=True)
+        view.flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
 
     def edit_tags(self, tag, value):
-        navigate_to(self, 'Details')
-        pol_btn("Edit 'My Company' Tags for this User", invokes_alert=True)
-        fill(edit_tags_form, {'select_tag': tag,
-                              'select_value': value},
-             action=form_buttons.save)
-        flash.assert_success_message('Tag edits were successfully saved')
+        view = navigate_to(self, 'EditTags')
+        view.fill({'select_tag': tag,
+                   'select_value': value})
+        view.save_button.click()
+        view.flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
-        navigate_to(self, 'Details')
-        pol_btn("Edit 'My Company' Tags for this User", invokes_alert=True)
+        view = navigate_to(self, 'EditTags')
         row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
                                           partial_check=True)
         sel.click(row[0])
-        form_buttons.save()
-        flash.assert_success_message('Tag edits were successfully saved')
+        view.save_button.click()
+        view.flash.assert_success_message('Tag edits were successfully saved')
 
     @property
     def exists(self):
@@ -174,47 +231,50 @@ class User(Updateable, Pretty, Navigatable):
 
 @navigator.register(User, 'All')
 class UserAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
+    VIEW = AllUserView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        accordion.tree(
-            "Access Control",
-            self.obj.appliance.server.zone.region.settings_string, "Users")
-
-    def resetter(self):
-        accordion.refresh("Access Control")
+        self.view.settings.select_item('Configuration')
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Users')
 
 
 @navigator.register(User, 'Add')
 class UserAdd(CFMENavigateStep):
+    VIEW = AddUserView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        tb_select("Add a new User")
+        self.prerequisite_view.configuration.item_select("Add a new User")
 
 
 @navigator.register(User, 'Details')
 class UserDetails(CFMENavigateStep):
+    VIEW = DetailsUserView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        accordion.tree(
-            "Access Control",
-            self.obj.appliance.server.zone.region.settings_string,
-            "Users",
-            self.obj.name
-        )
-
-    def resetter(self):
-        accordion.refresh("Access Control")
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Users', self.obj.name)
 
 
 @navigator.register(User, 'Edit')
 class UserEdit(CFMENavigateStep):
+    VIEW = EditUserView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb_select('Edit this User')
+        self.view.configuration.item_select('Edit this User')
+
+
+@navigator.register(User, 'EditTags')
+class UserTagsEdit(CFMENavigateStep):
+    VIEW = EditTagsUserView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.view.policy.item_select("Edit 'My Company' Tags for this User")
 
 
 class GroupForm(ConfigurationView):
@@ -497,15 +557,52 @@ class GroupTagsEdit(CFMENavigateStep):
         self.view.policy.item_select("Edit 'My Company' Tags for this Group")
 
 
+class RoleForm(ConfigurationView):
+    title = Text("#explorer_title_text")
+
+    name_txt = Input('name')
+    vm_restriction_select = BootstrapSelect('vm_restriction')
+    product_features_tree = CheckableBootstrapTreeview("features_treebox")
+
+    cancel_button = Button('Cancel')
+
+
+class AddRoleView(RoleForm):
+    add_button = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+            self.title.text == 'Adding a new Role'
+
+
+class EditRoleView(RoleForm):
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+            self.title.text == 'Editing Role "{}"'.format(self.obj.name)
+
+
+class DetailsRoleView(RoleForm):
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+            self.title.text == 'Role "{}"'.format(self.obj.name)
+
+
+class AllRolesView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.access_control.is_opened and \
+            self.title.text == 'Access Control Roles'
+
+
 class Role(Updateable, Pretty, Navigatable):
-    form = Form(
-        fields=[
-            ('name_txt', Input('name')),
-            ('vm_restriction_select', AngularSelect('vm_restriction')),
-            ('product_features_tree', {
-                version.LOWEST: CheckboxTree("//div[@id='features_treebox']/ul"),
-                '5.7': BootstrapTreeview("features_treebox")}),
-        ])
     pretty_attrs = ['name', 'product_features']
 
     def __init__(self, name=None, vm_restriction=None, product_features=None, appliance=None):
@@ -515,77 +612,76 @@ class Role(Updateable, Pretty, Navigatable):
         self.product_features = product_features or []
 
     def create(self):
-        navigate_to(self, 'Add')
-        fill(self.form, {'name_txt': self.name,
-                         'vm_restriction_select': self.vm_restriction,
-                         'product_features_tree': self.product_features},
-             action=form_buttons.add)
-        flash.assert_success_message('Role "{}" was saved'.format(self.name))
+        view = navigate_to(self, 'Add')
+        view.fill({'name_txt': self.name,
+                   'vm_restriction_select': self.vm_restriction,
+                   'product_features_tree': self.product_features})
+        view.add_button.click()
+        view.flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(self.form, {'name_txt': updates.get('name'),
-                         'vm_restriction_select': updates.get('vm_restriction'),
-                         'product_features_tree': updates.get('product_features')},
-             action=form_buttons.save)
+        view = navigate_to(self, 'Edit')
+        view.fill({'name_txt': updates.get('name'),
+                   'vm_restriction_select': updates.get('vm_restriction'),
+                   'product_features_tree': updates.get('product_features')})
+        view.save_button.click()
         flash.assert_success_message('Role "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self):
-        navigate_to(self, 'Details')
-        tb_select('Delete this Role', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Delete this Role', handle_alert=True)
+        view.flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
 
     def copy(self, name=None):
         if not name:
             name = self.name + "copy"
-        navigate_to(self, 'Details')
-        tb.select('Configuration', 'Copy this Role to a new Role')
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Copy this Role to a new Role')
+        view = self.create_view(AddRoleView)
         new_role = Role(name=name)
-        fill(self.form, {'name_txt': new_role.name},
-             action=form_buttons.add)
-        flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
+        view.fill({'name_txt': new_role.name})
+        view.add_button.click()
+        view.flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
         return new_role
 
 
 @navigator.register(Role, 'All')
 class RoleAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
+    VIEW = AllRolesView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        accordion.tree("Access Control", self.obj.appliance.server_region_string(), "Roles")
-
-    def resetter(self):
-        accordion.refresh("Access Control")
+        self.view.settings.select_item('Configuration')
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Roles')
 
 
 @navigator.register(Role, 'Add')
 class RoleAdd(CFMENavigateStep):
+    VIEW = AddRoleView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        tb_select("Add a new Role")
+        self.prerequisite_view.configuration.item_select("Add a new Role")
 
 
 @navigator.register(Role, 'Details')
 class RoleDetails(CFMENavigateStep):
+    VIEW = DetailsRoleView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        accordion.tree(
-            "Access Control", self.obj.appliance.server_region_string(), "Roles", self.obj.name
-        )
-
-    def resetter(self):
-        accordion.refresh("Access Control")
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Roles', self.obj.name)
 
 
 @navigator.register(Role, 'Edit')
 class RoleEdit(CFMENavigateStep):
+    VIEW = EditRoleView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb_select('Edit this Role')
+        self.view.configuration.item_select('Edit this Role')
 
 
 class Tenant(Updateable, Pretty, Navigatable):
