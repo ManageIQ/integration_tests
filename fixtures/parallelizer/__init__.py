@@ -103,17 +103,16 @@ class SlaveDetail(object):
     url = attr.ib()
     id = attr.ib(default=attr.Factory(
         lambda: next(SlaveDetail.slaveid_generator)))
-
+    forbid_restart = attr.ib(default=False, init=False)
     tests = attr.ib(default=attr.Factory(set), repr=False)
     process = attr.ib(default=None, repr=False)
 
     provider_allocation = attr.ib(default=attr.Factory(list), repr=False)
 
     def start(self):
-        devnull = open(os.devnull, 'w')
-        if self.url is None:
+        if self.forbid_restart:
             return
-
+        devnull = open(os.devnull, 'w')
         # worker output redirected to null; useful info comes via messages and logs
         self.process = subprocess.Popen(
             ['python', remote.__file__, self.id, self.url, conf.runtime['env']['ts']],
@@ -206,13 +205,16 @@ class ParallelSession(object):
                     self.failed_slave_test_groups.append(failed_tests)
                 self.print_message(msg, purple=True)
 
-        # If a slave has lost its base_url for any reason, kill that slave
-        # Losing a base_url means the associated appliance died :(
+        # If a slave was terminated for any reason, kill that slave
+        # the terminated flag implies the appliance has died :(
         for slave in list(self.slaves.values()):
-            if slave.url is None:
+            if slave.forbid_restart:
                 if slave.process is None:
+                    self.config.hook.pytest_miq_node_shutdown(
+                        config=self.config, nodeinfo=slave.url)
                     del self.slaves[slave.id]
                 else:
+                    # no hook call here, a future audit will handle the fallout
                     self.print_message(
                         "{}'s appliance has died, deactivating slave".format(slave.id))
                     self.interrupt(slave)
@@ -320,14 +322,14 @@ class ParallelSession(object):
 
     def interrupt(self, slave, **kwargs):
         """Nicely ask a slave to terminate"""
-        slave.url = None
+        slave.forbid_restart = True
         if slave.poll() is None:
             slave.process.send_signal(subprocess.signal.SIGINT)
             self.monitor_shutdown(slave, **kwargs)
 
     def kill(self, slave, **kwargs):
         """Rudely kill a slave"""
-        slave.url = None
+        slave.forbid_restart = True
         if slave.poll() is None:
             slave.process.kill()
             self.monitor_shutdown(slave, **kwargs)
