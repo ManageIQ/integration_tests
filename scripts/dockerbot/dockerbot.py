@@ -384,7 +384,7 @@ class DockerBot(object):
         if self.args['auto_gen_test'] and self.args['pr']:
             self.pr_metadata = self.get_pr_metadata(self.args['pr'])
             pytest = self.pr_metadata.get('pytest', None)
-            sprout_appliances = self.pr_metadata.get('sprouts', 1)
+            self.args['sprout_appliances'] = self.pr_metadata.get('sprouts', 1)
             if pytest:
                 self.args['pytest'] = "py.test {}".format(pytest)
             else:
@@ -394,10 +394,12 @@ class DockerBot(object):
                                            "--perf").format(" ".join(files))
                 else:
                     self.args['pytest'] = "py.test -v --use-provider default -m smoke"
+
         if self.args['pr']:
             self.base_branch = self.get_base_branch(self.args['pr']) or self.base_branch
         if self.args['sprout']:
-            self.args['pytest'] += ' --use-sprout --sprout-appliances {}'.format(sprout_appliances)
+            self.args['pytest'] += ' --use-sprout --sprout-appliances {}'.format(
+                self.args['sprout_appliances'])
             self.args['pytest'] += ' --sprout-group {}'.format(self.args['sprout_stream'])
             self.args['pytest'] += ' --sprout-desc {}'.format(self.args['sprout_description'])
         if not self.args['capture']:
