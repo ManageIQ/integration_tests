@@ -376,22 +376,26 @@ def test_delete_default_roles():
 @pytest.mark.tier(3)
 def test_edit_default_roles():
     role = Role(name='EvmRole-auditor')
-    navigate_to(role, 'Edit')
-    flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
+
+    #navigate_to(role, 'Edit')
+    #flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
+    with pytest.raises(RBACOperationBlocked):
+        role.update(None)
 
 
 @pytest.mark.tier(3)
 def test_delete_roles_with_assigned_group():
-    flash_msg = version.pick({
-        '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-            "because of dependent entitlements"),
-        '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-            "because of dependent miq_groups")})
+    #flash_msg = version.pick({
+    #    '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
+    #        "because of dependent entitlements"),
+    #    '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
+    #        "because of dependent miq_groups")})
     role = new_role()
     role.create()
     group = new_group(role=role.name)
     group.create()
-    with error.expected(flash_msg.format(role.name)):
+    #with error.expected(flash_msg.format(role.name)):
+    with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 

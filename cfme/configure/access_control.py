@@ -477,7 +477,16 @@ class Role(Updateable, Pretty, Navigatable):
         flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
     def update(self, updates):
+        flash_blocked_msg = version.pick({
+            '5.6': ("Read Only Role \"{}\" can not be edited".format(self.name))})
         navigate_to(self, 'Edit')
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
         fill(self.form, {'name_txt': updates.get('name'),
                          'vm_restriction_select': updates.get('vm_restriction'),
                          'product_features_tree': updates.get('product_features')},
@@ -563,6 +572,8 @@ class RoleEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        if tb.is_greyed('Configuration', 'Edit this Role'):
+            raise RBACOperationBlocked
         tb_select('Edit this Role')
 
 
