@@ -55,7 +55,7 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
 
 @pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
-        request, rest_api, provider, setup_provider, catalog_item, catalog):
+        request, appliance, provider, setup_provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
     Metadata:
         test_flag: provision, rest
@@ -64,14 +64,14 @@ def test_order_catalog_item_via_rest(
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     request.addfinalizer(catalog_item.delete)
-    catalog = rest_api.collections.service_catalogs.find_by(name=catalog.name)
+    catalog = appliance.rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
     catalog, = catalog
     template = catalog.service_templates.find_by(name=catalog_item.name)
     assert len(template) == 1
     template, = template
     req = template.action.order()
-    assert rest_api.response.status_code == 200
+    assert appliance.rest_api.response.status_code == 200
 
     @wait_for_decorator(timeout="15m", delay=5)
     def request_finished():
