@@ -25,6 +25,10 @@ class Blocker(object):
         self.forced_streams = kwargs.pop("forced_streams", [])
         self.__dict__["kwargs"] = kwargs
 
+    @property
+    def url(self):
+        raise NotImplementedError('You need to implement .url')
+
     @classmethod
     def all_blocker_engines(cls):
         """Return mapping of name:class of all the blocker engines in this module.
@@ -139,6 +143,10 @@ class GH(Blocker):
     def __str__(self):
         return "GitHub Issue https://github.com/{}/issues/{}".format(self.repo, self.issue)
 
+    @property
+    def url(self):
+        return "https://github.com/{}/issues/{}".format(self.repo, self.issue)
+
 
 class BZ(Blocker):
     @classproperty
@@ -191,6 +199,10 @@ class BZ(Blocker):
     def get_bug_url(self):
         bz_url = urlparse(self.bugzilla.bugzilla.url)
         return "{}://{}/show_bug.cgi?id={}".format(bz_url.scheme, bz_url.netloc, self.bug_id)
+
+    @property
+    def url(self):
+        return self.get_bug_url()
 
     def __str__(self):
         return "Bugzilla bug {} (or one of its copies)".format(self.get_bug_url())

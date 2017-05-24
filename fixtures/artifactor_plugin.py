@@ -31,6 +31,7 @@ from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
 from threading import RLock
+from utils.blockers import BZ, Blocker
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.wait import wait_for
@@ -189,13 +190,24 @@ def pytest_runtest_protocol(item):
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
+    meta = item.get_marker('meta')
+    if meta and 'blockers' in meta.kwargs:
+        blocker_spec = meta.kwargs['blockers']
+        blockers = []
+        for blocker in blocker_spec:
+            if isinstance(blocker, int):
+                blockers.append(BZ(blocker).url)
+            else:
+                blockers.append(Blocker.parse(blocker).url)
+    else:
+        blockers = []
     fire_art_test_hook(
         item, 'pre_start_test',
         slaveid=store.slaveid, ip=ip)
     fire_art_test_hook(
         item, 'start_test',
         slaveid=store.slaveid, ip=ip,
-        tier=tier, requirement=requirement, param_dict=param_dict)
+        tier=tier, requirement=requirement, param_dict=param_dict, issues=blockers)
     yield
 
 
