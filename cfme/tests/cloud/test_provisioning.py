@@ -228,10 +228,10 @@ def test_provision_from_template_using_rest(
             pytest.fail("Error when provisioning: `{}`".format(request.message))
         return request.request_state.lower() in {"finished", "provisioned"}
 
-    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=3000, delay=10, message="REST provisioning finishes")
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
-        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
+        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider, OpenStackProvider))
@@ -260,7 +260,7 @@ def test_manual_placement_using_rest(
         pytest.fail("Cannot find flavour.")
 
     provider_data = rest_api.get(provider_rest._href +
-        '?attributes=cloud_networks,cloud_subnets,security_groups')
+        '?attributes=cloud_networks,cloud_subnets,security_groups,cloud_tenants')
 
     # find out cloud network
     assert provider_data['cloud_networks']
@@ -310,7 +310,7 @@ def test_manual_placement_using_rest(
 
     # find out availability zone
     availability_zone_id = None
-    if 'availability_zone' in provisioning:
+    if provisioning.get('availability_zone'):
         availability_zone_entities = rest_api.collections.availability_zones.find_by(
             name=provisioning['availability_zone'])
         if availability_zone_entities and availability_zone_entities[0].ems_id == flavor.ems_id:
@@ -320,6 +320,16 @@ def test_manual_placement_using_rest(
     if not availability_zone_id:
         availability_zone_id, _ = wait_for(
             _find_availability_zone_id, num_sec=100, delay=5, message="availability_zone present")
+
+    # find out cloud tenant
+    cloud_tenant_id = None
+    tenant_name = provisioning.get('cloud_tenant')
+    if tenant_name:
+        for tenant in provider_data.get('cloud_tenants', []):
+            if (tenant['name'] == tenant_name and
+                    tenant['enabled'] and
+                    tenant['ems_id'] == flavor.ems_id):
+                cloud_tenant_id = tenant['id']
 
     provision_data = {
         "version": "1.1",
@@ -353,6 +363,8 @@ def test_manual_placement_using_rest(
         "miq_custom_attributes": {
         }
     }
+    if cloud_tenant_id:
+        provision_data['vm_fields']['cloud_tenant'] = cloud_tenant_id
 
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
@@ -366,10 +378,10 @@ def test_manual_placement_using_rest(
             pytest.fail("Error when provisioning: `{}`".format(request.message))
         return request.request_state.lower() in ('finished', 'provisioned')
 
-    wait_for(_finished, num_sec=1000, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=3000, delay=10, message="REST provisioning finishes")
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
-        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
+        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
 VOLUME_METHOD = ("""
