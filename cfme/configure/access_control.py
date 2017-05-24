@@ -283,8 +283,37 @@ class Group(Updateable, Pretty, Navigatable):
              action=form_buttons.add)
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
-    def update(self, updates):
-        navigate_to(self, 'Edit')
+    def _update_using_all_selection(self):
+        flash_blocked_msg = 'Read Only EVM Group "{}" can not be edited'.format(
+                self.description)
+
+        #TODO: this functionality should be moved to edit navigate step
+        navigate_to(Group, 'All')
+        row = self.all_group_table.find_row_by_cells({'Name': self.description})
+        sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+
+        if tb.is_greyed('Configuration', 'Edit the selected Group'):
+            raise RBACOperationBlocked
+
+        tb.select('Configuration', 'Edit the selected Group')
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
+    def update(self, updates, all_group_selection=False):
+        #######################################################################
+        #DELETE THIS
+        import pytest
+        pytest.set_trace()
+        #######################################################################
+        if all_group_selection:
+            self._update_using_all_selection()
+        else:
+            navigate_to(self, 'Edit')
+
         fill(self.group_form, {'description_txt': updates.get('description'),
                                'role_select': updates.get('role'),
                                'group_tenant': updates.get('tenant')},
@@ -433,6 +462,9 @@ class GroupEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        if tb.is_greyed('Configuration', 'Edit this Group'):
+            raise RBACOperationBlocked
+
         tb_select('Edit this Group')
 
 

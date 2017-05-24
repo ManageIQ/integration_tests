@@ -285,8 +285,7 @@ def test_delete_default_group():
     with pytest.raises(RBACOperationBlocked):
         all_group_selection = False
 
-        if version.current_version() < "5.7":
-            all_group_selection = True
+        if version.current_version() < "5.7": all_group_selection = True
 
         group.delete(all_group_selection=all_group_selection)
 
@@ -306,13 +305,14 @@ def test_delete_group_with_assigned_user():
 
 @pytest.mark.tier(3)
 def test_edit_default_group():
-    flash_msg = 'Read Only EVM Group "{}" can not be edited'
     group = Group(description='EvmGroup-approver')
-    navigate_to(Group, 'All')
-    row = group_table.find_row_by_cells({'Name': group.description})
-    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    tb.select('Configuration', 'Edit the selected Group')
-    flash.assert_message_match(flash_msg.format(group.description))
+    all_group_selection = False
+
+    if version.current_version() < "5.7":
+        all_group_selection = True
+
+    with pytest.raises(RBACOperationBlocked):
+        group.update(None, all_group_selection)
 
 
 @pytest.mark.tier(3)
@@ -377,24 +377,17 @@ def test_delete_default_roles():
 def test_edit_default_roles():
     role = Role(name='EvmRole-auditor')
 
-    #navigate_to(role, 'Edit')
-    #flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
     with pytest.raises(RBACOperationBlocked):
         role.update(None)
 
 
 @pytest.mark.tier(3)
 def test_delete_roles_with_assigned_group():
-    #flash_msg = version.pick({
-    #    '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-    #        "because of dependent entitlements"),
-    #    '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-    #        "because of dependent miq_groups")})
     role = new_role()
     role.create()
     group = new_group(role=role.name)
     group.create()
-    #with error.expected(flash_msg.format(role.name)):
+
     with pytest.raises(RBACOperationBlocked):
         role.delete()
 
