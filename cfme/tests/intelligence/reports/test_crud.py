@@ -14,6 +14,8 @@ from utils.blockers import BZ
 from utils import version
 from cfme import test_requirements
 
+from utils.wait import wait_for_decorator
+
 
 report_crud_dir = data_path.join("reports_crud")
 schedules_crud_dir = data_path.join("schedules_crud")
@@ -188,7 +190,7 @@ def test_run_report(appliance):
     response = report.action.run()
     assert appliance.rest_api.response.status_code == 200
 
-    @pytest.wait_for(timeout="5m", delay=5)
+    @wait_for_decorator(timeout="5m", delay=5)
     def rest_running_report_finishes():
         response.task.reload()
         if "error" in response.task.status.lower():
