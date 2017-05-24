@@ -485,10 +485,34 @@ class Role(Updateable, Pretty, Navigatable):
         flash.assert_success_message('Role "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self):
+        flash_success_msg = 'Role "{}": Delete successful'.format(self.name)
+        flash_blocked_msg = version.pick({
+            '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
+                "because of dependent entitlements".format(self.name)),
+            '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
+                "because of dependent miq_groups".format(self.name))})
+        delete_result = False
+
         navigate_to(self, 'Details')
+        if tb.is_greyed('Configuration', 'Delete this Role'):
+            raise RBACOperationBlocked
+
         tb_select('Delete this Role', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
+
+        try:
+            flash.assert_success_message(flash_success_msg)
+            delete_result = False
+        except FlashMessageException:
+            pass
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
+        return delete_result
 
     def copy(self, name=None):
         if not name:

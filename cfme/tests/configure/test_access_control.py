@@ -368,13 +368,8 @@ def test_rolename_duplicate_validation():
 
 @pytest.mark.tier(3)
 def test_delete_default_roles():
-    flash_msg = version.pick({
-        '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-            "because of dependent entitlements"),
-        '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-            "because of dependent miq_groups")})
     role = Role(name='EvmRole-approver')
-    with error.expected(flash_msg.format(role.name)):
+    with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 
