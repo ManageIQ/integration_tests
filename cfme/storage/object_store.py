@@ -42,10 +42,11 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version >= "5.7":
+        if self.obj.appliance.version < "5.8":
             self.prerequisite_view.navigation.select('Storage', 'Object Stores')
         else:
-            self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Object Stores')
+            self.prerequisite_view.navigation.select(
+                'Storage', 'Object Storage', 'Object Store Containers')
 
     def resetter(self):
         tb.select("Grid View")
