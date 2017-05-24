@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 from cfme import test_requirements
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import flash
 from cfme.automate.buttons import Button, ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.infrastructure import host
