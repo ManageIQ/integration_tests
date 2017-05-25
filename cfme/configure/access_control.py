@@ -66,6 +66,7 @@ class User(Updateable, Pretty, Navigatable):
         self.cost_center = cost_center
         self.value_assign = value_assign
         self._restore_user = None
+        self.region = 0
 
     def __enter__(self):
         if self._restore_user != self.appliance.user:
@@ -84,6 +85,12 @@ class User(Updateable, Pretty, Navigatable):
             self._restore_user = None
 
     def create(self):
+        flash_blocked_msg = version.pick({
+            '5.8': ("Userid is not unique within region {}".format(self.region)),
+            '5.7': ("Userid has already been taken"), })
+        flash_success_msg = version.pick({
+            '5.5': ('User "{}" was saved'.format(self.name)), })
+
         navigate_to(self, 'Add')
         fill(self.user_form, {'name_txt': self.name,
                               'userid_txt': self.credential.principal,
@@ -93,7 +100,14 @@ class User(Updateable, Pretty, Navigatable):
                               'user_group_select': getattr(self.group,
                                                            'description', None)},
              action=form_buttons.add)
-        flash.assert_success_message('User "{}" was saved'.format(self.name))
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
+        flash.assert_success_message(flash_success_msg)
 
     def update(self, updates):
         navigate_to(self, 'Edit')
@@ -298,7 +312,6 @@ class Group(Updateable, Pretty, Navigatable):
         flash_blocked_msg = 'Read Only EVM Group "{}" can not be edited'.format(
             self.description)
 
-        #TODO: this functionality should be moved to edit navigate step
         navigate_to(Group, 'All')
         row = self.all_group_table.find_row_by_cells({'Name': self.description})
         sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))

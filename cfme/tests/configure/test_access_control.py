@@ -95,7 +95,8 @@ def test_user_login():
 def test_user_duplicate_name():
     nu = new_user()
     nu.create()
-    with error.expected("Userid has already been taken"):
+
+    with pytest.raises(RBACOperationBlocked):
         nu.create()
 
 
