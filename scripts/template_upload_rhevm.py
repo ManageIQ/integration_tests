@@ -30,6 +30,9 @@ lock = Lock()
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
+    parser.add_argument('--stream', dest='stream',
+                        help='stream name: downstream-##z, upstream, upstream_stable, etc',
+                        default=None)
     parser.add_argument("--image_url", dest="image_url",
                         help="URL of ova file to upload", default=None)
     parser.add_argument("--template_name", dest="template_name",
