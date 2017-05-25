@@ -681,7 +681,7 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             getattr(__import__('clone_template'), "main")(**deploy_args)
         print("RHEVM:{} Template {} upload Ended".format(provider, template_name))
     except Exception as e:
-        print(e)
+        print("RHEVM:{} Template {} upload exception: {}".format(provider, template_name, e))
         return False
 
 
