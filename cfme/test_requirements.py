@@ -18,6 +18,7 @@ Please import the module instead of elements:
 
 import pytest
 
+ansible = pytest.mark.requirement("ansible")
 access = pytest.mark.requirement("access")
 alert = pytest.mark.requirement("alert")
 auth = pytest.mark.requirement("auth")
