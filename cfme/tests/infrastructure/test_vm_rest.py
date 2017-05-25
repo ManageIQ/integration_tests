@@ -17,30 +17,31 @@ def a_provider(request):
 
 
 @pytest.fixture(scope="function")
-def vm_name(request, a_provider, rest_api):
-    return _vm(request, a_provider, rest_api)
+def vm_name(request, a_provider, appliance):
+    return _vm(request, a_provider, appliance.rest_api)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-def test_delete_vm_from_detail(vm_name, rest_api, method):
+def test_delete_vm_from_detail(vm_name, appliance, method):
     status = 204 if method == 'delete' else 200
-    vm = rest_api.collections.vms.get(name=vm_name)
+    vm = appliance.rest_api.collections.vms.get(name=vm_name)
     vm.action.delete(force_method=method)
-    assert rest_api.response.status_code == status
-    wait_for(lambda: not rest_api.collections.vms.find_by(name=vm_name), num_sec=300, delay=10)
+    assert appliance.rest_api.response.status_code == status
+    wait_for(
+        lambda: not appliance.rest_api.collections.vms.find_by(name=vm_name), num_sec=300, delay=10)
     with error.expected('ActiveRecord::RecordNotFound'):
         vm.action.delete(force_method=method)
-    assert rest_api.response.status_code == 404
+    assert appliance.rest_api.response.status_code == 404
 
 
 @pytest.mark.tier(3)
-def test_delete_vm_from_collection(vm_name, rest_api):
-    vm = rest_api.collections.vms.get(name=vm_name)
-    collection = rest_api.collections.vms
+def test_delete_vm_from_collection(vm_name, appliance):
+    vm = appliance.rest_api.collections.vms.get(name=vm_name)
+    collection = appliance.rest_api.collections.vms
     collection.action.delete(vm)
-    assert rest_api.response.status_code == 200
+    assert appliance.rest_api.response.status_code == 200
     wait_for(lambda: not collection.find_by(name=vm_name), num_sec=300, delay=10)
     with error.expected('ActiveRecord::RecordNotFound'):
         collection.action.delete(vm)
-    assert rest_api.response.status_code == 404
+    assert appliance.rest_api.response.status_code == 404
