@@ -30,7 +30,7 @@ def ec2_sleep():
 
 
 @pytest.fixture(scope="module")
-def test_instance(request, provider):
+def new_instance(request, provider):
     instance = Instance.factory(random_vm_name("timelines", max_length=16), provider)
 
     request.addfinalizer(instance.delete_from_provider)
@@ -44,14 +44,14 @@ def test_instance(request, provider):
 
 
 @pytest.fixture(scope="module")
-def gen_events(test_instance):
+def gen_events(new_instance):
     logger.debug('Starting, stopping VM')
-    mgmt = test_instance.provider.mgmt
-    mgmt.stop_vm(test_instance.name)
-    if test_instance.provider.one_of(EC2Provider):
+    mgmt = new_instance.provider.mgmt
+    mgmt.stop_vm(new_instance.name)
+    if new_instance.provider.one_of(EC2Provider):
         ec2_sleep()
-    mgmt.start_vm(test_instance.name)
-    if test_instance.provider.one_of(EC2Provider):
+    mgmt.start_vm(new_instance.name)
+    if new_instance.provider.one_of(EC2Provider):
         ec2_sleep()
 
 
@@ -73,37 +73,37 @@ def count_events(target, vm):
     return len(found_events)
 
 
-def test_provider_event(gen_events, test_instance):
+def test_cloud_provider_event(gen_events, new_instance):
     """ Tests provider events on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    wait_for(count_events, [test_instance.provider, test_instance], timeout='5m', fail_condition=0,
+    wait_for(count_events, [new_instance.provider, new_instance], timeout='5m', fail_condition=0,
              message="events to appear")
 
 
-def test_azone_event(gen_events, test_instance):
+def test_cloud_azone_event(gen_events, new_instance):
     """ Tests availability zone events on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
     # obtaining this instance's azone
-    zone_id = test_instance.get_vm_via_rest().availability_zone_id
-    zones = test_instance.appliance.rest_api.collections.availability_zones
+    zone_id = new_instance.get_vm_via_rest().availability_zone_id
+    zones = new_instance.appliance.rest_api.collections.availability_zones
     zone_name = next(zone.name for zone in zones if zone.id == zone_id)
-    azone = AvailabilityZone(name=zone_name, provider=test_instance.provider,
-                             appliance=test_instance.appliance)
-    wait_for(count_events, [azone, test_instance], timeout='5m', fail_condition=0,
+    azone = AvailabilityZone(name=zone_name, provider=new_instance.provider,
+                             appliance=new_instance.appliance)
+    wait_for(count_events, [azone, new_instance], timeout='5m', fail_condition=0,
              message="events to appear")
 
 
-def test_vm_event(gen_events, test_instance):
+def test_cloud_instance_event(gen_events, new_instance):
     """ Tests vm events on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    wait_for(count_events, [test_instance, test_instance], timeout='5m', fail_condition=0,
+    wait_for(count_events, [new_instance, new_instance], timeout='5m', fail_condition=0,
              message="events to appear")

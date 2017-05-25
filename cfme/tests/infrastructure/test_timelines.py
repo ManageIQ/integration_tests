@@ -27,7 +27,7 @@ pytest_generate_tests = testgen.generate(gen_func=testgen.providers,
 
 
 @pytest.fixture(scope="module")
-def test_vm(request, provider):
+def new_vm(request, provider):
     vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
 
     request.addfinalizer(vm.delete_from_provider)
@@ -39,11 +39,11 @@ def test_vm(request, provider):
 
 
 @pytest.fixture(scope="module")
-def gen_events(test_vm):
+def gen_events(new_vm):
     logger.debug('Starting, stopping VM')
-    mgmt = test_vm.provider.mgmt
-    mgmt.stop_vm(test_vm.name)
-    mgmt.start_vm(test_vm.name)
+    mgmt = new_vm.provider.mgmt
+    mgmt.stop_vm(new_vm.name)
+    mgmt.start_vm(new_vm.name)
 
 
 def count_events(target, vm):
@@ -64,57 +64,57 @@ def count_events(target, vm):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_provider_event(gen_events, test_vm):
+def test_infra_provider_event(gen_events, new_vm):
     """Tests provider event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
 
-    wait_for(count_events, [test_vm.provider, test_vm], timeout='5m', fail_condition=0,
+    wait_for(count_events, [new_vm.provider, new_vm], timeout='5m', fail_condition=0,
              message="events to appear")
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_host_event(gen_events, test_vm):
+def test_infra_host_event(gen_events, new_vm):
     """Tests host event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    test_vm.load_details()
+    new_vm.load_details()
     host_name = InfoBlock.text('Relationships', 'Host')
-    host = Host(name=host_name, provider=test_vm.provider)
-    wait_for(count_events, [host, test_vm], timeout='10m', fail_condition=0,
+    host = Host(name=host_name, provider=new_vm.provider)
+    wait_for(count_events, [host, new_vm], timeout='10m', fail_condition=0,
              message="events to appear")
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_vm_event(gen_events, test_vm):
+def test_infra_vm_event(gen_events, new_vm):
     """Tests vm event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
 
-    wait_for(count_events, [test_vm, test_vm], timeout='3m', fail_condition=0,
+    wait_for(count_events, [new_vm, new_vm], timeout='3m', fail_condition=0,
              message="events to appear")
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_cluster_event(gen_events, test_vm):
+def test_infra_cluster_event(gen_events, new_vm):
     """Tests cluster event on timelines
 
     Metadata:
         test_flag: timelines, provision
     """
-    all_clusters = test_vm.provider.get_clusters()
-    cluster = next(cl for cl in all_clusters if cl.id == test_vm.cluster_id)
-    wait_for(count_events, [cluster, test_vm], timeout='5m',
+    all_clusters = new_vm.provider.get_clusters()
+    cluster = next(cl for cl in all_clusters if cl.id == new_vm.cluster_id)
+    wait_for(count_events, [cluster, new_vm], timeout='5m',
              fail_condition=0, message="events to appear")
 
 
-class TestVmEventRESTAPI(object):
+class TestInfraVmEventRESTAPI(object):
     @pytest.fixture(scope="module")
     def a_provider(self, request):
         return _a_provider(request)
