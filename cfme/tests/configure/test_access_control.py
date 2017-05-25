@@ -313,7 +313,7 @@ def test_edit_default_group():
         all_group_selection = True
 
     with pytest.raises(RBACOperationBlocked):
-        group.update(None, all_group_selection)
+        group.update({}, all_group_selection)
 
 
 @pytest.mark.tier(3)
@@ -379,7 +379,7 @@ def test_edit_default_roles():
     role = Role(name='EvmRole-auditor')
 
     with pytest.raises(RBACOperationBlocked):
-        role.update(None)
+        role.update({})
 
 
 @pytest.mark.tier(3)
