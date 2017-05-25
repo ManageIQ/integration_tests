@@ -286,7 +286,8 @@ def test_delete_default_group():
     with pytest.raises(RBACOperationBlocked):
         all_group_selection = False
 
-        if version.current_version() < "5.7": all_group_selection = True
+        if version.current_version() < "5.7":
+            all_group_selection = True
 
         group.delete(all_group_selection=all_group_selection)
 

@@ -89,7 +89,7 @@ class User(Updateable, Pretty, Navigatable):
             '5.8': ("Userid is not unique within region {}".format(self.region)),
             '5.7': ("Userid has already been taken"), })
         flash_success_msg = version.pick({
-            '5.6' : ('User "{}" was saved'.format(self.name)), })
+            '5.6': ('User "{}" was saved'.format(self.name)), })
 
         navigate_to(self, 'Add')
         fill(self.user_form, {'name_txt': self.name,
@@ -111,7 +111,7 @@ class User(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         flash_success_msg = version.pick({
-            '5.6' : 'User "{}" was saved'.format(updates.get('name', self.name)), })
+            '5.6': 'User "{}" was saved'.format(updates.get('name', self.name)), })
 
         navigate_to(self, 'Edit')
         change_stored_password()
