@@ -38,7 +38,7 @@ def refresh_and_wait(provider, stack):
         stack.wait_for_appear()
 
 
-def test_delete_instance(setup_provider, provider):
+def test_delete_instance_appear_after_refresh(setup_provider, provider):
     """ Tests delete instance
 
     Metadata:
@@ -52,7 +52,7 @@ def test_delete_instance(setup_provider, provider):
     test_instance.wait_to_appear()
 
 
-def test_delete_image(setup_provider, provider, set_grid, request):
+def test_delete_image_appear_after_refresh(setup_provider, provider, set_grid, request):
     """ Tests delete image
 
     Metadata:
@@ -67,7 +67,7 @@ def test_delete_image(setup_provider, provider, set_grid, request):
     request.addfinalizer(reset)
 
 
-def test_delete_stack(setup_provider, provider, provisioning, request):
+def test_delete_stack_appear_after_refresh(setup_provider, provider, provisioning, request):
     """ Tests delete stack
 
     Metadata:
