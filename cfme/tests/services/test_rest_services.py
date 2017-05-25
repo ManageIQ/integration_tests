@@ -4,7 +4,6 @@ import fauxfactory
 import pytest
 
 from cfme.rest.gen_data import dialog as _dialog
-from cfme.rest.gen_data import services as _services
 from cfme.rest.gen_data import service_data as _service_data
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
@@ -80,25 +79,21 @@ def service_catalogs(request, appliance):
 
 @pytest.fixture(scope="function")
 def services(request, appliance, a_provider):
-    if version.current_version() >= '5.7':
-        # create simple service using REST API
-        bodies = [service_body() for _ in range(3)]
-        collection = appliance.rest_api.collections.services
-        new_services = collection.action.create(*bodies)
-        assert appliance.rest_api.response.status_code == 200
+    # create simple service using REST API
+    bodies = [service_body() for _ in range(3)]
+    collection = appliance.rest_api.collections.services
+    new_services = collection.action.create(*bodies)
+    assert appliance.rest_api.response.status_code == 200
 
-        @request.addfinalizer
-        def _finished():
-            collection.reload()
-            ids = [service.id for service in new_services]
-            delete_entities = [service for service in collection if service.id in ids]
-            if delete_entities:
-                collection.action.delete(*delete_entities)
+    @request.addfinalizer
+    def _finished():
+        collection.reload()
+        ids = [service.id for service in new_services]
+        delete_entities = [service for service in collection if service.id in ids]
+        if delete_entities:
+            collection.action.delete(*delete_entities)
 
-        return new_services
-    else:
-        # create full-blown service using UI
-        return _services(request, appliance.rest_api, a_provider)
+    return new_services
 
 
 @pytest.fixture(scope="function")
@@ -291,7 +286,6 @@ class TestServiceRESTAPI(object):
             assert hasattr(service, "evm_owner_id")
             assert service.evm_owner_id == user.id
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
@@ -322,7 +316,16 @@ class TestServiceRESTAPI(object):
         _action_and_check('suspend', 'suspended')
         _action_and_check('start', 'on')
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_service_vm_subcollection(self, appliance, service_data):
+        """Tests /api/services/:id/vms.
+
+        Metadata:
+            test_flag: rest
+        """
+        service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
+        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        assert service.vms[0].id == vm.id
+
     def test_create_service_from_parent(self, request, appliance):
         """Tests creation of new service that reference existing service.
 
@@ -344,7 +347,6 @@ class TestServiceRESTAPI(object):
         for ent in response:
             assert ent.ancestry == str(service.id)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_delete_parent_service(self, appliance):
         """Tests that when parent service is deleted, child service is deleted automatically.
 
@@ -368,7 +370,6 @@ class TestServiceRESTAPI(object):
             with error.expected("ActiveRecord::RecordNotFound"):
                 gen.action.delete()
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_add_service_parent(self, request, appliance):
         """Tests adding parent reference to already existing service.
 
@@ -384,7 +385,6 @@ class TestServiceRESTAPI(object):
         child.reload()
         assert child.ancestry == str(parent.id)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.meta(blockers=[BZ(1416903, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_power_parent_service(self, request, appliance, service_data):
         """Tests that power operations triggered on service parent affects child service.
@@ -414,7 +414,6 @@ class TestServiceRESTAPI(object):
         _action_and_check('suspend', 'suspended')
         _action_and_check('start', 'on')
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.meta(blockers=[BZ(1441412, forced_streams=['5.8', 'upstream'])])
     def test_retire_parent_service_now(self, appliance, service_data):
         """Tests that child service is retired together with a parent service.
@@ -437,7 +436,6 @@ class TestServiceRESTAPI(object):
 
 
 class TestServiceDialogsRESTAPI(object):
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize("method", ["post", "delete"])
     def test_delete_service_dialog(self, appliance, dialog, method):
         """Tests deleting service dialogs from detail.
@@ -453,7 +451,6 @@ class TestServiceDialogsRESTAPI(object):
             service_dialog.action.delete(force_method=method)
         assert appliance.rest_api.response.status_code == 404
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_delete_service_dialogs(self, appliance, dialog):
         """Tests deleting service dialogs from collection.
 
@@ -608,7 +605,6 @@ class TestBlueprintsRESTAPI(object):
         return response
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_create_blueprints(self, appliance, blueprints):
         """Tests creation of blueprints.
 
@@ -622,7 +618,6 @@ class TestBlueprintsRESTAPI(object):
             assert record.ui_properties == blueprint.ui_properties
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
     def test_delete_blueprints_from_detail(self, appliance, blueprints, method):
         """Tests deleting blueprints from detail.
@@ -639,7 +634,6 @@ class TestBlueprintsRESTAPI(object):
             assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_delete_blueprints_from_collection(self, appliance, blueprints):
         """Tests deleting blueprints from collection.
 
@@ -654,7 +648,6 @@ class TestBlueprintsRESTAPI(object):
         assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
@@ -697,7 +690,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
         return response
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_create_orchestration_templates(self, appliance, orchestration_templates):
         """Tests creation of orchestration templates.
 
@@ -711,7 +703,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert record.type == template.type
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_delete_orchestration_templates_from_collection(
             self, appliance, orchestration_templates):
         """Tests deleting orchestration templates from collection.
@@ -727,7 +718,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
         assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_delete_orchestration_templates_from_detail_post(self, orchestration_templates,
             appliance):
@@ -744,7 +734,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_delete_orchestration_templates_from_detail_delete(self, orchestration_templates,
             appliance):
         """Tests deleting orchestration templates from detail using DELETE method.
@@ -760,7 +749,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
             assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
