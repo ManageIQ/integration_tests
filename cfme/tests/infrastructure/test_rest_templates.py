@@ -6,7 +6,7 @@ from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
 from utils import error
-from utils.blockers import BZ
+from utils.version import current_version
 
 pytestmark = [test_requirements.rest]
 
@@ -63,7 +63,8 @@ def test_set_ownership(appliance, template, from_detail):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1422807, forced_streams=["5.7"])])
+# BZ1422807 that was fixed only in 5.8
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_delete_template_from_detail_post(appliance, template):
     """Tests deletion of template from detail using POST method.
 
