@@ -246,7 +246,7 @@ def test_group_crud():
 def test_group_duplicate_name():
     group = new_group()
     group.create()
-    with error.expected("Description has already been taken"):
+    with pytest.raises(RBACOperationBlocked):
         group.create()
 
 

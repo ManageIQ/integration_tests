@@ -236,13 +236,25 @@ class Group(Updateable, Pretty, Navigatable):
         self.ldap_credentials = ldap_credentials
         self.user_to_lookup = user_to_lookup
         self.all_group_table = Table("//div[@id='main_div']//table")
+        self.region = 0
 
     def create(self):
+        flash_blocked_msg = version.pick({
+            '5.8': ("Description is not unique within region {}".format(self.region)),
+            '5.7': ("Description has already been taken"),
+            })
+
         navigate_to(self, 'Add')
         fill(self.group_form, {'description_txt': self.description,
                                'role_select': self.role,
                                'group_tenant': self.tenant},
              action=form_buttons.add)
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def _retrieve_ldap_user_groups(self):
@@ -304,11 +316,6 @@ class Group(Updateable, Pretty, Navigatable):
             pass
 
     def update(self, updates, all_group_selection=False):
-        #######################################################################
-        #DELETE THIS
-        import pytest
-        pytest.set_trace()
-        #######################################################################
         if all_group_selection:
             self._update_using_all_selection()
         else:
