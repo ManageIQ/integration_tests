@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Anisble/Repositories"""
-from navmazing import NavigateToAttribute, NavigateToSibling, NavigationDestinationNotFound
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 from cfme.base import Server
+from cfme.exceptions import ItemNotFound
 from cfme.base.login import BaseLoggedInPage
 from widgetastic.widget import Text, Checkbox
 from widgetastic_manageiq import Table
@@ -137,7 +138,14 @@ class Repository(Navigatable):
         self.delete_on_update = delete_on_update
         self.update_on_launch = update_on_launch
 
+    @property
+    def db_object(self):
+        table = self.appliance.db["configuration_script_sources"]
+        return self.appliance.db.sessionmaker(autocommit=True).query(table).filter(
+            table.name == self.name).first()
+
     def update(self, updates):
+        original_updated_at = self.db_object.updated_at
         view = navigate_to(self, "Edit")
         changed = view.fill(updates)
         if changed:
@@ -151,9 +159,23 @@ class Repository(Navigatable):
             view.flash.assert_message(
                 'Edit of Repository "{}" was successfully initialized.'.format(
                     updates.get("name", self.name)))
+
+            def _wait_until_changes_applied():
+                changed_updated_at = self.db_object.updated_at
+                return not original_updated_at == changed_updated_at
+
+            wait_for(_wait_until_changes_applied, delay=10, timeout="5m")
         else:
             view.flash.assert_message(
                 'Edit of Repository "{}" cancelled by the user.'.format(self.name))
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, "Details")
+            return True
+        except ItemNotFound:
+            return False
 
     def delete(self):
         view = navigate_to(self, "Details")
@@ -163,15 +185,8 @@ class Repository(Navigatable):
         repo_list_page.flash.assert_no_error()
         repo_list_page.flash.assert_message(
             'Delete of Repository "{}" was successfully initiated.'.format(self.name))
-
-        def _wait_until_removed():
-            for row in repo_list_page.repositories:
-                if row["Name"].text == self.name:
-                    return False
-            else:
-                return True
-
-        wait_for(_wait_until_removed, delay=10, fail_func=repo_list_page.browser.selenium.refresh)
+        wait_for(lambda: not self.exists, delay=10,
+            fail_func=repo_list_page.browser.selenium.refresh)
 
     def refresh(self):
         view = navigate_to(self, "Details")
@@ -201,7 +216,7 @@ class Details(CFMENavigateStep):
                 row["Name"].click()
                 break
         else:
-            raise NavigationDestinationNotFound(self.obj.name, "Repository", repositories)
+            raise ItemNotFound
 
 
 @navigator.register(RepositoryCollection)
