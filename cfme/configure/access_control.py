@@ -10,7 +10,7 @@ from cfme.web_ui import (
     AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
 from cfme.web_ui.form_buttons import change_stored_password
-from utils import version
+from utils import version, deferred_verpick
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
@@ -488,7 +488,8 @@ class Tenant(Updateable, Pretty, Navigatable):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
-    save_changes = form_buttons.FormButton("Save changes")
+    save_changes = deferred_verpick({'5.7': form_buttons.angular_save,
+                   '5.8': form_buttons.simple_save})
 
     # TODO:
     # Temporary defining elements with "//input" as Input() is not working.Seems to be
