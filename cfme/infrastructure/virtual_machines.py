@@ -135,13 +135,13 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
 
 class VMDisk(
-        namedtuple('VMDisk', ['filename', 'size', 'size_unit', 'type', 'mode', 'dependent'])):
+        namedtuple('VMDisk', ['filename', 'size', 'size_unit', 'type', 'mode'])):
     """Represents a single VM disk
 
     Note:
         Cannot be changed once created.
     """
-    EQUAL_ATTRS = {'type', 'mode', 'dependent', 'size_mb'}
+    EQUAL_ATTRS = {'type', 'mode', 'size_mb'}
 
     def __eq__(self, other):
         # If both have filename, it's easy
@@ -199,7 +199,8 @@ class VMConfiguration(Pretty):
         self._load()
 
     def __eq__(self, other):
-        return (self.hw == other.hw) and (self.disks == other.disks)
+        return (self.hw == other.hw) and (self.num_disks == other.num_disks) and \
+            all([disk in other.disks for disk in self.disks])
 
     def _load(self):
         appl_db = self.vm.appliance.db
@@ -233,8 +234,7 @@ class VMConfiguration(Pretty):
                     size=size_gb,
                     size_unit='GB',
                     type=disk_data.disk_type,
-                    mode=disk_data.mode,
-                    dependent=None  # Cannot be loaded because it is not stored in VMDB
+                    mode=disk_data.mode
                 ))
 
     def copy(self):
@@ -245,14 +245,29 @@ class VMConfiguration(Pretty):
         config.vm = self.vm
         return config
 
-    def add_disk(self, size, size_unit='GB', type='thin', mode='persistent', dependent=True):
+    def add_disk(self, size, size_unit='GB', type='thin', mode='persistent'):
+        """Adds a disk to the VM
+
+        Args:
+            size: Size of the disk
+            size_unit: Unit of size ('MB' or 'GB')
+            type: Type of the disk ('thin' or 'thick')
+            mode: Mode of the disk ('persistent', 'nonpersistent' or 'independent_persistent')
+
+        Note:
+            This method is designed to correspond with the DB, not with the UI.
+            In the UI, dependency is represented by a separate Yes / No option which is _incorrect_
+            design that we don't follow. Correctly, mode should be a selectbox of 3 items:
+            Persistent, Nonpersistent and Independent Persistent.
+            Independent Nonpersistent is an invalid combination that UI currently (5.8) allows.
+        """
         # New disk doesn't have a filename, until actually added
         disk = VMDisk(
-            filename=None, size=size, size_unit=size_unit, type=type, mode=mode,
-            dependent=dependent)
+            filename=None, size=size, size_unit=size_unit, type=type, mode=mode)
         self.disks.append(disk)
 
     def delete_disk(self, filename=None, index=None):
+        """Removes a disk of given filename or index"""
         if filename:
             disk = [disk for disk in self.disks if disk.filename == filename][0]
             self.disks.remove(disk)
@@ -599,13 +614,20 @@ class Vm(BaseVM):
         for disk_change in changes['disks']:
             action, disk = disk_change['action'], disk_change['disk']
             if action == 'add':
-                # By filling column by column, traceback will point to exact line in case of issues
+                # TODO This conditional has to go, once the 'Dependent' switch is removed from UI
+                if 'independent' in disk.mode:
+                    mode = disk.mode.split('independent_')[1]
+                    dependent = False
+                else:
+                    mode = disk.mode
+                    dependent = True
                 row = vm_recfg.disks_table.click_add_disk()
                 row.type.fill(disk.type)
-                row.mode.fill(disk.mode)
-                row.size.fill(disk.size)
+                row.mode.fill(mode)
+                # Unit first, then size (otherwise JS would try to recalculate the size...)
                 row[4].fill(disk.size_unit)
-                row.dependent.fill(disk.dependent)
+                row.size.fill(disk.size)
+                row.dependent.fill(dependent)
                 row.actions.widget.click()
             elif action == 'delete':
                 row = vm_recfg.disks_table.row(name=disk.filename)

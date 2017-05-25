@@ -18,7 +18,7 @@ pytestmark = [
 
 @pytest.yield_fixture(scope='module')
 def small_vm(provider, small_template_modscope):
-    vm = VM.factory(random_vm_name(context='reconfig'), provider)
+    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template_modscope)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
 
@@ -43,8 +43,7 @@ def ensure_power_state(small_vm, power_type):
 def test_vm_reconfigure_add_remove_hw(
         provider, small_vm, ensure_power_state, power_type, change_type):
 
-    orig_config = small_vm.configuration
-
+    orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
     if change_type == 'cores_per_socket':
         new_config.hw.cores_per_socket = new_config.hw.cores_per_socket + 1
@@ -70,20 +69,15 @@ def test_vm_reconfigure_add_remove_hw(
 # TODO power_type 'hot'
 @pytest.mark.parametrize('power_type', ['cold'])
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
-@pytest.mark.parametrize('disk_mode', ['persistent', 'nonpersistent'])
-@pytest.mark.parametrize('disk_dependent', [True, False])
-@pytest.mark.uncollectif(
-    lambda provider, disk_mode, disk_dependent:
-        provider.one_of(RHEVMProvider) or
-        (disk_mode == 'nonpersistent' and disk_dependent is False))
+@pytest.mark.parametrize('disk_mode', ['persistent', 'nonpersistent', 'independent_persistent'])
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
 def test_vm_reconfigure_add_remove_disk(
-        provider, small_vm, ensure_power_state, power_type, disk_type, disk_mode, disk_dependent):
+        provider, small_vm, ensure_power_state, power_type, disk_type, disk_mode):
 
-    orig_config = small_vm.configuration
-
+    orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
     new_config.add_disk(
-        size=5, size_unit='GB', type=disk_type, mode=disk_mode, dependent=disk_dependent)
+        size=5, size_unit='GB', type=disk_type, mode=disk_mode)
 
     small_vm.reconfigure(new_config)
     wait_for(
