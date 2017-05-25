@@ -1,5 +1,6 @@
 import pytest
 from random import choice
+from selenium.common.exceptions import NoSuchElementException
 
 from cfme.configure.tasks import is_host_analysis_finished
 from cfme.infrastructure.deployment_roles import DeploymentRoles
@@ -31,7 +32,10 @@ def test_host_role_association(provider, soft_assert):
         navigate_to(host, 'Details')
         role_name = summary_title().split()[1].translate(None, '()')
         role_name = 'Compute' if role_name == 'NovaCompute' else role_name
-        role_assoc = host.get_detail('Relationships', 'Deployment Role')
+        try:
+            role_assoc = host.get_detail('Relationships', 'Deployment Role')
+        except NoSuchElementException:
+            role_assoc = host.get_detail('Relationships', 'Cluster / Deployment Role')
         soft_assert(role_name in role_assoc, 'Deployment roles misconfigured')
 
 

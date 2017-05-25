@@ -4,7 +4,7 @@ from functools import partial
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from utils.appliance import Navigatable
@@ -20,8 +20,7 @@ details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
-match_page = partial(match_location, controller='ems_cluster',
-                     title='Deployment Roles')
+match_page = partial(match_location, controller='ems_cluster')
 
 
 class DeploymentRoles(Pretty, Navigatable):
@@ -66,14 +65,17 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        nav_path = ('Compute', 'Infrastructure', 'Deployment Roles')
+        nav_select = partial(self.prerequisite_view.navigation.select, 'Compute', 'Infrastructure')
         try:
-            self.prerequisite_view.navigation.select(*nav_path)
+            nav_select('Deployment Roles')
         except NoSuchElementException:
-            raise DestinationNotFound('Navigation {} not found'.format(nav_path))
+            nav_select('Clusters / Deployment Roles')
 
     def am_i_here(self):
-        return match_page(summary='Deployment Roles')
+        def match(option):
+            return match_page(title=option, summary=option)
+
+        return match('Clusters / Deployment Roles') or match('Deployment Roles')
 
 
 @navigator.register(DeploymentRoles, 'AllForProvider')
@@ -83,12 +85,22 @@ class AllForProvider(CFMENavigateStep):
         navigate_to(self.obj.provider, 'Details')
 
     def step(self):
-        list_acc.select('Relationships', 'Show all managed Deployment Roles',
-                        by_title=True, partial=False)
+        def list_acc_select(option):
+            list_acc.select('Relationships', 'Show all managed {}'.format(option), by_title=True,
+                            partial=False)
+
+        try:
+            list_acc_select('Deployment Roles')
+        except ListAccordionLinkNotFound:
+            list_acc_select('Clusters / Deployment Roles')
 
     def am_i_here(self):
-        summary = "{} (All Deployment Roles)".format(self.obj.provider.name)
-        return match_page(summary=summary)
+        def match(option):
+            summary_ptrn = "{} (All {})"
+            return match_page(summary=summary_ptrn.format(self.obj.provider.name, option),
+                              title=option)
+
+        return match('Deployment Roles') or match('Clusters / Deployment Roles')
 
 
 @navigator.register(DeploymentRoles, 'Details')
