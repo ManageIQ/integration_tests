@@ -241,8 +241,7 @@ class Group(Updateable, Pretty, Navigatable):
     def create(self):
         flash_blocked_msg = version.pick({
             '5.8': ("Description is not unique within region {}".format(self.region)),
-            '5.7': ("Description has already been taken"),
-            })
+            '5.7': ("Description has already been taken"), })
 
         navigate_to(self, 'Add')
         fill(self.group_form, {'description_txt': self.description,
@@ -297,7 +296,7 @@ class Group(Updateable, Pretty, Navigatable):
 
     def _update_using_all_selection(self):
         flash_blocked_msg = 'Read Only EVM Group "{}" can not be edited'.format(
-                self.description)
+            self.description)
 
         #TODO: this functionality should be moved to edit navigate step
         navigate_to(Group, 'All')
