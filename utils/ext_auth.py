@@ -46,7 +46,14 @@ def setup_external_auth_ipa(**data):
         command = 'echo "{}\t{}" >> /etc/hosts'.format(appliance_address, appliance_fqdn)
         ipaserver_ssh.run_command(command)
     with current_appliance.ssh_client as ssh:
-        assert ssh.run_command('appliance_console_cli --host {}'.format(appliance_fqdn))
+        result = ssh.run_command('appliance_console_cli --host {}'.format(appliance_fqdn)).success
+        if not current_appliance.is_pod:
+            assert result
+        else:
+            # appliance_console_cli fails when calls hostnamectl --host. it seems docker issue
+            # raise BZ ?
+            assert str(ssh.run_command('hostname')).rstrip() == appliance_fqdn
+
         ensure_browser_open()
         login_admin()
         if data["ipaserver"] not in get_ntp_servers():
