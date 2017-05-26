@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Page model for Automation/Anisble/Repositories"""
+"""Page model for Automation/Ansible/Repositories"""
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.widget import Text, Checkbox
 
 from cfme.base import Server
 from cfme.exceptions import ItemNotFound
 from cfme.base.login import BaseLoggedInPage
-from widgetastic.widget import Text, Checkbox
-from widgetastic_manageiq import Table
+from widgetastic_manageiq import Table, PaginationPane
 from widgetastic_patternfly import Dropdown, Button, Input, FlashMessages
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
@@ -15,7 +15,7 @@ from utils.wait import wait_for
 
 class RepositoryBaseView(BaseLoggedInPage):
     flash = FlashMessages('.//div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
-    title = Text(locator=".//h1")
+    title = Text(locator='.//div[@id="main-content"]//h1')
 
     @property
     def in_ansible_repositories(self):
@@ -28,6 +28,7 @@ class RepositoryBaseView(BaseLoggedInPage):
 class RepositoryListView(RepositoryBaseView):
     configuration = Dropdown("Configuration")
     repositories = Table(".//div[@id='list_grid']/table")
+    pagination_pane = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -115,9 +116,58 @@ class RepositoryCollection(Navigatable):
                 return False
 
         wait_for(_wait_until_appeared, delay=10, fail_func=repo_list_page.browser.selenium.refresh)
-        return Repository(name, url, description=description, scm_credentials=scm_credentials,
-            scm_branch=scm_branch, clean=clean, delete_on_update=delete_on_update,
-            update_on_launch=update_on_launch, appliance=self.appliance)
+        return Repository(
+            name,
+            url,
+            description=description or "",
+            scm_credentials=scm_credentials,
+            scm_branch=scm_branch or "",
+            clean=clean or False,
+            delete_on_update=delete_on_update or False,
+            update_on_launch=update_on_launch or False,
+            appliance=self.appliance
+        )
+
+    def all(self):
+        table = self.appliance.db["configuration_script_sources"]
+        result = []
+        for row in self.appliance.db.session.query(table):
+            result.append(
+                Repository(
+                    row.name,
+                    row.scm_url,
+                    description=row.description,
+                    scm_branch=row.scm_branch,
+                    clean=row.scm_clean,
+                    delete_on_update=row.scm_delete_on_update,
+                    update_on_launch=row.scm_update_on_launch,
+                    appliance=self.appliance
+                )
+            )
+        return result
+
+    def delete(self, *repositories):
+        repositories = list(repositories)
+        checked_repositories = []
+        all_page = navigate_to(Server, "AnsibleRepositories")
+        all_page.pagination_pane.uncheck_all()
+        if not all_page.repositories.is_displayed:
+            raise ValueError("No repository found!")
+        for row in all_page.repositories:
+            for repository in repositories:
+                if repository.name == row.name.text:
+                    checked_repositories.append(repository)
+                    row[0].check()
+                    break
+            if set(repositories) == set(checked_repositories):
+                break
+        if set(repositories) != set(checked_repositories):
+            raise ValueError("Some of the repositories were not found in the UI.")
+        all_page.configuration.item_select("Remove selected Repositories", handle_alert=True)
+        all_page.flash.assert_no_error()
+        for repository in checked_repositories:
+            all_page.flash.assert_message(
+                'Delete of Repository "{}" was successfully initiated.'.format(repository.name))
 
 
 class Repository(Navigatable):
@@ -125,18 +175,16 @@ class Repository(Navigatable):
     def __init__(self, name, url, description=None, scm_credentials=None, scm_branch=None,
             clean=None, delete_on_update=None, update_on_launch=None, collection=None,
             appliance=None):
-        if collection is None:
-            collection = RepositoryCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection or RepositoryCollection(appliance=appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.url = url
-        self.description = description
+        self.description = description or ""
         self.scm_credentials = scm_credentials
-        self.scm_branch = scm_branch
-        self.clean = clean
-        self.delete_on_update = delete_on_update
-        self.update_on_launch = update_on_launch
+        self.scm_branch = scm_branch or ""
+        self.clean = clean or False
+        self.delete_on_update = delete_on_update or False
+        self.update_on_launch = update_on_launch or False
 
     @property
     def db_object(self):
