@@ -81,6 +81,8 @@ class Store(object):
         #: hack variable until we get a more sustainable solution
         self.ssh_clients_to_close = []
 
+        self.uncollection_stats = {}
+
     @property
     def has_config(self):
         return self.config is not None

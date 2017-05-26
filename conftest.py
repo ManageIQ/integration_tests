@@ -14,6 +14,18 @@ def pytest_addoption(parser):
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
 
 
+def pytest_collection_finish(session):
+    from fixtures.pytest_store import store
+    store.terminalreporter.write(
+        "Uncollection Stats:\n", bold=True)
+
+    for reason, value in store.uncollection_stats.iteritems():
+        store.terminalreporter.write(
+            " {}: {}\n".format(reason, value), bold=True)
+    store.terminalreporter.write(
+        " {} tests left to process\n".format(len(session.items)), bold=True)
+
+
 pytest_plugins = (
     'markers',
     'fixtures.pytest_store',
