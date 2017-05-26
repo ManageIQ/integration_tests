@@ -88,7 +88,7 @@ def test_provider_refresh(request, a_provider, appliance):
     )
     # We suppose that thanks to the random string, there will be only one such VM
     wait_for(
-        lambda: appliance.rest_api.collections.vms.find_by(name=vm_name),
+        lambda: appliance.rest_api.collections.vms.find_by(name=vm_name) or False,
         num_sec=180,
         delay=10,
     )

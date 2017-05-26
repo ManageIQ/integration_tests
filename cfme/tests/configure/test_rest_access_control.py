@@ -66,7 +66,7 @@ class TestTenantsViaREST(object):
         assert tenants_len == len(edited)
         for index in range(tenants_len):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['name']),
+                lambda: collection.find_by(name=new[index]['name']) or False,
                 num_sec=180,
                 delay=10,
             )
@@ -151,7 +151,7 @@ class TestRolesViaREST(object):
         assert roles_len == len(edited)
         for index in range(roles_len):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['name']),
+                lambda: collection.find_by(name=new[index]['name']) or False,
                 num_sec=180,
                 delay=10,
             )
@@ -199,7 +199,7 @@ class TestRolesViaREST(object):
         assert appliance.rest_api.response.status_code == 200
         assert role.name == role_data["name"]
         wait_for(
-            lambda: appliance.rest_api.collections.roles.find_by(name=role.name),
+            lambda: appliance.rest_api.collections.roles.find_by(name=role.name) or False,
             num_sec=180,
             delay=10,
         )
@@ -288,7 +288,7 @@ class TestGroupsViaREST(object):
         assert groups_len == len(edited)
         for index in range(groups_len):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['description']),
+                lambda: collection.find_by(name=new[index]['description']) or False,
                 num_sec=180,
                 delay=10,
             )
@@ -389,7 +389,7 @@ class TestUsersViaREST(object):
         assert users_len == len(edited)
         for index in range(users_len):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['name']),
+                lambda: collection.find_by(name=new[index]['name']) or False,
                 num_sec=180,
                 delay=10,
             )
