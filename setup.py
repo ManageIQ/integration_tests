@@ -21,9 +21,6 @@ setup(
             'miq-runtest = cfme.scripting.runtest:main',
             'miq-ipython = cfme.scripting.ipyshell:main',
         ],
-        'pytest11': [
-            'miq_testing = cfme.test_framework.pytest_plugin',
-        ],
         'manageiq.provider_categories':
         [
             'infra = cfme.infrastructure.provider:InfraProvider',
