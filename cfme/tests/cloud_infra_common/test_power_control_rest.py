@@ -76,7 +76,7 @@ def verify_action_result(rest_api, assert_success=True):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["cfrom_detail", "from_collection"])
-def test_stop(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
+def test_stop_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test stop of vm
 
     Prerequisities:
@@ -107,7 +107,7 @@ def test_stop(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_start(appliance, vm_obj, verify_vm_stopped, soft_assert, from_detail):
+def test_start_vm_rest(appliance, vm_obj, verify_vm_stopped, soft_assert, from_detail):
     """Test start vm
 
     Prerequisities:
@@ -138,7 +138,7 @@ def test_start(appliance, vm_obj, verify_vm_stopped, soft_assert, from_detail):
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_suspend(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
+def test_suspend_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from_detail):
     """Test suspend vm
 
     Prerequisities:
@@ -174,7 +174,7 @@ def test_suspend(appliance, vm_obj, verify_vm_running, soft_assert, from_detail)
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_reset_vm(vm_obj, verify_vm_running, from_detail, appliance):
+def test_reset_vm_rest(vm_obj, verify_vm_running, from_detail, appliance):
     """
     Test reset vm
 
