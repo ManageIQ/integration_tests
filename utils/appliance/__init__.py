@@ -2015,7 +2015,7 @@ class IPAppliance(object):
         yaml = self.get_yaml_config()
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
         self.set_yaml_config(yaml)
-        wait_for(lambda: self.server_roles == roles, num_sec=60, delay=5)
+        wait_for(lambda: self.server_roles == roles, num_sec=300, delay=15)
 
     @cached_property
     def configuration_details(self):
