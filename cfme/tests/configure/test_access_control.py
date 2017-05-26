@@ -294,14 +294,11 @@ def test_delete_default_group():
 
 @pytest.mark.tier(3)
 def test_delete_group_with_assigned_user():
-    flash_msg = version.pick({
-        '5.6': ("EVM Group \"{}\": Error during delete: Still has users assigned"),
-        '5.5': ("EVM Group \"{}\": Error during \'destroy\': Still has users assigned")})
     group = new_group()
     group.create()
     user = new_user(group=group)
     user.create()
-    with error.expected(flash_msg.format(group.description)):
+    with pytest.raises(RBACOperationBlocked):
         group.delete()
 
 

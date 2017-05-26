@@ -390,6 +390,11 @@ class Group(Updateable, Pretty, Navigatable):
             RBACOperationBlocked - If the delete operation is disabled
         """
         flash_success_msg = "EVM Group \"{}\": Delete successful".format(self.description)
+        flash_blocked_assigned_user_msg = version.pick({
+            '5.6': ("EVM Group \"{}\": Error during delete: Still has users assigned.".format(
+                self.description)),
+            '5.5': ("EVM Group \"{}\": Error during \'destroy\': Still has users assigned".format(
+                self.description))})
         delete_result = False
 
         if all_group_selection:
@@ -408,6 +413,12 @@ class Group(Updateable, Pretty, Navigatable):
                 delete_result = True
             except FlashMessageException:
                 pass
+
+        try:
+            flash.assert_message_match(flash_blocked_assigned_user_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
 
         return delete_result
 
