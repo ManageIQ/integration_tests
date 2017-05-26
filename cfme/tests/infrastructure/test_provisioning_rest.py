@@ -85,19 +85,18 @@ def test_provision(request, provision_data, provider, appliance):
 
     vm_name = provision_data["vm_fields"]["vm_name"]
     request.addfinalizer(
-        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(
-            vm_name) else None)
+        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert appliance.rest_api.response.status_code == 200
     provision_request = response[0]
 
     def _finished():
         provision_request.reload()
-        if provision_request.status.lower() in {"error"}:
+        if "error" in provision_request.status.lower():
             pytest.fail("Error when provisioning: `{}`".format(provision_request.message))
-        return provision_request.request_state.lower() in {"finished", "provisioned"}
+        return provision_request.request_state.lower() in ("finished", "provisioned")
 
-    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=800, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
