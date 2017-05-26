@@ -11,7 +11,6 @@ from cfme import login, test_requirements
 from cfme.base.credential import Credential
 from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
-from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
 from cfme.exceptions import OptionNotAvailable
 from cfme.common.provider import base_types
@@ -332,7 +331,7 @@ def test_edit_sequence_usergroups(request):
     navigate_to(Group, 'All')
     row = group_table.find_row_by_cells({'Name': group.description})
     original_sequence = sel.text(row.sequence)
-    set_group_order([group.description])
+    group.set_group_order([group.description])
     row = group_table.find_row_by_cells({'Name': group.description})
     changed_sequence = sel.text(row.sequence)
     assert original_sequence != changed_sequence, "Edit Sequence Failed"

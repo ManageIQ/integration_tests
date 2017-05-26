@@ -1,20 +1,15 @@
-from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import Text, Checkbox
-from widgetastic_patternfly import BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview
 from widgetastic_manageiq import UpDownSelect, SummaryFormItem
-from widgetastic.widget import View
+from widgetastic_patternfly import (
+    BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
+    BootstrapSwitch, CandidateNotFound)
+from widgetastic.widget import Text, Checkbox, View
 
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.toolbar as tb
 from cfme.base.credential import Credential
-from cfme.exceptions import CandidateNotFound, OptionNotAvailable
-from cfme.web_ui import (
-    AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
-    form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
+import cfme.fixtures.pytest_selenium as sel
+from cfme.exceptions import OptionNotAvailable
+from cfme.web_ui import Table
 from cfme.web_ui.form_buttons import change_stored_password
-from utils import version, deferred_verpick
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
@@ -24,22 +19,7 @@ from utils.update import Updateable
 from . import ConfigurationView
 
 
-tb_select = partial(tb.select, "Configuration")
-pol_btn = partial(tb.select, "Policy")
-
-edit_tags_form = Form(
-    fields=[
-        ("select_tag", Select("select#tag_cat")),
-        ("select_value", Select("select#tag_add"))
-    ])
-
 tag_table = Table("//div[@id='assignments_div']//table")
-users_table = Table("//div[@id='records_div']//table")
-
-group_order_selector = UpDownSelect(
-    "select#seq_fields",
-    "//img[@alt='Move selected fields up']",
-    "//img[@alt='Move selected fields down']")
 
 
 def simple_user(userid, password):
@@ -54,10 +34,9 @@ class UserForm(ConfigurationView):
     userid_txt = Input(name='userid')
     password_txt = Input(id='password')
     password_verify_txt = Input(id='verify')
-    email_txt = Input('email')
+    email_txt = Input(name='email')
     user_group_select = BootstrapSelect(id='chosen_group')
 
-    add_button = Button('Add')
     cancel_button = Button('Cancel')
 
 
@@ -66,22 +45,32 @@ class AllUserView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Access Control EVM Users'
+        )
 
 
 class AddUserView(UserForm):
+    add_button = Button('Add')
+
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == "Adding a new User"
+        )
 
 
-class DetailsUserView(UserForm):
+class DetailsUserView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
     @property
     def is_displayed(self):
-        return self.title.text == 'EVM User "{}"'.format(self.obj.name) and \
+        return (
+            self.title.text == 'EVM User "{}"'.format(self.obj.name) and
             self.access_control.is_opened
+        )
 
 
 class EditUserView(UserForm):
@@ -90,8 +79,10 @@ class EditUserView(UserForm):
 
     @property
     def is_displayed(self):
-        return self.title.text == 'Editing User "{}"'.format(self.obj.name) and \
+        return (
+            self.title.text == 'Editing User "{}"'.format(self.obj.name) and
             self.access_control.is_opened
+        )
 
 
 class EditTagsUserView(ConfigurationView):
@@ -109,15 +100,17 @@ class EditTagsUserView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Editing My Company Tags for "EVM Users"'
+        )
 
 
 class User(Updateable, Pretty, Navigatable):
     pretty_attrs = ['name', 'group']
 
     def __init__(self, name=None, credential=None, email=None, group=None, cost_center=None,
-            value_assign=None, appliance=None):
+                 value_assign=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.credential = credential
@@ -152,6 +145,7 @@ class User(Updateable, Pretty, Navigatable):
                    'email_txt': self.email,
                    'user_group_select': getattr(self.group, 'description', None)})
         view.add_button.click()
+        view = self.create_view(AllUserView)
         view.flash.assert_success_message('User "{}" was saved'.format(self.name))
 
     def update(self, updates):
@@ -178,6 +172,7 @@ class User(Updateable, Pretty, Navigatable):
                    'email_txt': new_updates.get('email_txt'),
                    'user_group_select': new_updates.get('user_group_select')})
         view.save_button.click()
+        view = self.create_view(DetailsUserView)
         view.flash.assert_success_message(
             'User "{}" was saved'.format(updates.get('name', self.name)))
 
@@ -185,7 +180,7 @@ class User(Updateable, Pretty, Navigatable):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Copy this User to a new User')
         view = self.create_view(AddUserView)
-        new_user = User(name=self.name + "copy",
+        new_user = User(name="{}copy".format(self.name),
                         credential=Credential(principal='redhat', secret='redhat'))
         change_stored_password()
         view.fill({'name_txt': new_user.name,
@@ -193,12 +188,14 @@ class User(Updateable, Pretty, Navigatable):
                    'password_txt': new_user.credential.secret,
                    'password_verify_txt': new_user.credential.verify_secret})
         view.add_button.click()
+        view = self.create_view(AllUserView)
         view.flash.assert_success_message('User "{}" was saved'.format(new_user.name))
         return new_user
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this User', handle_alert=True)
+        view = self.create_view(AllUserView)
         view.flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
 
     def edit_tags(self, tag, value):
@@ -206,6 +203,7 @@ class User(Updateable, Pretty, Navigatable):
         view.fill({'select_tag': tag,
                    'select_value': value})
         view.save_button.click()
+        view = self.create_view(DetailsUserView)
         view.flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
@@ -214,6 +212,7 @@ class User(Updateable, Pretty, Navigatable):
                                           partial_check=True)
         sel.click(row[0])
         view.save_button.click()
+        view = self.create_view(DetailsUserView)
         view.flash.assert_success_message('Tag edits were successfully saved')
 
     @property
@@ -280,14 +279,14 @@ class UserTagsEdit(CFMENavigateStep):
 class GroupForm(ConfigurationView):
     title = Text('#explorer_title_text')
 
-    ldap_groups_for_user = BootstrapSelect('ldap_groups_user')
+    ldap_groups_for_user = BootstrapSelect(id='ldap_groups_user')
     description_txt = Input(name='description')
-    lookup_ldap_groups_chk = Checkbox('lookup')
+    lookup_ldap_groups_chk = Checkbox(name='lookup')
     role_select = BootstrapSelect(id='group_role')
     group_tenant = BootstrapSelect(id='group_tenant')
-    user_to_look_up = Input('user')
-    username = Input('user_id')
-    password = Input('password')
+    user_to_look_up = Input(name='user')
+    username = Input(name='user_id')
+    password = Input(name='password')
 
     tag = SummaryFormItem('Smart Management', 'My Company Tags')
 
@@ -315,15 +314,21 @@ class AddGroupView(GroupForm):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == "Adding a new Group"
+        )
 
 
-class DetailsGroupView(GroupForm):
+class DetailsGroupView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'EVM Group "{}"'.format(self.obj.description)
+        )
 
 
 class EditGroupView(GroupForm):
@@ -332,17 +337,21 @@ class EditGroupView(GroupForm):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Editing Group "{}"'.format(self.obj.description)
+        )
 
 
-class GroupAllView(ConfigurationView):
+class AllGroupView(ConfigurationView):
     title = Text('#explorer_title_text')
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Access Control EVM Groups'
+        )
 
 
 class EditGroupSequenceView(GroupForm):
@@ -358,8 +367,10 @@ class EditGroupSequenceView(GroupForm):
     cancel_button = Button('Cancel')
 
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == "Editing Sequence of User Groups"
+        )
 
 
 class GroupEditTagsView(ConfigurationView):
@@ -377,15 +388,18 @@ class GroupEditTagsView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Editing My Company Tags for "EVM Groups"'
+        )
 
 
 class Group(Updateable, Pretty, Navigatable):
     pretty_attrs = ['description', 'role']
 
     def __init__(self, description=None, role=None, tenant="My Company", user_to_lookup=None,
-            ldap_credentials=None, appliance=None, tag=None, host_cluster=None, vm_template=None):
+                 ldap_credentials=None, tag=None, host_cluster=None, vm_template=None,
+                 appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.role = role
@@ -401,13 +415,11 @@ class Group(Updateable, Pretty, Navigatable):
         view.fill({'description_txt': self.description,
                    'role_select': self.role,
                    'group_tenant': self.tenant})
-        if self.tag is not None:
-            view.my_company_tags.tag_tree.fill(self.tag)
-        if self.host_cluster is not None:
-            view.my_company_tags.hosts_clusters_tree.fill(self.host_cluster)
-        if self.vm_template is not None:
-            view.my_company_tags.vms_templates_tree.fill(self.vm_template)
+        view.my_company_tags.tag_tree.fill(self.tag)
+        view.my_company_tags.hosts_clusters_tree.fill(self.host_cluster)
+        view.my_company_tags.vms_templates_tree.fill(self.vm_template)
         view.add_button.click()
+        view = self.create_view(AllGroupView)
         view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def _retrieve_ldap_user_groups(self):
@@ -432,6 +444,7 @@ class Group(Updateable, Pretty, Navigatable):
                    'role_select': self.role,
                    'group_tenant': self.tenant})
         view.add_button.click()
+        view = self.create_view(AllGroupView)
         view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def add_group_from_ldap_lookup(self):
@@ -449,13 +462,14 @@ class Group(Updateable, Pretty, Navigatable):
                    'role_select': updates.get('role'),
                    'group_tenant': updates.get('tenant')})
         view.save_button.click()
+        view = self.create_view(DetailsGroupView)
         view.flash.assert_message(
             'Group "{}" was saved'.format(updates.get('description', self.description)))
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Group', handle_alert=True)
-        view = self.create_view(GroupAllView)
+        view = self.create_view(AllGroupView)
         view.flash.assert_success_message(
             'EVM Group "{}": Delete successful'.format(self.description))
 
@@ -464,6 +478,7 @@ class Group(Updateable, Pretty, Navigatable):
         view.fill({'select_tag': tag,
                    'select_value': value})
         view.save_button.click()
+        view = self.create_view(DetailsGroupView)
         view.flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
@@ -473,14 +488,11 @@ class Group(Updateable, Pretty, Navigatable):
                                           partial_check=True)
         sel.click(row[0])
         view.save_button.click()
+        view = self.create_view(DetailsGroupView)
         view.flash.assert_success_message('Tag edits were successfully saved')
 
-    def get_group_order(self):
-        view = navigate_to(Group, 'EditGroupSequence')
-        return view.group_order_selector.items
-
     def set_group_order(self, items):
-        original_order = self.get_group_order()
+        original_order = get_group_order()
         view = self.create_view(EditGroupSequenceView)
         # We pick only the same amount of items for comparing
         original_order = original_order[:len(items)]
@@ -498,9 +510,14 @@ class Group(Updateable, Pretty, Navigatable):
             return False
 
 
+def get_group_order():
+    view = navigate_to(Group, 'EditGroupSequence')
+    return view.group_order_selector.items
+
+
 @navigator.register(Group, 'All')
 class GroupAll(CFMENavigateStep):
-    VIEW = GroupAllView
+    VIEW = AllGroupView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -572,8 +589,10 @@ class AddRoleView(RoleForm):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Adding a new Role'
+        )
 
 
 class EditRoleView(RoleForm):
@@ -582,15 +601,19 @@ class EditRoleView(RoleForm):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Editing Role "{}"'.format(self.obj.name)
+        )
 
 
 class DetailsRoleView(RoleForm):
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Role "{}"'.format(self.obj.name)
+        )
 
 
 class AllRolesView(ConfigurationView):
@@ -598,8 +621,10 @@ class AllRolesView(ConfigurationView):
 
     @property
     def is_displayed(self):
-        return self.in_explorer and self.access_control.is_opened and \
+        return (
+            self.in_configuration and self.access_control.is_opened and
             self.title.text == 'Access Control Roles'
+        )
 
 
 class Role(Updateable, Pretty, Navigatable):
@@ -617,6 +642,7 @@ class Role(Updateable, Pretty, Navigatable):
                    'vm_restriction_select': self.vm_restriction,
                    'product_features_tree': self.product_features})
         view.add_button.click()
+        view = self.create_view(AllRolesView)
         view.flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
     def update(self, updates):
@@ -625,11 +651,14 @@ class Role(Updateable, Pretty, Navigatable):
                    'vm_restriction_select': updates.get('vm_restriction'),
                    'product_features_tree': updates.get('product_features')})
         view.save_button.click()
-        flash.assert_success_message('Role "{}" was saved'.format(updates.get('name', self.name)))
+        view = self.create_view(DetailsRoleView)
+        view.flash.assert_success_message(
+            'Role "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Role', handle_alert=True)
+        view = self.create_view(AllRolesView)
         view.flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
 
     def copy(self, name=None):
@@ -641,6 +670,7 @@ class Role(Updateable, Pretty, Navigatable):
         new_role = Role(name=name)
         view.fill({'name_txt': new_role.name})
         view.add_button.click()
+        view = self.create_view(AllRolesView)
         view.flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
         return new_role
 
@@ -684,6 +714,79 @@ class RoleEdit(CFMENavigateStep):
         self.view.configuration.item_select('Edit this Role')
 
 
+class TenantForm(ConfigurationView):
+    title = Text("#explorer_title_text")
+
+    name = Input(name='name')
+    description = Input(name='description')
+
+    cancel_button = Button('Cancel')
+
+
+class TenantQuotaView(ConfigurationView):
+    title = Text("#explorer_title_text")
+
+    cpu_cb = BootstrapSwitch('cpu_allocated')
+    memory_cb = BootstrapSwitch('mem_allocated')
+    storage_cb = BootstrapSwitch('storage_allocated')
+    vm_cb = BootstrapSwitch('vms_allocated')
+    template_cb = BootstrapSwitch('templates_allocated')
+    cpu_txt = Input('id_cpu_allocated')
+    memory_txt = Input('id_mem_allocated')
+    storage_txt = Input('id_storage_allocated')
+    vm_txt = Input('id_vms_allocated')
+    template_txt = Input('id_templates_allocated')
+
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+    cancel_button = Button('Cancel')
+
+
+class AllTenantView(ConfigurationView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_configuration and self.access_control.is_opened and
+            self.title.text == 'Access Control Tenants'
+        )
+
+
+class AddTenantView(TenantForm):
+    add_button = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_configuration and self.access_control.is_opened and
+            self.title.text == 'Adding a new Tenant'
+        )
+
+
+class DetailsTenantView(ConfigurationView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_configuration and self.access_control.is_opened and
+            self.title.text == 'Tenant "{}"'.format(self.obj.name)
+        )
+
+
+class EditTenantView(TenantForm):
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_configuration and self.access_control.is_opened and
+            self.title.text == 'Editing Tenant "{}"'.format(self.obj.name)
+        )
+
+
 class Tenant(Updateable, Pretty, Navigatable):
     """ Class representing CFME tenants in the UI.
     * Kudos to mfalesni *
@@ -696,31 +799,6 @@ class Tenant(Updateable, Pretty, Navigatable):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
-    save_changes = deferred_verpick({'5.7': form_buttons.angular_save,
-                   '5.8': form_buttons.simple_save})
-
-    # TODO:
-    # Temporary defining elements with "//input" as Input() is not working.Seems to be
-    # with html elements,looking into it.
-    quota_form = Form(
-        fields=[
-            ('cpu_cb', CFMECheckbox('cpu_allocated')),
-            ('cpu_txt', "//input[@id='id_cpu_allocated']"),
-            ('memory_cb', CFMECheckbox('mem_allocated')),
-            ('memory_txt', "//input[@id='id_mem_allocated']"),
-            ('storage_cb', CFMECheckbox('storage_allocated')),
-            ('storage_txt', "//input[@id='id_storage_allocated']"),
-            ('vm_cb', CFMECheckbox('vms_allocated')),
-            ('vm_txt', "//input[@id='id_vms_allocated']"),
-            ('template_cb', CFMECheckbox('templates_allocated')),
-            ('template_txt', "//input[@id='id_templates_allocated']")
-        ])
-
-    tenant_form = Form(
-        fields=[
-            ('name', Input('name')),
-            ('description', Input('description'))
-        ])
     pretty_attrs = ["name", "description"]
 
     @classmethod
@@ -728,7 +806,7 @@ class Tenant(Updateable, Pretty, Navigatable):
         return cls(name="My Company", _default=True)
 
     def __init__(self, name=None, description=None, parent_tenant=None, _default=False,
-            appliance=None):
+                 appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
@@ -783,77 +861,84 @@ class Tenant(Updateable, Pretty, Navigatable):
         if self._default:
             raise ValueError("Cannot create the root tenant {}".format(self.name))
 
-        navigate_to(self, 'Add')
-        fill(self.tenant_form, self, action=form_buttons.add)
+        view = navigate_to(self, 'Add')
+        view.fill({'name': self.name,
+                   'description': self.description})
+        view.add_button.click()
+        view = view.create(DetailsTenantView)
         if type(self) is Tenant:
-            flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
+            view.flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
         elif type(self) is Project:
-            flash.assert_success_message('Project "{}" was saved'.format(self.name))
+            view.flash.assert_success_message('Project "{}" was saved'.format(self.name))
         else:
             raise TypeError(
                 'No Tenant or Project class passed to create method{}'.format(
                     type(self).__name__))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        # Workaround - form is appearing after short delay
-        sel.wait_for_element(self.tenant_form.description)
-        fill(self.tenant_form, updates, action=self.save_changes)
-        flash.assert_success_message(
+        view = navigate_to(self, 'Edit')
+        view.fill({'name': updates.get('name'),
+                   'description': updates.get('description')})
+        view.save_button.click()
+        view = view.create(DetailsTenantView)
+        view.flash.assert_success_message(
             'Project "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self, cancel=False):
-        navigate_to(self, 'Details')
-        tb_select("Delete this item", invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-        flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Delete this item', handle_alert=True)
+        view = view.create(DetailsTenantView)
+        view.flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
 
     def set_quota(self, **kwargs):
-        navigate_to(self, 'ManageQuotas')
-        # Workaround - form is appearing after short delay
-        sel.wait_for_element(self.quota_form.cpu_txt)
-        fill(self.quota_form, {'cpu_cb': kwargs.get('cpu_cb'),
-                               'cpu_txt': kwargs.get('cpu'),
-                               'memory_cb': kwargs.get('memory_cb'),
-                               'memory_txt': kwargs.get('memory'),
-                               'storage_cb': kwargs.get('storage_cb'),
-                               'storage_txt': kwargs.get('storage'),
-                               'vm_cb': kwargs.get('vm_cb'),
-                               'vm_txt': kwargs.get('vm'),
-                               'template_cb': kwargs.get('template_cb'),
-                               'template_txt': kwargs.get('template')},
-             action=self.save_changes)
-        flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
+        view = navigate_to(self, 'ManageQuotas')
+        view.fill({'cpu_cb': kwargs.get('cpu_cb'),
+                   'cpu_txt': kwargs.get('cpu'),
+                   'memory_cb': kwargs.get('memory_cb'),
+                   'memory_txt': kwargs.get('memory'),
+                   'storage_cb': kwargs.get('storage_cb'),
+                   'storage_txt': kwargs.get('storage'),
+                   'vm_cb': kwargs.get('vm_cb'),
+                   'vm_txt': kwargs.get('vm'),
+                   'template_cb': kwargs.get('template_cb'),
+                   'template_txt': kwargs.get('template')})
+        view.save_button.click()
+        view = view.create(DetailsTenantView)
+        view.flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
 
 
 @navigator.register(Tenant, 'All')
 class TenantAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
+    VIEW = AllTenantView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        accordion.tree("Access Control", self.obj.appliance.server_region_string(), "Tenants")
-
-    def resetter(self):
-        accordion.refresh("Access Control")
+        self.view.settings.select_item('Configuration')
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Tenants')
 
 
 @navigator.register(Tenant, 'Details')
 class TenantDetails(CFMENavigateStep):
+    VIEW = DetailsTenantView
     prerequisite = NavigateToSibling('All')
 
-    def step(self, *args, **kwargs):
-        accordion.tree(
-            "Access Control", self.obj.appliance.server_region_string(),
-            "Tenants", *self.obj.tree_path
-        )
+    def step(self):
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Tenants', *self.obj.tree_path)
 
 
 @navigator.register(Tenant, 'Add')
 class TenantAdd(CFMENavigateStep):
-    def prerequisite(self, *args, **kwargs):
-        navigate_to(self.obj.parent_tenant, 'Details')
+    VIEW = AddTenantView
+
+    prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
+        import pdb
+        pdb.set_trace()
+        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
+                                                 'Tenants', *self.obj.parent_path)
         if isinstance(self.obj, Tenant):
             add_selector = 'Add child Tenant to this Tenant'
         elif isinstance(self.obj, Project):
@@ -861,23 +946,25 @@ class TenantAdd(CFMENavigateStep):
         else:
             raise OptionNotAvailable('Object type unsupported for Tenant Add: {}'
                                      .format(type(self.obj).__name__))
-        tb.select('Configuration', add_selector)
+        self.view.configuration.item_select(add_selector)
 
 
 @navigator.register(Tenant, 'Edit')
 class TenantEdit(CFMENavigateStep):
+    VIEW = EditTenantView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        tb.select('Configuration', 'Edit this item')
+        self.view.configuration.item_select('Edit this item')
 
 
 @navigator.register(Tenant, 'ManageQuotas')
 class TenantManageQuotas(CFMENavigateStep):
+    VIEW = TenantQuotaView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        tb.select('Configuration', 'Manage Quotas')
+        self.view.configuration.item_select('Manage Quotas')
 
 
 class Project(Tenant):

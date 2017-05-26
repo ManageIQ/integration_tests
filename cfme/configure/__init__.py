@@ -9,7 +9,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class ConfigurationView(BaseLoggedInPage):
-    def in_explorer(self):
+    def in_configuration(self):
         return self.logged_in_as_current_user
 
     @property
