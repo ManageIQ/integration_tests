@@ -38,10 +38,6 @@ class DisksTable(VanillaTable):
     def click_add_disk(self):
         """Clicks the Add Disk button attached to the table and returns the new editable row
         """
-        # TODO Replace - randomly fails on page load without this...
-        from time import sleep
-        sleep(2)
-        # ----
         self.add_disk_btn.click()
         return self[0]
 

@@ -35,12 +35,12 @@ def ensure_power_state(small_vm, power_type):
     elif small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_ON):
         small_vm.power_control_from_provider(small_vm.POWER_ON)
         small_vm.wait_for_vm_state_change(small_vm.STATE_ON)
+    else:
+        raise Exception("Unknown power state - unable to continue!")
 
 
-# TODO power_type 'hot'
-@pytest.mark.parametrize('power_type', ['cold'])
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
-def test_vm_reconfigure_add_remove_hw(
+def test_vm_reconfig_add_remove_hw_cold(
         provider, small_vm, ensure_power_state, power_type, change_type):
 
     orig_config = small_vm.configuration.copy()
@@ -66,12 +66,35 @@ def test_vm_reconfigure_add_remove_hw(
         message="confirm that previously-added {} was removed".format(change_type))
 
 
-# TODO power_type 'hot'
-@pytest.mark.parametrize('power_type', ['cold'])
+@pytest.mark.parametrize('change_type', ['sockets', 'memory'])
+def test_vm_reconfig_add_remove_hw_hot(
+        provider, small_vm, ensure_power_state, power_type, change_type):
+
+    orig_config = small_vm.configuration.copy()
+    new_config = orig_config.copy()
+    if change_type == 'sockets':
+        new_config.hw.sockets = new_config.hw.sockets + 1
+    else:
+        new_config.hw.mem_size = new_config.hw.mem_size_mb + 512
+        new_config.hw.mem_size_unit = 'MB'
+
+    small_vm.reconfigure(new_config)
+    wait_for(
+        lambda: small_vm.configuration == new_config, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that {} was added".format(change_type))
+
+    small_vm.reconfigure(orig_config)
+    wait_for(
+        lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
+        fail_func=small_vm.refresh_relationships,
+        message="confirm that previously-added {} was removed".format(change_type))
+
+
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
-@pytest.mark.parametrize('disk_mode', ['persistent', 'nonpersistent', 'independent_persistent'])
+@pytest.mark.parametrize('disk_mode', ['persistent', 'nonpersistent', 'independent_nonpersistent'])
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
-def test_vm_reconfigure_add_remove_disk(
+def test_vm_reconfig_add_remove_disk_cold(
         provider, small_vm, ensure_power_state, power_type, disk_type, disk_mode):
 
     orig_config = small_vm.configuration.copy()
