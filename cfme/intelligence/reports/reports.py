@@ -421,7 +421,7 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
 
     def delete(self):
         navigate_to(self, 'Saved')
-        self.saved_table.select_row(header='Run At', value=self.datetime_in_tree)
+        self.saved_table.select_row(header='Run At', value=self.datetime)
         cfg_btn("Delete this Saved Report from the Database", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
