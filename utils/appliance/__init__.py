@@ -1802,6 +1802,32 @@ class IPAppliance(object):
                  delay=5,
                  num_sec=timeout)
 
+    @property
+    def is_supervisord_running(self):
+        output = self.ssh_client.run_command("systemctl status supervisord")
+        return output.success
+
+    @property
+    def is_embedded_ensible_role_enabled(self):
+        return self.server_roles.get("embedded_ansible", False)
+
+    @property
+    def is_embedded_ansible_running(self):
+        return self.is_embedded_ensible_role_enabled and self.is_supervisord_running
+
+    def wait_for_embedded_ansible(self, timeout=900):
+        """Waits for embedded ansible to be ready
+
+        Args:
+            timeout: Number of seconds to wait until timeout (default ``900``)
+        """
+        wait_for(
+            func=lambda: self.is_embedded_ansible_running,
+            message='appliance.is_embedded_ansible_running',
+            delay=60,
+            num_sec=timeout
+        )
+
     @cached_property
     def get_host_address(self):
         try:
