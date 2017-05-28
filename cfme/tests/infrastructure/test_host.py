@@ -16,6 +16,11 @@ pytestmark = [
     pytest.mark.tier(3),
 ]
 
+msgs = {
+    'virtualcenter': 'Cannot complete login due to an incorrect user name or password.',
+    'rhevm': 'Login failed due to a bad username or password.'
+}
+
 
 def config_option():
     return version.pick({version.LOWEST: 'Edit Selected Hosts', '5.4': 'Edit Selected items'})
@@ -87,6 +92,6 @@ def test_multiple_host_bad_creds(setup_provider, provider):
                            'validate_host': cfme_host["name"]})
 
     sel.click(credential_form.validate_multi_host)
-    flash.assert_message_match('Cannot complete login due to an incorrect user name or password.')
+    flash.assert_message_match(msgs[provider.type])
 
     sel.click(credential_form.cancel_changes)
