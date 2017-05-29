@@ -1,9 +1,13 @@
 from functools import partial
 from random import sample
+import re
+import json
 
+import fauxfactory
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.provider import BaseProvider
+from cfme import exceptions
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
@@ -15,6 +19,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from utils.browser import ensure_browser_open
 from utils.pretty import Pretty
 from utils.varmeth import variable
+from utils.log import logger
 
 
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -365,6 +370,130 @@ class ContainersTestItem(object):
         return '{} ({})'.format(
             getattr(self.obj, '__name__', str(self.obj)),
             self.polarion_id)
+
+
+class Labelable(object):
+    """Provide the functionality to set labels"""
+    _LABEL_NAMEVAL_PATTERN = re.compile(r'^[A-Za-z0-9_.]+$')
+    _CONTAINER_OBJECTS = {
+        # <object_name>: <resource name>
+        'Image': 'image',
+        'Node': 'node',
+        'Pod': 'pod',
+        'Project': 'namespace',
+        'Replicator': 'rc',
+        'Route': 'route',
+        'Service': 'service',
+        'Template': 'template',
+        'Volume': 'persistentVolume'
+    }
+
+    @property
+    def _cli_resource_name(self):
+        return ('sha256:{}'.format(self.sha256) if
+               (self.__class__.__name__ == 'Image') else self.name)
+
+    @property
+    def _cli_resource_type(self):
+        return self._CONTAINER_OBJECTS[self.__class__.__name__]
+
+    def _get_json(self):
+        "Getting resource json"
+        if hasattr(self, 'project_name'):
+            self.provider.cli.run_command('oc project {}'.format(self.project_name))
+        return json.loads(str(self.provider.cli.run_command(
+            'oc get {} {} -o json'.
+            format(
+                self._cli_resource_type, self._cli_resource_name
+            )
+        )))
+
+    def _get_metadata(self):
+        """Get object metadata"""
+        return self._get_json()['metadata']
+
+    def get_labels(self):
+        """List labels"""
+        return self._get_metadata().get('labels', {})
+
+    def set_label(self, name, value):
+
+        """Sets a label to the object instance
+
+        Args:
+            :var name: the name of the label
+            :var value: the value of the label
+
+        Returns:
+            :py:class:`SSHResult`
+
+        Raises:
+            :py:class:`SetLabelException`.
+        """
+
+        assert self.__class__.__name__ in self._CONTAINER_OBJECTS.keys(), \
+            'object {} is not supported for label assignments.'
+        name, value = str(name), str(value)
+        assert self._LABEL_NAMEVAL_PATTERN.match(name), \
+            'name part ({}) must match the regex pattern {}'.format(
+                name, self._LABEL_NAMEVAL_PATTERN.pattern)
+        assert self._LABEL_NAMEVAL_PATTERN.match(value), \
+            'value part ({}) must match the regex pattern {}'.format(
+                value, self._LABEL_NAMEVAL_PATTERN.pattern)
+
+        if hasattr(self, 'project_name'):
+            results = self.provider.cli.run_command('oc project {}'.format(self.project_name))
+            assert results.success, 'Could not set project {}. SSH Results: {}'.format(
+                self.project_name, results)
+
+        payload = {'metadata': {'labels': {name: value}}}
+
+        results = self.provider.cli.run_command(
+            'oc patch {} {} -p \'{}\''.format(self._cli_resource_type, self._cli_resource_name,
+                json.dumps(payload)
+            )
+        )
+
+        if results.failed:
+            raise exceptions.SetLabelException(
+                'Failed to set label "{} = {}" to {} {}. SSH Results: {}'
+                .format(name, value, self.__class__.__name__, self.name, results))
+        return results
+
+    def remove_label(self, name, silent_failure=False):
+        """Remove label by name.
+        :var: name: name of label
+        :var: silent_failure: whether to raise an error or not in case of failure.
+
+        Returns:
+            :py:type:`bool` pass or fail
+        Raises:
+            :py:class:`LabelNotFoundException`.
+        """
+        json_content = self._get_json()
+        if name not in json_content['metadata'].get('labels', {}).keys():
+            failure_signature = 'Could not find label "{}", labels: {}' \
+                .format(name, json_content['metadata']['labels'])
+            if silent_failure:
+                logger.warning(failure_signature)
+                return False
+            else:
+                raise exceptions.LabelNotFoundException(failure_signature)
+        del json_content['metadata']['labels'][name]
+        temp_filename = fauxfactory.gen_alpha()
+        self.provider.cli.run_command(
+            'echo \'{}\' > {}'.format(
+                json.dumps(json_content), temp_filename))
+        self.provider.cli.run_command(
+            'oc edit {} {} -f \'{}\''.format(
+                self._cli_resource_type,
+                ('sha256:{}'.format(self.sha256) if
+                 (self.__class__.__name__ == 'Image') else self.name),
+                temp_filename
+            )
+        )
+        self.provider.cli.run_command('rm {}'.format(temp_filename))
+        return True
 
 
 def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,

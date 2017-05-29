@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+import random
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
@@ -42,6 +43,23 @@ class Container(Taggable, SummaryMixin, Navigatable):
         """
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
+
+    @property
+    def project_name(self):
+        return self.pod.project_name
+
+    @classmethod
+    def get_random_instances(cls, provider, count=1, appliance=None):
+        """Generating random instances."""
+        containers_list = provider.mgmt.list_container()
+        instances = []
+        random.shuffle(containers_list)
+        while containers_list and len(instances) < count:
+            chosen = containers_list.pop()
+            instances.append(
+                cls(chosen.name, chosen.cg_name, appliance=appliance)
+            )
+        return instances
 
 
 @navigator.register(Container, 'All')

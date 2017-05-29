@@ -139,22 +139,10 @@ def test_properties(provider, test_item, soft_assert):
     if current_version() < "5.7" and test_item.obj == Template:
         pytest.skip('Templates are not exist in CFME version lower than 5.7. skipping...')
 
-    rows = navigate_and_get_rows(provider, test_item.obj, 2, silent_failure=True)
+    instances = test_item.get_random_instances(provider, count=2)
 
-    if not rows:
-        pytest.skip('No records found for {}s. Skipping...'.format(test_item.obj.__name__))
-    names = [r[2].text for r in rows]
+    for instance in instances:
 
-    if test_item.obj is Container:
-        args = [(r.pod_name.text, ) for r in rows]
-    elif test_item.obj is Image:
-        args = [(r.id.text, provider) for r in rows]
-    else:
-        args = [(provider, ) for _ in rows]
-
-    for name, arg in zip(names, args):
-
-        instance = test_item.obj(name, *arg)
         navigate_to(instance, 'Details')
         if isinstance(test_item.expected_fields, dict):
             expected_fields = version.pick(test_item.expected_fields)
@@ -165,14 +153,14 @@ def test_properties(provider, test_item, soft_assert):
                 soft_get(instance.summary.properties, field)
             except AttributeError:
                 soft_assert(False, '{} "{}" properties table has missing field - "{}"'
-                                   .format(test_item.obj.__name__, name, field))
+                                   .format(test_item.obj.__name__, instance.name, field))
 
 
 def test_pods_conditions(provider, soft_assert):
 
     #  TODO: Add later this logic to mgmtsystem
-    selected_pods_cfme = {row.name.text: Pod(name=row.name.text, provider=provider) for row in
-                          navigate_and_get_rows(provider, Pod, 3)}
+    selected_pods_cfme = {row.name.text: Pod(row.name.text, row.project_name.text, provider)
+                          for row in navigate_and_get_rows(provider, Pod, 3)}
     selected_pods_ose = {pod["metadata"]["name"]: pod for pod in
                          provider.mgmt.api.get('pod')[1]['items'] if pod["metadata"]["name"] in
                          selected_pods_cfme}

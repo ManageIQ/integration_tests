@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+import random
+from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
+from cfme.containers.provider import Labelable, navigate_and_get_rows
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location, InfoBlock,\
     flash, PagedTable
@@ -20,7 +23,7 @@ match_page = partial(match_location, controller='container_image',
                      title='Images')
 
 
-class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
+class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssignable):
 
     def __init__(self, name, image_id, provider, appliance=None):
         self.name = name
@@ -43,6 +46,10 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
         navigate_to(self, 'Details')
         return InfoBlock.text(*ident)
 
+    @cached_property
+    def sha256(self):
+        return self.id.split('sha256:')[-1]
+
     def perform_smartstate_analysis(self, wait_for_finish=False):
         """Performing SmartState Analysis on this Image
         """
@@ -58,6 +65,25 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(ssa_timeout))
+
+    @classmethod
+    def get_random_instances(cls, provider, count=1, appliance=None, ocp_only=True):
+        """Generating random instances. (ocp_only: means for images available in OCP only)"""
+        # Grab the images from the UI since we have no way to calculate the name by API attributes
+        rows = navigate_and_get_rows(provider, cls, count=1000)
+        if ocp_only:
+            list_by_cli = str(provider.cli.run_command(
+                'oc get images --all-namespaces'))
+            rows = filter(lambda r: r.id.text.split('@sha256:')[-1] in list_by_cli,
+                          rows)
+        instances = []
+        random.shuffle(rows)
+        while rows and len(instances) < count:
+            row = rows.pop()
+            instances.append(
+                cls(row.name.text, row.id.text, provider, appliance=appliance)
+            )
+        return instances
 
     def check_compliance(self, wait_for_finish=True, timeout=240):
         """Initiates compliance check and waits for it to finish."""
