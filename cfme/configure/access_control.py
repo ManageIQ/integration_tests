@@ -68,7 +68,7 @@ class DetailsUserView(ConfigurationView):
     @property
     def is_displayed(self):
         return (
-            self.title.text == 'EVM User "{}"'.format(self.obj.name) and
+            self.title.text == 'EVM User "{}"'.format(self.context['object'].name) and
             self.access_control.is_opened
         )
 
@@ -80,7 +80,7 @@ class EditUserView(UserForm):
     @property
     def is_displayed(self):
         return (
-            self.title.text == 'Editing User "{}"'.format(self.obj.name) and
+            self.title.text == 'Editing User "{}"'.format(self.context['object'].name) and
             self.access_control.is_opened
         )
 
@@ -146,6 +146,7 @@ class User(Updateable, Pretty, Navigatable):
                    'user_group_select': getattr(self.group, 'description', None)})
         view.add_button.click()
         view = self.create_view(AllUserView)
+        assert view.is_displayed
         view.flash.assert_success_message('User "{}" was saved'.format(self.name))
 
     def update(self, updates):
@@ -165,16 +166,23 @@ class User(Updateable, Pretty, Navigatable):
                 updates.get('group'),
                 'description', None)
         })
-        view.fill({'name_txt': new_updates.get('name_txt'),
-                   'userid_txt': new_updates.get('userid_txt'),
-                   'password_txt': new_updates.get('password_txt'),
-                   'password_verify_txt': new_updates.get('password_verify_txt'),
-                   'email_txt': new_updates.get('email_txt'),
-                   'user_group_select': new_updates.get('user_group_select')})
-        view.save_button.click()
-        view = self.create_view(DetailsUserView)
-        view.flash.assert_success_message(
-            'User "{}" was saved'.format(updates.get('name', self.name)))
+        changed = view.fill({'name_txt': new_updates.get('name_txt'),
+                             'userid_txt': new_updates.get('userid_txt'),
+                             'password_txt': new_updates.get('password_txt'),
+                             'password_verify_txt': new_updates.get('password_verify_txt'),
+                             'email_txt': new_updates.get('email_txt'),
+                             'user_group_select': new_updates.get('user_group_select')})
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(DetailsUserView, override=updates)
+        assert view.is_displayed
+        if changed:
+            view.flash.assert_success_message(
+                'User "{}" was saved'.format(updates.get('name', self.name)))
+        else:
+            view.flash.assert_success_message('Edit of User was cancelled by the user')
 
     def copy(self):
         view = navigate_to(self, 'Details')
@@ -189,6 +197,7 @@ class User(Updateable, Pretty, Navigatable):
                    'password_verify_txt': new_user.credential.verify_secret})
         view.add_button.click()
         view = self.create_view(AllUserView)
+        assert view.is_displayed
         view.flash.assert_success_message('User "{}" was saved'.format(new_user.name))
         return new_user
 
@@ -196,6 +205,7 @@ class User(Updateable, Pretty, Navigatable):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this User', handle_alert=True)
         view = self.create_view(AllUserView)
+        assert view.is_displayed
         view.flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
 
     def edit_tags(self, tag, value):
@@ -204,6 +214,7 @@ class User(Updateable, Pretty, Navigatable):
                    'select_value': value})
         view.save_button.click()
         view = self.create_view(DetailsUserView)
+        assert view.is_displayed
         view.flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
@@ -213,6 +224,7 @@ class User(Updateable, Pretty, Navigatable):
         sel.click(row[0])
         view.save_button.click()
         view = self.create_view(DetailsUserView)
+        assert view.is_displayed
         view.flash.assert_success_message('Tag edits were successfully saved')
 
     @property
@@ -327,7 +339,7 @@ class DetailsGroupView(ConfigurationView):
     def is_displayed(self):
         return (
             self.in_configuration and self.access_control.is_opened and
-            self.title.text == 'EVM Group "{}"'.format(self.obj.description)
+            self.title.text == 'EVM Group "{}"'.format(self.context['object'].description)
         )
 
 
@@ -339,7 +351,7 @@ class EditGroupView(GroupForm):
     def is_displayed(self):
         return (
             self.in_configuration and self.access_control.is_opened and
-            self.title.text == 'Editing Group "{}"'.format(self.obj.description)
+            self.title.text == 'Editing Group "{}"'.format(self.context['object'].description)
         )
 
 
@@ -415,9 +427,12 @@ class Group(Updateable, Pretty, Navigatable):
         view.fill({'description_txt': self.description,
                    'role_select': self.role,
                    'group_tenant': self.tenant})
-        view.my_company_tags.tag_tree.fill(self.tag)
-        view.my_company_tags.hosts_clusters_tree.fill(self.host_cluster)
-        view.my_company_tags.vms_templates_tree.fill(self.vm_template)
+        if self.tag is not None:
+            view.my_company_tags.tag_tree.fill(self.tag)
+        if self.host_cluster is not None:
+            view.my_company_tags.hosts_clusters_tree.fill(self.host_cluster)
+        if self.vm_template is not None:
+            view.my_company_tags.vms_templates_tree.fill(self.vm_template)
         view.add_button.click()
         view = self.create_view(AllGroupView)
         view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
@@ -445,6 +460,7 @@ class Group(Updateable, Pretty, Navigatable):
                    'group_tenant': self.tenant})
         view.add_button.click()
         view = self.create_view(AllGroupView)
+        assert view.is_displayed
         view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def add_group_from_ldap_lookup(self):
@@ -458,18 +474,26 @@ class Group(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
-        view.fill({'description_txt': updates.get('description'),
+        changed = view.fill({'description_txt': updates.get('description'),
                    'role_select': updates.get('role'),
                    'group_tenant': updates.get('tenant')})
-        view.save_button.click()
-        view = self.create_view(DetailsGroupView)
-        view.flash.assert_message(
-            'Group "{}" was saved'.format(updates.get('description', self.description)))
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(DetailsGroupView, override=updates)
+        assert view.is_displayed
+        if changed:
+            view.flash.assert_message(
+                'Group "{}" was saved'.format(updates.get('description', self.description)))
+        else:
+            view.flash.assert_success_message('Edit of Group was cancelled by the user')
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Group', handle_alert=True)
         view = self.create_view(AllGroupView)
+        assert view.is_displayed
         view.flash.assert_success_message(
             'EVM Group "{}": Delete successful'.format(self.description))
 
@@ -479,6 +503,7 @@ class Group(Updateable, Pretty, Navigatable):
                    'select_value': value})
         view.save_button.click()
         view = self.create_view(DetailsGroupView)
+        assert view.is_displayed
         view.flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
@@ -489,11 +514,13 @@ class Group(Updateable, Pretty, Navigatable):
         sel.click(row[0])
         view.save_button.click()
         view = self.create_view(DetailsGroupView)
+        assert view.is_displayed
         view.flash.assert_success_message('Tag edits were successfully saved')
 
     def set_group_order(self, items):
         original_order = get_group_order()
         view = self.create_view(EditGroupSequenceView)
+        assert view.is_displayed
         # We pick only the same amount of items for comparing
         original_order = original_order[:len(items)]
         if items == original_order:
@@ -603,7 +630,7 @@ class EditRoleView(RoleForm):
     def is_displayed(self):
         return (
             self.in_configuration and self.access_control.is_opened and
-            self.title.text == 'Editing Role "{}"'.format(self.obj.name)
+            self.title.text == 'Editing Role "{}"'.format(self.context['object'].name)
         )
 
 
@@ -612,7 +639,7 @@ class DetailsRoleView(RoleForm):
     def is_displayed(self):
         return (
             self.in_configuration and self.access_control.is_opened and
-            self.title.text == 'Role "{}"'.format(self.obj.name)
+            self.title.text == 'Role "{}"'.format(self.context['object'].name)
         )
 
 
@@ -634,31 +661,40 @@ class Role(Updateable, Pretty, Navigatable):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.vm_restriction = vm_restriction
-        self.product_features = product_features or []
+        self.product_features = product_features
 
     def create(self):
         view = navigate_to(self, 'Add')
         view.fill({'name_txt': self.name,
-                   'vm_restriction_select': self.vm_restriction,
-                   'product_features_tree': self.product_features})
+                   'vm_restriction_select': self.vm_restriction})
+        self.set_role_product_features(view, self.product_features)
         view.add_button.click()
         view = self.create_view(AllRolesView)
+        assert view.is_displayed
         view.flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
-        view.fill({'name_txt': updates.get('name'),
-                   'vm_restriction_select': updates.get('vm_restriction'),
-                   'product_features_tree': updates.get('product_features')})
-        view.save_button.click()
-        view = self.create_view(DetailsRoleView)
-        view.flash.assert_success_message(
-            'Role "{}" was saved'.format(updates.get('name', self.name)))
+        changed = view.fill({'name_txt': updates.get('name'),
+                             'vm_restriction_select': updates.get('vm_restriction')})
+        feature_changed = self.set_role_product_features(view, updates.get('product_features'))
+        if changed or feature_changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(DetailsRoleView, override=updates)
+        assert view.is_displayed
+        if changed or feature_changed:
+            view.flash.assert_success_message(
+                'Role "{}" was saved'.format(updates.get('name', self.name)))
+        else:
+            view.flash.assert_success_message('Edit of Role was cancelled by the user')
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Role', handle_alert=True)
         view = self.create_view(AllRolesView)
+        assert view.is_displayed
         view.flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
 
     def copy(self, name=None):
@@ -671,9 +707,18 @@ class Role(Updateable, Pretty, Navigatable):
         view.fill({'name_txt': new_role.name})
         view.add_button.click()
         view = self.create_view(AllRolesView)
+        assert view.is_displayed
         view.flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
         return new_role
 
+    def set_role_product_features(self, view, product_features):
+        if product_features is not None and isinstance(product_features, (list, tuple, set)):
+            for path, option in product_features:
+                if option:
+                    view.product_features_tree.check_node(*path)
+                else:
+                    view.product_features_tree.uncheck_node(*path)
+            return True
 
 @navigator.register(Role, 'All')
 class RoleAll(CFMENavigateStep):
@@ -771,7 +816,7 @@ class DetailsTenantView(ConfigurationView):
     def is_displayed(self):
         return (
             self.in_configuration and self.access_control.is_opened and
-            self.title.text == 'Tenant "{}"'.format(self.obj.name)
+            self.title.text == 'Tenant "{}"'.format(self.context['object'].name)
         )
 
 
@@ -783,7 +828,7 @@ class EditTenantView(TenantForm):
     def is_displayed(self):
         return (
             self.in_configuration and self.access_control.is_opened and
-            self.title.text == 'Editing Tenant "{}"'.format(self.obj.name)
+            self.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name)
         )
 
 
@@ -866,9 +911,10 @@ class Tenant(Updateable, Pretty, Navigatable):
                    'description': self.description})
         view.add_button.click()
         view = view.create(DetailsTenantView)
-        if type(self) is Tenant:
+        assert view.is_displayed
+        if isinstance(self, Tenant):
             view.flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
-        elif type(self) is Project:
+        elif isinstance(self, Project):
             view.flash.assert_success_message('Project "{}" was saved'.format(self.name))
         else:
             raise TypeError(
@@ -877,17 +923,26 @@ class Tenant(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
-        view.fill({'name': updates.get('name'),
-                   'description': updates.get('description')})
-        view.save_button.click()
-        view = view.create(DetailsTenantView)
-        view.flash.assert_success_message(
-            'Project "{}" was saved'.format(updates.get('name', self.name)))
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = view.create(DetailsTenantView, override=updates)
+        assert view.is_displayed
+        if changed:
+            view.flash.assert_success_message(
+                'Project "{}" was saved'.format(updates.get('name', self.name)))
+        else:
+            view.flash.assert_success_message(
+                'Edit of Project "{}" was cancelled by the user'.format(
+                    updates.get('name', self.name)))
 
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this item', handle_alert=True)
         view = view.create(DetailsTenantView)
+        assert view.is_displayed
         view.flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
 
     def set_quota(self, **kwargs):
@@ -904,6 +959,7 @@ class Tenant(Updateable, Pretty, Navigatable):
                    'template_txt': kwargs.get('template')})
         view.save_button.click()
         view = view.create(DetailsTenantView)
+        assert view.is_displayed
         view.flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
 
 
