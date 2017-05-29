@@ -10,6 +10,7 @@ from cfme.web_ui import flash
 from cfme import test_requirements
 
 from utils.wait import wait_for
+from utils.generators import random_vm_name
 from utils import testgen
 
 pytestmark = [
@@ -19,13 +20,9 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def vm_name():
-    return "test_migrate_" + fauxfactory.gen_alphanumeric()
-
-
-@pytest.fixture(scope="module")
-def new_vm(setup_provider_modscope, provider, vm_name, request):
+def new_vm(setup_provider_modscope, provider, request):
     """Fixture to provision appliance to the provider being tested if necessary"""
+    vm_name = random_vm_name(context='migrate')
     vm = VM.factory(vm_name, provider, template_name=provider.data['small_template'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
