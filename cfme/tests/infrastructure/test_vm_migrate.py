@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
