@@ -159,7 +159,6 @@ class CFMENavigateStep(NavigateStep):
         go_kwargs = kwargs.copy()
         go_kwargs.update(nav_args)
         self.appliance.browser.open_browser()
-        self.appliance.browser.widgetastic.dismiss_any_alerts()
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
@@ -172,9 +171,16 @@ class CFMENavigateStep(NavigateStep):
 
         try:
             br.widgetastic.execute_script('miqSparkleOff();', silent=True)
-        except:  # Diaper OK (mfalesni)
+        except:  # noqa
             # miqSparkleOff undefined, so it's definitely off.
-            pass
+            # Or maybe it is alerts? Let's only do this when we get an exception.
+            self.appliance.browser.widgetastic.dismiss_any_alerts()
+            # If we went so far, let's put diapers on one more miqSparkleOff just to be sure
+            # It can be spinning in the back
+            try:
+                br.widgetastic.execute_script('miqSparkleOff();', silent=True)
+            except:  # noqa
+                pass
 
         # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right
         # here
