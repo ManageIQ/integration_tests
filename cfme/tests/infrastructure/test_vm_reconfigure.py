@@ -28,11 +28,17 @@ def small_vm(provider, small_template_modscope):
 
 
 @pytest.fixture(scope='function')
-def ensure_power_state(small_vm, power_type):
-    if power_type == 'cold' and small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_OFF):
+def ensure_vm_stopped(small_vm):
+    if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_OFF):
         small_vm.power_control_from_provider(small_vm.POWER_OFF)
         small_vm.wait_for_vm_state_change(small_vm.STATE_OFF)
-    elif small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_ON):
+    else:
+        raise Exception("Unknown power state - unable to continue!")
+
+
+@pytest.fixture(scope='function')
+def ensure_vm_running(small_vm):
+    if small_vm.is_pwr_option_available_in_cfme(small_vm.POWER_ON):
         small_vm.power_control_from_provider(small_vm.POWER_ON)
         small_vm.wait_for_vm_state_change(small_vm.STATE_ON)
     else:
@@ -41,7 +47,7 @@ def ensure_power_state(small_vm, power_type):
 
 @pytest.mark.parametrize('change_type', ['cores_per_socket', 'sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_cold(
-        provider, small_vm, ensure_power_state, power_type, change_type):
+        provider, small_vm, ensure_vm_stopped, change_type):
 
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
@@ -68,7 +74,7 @@ def test_vm_reconfig_add_remove_hw_cold(
 
 @pytest.mark.parametrize('change_type', ['sockets', 'memory'])
 def test_vm_reconfig_add_remove_hw_hot(
-        provider, small_vm, ensure_power_state, power_type, change_type):
+        provider, small_vm, ensure_vm_running, change_type):
 
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
@@ -95,7 +101,7 @@ def test_vm_reconfig_add_remove_hw_hot(
 @pytest.mark.parametrize('disk_mode', ['persistent', 'nonpersistent', 'independent_nonpersistent'])
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
 def test_vm_reconfig_add_remove_disk_cold(
-        provider, small_vm, ensure_power_state, power_type, disk_type, disk_mode):
+        provider, small_vm, ensure_vm_stopped, disk_type, disk_mode):
 
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
