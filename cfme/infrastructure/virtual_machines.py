@@ -32,7 +32,9 @@ from utils.pretty import Pretty
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from widgetastic.widget import Text
-from widgetastic_patternfly import Button, BootstrapSelect, BootstrapSwitch, Input as WInput
+from widgetastic_patternfly import (
+    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput
+)
 from widgetastic_manageiq import TimelinesView
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
@@ -101,6 +103,17 @@ def reset_page():
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
+class InfraVmDetailsView(BaseLoggedInPage):
+    # TODO this is only minimal implementation for toolbar access through widgetastic
+
+    configuration = Dropdown("Configuration")
+    policy = Dropdown("Policy")
+    lifecycle = Dropdown("Lifecycle")
+    monitoring = Dropdown("Monitoring")
+    power = Dropdown("Power")
+    access = Dropdown("Access")
+
+
 class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
     def is_displayed(self):
@@ -128,6 +141,9 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
     submit_button = Button('Submit', classes=[Button.PRIMARY])
     cancel_button = Button('Cancel', classes=[Button.DEFAULT])
+
+    # The page doesn't contain enough info to ensure that it's the right VM -> always navigate
+    is_displayed = False
 
 
 class VMDisk(
@@ -1012,6 +1028,7 @@ class VmAllWithTemplatesArchived(CFMENavigateStep):
 @navigator.register(Template, 'Details')
 @navigator.register(Vm, 'Details')
 class VmAllWithTemplatesDetails(CFMENavigateStep):
+    VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
@@ -1138,4 +1155,4 @@ class VmReconfigure(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Reconfigure this VM')
+        self.prerequisite_view.configuration.item_select('Reconfigure this VM')
