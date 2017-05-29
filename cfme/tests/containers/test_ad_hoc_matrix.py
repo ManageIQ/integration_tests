@@ -1,5 +1,6 @@
 import pytest
 from utils import testgen
+from utils.log import logger
 from cfme.containers.provider import ContainersProvider, navigate_and_get_rows, obj_factory
 from utils.version import current_version
 from cfme.web_ui import toolbar, tabstrip, form_buttons
@@ -21,7 +22,7 @@ def matrics_up_and_running(provider):
     response = requests.get("https://{url}:443".format(url=hawkular_url), verify=False)
     if not response.ok:
         raise Exception("hawkular failed started!")
-    print "hawkular started successfully"
+    logger.info("hawkular started successfully")
 
 
 def set_hawkular_without_validation(provider_object):
@@ -48,18 +49,3 @@ def test_ad_hoc_metrics_overview(provider):
     set_hawkular_without_validation(provider_object)
 
     navigate_to_ad_hoc_page(provider_object)
-
-
-@pytest.mark.polarion('CMP-10645')
-def test_ad_hoc_metrics_select_filter(provider):
-    matrics_up_and_running(provider)
-
-    chosen_provider = navigate_and_get_rows(provider, ContainersProvider, 1).pop()
-    provider_object = obj_factory(ContainersProvider, chosen_provider, provider)
-
-    # TODO: replace with pavelz code if marged
-    set_hawkular_without_validation(provider_object)
-
-    navigate_to_ad_hoc_page(provider_object)
-
-    # TODO: implementat for steps of entering a filter by pressing the button
