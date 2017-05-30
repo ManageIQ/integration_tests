@@ -309,7 +309,7 @@ class DockerBot(object):
             print("You must supply a CFME Credentials REPO")
             ec += 1
 
-        self.check_arg('selff', 'cfme/sel_ff_chrome')
+        self.check_arg('selff', 'cfmeqe/sel_ff_chrome')
 
         self.check_arg('gh_token', None)
         self.check_arg('gh_owner', None)
