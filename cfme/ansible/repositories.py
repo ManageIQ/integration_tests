@@ -85,10 +85,24 @@ class RepositoryEditView(RepositoryFormView):
 
 
 class RepositoryCollection(Navigatable):
-    """Collection object for the :py:class:`Repository`."""
+    """Collection object for the :py:class:`cfme.ansible.repositories.Repository`."""
 
     def create(self, name, url, description=None, scm_credentials=None, scm_branch=None,
                clean=None, delete_on_update=None, update_on_launch=None):
+        """Add an ansible repository in the UI and return a Repository object.
+
+        Args:
+            name (str): name of the repository
+            url (str): url of the repository
+            description (str): description of the repository
+            scm_credentials (str): credentials of the repository
+            scm_branch (str): branch name
+            clean (bool): clean
+            delete_on_update (bool): delete the repo at each update
+            update_on_launch (bool): update the repo at each launch
+
+        Returns: an instance of :py:class:`cfme.ansible.repositories.Repository`
+        """
         add_page = navigate_to(self, "Add")
         fill_dict = {
             "name": name,
@@ -129,6 +143,10 @@ class RepositoryCollection(Navigatable):
         )
 
     def all(self):
+        """Return all repositories of the applaince.
+
+        Returns: a :py:class:`list` of :py:class:`cfme.ansible.repositories.Repository` instances
+        """
         table = self.appliance.db["configuration_script_sources"]
         result = []
         for row in self.appliance.db.session.query(table):
@@ -147,6 +165,15 @@ class RepositoryCollection(Navigatable):
         return result
 
     def delete(self, *repositories):
+        """Delete one or more ansible repositories in the UI.
+
+        Args:
+            *repositories: a list of :py:class:`cfme.ansible.repositories.Repository`
+            instances to delete
+
+        Raises:
+            ValueError: if some of the repositories were not found in the UI
+        """
         repositories = list(repositories)
         checked_repositories = []
         all_page = navigate_to(Server, "AnsibleRepositories")
@@ -172,6 +199,7 @@ class RepositoryCollection(Navigatable):
 
 class Repository(Navigatable):
     """A class representing one Embedded Ansible repository in the UI."""
+
     def __init__(self, name, url, description=None, scm_credentials=None, scm_branch=None,
             clean=None, delete_on_update=None, update_on_launch=None, collection=None,
             appliance=None):
@@ -193,6 +221,11 @@ class Repository(Navigatable):
             table.name == self.name).first()
 
     def update(self, updates):
+        """Update the repository in the UI.
+
+        Args:
+            updates (dict): :py:class:`dict` of the updates.
+        """
         original_updated_at = self.db_object.updated_at
         view = navigate_to(self, "Edit")
         changed = view.fill(updates)
@@ -226,6 +259,7 @@ class Repository(Navigatable):
             return False
 
     def delete(self):
+        """Delete the repository in the UI."""
         view = navigate_to(self, "Details")
         view.configuration.item_select("Remove this Repository", handle_alert=True)
         repo_list_page = self.create_view(RepositoryListView)
@@ -237,6 +271,7 @@ class Repository(Navigatable):
             fail_func=repo_list_page.browser.selenium.refresh)
 
     def refresh(self):
+        """Perform a refresh to update the repository."""
         view = navigate_to(self, "Details")
         view.configuration.item_select("Refresh this Repository", handle_alert=True)
         view.flash.assert_no_error()
