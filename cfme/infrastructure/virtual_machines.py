@@ -268,14 +268,15 @@ class VMConfiguration(Pretty):
             size: Size of the disk
             size_unit: Unit of size ('MB' or 'GB')
             type: Type of the disk ('thin' or 'thick')
-            mode: Mode of the disk ('persistent', 'nonpersistent' or 'independent_nonpersistent')
+            mode: Mode of the disk ('persistent', 'independent_persistent' or
+                  'independent_nonpersistent')
 
         Note:
             This method is designed to correspond with the DB, not with the UI.
             In the UI, dependency is represented by a separate Yes / No option which is _incorrect_
             design that we don't follow. Correctly, mode should be a selectbox of 3 items:
-            Persistent, Nonpersistent and Independent Nonpersistent.
-            Independent Persistent is an invalid combination that UI currently (5.8) allows.
+            Persistent, Independent Persistent and Independent Nonpersistent.
+            Just Nonpersistent is an invalid setup that UI currently (5.8) allows.
         """
         # New disk doesn't have a filename, until actually added
         disk = VMDisk(
