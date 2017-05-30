@@ -156,9 +156,6 @@ def test_html5_ssl_files_present(appliance, soft_assert):
         # Test for files existance
         assert appliance.ssh_client.run_command("test -f '{}'".format(ssl_file)) == 0
 
-        # Test if the file is different from what was delivered via RPM.
-        assert appliance.ssh_client.run_command("rpm -V cfme|grep '{}$'".format(ssl_file)) == 0
-
 
 @pytest.mark.ignore_stream("upstream")
 def test_db_connection(appliance):
