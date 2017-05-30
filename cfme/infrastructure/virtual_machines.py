@@ -212,9 +212,11 @@ class VMConfiguration(Pretty):
 
     def __eq__(self, other):
         return (self.hw == other.hw) and (self.num_disks == other.num_disks) and \
-            all([disk in other.disks for disk in self.disks])
+            all(disk in other.disks for disk in self.disks)
 
     def _load(self):
+        """Loads the configuration from the VM object's appliance (through DB)
+        """
         appl_db = self.vm.appliance.db
 
         # Hardware
@@ -250,6 +252,8 @@ class VMConfiguration(Pretty):
                 ))
 
     def copy(self):
+        """Returns a copy of this configuration
+        """
         config = VMConfiguration.__new__(VMConfiguration)
         config.hw = copy(self.hw)
         # We can just make shallow copy here because disks can be only added or deleted, not edited
@@ -606,6 +610,14 @@ class Vm(BaseVM):
         return VMConfiguration(self)
 
     def reconfigure(self, new_configuration=None, changes=None, cancel=False):
+        """Reconfigures the VM based on given configuration or set of changes
+
+        Args:
+            new_configuration: VMConfiguration object with desired configuration
+            changes: Set of changes to request; alternative to new_configuration
+                     See VMConfiguration.get_changes_to_fill to see expected format of the data
+            cancel: `False` if we want to submit the changes, `True` otherwise
+        """
         if not new_configuration and not changes:
             raise ValueError(
                 "You must provide either new configuration or changes to apply.")
@@ -613,7 +625,7 @@ class Vm(BaseVM):
         if new_configuration:
             changes = self.configuration.get_changes_to_fill(new_configuration)
 
-        any_changes = any([v not in [None, []] for v in changes.values()])
+        any_changes = any(v not in [None, []] for v in changes.values())
         if not any_changes and not cancel:
             raise ValueError("No changes specified - cannot reconfigure VM.")
 

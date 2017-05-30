@@ -4,6 +4,8 @@ from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, Inp
 
 
 class DisksButton(Button):
+    """Button above DisksTable used to add new disks
+    """
 
     # Relative to DisksTable
     BTN_CONTAINER_LOC = "../h3//td[contains(@align, 'right') and contains(@id, 'buttons_on')]"
