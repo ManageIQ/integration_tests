@@ -23,7 +23,7 @@ def pytest_collection_finish(session):
         store.terminalreporter.write(
             " {}: {}\n".format(reason, value), bold=True)
     store.terminalreporter.write(
-        " {} tests left to process\n".format(len(session.items)), bold=True)
+        " {} tests left after all uncollections\n".format(len(session.items)), bold=True)
 
 
 pytest_plugins = (
@@ -34,7 +34,7 @@ pytest_plugins = (
 
     'fixtures.portset',
 
-
+    'markers.manual',
     'markers.polarion',  # before artifactor
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',
