@@ -254,11 +254,10 @@ class CFMENavigateStep(NavigateStep):
         try:
             br.widgetastic.logger.info('Badness check')
             result = br.widgetastic.execute_script(BADNESS, silent=True)
-        except WebDriverException as e:
+        except WebDriverException:
             recycle = True
             restart_workers = False
-            br.widgetastic.logger.error('Badness check raised an exception')
-            br.widgetastic.logger.exception(e)
+            br.widgetastic.logger.exception('Badness check raised an exception')
         else:
             recycle = result['r']
             restart_workers = result['rw']
