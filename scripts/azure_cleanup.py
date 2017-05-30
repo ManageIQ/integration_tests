@@ -38,6 +38,7 @@ def azure_cleanup(nic_template, pip_template, days_old, output):
                 if nic_list:
                     report.write("Removing Nics with the name \'{}\':\n".format(nic_template))
                     report.write("\n".join(str(k) for k in nic_list))
+                    report.write("\n")
                     provider_mgmt.remove_nics_by_search(nic_template)
                 else:
                     report.write("No \'{}\' NICs were found\n".format(nic_template))
@@ -45,6 +46,7 @@ def azure_cleanup(nic_template, pip_template, days_old, output):
                     report.write("Removing Public IPs with the name \'{}\':\n".
                                  format(pip_template))
                     report.write("\n".join(str(k) for k in pip_list))
+                    report.write("\n")
                     provider_mgmt.remove_pips_by_search(pip_template)
                 else:
                     report.write("No \'{}\' Public IPs were found\n".format(pip_template))
