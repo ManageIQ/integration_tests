@@ -34,7 +34,7 @@ class DisksTable(VanillaTable):
     }
 
     def __init__(self, parent, *args, **kwargs):
-        kwargs['column_widgets'] = DisksTable.column_widgets
+        kwargs['column_widgets'] = self.column_widgets
         VanillaTable.__init__(self, parent, self.BASELOC.format(quote('Disks')), *args, **kwargs)
 
     def click_add_disk(self):

@@ -281,6 +281,7 @@ class VMConfiguration(Pretty):
         disk = VMDisk(
             filename=None, size=size, size_unit=size_unit, type=type, mode=mode)
         self.disks.append(disk)
+        return disk
 
     def delete_disk(self, filename=None, index=None):
         """Removes a disk of given filename or index"""
@@ -290,7 +291,7 @@ class VMConfiguration(Pretty):
         elif index:
             del self.disks[index]
         else:
-            raise ValueError("Either filename or index must be specified")
+            raise TypeError("Either filename or index must be specified")
 
     @property
     def num_disks(self):
@@ -619,7 +620,7 @@ class Vm(BaseVM):
             cancel: `False` if we want to submit the changes, `True` otherwise
         """
         if not new_configuration and not changes:
-            raise ValueError(
+            raise TypeError(
                 "You must provide either new configuration or changes to apply.")
 
         if new_configuration:
