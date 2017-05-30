@@ -62,8 +62,8 @@ def get_provision_data(rest_api, provider, small_template, auto_approve=True):
 
 
 @pytest.fixture(scope="module")
-def provision_data(rest_api_modscope, provider, small_template_modscope):
-    return get_provision_data(rest_api_modscope, provider, small_template_modscope)
+def provision_data(appliance, provider, small_template_modscope):
+    return get_provision_data(appliance.rest_api, provider, small_template_modscope)
 
 
 # Here also available the ability to create multiple provision request, but used the save
@@ -71,7 +71,7 @@ def provision_data(rest_api_modscope, provider, small_template_modscope):
 @pytest.mark.tier(2)
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
-def test_provision(request, provision_data, provider, rest_api):
+def test_provision(request, provision_data, provider, appliance):
     """Tests provision via REST API.
     Prerequisities:
         * Have a provider set up with templates suitable for provisioning.
@@ -85,35 +85,35 @@ def test_provision(request, provision_data, provider, rest_api):
 
     vm_name = provision_data["vm_fields"]["vm_name"]
     request.addfinalizer(
-        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(
-            vm_name) else None)
-    response = rest_api.collections.provision_requests.action.create(**provision_data)
-    assert rest_api.response.status_code == 200
+        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+    assert appliance.rest_api.response.status_code == 200
     provision_request = response[0]
 
     def _finished():
         provision_request.reload()
-        if provision_request.status.lower() in {"error"}:
+        if "error" in provision_request.status.lower():
             pytest.fail("Error when provisioning: `{}`".format(provision_request.message))
-        return provision_request.request_state.lower() in {"finished", "provisioned"}
+        return provision_request.request_state.lower() in ("finished", "provisioned")
 
-    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=800, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
-def test_create_pending_provision_requests(rest_api, provider, small_template):
+def test_create_pending_provision_requests(appliance, provider, small_template):
     """Tests creation and and auto-approval of pending provision request
     using /api/provision_requests.
 
     Metadata:
         test_flag: rest, provision
     """
-    provision_data = get_provision_data(rest_api, provider, small_template, auto_approve=False)
-    response = rest_api.collections.provision_requests.action.create(**provision_data)
-    assert rest_api.response.status_code == 200
+    provision_data = get_provision_data(
+        appliance.rest_api, provider, small_template, auto_approve=False)
+    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+    assert appliance.rest_api.response.status_code == 200
     # check that the `approval_state` is pending_approval
     for prov_request in response:
         assert prov_request.options['auto_approve'] is False
@@ -133,15 +133,16 @@ def test_create_pending_provision_requests(rest_api, provider, small_template):
 @pytest.mark.tier(2)
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
-def test_provision_attributes(rest_api, provider, small_template):
+def test_provision_attributes(appliance, provider, small_template):
     """Tests that it's possible to display additional attributes in /api/provision_requests/:id.
 
     Metadata:
         test_flag: rest, provision
     """
-    provision_data = get_provision_data(rest_api, provider, small_template, auto_approve=False)
-    response = rest_api.collections.provision_requests.action.create(**provision_data)
-    assert rest_api.response.status_code == 200
+    provision_data = get_provision_data(
+        appliance.rest_api, provider, small_template, auto_approve=False)
+    response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+    assert appliance.rest_api.response.status_code == 200
     provision_request = response[0]
     # workaround for BZ1437689 to make sure the vm is not provisioned
     provision_request.action.deny(reason="denied")
