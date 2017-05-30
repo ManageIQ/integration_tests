@@ -24,7 +24,7 @@ def test_volume_navigation(openstack_provider):
     # grab a volume name, the table returns a generator so use next
     view = navigate_to(Volume, 'All')
     try:
-        volume_name = view.entities.table.rows().next().name.text
+        volume_name = view.entities.table[0].name.text
     except (StopIteration, NoSuchElementException):
         pytest.skip('Skipping volume navigation for details, no volumes present')
     volume = Volume(name=volume_name, provider=openstack_provider)

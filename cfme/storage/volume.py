@@ -4,7 +4,7 @@ from widgetastic.widget import View, Text, NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Search, Table, PaginationPane, BreadCrumb, SummaryTable, Accordion,
-    ManageIQTree, TextInput, BootstrapSelect)
+    ManageIQTree, TextInput, BootstrapSelect, VersionPick, Version)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound
@@ -56,8 +56,7 @@ class VolumeView(BaseLoggedInPage):
     """Base class for header and nav check"""
     @property
     def in_volume(self):
-        nav = ['Storage', 'Volumes'] if self.context['object'].appliance.version < '5.8' else \
-            ['Storage', 'Block Storage', 'Volumes']
+        nav = Volume.nav.pick(self.context['object'].appliance.version)
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == nav and
@@ -80,11 +79,12 @@ class VolumeDetailsView(VolumeView):
     @property
     def is_displayed(self):
         expected_title = '{} (Summary)'.format(self.context['object'].name)
+        provider_field = Volume.prov_field.pick(self.context['object'].appliance.version)
         return (
             self.in_volume and
             self.entities.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title and
-            self.entities.relationships.get_text_of('Parent Cloud Provider') == self.context[
+            self.entities.relationships.get_text_of(provider_field) == self.context[
                 'object'].provider.name)
 
     toolbar = View.nested(VolumeDetailsToolbar)
@@ -119,6 +119,16 @@ class VolumeAddView(VolumeView):
 
 
 class Volume(Navigatable):
+    # Navigation menu option
+    nav = VersionPick({
+        Version.lowest(): ['Storage', 'Volumes'],
+        '5.8': ['Storage', 'Block Storage', 'Volumes']})
+    # Details relationship field
+    prov_field = VersionPick({
+        Version.lowest(): 'Cloud Provider',
+        '5.8': 'Parent Cloud Provider'
+    })
+
     def __init__(self, name, provider, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
@@ -134,8 +144,7 @@ class VolumeAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav = ['Storage', 'Volumes'] if self.obj.appliance.version < '5.8' else \
-            ['Storage', 'Block Storage', 'Volumes']
+        nav = Volume.nav.pick(self.obj.appliance.version)
         self.prerequisite_view.navigation.select(*nav)
 
 
