@@ -43,9 +43,10 @@ RUN export PYCURL_SSL_LIBRARY=nss
 
 RUN find . -iname "*.pyc" -exec rm '{}' \;
 
-RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements.txt > requirements.txt
+#RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements.txt > requirements.txt
+RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requirements/frozen.txt > requirements.txt
 
-RUN sed -i '/-e \./d' requirements.txt
+#RUN sed -i '/-e \./d' requirements.txt
 
 RUN source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt && rm -rf ~/.cache/pip
 
