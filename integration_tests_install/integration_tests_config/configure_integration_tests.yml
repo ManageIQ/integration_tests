@@ -288,15 +288,18 @@
       become_user: "{{ username }}"
       when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
 
+    - name: get basename from git remote repo
+      set_fact:
+        yaml_remote_repo_basename: {{ yaml_remote_repo | basename | regex_replace('\\.git','') }
+
     - name: Clone remote YAML repo - Add username into repo url - regexp
-      git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
+      git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
       # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
       when: yaml_remote_repo_yn_p.key == "y"
 
     - name: Configure origin for remote YAML repo
-      # git_config: repo="{{ cfme_vol }}/cfme-qe-yamls.git/" scope=local name="{{ item.name }}" value="{{ item.value }}"
-      git_config: repo="{{ cfme_vol }}/{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}" scope=local name="{{ item.name }}" value="{{ item.value }}"
+      git_config: repo="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" scope=local name="{{ item.name }}" value="{{ item.value }}"
       with_items:
 #        - { name: 'user.email', value: "{{ git_email }}" }
 #        - { name: 'user.name', value: "{{ git_full_name }}" }
@@ -315,13 +318,13 @@
      
     - debug: msg="{{item | basename }}"
       with_fileglob: 
-        - /projects/cfme_env/cfme_vol/cfme-qe-yamls.git/complete/*.*yaml 
+        - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
       when: item | basename != 'env.yaml'
       
     - name: Create symlinks for (remote) YAML repo
-      file: src="../../cfme-qe-yamls.git/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      file: src="../../{{ yaml_remote_repo_basename }}/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob: 
-        - /projects/cfme_env/cfme_vol/cfme-qe-yamls.git/complete/*.*yaml 
+        - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
       #when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
       when: yaml_remote_repo_yn_p.key == "y" and (item | basename != 'env.yaml')
     
