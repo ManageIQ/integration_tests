@@ -289,7 +289,7 @@
       when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
 
     - name: Clone remote YAML repo - Add username into repo url - regexp
-      git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo | basename | regex_replace('\.git','') }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
+      git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
       # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
       when: yaml_remote_repo_yn_p.key == "y"
