@@ -9,7 +9,8 @@ LABEL company="Redhat" product="Ansible" environment="dev" tier="test"
 
 RUN easy_install pip
 
-RUN pip install virtualenv os-client-config shade ipython
+#RUN pip install virtualenv os-client-config shade ipython
+RUN pip install virtualenv os-client-config shade
 
 ENV PROJECTS /projects 
 
