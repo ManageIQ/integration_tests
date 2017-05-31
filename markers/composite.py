@@ -1,5 +1,3 @@
-
-
 def pytest_addoption(parser):
     """Adds options for the composite uncollection system"""
     parser.addoption("--composite-uncollect", action="store_true", default=False,
@@ -61,11 +59,4 @@ def pytest_collection_modifyitems(session, config, items):
 
     len_filtered = len(items)
     filtered_count = len_collected - len_filtered
-
-    if filtered_count:
-        # A warning should go into log/cfme.log when a test has this mark applied.
-        # It might be good to write uncollected test names out via terminalreporter,
-        # but I suspect it would be extremely spammy. It might be useful in the
-        # --collect-only output?
-        store.terminalreporter.write(
-            '{} tests uncollected because they previously passed'.format(filtered_count), bold=True)
+    store.uncollection_stats['composite_uncollect'] = filtered_count

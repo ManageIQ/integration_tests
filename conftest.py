@@ -14,6 +14,18 @@ def pytest_addoption(parser):
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
 
 
+def pytest_collection_finish(session):
+    from fixtures.pytest_store import store
+    store.terminalreporter.write(
+        "Uncollection Stats:\n", bold=True)
+
+    for reason, value in store.uncollection_stats.iteritems():
+        store.terminalreporter.write(
+            " {}: {}\n".format(reason, value), bold=True)
+    store.terminalreporter.write(
+        " {} tests left after all uncollections\n".format(len(session.items)), bold=True)
+
+
 pytest_plugins = (
     'markers',
     'fixtures.pytest_store',
@@ -22,7 +34,7 @@ pytest_plugins = (
 
     'fixtures.portset',
 
-
+    'markers.manual',
     'markers.polarion',  # before artifactor
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',

@@ -110,6 +110,7 @@ def uncollectif(item):
 
 
 def pytest_collection_modifyitems(session, config, items):
+    from fixtures.pytest_store import store
     len_collected = len(items)
 
     new_items = []
@@ -135,13 +136,4 @@ def pytest_collection_modifyitems(session, config, items):
 
     len_filtered = len(items)
     filtered_count = len_collected - len_filtered
-
-    if filtered_count:
-        # A warning should go into log/cfme.log when a test has this mark applied.
-        # It might be good to write uncollected test names out via terminalreporter,
-        # but I suspect it would be extremely spammy. It might be useful in the
-        # --collect-only output?
-
-        from fixtures.pytest_store import store
-        store.terminalreporter.write('collected %d items' % len_filtered, bold=True)
-        store.terminalreporter.write(' (uncollected %d items)\n' % filtered_count)
+    store.uncollection_stats['uncollectif'] = filtered_count

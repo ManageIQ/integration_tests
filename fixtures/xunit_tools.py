@@ -207,11 +207,8 @@ def pytest_collection_modifyitems(session, config, items):
 
         param_list = extract_fixtures_values(item).keys()
 
-        try:
-            automated = item.get_marker('automated').args[0]
-        except:
-            automated = True
-        if automated:
+        manual = item.get_marker('manual')
+        if not manual:
             # The master here should probably link the latest "commit" eventually
             automation_script = 'http://github.com/{}/{}/blob/master/{}#L{}'.format(
                 xunit['gh_owner'],
@@ -221,8 +218,11 @@ def pytest_collection_modifyitems(session, config, items):
             )
             custom_fields['caseautomation'] = "automated"
             custom_fields['automation_script'] = automation_script
-        description = '{}<br/><br/><a href="{}">Test Source</a>'.format(
-            description, automation_script)
+            description = '{}<br/><br/><a href="{}">Test Source</a>'.format(
+                description, automation_script)
+        else:
+            custom_fields['caseautomation'] = "manualonly"
+            description = '{}'.format(description)
 
         name = item.name
         name = re.sub('\[.*\]', '', name)
