@@ -1,28 +1,32 @@
+from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from . import InfraProvider
 from mgmtsystem.virtualcenter import VMWareSystem
+
+
+class VirtualCenterEndpoint(DefaultEndpoint):
+    pass
+
+
+class VirtualCenterEndpointForm(DefaultEndpointForm):
+    pass
 
 
 class VMwareProvider(InfraProvider):
     type_name = "virtualcenter"
     mgmt_class = VMWareSystem
     db_types = ["Vmware::InfraManager"]
+    endpoints_form = VirtualCenterEndpointForm
 
-    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
+    def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
         super(VMwareProvider, self).__init__(
-            name=name, credentials=credentials, zone=zone, key=key, provider_data=provider_data,
+            name=name, endpoints=endpoints, zone=zone, key=key, provider_data=provider_data,
             appliance=appliance)
-
         self.hostname = hostname
-        self.ip_address = ip_address
         self.start_ip = start_ip
         self.end_ip = end_ip
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'VMware vCenter',
-                'hostname_text': kwargs.get('hostname'),
-                'ipaddress_text': kwargs.get('ip_address')}
+        if ip_address:
+            self.ip_address = ip_address
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
@@ -37,19 +41,23 @@ class VMwareProvider(InfraProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        credentials_key = prov_config['credentials']
-        credentials = cls.process_credential_yaml_key(credentials_key)
+        endpoint = VirtualCenterEndpoint(**prov_config['endpoints']['default'])
+
         if prov_config.get('discovery_range', None):
             start_ip = prov_config['discovery_range']['start']
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
         return cls(name=prov_config['name'],
-            hostname=prov_config['hostname'],
-            ip_address=prov_config['ipaddress'],
-            credentials={'default': credentials},
-            zone=prov_config['server_zone'],
-            key=prov_key,
-            start_ip=start_ip,
-            end_ip=end_ip,
-            appliance=appliance)
+                   endpoints=endpoint,
+                   zone=prov_config['server_zone'],
+                   key=prov_key,
+                   start_ip=start_ip,
+                   end_ip=end_ip,
+                   appliance=appliance)
+
+    @property
+    def view_value_mapping(self):
+        return {'name': self.name,
+                'prov_type': 'VMware vCenter'
+                }
