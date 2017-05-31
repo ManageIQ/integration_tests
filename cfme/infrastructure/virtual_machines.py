@@ -2,6 +2,8 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+from copy import copy
+from collections import namedtuple
 import fauxfactory
 from functools import partial
 import re
@@ -26,10 +28,15 @@ from cfme.web_ui.search import search_box
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.conf import cfme_data
 from utils.log import logger
+from utils.pretty import Pretty
 from utils.wait import wait_for
 from utils import version, deferred_verpick
+from widgetastic.widget import Text
+from widgetastic_patternfly import (
+    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput
+)
 from widgetastic_manageiq import TimelinesView
-
+from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 # for provider specific vm/template page
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
@@ -96,6 +103,17 @@ def reset_page():
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
+class InfraVmDetailsView(BaseLoggedInPage):
+    # TODO this is only minimal implementation for toolbar access through widgetastic
+
+    configuration = Dropdown("Configuration")
+    policy = Dropdown("Policy")
+    lifecycle = Dropdown("Lifecycle")
+    monitoring = Dropdown("Monitoring")
+    power = Dropdown("Power")
+    access = Dropdown("Access")
+
+
 class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
     def is_displayed(self):
@@ -103,6 +121,206 @@ class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
             self.navigation.currently_selected == ['Compute', 'Infrastructure',
                                                    '/vm_infra/explorer'] and \
             super(TimelinesView, self).is_displayed
+
+
+class InfraVmReconfigureView(BaseLoggedInPage):
+    title = Text('#explorer_title_text')
+
+    memory = BootstrapSwitch(name='cb_memory')
+    # memory set to True unlocks the following (order matters - first type then value!):
+    mem_size_unit = BootstrapSelect(id='mem_type')
+    mem_size = WInput(id='memory_value')
+
+    cpu = BootstrapSwitch(name='cb_cpu')
+    # cpu set to True unlocks the following:
+    sockets = BootstrapSelect(id='socket_count')
+    cores_per_socket = BootstrapSelect(id='cores_per_socket_count')
+    cpu_total = WInput()  # read-only, TODO widgetastic
+
+    disks_table = DisksTable()
+
+    submit_button = Button('Submit', classes=[Button.PRIMARY])
+    cancel_button = Button('Cancel', classes=[Button.DEFAULT])
+
+    # The page doesn't contain enough info to ensure that it's the right VM -> always navigate
+    is_displayed = False
+
+
+class VMDisk(
+        namedtuple('VMDisk', ['filename', 'size', 'size_unit', 'type', 'mode'])):
+    """Represents a single VM disk
+
+    Note:
+        Cannot be changed once created.
+    """
+    EQUAL_ATTRS = {'type', 'mode', 'size_mb'}
+
+    def __eq__(self, other):
+        # If both have filename, it's easy
+        if self.filename and other.filename:
+            return self.filename == other.filename
+        # If one of filenames is None (before disk is created), compare the rest
+        for attr in self.EQUAL_ATTRS:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+        return True
+
+    @property
+    def size_mb(self):
+        return self.size * 1024 if self.size_unit == 'GB' else self.size
+
+
+class VMHardware(object):
+    """Represents VM's hardware, i.e. CPU (cores, sockets) and memory
+    """
+    EQUAL_ATTRS = {'cores_per_socket', 'sockets', 'mem_size_mb'}
+
+    def __init__(self, cores_per_socket=None, sockets=None, mem_size=None, mem_size_unit='MB'):
+        self.cores_per_socket = cores_per_socket
+        self.sockets = sockets
+        self.mem_size = mem_size
+        self.mem_size_unit = mem_size_unit
+
+    def __eq__(self, other):
+        for attr in self.EQUAL_ATTRS:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+        return True
+
+    @property
+    def mem_size_mb(self):
+        return self.mem_size * 1024 if self.mem_size_unit == 'GB' else self.mem_size
+
+
+class VMConfiguration(Pretty):
+    """Represents VM's full configuration - hardware, disks and so forth
+
+    Args:
+        vm: VM that exists within current appliance
+
+    Note:
+        It can be only instantiated by fetching an existing VM's configuration, as it is designed
+        to be used to reconfigure an existing VM.
+    """
+    pretty_attrs = ['hw', 'num_disks']
+
+    def __init__(self, vm):
+        self.hw = VMHardware()
+        self.disks = []
+        self.vm = vm
+        self._load()
+
+    def __eq__(self, other):
+        return (self.hw == other.hw) and (self.num_disks == other.num_disks) and \
+            all(disk in other.disks for disk in self.disks)
+
+    def _load(self):
+        """Loads the configuration from the VM object's appliance (through DB)
+        """
+        appl_db = self.vm.appliance.db
+
+        # Hardware
+        ems = appl_db['ext_management_systems']
+        vms = appl_db['vms']
+        hws = appl_db['hardwares']
+        hw_data = appl_db.session.query(ems, vms, hws).filter(
+            ems.name == self.vm.provider.name).filter(
+            vms.ems_id == ems.id).filter(
+            vms.name == self.vm.name).filter(
+            hws.vm_or_template_id == vms.id
+        ).first().hardwares
+        self.hw = VMHardware(
+            hw_data.cpu_cores_per_socket, hw_data.cpu_sockets, hw_data.memory_mb, 'MB')
+        hw_id = hw_data.id
+
+        # Disks
+        disks = appl_db['disks']
+        disks_data = appl_db.session.query(disks).filter(
+            disks.hardware_id == hw_id).filter(
+            disks.device_type == 'disk'
+        ).all()
+        for disk_data in disks_data:
+            # In DB stored in bytes, but UI default is GB
+            size_gb = disk_data.size / (1024 ** 3)
+            self.disks.append(
+                VMDisk(
+                    filename=disk_data.filename,
+                    size=size_gb,
+                    size_unit='GB',
+                    type=disk_data.disk_type,
+                    mode=disk_data.mode
+                ))
+
+    def copy(self):
+        """Returns a copy of this configuration
+        """
+        config = VMConfiguration.__new__(VMConfiguration)
+        config.hw = copy(self.hw)
+        # We can just make shallow copy here because disks can be only added or deleted, not edited
+        config.disks = self.disks[:]
+        config.vm = self.vm
+        return config
+
+    def add_disk(self, size, size_unit='GB', type='thin', mode='persistent'):
+        """Adds a disk to the VM
+
+        Args:
+            size: Size of the disk
+            size_unit: Unit of size ('MB' or 'GB')
+            type: Type of the disk ('thin' or 'thick')
+            mode: Mode of the disk ('persistent', 'independent_persistent' or
+                  'independent_nonpersistent')
+
+        Note:
+            This method is designed to correspond with the DB, not with the UI.
+            In the UI, dependency is represented by a separate Yes / No option which is _incorrect_
+            design that we don't follow. Correctly, mode should be a selectbox of 3 items:
+            Persistent, Independent Persistent and Independent Nonpersistent.
+            Just Nonpersistent is an invalid setup that UI currently (5.8) allows.
+        """
+        # New disk doesn't have a filename, until actually added
+        disk = VMDisk(
+            filename=None, size=size, size_unit=size_unit, type=type, mode=mode)
+        self.disks.append(disk)
+        return disk
+
+    def delete_disk(self, filename=None, index=None):
+        """Removes a disk of given filename or index"""
+        if filename:
+            disk = [disk for disk in self.disks if disk.filename == filename][0]
+            self.disks.remove(disk)
+        elif index:
+            del self.disks[index]
+        else:
+            raise TypeError("Either filename or index must be specified")
+
+    @property
+    def num_disks(self):
+        return len(self.disks)
+
+    def get_changes_to_fill(self, other_configuration):
+        """ Returns changes to be applied to this config to reach the other config
+
+        Note:
+            Result of this method is used for form filling by VM's reconfigure method.
+        """
+        changes = {}
+        changes['disks'] = []
+        for key in ['cores_per_socket', 'sockets']:
+            if getattr(self.hw, key) != getattr(other_configuration.hw, key):
+                changes[key] = str(getattr(other_configuration.hw, key))
+                changes['cpu'] = True
+        if self.hw.mem_size != other_configuration.hw.mem_size \
+                or self.hw.mem_size_unit != other_configuration.hw.mem_size_unit:
+            changes['memory'] = True
+            changes['mem_size'] = other_configuration.hw.mem_size
+            changes['mem_size_unit'] = other_configuration.hw.mem_size_unit
+        for disk in self.disks + other_configuration.disks:
+            if disk in self.disks and disk not in other_configuration.disks:
+                changes['disks'].append({'action': 'delete', 'disk': disk, 'delete_backing': None})
+            elif disk not in self.disks and disk in other_configuration.disks:
+                changes['disks'].append({'action': 'add', 'disk': disk})
+        return changes
 
 
 class Vm(BaseVM):
@@ -388,6 +606,74 @@ class Vm(BaseVM):
                 sel.click(form_buttons.FormButton(
                     "Save Changes", dimmed_alt="Save", force_click=True))
                 flash.assert_success_message("Management Engine Relationship saved")
+
+    @property
+    def configuration(self):
+        return VMConfiguration(self)
+
+    def reconfigure(self, new_configuration=None, changes=None, cancel=False):
+        """Reconfigures the VM based on given configuration or set of changes
+
+        Args:
+            new_configuration: VMConfiguration object with desired configuration
+            changes: Set of changes to request; alternative to new_configuration
+                     See VMConfiguration.get_changes_to_fill to see expected format of the data
+            cancel: `False` if we want to submit the changes, `True` otherwise
+        """
+        if not new_configuration and not changes:
+            raise TypeError(
+                "You must provide either new configuration or changes to apply.")
+
+        if new_configuration:
+            changes = self.configuration.get_changes_to_fill(new_configuration)
+
+        any_changes = any(v not in [None, []] for v in changes.values())
+        if not any_changes and not cancel:
+            raise ValueError("No changes specified - cannot reconfigure VM.")
+
+        vm_recfg = navigate_to(self, 'Reconfigure')
+
+        # We gotta add disks separately
+        fill_data = {k: v for k, v in changes.iteritems() if k != 'disks'}
+        vm_recfg.fill(fill_data)
+
+        for disk_change in changes['disks']:
+            action, disk = disk_change['action'], disk_change['disk']
+            if action == 'add':
+                # TODO This conditional has to go, once the 'Dependent' switch is removed from UI
+                if 'independent' in disk.mode:
+                    mode = disk.mode.split('independent_')[1]
+                    dependent = False
+                else:
+                    mode = disk.mode
+                    dependent = True
+                row = vm_recfg.disks_table.click_add_disk()
+                row.type.fill(disk.type)
+                row.mode.fill(mode)
+                # Unit first, then size (otherwise JS would try to recalculate the size...)
+                row[4].fill(disk.size_unit)
+                row.size.fill(disk.size)
+                row.dependent.fill(dependent)
+                row.actions.widget.click()
+            elif action == 'delete':
+                row = vm_recfg.disks_table.row(name=disk.filename)
+                row.delete_backing.fill(disk_change['delete_backing'])
+                row.actions.widget.click()
+            else:
+                raise ValueError("Unknown disk change action; must be one of: add, delete")
+
+        if cancel:
+            vm_recfg.cancel_button.click()
+            # TODO Cannot use VM list view for flash messages here because we don't have one yet
+            vm_recfg.flash.assert_no_error()
+            vm_recfg.flash.assert_message('VM Reconfigure Request was cancelled by the user')
+        else:
+            vm_recfg.submit_button.click()
+            # TODO Cannot use Requests view for flash messages here because we don't have one yet
+            vm_recfg.flash.assert_no_error()
+            vm_recfg.flash.assert_message("VM Reconfigure Request was saved")
+
+        # TODO This should (one day) return a VM reconfigure request obj that we can further use
 
 
 class Template(BaseTemplate):
@@ -756,6 +1042,7 @@ class VmAllWithTemplatesArchived(CFMENavigateStep):
 @navigator.register(Template, 'Details')
 @navigator.register(Vm, 'Details')
 class VmAllWithTemplatesDetails(CFMENavigateStep):
+    VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
@@ -874,3 +1161,12 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         mon_btn('Timelines')
+
+
+@navigator.register(Vm, 'Reconfigure')
+class VmReconfigure(CFMENavigateStep):
+    VIEW = InfraVmReconfigureView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select('Reconfigure this VM')
