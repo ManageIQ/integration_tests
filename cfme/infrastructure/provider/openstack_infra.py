@@ -87,11 +87,11 @@ class OpenstackInfraProvider(InfraProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        endpoints = []
+        endpoints = {}
         for endp in prov_config['endpoints']:
             for expected_endpoint in (RHOSEndpoint, EventsEndpoint, SSHEndpoint):
                 if expected_endpoint.name == endp:
-                    endpoints.append(expected_endpoint(**prov_config['endpoints'][endp]))
+                    endpoints[endp] = expected_endpoint(**prov_config['endpoints'][endp])
 
         if prov_config.get('discovery_range', None):
             start_ip = prov_config['discovery_range']['start']

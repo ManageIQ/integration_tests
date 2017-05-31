@@ -66,7 +66,7 @@ class SCVMMProvider(InfraProvider):
             start_ip = end_ip = prov_config.get('ipaddress')
         return cls(
             name=prov_config['name'],
-            endpoints=endpoint,
+            endpoints={endpoint.name: endpoint},
             key=prov_key,
             start_ip=start_ip,
             end_ip=end_ip,
