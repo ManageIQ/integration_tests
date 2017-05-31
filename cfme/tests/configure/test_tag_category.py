@@ -69,7 +69,7 @@ class TestCategoriesViaREST(object):
         assert categories_len == len(edited)
         for index in range(categories_len):
             record, _ = wait_for(
-                lambda: collection.find_by(description=new[index]['description']),
+                lambda: collection.find_by(description=new[index]['description']) or False,
                 num_sec=180,
                 delay=10,
             )
