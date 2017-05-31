@@ -278,6 +278,13 @@ class AvailabilityZoneNotFound(CFMEException):
     pass
 
 
+class VolumeNotFound(CFMEException):
+    """
+    Raised if a specific cloud volume cannot be found in the UI
+    """
+    pass
+
+
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
