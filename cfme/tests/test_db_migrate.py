@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="module")
 def temp_appliance_extended_db(temp_appliance_preconfig):
     app = temp_appliance_preconfig
-    app.stop_evm_service()
+    app.evmserverd.stop()
     app.extend_db_partition()
     app.start_evm_service()
     return app
@@ -51,7 +51,7 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
     v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
 
     # Stop EVM service and drop vmdb_production DB
-    app.stop_evm_service()
+    app.evmserverd.stop()
     app.drop_database()
 
     # restore new DB and migrate it
