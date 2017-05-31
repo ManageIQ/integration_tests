@@ -18,11 +18,15 @@ def tenant(provider, setup_provider):
     yield tenant
 
     try:
-        tenant.delete()
+        if tenant.exists():
+            tenant.delete()
+
     except Exception:
         logger.warning(
             'Exception while attempting to delete tenant fixture, continuing')
-        pass
+    finally:
+        if tenant.name in provider.mgmt.list_tenant():
+            provider.mgmt.remove_tenant(tenant.name)
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
@@ -37,9 +41,9 @@ def test_tenant_crud(tenant):
     assert not tenant.exists()
 
     tenant.create()
+
     tenant.wait_for_appear()
     assert tenant.exists()
-
     with update(tenant):
         tenant.name = fauxfactory.gen_alphanumeric(8)
     assert tenant.exists()
