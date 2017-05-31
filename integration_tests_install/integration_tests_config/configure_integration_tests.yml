@@ -295,7 +295,7 @@
       when: yaml_remote_repo_yn_p.key == "y"
 
     - name: Configure origin for remote YAML repo
-      #git_config: repo="{{ cfme_vol }}/cfme-qe-yamls.git/" scope=local name="{{ item.name }}" value="{{ item.value }}"
+      # git_config: repo="{{ cfme_vol }}/cfme-qe-yamls.git/" scope=local name="{{ item.name }}" value="{{ item.value }}"
       git_config: repo="{{ cfme_vol }}/{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}" scope=local name="{{ item.name }}" value="{{ item.value }}"
       with_items:
 #        - { name: 'user.email', value: "{{ git_email }}" }
