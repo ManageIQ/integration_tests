@@ -125,7 +125,7 @@ def set_template_quad():
 
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_grid_page_per_item(request, page, set_grid):
+def test_infra_grid_page_per_item(request, page, set_grid):
     """ Tests grid items per page
 
     Metadata:
@@ -141,7 +141,7 @@ def test_grid_page_per_item(request, page, set_grid):
 
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_tile_page_per_item(request, page, set_tile):
+def test_infra_tile_page_per_item(request, page, set_tile):
     """ Tests tile items per page
 
     Metadata:
@@ -157,7 +157,7 @@ def test_tile_page_per_item(request, page, set_tile):
 
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_list_page_per_item(request, page, set_list):
+def test_infra_list_page_per_item(request, page, set_list):
     """ Tests list items per page
 
     Metadata:
@@ -172,7 +172,7 @@ def test_list_page_per_item(request, page, set_list):
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
-def test_report_page_per_item(set_report):
+def test_infra_report_page_per_item(set_report):
     """ Tests report items per page
 
     Metadata:
@@ -189,7 +189,7 @@ def test_report_page_per_item(set_report):
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_start_page(request, start_page):
+def test_infra_start_page(request, start_page):
     """ Tests start page
 
     Metadata:

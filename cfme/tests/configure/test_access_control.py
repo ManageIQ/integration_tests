@@ -271,7 +271,7 @@ def test_group_remove_tag():
 
 
 @pytest.mark.tier(3)
-def test_description_required_error_validation():
+def test_group_description_required_error_validation():
     error_text = "Description can't be blank"
     group = Group(description=None, role='EvmRole-approver')
     with error.expected(error_text):
