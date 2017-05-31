@@ -2,19 +2,22 @@
 
 RES=16
 # Append messages to setup.txt
+LOGFILE=/integration_tests/log/setup.txt
+
+
+
 log () {
-    echo "$@" | tee -a $ARTIFACTOR_DIR/setup.txt
+    echo "$@" | tee -a $LOGFILE
 }
 
 # Runs given command and appends the stdout and stderr output to setup.txt
 run_n_log () {
-    eval "$1"  2>&1 | tee -a $ARTIFACTOR_DIR/setup.txt
+    eval "$1"  2>&1 | tee -a $LOGFILE
 }
-
 # Shutdown and destroy everything
 on_exit () {
     log "Beginning shutdown proc...#~"
-    echo $RES > $ARTIFACTOR_DIR/result.txt
+    echo $RES > /log_depot/result.txt
     log "Checking out master branch..."
     git checkout origin/master
     
@@ -124,7 +127,7 @@ if [ -n "$CFME_PR" ]; then
     run_n_log "/verify_commit.py origin/pr/$CFME_PR"
     log "merging against $BASE_BRANCH"
     git fetch repo_under_test $BASE_BRANCH
-    git checkout repo_under_test/$BASE_BRANCH
+    git checkout -b branch-under-test repo_under_test/$BASE_BRANCH
     run_n_log "git merge --no-ff --no-edit repo_under_test/pr/$CFME_PR"
 else
     log "Checking out branch $BRANCH"
@@ -143,7 +146,7 @@ if [ -n "$PROVIDER" ]; then
     log "#*"
 fi
 export APPLIANCE=${APPLIANCE-"None"}
-log $APPLIANCE
+log "appliance: $APPLIANCE"
 
 # Now fill out the env yaml with ALL THE THINGS
 cat > /integration_tests/conf/env.local.yaml <<EOF
@@ -151,7 +154,7 @@ base_url: $APPLIANCE
 $BROWSER_SECTION
 
 artifactor:
-    log_dir: $ARTIFACTOR_DIR
+    log_dir: /log_depot/artifacts
     per_run: test #test, run, None
     reuse_dir: True
     squash_exceptions: True
