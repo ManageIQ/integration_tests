@@ -290,7 +290,7 @@
 
     - name: get basename from git remote repo
       set_fact:
-        yaml_remote_repo_basename: {{ yaml_remote_repo | basename | regex_replace('\\.git','') }
+        yaml_remote_repo_basename: "{{ yaml_remote_repo | basename | regex_replace('\\.git','') }}"
 
     - name: Clone remote YAML repo - Add username into repo url - regexp
       git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo_basename }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
