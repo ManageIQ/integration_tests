@@ -80,20 +80,20 @@ def set_and_test_view(group_name, view):
 
 
 @pytest.mark.meta(blockers=[1394331])
-def test_expanded_view(request):
+def test_infra_expanded_view(request):
     set_and_test_view('Compare', 'Expanded View')
 
 
 @pytest.mark.meta(blockers=[1394331])
-def test_compressed_view(request):
+def test_infra_compressed_view(request):
     set_and_test_view('Compare', 'Compressed View')
 
 
 @pytest.mark.meta(blockers=[1394331])
-def test_details_view(request):
+def test_infra_details_view(request):
     set_and_test_view('Compare Mode', 'Details Mode')
 
 
 @pytest.mark.meta(blockers=[1394331])
-def test_exists_view(request):
+def test_infra_exists_view(request):
     set_and_test_view('Compare Mode', 'Exists Mode')

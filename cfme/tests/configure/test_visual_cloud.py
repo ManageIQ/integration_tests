@@ -94,7 +94,7 @@ def set_cloud_provider_quad():
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_grid_page_per_item(request, page, set_grid):
+def test_cloud_grid_page_per_item(request, page, set_grid):
     """ Tests grid items per page
 
     Metadata:
@@ -111,7 +111,7 @@ def test_grid_page_per_item(request, page, set_grid):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_tile_page_per_item(request, page, set_tile):
+def test_cloud_tile_page_per_item(request, page, set_tile):
     """ Tests tile items per page
 
     Metadata:
@@ -128,7 +128,7 @@ def test_tile_page_per_item(request, page, set_tile):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_list_page_per_item(request, page, set_list):
+def test_cloud_list_page_per_item(request, page, set_list):
     """ Tests list items per page
 
     Metadata:
@@ -145,7 +145,7 @@ def test_list_page_per_item(request, page, set_list):
 
 
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_start_page(request, start_page):
+def test_cloud_start_page(request, start_page):
     """ Tests start page
 
     Metadata:

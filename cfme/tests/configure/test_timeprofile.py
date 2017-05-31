@@ -95,7 +95,7 @@ def test_hours_required_error_validation():
 
 
 @pytest.mark.sauce
-def test_description_required_error_validation():
+def test_timeprofile_description_required_error_validation():
     tp = st.Timeprofile(
         description=None,
         scope='Current User',

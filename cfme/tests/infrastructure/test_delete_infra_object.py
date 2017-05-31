@@ -18,7 +18,7 @@ pytest_generate_tests = testgen.generate(
     [InfraProvider], required_fields=['remove_test'], scope="module")
 
 
-def test_delete_cluster(setup_provider, provider):
+def test_delete_cluster_appear_after_refresh(setup_provider, provider):
     """ Tests delete cluster
 
     Metadata:
@@ -32,7 +32,7 @@ def test_delete_cluster(setup_provider, provider):
     test_cluster.wait_for_appear()
 
 
-def test_delete_host(setup_provider, provider):
+def test_delete_host_appear_after_refresh(setup_provider, provider):
     """ Tests delete host
 
     Metadata:
@@ -46,7 +46,7 @@ def test_delete_host(setup_provider, provider):
     host.wait_for_host_to_appear(test_host)
 
 
-def test_delete_vm(setup_provider, provider):
+def test_delete_vm_appear_after_refresh(setup_provider, provider):
     """ Tests delete vm
 
     Metadata:
@@ -60,7 +60,7 @@ def test_delete_vm(setup_provider, provider):
     test_vm.wait_to_appear()
 
 
-def test_delete_template(setup_provider, provider):
+def test_delete_template_appear_after_refresh(setup_provider, provider):
     """ Tests delete template
 
     Metadata:
@@ -74,7 +74,7 @@ def test_delete_template(setup_provider, provider):
     test_template.wait_to_appear()
 
 
-def test_delete_resource_pool(setup_provider, provider):
+def test_delete_resource_pool_appear_after_refresh(setup_provider, provider):
     """ Tests delete pool
 
     Metadata:
@@ -90,7 +90,7 @@ def test_delete_resource_pool(setup_provider, provider):
 
 @pytest.mark.meta(blockers=[1236977, 1335961])
 @pytest.mark.ignore_stream("upstream")
-def test_delete_datastore(setup_provider, provider):
+def test_delete_datastore_appear_after_refresh(setup_provider, provider):
     """ Tests delete datastore
 
     Metadata:
