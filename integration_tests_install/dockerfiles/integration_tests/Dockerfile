@@ -50,6 +50,8 @@ RUN curl -L  https://raw.githubusercontent.com/RedHatQE/cfme_tests/master/requir
 
 RUN source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt && rm -rf ~/.cache/pip
 
+RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
+
 # ENV CHROME_DRIVER_VERSION 2.21
 ENV CHROME_DRIVER_VERSION 2.27
 # ENV SELENIUM_VERSION 2.51
