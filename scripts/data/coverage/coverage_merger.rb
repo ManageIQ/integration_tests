@@ -43,11 +43,18 @@ SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
 SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter
 SimpleCov.use_merging true
 SimpleCov.merge_timeout 2 << 28
-if Vmdb::Appliance.VERSION.start_with?('5.5', 'master')
-  SimpleCov.add_group "REST API", "vmdb/app/controllers/api_controller"
-else
-  SimpleCov.add_group "APIs", "vmdb/app/apis"
+# Remove the original filters
+SimpleCov.filters.clear
+SimpleCov.add_filter do |src|
+  # This is a modified version of the original block filter
+  include_file = src.filename =~ /\A#{Regexp.escape(SimpleCov.root)}/io
+  unless include_file
+    # A gem maybe?
+    include_file = src.filename =~ /\A\/opt\/rh\/cfme-gemset\/gems\/manageiq-/io
+  end
+  ! include_file
 end
-SimpleCov.add_group "Presenters", "vmdb/app/presenters"
-SimpleCov.add_group "Services", "vmdb/app/services"
+SimpleCov.add_group "REST API", "app/controllers/api"
+SimpleCov.add_group "Models", "app/models"
+SimpleCov.add_group "Automate Engine", "lib/miq_automation_engine"
 SimpleCov.result.format!

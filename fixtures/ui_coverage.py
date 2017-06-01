@@ -259,11 +259,15 @@ class CoverageManager(object):
             'tar czf /tmp/ui-coverage-raw.tgz coverage/')
         ssh_client.get_file('/tmp/ui-coverage-raw.tgz', coverage_results_archive.strpath)
 
+    def _upload_coverage_merger(self):
+        ssh_client = self.collection_appliance.ssh_client
+        ssh_client.put_file(coverage_merger.strpath, rails_root.strpath)
+
     def _merge_coverage_reports(self):
         # run the merger on the appliance to generate the simplecov report
         # This has been failing, presumably due to oom errors :(
+        self._upload_coverage_merger()
         ssh_client = self.collection_appliance.ssh_client
-        ssh_client.put_file(coverage_merger.strpath, rails_root.strpath)
         ssh_client.run_rails_command(coverage_merger.basename)
 
     def _retrieve_merged_reports(self):
