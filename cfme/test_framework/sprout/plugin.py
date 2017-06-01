@@ -263,6 +263,11 @@ def pytest_addhooks(pluginmanager):
 
 
 def pytest_miq_node_shutdown(config, nodeinfo):
+    if config.getoption('ui_coverage'):
+        # TODO: Ensure this gets called after pytest_sessionfinish
+        # This disables the appliance deletion when ui coverage is on. ^
+        # This is because we need one of the appliances to do the collection for us
+        return
     if nodeinfo:
         netloc = urlparse(nodeinfo).netloc
         ip_address = netloc.split(":")[0]
