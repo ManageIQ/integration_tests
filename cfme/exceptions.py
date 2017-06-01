@@ -377,3 +377,7 @@ class DestinationNotFound(CFMEException):
 
 class ItemNotFound(CFMEException):
     """Raised when an item is not found in general."""
+
+
+class ManyItemsFound(CFMEException):
+    """Raised when one or no items were expected but several/many items were obtained instead."""

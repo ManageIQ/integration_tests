@@ -20,7 +20,7 @@ from cfme.common.provider_views import (ProviderAddView,
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
-from cfme.web_ui import Quadicon, paginator, toolbar as tb, match_location
+from cfme.web_ui import Quadicon, match_location
 from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -30,8 +30,8 @@ from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
 
+# todo: get_rid of match_page and am_i_here
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
-pol_btn = partial(tb.select, 'Policy')
 
 
 class InfraProvider(Pretty, CloudInfraProvider, Fillable):
@@ -298,8 +298,8 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg = self.prerequisite_view.toolbar.configuration
-        cfg.item_select('Add a New Infrastructure Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                 'Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
@@ -308,8 +308,8 @@ class Discover(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg = self.prerequisite_view.toolbar.configuration
-        cfg.item_select('Discover Infrastructure Providers')
+        self.prerequisite_view.toolbar.configuration.item_select('Discover '
+                                                                 'Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')
@@ -318,7 +318,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
 
     def resetter(self):
         # Reset view and selection
@@ -330,11 +330,12 @@ class Details(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'ManagePolicies')
 class ManagePolicies(CFMENavigateStep):
+    VIEW = ProvidersManagePoliciesView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        pol_btn('Manage Policies')
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
@@ -344,6 +345,16 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
+
+
+@navigator.register(InfraProvider, 'EditTags')
+class EditTags(CFMENavigateStep):
+    VIEW = ProvidersEditTagsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(InfraProvider, 'EditTagsFromDetails')
@@ -361,9 +372,9 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg = self.prerequisite_view.toolbar.configuration
-        cfg.item_select('Edit Selected Infrastructure Providers')
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.configuration.item_select('Edit Selected '
+                                                                 'Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Timelines')
@@ -400,17 +411,10 @@ class Templates(CFMENavigateStep):
         # todo: add templates view when it is done
 
 
-def get_all_providers(do_not_navigate=False):
+def get_all_providers():
     """Returns list of all providers"""
-    if not do_not_navigate:
-        navigate_to(InfraProvider, 'All')
-    providers = set([])
-    link_marker = "ems_infra"
-    for page in paginator.pages():
-        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'{}/show')]".format(link_marker)):
-            providers.add(sel.get_attribute(title, "title"))
-    return providers
+    view = navigate_to(InfraProvider, 'All')
+    return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
 def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None, end_ip=None):
@@ -451,7 +455,7 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
 
 
 def wait_for_a_provider():
-    navigate_to(InfraProvider, 'All')
+    view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
-             num_sec=1000, fail_func=sel.refresh)
+    wait_for(view.paginator.items_amount, fail_condition=None,
+             message="Wait for any provider to appear", num_sec=1000, fail_func=sel.refresh)

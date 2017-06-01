@@ -27,6 +27,7 @@ from widgetastic.widget import (
     ParametrizedView,
     WidgetDescriptor,
     FileInput as BaseFileInput,
+    ClickableMixin,
     do_not_read_this_widget)
 from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
@@ -1774,3 +1775,179 @@ class FileInput(BaseFileInput):
             value = os.path.abspath(f.name)
             atexit.register(f.close)
         return super(FileInput, self).fill(value)
+
+
+class BaseQuadIconItem(ParametrizedView, ClickableMixin):
+    PARAMETERS = ('name',)
+    ROOT = ParametrizedLocator('.//table[./tbody/tr/td/a[contains(@title, {name|quote})]]')
+    LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
+    label = Text(locator=ParametrizedLocator('./tbody/tr/td/a[contains(@title, {name|quote})]'))
+    checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
+    QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img]'
+
+    @property
+    def is_checked(self):
+        return self.checkbox.selected
+
+    def check(self):
+        return self.checkbox.fill(True)
+
+    def uncheck(self):
+        return self.checkbox.fill(False)
+
+    @property
+    def href(self):
+        return self.browser.get_attribute('href', self.label)
+
+    @property
+    def data(self):
+        # to override this property in concrete classes
+        return {}
+
+    def read(self):
+        return self.is_checked
+
+    def fill(self, values):
+        return self.check(values)
+
+    @property
+    def is_displayed(self):
+        try:
+            list_exists = self.browser.element(self.LIST).is_displayed()
+        except NoSuchElementException:
+            list_exists = False
+        return not list_exists and super(BaseQuadIconItem, self).is_displayed
+
+
+class ProviderQuadIconItem(BaseQuadIconItem):
+    @property
+    def data(self):
+        br = self.browser
+        return {
+            "no_host": br.text(self.QUADRANT.format(pos='a')),
+            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
+            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
+        }
+
+
+class BaseTileIconItem(ParametrizedView):
+    PARAMETERS = ('name',)
+    ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/a[contains(@title, '
+                               '{name|quote})]]]')
+    LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
+    quad_icon = ParametrizedView.nested(BaseQuadIconItem)
+
+    @property
+    def is_checked(self):
+        return self.quad_icon(self.context['name']).is_checked
+
+    def check(self):
+        return self.quad_icon(self.context['name']).check()
+
+    def uncheck(self):
+        return self.quad_icon(self.context['name']).uncheck()
+
+    @property
+    def href(self):
+        return self.quad_icon(self.context['name']).href
+
+    @property
+    def data(self):
+        quad_data = self.quad_icon(self.context['name']).data
+        br = self.browser
+        # it seems we don't have list widget in other places.
+        # so, this code just parses it, creates dict and adds it to quad icon dict
+        els = [br.text(el) for el in br.elements(locator=self.LIST)]
+        list_data = dict(zip(els[::2], els[1::2]))  # get first and second element and join them
+        quad_data.update(list_data)
+        return quad_data
+
+    def read(self):
+        return self.quad_icon(self.context['name']).read()
+
+    def fill(self, values):
+        return self.quad_icon(self.context['name']).fill()
+
+    @property
+    def is_displayed(self):
+        try:
+            return super(BaseTileIconItem, self).is_displayed and \
+                self.browser.is_displayed(self.LIST)
+        except NoSuchElementException:
+            return False
+
+
+class ProviderTileIconItem(BaseTileIconItem):
+    quad_icon = ParametrizedView.nested(ProviderQuadIconItem)
+    pass
+
+
+class BaseListItem(ParametrizedView, ClickableMixin):
+    PARAMETERS = ('name',)
+    TABLE_LOCATOR = ParametrizedLocator('.//table[.//td[normalize-space(.)={name|quote}]]')
+    ROOT = ParametrizedLocator('.//tr[./td[normalize-space(.)={name|quote}]]')
+    parent_table = Table(locator=TABLE_LOCATOR)
+    checkbox = Checkbox(locator='.//input[@type="checkbox"]')
+
+    @property
+    def is_checked(self):
+        return self.checkbox.selected
+
+    def check(self):
+        return self.checkbox.fill(True)
+
+    def uncheck(self):
+        return self.checkbox.fill(False)
+
+    @property
+    def href(self):
+        return None
+
+    @property
+    def data(self):
+        row = next(row for row in self.parent_table.rows() if row.name.text == self.context['name'])
+        item_data = {}
+        for col_name in (h for h in self.parent_table.headers if h is not None):
+            item_data[col_name] = row[col_name].text
+        return item_data
+
+    def read(self):
+        return self.is_checked
+
+    def fill(self, values):
+        return self.check(values)
+
+
+class ProviderListItem(BaseListItem):
+    pass
+
+
+class ProviderItem(View):
+    quad_item = ProviderQuadIconItem
+    list_item = ProviderListItem
+    tile_item = ProviderTileIconItem
+
+    def __init__(self, parent, name, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.name = name
+
+    def _get_existing_item(self):
+        for item in (self.quad_item, self.tile_item, self.list_item):
+            if item(name=self.name).is_displayed:
+                return item(name=self.name)
+        else:
+            raise NoSuchElementException("Item {name} isn't found on page".format(name=self.name))
+
+    def __getattr__(self, name):
+        if name.startswith('__'):
+            return self.__dict__[name]
+
+        item = self._get_existing_item()
+        if hasattr(item, name):  # needed for is displayed
+            return getattr(item, name)
+
+    def __str__(self):
+        return str(self._get_existing_item())
+
+    def __repr__(self):
+        return repr(self._get_existing_item())
