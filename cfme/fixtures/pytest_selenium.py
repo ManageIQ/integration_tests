@@ -221,6 +221,10 @@ def _d(l, **kwargs):
 
 def get_rails_error():
     """Get displayed rails error. If not present, return None"""
+    if not is_displayed(
+            "//body[./h1 and ./p and ./hr and ./address] | "
+            "//h1[normalize-space(.)='Unexpected error encountered']"):
+        return None
     if is_displayed(
             "//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
         try:
