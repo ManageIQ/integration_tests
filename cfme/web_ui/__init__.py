@@ -3464,7 +3464,7 @@ class DriftGrid(Pretty):
 
 
 class ButtonGroup(object):
-    def __init__(self, key):
+    def __init__(self, key, fieldset=None):
         """ A ButtonGroup is a set of buttons next to each other, as is used on the DefaultViews
         page.
 
@@ -3472,6 +3472,7 @@ class ButtonGroup(object):
             key: The name of the key field text before the button group.
         """
         self.key = key
+        self.fieldset = fieldset
 
     @property
     def _icon_tag(self):
@@ -3490,12 +3491,12 @@ class ButtonGroup(object):
     @property
     def locator(self):
         attr = re.sub(r"&amp;", "&", quoteattr(self.key))  # We don't need it in xpath
-        if version.current_version() < "5.5":
-            return '//td[@class="key" and normalize-space(.)={}]/..'.format(attr)
-        else:
-            return (
-                '//label[contains(@class, "control-label") and normalize-space(.)={}]/..'
-                .format(attr))
+        path = './/label[contains(@class, "control-label") and ' \
+               'normalize-space(.)={}]/..'.format(attr)
+        if self.fieldset:
+            fieldset = quoteattr(self.fieldset)
+            path = '//fieldset[./h3[normalize-space(.)={}]]/'.format(fieldset) + path
+        return path
 
     def locate(self):
         """ Moves to the element """
