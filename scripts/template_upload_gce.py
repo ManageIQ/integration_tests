@@ -15,6 +15,7 @@ import sys
 from threading import Lock, Thread
 from datetime import datetime
 
+from utils import trackerbot
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.ssh import SSHClient
@@ -130,7 +131,13 @@ def check_template_name(name):
     return name
 
 
-def upload_template(provider, template_name, file_name, file_path, ssh_client, bucket_name=None):
+def upload_template(provider,
+                    template_name,
+                    stream,
+                    file_name,
+                    file_path,
+                    ssh_client,
+                    bucket_name=None):
     bucket = bucket_name or cfme_data['template_upload']['template_upload_gce']['bucket_name']
     try:
         # IMAGE CHECK
@@ -171,6 +178,10 @@ def upload_template(provider, template_name, file_name, file_path, ssh_client, b
         log_detail('Successfully added template {} from bucket {}'.format(template_name, bucket),
                    provider)
 
+        log_detail('Adding template {} to trackerbot for stream {}'
+                   .format(template_name, stream), provider)
+        trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
+
         # DELETE FILE FROM BUCKET
         log_detail('Cleaning up, removing {} from bucket {}...'.format(file_name, bucket), provider)
         result = ssh_client.run_command('gsutil rm gs://{}/{}'.format(bucket, file_name))
@@ -199,11 +210,12 @@ def run(**kwargs):
     for provider in list_provider_keys("gce"):
         template_name = kwargs.get('template_name')
         bucket_name = kwargs.get('bucket_name')
-
+        stream = kwargs.get('stream')
         with make_ssh_client(host, user, passwd) as ssh_client:
             thread = Thread(target=upload_template,
                             args=(provider,
                                   template_name,
+                                  stream,
                                   file_name,
                                   file_path,
                                   ssh_client,
