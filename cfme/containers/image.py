@@ -22,9 +22,9 @@ match_page = partial(match_location, controller='container_image',
 
 class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
 
-    def __init__(self, name, id_, provider, appliance=None):
+    def __init__(self, name, image_id, provider, appliance=None):
         self.name = name
-        self.id = id_
+        self.id = image_id
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
 
@@ -80,7 +80,7 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
     @property
     def compliance_status(self):
         self.summary.reload()
-        return self.summary.compliance.status.value
+        return self.summary.compliance.status.value.strip()
 
     @property
     def compliant(self):
@@ -89,7 +89,7 @@ class Image(Taggable, SummaryMixin, Navigatable, PolicyProfileAssignable):
         Returns:
             :py:class:`NoneType` if the image was never verified, otherwise :py:class:`bool`
         """
-        text = self.compliance_status.strip().lower()
+        text = self.compliance_status.lower()
         if text == "never verified":
             return None
         elif text.startswith("non-compliant"):
@@ -105,7 +105,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):
-        return match_page()
+        return match_page(summary='Container Images')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Images')
