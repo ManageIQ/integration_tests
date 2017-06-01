@@ -3,12 +3,10 @@ from widgetastic_manageiq import UpDownSelect, SummaryFormItem
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound)
-from widgetastic.widget import Text, Checkbox, View
+from widgetastic.widget import Text, Checkbox, View, Table
 
 from cfme.base.credential import Credential
-import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import OptionNotAvailable
-from cfme.web_ui import Table
 from cfme.web_ui.form_buttons import change_stored_password
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -17,9 +15,6 @@ from utils.pretty import Pretty
 from utils.update import Updateable
 
 from . import ConfigurationView
-
-
-tag_table = Table("//div[@id='assignments_div']//table")
 
 
 def simple_user(userid, password):
@@ -88,9 +83,7 @@ class EditUserView(UserForm):
 class EditTagsUserView(ConfigurationView):
     title = Text('#explorer_title_text')
 
-# TODO remove comment, when widget is done
-# tag_table = Table("//div[@id='assignments_div']//table")
-
+    tag_table = Table("//div[@id='assignments_div']//table")
     select_tag = BootstrapSelect(id='tag_cat')
     select_value = BootstrapSelect(id='tag_add')
 
@@ -178,14 +171,12 @@ class User(Updateable, Pretty, Navigatable):
         })
         if changed:
             view.save_button.click()
+            flash_message = 'User "{}" was saved'.format(updates.get('name', self.name))
         else:
             view.cancel_button.click()
+            flash_message = 'Edit of User was cancelled by the user'
         view = self.create_view(DetailsUserView, override=updates)
-        if changed:
-            view.flash.assert_success_message(
-                'User "{}" was saved'.format(updates.get('name', self.name)))
-        else:
-            view.flash.assert_success_message('Edit of User was cancelled by the user')
+        view.flash.assert_message(flash_message)
         assert view.is_displayed
 
     def copy(self):
@@ -225,9 +216,8 @@ class User(Updateable, Pretty, Navigatable):
 
     def remove_tag(self, tag, value):
         view = navigate_to(self, 'EditTags')
-        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
-                                          partial_check=True)
-        sel.click(row[0])
+        row = view.tag_table.row((1, tag), (2, value))
+        row[0].click()
         view.save_button.click()
         view = self.create_view(DetailsUserView)
         view.flash.assert_success_message('Tag edits were successfully saved')
@@ -373,8 +363,6 @@ class AllGroupView(ConfigurationView):
 
 
 class EditGroupSequenceView(GroupForm):
-    title = Text('#explorer_title_text')
-
     group_order_selector = UpDownSelect(
         '#seq_fields',
         './/a[@title="Move selected fields up"]/img',
@@ -382,7 +370,6 @@ class EditGroupSequenceView(GroupForm):
 
     save_button = Button('Save')
     reset_button = Button('Reset')
-    cancel_button = Button('Cancel')
 
     def is_displayed(self):
         return (
@@ -394,8 +381,7 @@ class EditGroupSequenceView(GroupForm):
 class GroupEditTagsView(ConfigurationView):
     title = Text('#explorer_title_text')
 
-# TODO remove comment, when widget is done
-# tag_table = Table("//div[@id='assignments_div']//table")
+    tag_table = Table("//div[@id='assignments_div']//table")
 
     select_tag = BootstrapSelect(id='tag_cat')
     select_value = BootstrapSelect(id='tag_add')
@@ -490,17 +476,16 @@ class Group(Updateable, Pretty, Navigatable):
         })
         if changed:
             view.save_button.click()
+            flash_message = 'Group "{}" was saved'.format(
+                updates.get('description', self.description))
         else:
             view.cancel_button.click()
+            flash_message = 'Edit of Group was cancelled by the user'
         view = self.create_view(DetailsGroupView, override=updates)
-        if changed:
-            view.flash.assert_message(
-                'Group "{}" was saved'.format(updates.get('description', self.description)))
-        else:
-            view.flash.assert_success_message('Edit of Group was cancelled by the user')
+        view.flash.assert_message(flash_message)
         assert view.is_displayed
 
-    def delete(self, result=True):
+    def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Group', handle_alert=True)
         view = self.create_view(AllGroupView)
@@ -519,10 +504,8 @@ class Group(Updateable, Pretty, Navigatable):
 
     def remove_tag(self, tag, value):
         view = navigate_to(self, 'EditTags')
-# TODO replace with widget, when ready
-        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
-                                          partial_check=True)
-        sel.click(row[0])
+        row = view.tag_table.row((1, tag), (2, value))
+        row[0].click()
         view.save_button.click()
         view = self.create_view(DetailsGroupView)
         view.flash.assert_success_message('Tag edits were successfully saved')
@@ -693,14 +676,12 @@ class Role(Updateable, Pretty, Navigatable):
         feature_changed = self.set_role_product_features(view, updates.get('product_features'))
         if changed or feature_changed:
             view.save_button.click()
+            flash_message = 'Role "{}" was saved'.format(updates.get('name', self.name))
         else:
             view.cancel_button.click()
+            flash_message = 'Edit of Role was cancelled by the user'
         view = self.create_view(DetailsRoleView, override=updates)
-        if changed or feature_changed:
-            view.flash.assert_success_message(
-                'Role "{}" was saved'.format(updates.get('name', self.name)))
-        else:
-            view.flash.assert_success_message('Edit of Role was cancelled by the user')
+        view.flash.assert_message(flash_message)
         assert view.is_displayed
 
     def delete(self):
@@ -711,8 +692,8 @@ class Role(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def copy(self, name=None):
-        if not name:
-            name = self.name + "copy"
+        if name is None:
+            name = "{}_copy".format(self.name)
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Copy this Role to a new Role')
         view = self.create_view(AddRoleView)
@@ -918,7 +899,7 @@ class Tenant(Updateable, Pretty, Navigatable):
     def parent_path(self):
         return self.tree_path[:-1]
 
-    def create(self, cancel=False):
+    def create(self):
         if self._default:
             raise ValueError("Cannot create the root tenant {}".format(self.name))
 
@@ -926,7 +907,7 @@ class Tenant(Updateable, Pretty, Navigatable):
         view.fill({'name': self.name,
                    'description': self.description})
         view.add_button.click()
-        view = view.create(DetailsTenantView)
+        view = self.create_view(DetailsTenantView)
         if isinstance(self, Tenant):
             view.flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
         elif isinstance(self, Project):
@@ -942,24 +923,20 @@ class Tenant(Updateable, Pretty, Navigatable):
         changed = view.fill(updates)
         if changed:
             view.save_button.click()
+            flash_message = 'Project "{}" was saved'.format(updates.get('name', self.name))
         else:
             view.cancel_button.click()
+            flash_message = 'Edit of Project "{}" was cancelled by the user'.format(
+                updates.get('name', self.name))
         view = view.create(DetailsTenantView, override=updates)
-        if changed:
-            view.flash.assert_success_message(
-                'Project "{}" was saved'.format(updates.get('name', self.name)))
-        else:
-            view.flash.assert_success_message(
-                'Edit of Project "{}" was cancelled by the user'.format(
-                    updates.get('name', self.name)))
+        view.flash.assert_message(flash_message)
         assert view.is_displayed
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this item', handle_alert=True)
-        view = view.create(DetailsTenantView)
+        view = self.create_view(DetailsTenantView)
         view.flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
-        assert view.is_displayed
 
     def set_quota(self, **kwargs):
         view = navigate_to(self, 'ManageQuotas')
@@ -974,7 +951,7 @@ class Tenant(Updateable, Pretty, Navigatable):
                    'template_cb': kwargs.get('template_cb'),
                    'template_txt': kwargs.get('template')})
         view.save_button.click()
-        view = view.create(DetailsTenantView)
+        view = self.create_view(DetailsTenantView)
         view.flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
         assert view.is_displayed
 
@@ -1007,8 +984,6 @@ class TenantAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        import pdb
-        pdb.set_trace()
         self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
                                                  'Tenants', *self.obj.parent_path)
         if isinstance(self.obj, Tenant):
