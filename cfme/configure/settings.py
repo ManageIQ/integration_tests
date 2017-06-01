@@ -351,7 +351,7 @@ class DefaultView(Updateable, Navigatable):
         Navigatable.__init__(self, appliance=appliance)
 
     @classmethod
-    def set_default_view(cls, button_group_names, defaults):
+    def set_default_view(cls, button_group_names, defaults, fieldset=None):
 
         """This function sets default views for the objects.
         Args:
@@ -381,7 +381,7 @@ class DefaultView(Updateable, Navigatable):
 
         is_something_changed = False
         for button_group_name, default in zip(button_group_names, defaults):
-            bg = ButtonGroup(button_group_name)
+            bg = ButtonGroup(button_group_name, fieldset=fieldset)
             navigate_to(cls, 'All')
             if bg.active != default:
                 bg.choose(default)
@@ -391,8 +391,8 @@ class DefaultView(Updateable, Navigatable):
             sel.click(form_buttons.save)
 
     @classmethod
-    def get_default_view(cls, button_group_name):
-        bg = ButtonGroup(button_group_name)
+    def get_default_view(cls, button_group_name, fieldset=None):
+        bg = ButtonGroup(button_group_name, fieldset=fieldset)
         navigate_to(cls, 'All')
         return bg.active
 

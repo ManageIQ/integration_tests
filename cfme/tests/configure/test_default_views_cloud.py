@@ -37,12 +37,12 @@ def select_two_quads():
 
 
 def set_and_test_default_view(group_name, view, page):
-    old_default = DefaultView.get_default_view(group_name)
-    DefaultView.set_default_view(group_name, view)
+    old_default = DefaultView.get_default_view(group_name, fieldset='Clouds')
+    DefaultView.set_default_view(group_name, view, fieldset='Clouds')
     navigate_to(page, 'All', use_resetter=False)
     # TODO replace view detection with widgets when all tested classes have them
     assert tb.is_active(view), "{} view setting failed".format(view)
-    DefaultView.set_default_view(group_name, old_default)
+    DefaultView.set_default_view(group_name, old_default, fieldset='Clouds')
 
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different
 # pages in different releases
