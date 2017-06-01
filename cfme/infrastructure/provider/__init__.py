@@ -457,5 +457,5 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
 def wait_for_a_provider():
     view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    wait_for(view.paginator.items_amount, fail_condition=None,
+    wait_for(lambda: int(view.paginator.items_amount), fail_condition=0,
              message="Wait for any provider to appear", num_sec=1000, fail_func=sel.refresh)
