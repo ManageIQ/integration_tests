@@ -19,6 +19,7 @@ from cfme.web_ui.multibox import MultiBoxSelect
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
+from cfme.exceptions import ItemNotFound
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils import version
@@ -425,6 +426,18 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         cfg_btn("Delete this Saved Report from the Database", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Saved')
+            return True
+        except ItemNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 
 @navigator.register(CannedSavedReport, 'Details')
