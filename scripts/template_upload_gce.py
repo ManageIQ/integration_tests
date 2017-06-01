@@ -31,6 +31,13 @@ def parse_cmd_line():
                         help="Name of final image on gce", default=None)
     parser.add_argument("--provider", dest="provider",
                         help="Provider of GCE service", default=None)
+    parser.add_argument('--ssh-host', dest='ssh_host', default=None,
+                        help="IP of the host with gcloud/gsutil tools installed and configured "
+                             "for your GCE account")
+    parser.add_argument('--ssh-user', dest='ssh_user', default=None,
+                        help='User name of the host with gcloud/gsutil tools')
+    parser.add_argument('--ssh-pass', dest='ssh_pass', default=None,
+                        help='Password for given user of the host with gcloud/gsutil tools')
     args = parser.parse_args()
     return args
 
@@ -65,19 +72,11 @@ def make_kwargs(args, **kwargs):
     return kwargs
 
 
-def make_ssh_client(hostname=None, sshname=None, sshpass=None):
-    # Defaults connect to the cli tool client
-    if hostname is None:
-        hostname = cfme_data['template_upload']['template_upload_ec2']['aws_cli_tool_client']
-    if sshname is None:
-        sshname = credentials['host_default']['username']
-    if sshpass is None:
-        sshpass = credentials['host_default']['password']
-
+def make_ssh_client(ssh_host, ssh_user, ssh_pass):
     connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': hostname
+        'username': ssh_user,
+        'password': ssh_pass,
+        'hostname': ssh_host
     }
     return SSHClient(**connect_kwargs)
 
@@ -89,7 +88,7 @@ def log_detail(message, provider=None):
         print("{} INFO: {}".format(datetime.utcnow(), message))
 
 
-def download_image_file(image_url):
+def download_image_file(image_url, ssh_client):
     """
     Download the file to the cli-tool-client and return the file path + file name
     Default destinations are None and are set to the cli-tool-client if left that way
@@ -100,26 +99,25 @@ def download_image_file(image_url):
     # Download to the amazon/gce upload machine in the lab because its fast
     target_dir = '/root/downloads'
     file_name = image_url.split('/')[-1]
-    with make_ssh_client() as ssh_client:
-        # check if file exists
-        print('INFO: Checking if file exists on cli-tool-client...')
-        result = ssh_client.run_command('ls -1 {}/{}'.format(target_dir, file_name))
-        if result.success:
-            print('INFO: File exists on cli-tool-client, skipping download...')
-            return file_name, target_dir
+    # check if file exists
+    print('INFO: Checking if file exists on cli-tool-client...')
+    result = ssh_client.run_command('ls -1 {}/{}'.format(target_dir, file_name))
+    if result.success:
+        print('INFO: File exists on cli-tool-client, skipping download...')
+        return file_name, target_dir
 
-        # target directory setup
-        print('INFO: Prepping cli-tool-client machine for download...')
-        assert ssh_client.run_command('mkdir -p {}'.format(target_dir))
-        # This should keep the downloads directory clean
-        assert ssh_client.run_command('rm -f {}/*.gz'.format(target_dir))
+    # target directory setup
+    print('INFO: Prepping cli-tool-client machine for download...')
+    assert ssh_client.run_command('mkdir -p {}'.format(target_dir))
+    # This should keep the downloads directory clean
+    assert ssh_client.run_command('rm -f {}/*.gz'.format(target_dir))
 
-        # get the file
-        download_cmd = 'cd {}; ' \
-                       'curl -O {}'.format(target_dir, image_url)
-        print('INFO: Downloading file to cli-tool-client with command: {}'.format(download_cmd))
-        assert ssh_client.run_command(download_cmd)
-        print('INFO: Download finished...')
+    # get the file
+    download_cmd = 'cd {}; ' \
+                   'curl -O {}'.format(target_dir, image_url)
+    print('INFO: Downloading file to cli-tool-client with command: {}'.format(download_cmd))
+    assert ssh_client.run_command(download_cmd)
+    print('INFO: Download finished...')
 
     return file_name, target_dir
 
@@ -132,43 +130,48 @@ def check_template_name(name):
     return name
 
 
-def upload_template(provider, template_name, file_name, file_path, bucket_name=None):
+def upload_template(provider, template_name, file_name, file_path, ssh_client, bucket_name=None):
     bucket = bucket_name or cfme_data['template_upload']['template_upload_gce']['bucket_name']
     try:
-        with make_ssh_client() as ssh_client:
-            log_detail('Checking if template {} present...'.format(template_name), provider)
-            result = ssh_client.run_command('gcloud compute images list {}'.format(template_name))
-            if 'Listed 0 items' not in result.output:
-                log_detail('Image {} already present in GCE, stopping upload'.format(template_name),
-                           provider)
-                return True
-            log_detail('Image NOT {} present, continuing upload'.format(template_name), provider)
-            log_detail('Creating bucket {}...'.format(bucket))
-            # gsutil has RC 1 and a API 409 in stdout if bucket exists
-            result = ssh_client.run_command('gsutil mb gs://{}'.format(bucket))
-            assert result or 'already exists' in result
+        # IMAGE CHECK
+        log_detail('Checking if template {} present...'.format(template_name), provider)
+        result = ssh_client.run_command('gcloud compute images list {}'.format(template_name))
+        if 'Listed 0 items' not in result.output:
+            log_detail('Image {} already present in GCE, stopping upload'.format(template_name),
+                       provider)
+            return True
+        log_detail('Image NOT {} present, continuing upload'.format(template_name), provider)
 
-            log_detail('Checking if file on bucket already...')
-            result = ssh_client.run_command('gsutil ls gs://{}/{}'.format(bucket, file_name))
-            if result.failed:
-                # file not found, upload
-                log_detail('Uploading to bucket...')
-                result = ssh_client.run_command(
-                    'gsutil cp {}/{} gs://{}'.format(file_path, file_name, bucket))
-                assert result.success
-                log_detail('File uploading done ...')
-            else:
-                log_detail('File already on bucket...')
+        # MAKE BUCKET
+        log_detail('Creating bucket {}...'.format(bucket))
+        # gsutil has RC 1 and a API 409 in stdout if bucket exists
+        result = ssh_client.run_command('gsutil mb gs://{}'.format(bucket))
+        assert result or 'already exists' in result
 
-            log_detail('Creating template {}...'.format(template_name), provider)
-            template_name = check_template_name(template_name)
-            image_cmd = 'gcloud compute images create {} --source-uri gs://{}/{}'\
-                .format(template_name, bucket, file_name)
-            result = ssh_client.run_command(image_cmd)
+        # BUCKET CHECK
+        log_detail('Checking if file on bucket already...')
+        result = ssh_client.run_command('gsutil ls gs://{}/{}'.format(bucket, file_name))
+        if result.failed:
+            # FILE UPLOAD
+            log_detail('Uploading to bucket...')
+            result = ssh_client.run_command(
+                'gsutil cp {}/{} gs://{}'.format(file_path, file_name, bucket))
             assert result.success
+            log_detail('File uploading done ...')
+        else:
+            log_detail('File already on bucket...')
+
+        # IMAGE CREATION
+        log_detail('Creating template {}...'.format(template_name), provider)
+        template_name = check_template_name(template_name)
+        image_cmd = 'gcloud compute images create {} --source-uri gs://{}/{}'\
+            .format(template_name, bucket, file_name)
+        result = ssh_client.run_command(image_cmd)
+        assert result.success
         log_detail('Successfully added template {} from bucket {}'.format(template_name, bucket),
                    provider)
 
+        # DELETE FILE FROM BUCKET
         log_detail('Cleaning up, removing {} from bucket {}...'.format(file_name, bucket), provider)
         result = ssh_client.run_command('gsutil rm gs://{}/{}'.format(bucket, file_name))
         assert result.success
@@ -183,22 +186,31 @@ def upload_template(provider, template_name, file_name, file_path, bucket_name=N
 
 
 def run(**kwargs):
+    # Setup defaults for the cli tool machine
+    host = kwargs.get('ssh_host') or \
+        cfme_data['template_upload']['template_upload_ec2']['aws_cli_tool_client']
+    user = kwargs.get('ssh_user') or credentials['host_default']['username']
+    passwd = kwargs.get('ssh_pass') or credentials['host_default']['password']
     # Download file once and thread uploading to different gce regions
-    file_name, file_path = download_image_file(kwargs.get('image_url'))
+    with make_ssh_client(host, user, passwd) as ssh_client:
+        file_name, file_path = download_image_file(kwargs.get('image_url'), ssh_client)
 
     thread_queue = []
     for provider in list_provider_keys("gce"):
         template_name = kwargs.get('template_name')
         bucket_name = kwargs.get('bucket_name')
-        thread = Thread(target=upload_template,
-                        args=(provider,
-                              template_name,
-                              file_name,
-                              file_path,
-                              bucket_name))
-        thread.daemon = True
-        thread_queue.append(thread)
-        thread.start()
+
+        with make_ssh_client(host, user, passwd) as ssh_client:
+            thread = Thread(target=upload_template,
+                            args=(provider,
+                                  template_name,
+                                  file_name,
+                                  file_path,
+                                  ssh_client,
+                                  bucket_name))
+            thread.daemon = True
+            thread_queue.append(thread)
+            thread.start()
 
     for thread in thread_queue:
         thread.join()
