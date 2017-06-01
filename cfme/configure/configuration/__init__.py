@@ -9,7 +9,11 @@ from fixtures.pytest_store import store
 from functools import partial
 
 from cfme.base.ui import Server, Region, ConfigurationView, Zone
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
+from cfme.exceptions import (
+    AuthModeUnknown,
+    ConsoleNotSupported,
+    ConsoleTypeNotSupported,
+    ScheduleNotFound)
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
@@ -512,6 +516,53 @@ class BasicInformation(Updateable, Pretty, Navigatable):
         # TODO: These should move as functions of the server and don't need to be classes
         navigate_to(current_appliance.server, 'Server')
         fill(self.basic_information, self, action=form_buttons.save)
+        self.appliance.server_details_changed()
+
+
+class VMwareConsoleSupport(Updateable, Pretty, Navigatable):
+    """
+    This class represents the "VMware Console Support" section of the Configuration page.
+    Note this is to support CFME 5.8 and beyond functionality.
+
+    Args:
+        console_type:  One of the following strings 'VMware VMRC Plugin', 'VNC' or 'VMware WebMKS'
+
+    Usage:
+
+        vmware_console_support = VMwareConsoleSupport(console_type="VNC")
+        vmware_console_support.update()
+
+    """
+    vmware_console_form = Form(
+        fields=[
+            ('console_type', AngularSelect("console_type")),
+        ]
+    )
+    pretty_attrs = ['console_type']
+
+    CONSOLE_TYPES = ['VNC', 'VMware VMRC Plugin', 'VMware WebMKS']
+
+    def __init__(self, console_type, appliance=None):
+        if console_type not in VMwareConsoleSupport.CONSOLE_TYPES:
+            raise ConsoleTypeNotSupported(console_type)
+
+        if appliance.version < '5.8':
+            raise ConsoleNotSupported(
+                product_name=appliance.product_name,
+                version=appliance.version
+            )
+
+        self.console_type = console_type
+        Navigatable.__init__(self, appliance=appliance)
+
+    def update(self):
+        """ Navigate to a correct page, change details and save.
+
+        """
+        # TODO: These should move as functions of the server and don't need to be classes
+        logger.info("Updating VMware Console form")
+        navigate_to(current_appliance.server, 'Server')
+        fill(self.vmware_console_form, self, action=form_buttons.save)
         self.appliance.server_details_changed()
 
 
