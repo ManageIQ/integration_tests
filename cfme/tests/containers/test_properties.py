@@ -148,7 +148,7 @@ def test_properties(provider, test_item, soft_assert):
     if test_item.obj is Container:
         args = [(r.pod_name.text, ) for r in rows]
     elif test_item.obj is Image:
-        args = [(r.tag.text, provider) for r in rows]
+        args = [(r.id.text, provider) for r in rows]
     else:
         args = [(provider, ) for _ in rows]
 

@@ -93,7 +93,7 @@ def test_relationships_tables(provider, test_item):
     elif test_item.obj is ImageRegistry:
         instance = test_item.obj(row.host.text, provider)
     elif test_item.obj is Image:
-        instance = test_item.obj(row.name.text, row.tag.text, provider)
+        instance = test_item.obj(row.name.text, row.id.text, provider)
     else:
         instance = test_item.obj(row.name.text, provider)
 
