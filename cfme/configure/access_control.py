@@ -653,8 +653,7 @@ class Tenant(Updateable, Pretty, Navigatable):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
-    save_changes = deferred_verpick({'5.7': form_buttons.angular_save,
-                   '5.8': form_buttons.simple_save})
+    save_changes = deferred_verpick({'5.6': form_buttons.simple_save})
 
     # TODO:
     # Temporary defining elements with "//input" as Input() is not working.Seems to be
