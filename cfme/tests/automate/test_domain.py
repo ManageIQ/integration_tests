@@ -69,7 +69,8 @@ def test_duplicate_domain_disallowed(request):
 
 
 @pytest.mark.tier(2)
-def test_cannot_delete_builtin():
+@pytest.mark.polarion('RHCF3-11228')
+def test_domain_cannot_delete_builtin():
     domains = DomainCollection()
     manageiq_domain = domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
@@ -81,7 +82,8 @@ def test_cannot_delete_builtin():
 
 
 @pytest.mark.tier(2)
-def test_cannot_edit_builtin():
+@pytest.mark.polarion('RHCF3-11227')
+def test_domain_cannot_edit_builtin():
     domains = DomainCollection()
     manageiq_domain = domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
