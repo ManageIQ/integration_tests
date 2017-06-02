@@ -12,6 +12,7 @@ normally be placed in main function, are located in function run(**kwargs).
 import argparse
 import re
 import sys
+from os.path import join
 from threading import Lock, Thread
 from datetime import datetime
 
@@ -98,11 +99,11 @@ def download_image_file(image_url, ssh_client):
     """
     # TODO: add a --local option to the script and run commands locally to download
     # Download to the amazon/gce upload machine in the lab because its fast
-    target_dir = '/root/downloads'
+    target_dir = '/var/tmp/templates/'
     file_name = image_url.split('/')[-1]
     # check if file exists
     print('INFO: Checking if file exists on cli-tool-client...')
-    result = ssh_client.run_command('ls -1 {}/{}'.format(target_dir, file_name))
+    result = ssh_client.run_command('ls -1 {}'.format(join(target_dir, file_name)))
     if result.success:
         print('INFO: File exists on cli-tool-client, skipping download...')
         return file_name, target_dir
@@ -111,7 +112,7 @@ def download_image_file(image_url, ssh_client):
     print('INFO: Prepping cli-tool-client machine for download...')
     assert ssh_client.run_command('mkdir -p {}'.format(target_dir))
     # This should keep the downloads directory clean
-    assert ssh_client.run_command('rm -f {}/*.gz'.format(target_dir))
+    assert ssh_client.run_command('rm -f {}'.format(join(target_dir, '*.gz')))
 
     # get the file
     download_cmd = 'cd {}; ' \
@@ -147,7 +148,7 @@ def upload_template(provider,
             log_detail('Image {} already present in GCE, stopping upload'.format(template_name),
                        provider)
             return True
-        log_detail('Image NOT {} present, continuing upload'.format(template_name), provider)
+        log_detail('Image {} NOT present, continuing upload'.format(template_name), provider)
 
         # MAKE BUCKET
         log_detail('Creating bucket {}...'.format(bucket))
@@ -157,12 +158,13 @@ def upload_template(provider,
 
         # BUCKET CHECK
         log_detail('Checking if file on bucket already...')
-        result = ssh_client.run_command('gsutil ls gs://{}/{}'.format(bucket, file_name))
+        result = ssh_client.run_command('gsutil ls gs://{}'.format(join(bucket, file_name)))
         if result.failed:
             # FILE UPLOAD
             log_detail('Uploading to bucket...')
-            result = ssh_client.run_command(
-                'gsutil cp {}/{} gs://{}'.format(file_path, file_name, bucket))
+            result = ssh_client.run_command('gsutil cp {} gs://{}'
+                                            .format(join(file_path, file_name),
+                                                    bucket))
             assert result.success
             log_detail('File uploading done ...')
         else:
@@ -171,9 +173,9 @@ def upload_template(provider,
         # IMAGE CREATION
         log_detail('Creating template {}...'.format(template_name), provider)
         template_name = check_template_name(template_name)
-        image_cmd = 'gcloud compute images create {} --source-uri gs://{}/{}'\
-            .format(template_name, bucket, file_name)
-        result = ssh_client.run_command(image_cmd)
+        result = ssh_client.run_command('gcloud compute images create {} --source-uri gs://{}'
+                                        .format(template_name,
+                                                join(bucket, file_name)))
         assert result.success
         log_detail('Successfully added template {} from bucket {}'.format(template_name, bucket),
                    provider)
@@ -184,7 +186,7 @@ def upload_template(provider,
 
         # DELETE FILE FROM BUCKET
         log_detail('Cleaning up, removing {} from bucket {}...'.format(file_name, bucket), provider)
-        result = ssh_client.run_command('gsutil rm gs://{}/{}'.format(bucket, file_name))
+        result = ssh_client.run_command('gsutil rm gs://{}'.format(join(bucket, file_name)))
         assert result.success
     except Exception as e:
         print(e)
