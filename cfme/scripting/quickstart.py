@@ -213,6 +213,8 @@ def link_config_files(src, dest):
         print("WARNING: not linking config files,", src, "missing")
         return
 
+    bad_elements = False
+
     for element in os.listdir(src):
         if element.endswith(('.yaml', '.eyaml')):
             if element.endswith('.eyaml') and not os.path.exists('.yaml_key'):
@@ -228,9 +230,12 @@ def link_config_files(src, dest):
                     print("         please verify this is intended")
             elif os.path.isfile(target):
                 print('ERROR: You have', element, 'copied into your conf/ folder. Remove it.')
-                exit(1)
+                bad_elements = True
             else:
                 os.symlink(source, target)
+
+    if bad_elements:
+        exit(1)
 
 
 def ensure_pycurl_works(venv_path):
