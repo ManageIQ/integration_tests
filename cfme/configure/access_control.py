@@ -737,15 +737,18 @@ class Tenant(Updateable, Pretty, Navigatable):
         return self.tree_path[:-1]
 
     def create(self, cancel=False):
+        flash_tenant_success_msg = 'Tenant "{}" was saved'.format(self.name)
+        flash_project_success_msg = 'Project "{}" was saved'.format(self.name)
+
         if self._default:
             raise ValueError("Cannot create the root tenant {}".format(self.name))
 
         navigate_to(self, 'Add')
         fill(self.tenant_form, self, action=form_buttons.add)
         if type(self) is Tenant:
-            flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
+            flash.assert_success_message(flash_tenant_success_msg)
         elif type(self) is Project:
-            flash.assert_success_message('Project "{}" was saved'.format(self.name))
+            flash.assert_success_message(flash_project_success_msg)
         else:
             raise TypeError(
                 'No Tenant or Project class passed to create method{}'.format(
@@ -811,10 +814,11 @@ class TenantAdd(CFMENavigateStep):
         navigate_to(self.obj.parent_tenant, 'Details')
 
     def step(self, *args, **kwargs):
-        if isinstance(self.obj, Tenant):
-            add_selector = 'Add child Tenant to this Tenant'
-        elif isinstance(self.obj, Project):
+        # Check for Project before Tenant since isinstance returns True for base classes
+        if isinstance(self.obj, Project):
             add_selector = 'Add Project to this Tenant'
+        elif isinstance(self.obj, Tenant):
+            add_selector = 'Add child Tenant to this Tenant'
         else:
             raise OptionNotAvailable('Object type unsupported for Tenant Add: {}'
                                      .format(type(self.obj).__name__))
