@@ -8,8 +8,9 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
 
-from utils.wait import wait_for
 from utils.generators import random_vm_name
+from utils.log import logger
+from utils.wait import wait_for
 from utils import testgen
 
 pytestmark = [
@@ -47,6 +48,8 @@ def test_vm_migrate(new_vm, provider):
     # auto_test_services should exist to test migrate VM
     vm_host = new_vm.get_detail(properties=('Relationships', 'Host'))
     migrate_to = [vds.name for vds in provider.hosts if vds.name not in vm_host][0]
+    logger.info('Migrating VM %s from %s to %s', new_vm.name, vm_host, migrate_to)
+    logger.info('Host was picked from this list: %s', provider.hosts)
     new_vm.migrate_vm("email@xyz.com", "first", "last", host_name=migrate_to)
     flash.assert_no_errors()
     row_description = new_vm.name
