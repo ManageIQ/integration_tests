@@ -27,7 +27,7 @@ from functools import partial
 import fauxfactory
 import pytest
 
-from fixtures.artifactor_plugin import art_client
+from fixtures.artifactor_plugin import fire_art_test_hook
 from utils.log import nth_frame_info
 from utils.path import get_rel_path
 import sys
@@ -39,16 +39,27 @@ import utils
 _thread_locals = local()
 
 
-@pytest.mark.hookwrapper
-def pytest_runtest_call(item):
-    """pytest hook to handle :py:func:`soft_assert` fixture usage"""
-    # If a test is using soft_assert, wrap it in the context manager
-    # This ensures SoftAssertionError will be raised in the call phase.
+@pytest.mark.hookwrapper(tryfirst=True)
+def pytest_runtest_protocol(item, nextitem):
     if 'soft_assert' in item.fixturenames:
         with _soft_assert_cm():
             yield
     else:
         yield
+
+
+@pytest.mark.hookwrapper(tryfirst=True)
+def pytest_runtest_teardown(item, nextitem):
+    """
+    pytest hook to handle :py:func:`soft_assert` fixture for case
+    when soft_assert is used in another fixture like register_event
+    """
+    try:
+        yield
+    finally:
+        if 'soft_assert' in item.fixturenames:
+            if _thread_locals.caught_asserts:
+                raise SoftAssertionError(_thread_locals.caught_asserts)
 
 
 class SoftAssertionError(AssertionError):
@@ -89,14 +100,9 @@ def _soft_assert_cm():
     """
     _thread_locals.caught_asserts = []
     yield _thread_locals.caught_asserts
-    if _thread_locals.caught_asserts:
-        raise SoftAssertionError(_thread_locals.caught_asserts)
 
 
 def handle_assert_artifacts(request, fail_message=None):
-    test_name = request.node.location[2]
-    test_location = request.node.location[0]
-
     if not fail_message:
         short_tb = '{}'.format(sys.exc_info()[1])
         short_tb = short_tb.encode('base64')
@@ -121,25 +127,31 @@ def handle_assert_artifacts(request, fail_message=None):
 
     # A simple id to match the artifacts together
     sa_id = "softassert-{}".format(fauxfactory.gen_alpha(length=3).upper())
-    from fixtures.artifactor_plugin import SLAVEID
-    art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+    from fixtures.pytest_store import store
+    node = request.node
+
+    fire_art_test_hook(
+        node, 'filedump',
         description="Soft Assert Traceback", contents=full_tb,
         file_type="soft_traceback", display_type="danger", display_glyph="align-justify",
-        contents_base64=True, group_id=sa_id, slaveid=SLAVEID)
-    art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+        contents_base64=True, group_id=sa_id, slaveid=store.slaveid)
+    fire_art_test_hook(
+        node, 'filedump',
         description="Soft Assert Short Traceback", contents=short_tb,
         file_type="soft_short_tb", display_type="danger", display_glyph="align-justify",
-        contents_base64=True, group_id=sa_id, slaveid=SLAVEID)
+        contents_base64=True, group_id=sa_id, slaveid=store.slaveid)
     if ss is not None:
-        art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+        fire_art_test_hook(
+            node, 'filedump',
             description="Soft Assert Exception screenshot",
             file_type="screenshot", mode="wb", contents_base64=True, contents=ss,
-            display_glyph="camera", group_id=sa_id, slaveid=SLAVEID)
+            display_glyph="camera", group_id=sa_id, slaveid=store.slaveid)
     if ss_error is not None:
-        art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+        fire_art_test_hook(
+            node, 'filedump',
             description="Soft Assert Screenshot error", mode="w",
             contents_base64=True, contents=ss_error, display_type="danger", group_id=sa_id,
-            slaveid=SLAVEID)
+            slaveid=store.slaveid)
 
 
 @contextmanager

@@ -94,7 +94,7 @@ def original_instance(request, original_method, original_class):
 @pytest.mark.meta(blockers=[1254055], server_roles=["+automate"])
 @pytest.mark.tier(2)
 def test_priority(
-        request, ssh_client, original_method, original_instance, original_domain, copy_domain,
+        request, appliance, original_method, original_instance, original_domain, copy_domain,
         original_method_write_data, copy_method_write_data, domain_collection):
     """This test checks whether method overriding works across domains with the aspect of priority.
 
@@ -114,11 +114,12 @@ def test_priority(
         * Change the copied method so it writes different data.
         * Set the domain order so the copy domain is first.
         * Run the same simulation again.
-        * Check the file contents, it should be the same as the ćontent you entered last.
+        * Check the file contents, it should be the same as the content you entered last.
         * Then pick the domain order so the original domain is first.
         * Run the same simulation again.
         * The contents of the file should be the same as in the first case.
     """
+    ssh_client = appliance.ssh_client
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     domain_collection.set_order([original_domain])  # Default first
     #
@@ -128,7 +129,6 @@ def test_priority(
         instance="Request",
         message="create",
         request=original_instance.name,
-        attribute=None,  # Random selection, does not matter
         execute_methods=True
     )
     wait_for(
@@ -146,7 +146,6 @@ def test_priority(
         .namespaces.instantiate(name='System')\
         .classes.instantiate(name='Request')\
         .methods.instantiate(name=original_method.name)
-    request.addfinalizer(copied_method.delete_if_exists)
     # Set up a different thing to write to the file
     with update(copied_method):
         copied_method.script = METHOD_TORSO.format(copy_method_write_data)
@@ -160,7 +159,6 @@ def test_priority(
         instance="Request",
         message="create",
         request=original_instance.name,
-        attribute=None,  # Does not matter
         execute_methods=True
     )
     wait_for(
@@ -181,7 +179,6 @@ def test_priority(
         instance="Request",
         message="create",
         request=original_instance.name,
-        attribute=None,  # Does not matter
         execute_methods=True
     )
     wait_for(

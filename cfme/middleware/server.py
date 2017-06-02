@@ -12,9 +12,8 @@ from cfme.web_ui import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
@@ -26,13 +25,14 @@ def _db_select_query(name=None, feed=None, provider=None, server_group=None,
                      product=None):
     """column order: `id`, `name`, `hostname`, `feed`, `product`,
     `provider_name`, `ems_ref`, `properties`, `server_group_name`"""
-    t_ms = cfmedb()['middleware_servers']
-    t_msgr = cfmedb()['middleware_server_groups']
-    t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_ms.id, t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
-                                   t_ems.name.label('provider_name'),
-                                   t_ms.ems_ref, t_ms.properties,
-                                   t_msgr.name.label('server_group_name'))\
+    t_ms = current_appliance.db['middleware_servers']
+    t_msgr = current_appliance.db['middleware_server_groups']
+    t_ems = current_appliance.db['ext_management_systems']
+    query = current_appliance.db.session.query(
+        t_ms.id, t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
+        t_ems.name.label('provider_name'),
+        t_ms.ems_ref, t_ms.properties,
+        t_msgr.name.label('server_group_name'))\
         .join(t_ems, t_ms.ems_id == t_ems.id)\
         .outerjoin(t_msgr, t_ms.server_group_id == t_msgr.id)
     if name:
@@ -313,6 +313,12 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         self.load_details(refresh=True)
         pwr_btn("Kill Server", invokes_alert=True)
         sel.handle_alert()
+
+    def is_immutable(self):
+        return not (tb.exists("Power") or
+                    tb.exists("Deployments") or
+                    tb.exists("JDBC Drivers") or
+                    tb.exists("Datasources"))
 
     @classmethod
     def download(cls, extension, provider=None, server_group=None):

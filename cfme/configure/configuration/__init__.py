@@ -5,28 +5,31 @@ from navmazing import (NavigateToAttribute,
                        NavigationDestinationNotFound)
 
 from contextlib import contextmanager
-from functools import partial
-from cached_property import cached_property
-import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
+from functools import partial
 
-from cfme.base.ui import Server, Region
+from cfme.base.ui import Server, Region, ConfigurationView, Zone
+from cfme.exceptions import (
+    AuthModeUnknown,
+    ConsoleNotSupported,
+    ConsoleTypeNotSupported,
+    ScheduleNotFound)
+import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
-    MultiFill, Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
+    Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.form_buttons import change_stored_password
+from utils import version, conf
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
+from utils.blockers import BZ
 from utils.log import logger
+from utils.pretty import Pretty
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version, conf
-from utils.pretty import Pretty
 
 
 access_tree = partial(accordion.tree, "Access Control")
@@ -52,6 +55,7 @@ replication_process = UIRegion(locators={
 
 server_roles = Form(
     fields=[
+        ('embedded_ansible', CFMECheckbox("server_roles_embedded_ansible")),
         ('ems_metrics_coordinator', CFMECheckbox("server_roles_ems_metrics_coordinator")),
         ('ems_operations', CFMECheckbox("server_roles_ems_operations")),
         ('ems_metrics_collector', CFMECheckbox("server_roles_ems_metrics_collector")),
@@ -87,6 +91,14 @@ ntp_servers = Form(
         ('ntp_server_2', Input("ntp_server_2")),
         ('ntp_server_3', Input("ntp_server_3")),
     ]
+)
+
+depot_types = dict(
+    anon_ftp="Anonymous FTP",
+    ftp="FTP",
+    nfs="NFS",
+    smb="Samba",
+    dropbox="Red Hat Dropbox",
 )
 
 db_configuration = Form(
@@ -250,12 +262,13 @@ class AnalysisProfile(Pretty, Updateable, Navigatable):
 
 @navigator.register(AnalysisProfile, 'All')
 class AnalysisProfileAll(CFMENavigateStep):
+    VIEW = ConfigurationView
     prerequisite = NavigateToObject(Server, 'Configuration')
 
     def step(self):
-        server_region = store.current_appliance.server_region_string()
+        server_region = self.obj.appliance.server_region_string()
         self.prerequisite_view.accordions.settings.tree.click_path(
-            (server_region, "Analysis Profiles"))
+            server_region, "Analysis Profiles")
 
 
 @navigator.register(AnalysisProfile, 'Add')
@@ -271,9 +284,9 @@ class AnalysisProfileDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        server_region = store.current_appliance.server_region_string()
-        self.prerequisite_view.accordions.settings.tree.click_path((server_region,
-                                                              "Analysis Profiles", str(self)))
+        server_region = self.obj.appliance.server_region_string()
+        self.prerequisite_view.accordions.settings.tree.click_path(
+            server_region, "Analysis Profiles", str(self.obj))
 
 
 @navigator.register(AnalysisProfile, 'Edit')
@@ -292,189 +305,126 @@ class AnalysisProfileCopy(CFMENavigateStep):
         tb.select('Configuration', 'Copy this selected Analysis Profile')
 
 
-class ServerLogDepot(Pretty):
+class ServerLogDepot(Pretty, Navigatable):
     """ This class represents the 'Collect logs' for the server.
 
     Usage:
 
-        log_credentials = ServerLogDepot.Credentials("nfs", "backup.acme.com")
-        log_credentials.update()
-        ServerLogDepot.collect_all()
-        ServerLogDepot.Credentials.clear()
+        log_credentials = configure.ServerLogDepot("anon_ftp",
+                                               depot_name=fauxfactory.gen_alphanumeric(),
+                                               uri=fauxfactory.gen_alphanumeric())
+        log_credentials.create()
+        log_credentials.clear()
 
     """
-    elements = UIRegion(
-        locators={
-            "last_message": InfoBlock("Basic Info", "Last Message"),
-            "last_log_collection": InfoBlock("Basic Info", "Last Log Collection"),
-        },
-    )
 
-    class Credentials(Updateable, Pretty):
-        """ This class represents the credentials for log depots.
+    def __init__(self, depot_type, depot_name=None, uri=None, username=None, password=None,
+                 zone_collect=False, second_server_collect=False, appliance=None):
+        self.depot_name = depot_name
+        self.uri = uri
+        self.username = username
+        self.password = password
+        self.depot_type = depot_types[depot_type]
+        self.zone_collect = zone_collect
+        self.second_server_collect = second_server_collect
+        Navigatable.__init__(self, appliance=appliance)
 
-        Args:
-            p_type: One of ftp, nfs, or smb.
-            uri: Hostname/IP address of the machine.
-            username: User name used for logging in (ftp, smb only).
-            password: Password used for logging in (ftp, smb only).
+        self.obj_type = Zone(self.appliance) if self.zone_collect else self.appliance.server
 
-        Usage:
+    def create(self, cancel=False):
+        self.clear()
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEditSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogsEdit')
+        view.fill({'depot_type': self.depot_type})
+        if self.depot_type != 'Red Hat Dropbox':
+            view.fill({'depot_name': self.depot_name,
+                       'uri': self.uri})
+        if self.depot_type in ['FTP', 'Samba']:
+            view.fill({'username': self.username,
+                       'password': self.password,
+                       'confirm_password': self.password})
+            view.validate.click()
+            view.flash.assert_success_message("Log Depot Settings were validated")
+        if cancel:
+            view.cancel.click()
+            view.flash.assert_success_message("Edit Log Depot settings was cancelled by the user")
+        else:
+            view.save.click()
+            view.flash.assert_success_message("Log Depot Settings were saved")
 
-            log_credentials = ServerLogDepot.Credentials("nfs", "backup.acme.com")
-            log_credentials.update()
-            log_credentials = ServerLogDepot.Credentials(
-                "smb",
-                "foobar",
-                "backup.acme.com",
-                username="jdoe",
-                password="xyz",
-            )
-            log_credentials.update()
-
-        """
-        pretty_attrs = ['p_type', 'name', 'uri', 'username', 'password']
-
-        server_collect_logs = Form(
-            fields=[
-                ("type", {
-                    version.LOWEST: Select("select#log_protocol"),
-                    '5.5': AngularSelect('log_protocol')}),
-                ("name", {
-                    version.LOWEST: None,
-                    "5.4": Input("depot_name")}),
-                ("uri", Input("uri")),
-                ("user", Input("log_userid")),
-                ("password", MultiFill(Input("log_password"), Input("log_verify"))),
-            ]
-        )
-
-        validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
-        # add FormButton because of inconsistency in attributes for Save buttons in cfme
-        save_button = {
-            version.LOWEST: form_buttons.save,
-            "5.4": form_buttons.angular_save,
-            "5.6": form_buttons.FormButton("Save Changes", ng_click="btnClick()")
-        }
-
-        def __init__(self, p_type, name, uri, username=None, password=None):
-            assert p_type in self.p_types.keys(), "{} is not allowed as the protocol type!".format(
-                p_type)
-            self.p_type = p_type
-            self.uri = uri
-            self.username = username
-            self.password = password
-            self.name = name
-
-        @cached_property
-        def p_types(self):
-            return version.pick({
-                version.LOWEST: dict(
-                    anon_ftp="Anonymous FTP",
-                    ftp="FTP",
-                    nfs="NFS",
-                    smb="Samba",
-                    dropbox="Red Hat Dropbox",
-                ),
-                "5.5": dict(
-                    anon_ftp=sel.ByValue("Anonymous FTP"),
-                    ftp=sel.ByValue("FTP"),
-                    nfs=sel.ByValue("NFS"),
-                    smb=sel.ByValue("Samba"),
-                    dropbox=sel.ByValue("Red Hat Dropbox")
-                )
-            })
-
-        def update(self, validate=True, cancel=False):
-            """ Navigate to a correct page, change details and save.
-
-            Args:
-                validate: Whether validate the credentials (not for NFS)
-                cancel: If set to True, the Cancel button is clicked instead of saving.
-            """
-            navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
-            details = {
-                "type": sel.ByValue(self.p_types[self.p_type]),
-                "name": self.name,
-                "uri": self.uri,
-            }
-            if self.p_type not in {"nfs", "anon_ftp"}:
-                change_stored_password()
-                details["user"] = self.username
-                details["password"] = self.password
-
-            fill(
-                self.server_collect_logs,
-                details
-            )
-            if validate and self.p_type not in {"nfs", "anon_ftp", "dropbox"}:
-                sel.click(self.validate)
-                flash.assert_no_errors()
-
-            if cancel:
-                sel.click(form_buttons.cancel)
-                flash.assert_message_match("Edit Log Depot settings was cancelled by the user")
-                flash.assert_no_errors()
-            else:
-                sel.click(self.save_button)
-                flash.assert_message_match("Log Depot Settings were saved")
-                flash.assert_no_errors()
-
-        @classmethod
-        def clear(cls, cancel=False):
-            """ Navigate to correct page and set <No Depot>.
-
-            Args:
-                cancel: If set to True, the Cancel button is clicked instead of saving.
-            """
-            navigate_to(current_appliance.server, 'DiagnosticsCollectLogsEdit')
-            sel.wait_for_element(cls.server_collect_logs.type)
-            sel.wait_for_ajax()
-            if cls.server_collect_logs.type.first_selected_option_text == "<No Depot>":
-                # Nothing to do here
-                sel.click(form_buttons.cancel)
-            else:
-                fill(
-                    cls.server_collect_logs,
-                    {"type": "<No Depot>"},
-                    action=form_buttons.cancel if cancel else cls.save_button
-                )
-
-    @classmethod
-    def get_last_message(cls):
-        """ Returns the Last Message that is displayed in the InfoBlock.
-
-        """
-        return cls.elements.last_message.text
-
-    @classmethod
-    def get_last_collection(cls):
-        """ Returns the Last Log Collection that is displayed in the InfoBlock.
-
-        Returns: If it is Never, returns `None`, otherwise :py:class:`utils.timeutil.parsetime`.
-        """
-        d = cls.elements.last_log_collection.text
-        if d.strip().lower() == "never":
+    @property
+    def last_collection(self):
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogs')
+        text = view.last_log_collection.text
+        if text.lower() == "never":
             return None
         else:
             try:
-                return parsetime.from_american_with_utc(d.strip())
+                return parsetime.from_american_with_utc(text)
             except ValueError:
-                return parsetime.from_iso_with_utc(d.strip())
+                return parsetime.from_iso_with_utc(text)
 
-    @classmethod
-    def _collect(cls, selection, wait_minutes=4):
-        """ Initiate and wait for collection to finish. DRY method.
+    @property
+    def last_message(self):
+        if self.second_server_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
+        return view.last_log_message.text
+
+    @property
+    def is_cleared(self):
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogs')
+        return view.log_depot_uri.text == "N/A"
+
+    def clear(self):
+        """ Set depot type to "No Depot"
+
+        """
+        if not self.is_cleared:
+            if self.second_server_collect and not self.zone_collect:
+                view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsEditSlave')
+            else:
+                view = navigate_to(self.obj_type, 'DiagnosticsCollectLogsEdit')
+            if BZ.bugzilla.get_bug(1436326).is_opened:
+                wait_for(lambda: view.depot_type.selected_option != '<No Depot>', num_sec=5)
+            view.depot_type.fill('<No Depot>')
+            view.save.click()
+            view.flash.assert_success_message("Log Depot Settings were saved")
+
+    def _collect(self, selection):
+        """ Initiate and wait for collection to finish.
 
         Args:
             selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
-            wait_minutes: How many minutes should we wait for the collection process to finish?
         """
-        navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
-        last_collection = cls.get_last_collection()
+
+        if self.second_server_collect and not self.zone_collect:
+            view = navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+        else:
+            view = navigate_to(self.obj_type, 'DiagnosticsCollectLogs')
+        last_collection = self.last_collection
         # Initiate the collection
         tb.select("Collect", selection)
-        flash.assert_no_errors()
+        if self.zone_collect:
+            message = "Zone {}".format(self.obj_type.name)
+        elif self.second_server_collect:
+            message = "MiqServer {} [{}]".format(
+                self.appliance.slave_server_name(), self.appliance.slave_server_zone_id())
+        else:
+            message = "MiqServer {} [{}]".format(
+                self.appliance.server_name(), self.appliance.server_zone_id())
+        view.flash.assert_success_message(
+            "Log collection for {} {} has been initiated".
+            format(self.appliance.product_name, message))
 
         def _refresh():
             """ The page has no refresh button, so we'll switch between tabs.
@@ -482,40 +432,45 @@ class ServerLogDepot(Pretty):
             Why this? Selenium's refresh() is way too slow. This is much faster.
 
             """
-            tabs.select_tab("Workers")
-            tabs.select_tab("Collect Logs")  # Serve as the refresh
+            if self.zone_collect:
+                navigate_to(self.obj_type, 'Servers')
+            else:
+                navigate_to(self.obj_type, 'Workers')
+            if self.second_server_collect:
+                navigate_to(self.appliance.server, 'DiagnosticsCollectLogsSlave')
+            else:
+                navigate_to(self.appliance.server, 'DiagnosticsCollectLogs')
+
         # Wait for start
         if last_collection is not None:
             # How does this work?
             # The time is updated just after the collection has started
             # If the Text is Never, we will not wait as there is nothing in the last message.
             wait_for(
-                lambda: cls.get_last_collection() > last_collection,
+                lambda: self.last_collection > last_collection,
                 num_sec=90,
                 fail_func=_refresh,
                 message="wait_for_log_collection_start"
             )
         # Wait for finish
         wait_for(
-            lambda: "were successfully collected" in cls.get_last_message(),
-            num_sec=wait_minutes * 60,
+            lambda: "were successfully collected" in self.last_message,
+            num_sec=4 * 60,
             fail_func=_refresh,
             message="wait_for_log_collection_finish"
         )
 
-    @classmethod
-    def collect_all(cls):
+    def collect_all(self):
         """ Initiate and wait for collection of all logs to finish.
 
         """
-        cls._collect("Collect all logs")
+        self._collect("Collect all logs")
 
-    @classmethod
-    def collect_current(cls):
+    def collect_current(self):
         """ Initiate and wait for collection of the current log to finish.
 
         """
-        cls._collect("Collect current logs")
+        self._collect("Collect current logs")
 
 
 class BasicInformation(Updateable, Pretty, Navigatable):
@@ -564,6 +519,53 @@ class BasicInformation(Updateable, Pretty, Navigatable):
         self.appliance.server_details_changed()
 
 
+class VMwareConsoleSupport(Updateable, Pretty, Navigatable):
+    """
+    This class represents the "VMware Console Support" section of the Configuration page.
+    Note this is to support CFME 5.8 and beyond functionality.
+
+    Args:
+        console_type:  One of the following strings 'VMware VMRC Plugin', 'VNC' or 'VMware WebMKS'
+
+    Usage:
+
+        vmware_console_support = VMwareConsoleSupport(console_type="VNC")
+        vmware_console_support.update()
+
+    """
+    vmware_console_form = Form(
+        fields=[
+            ('console_type', AngularSelect("console_type")),
+        ]
+    )
+    pretty_attrs = ['console_type']
+
+    CONSOLE_TYPES = ['VNC', 'VMware VMRC Plugin', 'VMware WebMKS']
+
+    def __init__(self, console_type, appliance=None):
+        if console_type not in VMwareConsoleSupport.CONSOLE_TYPES:
+            raise ConsoleTypeNotSupported(console_type)
+
+        if appliance.version < '5.8':
+            raise ConsoleNotSupported(
+                product_name=appliance.product_name,
+                version=appliance.version
+            )
+
+        self.console_type = console_type
+        Navigatable.__init__(self, appliance=appliance)
+
+    def update(self):
+        """ Navigate to a correct page, change details and save.
+
+        """
+        # TODO: These should move as functions of the server and don't need to be classes
+        logger.info("Updating VMware Console form")
+        navigate_to(current_appliance.server, 'Server')
+        fill(self.vmware_console_form, self, action=form_buttons.save)
+        self.appliance.server_details_changed()
+
+
 class SMTPSettings(Updateable):
     """ SMTP settings on the main page.
 
@@ -599,8 +601,8 @@ class SMTPSettings(Updateable):
             ('port', Input("smtp_port")),
             ('domain', Input("smtp_domain")),
             ('start_tls', Input("smtp_enable_starttls_auto")),
-            ('ssl_verify', Select("select#smtp_openssl_verify_mode")),
-            ('auth', Select("select#smtp_authentication")),
+            ('ssl_verify', AngularSelect("smtp_openssl_verify_mode")),
+            ('auth', AngularSelect("smtp_authentication")),
             ('username', Input("smtp_user_name")),
             ('password', Input("smtp_password")),
             ('from_email', Input("smtp_from")),
@@ -647,14 +649,14 @@ class SMTPSettings(Updateable):
         fill(self.smtp_settings, self.details, action=form_buttons.save)
 
     @classmethod
-    def send_test_email(self, to_address):
+    def send_test_email(cls, to_address):
         """ Send a testing e-mail on specified address. Needs configured SMTP.
 
         Args:
             to_address: Destination address.
         """
         navigate_to(current_appliance.server, 'Server')
-        fill(self.smtp_settings, dict(to_email=to_address), action=self.buttons.test)
+        fill(cls.smtp_settings, dict(to_email=to_address), action=cls.buttons.test)
 
 
 class AuthSetting(Updateable, Pretty):
@@ -1130,7 +1132,7 @@ class ScheduleAll(CFMENavigateStep):
 
     def step(self):
         server_region = store.current_appliance.server_region_string()
-        self.prerequisite_view.accordions.settings.tree.click_path((server_region, "Schedules"))
+        self.prerequisite_view.accordions.settings.tree.click_path(server_region, "Schedules")
 
 
 @navigator.register(Schedule, 'Add')
@@ -1494,13 +1496,11 @@ def set_server_roles(db=True, **roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    yaml = store.current_appliance.get_yaml_config("vmdb")
     if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
     if db:
-        yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
-        store.current_appliance.set_yaml_config("vmdb", yaml)
+        store.current_appliance.server_roles = roles
     else:
         navigate_to(current_appliance.server, 'Server')
         fill(server_roles, roles, action=form_buttons.save)
@@ -1513,29 +1513,7 @@ def get_server_roles(navigate=True, db=True):
         accepts as kwargs.
     """
     if db:
-        asr = cfmedb()['assigned_server_roles']
-        sr = cfmedb()['server_roles']
-        cfg = store.current_appliance.get_yaml_config('vmdb')
-        roles = list(cfmedb().session.query(sr.name))
-        roles_set = list(cfmedb().session.query(sr.name)
-                         .join(asr, asr.server_role_id == sr.id))
-        role_set = [role_set[0] for role_set in roles_set]
-        roles_with_bool = {role[0]: role[0] in role_set for role in roles}
-
-        dead_keys = ['database_owner', 'vdi_inventory']
-        for key in roles_with_bool:
-            if 'storage' not in cfg.get('product', {}):
-                if key.startswith('storage'):
-                    dead_keys.append(key)
-                if key == 'vmdb_storage_bridge':
-                    dead_keys.append(key)
-
-        for key in dead_keys:
-            try:
-                del roles_with_bool[key]
-            except:
-                pass
-        return roles_with_bool
+        return store.current_appliance.server_roles
     else:
         if navigate:
             navigate_to(current_appliance.server, 'Server')
@@ -1620,7 +1598,7 @@ def restart_workers(name, wait_time_min=1):
     Returns: bool whether the restart succeeded.
     """
 
-    navigate_to(current_appliance.server, 'Workers')
+    navigate_to(current_appliance.server, 'DiagnosticsWorkers')
 
     def get_all_pids(worker_name):
         return {row.pid.text for row in records_table.rows() if worker_name in row.name.text}

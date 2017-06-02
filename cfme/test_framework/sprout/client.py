@@ -96,16 +96,23 @@ class SproutClient(object):
     def provision_appliances(
             self, count=1, preconfigured=False, version=None, stream=None, provider=None,
             lease_time=120, ram=None, cpu=None):
-        if not version:
-            version = current_appliance.version.vstring
-        if not stream:
+        # If we specify version, stream is ignored because we will get that specific version
+        if version:
+            stream = get_stream(version)
+        # If we specify stream but not version, sprout will give us latest version of that stream
+        elif stream:
+            pass
+        # If we dont specify either, we will get the same version as current appliance
+        else:
             stream = get_stream(current_appliance.version)
+            version = current_appliance.version.vstring
         request_id = self.call_method(
             'request_appliances', preconfigured=preconfigured, version=version,
-            group=stream, provider=provider, lease_time=lease_time, ram=ram, cpu=cpu
+            group=stream, provider=provider, lease_time=lease_time, ram=ram, cpu=cpu, count=count
         )
         wait_for(
-            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300)
+            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300,
+            message='provision {} appliance(s) from sprout'.format(count))
         data = self.call_method('request_check', str(request_id))
         logger.debug(data)
         appliances = []

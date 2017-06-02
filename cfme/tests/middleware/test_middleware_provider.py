@@ -3,7 +3,8 @@ import uuid
 
 import pytest
 
-import utils.error as error
+from utils import error
+from cfme.base.credential import Credential
 from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import fill, flash, form_buttons
@@ -24,7 +25,7 @@ pytest_generate_tests = testgen.generate([MiddlewareProvider], scope='function')
 @pytest.mark.usefixtures('has_no_middleware_providers')
 def test_provider_add_with_bad_credentials(provider):
     """ Tests provider add with bad credentials"""
-    provider.credentials['default'] = provider.Credential(
+    provider.credentials['default'] = Credential(
         principal='bad',
         secret='reallybad'
     )
@@ -43,7 +44,7 @@ def test_add_cancelled_validation():
 def test_password_mismatch_validation(soft_assert):
     """ Tests password mismatch check """
     prov = HawkularProvider()
-    cred = prov.Credential(
+    cred = Credential(
         principal='bad',
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(6)
@@ -94,7 +95,7 @@ def test_provider_add_with_bad_hostname(provider):
 def test_required_fields_validation(provider, soft_assert):
     """Test to validate all required fields while adding a provider"""
     navigate_to(provider, 'Add')
-    cred = provider.Credential()
+    cred = Credential()
     fill(provider.properties_form, {"type_select": "Hawkular"})
     soft_assert(not provider.add_provider_button.can_be_clicked)
     soft_assert(not form_buttons.validate.can_be_clicked)
@@ -109,7 +110,10 @@ def test_required_fields_validation(provider, soft_assert):
 @pytest.mark.usefixtures('setup_provider')
 def test_duplicite_provider_creation(provider):
     """Tests that creation of already existing provider fails."""
-    with error.expected('Host Name has already been taken'):
+    message = 'Name has already been taken, Host Name has already been taken'
+    if current_version() >= '5.8':
+        message = 'Name has already been taken, Host Name has to be unique per provider type'
+    with error.expected(message):
         provider.create(cancel=False, validate_credentials=True)
 # TODO - this checks only hostname err msgs, we need two providers to check name err msg as well
 

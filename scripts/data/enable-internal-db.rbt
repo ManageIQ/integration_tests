@@ -24,9 +24,9 @@ config.post_activation
 =begin
 # bash-fu to put an appliance into a testing state for this script
 # assumes sdb, update disk device as needed
-service evmserverd stop
-/etc/init.d/${scl_name}-postgresql stop
-umount /opt/rh/${scl_name}/root/var/lib/pgsql/data/
+systemctl stop evmserverd
+/etc/init.d/${postgres_version}-postgresql stop
+umount /opt/rh/${postgres_version}/root/var/lib/pgsql/data/
 lvremove -f vg_data/lv_pg
 vgremove vg_data
 pvremove /dev/sdb1

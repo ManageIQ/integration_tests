@@ -13,6 +13,7 @@ import argparse
 import fauxfactory
 import re
 import sys
+import traceback as tb
 from threading import Lock, Thread
 
 from ovirtsdk.xml import params
@@ -64,13 +65,15 @@ def make_ssh_client(rhevip, sshname, sshpass):
 def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
     try:
         ssh_client = make_ssh_client(rhevm_ip, sshname, sshpass)
-        stdout = ssh_client.run_command('service ovirt-engine status')[1]
+        stdout = ssh_client.run_command('systemctl status ovirt-engine')[1]
+        # fallback to sysV commands if necessary
+        if 'command not found' in stdout:
+            stdout = ssh_client.run_command('service ovirt-engine status')[1]
         ssh_client.close()
-        if 'running' not in stdout:
-            return False
-        return True
-    except Exception as e:
-        print(e)
+        return 'running' in stdout
+    except Exception:
+        print('RHEVM: While checking status of ovirt engine, an exception happened')
+        tb.print_exc()
         return False
 
 
@@ -81,19 +84,26 @@ def change_edomain_state(api, state, edomain, provider):
             export_domain = dc.storagedomains.get(edomain)
             if export_domain:
                 if state == 'maintenance' and export_domain.get_status().state == 'active':
-                    dc.storagedomains.get(edomain).deactivate()
+                    # may be tasks on the storage, try multiple times
+                    print('RHEVM:{} {} in active, waiting for deactivate...').format(
+                        provider, edomain)
+                    wait_for(lambda: dc.storagedomains.get(edomain).deactivate(), delay=5,
+                             num_sec=600, handle_exception=True)
                 elif state == 'active' and export_domain.get_status().state != 'active':
-                    dc.storagedomains.get(edomain).activate()
+                    print('RHEVM:{} {} not active, waiting for active...').format(provider,
+                        edomain)
+                    wait_for(lambda: dc.storagedomains.get(edomain).activate(), delay=5,
+                             num_sec=600, handle_exception=True)
 
                 wait_for(is_edomain_in_state,
-                        [api, state, edomain], fail_condition=False, delay=5)
+                        [api, state, edomain], fail_condition=False, delay=5, num_sec=240)
                 print('RHEVM:{} {} successfully set to {} state'.format(provider, edomain, state))
                 return True
         return False
-    except Exception as e:
-        print(e)
+    except Exception:
         print("RHEVM:{} Exception occurred while changing {} state to {}".format(
             provider, edomain, state))
+        tb.print_exc()
         return False
 
 
@@ -119,7 +129,7 @@ def download_ova(ssh_client, ovaurl):
         ovaurl: URL of ova file
     """
     command = 'curl -O {}'.format(ovaurl)
-    exit_status, output = ssh_client.run_command(command)
+    exit_status, output = ssh_client.run_command(command, timeout=1800)
     if exit_status != 0:
         print("RHEVM: There was an error while downloading ova file:")
         print(output)
@@ -155,21 +165,25 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
                 command = ['engine-image-uploader']
         command.append("-u {}".format(username))
         command.append("-p {}".format(password))
+        command.append("-v -m --insecure")
         command.append("-r {}:443".format(rhevip))
         command.append("-N {}".format(temp_template_name))
         command.append("-e {}".format(edomain))
         command.append("upload {}".format(ovaname))
-        command.append("-m --insecure")
-        exit_status, output = ssh_client.run_command(' '.join(command))
+        command = ' '.join(command)
+        print(
+            'RHEVM:{} Executing command: {}'.format(
+                provider, re.sub(re.escape(password), '*' * len(password), command)))
+        exit_status, output = ssh_client.run_command(command)
         if exit_status != 0:
             print("RHEVM:{} There was an error while making template from ova file:".format(
                 provider))
             print(output)
             sys.exit(127)
         print("RHEVM:{} successfully created template from ova file:".format(provider))
-    except Exception as e:
+    except Exception:
         print("RHEVM:{} template_from_ova failed:".format(provider))
-        print(e)
+        tb.print_exc()
 
 
 def import_template(api, edomain, sdomain, cluster, temp_template_name, provider):
@@ -197,9 +211,9 @@ def import_template(api, edomain, sdomain, cluster, temp_template_name, provider
             print("RHEVM:{} The template failed to import on data domain".format(provider))
             sys.exit(127)
         print("RHEVM:{} successfully imported template on data domain".format(provider))
-    except Exception as e:
-        print("RHEVM:{} import_template to data domain failed".format(provider))
-        print(e)
+    except Exception:
+        print("RHEVM:{} import_template to data domain failed:".format(provider))
+        tb.print_exc()
 
 
 def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provider,
@@ -218,7 +232,9 @@ def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provid
     """
     try:
         if api.vms.get(temp_vm_name) is not None:
-            print("RHEVM:{} Warning: found another VM with this name.".format(provider))
+            print(
+                "RHEVM:{} Warning: found another VM with this name ({}).".format(
+                    provider, temp_vm_name))
             print("RHEVM:{} Skipping this step, attempting to continue...".format(provider))
             return
         actual_template = api.templates.get(temp_template_name)
@@ -228,12 +244,9 @@ def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provid
 
         # we must wait for the vm do become available
         def check_status():
-            status = api.vms.get(temp_vm_name).get_status()
-            if status.state != 'down':
-                return False
-            return True
+            return api.vms.get(temp_vm_name).get_status().state == 'down'
 
-        wait_for(check_status, fail_condition=False, delay=5)
+        wait_for(check_status, fail_condition=False, delay=5, num_sec=240)
         if mgmt_network:
             vm = api.vms.get(temp_vm_name)
             nic = vm.nics.get('eth0')
@@ -246,9 +259,9 @@ def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provid
             print("RHEVM:{} temp VM could not be provisioned".format(provider))
             sys.exit(127)
         print("RHEVM:{} successfully provisioned temp vm".format(provider))
-    except Exception as e:
-        print("RHEVM:{} Make_temp_vm_from_template Failed ".format(provider))
-        print(e)
+    except Exception:
+        print("RHEVM:{} Make_temp_vm_from_template failed:".format(provider))
+        tb.print_exc()
 
 
 def check_disks(api, temp_vm_name):
@@ -297,7 +310,9 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface, temp_vm
     """
     try:
         if len(api.vms.get(temp_vm_name).disks.list()) > 1:
-            print("RHEVM:{} Warning: found more than one disk in existing VM.".format(provider))
+            print(
+                "RHEVM:{} Warning: found more than one disk in existing VM ({}).".format(
+                    provider, temp_vm_name))
             print("RHEVM:{} Skipping this step, attempting to continue...".format(provider))
             return
         actual_sdomain = api.storagedomains.get(sdomain)
@@ -312,10 +327,10 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface, temp_vm
         if len(api.vms.get(temp_vm_name).disks.list()) < 2:
             print("RHEVM:{} Disk failed to add".format(provider))
             sys.exit(127)
-        print("RHEVM:{} Successfully added Disk".format(provider))
-    except Exception as e:
-        print("RHEVM:{} add_disk_to_temp_vm failed".format(provider))
-        print(e)
+        print("RHEVM:{} Successfully added disk".format(provider))
+    except Exception:
+        print("RHEVM:{} add_disk_to_temp_vm failed:".format(provider))
+        tb.print_exc()
 
 
 def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
@@ -328,7 +343,9 @@ def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
     """
     try:
         if api.templates.get(template_name) is not None:
-            print("RHEVM:{} Warning: found finished template with this name.".format(provider))
+            print(
+                "RHEVM:{} Warning: found finished template with this name ({}).".format(
+                    provider, template_name))
             print("RHEVM:{} Skipping this step, attempting to continue...".format(provider))
             return
         temporary_vm = api.vms.get(temp_vm_name)
@@ -343,9 +360,9 @@ def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
             print("RHEVM:{} templatizing temporary VM failed".format(provider))
             sys.exit(127)
         print("RHEVM:{} successfully templatized the temporary VM".format(provider))
-    except Exception as e:
+    except Exception:
         print("RHEVM:{} templatizing temporary VM failed".format(provider))
-        print(e)
+        tb.print_exc()
 
 
 # get the domain edomain path on the rhevm
@@ -371,12 +388,13 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip,
     try:
         ssh_client = make_ssh_client(provider_ip, sshname, sshpass)
         edomain_path = edomainip + ':' + path
-        command = 'mkdir -p ~/tmp_filemount && mount -O tcp {} ~/tmp_filemount &&'.format(
-            edomain_path)
-        command += 'cd ~/tmp_filemount/master/vms &&'
+        temp_path = '~/tmp_filemount'
+        command = 'mkdir -p {} &&'.format(temp_path)
+        command += 'mount -O tcp {} {} &&'.format(edomain_path, temp_path)
+        command += 'cd {}/master/vms &&'.format(temp_path)
         command += 'find . -maxdepth 1 -type d -empty -delete &&'
-        command += 'cd ~ && umount ~/tmp_filemount &&'
-        command += 'find . -maxdepth 1 -name tmp_filemount -type d -empty -delete'
+        command += 'cd ~ && umount {} &&'.format(temp_path)
+        command += 'rmdir {}'.format(temp_path)
         print("RHEVM:{} Deleting the empty directories on edomain/vms file...".format(provider))
         exit_status, output = ssh_client.run_command(command)
         ssh_client.close()
@@ -385,8 +403,8 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip,
                 provider))
             print(output)
         print("RHEVM:{} successfully deleted the empty directories on path..".format(provider))
-    except Exception as e:
-        print(e)
+    except Exception:
+        tb.print_exc()
         return False
 
 
@@ -417,20 +435,20 @@ def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, tem
             temp_template_name)
         print("RHEVM:{} waiting for template on export domain...".format(provider))
         wait_for(check_edomain_template, [api, edomain, temp_template_name],
-                 fail_condition=False, delay=5)
+                 fail_condition=False, delay=5, num_sec=600)
 
         if unimported_template:
             print("RHEVM:{} deleting the template on export domain...".format(provider))
-            unimported_template.delete()
+            wait_for(unimported_template.delete, delay=10, num_sec=600, handle_exception=True)
 
         print("RHEVM:{} waiting for template delete on export domain...".format(provider))
         wait_for(is_edomain_template_deleted, [api, temp_template_name, edomain],
-                 fail_condition=False, delay=5)
+                 fail_condition=False, delay=5, num_sec=600)
         print("RHEVM:{} successfully deleted template on export domain...".format(provider))
 
-    except Exception as e:
-        print(e)
-        print("RHEVM:{} Exception occurred in cleanup method".format(provider))
+    except Exception:
+        print("RHEVM:{} Exception occurred in cleanup method:".format(provider))
+        tb.print_exc()
         return False
 
 
@@ -663,7 +681,7 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             getattr(__import__('clone_template'), "main")(**deploy_args)
         print("RHEVM:{} Template {} upload Ended".format(provider, template_name))
     except Exception as e:
-        print(e)
+        print("RHEVM:{} Template {} upload exception: {}".format(provider, template_name, e))
         return False
 
 

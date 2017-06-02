@@ -2,15 +2,20 @@
 
 """ Module dealing with Configure/Tasks section.
 """
+from functools import partial
 
 from navmazing import NavigateToAttribute
+from widgetastic.widget import View
+from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
+from widgetastic_patternfly import Dropdown, Tab, FlashMessages
 
 from cfme import web_ui as ui
+from cfme.base.login import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, CheckboxTable, fill, toolbar, match_location
+from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from cfme.services import requests
 
@@ -36,12 +41,17 @@ filter_form = Form(
     ]
 )
 
+table_loc = '//div[@id="records_div"]/table'
+
+match_page = partial(match_location, controller='miq_task')
+
 tasks_table = CheckboxTable(
     table_locator='//div[@id="records_div"]/table[thead]',
     header_checkbox_locator="//div[@id='records_div']//input[@id='masterToggle']"
 )
 
 
+# TODO move these into Task class
 def _filter(
         zone=None,
         user=None,
@@ -87,23 +97,32 @@ def is_cluster_analysis_finished(name, **kwargs):
     return is_analysis_finished(name=name, task_type='cluster', **kwargs)
 
 
-def is_task_finished(tab_destination, task_name, expected_status, clear_tasks_after_success=True):
-    navigate_to(Tasks, tab_destination)
-    el = tasks_table.find_row_by_cells({
-        'task_name': task_name,
-        'state': expected_status
-    })
-    if el is None:
+def delete_all_tasks(destination):
+    view = navigate_to(Tasks, destination)
+    view.delete.item_select('Delete All', handle_alert=True)
+
+
+def is_task_finished(destination, task_name, expected_status, clear_tasks_after_success=True):
+    view = navigate_to(Tasks, destination)
+    tab_view = getattr(view.tabs, destination.lower())
+    try:
+        row = tab_view.table.row(task_name=task_name, state=expected_status)
+    except IndexError:
+        logger.warn('IndexError exception suppressed when searching for task row, no match found.')
         return False
 
-    # throw exception if status is error
-    if 'Error' in sel.get_attribute(sel.element('.//td/img', root=el), 'title'):
-        raise Exception("Task {} errored".format(task_name))
+    # throw exception if error in message
+    message = row.message.text.lower()
+    if 'error' in message:
+        raise Exception("Task {} error: {}".format(task_name, message))
+    elif 'timed out' in message:
+        raise TimedOutError("Task {} timed out: {}".format(task_name, message))
+    elif 'failed' in message:
+        raise Exception("Task {} has a failure: {}".format(task_name, message))
 
     if clear_tasks_after_success:
         # Remove all finished tasks so they wouldn't poison other tests
-        toolbar.select('Delete Tasks', 'Delete All', invokes_alert=True)
-        sel.handle_alert(cancel=False)
+        delete_all_tasks(destination)
 
     return True
 
@@ -112,30 +131,32 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
     """ Check if analysis is finished - if not, reload page"""
 
     tabs_data = {
-        'vm': {
-            'tab': 'AllVMContainerAnalysis',
+        'container': {
+            'tab': 'AllTasks',
             'task': '{}',
             'state': 'finished'
         },
+        'vm': {
+            'tab': 'AllTasks',
+            'task': 'Scan from Vm {}',
+            'state': 'finished'
+        },
         'host': {
-            'tab': 'MyOther',
+            'tab': 'MyOtherTasks',
             'task': "SmartState Analysis for '{}'",
             'state': 'Finished'
         },
         'datastore': {
-            'tab': 'MyOther',
-            'page': 'tasks_my_other_ui',
+            'tab': 'MyOtherTasks',
             'task': 'SmartState Analysis for [{}]',
             'state': "Finished"
         },
         'cluster': {
-            'tab': 'MyOther',
-            'page': 'tasks_my_other_ui',
+            'tab': 'MyOtherTasks',
             'task': 'SmartState Analysis for [{}]',
             'state': "Finished"}
     }[task_type]
-
-    return is_task_finished(tab_destination=tabs_data['tab'],
+    return is_task_finished(destination=tabs_data['tab'],
                             task_name=tabs_data['task'].format(name),
                             expected_status=tabs_data['state'],
                             clear_tasks_after_success=clear_tasks_after_success)
@@ -147,61 +168,110 @@ def wait_analysis_finished(task_name, task_type, delay=5, timeout='5M'):
              delay=delay, timeout=timeout, fail_func=requests.reload)
 
 
+class TasksView(BaseLoggedInPage):
+    flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
+    # Toolbar
+    delete = Dropdown('Delete Tasks')  # dropdown just has icon, use element title
+    reload = Button(title='Reload the current display')
+
+    @View.nested
+    class tabs(View):  # noqa
+        # Extra Toolbar
+        # Only on 'All' type tabs, but for access it doesn't make sense to access the tab for a
+        # toolbar button
+        cancel = Button(title='Cancel the selected task')
+
+        # Form Buttons
+        apply = Button('Apply')
+        reset = Button('Reset')
+        default = Button('Default')
+
+        # Filters
+        zone = BootstrapSelect(id='chosen_zone')
+        period = BootstrapSelect(id='time_period')
+        user = BootstrapSelect(id='user_choice')
+        # This checkbox search_root captures all the filter options
+        # It will break for status if/when there is second checkbox selection field added
+        # It's the lowest level div with an id that captures the status checkboxes
+        status = CheckboxSelect(search_root='tasks_options_div')
+        state = BootstrapSelect(id='state_choice')
+
+        @View.nested
+        class mytasks(Tab):  # noqa
+            TAB_NAME = "My VM and Container Analysis Tasks"
+            table = Table(table_loc)
+
+        @View.nested
+        class myothertasks(Tab):  # noqa
+            TAB_NAME = "My Other UI Tasks"
+            table = Table(table_loc)
+
+        @View.nested
+        class alltasks(Tab):  # noqa
+            TAB_NAME = "All VM and Container Analysis Tasks"
+            table = Table(table_loc)
+
+        @View.nested
+        class allothertasks(Tab):  # noqa
+            TAB_NAME = "All Other Tasks"
+            table = Table(table_loc)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.tabs.mytasks.is_displayed and
+            self.tabs.myothertasks.is_displayed and
+            self.tabs.alltasks.is_displayed and
+            self.tabs.allothertasks.is_displayed)
+
+
 class Tasks(Navigatable):
     pass
 
 
-@navigator.register(Tasks, 'MyVMContainerAnalysis')
-class MyVMContainerAnalysis(CFMENavigateStep):
+@navigator.register(Tasks, 'MyTasks')
+class MyTasks(CFMENavigateStep):
+    VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
 
-    tab_name = 'My VM and Container Analysis Tasks'
-
     def step(self, *args, **kwargs):
-        tabs.select_tab(self.tab_name)
+        self.view.tabs.mytasks.select()
 
     def am_i_here(self):
-        return match_location(controller='miq_task', title='My Tasks') and \
-            tabs.is_tab_selected(self.tab_name)
+        return match_page(title='My Tasks') and self.view.tabs.mytasks.is_active()
 
 
-@navigator.register(Tasks, 'MyOther')
-class MyOther(CFMENavigateStep):
+@navigator.register(Tasks, 'MyOtherTasks')
+class MyOtherTasks(CFMENavigateStep):
+    VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
 
-    tab_name = 'My Other UI Tasks'
-
     def step(self, *args, **kwargs):
-        tabs.select_tab(self.tab_name)
+        self.view.tabs.myothertasks.select()
 
     def am_i_here(self):
-        return match_location(controller='miq_task', title='My UI Tasks') and \
-            tabs.is_tab_selected()
+        return match_page(title='My UI Tasks') and self.view.tabs.myothertasks.is_active()
 
 
-@navigator.register(Tasks, 'AllVMContainerAnalysis')
-class AllVMContainerAnalysis(CFMENavigateStep):
+@navigator.register(Tasks, 'AllTasks')
+class AllTasks(CFMENavigateStep):
+    VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
 
-    tab_name = "All VM and Container Analysis Tasks"
-
     def step(self, *args, **kwargs):
-        tabs.select_tab(self.tab_name)
+        self.view.tabs.alltasks.select()
 
     def am_i_here(self):
-        return match_location(controller='miq_task', title='All Tasks') and \
-            tabs.is_tab_selected(self.tab_name)
+        return match_page(title='All Tasks') and self.view.tabs.alltasks.is_active()
 
 
-@navigator.register(Tasks, 'AllOther')
-class AllOther(CFMENavigateStep):
+@navigator.register(Tasks, 'AllOtherTasks')
+class AllOtherTasks(CFMENavigateStep):
+    VIEW = TasksView
     prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
 
-    tab_name = 'All Other Tasks'
-
     def step(self, *args, **kwargs):
-        tabs.select_tab(self.tab_name)
+        self.view.tabs.allothertasks.select()
 
     def am_i_here(self):
-        return match_location(controller='miq_task', title='All UI Tasks') and \
-            tabs.is_tab_selected(self.tab_name)
+        return match_page(title='All UI Tasks') and self.view.tabs.allothertasks.is_active()

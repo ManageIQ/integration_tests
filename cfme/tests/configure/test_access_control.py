@@ -5,17 +5,16 @@ from time import sleep
 import traceback
 
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
-import utils.error as error
+from utils import error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import Credential, login, test_requirements
-from cfme.automate import AutomateExplorer # NOQA
+from cfme import login, test_requirements
+from cfme.base.credential import Credential
+from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
 from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
-from cfme.infrastructure.provider import InfraProvider
-from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.exceptions import OptionNotAvailable
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.services.myservice import MyService
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
@@ -23,7 +22,6 @@ from cfme.configure import tasks
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
-from utils.providers import setup_a_provider_by_class
 from utils.update import update
 from utils import version
 
@@ -33,15 +31,10 @@ usergrp = Group(description='EvmGroup-user')
 group_table = Table("//div[@id='main_div']//table")
 
 
-@pytest.fixture(scope="module")
-def setup_first_provider():
-    setup_a_provider_by_class(InfraProvider)
-
-
 # due to pytest.mark.meta(blockers=[1035399]), non admin users can't login
 # with no providers added
 pytestmark = [test_requirements.rbac,
-              pytest.mark.usefixtures("setup_first_provider")]
+              pytest.mark.usefixtures("infra_provider")]
 
 
 def new_credential():
@@ -93,7 +86,7 @@ def test_user_login():
     user.create()
     try:
         with user:
-            navigate_to(Dashboard, 'Main')
+            navigate_to(Server, 'Dashboard')
     finally:
         login.login_admin()
 
@@ -278,7 +271,7 @@ def test_group_remove_tag():
 
 
 @pytest.mark.tier(3)
-def test_description_required_error_validation():
+def test_group_description_required_error_validation():
     error_text = "Description can't be blank"
     group = Group(description=None, role='EvmRole-approver')
     with error.expected(error_text):
@@ -512,16 +505,16 @@ cat_name = "Settings"
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
-          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
+          'clouds providers': _go_to(base_types()['cloud']),
+          'infrastructure providers': _go_to(base_types()['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')}],
      [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
-          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
+          'clouds providers': _go_to(base_types()['cloud']),
+          'infrastructure providers': _go_to(base_types()['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')},
       {}]])
@@ -605,7 +598,7 @@ def test_permissions_vm_provisioning():
 #    # Ensure VMs exist
 #    if not vms.get_number_of_vms():
 #        logger.debug("Setting up providers")
-#        setup_first_provider()
+#        infra_provider
 #        logger.debug("Providers setup")
 #    single_task_permission_test(
 #        [

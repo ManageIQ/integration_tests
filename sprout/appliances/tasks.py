@@ -36,7 +36,6 @@ from sprout.log import create_logger
 from utils import conf
 from utils.appliance import Appliance as CFMEAppliance
 from utils.path import project_path
-from utils.providers import get_mgmt
 from utils.timeutil import parsetime
 from utils.trackerbot import api, depaginate, parse_template
 from utils.version import Version
@@ -149,7 +148,7 @@ def kill_unused_appliances(self):
     to prolong the lease time, this is the thing that will take the appliance off your hands
     and kill it."""
     with transaction.atomic():
-        for appliance in Appliance.objects.filter(marked_for_deletion=False, ready=True):
+        for appliance in Appliance.objects.filter(marked_for_deletion=False):
             if appliance.leased_until is not None and appliance.leased_until <= timezone.now():
                 self.logger.info("Watchdog found an appliance that is to be deleted: {}/{}".format(
                     appliance.id, appliance.name))
@@ -184,6 +183,8 @@ def kill_appliance_delete(self, appliance_id, _delete_already_issued=False):
     delete_issued = False
     try:
         appliance = Appliance.objects.get(id=appliance_id)
+        if not appliance.provider.is_working:
+            raise RuntimeError('Provider is not working.')
         if appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Deleting the appliance from provider")
             # If we haven't issued the delete order, do it now
@@ -319,6 +320,8 @@ def poke_trackerbot(self):
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
         provider, create = Provider.objects.get_or_create(id=provider_id)
+        if not provider.working or provider.disabled:
+            continue
         with transaction.atomic():
             for template in Template.objects.filter(provider=provider, original_name=template_name):
                 template.usable = usability
@@ -326,8 +329,11 @@ def poke_trackerbot(self):
                 # Kill all shepherd appliances if they were acidentally spun up
                 if not usability:
                     for appliance in Appliance.objects.filter(
-                            template=template, ready=True, marked_for_deletion=False,
+                            template=template, marked_for_deletion=False,
                             appliance_pool=None):
+                        self.logger.info(
+                            'Killing an appliance {}/{} because its template was marked as unusable'
+                            .format(appliance.id, appliance.name))
                         Appliance.kill(appliance)
 
 
@@ -336,7 +342,7 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
     """This task creates a template from a fresh CFME template. In case of fatal error during the
     operation, the template object is deleted to make sure the operation will be retried next time
     when poke_trackerbot runs."""
-    provider = Provider.objects.get(id=provider_id)
+    provider = Provider.objects.get(id=provider_id, working=True, disabled=False)
     provider.cleanup()  # Precaution
     group = Group.objects.get(id=group_id)
     with transaction.atomic():
@@ -405,6 +411,8 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
 def prepare_template_deploy(self, template_id):
     template = Template.objects.get(id=template_id)
     try:
+        if not template.provider.is_working:
+            raise RuntimeError('Provider is not working.')
         if not template.exists_in_provider:
             template.set_status("Deploying the template.")
             provider_data = template.provider.provider_data
@@ -512,8 +520,10 @@ def prepare_template_seal(self, template_id):
 @singleton_task()
 def prepare_template_poweroff(self, template_id):
     template = Template.objects.get(id=template_id)
-    template.set_status("Powering off")
     try:
+        if not template.provider.is_working:
+            raise RuntimeError('Provider is not working.')
+        template.set_status("Powering off")
         template.provider_api.stop_vm(template.name)
         template.provider_api.wait_vm_stopped(template.name)
     except Exception as e:
@@ -526,8 +536,10 @@ def prepare_template_poweroff(self, template_id):
 @singleton_task()
 def prepare_template_finish(self, template_id):
     template = Template.objects.get(id=template_id)
-    template.set_status("Finishing template creation.")
     try:
+        if not template.provider.is_working:
+            raise RuntimeError('Provider is not working.')
+        template.set_status("Finishing template creation.")
         if template.temporary_name is None:
             tmp_name = "templatize_{}".format(fauxfactory.gen_alphanumeric(8))
             Template.objects.get(id=template_id).temporary_name = tmp_name  # metadata, autosave
@@ -554,8 +566,10 @@ def prepare_template_delete_on_error(self, template_id):
         template = Template.objects.get(id=template_id)
     except ObjectDoesNotExist:
         return True
-    template.set_status("Template creation failed. Deleting it.")
     try:
+        if not template.provider.is_working:
+            raise RuntimeError('Provider is not working.')
+        template.set_status("Template creation failed. Deleting it.")
         if template.provider_api.does_vm_exist(template.name):
             template.provider_api.delete_vm(template.name)
             wait_for(template.provider_api.does_vm_exist, [template.name], timeout='5m', delay=10)
@@ -607,7 +621,9 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
             pool.save()
     else:
         # Look whether we can swap any provisioning appliance with some in shepherd
-        unfinished = list(Appliance.objects.filter(appliance_pool=pool, ready=False).all())
+        unfinished = list(
+            Appliance.objects.filter(
+                appliance_pool=pool, ready=False, marked_for_deletion=False).all())
         random.shuffle(unfinished)
         if len(unfinished) > 0:
             n = Appliance.give_to_pool(pool, len(unfinished))
@@ -656,7 +672,11 @@ def process_delayed_provision_tasks(self):
                         task.pool.appliance_container_q,
                         **task.pool.appliance_filter_params)
                     if appliances:
-                        Appliance.kill(random.choice(appliances))
+                        appl = random.choice(appliances)
+                        self.logger.info(
+                            'Freeing some space in provider by killing appliance {}/{}'
+                            .format(appl.id, appl.name))
+                        Appliance.kill(appl)
                         break  # Just one
         else:
             # There was a free appliance in shepherd, so we took it and we don't need this task more
@@ -768,8 +788,10 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             self.request.callbacks[:] = []
             kill_appliance.delay(appliance_id)
             return
-    appliance.provider.cleanup()
+    if not appliance.provider.is_working:
+        raise RuntimeError('Provider is not working.')
     try:
+        appliance.provider.cleanup()
         if not appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Beginning template clone.")
             provider_data = appliance.template.provider.provider_data
@@ -838,6 +860,8 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
         # source objects are not present, terminating the chain
         self.request.callbacks[:] = []
         return
+    if not appliance.provider.is_working:
+        raise RuntimeError('Provider is not working.')
     if appliance.appliance_pool is not None:
         if appliance.appliance_pool.not_needed_anymore:
             # Terminate task chain
@@ -874,6 +898,8 @@ def appliance_power_on(self, appliance_id):
         # source objects are not present
         return
     try:
+        if not appliance.provider.is_working:
+            raise RuntimeError('Provider is not working.')
         if appliance.provider_api.is_vm_running(appliance.name):
             try:
                 current_ip = appliance.provider_api.current_ip_address(appliance.name)
@@ -894,6 +920,8 @@ def appliance_power_on(self, appliance_id):
                 # VM is running now.
                 sync_appliance_hw.delay(appliance.id)
                 sync_provider_hw.delay(appliance.template.provider.id)
+                # fixes time synchronization
+                appliance.ipapp.fix_ntp_clock()
                 return
             else:
                 # IP not present yet
@@ -946,6 +974,8 @@ def appliance_power_off(self, appliance_id):
         # source objects are not present
         return
     try:
+        if not appliance.provider.is_working:
+            raise RuntimeError('Provider is not working.')
         if appliance.provider_api.is_vm_stopped(appliance.name):
             Appliance.objects.get(id=appliance_id).set_status("Appliance was powered off.")
             with transaction.atomic():
@@ -980,6 +1010,8 @@ def appliance_suspend(self, appliance_id):
         # source objects are not present
         return
     try:
+        if not appliance.provider.is_working:
+            raise RuntimeError('Provider is not working.')
         if appliance.provider_api.is_vm_suspended(appliance.name):
             Appliance.objects.get(id=appliance_id).set_status("Appliance was suspended.")
             with transaction.atomic():
@@ -1007,6 +1039,8 @@ def retrieve_appliance_ip(self, appliance_id):
     """Updates appliance's IP address."""
     try:
         appliance = Appliance.objects.get(id=appliance_id)
+        if not appliance.provider.is_working:
+            raise RuntimeError('Provider is not working.')
         appliance.set_status("Retrieving IP address.")
         ip_address = appliance.provider_api.current_ip_address(appliance.name)
         if ip_address is None:
@@ -1036,7 +1070,7 @@ def refresh_appliances_provider(self, provider_id):
     appliances stored in database.
     """
     self.logger.info("Refreshing appliances in {}".format(provider_id))
-    provider = Provider.objects.get(id=provider_id)
+    provider = Provider.objects.get(id=provider_id, working=True, disabled=False)
     if not hasattr(provider.api, "all_vms"):
         # Ignore this provider
         return
@@ -1075,18 +1109,18 @@ def refresh_appliances_provider(self, provider_id):
 @singleton_task()
 def check_templates(self):
     self.logger.info("Initiated a periodic template check")
-    for provider in Provider.objects.all():
+    for provider in Provider.objects.filter(disabled=False):
         check_templates_in_provider.delay(provider.id)
 
 
 @singleton_task(soft_time_limit=180)
 def check_templates_in_provider(self, provider_id):
     self.logger.info("Initiated a periodic template check for {}".format(provider_id))
-    provider = Provider.objects.get(id=provider_id)
+    provider = Provider.objects.get(id=provider_id, disabled=False)
     # Get templates and update metadata
     try:
         templates = map(str, provider.api.list_template())
-    except:
+    except Exception:
         provider.working = False
         provider.save()
     else:
@@ -1147,13 +1181,9 @@ def delete_nonexistent_appliances(self):
     # And now - if something happened during appliance deletion, call kill again
     for appliance in Appliance.objects.filter(
             marked_for_deletion=True, status_changed__lt=expiration_time).all():
-        with transaction.atomic():
-            appl = Appliance.objects.get(pk=appliance.pk)
-            appl.marked_for_deletion = False
-            appl.save()
         self.logger.info(
             "Trying to kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
-        Appliance.kill(appl)
+        Appliance.kill(appliance, force_delete=True)
 
 
 def generic_shepherd(self, preconfigured):
@@ -1304,31 +1334,33 @@ def wait_appliance_ready(self, appliance_id):
 
 @singleton_task()
 def anyvm_power_on(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.start_vm(vm)
+    provider = Provider.objects.get(id=provider, working=True, disabled=False)
+    provider.api.start_vm(vm)
 
 
 @singleton_task()
 def anyvm_power_off(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.stop_vm(vm)
+    provider = Provider.objects.get(id=provider, working=True, disabled=False)
+    provider.api.stop_vm(vm)
 
 
 @singleton_task()
 def anyvm_suspend(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.suspend_vm(vm)
+    provider = Provider.objects.get(id=provider, working=True, disabled=False)
+    provider.api.suspend_vm(vm)
 
 
 @singleton_task()
 def anyvm_delete(self, provider, vm):
-    provider = get_mgmt(provider)
-    provider.delete_vm(vm)
+    provider = Provider.objects.get(id=provider, working=True, disabled=False)
+    provider.api.delete_vm(vm)
 
 
 @singleton_task()
 def delete_template_from_provider(self, template_id):
     template = Template.objects.get(id=template_id)
+    if not template.provider.is_working:
+        raise RuntimeError('Provider is not working.')
     try:
         template.provider_api.delete_template(template.name)
     except Exception as e:
@@ -1347,6 +1379,8 @@ def appliance_rename(self, appliance_id, new_name):
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
         return None
+    if not appliance.provider.is_working:
+        raise RuntimeError('Provider is not working.')
     if not appliance.provider.allow_renaming:
         return None
     if appliance.name == new_name:
@@ -1373,6 +1407,8 @@ def rename_appliances_for_pool(self, pool_id):
         ]
         for appliance in appliances:
             if not appliance.provider.allow_renaming:
+                continue
+            if not appliance.provider.is_working:
                 continue
             new_name = '{}_'.format(appliance_pool.owner.username)
             if appliance.version and not appliance.version.startswith('...'):
@@ -1415,7 +1451,7 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
     except ObjectDoesNotExist:
         return None
     try:
-        managed_providers = appliance.ipapp.managed_providers
+        managed_providers = appliance.ipapp.managed_known_providers
         appliance.managed_providers = [prov.key for prov in managed_providers]
     except Exception as e:
         # To prevent single appliance messing up whole result
@@ -1437,7 +1473,7 @@ def calculate_provider_management_usage(self, appliance_ids):
             if provider_key not in results:
                 results[provider_key] = []
             results[provider_key].append(appliance.id)
-    for provider in Provider.objects.all():
+    for provider in Provider.objects.filter(working=True, disabled=False):
         provider.appliances_manage_this_provider = results.get(provider.id, [])
 
 
@@ -1499,6 +1535,8 @@ def obsolete_template_deleter(self):
 @singleton_task()
 def connect_direct_lun(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
+    if not appliance.provider.is_working:
+        raise RuntimeError('Provider is not working.')
     if not hasattr(appliance.provider_api, "connect_direct_lun_to_appliance"):
         return False
     try:
@@ -1517,6 +1555,8 @@ def connect_direct_lun(self, appliance_id):
 @singleton_task()
 def disconnect_direct_lun(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
+    if not appliance.provider.is_working:
+        raise RuntimeError('Provider is not working.')
     if not appliance.lun_disk_connected:
         return False
     if not hasattr(appliance.provider_api, "connect_direct_lun_to_appliance"):
@@ -1712,7 +1752,7 @@ def parsedate(d):
 @singleton_task()
 def synchronize_untracked_vms_in_provider(self, provider_id):
     """'re'-synchronizes any vms that might be lost during outages."""
-    provider = Provider.objects.get(id=provider_id)
+    provider = Provider.objects.get(id=provider_id, working=True, disabled=False)
     provider_api = provider.api
     if not hasattr(provider_api, 'list_vm'):
         # This provider does not have VMs (eg. Hawkular or Openshift)
@@ -1757,6 +1797,10 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
                 provider_api.get_meta_value(vm_name, 'sprout_leased_until'))
             construct['status_changed'] = parsedate(
                 provider_api.get_meta_value(vm_name, 'sprout_status_changed'))
+            construct['created_on'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_created_on'))
+            construct['modified_on'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_modified_on'))
         except KeyError as e:
             self.logger.error('Failed to reconstruct %d/%s', appliance_id, vm_name)
             self.logger.exception(e)
@@ -1819,7 +1863,7 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
 
 @singleton_task()
 def read_docker_images_from_url(self):
-    for group in Group.objects.exclude(templates_url=None):
+    for group in Group.objects.exclude(Q(templates_url=None) | Q(templates_url='')):
         read_docker_images_from_url_group.delay(group.id)
 
 
@@ -1882,7 +1926,19 @@ def process_docker_images_from_url_group(self, group_id, version, docker_version
         date = datetime.strptime(date, '%Y%m%d%H%M%S').date()  # noqa
     except AttributeError:
         raise ValueError('Could not parse date from {}'.format(docker_version))
-    for provider in Provider.objects.exclude(container_base_template=None):
+    if group.template_obsolete_days is not None:
+        today = datetime.now().date()
+        age = today - date
+        if age > group.template_obsolete_days:
+            self.logger.info('Ignoring old template {} (age {} days)'.format(pull_url, age))
+            return
+    for provider in Provider.objects.filter(working=True, disabled=False):
+        if not provider.container_base_template:
+            # 11:30 PM, TODO put this check in a query
+            continue
+        if provider.remaining_configuring_slots < 1:
+            # Will do it later ...
+            continue
         try:
             Template.objects.get(
                 ~Q(container=None), template_group=group, provider=provider, version=version,
@@ -1901,7 +1957,7 @@ def docker_vm_name(version, date):
 @singleton_task()
 def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
     group = Group.objects.get(id=group_id)
-    provider = Provider.objects.get(id=provider_id)
+    provider = Provider.objects.get(id=provider_id, working=True, disabled=False)
     with transaction.atomic():
         if provider.remaining_configuring_slots < 1:
             self.retry(
@@ -1948,7 +2004,7 @@ def sync_appliance_hw(self, appliance_id):
 
 @singleton_task()
 def sync_provider_hw(self, provider_id):
-    Provider.objects.get(id=provider_id).perf_sync()
+    Provider.objects.get(id=provider_id, working=True, disabled=False).perf_sync()
 
 
 @singleton_task()

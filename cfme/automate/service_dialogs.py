@@ -83,7 +83,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
     def __init__(self, label=None, description=None,
                  submit=False, cancel=False,
                  tab_label=None, tab_desc=None,
-                 box_label=None, box_desc=None, appliance=None):
+                 box_label=None, box_desc=None, element_data=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.label = label
         self.description = description
@@ -93,6 +93,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
         self.tab_desc = tab_desc
         self.box_label = box_label
         self.box_desc = box_desc
+        self.element_data = element_data
 
     def as_fill_value(self):
         return self.label
@@ -108,7 +109,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
             fill(element_form, each_element)
             self.element_type(each_element)
 
-    def create(self, *element_data):
+    def create(self):
         navigate_to(self, 'Add')
         fill(label_form, {
             'label': self.label,
@@ -124,7 +125,10 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
         sel.wait_for_element(box_form.box_label)
         fill(box_form, {'box_label': self.box_label,
                         'box_desc': self.box_desc})
-        self.add_element(*element_data)
+        if isinstance(self.element_data, (list, tuple)):
+            self.add_element(*self.element_data)
+        else:
+            self.add_element(self.element_data)
         sel.click(form_buttons.add)
         flash.assert_success_message('Dialog "{}" was added'.format(self.label))
 
@@ -137,7 +141,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
 
     def update_element(self, second_element, element_data):
         navigate_to(self, 'Edit')
-        if version.current_version() > "5.5":
+        if self.appliance.version > "5.5":
             tree = accordion.tree("Dialog")
         else:
             tree = Tree("dialog_edit_treebox")
@@ -172,7 +176,7 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
             else:
                 node1 = "InspectMe"
                 sel.click(element_form.field_entry_point)
-                if version.current_version() < "5.7":
+                if self.appliance.version < "5.7":
                     dynamic_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
                 else:
                     bt_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
@@ -204,7 +208,7 @@ class ServiceDialogAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if version.current_version() < '5.8':
+        if self.obj.appliance.version < '5.8':
             self.prerequisite_view.navigation.select('Automate', 'Customization')
         else:
             self.prerequisite_view.navigation.select('Automation', 'Automate', 'Customization')

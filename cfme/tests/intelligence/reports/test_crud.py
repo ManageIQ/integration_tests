@@ -14,6 +14,8 @@ from utils.blockers import BZ
 from utils import version
 from cfme import test_requirements
 
+from utils.wait import wait_for_decorator
+
 
 report_crud_dir = data_path.join("reports_crud")
 schedules_crud_dir = data_path.join("schedules_crud")
@@ -23,9 +25,9 @@ def crud_files_reports():
     result = []
     if not report_crud_dir.exists():
         report_crud_dir.mkdir()
-    for file in report_crud_dir.listdir():
-        if file.isfile() and file.basename.endswith(".yaml"):
-            result.append(file.basename)
+    for file_name in report_crud_dir.listdir():
+        if file_name.isfile() and file_name.basename.endswith(".yaml"):
+            result.append(file_name.basename)
     return result
 
 
@@ -33,9 +35,9 @@ def crud_files_schedules():
     result = []
     if not schedules_crud_dir.exists():
         schedules_crud_dir.mkdir()
-    for file in schedules_crud_dir.listdir():
-        if file.isfile() and file.basename.endswith(".yaml"):
-            result.append(file.basename)
+    for file_name in schedules_crud_dir.listdir():
+        if file_name.isfile() and file_name.basename.endswith(".yaml"):
+            result.append(file_name.basename)
     return result
 
 
@@ -52,7 +54,7 @@ def schedule(request):
         name = data.pop("name")
         description = data.pop("description")
         yfilter = data.pop("filter")
-        if version.current_version() >= 5.6:
+        if '5.6' <= version.current_version() < '5.7.1.1':
             yfilter[2] += ' - Sample 1'
         return Schedule(name, description, yfilter, **data)
 
@@ -65,7 +67,7 @@ def test_custom_report_crud(custom_report):
         custom_report.title += fauxfactory.gen_alphanumeric()
     custom_report.queue(wait_for_finish=True)
     for report in custom_report.get_saved_reports():
-        report.data  # touch the results
+        assert hasattr(report, 'data')
     custom_report.delete()
 
 
@@ -182,27 +184,26 @@ def test_dashboard_crud():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 @test_requirements.report
-def test_run_report(rest_api):
-    report = rest_api.collections.reports.get(name='VM Disk Usage')
+def test_run_report(appliance):
+    report = appliance.rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
+    assert appliance.rest_api.response.status_code == 200
 
-    @pytest.wait_for(timeout="5m", delay=5)
+    @wait_for_decorator(timeout="5m", delay=5)
     def rest_running_report_finishes():
         response.task.reload()
-        if response.task.status.lower() in {"error"}:
+        if "error" in response.task.status.lower():
             pytest.fail("Error when running report: `{}`".format(response.task.message))
         return response.task.state.lower() == 'finished'
 
-    result = rest_api.collections.results.get(id=response.result_id)
+    result = appliance.rest_api.collections.results.get(id=response.result_id)
     assert result.name == report.name
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 @test_requirements.report
-def test_import_report(rest_api):
+def test_import_report(appliance):
     menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
     data = {
         'report': {
@@ -216,10 +217,12 @@ def test_import_report(rest_api):
         },
         'options': {'save': 'true'}
     }
-    response, = rest_api.collections.reports.action.execute_action("import", data)
+    response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
+    assert appliance.rest_api.response.status_code == 200
     assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
-    report = rest_api.collections.reports.get(name=menu_name)
+    report = appliance.rest_api.collections.reports.get(name=menu_name)
     assert report.name == menu_name
 
-    response, = rest_api.collections.reports.action.execute_action("import", data)
+    response, = appliance.rest_api.collections.reports.action.execute_action("import", data)
+    assert appliance.rest_api.response.status_code == 200
     assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)

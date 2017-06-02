@@ -56,7 +56,8 @@ def test_instance_crud(klass):
 
 
 @pytest.mark.tier(2)
-def test_duplicate_disallowed(request, klass):
+@pytest.mark.polarion('RHCF3-4317')
+def test_duplicate_instance_disallowed(request, klass):
     name = fauxfactory.gen_alphanumeric()
     klass.instances.create(name=name)
     with error.expected("Name has already been taken"):
@@ -65,7 +66,8 @@ def test_duplicate_disallowed(request, klass):
 
 @pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
-def test_display_name_unset_from_ui(request, klass):
+@pytest.mark.polarion('RHCF3-3655')
+def test_instance_display_name_unset_from_ui(request, klass):
     instance = klass.instances.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric())

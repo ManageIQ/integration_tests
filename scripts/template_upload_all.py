@@ -23,9 +23,9 @@ import datetime
 import sys
 import utils
 from contextlib import closing
-from utils import path
-
 from urllib2 import urlopen, HTTPError
+
+from utils import path, trackerbot
 from utils.conf import cfme_data
 
 CFME_BREW_ID = "cfme"
@@ -45,7 +45,7 @@ def parse_cmd_line():
                         default=None)
     parser.add_argument('--provider-type', dest='provider_type',
                         help='Type of provider to upload to (virtualcenter, rhevm,'
-                             'openstack, google, scvmm)',
+                             'openstack, gce, scvmm)',
                         default=None)
     parser.add_argument('--provider-version', dest='provider_version',
                         help='Version of chosen provider',
@@ -94,12 +94,16 @@ def template_name(image_link, image_ts, checksum_link, version=None):
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-vvvv-yyyymmddhhmm
             return "miq-nightly-{}-{}".format(version, result[0])
         elif "stable" in image_link:
-            if 'euwe' in image_link:
-                pattern = re.compile(r'[^\d]*?-euwe-(.*)-(?P<year>\d{4})(?P<month>\d{2})('
-                                     r'?P<day>\d{2})')
-                result = pattern.findall(image_name)
-                return "miq-stable-euwe-{}-{}{}{}".format(result[0][0], result[0][1], result[0][2],
-                                                      result[0][3])
+            # Handle named MIQ releases, dropping provider and capturing release and date
+            if 'master' not in image_link:
+                pattern = re.compile(r'manageiq-[^\d]*?-(?P<release>[-.\w]*?)'
+                                     r'-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
+                # Use match so we can use regex group names
+                result = pattern.match(image_name)
+                return "miq-stable-{}-{}{}{}".format(result.group('release'),
+                                                     result.group('year'),
+                                                     result.group('month'),
+                                                     result.group('day'))
             return "miq-stable-{}-{}".format(result[0][0], result[0][2])
         else:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
@@ -245,7 +249,7 @@ def browse_directory(dir_url):
         print("Skipping: {}".format(dir_url))
         return None
 
-    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm|ovirt)[^"\'>]*)')
+    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm\.ova|ovirt)[^"\'>]*)')
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
     rhos_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhos|openstack|rhelosp)[^"\'>]*)')
     rhos_image_name = rhos_pattern.findall(string_from_url)
@@ -317,7 +321,8 @@ def main():
             if key != stream:
                 continue
         if upload_url:
-            if url != upload_url:
+            # strip trailing slashes just in case
+            if url.rstrip('/') != upload_url.rstrip('/'):
                 continue
         dir_files = browse_directory(url)
         if not dir_files:
@@ -348,7 +353,7 @@ def main():
             module = 'template_upload_scvmm'
             if module not in dir_files.iterkeys():
                 continue
-        elif provider_type == 'google':
+        elif provider_type == 'gce':
             module = 'template_upload_gce'
             if module not in dir_files.iterkeys():
                 continue
@@ -370,6 +375,12 @@ def main():
                 checksum_url,
                 get_version(url)
             )
+            if not stream:
+                # Stream is none, using automatic naming strategy, parse stream from template name
+                template_parser = trackerbot.parse_template(kwargs['template_name'])
+                if template_parser.stream:
+                    kwargs['stream'] = template_parser.group_name
+
         print("TEMPLATE_UPLOAD_ALL:-----Start of {} upload on: {}--------".format(
             kwargs['template_name'], provider_type))
 

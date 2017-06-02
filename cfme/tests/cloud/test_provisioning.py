@@ -9,15 +9,13 @@ from textwrap import dedent
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.cloud.instance import Instance
-from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
-from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
-from cfme.cloud.instance.azure import AzureInstance  # NOQA
-from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from utils import testgen
+from cfme.services import requests
+from utils import normalize_text, testgen
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.update import update
@@ -50,10 +48,11 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         'last_name': 'Provisioner',
         'notes': note,
     }
+    # TODO Move this into helpers on the provider classes
     if not isinstance(provider, AzureProvider):
         inst_args['instance_type'] = provisioning['instance_type']
         inst_args['availability_zone'] = provisioning['availability_zone']
-        inst_args['security_groups'] = [provisioning['security_group']]
+        inst_args['security_groups'] = provisioning['security_group']
         inst_args['guest_keypair'] = provisioning['guest_keypair']
 
     if isinstance(provider, OpenStackProvider):
@@ -72,7 +71,22 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         inst_args['instance_type'] = provisioning['vm_size'].lower()
         inst_args['admin_username'] = provisioning['vm_user']
         inst_args['admin_password'] = provisioning['vm_password']
-    return instance, inst_args
+
+    try:
+        auto = request.param
+        if auto:
+            inst_args['automatic_placement'] = True
+            inst_args['availability_zone'] = None
+            inst_args['virtual_private_cloud'] = None
+            inst_args['cloud_network'] = None
+            inst_args['cloud_subnet'] = None
+            inst_args['security_groups'] = None
+            inst_args['resource_groups'] = None
+            inst_args['public_ip_address'] = None
+    except AttributeError:
+        # in case nothing was passed just skip
+        pass
+    return instance, inst_args, image
 
 
 @pytest.fixture(scope="function")
@@ -80,14 +94,27 @@ def vm_name(request, provider):
     return random_vm_name('prov')
 
 
+@pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
 def test_provision_from_template(request, setup_provider, provider, testing_instance, soft_assert):
     """ Tests instance provision from template
 
     Metadata:
         test_flag: provision
     """
-    instance, inst_args = testing_instance
+    instance, inst_args, image = testing_instance
     instance.create(**inst_args)
+    logger.info('Waiting for cfme provision request for vm %s', instance.name)
+    row_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
+    cells = {'Description': row_description}
+    try:
+        row, __ = wait_for(requests.wait_for_request, [cells],
+                           fail_func=requests.reload, num_sec=1500, delay=20)
+    except Exception as e:
+        requests.debug_requests()
+        raise e
+    assert normalize_text(row.status.text) == 'ok' and \
+        normalize_text(row.request_state.text) == 'finished', \
+        "Provisioning failed with the message {}".format(row.last_message.text)
     instance.wait_to_appear(timeout=800)
     provider.refresh_provider_relationships()
     logger.info("Refreshing provider relationships and power states")
@@ -191,7 +218,9 @@ def test_provision_from_template_using_rest(
 
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+
     request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    assert rest_api.response.status_code == 200
 
     def _finished():
         request.reload()
@@ -200,6 +229,122 @@ def test_provision_from_template_using_rest(
         return request.request_state.lower() in {"finished", "provisioned"}
 
     wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(
+        lambda: provider.mgmt.does_vm_exist(vm_name),
+        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
+
+
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
+def test_ec2_manual_placement_using_rest(
+        request, setup_provider, provider, vm_name, rest_api, provisioning):
+    """ Tests provisioning ec2 instance with manual placement using the REST API.
+
+    Metadata:
+        test_flag: provision
+    """
+    image_guid = rest_api.collections.templates.get(name=provisioning['image']['name']).guid
+    provider_rest = rest_api.collections.providers.get(name=provider.name)
+    security_group_name = provisioning['security_group'].split(':')[0].strip()
+    instance_type = provisioning['instance_type'].split(':')[0].strip()
+
+    flavors = rest_api.collections.flavors.find_by(name=instance_type)
+    assert len(flavors) > 0
+    flavor = None
+    for flavor in flavors:
+        if flavor.ems_id == provider_rest.id:
+            break
+    else:
+        pytest.fail("Cannot find flavour.")
+
+    provider_data = rest_api.get(provider_rest._href +
+        '?attributes=cloud_networks,cloud_subnets,security_groups')
+
+    assert len(provider_data['cloud_networks']) > 0
+    cloud_network = None
+    for cloud_network in provider_data['cloud_networks']:
+        if cloud_network['enabled']:
+            break
+    else:
+        pytest.fail("Cannot find cloud network.")
+
+    assert len(provider_data['security_groups']) > 0
+    security_group = None
+    for security_group in provider_data['security_groups']:
+        if ('cloud_network_id' in security_group and
+                security_group['cloud_network_id'] == cloud_network['id'] and
+                security_group['name'] == security_group_name):
+            break
+    else:
+        pytest.fail("Cannot find security group.")
+
+    assert len(provider_data['cloud_subnets']) > 0
+    cloud_subnet = None
+    for cloud_subnet in provider_data['cloud_subnets']:
+        if (cloud_subnet['cloud_network_id'] == cloud_network['id'] and
+                cloud_subnet['status'] == 'available'):
+            break
+    else:
+        pytest.fail("Cannot find cloud subnet.")
+
+    def _find_availability_zone_id():
+        subnet_data = rest_api.get(provider_rest._href + '?attributes=cloud_subnets')
+        for subnet in subnet_data['cloud_subnets']:
+            if subnet['id'] == cloud_subnet['id'] and 'availability_zone_id' in subnet:
+                return subnet['availability_zone_id']
+        return False
+
+    if 'availability_zone_id' in cloud_subnet:
+        availability_zone_id = cloud_subnet['availability_zone_id']
+    else:
+        availability_zone_id, _ = wait_for(
+            _find_availability_zone_id, num_sec=100, delay=5, message="availability_zone present")
+
+    provision_data = {
+        "version": "1.1",
+        "template_fields": {
+            "guid": image_guid
+        },
+        "vm_fields": {
+            "vm_name": vm_name,
+            "instance_type": flavor.id,
+            "request_type": "template",
+            "placement_auto": False,
+            "cloud_network": cloud_network['id'],
+            "cloud_subnet": cloud_subnet['id'],
+            "placement_availability_zone": availability_zone_id,
+            "security_groups": security_group['id'],
+            "monitoring": "basic"
+        },
+        "requester": {
+            "user_name": "admin",
+            "owner_first_name": "Administrator",
+            "owner_last_name": "Administratorovich",
+            "owner_email": "admin@example.com",
+            "auto_approve": True,
+        },
+        "tags": {
+        },
+        "additional_values": {
+        },
+        "ems_custom_attributes": {
+        },
+        "miq_custom_attributes": {
+        }
+    }
+
+    request.addfinalizer(
+        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+
+    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    assert rest_api.response.status_code == 200
+
+    def _finished():
+        request.reload()
+        if 'error' in request.status.lower():
+            pytest.fail("Error when provisioning: `{}`".format(request.message))
+        return request.request_state.lower() in ('finished', 'provisioned')
+
+    wait_for(_finished, num_sec=1000, delay=5, message="REST provisioning finishes")
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
         num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))

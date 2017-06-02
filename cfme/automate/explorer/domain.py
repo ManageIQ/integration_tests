@@ -9,6 +9,7 @@ from widgetastic_manageiq import Table, UpDownSelect
 from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
+from utils import clear_property_cache
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
@@ -303,6 +304,26 @@ class Domain(Navigatable, Fillable):
             domains_view.flash.assert_no_error()
             domains_view.flash.assert_message(
                 'Automate Domain "{}": Delete successful'.format(self.description or self.name))
+
+    def lock(self):
+        # Ensure this has correct data
+        self.description
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Lock this Domain')
+        details_page.flash.assert_no_error()
+        details_page.flash.assert_message('The selected Automate Domain were marked as Locked')
+        clear_property_cache(self, 'locked')
+        assert self.locked
+
+    def unlock(self):
+        # Ensure this has correct data
+        self.description
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Unlock this Domain')
+        details_page.flash.assert_no_error()
+        details_page.flash.assert_message('The selected Automate Domain were marked as Unlocked')
+        clear_property_cache(self, 'locked')
+        assert not self.locked
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')

@@ -4,9 +4,6 @@ In cases where you cannot run a certain test againts the primary appliance becau
 destructive potential (which could render all subsequent testing useless), you want to use
 a temporary appliance parallel to the primary one.
 
-For tests such as setting up an appliance (or multiple) in a certain setup, you will want to use
-the :py:func:`temp_appliance_unconfig` fixture and then configure the appliance(s) yourself.
-
 For tests where all you need is a single preconfigured appliance to run a database restore on for
 example, you will want to use the :py:func:`temp_appliance_preconfig` fixture.
 
@@ -29,13 +26,18 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
         preconfigured: True if the appliance should be already configured, False otherwise
         lease_time: Lease time in minutes (3 hours by default)
     """
+    apps = []
+    request_id = None
     try:
         sprout_client = SproutClient.from_config()
         apps, request_id = sprout_client.provision_appliances(
             count=count, lease_time=lease_time, preconfigured=preconfigured)
         yield apps
     finally:
-        sprout_client.destroy_pool(request_id)
+        for app in apps:
+            app.ssh_client.close()
+        if request_id:
+            sprout_client.destroy_pool(request_id)
 
 
 # Single appliance, configured

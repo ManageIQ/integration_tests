@@ -5,7 +5,7 @@ Extensively uses :py:mod:`cfme.intelligence.reports.ui_elements`
 """
 from functools import partial
 from cached_property import cached_property
-from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
+from navmazing import NavigateToSibling, NavigateToObject
 
 from . import Report
 from cfme.fixtures import pytest_selenium as sel
@@ -19,6 +19,7 @@ from cfme.web_ui.multibox import MultiBoxSelect
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
+from cfme.exceptions import ItemNotFound
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils import version
@@ -87,6 +88,8 @@ report_form = TabStripForm(
         "Filter": [
             ("filter", Expression()),
             ("filter_show_costs", select(id="cb_show_typ")),
+            ('provider', ShowingInputs(select(id="cb_provider_id"))),
+            ("project", ShowingInputs(select(id="cb_entity_id"))),
             ("filter_owner", select(id="cb_owner_id")),
             ("filter_tag_cat", select(id="cb_tag_cat")),
             ("filter_tag_value", select(id="cb_tag_value")),
@@ -419,10 +422,22 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
 
     def delete(self):
         navigate_to(self, 'Saved')
-        self.saved_table.select_row(header='Run At', value=self.datetime_in_tree)
+        self.saved_table.select_row(header='Run At', value=self.datetime)
         cfg_btn("Delete this Saved Report from the Database", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Saved')
+            return True
+        except ItemNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 
 @navigator.register(CannedSavedReport, 'Details')

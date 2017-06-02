@@ -17,7 +17,10 @@ from time import time
 
 import pytest
 
-from fixtures.terminalreporter import reporter
+
+def reporter(config):
+    from fixtures.terminalreporter import reporter as lazy_imported_reporter
+    return lazy_imported_reporter(config)
 
 
 def pytest_addoption(parser):

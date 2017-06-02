@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+import random
 import fauxfactory
 import pytest
-import cfme.intelligence.chargeback as cb
-import cfme.web_ui.flash as flash
-import utils.error as error
 
+
+import cfme.intelligence.chargeback as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
+from utils import error
+from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for
 
@@ -17,139 +19,172 @@ pytestmark = [
 ]
 
 
-def new_compute_rate():
-    return cb.ComputeRate(description='cb' + fauxfactory.gen_alphanumeric(),
-                          cpu_alloc=(1000, cb.HOURLY),
-                          disk_io=(10, cb.HOURLY),
-                          compute_fixed_1=(100, cb.HOURLY),
-                          compute_fixed_2=(200, cb.HOURLY),
-                          mem_alloc=(10000, cb.HOURLY),
-                          mem_used=(4000, cb.HOURLY),
-                          net_io=(6000, cb.HOURLY))
+def with_random_per_time(**kw):
+    kw['per_time'] = random.choice(['Hourly', 'Daily', 'Monthly', 'Weekly', 'Yearly'])
+    return kw
 
 
-def new_storage_rate():
-    return cb.StorageRate(description='cb' + fauxfactory.gen_alphanumeric(),
-                          storage_fixed_2=(4000, cb.HOURLY),
-                          storage_alloc=(2000, cb.HOURLY),
-                          storage_used=(6000, cb.HOURLY))
+@pytest.fixture
+def chargeback_compute_rate():
+    return cb.ComputeRate(
+        description='cb' + fauxfactory.gen_alphanumeric(),
+        fields={
+            'Allocated CPU Count': with_random_per_time(fixed_rate='1000'),
+            'Used Disk I/O': with_random_per_time(fixed_rate='10'),
+            'Fixed Compute Cost 1': with_random_per_time(fixed_rate='100'),
+            'Used Memory': with_random_per_time(fixed_rate='6000'),
+            'Used CPU Cores': {'variable_rate': '0.05'}
+        })
 
 
-def test_add_new_compute_chargeback():
-    ccb = new_compute_rate()
-    ccb.create()
-    flash.assert_message_match('Chargeback Rate "{}" was added'.format(ccb.description))
+@pytest.fixture
+def chargeback_storage_rate():
+    return cb.StorageRate(
+        description='cb' + fauxfactory.gen_alphanumeric(),
+        fields={
+            'Fixed Storage Cost 1': with_random_per_time(fixed_rate='100'),
+            'Fixed Storage Cost 2': with_random_per_time(fixed_rate='300'),
+            'Allocated Disk Storage': with_random_per_time(fixed_rate='6000'),
+            'Used Disk Storage': with_random_per_time(variable_rate='0.1'),
+        })
+
+
+def test_add_new_compute_chargeback(chargeback_compute_rate):
+    chargeback_compute_rate.create()
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1073366])
-def test_compute_chargeback_duplicate_disallowed():
-    ccb = new_compute_rate()
-    ccb.create()
+@pytest.mark.meta(blockers=[BZ(1441152, forced_streams=["5.8"])])
+def test_compute_chargeback_duplicate_disallowed(chargeback_compute_rate):
+    chargeback_compute_rate.create()
     with error.expected('Description has already been taken'):
-        ccb.create()
+        chargeback_compute_rate.create()
 
 
 @pytest.mark.tier(3)
-def test_add_new_storage_chargeback():
-    scb = new_storage_rate()
-    scb.create()
-    flash.assert_message_match('Chargeback Rate "{}" was added'.format(scb.description))
+def test_add_new_storage_chargeback(chargeback_storage_rate):
+    chargeback_storage_rate.create()
 
 
 @pytest.mark.tier(3)
-def test_edit_compute_chargeback():
-    ccb = new_compute_rate()
-    ccb.create()
-    with update(ccb):
-        ccb.description = ccb.description + "-edited"
-        ccb.cpu_alloc = (5000, cb.HOURLY)
-        ccb.disk_io = (10, cb.HOURLY)
-        ccb.compute_fixed_1 = (200, cb.HOURLY)
-        ccb.compute_fixed_2 = (100, cb.HOURLY)
-        ccb.mem_alloc = (1, cb.HOURLY)
-        ccb.mem_used = (2000, cb.HOURLY)
-        ccb.net_io = (4000, cb.HOURLY)
-    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(ccb.description))
+def test_edit_compute_chargeback(chargeback_compute_rate):
+    chargeback_compute_rate.create()
+    with update(chargeback_compute_rate):
+        chargeback_compute_rate.description = chargeback_compute_rate.description + "-edited"
+        chargeback_compute_rate.fields = {
+            'Fixed Compute Cost 1': with_random_per_time(fixed_rate='500'),
+            'Allocated CPU Count': with_random_per_time(fixed_rate='100'),
+        }
 
 
 @pytest.mark.tier(3)
-def test_edit_storage_chargeback():
-    scb = new_storage_rate()
-    scb.create()
-    with update(scb):
-        scb.description = scb.description + "-edited"
-        scb.storage_fixed_2 = (2000, cb.HOURLY)
-        scb.storage_alloc = (3000, cb.HOURLY)
-        scb.storage_used = (6000, cb.HOURLY)
-    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(scb.description))
+def test_edit_storage_chargeback(chargeback_storage_rate):
+    chargeback_storage_rate.create()
+    with update(chargeback_storage_rate):
+        chargeback_storage_rate.description = chargeback_storage_rate.description + "-edited"
+        chargeback_storage_rate.fields = {
+            'Fixed Storage Cost 1': with_random_per_time(fixed_rate='500'),
+            'Allocated Disk Storage': with_random_per_time(fixed_rate='100'),
+        }
 
 
 @pytest.mark.tier(3)
-def test_delete_compute_chargeback():
-    ccb = new_compute_rate()
-    ccb.create()
-    ccb.delete()
-    flash.assert_message_match('Chargeback Rate "{}": Delete successful'.format(ccb.description))
+def test_delete_compute_chargeback(chargeback_compute_rate):
+    chargeback_compute_rate.create()
+    chargeback_compute_rate.delete()
 
 
 @pytest.mark.tier(3)
-def test_delete_storage_chargeback():
-    scb = new_storage_rate()
-    scb.create()
-    scb.delete()
-    flash.assert_message_match('Chargeback Rate "{}": Delete successful'.format(scb.description))
+def test_delete_storage_chargeback(chargeback_storage_rate):
+    chargeback_storage_rate.create()
+    chargeback_storage_rate.delete()
 
 
 class TestRatesViaREST(object):
     @pytest.fixture(scope="function")
-    def rates(self, request, rest_api):
-        return _rates(request, rest_api)
+    def rates(self, request, appliance):
+        response = _rates(request, appliance.rest_api)
+        assert appliance.rest_api.response.status_code == 200
+        return response
 
+    @pytest.mark.tier(3)
+    def test_create_rates(self, appliance, rates):
+        """Tests creating rates.
+
+        Metadata:
+            test_flag: rest
+        """
+        for rate in rates:
+            record = appliance.rest_api.collections.rates.get(id=rate.id)
+            assert appliance.rest_api.response.status_code == 200
+            assert record.description == rate.description
+
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])
-    @pytest.mark.tier(3)
-    def test_edit_rates(self, rest_api, rates, multiple):
+    def test_edit_rates(self, appliance, rates, multiple):
+        """Tests editing rates.
+
+        Metadata:
+            test_flag: rest
+        """
+        new_descriptions = []
         if multiple:
-            new_descriptions = []
             rates_data_edited = []
             for rate in rates:
-                new_description = fauxfactory.gen_alphanumeric().lower()
+                new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
                 new_descriptions.append(new_description)
                 rate.reload()
                 rates_data_edited.append({
                     "href": rate.href,
-                    "description": "test_category_{}".format(new_description),
+                    "description": new_description,
                 })
-            rest_api.collections.rates.action.edit(*rates_data_edited)
-            for new_description in new_descriptions:
-                wait_for(
-                    lambda: rest_api.collections.rates.find_by(description=new_description),
-                    num_sec=180,
-                    delay=10,
-                )
+            edited = appliance.rest_api.collections.rates.action.edit(*rates_data_edited)
+            assert appliance.rest_api.response.status_code == 200
         else:
-            rate = rest_api.collections.rates.get(description=rates[0].description)
-            new_description = 'test_rate_{}'.format(fauxfactory.gen_alphanumeric().lower())
-            rate.action.edit(description=new_description)
-            wait_for(
-                lambda: rest_api.collections.rates.find_by(description=new_description),
+            edited = []
+            for rate in rates:
+                new_description = "test_rate_{}".format(fauxfactory.gen_alphanumeric().lower())
+                new_descriptions.append(new_description)
+                edited.append(rate.action.edit(description=new_description))
+                assert appliance.rest_api.response.status_code == 200
+        assert len(edited) == len(rates)
+        for index, rate in enumerate(rates):
+            rate.reload()
+            record, _ = wait_for(
+                lambda: appliance.rest_api.collections.rates.find_by(
+                    description=new_descriptions[index]) or False,
                 num_sec=180,
                 delay=10,
             )
+            assert rate.description == edited[index].description == record[0].description
 
     @pytest.mark.tier(3)
-    @pytest.mark.parametrize(
-        "multiple", [False, True],
-        ids=["one_request", "multiple_requests"])
-    def test_delete_rates(self, rest_api, rates, multiple):
-        if multiple:
-            rest_api.collections.rates.action.delete(*rates)
+    @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
+    def test_delete_rates_from_detil(self, appliance, rates, method):
+        """Tests deleting rates from detail.
+
+        Metadata:
+            test_flag: rest
+        """
+        status = 204 if method == "delete" else 200
+        for rate in rates:
+            rate.action.delete(force_method=method)
+            assert appliance.rest_api.response.status_code == status
             with error.expected("ActiveRecord::RecordNotFound"):
-                rest_api.collections.rates.action.delete(*rates)
-        else:
-            rate = rates[0]
-            rate.action.delete()
-            with error.expected("ActiveRecord::RecordNotFound"):
-                rate.action.delete()
+                rate.action.delete(force_method=method)
+            assert appliance.rest_api.response.status_code == 404
+
+    @pytest.mark.tier(3)
+    def test_delete_rates_from_collection(self, appliance, rates):
+        """Tests deleting rates from collection.
+
+        Metadata:
+            test_flag: rest
+        """
+        appliance.rest_api.collections.rates.action.delete(*rates)
+        assert appliance.rest_api.response.status_code == 200
+        with error.expected("ActiveRecord::RecordNotFound"):
+            appliance.rest_api.collections.rates.action.delete(*rates)
+        assert appliance.rest_api.response.status_code == 404

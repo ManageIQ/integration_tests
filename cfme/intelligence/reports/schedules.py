@@ -12,7 +12,6 @@ from cfme.web_ui import (
 )
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -75,8 +74,8 @@ class Schedule(Updateable, Pretty, Navigatable):
 
     @property
     def exists(self):
-        schedules = cfmedb()["miq_schedules"]
-        return cfmedb().session\
+        schedules = self.appliance.db["miq_schedules"]
+        return self.appliance.db.session\
             .query(schedules.name)\
             .filter(schedules.name == self.name)\
             .count() > 0

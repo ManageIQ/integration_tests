@@ -3,15 +3,15 @@ from utils.version import pick
 from mgmtsystem.azure import AzureSystem
 
 
-@CloudProvider.add_provider_type
 class AzureProvider(CloudProvider):
     type_name = "azure"
     mgmt_class = AzureSystem
+    db_types = ["Azure::CloudManager"]
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None,
-                 tenant_id=None, subscription_id=None):
+                 tenant_id=None, subscription_id=None, appliance=None):
         super(AzureProvider, self).__init__(name=name, credentials=credentials,
-                                            zone=zone, key=key)
+                                            zone=zone, key=key, appliance=appliance)
         self.region = region  # Region can be a string or a dict for version pick
         self.tenant_id = tenant_id
         self.subscription_id = subscription_id
@@ -32,7 +32,7 @@ class AzureProvider(CloudProvider):
         return self.data['provisioning']
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         # HACK: stray domain entry in credentials, so ensure it is not there
@@ -43,4 +43,5 @@ class AzureProvider(CloudProvider):
             tenant_id=prov_config['tenant_id'],
             subscription_id=prov_config['subscription_id'],
             credentials={'default': credentials},
-            key=prov_key)
+            key=prov_key,
+            appliance=appliance)

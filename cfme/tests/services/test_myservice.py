@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import pytest
 from datetime import datetime
 
-import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -13,6 +13,9 @@ from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.wait import wait_for
+from utils.update import update
+from utils.version import appliance_is_downstream
+
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name", "catalog_item"),
@@ -48,7 +51,7 @@ def myservice(setup_provider, provider, catalog_item, request):
         version.LOWEST: catalog_item.provisioning_data["vm_name"] + '_0001',
         '5.7': catalog_item.provisioning_data["vm_name"] + '0001'})
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
@@ -62,14 +65,13 @@ def myservice(setup_provider, provider, catalog_item, request):
     cleanup_vm(vm_name, provider)
 
 
-def test_retire_service(provider, myservice, register_event):
+def test_retire_service(provider, myservice):
     """Tests my service
 
     Metadata:
         test_flag: provision
     """
     myservice.retire()
-    register_event('Service', myservice.service_name, 'service_retired')
 
 
 def test_retire_service_on_date(myservice):
@@ -90,12 +92,14 @@ def test_crud_set_ownership_and_edit_tags(myservice):
     """
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
     myservice.edit_tags("Cost Center *", "Cost Center 001")
-    myservice.update(updates={'service_name': myservice.service_name + '_updated',
-                              'description': 'Updated service description'})
+    with update(myservice):
+        myservice.description = "my edited description"
     myservice.delete()
 
 
 @pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
+# PDF not present on upstream
+@pytest.mark.uncollectif(lambda filetype: filetype == 'PDF' and not appliance_is_downstream())
 def test_download_file(needs_firefox, myservice, filetype):
     """Tests my service download files
 

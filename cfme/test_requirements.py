@@ -18,6 +18,7 @@ Please import the module instead of elements:
 
 import pytest
 
+ansible = pytest.mark.requirement("ansible")
 access = pytest.mark.requirement("access")
 alert = pytest.mark.requirement("alert")
 auth = pytest.mark.requirement("auth")
@@ -61,6 +62,7 @@ smartstate = pytest.mark.requirement("smartstate")
 snapshot = pytest.mark.requirement("snapshot")
 ssui = pytest.mark.requirement("ssui")
 stack = pytest.mark.requirement("stack")
+storage = pytest.mark.requirement("storage")
 sysprep = pytest.mark.requirement("sysprep")
 tag = pytest.mark.requirement("tag")
 timelines = pytest.mark.requirement("timelines")

@@ -90,14 +90,14 @@ def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=F
         if not machine_addr:
             machine_addr = urlparse.urlparse(store.base_url).hostname
         if not ssh_creds:
-            ssh = store.current_appliance.ssh_client
+            ssh_client = store.current_appliance.ssh_client
         else:
-            ssh = SSHClient(
+            ssh_client = SSHClient(
                 hostname=machine_addr,
                 username=ssh_creds['username'],
                 password=ssh_creds['password']
             )
-        with ssh:
+        with ssh_client:
             # on exception => fails with return code 1
             cmd = '''python -c "
 import sys, socket
@@ -105,7 +105,7 @@ addr = socket.gethostbyname('%s')
 socket.create_connection((addr, %d), timeout=10)
 sys.exit(0)
             "''' % (addr, port)
-            ret, out = ssh.run_command(cmd)
+            ret, out = ssh_client.run_command(cmd)
             if ret == 0:
                 _ports[addr][port] = True
             else:

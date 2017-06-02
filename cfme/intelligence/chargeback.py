@@ -3,22 +3,27 @@ from collections import Mapping
 from copy import copy
 from functools import partial
 
-from selenium.webdriver.common.by import By
-from navmazing import NavigateToSibling, NavigateToAttribute
+from cached_property import cached_property
 
-from cfme import BaseLoggedInPage
-import cfme.web_ui.accordion as accordion
-import cfme.web_ui.toolbar as tb
+from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.utils import ParametrizedLocator, ParametrizedString
+from widgetastic.widget import Text, ParametrizedView
+from widgetastic_manageiq import Select
+from widgetastic_patternfly import Input, Button, Dropdown
+
+from cfme.base.login import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons, match_location
+import cfme.web_ui.accordion as accordion
+from cfme.web_ui import Form, Tree, fill, flash, form_buttons, match_location, Select as Select_old
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.version import LOWEST, pick
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+
 
 assignment_tree = Tree("//div[@id='cb_assignments_treebox']/ul")
-tb_select = partial(tb.select, "Configuration")
+
 
 match_page = partial(match_location, controller='chargeback',
                      title='Chargeback')
@@ -26,64 +31,102 @@ match_page = partial(match_location, controller='chargeback',
 
 class ChargebackView(BaseLoggedInPage):
     @property
-    def is_displayed(self):
+    def in_chargeback(self):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Cloud Intel', 'Chargeback'])
 
+    @property
+    def is_displayed(self):
+        return (
+            self.in_chargeback and
+            self.title.text == 'Compute Chargeback Rates')
 
-class RateFormItem(Pretty):
-    pretty_attrs = ['rate_loc', 'unit_select_loc']
-
-    def __init__(self, rate_loc=None, unit_select_loc=None):
-        self.rate_loc = rate_loc
-        self.unit_select_loc = unit_select_loc
-
-
-def _mkitem(field, index1, index2=0):
-    return RateFormItem((By.CSS_SELECTOR, "input#{}_{}_{}".format(field, index1, index2)),
-                        Select((By.CSS_SELECTOR, "select#per_time_" + str(index1))))
+    configuration = Dropdown('Configuration')
 
 
-rate_form = Form(
-    fields=[
-        ('description', (By.CSS_SELECTOR, "input#description")),
-        # Compute form items fixed
-        ('cpu_alloc', _mkitem("fixed_rate", 0)),
-        ('cpu_used', _mkitem("fixed_rate", 1)),
-        ('cpu_cores_used', _mkitem("fixed_rate", 2)),
-        ('disk_io', _mkitem("fixed_rate", 3)),
-        ('compute_fixed_1', _mkitem("fixed_rate", 4)),
-        ('compute_fixed_2', _mkitem("fixed_rate", 5)),
-        ('mem_alloc', _mkitem("fixed_rate", 6)),
-        ('mem_used', _mkitem("fixed_rate", 7)),
-        ('net_io', _mkitem("fixed_rate", 8)),
-        ('net_io_2', _mkitem("fixed_rate", 8, 1)),
-        # Compute form items variable
-        ('cpu_alloc_var', _mkitem("variable_rate", 0)),
-        ('cpu_used_var', _mkitem("variable_rate", 1)),
-        ('cpu_cores_used_var', _mkitem("variable_rate", 2)),
-        ('disk_io_var', _mkitem("variable_rate", 3)),
-        ('compute_fixed_1_var', _mkitem("variable_rate", 4)),
-        ('compute_fixed_2_var', _mkitem("variable_rate", 5)),
-        ('mem_alloc_var', _mkitem("variable_rate", 6)),
-        ('mem_used_var', _mkitem("variable_rate", 7)),
-        ('net_io_var', _mkitem("variable_rate", 8)),
-        ('net_io_2_var', _mkitem("variable_rate", 8, 1)),
-        # Storage form items
-        ('storage_fixed_1', _mkitem("fixed_rate", 0)),
-        ('storage_fixed_2', _mkitem("fixed_rate", 1)),
-        ('storage_alloc', _mkitem("fixed_rate", 2)),
-        ('storage_used', _mkitem("fixed_rate", 3)),
-        # Storage form items variable
-        ('storage_fixed_1_var', _mkitem("variable_rate", 0)),
-        ('storage_fixed_2_var', _mkitem("variable_rate", 1)),
-        ('storage_alloc_var', _mkitem("variable_rate", 2)),
-        ('storage_used_var', _mkitem("variable_rate", 3)),
-        ('add_button', form_buttons.add),
-        ('save_button', form_buttons.save),
-        ('reset_button', form_buttons.reset),
-        ('cancel_button', form_buttons.cancel)])
+class AddComputeChargebackView(ChargebackView):
+    title = Text('#explorer_title_text')
+
+    description = Input(id='description')
+    currency = Select(id='currency')
+
+    @ParametrizedView.nested
+    class fields(ParametrizedView):  # noqa
+        PARAMETERS = ('name',)
+        ROOT = ParametrizedLocator('.//tr[./td[contains(normalize-space(.), {name|quote})]]')
+
+        @cached_property
+        def row_id(self):
+            attr = self.browser.get_attribute(
+                'id',
+                './td/select[starts-with(@id, "per_time_")]',
+                parent=self)
+            return int(attr.rsplit('_', 1)[-1])
+
+        @cached_property
+        def sub_row_id(self):
+            attr = self.browser.get_attribute(
+                'id',
+                './td/input[starts-with(@id, "fixed_rate_")]',
+                parent=self)
+            return int(attr.rsplit('_', 1)[-1])
+
+        per_time = Select(id=ParametrizedString('per_time_{@row_id}'))
+        per_unit = Select(id=ParametrizedString('per_unit_{@row_id}'))
+        start = Input(id=ParametrizedString('start_{@row_id}_{@sub_row_id}'))
+        finish = Input(id=ParametrizedString('finish_{@row_id}_{@sub_row_id}'))
+        fixed_rate = Input(id=ParametrizedString('fixed_rate_{@row_id}_{@sub_row_id}'))
+        variable_rate = Input(id=ParametrizedString('variable_rate_{@row_id}_{@sub_row_id}'))
+        action_add = Button(title='Add a new tier')
+        action_delete = Button(title='Remove the tier')
+
+    add_button = Button(title='Add')
+    cancel_button = Button(title='Cancel')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'Compute Chargeback Rates' and
+            self.description.is_displayed)
+
+
+class EditComputeChargebackView(AddComputeChargebackView):
+
+    save_button = Button(title='Save Changes')
+    reset_button = Button(title='Reset Changes')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'Compute Chargeback Rate "{}"'.format(self.obj.description))
+
+
+class StorageChargebackView(ChargebackView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_chargeback and
+            self.title.text == 'Storage Chargeback Rates')
+
+
+class AddStorageChargebackView(AddComputeChargebackView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'Storage Chargeback Rates' and
+            self.description.is_displayed)
+
+
+class EditStorageChargebackView(EditComputeChargebackView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'Storage Chargeback Rate "{}"'.format(self.obj.description))
 
 
 class AssignFormTable(Pretty):
@@ -110,7 +153,7 @@ class AssignFormTable(Pretty):
     def select_from_row(self, row):
         el = pick({"5.6": "./td/select",
                    "5.7": "./td/div/select"})
-        return Select(sel.element(el, root=row))
+        return Select_old(sel.element(el, root=row))
 
     def select_by_name(self, name):
         return self.select_from_row(self.row_by_name(name))
@@ -128,11 +171,13 @@ def _fill_assignform_dict(form, d):
 
 assign_form = Form(
     fields=[
-        ("assign_to", Select("select#cbshow_typ")),
+        ("assign_to", Select_old("select#cbshow_typ")),
         # Enterprise
-        ("enterprise", Select("select#enterprise__1")),  # Simple shotcut, might explode one time
+        ("enterprise", Select_old("select#enterprise__1")),  # Simple shotcut, might explode once
         # Tagged DS
-        ("tag_category", Select("select#cbtag_cat")),
+        ("tag_category", Select_old("select#cbtag_cat")),
+        # Docker Labels
+        ("docker_labels", Select_old('select#cblabel_key')),
         # Common - selection table
         ("selections", AssignFormTable({
             LOWEST: (
@@ -143,216 +188,123 @@ assign_form = Form(
         ('save_button', form_buttons.save)])
 
 
-HOURLY = 'hourly'
-DAILY = 'daily'
-WEEKLY = 'weekly'
-MONTHLY = 'monthly'
-
-
-@fill.method((RateFormItem, tuple))
-def _fill_rateform(rf, value):
-    """value should be like (5, HOURLY)"""
-    fill(rf.rate_loc, value[0])
-    fill(rf.unit_select_loc, sel.ByValue(value[1]))
-
-
-@fill.method((RateFormItem))
-def _fill_assignform(rf, value):
-    fill(rf.rate_loc, value)
-
-
 class ComputeRate(Updateable, Pretty, Navigatable):
     pretty_attrs = ['description']
 
     def __init__(self, description=None,
-                 cpu_alloc=None,
-                 cpu_used=None,
-                 cpu_used_var=None,
-                 disk_io=None,
-                 disk_io_var=None,
-                 compute_fixed_1=None,
-                 compute_fixed_2=None,
-                 mem_alloc=None,
-                 mem_used=None,
-                 mem_used_var=None,
-                 net_io=None,
-                 net_io_var=None,
-                 appliance=None):
+                 currency=None,
+                 fields=None,
+                 appliance=None,
+                 ):
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
-        self.cpu_alloc = cpu_alloc
-        self.cpu_used = cpu_used
-        self.cpu_used_var = cpu_used_var
-        self.disk_io = disk_io
-        self.disk_io_var = disk_io_var
-        self.compute_fixed_1 = compute_fixed_1
-        self.compute_fixed_2 = compute_fixed_2
-        self.mem_alloc = mem_alloc
-        self.mem_used = mem_used
-        self.mem_used_var = mem_used_var
-        self.net_io = net_io
-        self.net_io_var = net_io_var
+        self.currency = currency
+        self.fields = fields
+
+    def __getitem__(self, name):
+        return self.fields.get(name, None)
 
     def create(self):
-        navigate_to(self, 'New')
-        fill(rate_form,
-            {'description': self.description,
-             'cpu_alloc': self.cpu_alloc,
-             'cpu_used': self.cpu_used,
-             'cpu_used_var': self.cpu_used_var,
-             'disk_io': self.disk_io,
-             'disk_io_var': self.disk_io_var,
-             'compute_fixed_1': self.compute_fixed_1,
-             'compute_fixed_2': self.compute_fixed_2,
-             'mem_alloc': self.mem_alloc,
-             'mem_used': self.mem_used,
-             'mem_used_var': self.mem_used_var,
-             'net_io': self.net_io,
-             'net_io_var': self.net_io_var},
-            action=rate_form.add_button)
-        flash.assert_no_errors()
+        view = navigate_to(self, 'New')
+        view.fill_with({'description': self.description,
+                        'currency': self.currency,
+                        'fields': self.fields},
+                       on_change=view.add_button,
+                       no_change=view.cancel_button)
+
+        view.flash.assert_success_message('Chargeback Rate "{}" was added'.format(
+            self.description))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(rate_form,
-            {'description': updates.get('description'),
-             'cpu_alloc': updates.get('cpu_alloc'),
-             'cpu_used': updates.get('cpu_used'),
-             'disk_io': updates.get('disk_io'),
-             'compute_fixed_1': updates.get('compute_fixed_1'),
-             'compute_fixed_2': updates.get('compute_fixed_2'),
-             'mem_alloc': updates.get('memory_allocated'),
-             'mem_used': updates.get('memory_used'),
-             'net_io': updates.get('network_io')},
-            action=rate_form.save_button)
-        flash.assert_no_errors()
+        view = navigate_to(self, 'Edit')
+        view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
+        view.flash.assert_success_message('Chargeback Rate "{}" was saved'.format(
+            updates.get('description')))
 
     def delete(self):
-        navigate_to(self, 'Details')
-        tb_select('Remove from the VMDB', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Remove from the VMDB', handle_alert=True)
+        view.flash.assert_success_message('Chargeback Rate "{}": Delete successful'.format(
+            self.description))
 
 
 @navigator.register(ComputeRate, 'All')
 class ComputeRateAll(CFMENavigateStep):
+    VIEW = ChargebackView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Compute")
 
-    def am_i_here(self):
-        return match_page(summary="Compute Chargeback Rates")
-
 
 @navigator.register(ComputeRate, 'New')
 class ComputeRateNew(CFMENavigateStep):
+    VIEW = AddComputeChargebackView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        tb_select("Add a new Chargeback Rate")
+        self.view.configuration.item_select("Add a new Chargeback Rate")
 
 
 @navigator.register(ComputeRate, 'Details')
 class ComputeRateDetails(CFMENavigateStep):
+    VIEW = ChargebackView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
         accordion.tree("Rates", "Rates", "Compute", self.obj.description)
 
-    def am_i_here(self):
-        return match_page(summary='Compute Chargeback Rate "{}"'.format(self.obj.description))
-
 
 @navigator.register(ComputeRate, 'Edit')
 class ComputeRateEdit(CFMENavigateStep):
+    VIEW = EditComputeChargebackView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb_select("Edit this Chargeback Rate")
+        self.view.configuration.item_select("Edit this Chargeback Rate")
 
 
-class StorageRate(Updateable, Pretty, Navigatable):
+class StorageRate(ComputeRate, Updateable, Pretty, Navigatable):
+    # Identical methods and form with ComputeRate but different navigation
     pretty_attrs = ['description']
-
-    def __init__(self, description=None,
-                 storage_fixed_1=None,
-                 storage_fixed_2=None,
-                 storage_alloc=None,
-                 storage_used=None,
-                 appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.description = description
-        self.storage_fixed_1 = storage_fixed_1
-        self.storage_fixed_2 = storage_fixed_2
-        self.storage_alloc = storage_alloc
-        self.storage_used = storage_used
-
-    def create(self):
-        navigate_to(self, 'New')
-        fill(rate_form,
-            {'description': self.description,
-             'storage_fixed_1': self.storage_fixed_1,
-             'storage_fixed_2': self.storage_fixed_2,
-             'storage_alloc': self.storage_alloc,
-             'storage_used': self.storage_used},
-            action=rate_form.add_button)
-
-    def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(rate_form,
-            {'description': updates.get('description'),
-             'storage_fixed_1': updates.get('storage_fixed_1'),
-             'storage_fixed_2': updates.get('storage_fixed_2'),
-             'storage_alloc': updates.get('storage_alloc'),
-             'storage_used': updates.get('storage_used')},
-            action=rate_form.save_button)
-
-    def delete(self):
-        navigate_to(self, 'Details')
-        tb_select('Remove from the VMDB', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
 
 
 @navigator.register(StorageRate, 'All')
 class StorageRateAll(CFMENavigateStep):
+    VIEW = StorageChargebackView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Storage")
 
-    def am_i_here(self):
-        return match_page(summary='Storage Chargeback Rates')
-
 
 @navigator.register(StorageRate, 'New')
 class StorageRateNew(CFMENavigateStep):
+    VIEW = AddStorageChargebackView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        tb_select("Add a new Chargeback Rate")
+        self.view.configuration.item_select("Add a new Chargeback Rate")
 
 
 @navigator.register(StorageRate, 'Details')
 class StorageRateDetails(CFMENavigateStep):
+    VIEW = ChargebackView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
         accordion.tree("Rates", "Rates", "Storage", self.obj.description)
 
-    def am_i_here(self):
-        return match_page(summary='Storage Chargeback Rate "{}"'.format(self.obj.description))
-
 
 @navigator.register(StorageRate, 'Edit')
 class StorageRateEdit(CFMENavigateStep):
+    VIEW = EditStorageChargebackView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        tb_select("Edit this Chargeback Rate")
+        self.view.configuration.item_select("Edit this Chargeback Rate")
 
 
 class Assign(Updateable, Pretty, Navigatable):
@@ -379,11 +331,13 @@ class Assign(Updateable, Pretty, Navigatable):
     """
     def __init__(self, assign_to=None,
                  tag_category=None,
+                 docker_labels=None,
                  selections=None,
                  appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.assign_to = assign_to
         self.tag_category = tag_category
+        self.docker_labels = docker_labels
         self.selections = selections
 
     def storageassign(self):
@@ -400,6 +354,7 @@ class Assign(Updateable, Pretty, Navigatable):
         fill(assign_form,
             {'assign_to': self.assign_to,
              'tag_category': self.tag_category,
+             'docker_labels': self.docker_labels,
              'selections': self.selections},
             action=assign_form.save_button)
         flash.assert_no_errors()

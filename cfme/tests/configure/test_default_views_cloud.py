@@ -3,7 +3,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
@@ -11,11 +10,10 @@ from cfme.cloud.instance.image import Image
 from cfme.configure.settings import DefaultView
 from cfme.web_ui import Quadicon, fill, toolbar as tb
 from utils.appliance.implementations.ui import navigate_to
-from utils.providers import setup_a_provider_by_class
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.usefixtures('setup_a_provider')]
+              pytest.mark.usefixtures('openstack_provider')]
 
 gtl_params = {
     'Cloud Providers': CloudProvider,
@@ -27,9 +25,6 @@ gtl_params = {
 
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    setup_a_provider_by_class(OpenStackProvider)
 
 
 def select_two_quads():
@@ -42,11 +37,12 @@ def select_two_quads():
 
 
 def set_and_test_default_view(group_name, view, page):
-    old_default = DefaultView.get_default_view(group_name)
-    DefaultView.set_default_view(group_name, view)
+    old_default = DefaultView.get_default_view(group_name, fieldset='Clouds')
+    DefaultView.set_default_view(group_name, view, fieldset='Clouds')
     navigate_to(page, 'All', use_resetter=False)
+    # TODO replace view detection with widgets when all tested classes have them
     assert tb.is_active(view), "{} view setting failed".format(view)
-    DefaultView.set_default_view(group_name, old_default)
+    DefaultView.set_default_view(group_name, old_default, fieldset='Clouds')
 
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different
 # pages in different releases
@@ -77,21 +73,21 @@ def set_and_test_view(group_name, view):
     DefaultView.set_default_view(group_name, old_default)
 
 
-@pytest.mark.meta(blockers=[1394331])
-def test_expanded_view(request):
+@pytest.mark.meta(blockers=[1447971])
+def test_cloud_expanded_view(request):
     set_and_test_view('Compare', 'Expanded View')
 
 
-@pytest.mark.meta(blockers=[1394331])
-def test_compressed_view(request):
+@pytest.mark.meta(blockers=[1447971])
+def test_cloud_compressed_view(request):
     set_and_test_view('Compare', 'Compressed View')
 
 
-@pytest.mark.meta(blockers=[1394331])
-def test_details_view(request):
+@pytest.mark.meta(blockers=[1447971])
+def test_cloud_details_view(request):
     set_and_test_view('Compare Mode', 'Details Mode')
 
 
-@pytest.mark.meta(blockers=[1394331])
-def test_exists_view(request):
+@pytest.mark.meta(blockers=[1447971])
+def test_cloud_exists_view(request):
     set_and_test_view('Compare Mode', 'Exists Mode')

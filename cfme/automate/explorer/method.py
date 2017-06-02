@@ -43,7 +43,9 @@ class MethodDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text.startswith('Automate Method [{}'.format(
                 self.context['object'].display_name or self.context['object'].name)) and
-            self.fqdn.is_displayed and self.fqdn.text == self.context['object'].tree_path_name_only)
+            self.fqdn.is_displayed and
+            # We need to chop off the leading Domain name.
+            self.fqdn.text == self.context['object'].tree_path_name_only[1:])
 
 
 class MethodAddView(AutomateExplorerView):

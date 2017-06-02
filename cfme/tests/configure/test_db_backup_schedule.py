@@ -36,16 +36,17 @@ class DbBackupData(Pretty):
         'smb': ('sub_folder', 'path_on_host'),
         'nfs': ('sub_folder',)
     }
-    pretty_attrs = ['machine_id', 'machine_data', 'protocol_type']
+    pretty_attrs = ['machine_data', 'protocol_type', 'protocol_data']
 
-    def __init__(self, machine_id, machine_data, protocol_type):
-        self.machine_id = machine_id
+    def __init__(self, machine_data, protocol_type, protocol_data):
+        self._param_name = protocol_type
         self.protocol_type = protocol_type
+        self.protocol_data = protocol_data
         self.schedule_name = self._get_random_schedule_name()
         self.schedule_description = self._get_random_schedule_description()
-        self.credentials = self._get_credentials(machine_data)
+        self.credentials = self._get_credentials()
         # data from cfme_data are accessed directly as attributes
-        self.__dict__.update(self._get_data(machine_data, protocol_type))
+        self.__dict__.update(self._get_data(protocol_data, protocol_type))
 
     def _get_random_schedule_name(self):
         return '{}_name'.format(fauxfactory.gen_alphanumeric())
@@ -53,12 +54,13 @@ class DbBackupData(Pretty):
     def _get_random_schedule_description(self):
         return '{}_desc'.format(fauxfactory.gen_alphanumeric())
 
-    def _get_credentials(self, machine_data):
+    def _get_credentials(self):
         """ Loads credentials that correspond to 'credentials' key from machine_data dict
         """
-        assert 'credentials' in machine_data.iterkeys() and machine_data['credentials'],\
+
+        creds_key = conf.cfme_data.get('log_db_operations', {}).get('credentials', False)
+        assert creds_key, \
             "No 'credentials' key found for machine {machine_id}".format(**self.__dict__)
-        creds_key = machine_data['credentials']
 
         assert creds_key in conf.credentials.iterkeys() and conf.credentials[creds_key],\
             "No credentials for key '{}' found in credentials yaml".format(creds_key)
@@ -66,11 +68,10 @@ class DbBackupData(Pretty):
 
         return credentials
 
-    def _get_data(self, machine_data, protocol_type):
+    def _get_data(self, protocol_data, protocol_type):
         """ Loads data from machine_data dict
         """
         data = {}
-        protocol_data = machine_data[protocol_type]
         for key in self.required_keys[protocol_type]:
             assert key in protocol_data.iterkeys() and protocol_data[key],\
                 "'{}' key must be set for scheduled {} backup to work".format(key, protocol_type)
@@ -81,24 +82,22 @@ class DbBackupData(Pretty):
     def id(self):
         """ Used for pretty test identification string in report
         """
-        return '{machine_id}-{protocol_type}-{sub_folder}'.format(**self.__dict__)
+        return '{protocol_type}-{sub_folder}'.format(**self.__dict__)
 
 
 def pytest_generate_tests(metafunc):
     """ Generates DbBackupData fixture called 'db_backup_data' with all the necessary data
     """
+    data = conf.cfme_data.get('log_db_operations', {})
     if 'db_backup_data' in metafunc.fixturenames:
         argnames = 'db_backup_data'
         argvalues = []
         ids = []
-        for machine_id, machine_data in conf.cfme_data.get('log_db_operations', {}).iteritems():
-            for protocol_type in PROTOCOL_TYPES:
-                if not machine_data.get(protocol_type, None):
-                    continue
-                if not machine_data[protocol_type].get('use_for_db_backups', False):
-                    continue
-
-                db_backup_data = DbBackupData(machine_id, machine_data, protocol_type)
+        machine_data = data["log_db_depot_template"]
+        for protocol in data["protocols"]:
+            if protocol in PROTOCOL_TYPES and data["protocols"][protocol].get('use_for_db_backups',
+                                                                              False):
+                db_backup_data = DbBackupData(machine_data, protocol, data["protocols"][protocol])
                 argvalues.append(db_backup_data)
                 ids.append(db_backup_data.id)
 
@@ -114,7 +113,7 @@ def db_depot_machine_ip(request):
     """
     depot_machine_name = "test_db_backup_depot_{}".format(fauxfactory.gen_alphanumeric())
     data = conf.cfme_data.get("log_db_operations", {})
-    depot_provider_key = data["log_db_depot_template"]["provider_key"]
+    depot_provider_key = data["log_db_depot_template"]["provider"]
     depot_template_name = data["log_db_depot_template"]["template_name"]
     prov = get_mgmt(depot_provider_key)
     deploy_template(depot_provider_key,
@@ -211,8 +210,9 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
 
     # ---- Add cleanup finalizer
     def delete_sched_and_files():
-        with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh:
-            ssh.run_command('rm -rf {}'.format(full_path))
+        with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
+            ssh_client.run_command('rm -rf {}'.format(full_path), ensure_user=True)
+
         sched.delete()
         flash.assert_message_contain(
             'Schedule "{}": Delete successful'.format(db_backup_data.schedule_description)
@@ -232,17 +232,18 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
     # ----
 
     # ---- Check if the db backup file exists
-    with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh:
+    with get_ssh_client(db_depot_uri, db_backup_data.credentials) as ssh_client:
 
-        assert ssh.run_command('cd "{}"'.format(path_on_host))[0] == 0,\
+        assert ssh_client.run_command('cd "{}"'.format(path_on_host), ensure_user=True)[0] == 0,\
             "Could not cd into '{}' over ssh".format(path_on_host)
         # Find files no more than 5 minutes old, count them and remove newline
         file_check_cmd = "find {}/* -cmin -5 | wc -l | tr -d '\n' ".format(full_path)
 
         wait_for(
-            lambda: ssh.run_command(file_check_cmd)[1] == '1',
+            lambda: ssh_client.run_command(file_check_cmd, ensure_user=True)[1] == '1',
             delay=5,
             num_sec=60,
             message="File '{}' not found on share".format(full_path)
         )
+
     # ----

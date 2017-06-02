@@ -9,23 +9,21 @@ from cfme.infrastructure import virtual_machines
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import search
+from fixtures.provider import setup_one_or_skip
 from utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
-from utils.providers import setup_a_provider as _setup_a_provider, ProviderFilter
+from utils.providers import ProviderFilter
 
 
 @pytest.fixture(scope="module")
-def setup_a_provider():
-    try:
-        pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
-        _setup_a_provider(filters=[pf])
-    except Exception:
-        pytest.skip("It's not possible to set up any providers, therefore skipping")
+def a_provider(request):
+    pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
+    setup_one_or_skip(request, filters=[pf])
 
 
 @pytest.fixture(scope="module")
-def vms(setup_a_provider):
+def vms(a_provider):
     """Ensure the infra providers are set up and get list of vms"""
     navigate_to(Vm, 'VMsOnly')
     search.ensure_no_filter_applied()
@@ -45,7 +43,8 @@ pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 @pytest.fixture(scope="module")
 def subset_of_vms(vms):
     """We'll pick a host with median number of vms"""
-    return sample(vms, 4)
+    vm_num = 4 if len(vms) >= 4 else len(vms)
+    return sample(vms, vm_num)
 
 
 @pytest.fixture(scope="module")
@@ -118,12 +117,11 @@ def test_filter_save_cancel(vms, subset_of_vms, expression_for_vms_subset):
         cancel=True
     )
     assert_no_cfme_exception()
-    with pytest.raises(pytest.sel.NoSuchElementException):
+    with pytest.raises(search.DisabledButtonException):
         search.load_filter(filter_name)  # does not exist
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_load(request, vms, subset_of_vms, expression_for_vms_subset):
     navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
@@ -140,7 +138,6 @@ def test_filter_save_and_load(request, vms, subset_of_vms, expression_for_vms_su
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_cancel_load(request):
     navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
@@ -161,7 +158,6 @@ def test_filter_save_and_cancel_load(request):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
     navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
@@ -217,7 +213,6 @@ def test_quick_search_with_filter(request, vms, subset_of_vms, expression_for_vm
     assert len(all_vms_visible) == 1 and chosen_vm in all_vms_visible
 
 
-@pytest.mark.meta(blockers=[1273032, 1320244])
 def test_can_delete_filter():
     navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
@@ -232,7 +227,6 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1273032, 1320244])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     navigate_to(Vm, 'VMsOnly')
@@ -249,7 +243,6 @@ def test_delete_button_should_appear_after_save(request):
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150, 1273032, 1320244])
 def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
     navigate_to(Vm, 'VMsOnly')

@@ -1,26 +1,22 @@
 # -*- coding: utf-8 -*-
 import pytest
-from functools import partial
 
-from cfme.infrastructure.provider import InfraProvider, details_page
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
-from utils.providers import get_crud_by_name, setup_a_provider_by_class
-from utils import version
+from utils.providers import get_crud_by_name
+from utils import testgen
 from cfme import test_requirements
 
-provider_props = partial(details_page.infoblock.text, "Properties")
 
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    setup_a_provider_by_class(InfraProvider)
+pytest_generate_tests = testgen.generate(classes=[InfraProvider], scope='module')
 
 
 @pytest.mark.tier(3)
+@pytest.mark.usefixtures('setup_provider')
 @test_requirements.report
-def test_providers_summary(soft_assert, setup_a_provider):
+def test_providers_summary(soft_assert):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
     path = ["Configuration Management", "Providers", "Providers Summary"]
@@ -28,32 +24,26 @@ def test_providers_summary(soft_assert, setup_a_provider):
     for provider in report.data.rows:
         if any(ptype in provider["MS Type"] for ptype in {"ec2", "openstack"}):  # Skip cloud
             continue
-        navigate_to(InfraProvider(name=provider["Name"]), 'Details')
-        hostname = version.pick({
-            version.LOWEST: ("Hostname", "Hostname"),
-            "5.5": ("Host Name", "Hostname")})
-        soft_assert(
-            provider_props(hostname[0]) == provider[hostname[1]],
-            "Hostname does not match at {}".format(provider["Name"]))
+        details_view = navigate_to(InfraProvider(name=provider["Name"]), 'Details')
+        props = details_view.contents.properties
 
-        if version.current_version() < "5.4":
-            # In 5.4, hostname and IP address are shared under Hostname (above)
-            soft_assert(
-                provider_props("IP Address") == provider["IP Address"],
-                "IP Address does not match at {}".format(provider["Name"]))
+        hostname = ("Host Name", "Hostname")
+        soft_assert(props.get_text_of(hostname[0]) == provider[hostname[1]],
+                    "Hostname does not match at {}".format(provider["Name"]))
 
-        soft_assert(
-            provider_props("Aggregate Host CPU Cores") == provider["Total Number of Logical CPUs"],
-            "Logical CPU count does not match at {}".format(provider["Name"]))
+        cpu_cores = props.get_text_of("Aggregate Host CPU Cores")
+        soft_assert(cpu_cores == provider["Total Number of Logical CPUs"],
+                    "Logical CPU count does not match at {}".format(provider["Name"]))
 
-        soft_assert(
-            provider_props("Aggregate Host CPUs") == provider["Total Number of Physical CPUs"],
-            "Physical CPU count does not match at {}".format(provider["Name"]))
+        host_cpu = props.get_text_of("Aggregate Host CPUs")
+        soft_assert(host_cpu == provider["Total Number of Physical CPUs"],
+                    "Physical CPU count does not match at {}".format(provider["Name"]))
 
 
 @pytest.mark.tier(3)
+@pytest.mark.usefixtures('setup_provider')
 @test_requirements.report
-def test_cluster_relationships(soft_assert, setup_a_provider):
+def test_cluster_relationships(soft_assert):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)
     for relation in report.data.rows:
@@ -93,3 +83,89 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
                     break
         else:
             soft_assert(False, "Hostname {} not found in {}".format(host_name, provider_name))
+
+
+@pytest.mark.tier(3)
+@test_requirements.report
+@pytest.mark.usefixtures('setup_provider')
+def test_operations_vm_on(soft_assert, appliance):
+
+    adb = appliance.db
+    vms = adb['vms']
+    hosts = adb['hosts']
+    storages = adb['storages']
+
+    path = ["Operations", "Virtual Machines", "Online VMs (Powered On)"]
+    report = CannedSavedReport.new(path)
+
+    vms_in_db = adb.session.query(
+        vms.name.label('vm_name'),
+        vms.location.label('vm_location'),
+        vms.last_scan_on.label('vm_last_scan'),
+        storages.name.label('storages_name'),
+        hosts.name.label('hosts_name')).join(
+            hosts, vms.host_id == hosts.id).join(
+                storages, vms.storage_id == storages.id).filter(
+                    vms.power_state == 'on').order_by(vms.name).all()
+
+    assert len(vms_in_db) == len(list(report.data.rows))
+    for vm in vms_in_db:
+        store_path = '{}/{}'.format(vm.storages_name.encode('utf8'),
+                                    vm.vm_location.encode('utf8'))
+        for item in report.data.rows:
+            if vm.vm_name.encode('utf8') == item['VM Name']:
+                assert vm.hosts_name.encode('utf8') == item['Host']
+                assert vm.storages_name.encode('utf8') == item['Datastore']
+                assert store_path == item['Datastore Path']
+                assert (str(vm.vm_last_scan).encode('utf8') == item['Last Analysis Time'] or
+                 (str(vm.vm_last_scan).encode('utf8') == 'None' and
+                 item['Last Analysis Time'] == ''))
+
+
+@pytest.mark.tier(3)
+@test_requirements.report
+@pytest.mark.usefixtures('setup_provider')
+def test_datastores_summary(soft_assert, appliance):
+    """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
+    storage sizes."""
+
+    adb = appliance.db
+    storages = adb['storages']
+    vms = adb['vms']
+    host_storages = adb['host_storages']
+
+    path = ["Configuration Management", "Storage", "Datastores Summary"]
+    report = CannedSavedReport.new(path)
+
+    storages_in_db = adb.session.query(storages.store_type, storages.free_space,
+                                       storages.total_space, storages.name, storages.id).all()
+
+    assert len(storages_in_db) == len(list(report.data.rows))
+    for store in storages_in_db:
+
+        number_of_vms = adb.session.query(vms.id).filter(
+            vms.storage_id == store.id).filter(
+                vms.template == 'f').count()
+        number_of_hosts = adb.session.query(host_storages.host_id).filter(
+            host_storages.storage_id == store.id).count()
+
+        for item in report.data.rows:
+            if store.name.encode('utf8') == item['Datastore Name']:
+                assert store.store_type.encode('utf8') == item['Type']
+                assert round_num(store.free_space) == extract_num(item['Free Space'])
+                assert round_num(store.total_space) == extract_num(item['Total Space'])
+                assert int(number_of_hosts) == int(item['Number of Hosts'])
+                assert int(number_of_vms) == int(item['Number of VMs'])
+
+
+def round_num(column):
+    num = float(column)
+
+    while num > 1024:
+        num /= 1024.0
+
+    return round(num, 1)
+
+
+def extract_num(column):
+    return float(column.split(' ')[0])

@@ -11,7 +11,6 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.update import Updateable
 from utils.pretty import Pretty
-from utils import version
 
 
 acc_tree = partial(accordion.tree, "Provisioning Dialogs")
@@ -90,7 +89,7 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
 
     def delete(self, cancel=False):
         navigate_to(self, 'Details')
-        if version.current_version() >= '5.7':
+        if self.appliance.version >= '5.7':
             btn_name = "Remove Dialog"
         else:
             btn_name = "Remove from the VMDB"
@@ -107,13 +106,10 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
 
 @navigator.register(ProvisioningDialog, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Automate', 'Customization')
-
-    def resetter(self):
-        accordion.tree("Provisioning Dialogs", "All Dialogs")
+        self.prerequisite_view.provisioning_dialogs.tree.click_path('All Dialogs')
 
 
 @navigator.register(ProvisioningDialog, 'Add')

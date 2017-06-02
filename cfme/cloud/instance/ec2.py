@@ -2,11 +2,9 @@ from utils import version, deferred_verpick
 from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui import fill, flash
 from cfme.fixtures import pytest_selenium as sel
-from cfme.common.vm import VM
 from . import Instance, select_provision_image
 
 
-@VM.register_for_provider_type("ec2")
 class EC2Instance(Instance):
     # CFME & provider power control options
     START = "Start"
@@ -29,6 +27,18 @@ class EC2Instance(Instance):
     STATE_TERMINATED = "terminated"
     STATE_ARCHIVED = "archived"
     STATE_UNKNOWN = "unknown"
+
+    @property
+    def ui_powerstates_available(self):
+        return {
+            'on': [self.STOP, self.SOFT_REBOOT, self.TERMINATE],
+            'off': [self.START, self.TERMINATE]}
+
+    @property
+    def ui_powerstates_unavailable(self):
+        return {
+            'on': [self.START],
+            'off': [self.STOP, self.SOFT_REBOOT]}
 
     def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
                security_groups=None, instance_type=None, guest_keypair=None, cancel=False,
@@ -61,7 +71,7 @@ class EC2Instance(Instance):
             instance_name=self.name,
             availability_zone=availability_zone,
             # not supporting multiselect now, just take first value
-            security_groups=security_groups[0],
+            security_groups=security_groups,
             instance_type=instance_type,
             guest_keypair=guest_keypair,
             **prov_fill_kwargs

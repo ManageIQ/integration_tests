@@ -2,10 +2,8 @@
 from urlparse import urlparse
 import pytest
 
-from cfme.infrastructure.provider import InfraProvider
 from fixtures.pytest_store import store
 from utils.appliance import IPAppliance
-from utils.providers import setup_a_provider_by_class
 
 
 def test_ipappliance_from_address():
@@ -31,10 +29,9 @@ def test_ipappliance_use_baseurl():
     assert ip_a.address in store.base_url
 
 
-def test_ipappliance_managed_providers():
+def test_ipappliance_managed_providers(infra_provider):
     ip_a = IPAppliance()
-    provider = setup_a_provider_by_class(InfraProvider)
-    assert provider in ip_a.managed_providers
+    assert infra_provider in ip_a.managed_known_providers
 
 
 def test_context_hack(monkeypatch):

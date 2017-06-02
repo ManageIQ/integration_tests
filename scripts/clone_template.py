@@ -83,7 +83,7 @@ def destroy_vm(provider_mgmt, vm_name):
 
 def main(**kwargs):
     # get_mgmt validates, since it will explode without an existing key or type
-    if kwargs.get('deploy', None):
+    if kwargs.get('deploy'):
         kwargs['configure'] = True
         kwargs['outfile'] = 'appliance_ip_address_1'
         provider_data = utils.conf.provider_data
@@ -93,7 +93,7 @@ def main(**kwargs):
             {'username': provider_dict['username'],
              'password': provider_dict['password'],
              'tenant': provider_dict['template_upload'].get('tenant_admin', 'admin'),
-             'auth_url': provider_dict.get('auth_url', None),
+             'auth_url': provider_dict.get('auth_url'),
              }
         provider = get_mgmt(kwargs['provider'], providers=providers, credentials=credentials)
         flavors = provider_dict['template_upload'].get('flavors', ['m1.medium'])
@@ -114,7 +114,7 @@ def main(**kwargs):
 
     logger.info('Connecting to {}'.format(kwargs['provider']))
 
-    if kwargs.get('destroy', None):
+    if kwargs.get('destroy'):
         # TODO: destroy should be its own script
         # but it's easy enough to just hijack the parser here
         # This returns True if destroy fails to give POSIXy exit codes (0 is good, False is 0, etc)
@@ -122,18 +122,18 @@ def main(**kwargs):
 
     # Try to snag defaults from cfme_data here for each provider type
     if provider_type == 'rhevm':
-        cluster = provider_dict.get('default_cluster', kwargs.get('cluster', None))
+        cluster = provider_dict.get('default_cluster', kwargs.get('cluster'))
         if cluster is None:
             raise Exception('--cluster is required for rhev instances and default is not set')
         deploy_args['cluster'] = cluster
 
-        if kwargs.get('place_policy_host', None) and kwargs.get('place_policy_aff', None):
+        if kwargs.get('place_policy_host') and kwargs.get('place_policy_aff'):
             deploy_args['placement_policy_host'] = kwargs['place_policy_host']
             deploy_args['placement_policy_affinity'] = kwargs['place_policy_aff']
     elif provider_type == 'ec2':
         # ec2 doesn't have an api to list available flavors, so the first flavor is the default
         try:
-            flavor = kwargs.get('flavor', None) or flavors[0]
+            flavor = kwargs.get('flavor') or flavors[0]
         except IndexError:
             raise Exception('--flavor is required for EC2 instances and default is not set')
         deploy_args['instance_type'] = flavor
@@ -142,7 +142,7 @@ def main(**kwargs):
         available_flavors = provider.list_flavor()
         flavors = filter(lambda f: f in available_flavors, flavors)
         try:
-            flavor = kwargs.get('flavor', None) or flavors[0]
+            flavor = kwargs.get('flavor') or flavors[0]
         except IndexError:
             raise Exception('--flavor is required for RHOS instances and '
                             'default is not set or unavailable on provider')
@@ -156,7 +156,7 @@ def main(**kwargs):
         provider_pools = [p.name for p in provider.api.floating_ip_pools.list()]
         try:
             # TODO: If there are multiple pools, have a provider default in cfme_data
-            floating_ip_pool = kwargs.get('floating_ip_pool', None) or provider_pools[0]
+            floating_ip_pool = kwargs.get('floating_ip_pool') or provider_pools[0]
         except IndexError:
             raise Exception('No floating IP pools available on provider')
 
@@ -178,11 +178,15 @@ def main(**kwargs):
         provider.deploy_template(**deploy_args)
     except Exception as e:
         logger.exception(e)
-        logger.error('Clone failed')
-        if kwargs.get('cleanup', None):
+        logger.error('provider.deploy_template failed')
+        if kwargs.get('cleanup'):
             logger.info('attempting to destroy {}'.format(deploy_args['vm_name']))
             destroy_vm(provider, deploy_args['vm_name'])
-            return 12
+        return 12
+
+    if not provider.does_vm_exist(deploy_args['vm_name']):
+        logger.error('provider.deploy_template failed without exception')
+        return 12
 
     if provider.is_vm_running(deploy_args['vm_name']):
         logger.info("VM {} is running".format(deploy_args['vm_name']))
@@ -200,9 +204,9 @@ def main(**kwargs):
         return 10
 
     try:
-        if kwargs.get('configure', None):
+        if kwargs.get('configure'):
             logger.info('Configuring appliance, this can take a while.')
-            if kwargs.get('deploy', None):
+            if kwargs.get('deploy'):
                 app = IPAppliance(address=ip)
             else:
                 app = Appliance(kwargs['provider'], deploy_args['vm_name'])
@@ -215,7 +219,7 @@ def main(**kwargs):
     except Exception as e:
         logger.exception(e)
         logger.error('Appliance Configuration Failed')
-        if not kwargs.get('deploy', None):
+        if not kwargs.get('deploy'):
             app = Appliance(kwargs['provider'], deploy_args['vm_name'])
             ssh_client = app.ssh_client()
             status, output = ssh_client.run_command('find /root/anaconda-post.log')
@@ -225,7 +229,7 @@ def main(**kwargs):
             ssh_client.close()
         return 10
 
-    if kwargs.get('outfile', None) or kwargs.get('deploy', None):
+    if kwargs.get('outfile') or kwargs.get('deploy'):
         with open(kwargs['outfile'], 'w') as outfile:
             outfile.write("appliance_ip_address={}\n".format(ip))
 

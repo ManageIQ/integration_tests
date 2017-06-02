@@ -2,6 +2,7 @@
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill, Form, AngularSelect, Table, toolbar, form_buttons, flash
 from xml.sax.saxutils import quoteattr
+from utils.version import current_version
 
 tag_form = Form(
     fields=[
@@ -47,9 +48,9 @@ def remove_tag(tag):
 
 def get_tags(tag="My Company Tags"):
     tags = []
-    for row in sel.elements(
-            "//*[(self::th or self::td) and normalize-space(.)={}]/../.."
-            "//td[img[contains(@src, 'smarttag')]]".format(
-                quoteattr(tag))):
+    tagpath = "//*[(self::th or self::td) and normalize-space(.)={}]/../.."\
+        "//td[img[contains(@src, 'smarttag')]]" if current_version() < '5.8'\
+        else "//td[i[contains(@class, 'fa-tag')]]"
+    for row in sel.elements(tagpath.format(quoteattr(tag))):
         tags.append(sel.text(row).strip())
     return tags

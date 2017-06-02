@@ -66,7 +66,8 @@ def test_pxe_image_type_required_error_validation():
 
 @pytest.mark.meta(
     blockers=[
-        BZ(1092951, ignore_bugs=[1083198])
+        BZ(1092951, ignore_bugs=[1083198]),
+        BZ(1450927, forced_streams=['5.8']),
     ]
 )
 def test_duplicate_name_error_validation():

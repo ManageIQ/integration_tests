@@ -137,7 +137,6 @@ import warnings
 from time import time
 from traceback import extract_tb, format_tb
 
-from cached_property import cached_property
 from utils import conf, safe_string
 from utils.path import get_rel_path, log_path, project_path
 
@@ -431,22 +430,21 @@ def nth_frame_info(n):
 
 class ArtifactorHandler(logging.Handler):
     """Logger handler that hands messages off to the artifactor"""
-    @cached_property
-    def artifactor(self):
-        from fixtures.artifactor_plugin import art_client
-        return art_client
 
-    @cached_property
-    def slaveid(self):
-        from fixtures.artifactor_plugin import SLAVEID
-        return SLAVEID or ""
+    slaveid = artifactor = None
 
     def emit(self, record):
-        self.artifactor.fire_hook('log_message', log_record=record.__dict__, slaveid=self.slaveid)
+        if self.artifactor:
+            self.artifactor.fire_hook(
+                'log_message',
+                log_record=record.__dict__,
+                slaveid=self.slaveid,
+            )
 
 
 logger = setup_logger(logging.getLogger('cfme'))
-logger.addHandler(ArtifactorHandler())
+artifactor_handler = ArtifactorHandler()
+logger.addHandler(artifactor_handler)
 
 add_prefix = PrefixAddingLoggerFilter()
 logger.addFilter(add_prefix)
@@ -463,6 +461,20 @@ def _configure_warnings():
     wlog.addFilter(WarningsDeduplicationFilter())
     wlog.addHandler(make_file_handler('py.warnings.log'))
     wlog.propagate = False
+
+
+def setup_for_worker(workername, loggers=('cfme', 'py.warnings')):
+    # this function is a bad hack, at some point we want a more ballanced setup
+    for logger in loggers:
+        log = logging.getLogger(logger)
+        handler = next(x for x in log.handlers
+                       if isinstance(x, logging.FileHandler))
+        handler.close()
+        base, name = os.path.split(handler.baseFilename)
+        add_prefix.prefix = "({})".format(workername)
+        handler.baseFilename = os.path.join(
+            base, "{worker}-{name}".format(worker=workername, name=name))
+        log.debug("worker log started")  # directly reopens the file
 
 
 _configure_warnings()

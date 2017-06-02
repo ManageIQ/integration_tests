@@ -26,26 +26,6 @@ def fakeobject_or_object(obj, attr, default=None):
         return obj
 
 
-def property_or_none(wrapped, *args, **kwargs):
-    """property_or_none([fget[, fset[, fdel[, doc]]]])
-    Property decorator that turns AttributeErrors into None returns
-
-    Useful for chained attr lookups where some links in the chain are None
-
-    Note:
-
-        This delegates back to the :py:func:`property <python:property>` builtin and inherits
-        its signature; thus it can be used interchangeably with ``property``.
-
-    """
-    def wrapper(store):
-        try:
-            return wrapped(store)
-        except AttributeError:
-            pass
-    return property(wrapper, *args, **kwargs)
-
-
 def clear_property_cache(obj, *names):
     """
     clear a cached property regardess of if it was cached priority
@@ -395,17 +375,32 @@ class InstanceClassMethod(object):
             return partial(self.instance_or_class_method, o)
 
 
-class OverrideWithDict(object):
-    """Override object's attribute access with a dictionary."""
-    def __init__(self, o, d):
-        self._o = o
-        self._d = d
+class ParamClassName(object):
+    """ ParamClassName is a Descriptor to help when using classes and instances as parameters
 
-    def __getattribute__(self, attr):
-        if attr in {'_o', '_d'}:
-            return object.__getattribute__(self, attr)
+    Note: This descriptor is a hack until collections are implemented everywhere
 
-        if attr in self._d:
-            return self._d[attr]
+    Usage:
+
+    .. code-block:: python
+
+        class Provider(object):
+            _param_name = ParamClassName('name')
+
+            def __init__(self, name):
+                self.name = name
+
+    When accessing the ``_param_name`` on the class object it will return the ``__name__`` of the
+    class by default. When accessing the ``_param_name`` on an instance of the class, it will return
+    the attribute that is passed in.
+    """
+
+    def __init__(self, instance_attr, class_attr='__name__'):
+        self.instance_attr = instance_attr
+        self.class_attr = class_attr
+
+    def __get__(self, instance, owner):
+        if instance:
+            return getattr(instance, self.instance_attr)
         else:
-            return getattr(self._o, attr)
+            return getattr(owner, self.class_attr)

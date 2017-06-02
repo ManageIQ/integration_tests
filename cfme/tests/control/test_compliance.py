@@ -6,11 +6,11 @@ import pytest
 from mgmtsystem import exceptions
 
 from cfme.common.vm import VM
-from cfme.configure.configuration import AnalysisProfile
-from cfme.control.explorer.policies import VMCompliancePolicy
+from cfme.control.explorer.policies import VMCompliancePolicy, HostCompliancePolicy
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider import InfraProvider
+from cfme.configure.configuration import AnalysisProfile
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -41,6 +41,39 @@ def wait_for_ssa_enabled():
     wait_for(
         lambda: not toolbar.is_greyed('Configuration', 'Perform SmartState Analysis'),
         delay=10, handle_exception=True, num_sec=600, fail_func=lambda: toolbar.select("Reload"))
+
+
+@pytest.fixture
+def policy_name():
+    return "compliance_testing: policy {}".format(fauxfactory.gen_alphanumeric(8))
+
+
+@pytest.fixture
+def policy_profile_name():
+    return "compliance_testing: policy profile {}".format(fauxfactory.gen_alphanumeric(8))
+
+
+@pytest.fixture
+def host(provider, setup_provider):
+    return provider.hosts[0]
+
+
+@pytest.yield_fixture
+def policy_for_testing(policy_name, policy_profile_name, provider):
+    policy = HostCompliancePolicy(policy_name)
+    policy.create()
+    policy_profile = PolicyProfile(policy_profile_name, policies=[policy])
+    policy_profile.create()
+    yield policy
+    policy_profile.delete()
+    policy.delete()
+
+
+@pytest.yield_fixture
+def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
+    host.assign_policy_profiles(policy_profile_name)
+    yield policy_for_testing
+    host.unassign_policy_profiles(policy_profile_name)
 
 
 @pytest.yield_fixture(scope="module")
@@ -98,8 +131,7 @@ def analysis_profile(compliance_vm):
 
 
 @pytest.fixture(scope="module")
-def fleecing_vm(
-        request, compliance_vm, provider, analysis_profile):
+def fleecing_vm(request, compliance_vm, provider, analysis_profile):
     logger.info("Provisioning an appliance for fleecing on %s", provider.key)
     # TODO: When we get something smaller, use it!
     appliance = provision_appliance(
@@ -139,7 +171,7 @@ def do_scan(vm, additional_item_check=None):
     logger.info("Scan finished")
 
 
-def test_check_package_presence(request, fleecing_vm, ssh_client, analysis_profile):
+def test_check_package_presence(request, fleecing_vm, analysis_profile):
     """This test checks compliance by presence of a certain cfme-appliance package which is expected
     to be present on an appliance."""
     # TODO: If we step out from provisioning a full appliance for fleecing, this might need revisit
@@ -170,7 +202,7 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, analysis_profi
     assert fleecing_vm.check_compliance()
 
 
-def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
+def test_check_files(request, fleecing_vm, analysis_profile):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
     """
@@ -203,3 +235,12 @@ def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
 
     do_scan(fleecing_vm, ("Configuration", "Files"))
     assert fleecing_vm.check_compliance()
+
+
+def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
+    assign_policy_for_testing.assign_actions_to_event(
+        "Host Compliance Check",
+        {"Mark as Non-Compliant": True}
+    )
+    host.check_compliance()
+    assert not host.is_compliant

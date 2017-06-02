@@ -2451,13 +2451,8 @@ class InfoBlock(Pretty):
     def root(self):
         possible_locators = [
             # Detail type
-            version.pick({
-                '5.3': '//table//th[contains(normalize-space(.), "{}")]/../../../..'.format(
-                    self.title),
-                version.LOWEST:
-                '//div[@class="modbox"]/h2[@class="modtitle"]'
-                '[contains(normalize-space(.), "{}")]/..'.format(self.title)
-            }),
+            '//table//th[contains(normalize-space(.), "{}")]/../../../..'.format(
+                self.title),
             # Form type
             (
                 '//*[p[@class="legend"][contains(normalize-space(.), "{}")] and table/tbody/tr/td['
@@ -2753,6 +2748,9 @@ class Quadicon(Pretty):
         self._name = name
         self.qtype = qtype
 
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(type(self).__name__, self._name, self.qtype)
+
     @property
     def qtype(self):
         return self._qtype
@@ -2828,8 +2826,29 @@ class Quadicon(Pretty):
             if rtype == 'txt':
                 return el.text
             if rtype == 'img':
-                img_el = sel.element('.//img', root=el)
-                img_name = sel.get_attribute(img_el, 'src')
+                try:
+                    img_el = sel.element(
+                        './/img|.//div[contains(@style, "background-image")]',
+                        root=el)
+                except sel_exceptions.NoSuchElementException:
+                    raise NoSuchElementException(
+                        ('Could not find the image field in quadrant {} of {!r}. '
+                        'This may be an error or a UI change.').format(corner, self))
+                tag = sel.tag(img_el)
+                if tag == 'img':
+                    img_name = sel.get_attribute(img_el, 'src')
+                elif tag == 'div':
+                    style = sel.get_attribute(img_el, 'style')
+                    match = re.search(r'background-image:\s*url\("([^"]+)"\)', style)
+                    if not match:
+                        raise ValueError(
+                            'Could not find the image url in style {!r} of {!r} quadrant {}'.format(
+                                style, self, corner))
+                    img_name = match.groups()[0]
+                else:
+                    raise ValueError(
+                        'Unknown tag <{}> when parsing quadicon {!r}, quadrant {}'.format(
+                            tag, self, corner))
                 path, filename = os.path.split(img_name)
                 root, ext = os.path.splitext(filename)
                 return root
@@ -3426,13 +3445,8 @@ class DriftGrid(Pretty):
                 return True
         # or text
         except NoSuchElementException:
-            if version.current_version() <= '5.3':
-                cell_textdiv = sel.element("./div", root=cell)
-                if 'mark' in sel.get_attribute(cell_textdiv, 'class'):
-                    return True
-            else:  # LOWEST
-                if 'color: rgb(33, 160, 236)' in sel.get_attribute(cell, 'style'):
-                    return True
+            if 'color: rgb(33, 160, 236)' in sel.get_attribute(cell, 'style'):
+                return True
         return False
 
     def expand_all_sections(self):
@@ -3450,7 +3464,7 @@ class DriftGrid(Pretty):
 
 
 class ButtonGroup(object):
-    def __init__(self, key):
+    def __init__(self, key, fieldset=None):
         """ A ButtonGroup is a set of buttons next to each other, as is used on the DefaultViews
         page.
 
@@ -3458,6 +3472,7 @@ class ButtonGroup(object):
             key: The name of the key field text before the button group.
         """
         self.key = key
+        self.fieldset = fieldset
 
     @property
     def _icon_tag(self):
@@ -3476,12 +3491,12 @@ class ButtonGroup(object):
     @property
     def locator(self):
         attr = re.sub(r"&amp;", "&", quoteattr(self.key))  # We don't need it in xpath
-        if version.current_version() < "5.5":
-            return '//td[@class="key" and normalize-space(.)={}]/..'.format(attr)
-        else:
-            return (
-                '//label[contains(@class, "control-label") and normalize-space(.)={}]/..'
-                .format(attr))
+        path = './/label[contains(@class, "control-label") and ' \
+               'normalize-space(.)={}]/..'.format(attr)
+        if self.fieldset:
+            fieldset = quoteattr(self.fieldset)
+            path = '//fieldset[./h3[normalize-space(.)={}]]/'.format(fieldset) + path
+        return path
 
     def locate(self):
         """ Moves to the element """

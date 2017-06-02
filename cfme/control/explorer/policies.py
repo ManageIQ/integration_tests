@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, Checkbox, TextInput
@@ -11,7 +9,10 @@ from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 from . import ControlExplorerView
 from actions import Action
+from utils import ParamClassName
 from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from utils.pretty import Pretty
 from utils.update import Updateable
 
 
@@ -238,6 +239,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
     TYPE = None
     TREE_NODE = None
     PRETTY = None
+    _param_name = ParamClassName('description')
 
     def __init__(self, description, active=True, scope=None, notes=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -417,8 +419,8 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         view = self.create_view(EditEventView)
         assert view.is_displayed
         changed = view.fill({
-            "true_actions": [ac.description for ac in true_actions],
-            "false_actions": [ac.description for ac in false_actions]
+            "true_actions": [str(action) for action in true_actions],
+            "false_actions": [str(action) for action in false_actions]
         })
         if changed:
             view.save_button.click()

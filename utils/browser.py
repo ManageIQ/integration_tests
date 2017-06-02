@@ -8,6 +8,7 @@ import threading
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
+import warnings
 
 # import logging
 
@@ -32,6 +33,7 @@ from utils.log import logger as log  # TODO remove after artifactor handler
 
 
 FIVE_MINUTES = 5 * 60
+THIRTY_SECONDS = 30
 
 
 def _load_firefox_profile():
@@ -108,6 +110,7 @@ class Wharf(object):
                 return
             if self.docker_id is None:
                 log.debug("renew done, docker id %s", self.docker_id)
+                return
             expiry_info = self._get('renew', self.docker_id)
             self.config.update(expiry_info)
             log.info('Renewed webdriver container %s', self.docker_id)
@@ -116,9 +119,17 @@ class Wharf(object):
         return self.docker_id is not None
 
 
+def web_driver_class_factory(base_class, lock):
+    def execute(self, *args, **kwargs):
+        with lock:
+            return base_class.execute(self, *args, **kwargs)
+    return type(base_class.__name__, (base_class,), {"execute": execute})
+
+
 class BrowserFactory(object):
     def __init__(self, webdriver_class, browser_kwargs):
-        self.webdriver_class = webdriver_class
+        self.lock = threading.RLock()
+        self.webdriver_class = web_driver_class_factory(webdriver_class, self.lock)
         self.browser_kwargs = browser_kwargs
 
         if webdriver_class is not webdriver.Remote:
@@ -135,6 +146,13 @@ class BrowserFactory(object):
         return _load_firefox_profile()
 
     def processed_browser_args(self):
+        if 'keep_alive' in self.browser_kwargs:
+            warnings.warn(
+                "forcing browser keep_alive to False due to selenium bugs\n"
+                "we are aware of the performance cost and hope to redeem",
+                category=RuntimeWarning,
+            )
+            return dict(self.browser_kwargs, keep_alive=False)
         return self.browser_kwargs
 
     def create(self, url_key):
@@ -157,7 +175,8 @@ class BrowserFactory(object):
         return browser
 
     def close(self, browser):
-        browser.quit()
+        if browser:
+            browser.quit()
 
 
 class WharfFactory(BrowserFactory):
@@ -210,10 +229,45 @@ class WharfFactory(BrowserFactory):
             self.wharf.checkin()
 
 
+class BrowserKeepAliveThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+
+    def __init__(self, manager):
+        super(BrowserKeepAliveThread, self).__init__()
+        self._stop = threading.Event()
+        self.manager = manager
+
+    def run(self):
+        while not self.stopped():
+            time.sleep(THIRTY_SECONDS)
+            with self.manager.factory.lock:
+
+                # The double try is necessary as if the purpose of the function is to ensure that
+                # the connection doesn't die. If the connection does die due to lack of interaction
+                # then this double try will fail the first time and connect the second time.
+                # The break ensures we don't run the call more times than we need to.
+                for _ in range(2):
+                    try:
+                        log.debug('renew')
+                        self.manager.browser.current_url
+                        break
+                    except Exception as e:
+                        log.error('something bad happened')
+                        log.error(e)
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
+
+
 class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
         self.browser = None
+        self._browser_renew_thread = None
 
     def coerce_url_key(self, key):
         return key or store.base_url
@@ -232,19 +286,20 @@ class BrowserManager(object):
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
+    def _browser_start_renew_thread(self):
+        log.debug('starting repeater')
+        self._browser_renew_thread = BrowserKeepAliveThread(self)
+        self._browser_renew_thread.daemon = True
+        self._browser_renew_thread.start()
+
     def _is_alive(self):
         log.debug("alive check")
         try:
             self.browser.current_url
         except UnexpectedAlertPresentException:
-            # Try to handle an open alert, restart the browser if possible
-            log.info("browser hangs on alert, dismissing")
-            try:
-                self.browser.switch_to_alert().dismiss()
-            except:
-                log.exception("browser died on alert")
-                return False
-        except:
+            # We shouldn't think that an Unexpected alert means the browser is dead
+            return True
+        except Exception:
             log.exception("browser in unknown state, considering dead")
             return False
         return True
@@ -281,18 +336,22 @@ class BrowserManager(object):
         log.info('closing browser')
         self._consume_cleanups()
         try:
-            self.factory.quit(self.browser)
-        except:
-            # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
-            # Diaper Pattern!
-            pass
+            self.factory.close(self.browser)
+        except Exception as e:
+            log.error('An exception happened during browser shutdown:')
+            log.exception(e)
         finally:
             self.browser = None
+            if self._browser_renew_thread:
+                self._browser_renew_thread.stop()
+                self._browser_renew_thread = None
 
     def start(self, url_key=None):
+        log.info('starting browser')
         url_key = self.coerce_url_key(url_key)
         if self.browser is not None:
             self.quit()
+        self._browser_start_renew_thread()
         return self.open_fresh(url_key=url_key)
 
     def open_fresh(self, url_key=None):

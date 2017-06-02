@@ -2,25 +2,20 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme import Credential
-from cfme.exceptions import CandidateNotFound, OptionNotAvailable
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
+from cfme.base.credential import Credential
+from cfme.exceptions import CandidateNotFound, OptionNotAvailable
 from cfme.web_ui import (
     AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
 from cfme.web_ui.form_buttons import change_stored_password
-from fixtures.pytest_store import store
-from utils import version
+from utils import version, deferred_verpick
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
-
-
-def server_region_string():
-    return store.current_appliance.server_region_string()
 
 
 tb_select = partial(tb.select, "Configuration")
@@ -108,7 +103,7 @@ class User(Updateable, Pretty, Navigatable):
                 'password_txt': updates.get('credential').secret,
                 'password_verify_txt': updates.get('credential').verify_secret
             })
-            if version.current_version() >= '5.7':
+            if self.appliance.version >= '5.7':
                 self.name = updates.get('credential').principal
         new_updates.update({
             'name_txt': updates.get('name'),
@@ -331,7 +326,7 @@ class GroupAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        accordion.tree("Access Control", server_region_string(), "Groups")
+        accordion.tree("Access Control", self.obj.appliance.server_region_string(), "Groups")
 
     def resetter(self):
         accordion.refresh("Access Control")
@@ -358,7 +353,10 @@ class GroupDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        accordion.tree("Access Control", server_region_string(), "Groups", self.obj.description)
+        accordion.tree(
+            "Access Control", self.obj.appliance.server_region_string(),
+            "Groups", self.obj.description
+        )
 
     def resetter(self):
         accordion.refresh("Access Control")
@@ -443,7 +441,7 @@ class RoleAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        accordion.tree("Access Control", server_region_string(), "Roles")
+        accordion.tree("Access Control", self.obj.appliance.server_region_string(), "Roles")
 
     def resetter(self):
         accordion.refresh("Access Control")
@@ -462,7 +460,9 @@ class RoleDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        accordion.tree("Access Control", server_region_string(), "Roles", self.obj.name)
+        accordion.tree(
+            "Access Control", self.obj.appliance.server_region_string(), "Roles", self.obj.name
+        )
 
     def resetter(self):
         accordion.refresh("Access Control")
@@ -488,7 +488,8 @@ class Tenant(Updateable, Pretty, Navigatable):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
-    save_changes = form_buttons.FormButton("Save changes")
+    save_changes = deferred_verpick({'5.7': form_buttons.angular_save,
+                   '5.8': form_buttons.simple_save})
 
     # TODO:
     # Temporary defining elements with "//input" as Input() is not working.Seems to be
@@ -622,7 +623,7 @@ class TenantAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        accordion.tree("Access Control", server_region_string(), "Tenants")
+        accordion.tree("Access Control", self.obj.appliance.server_region_string(), "Tenants")
 
     def resetter(self):
         accordion.refresh("Access Control")
@@ -633,7 +634,10 @@ class TenantDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        accordion.tree("Access Control", server_region_string(), "Tenants", *self.obj.tree_path)
+        accordion.tree(
+            "Access Control", self.obj.appliance.server_region_string(),
+            "Tenants", *self.obj.tree_path
+        )
 
 
 @navigator.register(Tenant, 'Add')

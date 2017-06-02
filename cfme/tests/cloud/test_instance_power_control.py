@@ -5,11 +5,9 @@ import pytest
 import cfme.web_ui.flash as flash
 from cfme import test_requirements
 from cfme.cloud.instance import Instance
-from cfme.cloud.instance.openstack import OpenStackInstance
-from cfme.cloud.instance.ec2 import EC2Instance
-from cfme.cloud.instance.azure import AzureInstance
-from cfme.cloud.instance.gce import GCEInstance
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.generators import random_vm_name
@@ -113,58 +111,11 @@ def wait_for_termination(provider, instance):
 def check_power_options(soft_assert, instance, power_state):
     """ Checks if power options match given power state ('on', 'off')
     """
-    must_be_available = {
-        AzureInstance: {
-            'on': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT,
-                   AzureInstance.TERMINATE],
-            'off': [AzureInstance.START, AzureInstance.TERMINATE]
-        },
-        EC2Instance: {
-            'on': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT, EC2Instance.TERMINATE],
-            'off': [EC2Instance.START, EC2Instance.TERMINATE]
-        },
-        OpenStackInstance: {
-            'on': [
-                OpenStackInstance.SUSPEND,
-                OpenStackInstance.SOFT_REBOOT,
-                OpenStackInstance.HARD_REBOOT,
-                OpenStackInstance.TERMINATE
-            ],
-            'off': [OpenStackInstance.START, OpenStackInstance.TERMINATE]
-        },
-        GCEInstance: {
-            'on': [GCEInstance.STOP, GCEInstance.SOFT_REBOOT, GCEInstance.TERMINATE],
-            'off': [GCEInstance.START, GCEInstance.TERMINATE]
-        }
-    }
-    mustnt_be_available = {
-        AzureInstance: {
-            'on': [AzureInstance.START],
-            'off': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT]
-        },
-        EC2Instance: {
-            'on': [EC2Instance.START],
-            'off': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT]
-        },
-        OpenStackInstance: {
-            'on': [OpenStackInstance.START],
-            'off': [
-                OpenStackInstance.SUSPEND,
-                OpenStackInstance.SOFT_REBOOT,
-                OpenStackInstance.HARD_REBOOT
-            ]
-        },
-        GCEInstance: {
-            'on': [GCEInstance.START],
-            'off': [GCEInstance.STOP, GCEInstance.SOFT_REBOOT]
-        }
-    }
-
-    for pwr_option in must_be_available[instance.__class__][power_state]:
+    for pwr_option in instance.ui_powerstates_available[power_state]:
         soft_assert(
             instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
             "{} must be available in current power state - {} ".format(pwr_option, power_state))
-    for pwr_option in mustnt_be_available[instance.__class__][power_state]:
+    for pwr_option in instance.ui_powerstates_unavailable[power_state]:
         soft_assert(
             not instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
             "{} must not be available in current power state - {} ".format(pwr_option, power_state))
@@ -360,26 +311,9 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
 
     flash.assert_message_contain('Vm Destroy initiated')
     terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
-                         testing_instance.STATE_UNKNOWN)
+            testing_instance.STATE_UNKNOWN)
     soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
-                                                                timeout=1200))
-
-
-@pytest.mark.ignore_stream("5.4")
-@pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
-def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance, soft_assert,
-        verify_vm_running, rest_api, from_detail):
-    assert "terminate" in rest_api.collections.instances.action.all
-    testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-    vm = rest_api.collections.instances.get(name=testing_instance.name)
-    if from_detail:
-        vm.action.terminate()
-    else:
-        rest_api.collections.instances.action.terminate(vm)
-    terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
-                         testing_instance.STATE_UNKNOWN)
-    soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
-                                                                timeout=1200))
+        timeout=1200))
 
 
 def test_power_options_from_on(setup_provider_funcscope, provider, testing_instance, soft_assert,
@@ -403,3 +337,193 @@ def test_power_options_from_off(setup_provider_funcscope, provider, testing_inst
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_OFF,
                                                     timeout=1200)
     check_power_options(soft_assert, testing_instance, 'off')
+
+
+class TestInstanceRESTAPI(object):
+    """ Tests using the /api/instances collection. """
+    def verify_vm_power_state(self, vm, state):
+        vm.reload()
+        if isinstance(state, (list, tuple)):
+            return vm.power_state in state
+        else:
+            return vm.power_state == state
+
+    def verify_action_result(self, rest_api, assert_success=True):
+        assert rest_api.response.status_code == 200
+        response = rest_api.response.json()
+        if 'results' in response:
+            response = response['results'][0]
+        message = response['message']
+        success = response['success']
+        if assert_success:
+            assert success
+        return success, message
+
+    @pytest.mark.uncollectif(lambda provider: provider.one_of(OpenStackProvider))
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_stop(self, setup_provider_funcscope, provider, testing_instance, verify_vm_running,
+            soft_assert, rest_api, from_detail):
+        """ Tests instance stop
+
+        Metadata:
+            test_flag: power_control, provision, rest
+        """
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        vm = testing_instance.get_vm_via_rest()
+        if from_detail:
+            vm.action.stop()
+        else:
+            rest_api.collections.instances.action.stop(vm)
+        self.verify_action_result(rest_api)
+        wait_for(
+            lambda: provider.mgmt.is_vm_stopped(testing_instance.name),
+            num_sec=1200,
+            delay=20,
+            message="mgmt system check - instance stopped")
+        soft_assert(not self.verify_vm_power_state(vm, testing_instance.STATE_ON),
+            "instance still running")
+
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_start(self, setup_provider_funcscope, provider, testing_instance, verify_vm_stopped,
+            soft_assert, rest_api, from_detail):
+        """ Tests instance start
+
+        Metadata:
+            test_flag: power_control, provision, rest
+        """
+        testing_instance.wait_for_instance_state_change(
+            desired_state=testing_instance.STATE_OFF, timeout=1200)
+        vm = testing_instance.get_vm_via_rest()
+        if from_detail:
+            vm.action.start()
+        else:
+            rest_api.collections.instances.action.start(vm)
+        self.verify_action_result(rest_api)
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_ON),
+            "instance not running")
+
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_soft_reboot(self, setup_provider_funcscope, provider, testing_instance,
+            soft_assert, verify_vm_running, rest_api, from_detail):
+        """ Tests instance soft reboot
+
+        Metadata:
+            test_flag: power_control, provision, rest
+        """
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        vm = testing_instance.get_vm_via_rest()
+        if from_detail:
+            vm.action.reboot_guest()
+        else:
+            rest_api.collections.instances.action.reboot_guest(vm)
+        self.verify_action_result(rest_api)
+        wait_for(lambda: vm.power_state != testing_instance.STATE_ON, num_sec=720, delay=45,
+            fail_func=vm.reload)
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_ON),
+            "instance not running")
+
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_hard_reboot(self, setup_provider_funcscope, provider, testing_instance,
+            soft_assert, verify_vm_running, rest_api, from_detail):
+        """ Tests instance hard reboot
+
+        Metadata:
+            test_flag: power_control, provision, rest
+        """
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        vm = testing_instance.get_vm_via_rest()
+        if from_detail:
+            vm.action.reset()
+        else:
+            rest_api.collections.instances.action.reset(vm)
+        self.verify_action_result(rest_api)
+        wait_for(lambda: vm.power_state != testing_instance.STATE_ON, num_sec=720, delay=45,
+            fail_func=vm.reload)
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_ON),
+            "instance not running")
+
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(AzureProvider, OpenStackProvider))
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_suspend_resume(self, setup_provider_funcscope, provider, testing_instance,
+            soft_assert, verify_vm_running, rest_api, from_detail):
+        """ Tests instance suspend and resume
+
+        Metadata:
+            test_flag: power_control, provision, rest
+        """
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        vm = testing_instance.get_vm_via_rest()
+
+        if from_detail:
+            vm.action.suspend()
+        else:
+            rest_api.collections.instances.action.suspend(vm)
+        self.verify_action_result(rest_api)
+        testing_instance.wait_for_instance_state_change(
+            desired_state=testing_instance.STATE_SUSPENDED)
+        soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_SUSPENDED),
+            "instance not suspended")
+
+        if from_detail:
+            vm.action.start()
+        else:
+            rest_api.collections.instances.action.start(vm)
+        self.verify_action_result(rest_api)
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_ON),
+            "instance not running")
+
+    @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_pause_unpause(self, setup_provider_funcscope, provider, testing_instance,
+            soft_assert, verify_vm_running, rest_api, from_detail):
+        """ Tests instance pause and unpause
+
+        Metadata:
+            test_flag: power_control, provision, rest
+        """
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        vm = testing_instance.get_vm_via_rest()
+
+        if from_detail:
+            vm.action.pause()
+        else:
+            rest_api.collections.instances.action.pause(vm)
+        self.verify_action_result(rest_api)
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_PAUSED)
+        soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_PAUSED),
+            "instance not paused")
+
+        if from_detail:
+            vm.action.start()
+        else:
+            rest_api.collections.instances.action.start(vm)
+        self.verify_action_result(rest_api)
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_ON),
+            "instance not running")
+
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_terminate(self, setup_provider_funcscope, provider, testing_instance,
+            soft_assert, verify_vm_running, rest_api, from_detail):
+        """ Tests instance terminate via REST API
+
+        Metadata:
+            test_flag: power_control, provision, rest
+        """
+        testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
+        vm = testing_instance.get_vm_via_rest()
+        if from_detail:
+            vm.action.terminate()
+        else:
+            rest_api.collections.instances.action.terminate(vm)
+        self.verify_action_result(rest_api)
+        terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
+            testing_instance.STATE_UNKNOWN)
+        soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
+            timeout=1200))
+        soft_assert(self.verify_vm_power_state(vm, terminated_states), "instance not terminated")

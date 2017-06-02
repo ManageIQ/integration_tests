@@ -13,17 +13,15 @@ from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table,
 from cfme.web_ui import paginator as pg
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
-from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-import utils.conf as conf
+from utils import conf
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
-from utils.db import cfmedb
 from utils.varmeth import variable
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -173,7 +171,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
         """
         Checks if the PXE server already exists
         """
-        dbs = cfmedb()
+        dbs = self.appliance.db
         candidates = list(dbs.session.query(dbs["pxe_servers"]))
         return self.name in [s.name for s in candidates]
 
@@ -220,7 +218,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this PXE Server from the VMDB'
         else:
             btn_name = 'Remove this PXE Server'
@@ -245,10 +243,10 @@ class PXEServer(Updateable, Pretty, Navigatable):
 
     @variable(alias='db')
     def get_pxe_image_type(self, image_name):
-        pxe_i = cfmedb()["pxe_images"]
-        pxe_s = cfmedb()["pxe_servers"]
-        pxe_t = cfmedb()["pxe_image_types"]
-        hosts = list(cfmedb().session.query(pxe_t.name)
+        pxe_i = self.appliance.db["pxe_images"]
+        pxe_s = self.appliance.db["pxe_servers"]
+        pxe_t = self.appliance.db["pxe_image_types"]
+        hosts = list(self.appliance.db.session.query(pxe_t.name)
                      .join(pxe_i, pxe_i.pxe_image_type_id == pxe_t.id)
                      .join(pxe_s, pxe_i.pxe_server_id == pxe_s.id)
                      .filter(pxe_s.name == self.name)
@@ -366,7 +364,7 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         """
         Checks if the Customization template already exists
         """
-        dbs = cfmedb()
+        dbs = self.appliance.db
         candidates = list(dbs.session.query(dbs["customization_templates"]))
         return self.name in [s.name for s in candidates]
 
@@ -413,7 +411,7 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this Customization Template from the VMDB'
         else:
             btn_name = 'Remove this Customization Template'
@@ -527,7 +525,7 @@ class SystemImageType(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this System Image Type from the VMDB'
         else:
             btn_name = 'Remove this System Image Type'
@@ -614,10 +612,10 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
         Checks if the ISO Datastore already exists via db
         """
-        iso = cfmedb()['iso_datastores']
-        ems = cfmedb()['ext_management_systems']
+        iso = self.appliance.db['iso_datastores']
+        ems = self.appliance.db['ext_management_systems']
         name = self.provider
-        iso_ds = list(cfmedb().session.query(iso.id)
+        iso_ds = list(self.appliance.db.session.query(iso.id)
                       .join(ems, iso.ems_id == ems.id)
                       .filter(ems.name == name))
         if iso_ds:
@@ -646,7 +644,7 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        if version.current_version() < '5.7':
+        if self.appliance.version < '5.7':
             btn_name = 'Remove this ISO Datastore from the VMDB'
         else:
             btn_name = 'Remove this ISO Datastore'

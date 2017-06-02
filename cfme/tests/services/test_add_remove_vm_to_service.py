@@ -44,7 +44,7 @@ def myservice(setup_provider, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
@@ -86,7 +86,7 @@ def test_add_vm_to_service(myservice, request, copy_domain):
     $evm.log("info", "===========================================")
 
     add_to_service
-    """.format(myservice.service_name)
+    """.format(myservice.name)
     method = copy_domain\
         .namespaces.instantiate(name='System')\
         .classes.instantiate(name='Request')\
@@ -97,7 +97,8 @@ def test_add_vm_to_service(myservice, request, copy_domain):
         instance="Request",
         message="create",
         request=method.name,
-        attribute=["VM and Instance", "auto_test_services"],  # Random selection, does not matter
+        target_type='VM and Instance',
+        target_object="auto_test_services",
         execute_methods=True
     )
     myservice.check_vm_add("auto_test_services")

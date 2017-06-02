@@ -124,53 +124,55 @@ def create_image(template_name, image_description, bucket_name, key_name):
             service.
             key_name: Keyname inside the create bucket.
     """
-    temp_up = cfme_data['template_upload']['template_upload_ec2']
-    aws_cli_tool_client_username = credentials['host_default']['username']
-    aws_cli_tool_client_password = credentials['host_default']['password']
-    sshclient = make_ssh_client(temp_up['aws_cli_tool_client'], aws_cli_tool_client_username,
-                                aws_cli_tool_client_password)
+    ssh_args = [
+        cfme_data['template_upload']['template_upload_ec2']['aws_cli_tool_client'],
+        credentials['host_default']['username'],
+        credentials['host_default']['password']
+    ]
+    with make_ssh_client(*ssh_args) as ssh_client:
 
-    print("AMAZON EC2: Creating JSON file beofre importing the image ...")
-    upload_json = """[
-  {{
-    "Description": "{description}",
-    "Format": "vhd",
-    "UserBucket": {{
-        "S3Bucket": "{bucket_name}",
-        "S3Key": "{key_name}"
-    }}
-}}]""".format(description=image_description, bucket_name=bucket_name,
-              key_name=key_name)
-    command = '''cat <<EOT > import_image.json
-    {}
-    '''.format(upload_json)
-    sshclient.run_command(command)
+        print("AMAZON EC2: Creating JSON file beofre importing the image ...")
+        # TODO do this with the json module so it doesn't look so awful
+        upload_json = """[
+      {{
+        "Description": "{description}",
+        "Format": "vhd",
+        "UserBucket": {{
+            "S3Bucket": "{bucket_name}",
+            "S3Key": "{key_name}"
+        }}
+    }}]""".format(description=image_description, bucket_name=bucket_name,
+                  key_name=key_name)
+        command = '''cat <<EOT > import_image.json
+        {}
+        '''.format(upload_json)
+        ssh_client.run_command(command)
 
-    print("AMAZON EC2: Running import-image command and grep ImportTaskId ...")
-    command = "aws ec2 import-image --description 'test_cfme_ami_image_upload' --disk-containers " \
-              "file://import_image.json | grep ImportTaskId"
-    output = sshclient.run_command(command)
-    importtask_id = re.findall(r'import-ami-[a-zA-Z0-9_]*', str(output))[0]
+        print("AMAZON EC2: Running import-image command and grep ImportTaskId ...")
+        command = "aws ec2 import-image --description 'test_cfme_ami_image_upload' " \
+                  "--disk-containers file://import_image.json | grep ImportTaskId"
+        output = ssh_client.run_command(command)
+        importtask_id = re.findall(r'import-ami-[a-zA-Z0-9_]*', str(output))[0]
 
-    def check_import_task_status():
-        check_status_command = "aws ec2 describe-import-image-tasks --import-task-ids {} | grep " \
-                               "-w Status".format(importtask_id)
-        import_status_output = sshclient.run_command(check_status_command)
-        return True if 'completed' in import_status_output else False
+        def check_import_task_status():
+            import_status_output = ssh_client.run_command("aws ec2 describe-import-image-tasks "
+                                                          "--import-task-ids {} |grep -w Status"
+                                                          .format(importtask_id))
+            return True if 'completed' in import_status_output else False
 
-    print("AMAZON EC2: Waiting for import-image task to be completed, this may take a while ...")
-    wait_for(check_import_task_status, fail_condition=False, delay=5, timeout='1h')
+        print("AMAZON EC2: Waiting for import-image task to complete, this may take a while ...")
+        wait_for(check_import_task_status, fail_condition=False, delay=5, timeout='1h')
 
-    print("AMAZON EC2: Retrieve AMI ImageId from describe-import-image-tasks...")
-    command = "aws ec2 describe-import-image-tasks --import-task-ids {} | grep ImageId".format(
-        importtask_id)
-    output = sshclient.run_command(command)
-    ami_image_id = re.findall(r'ami-[a-zA-Z0-9_]*', str(output))[0]
+        print("AMAZON EC2: Retrieve AMI ImageId from describe-import-image-tasks...")
+        command = "aws ec2 describe-import-image-tasks --import-task-ids {} | grep ImageId".format(
+            importtask_id)
+        output = ssh_client.run_command(command)
+        ami_image_id = re.findall(r'ami-[a-zA-Z0-9_]*', str(output))[0]
 
-    print("AMAZON EC2: Creating Tag for imported image ...")
-    command = "aws ec2 create-tags --resources {} --tags Key='Name'," \
-              "Value='{}'".format(ami_image_id, template_name)
-    sshclient.run_command(command)
+        print("AMAZON EC2: Creating Tag for imported image ...")
+        command = "aws ec2 create-tags --resources {} --tags Key='Name'," \
+                  "Value='{}'".format(ami_image_id, template_name)
+        ssh_client.run_command(command)
 
 
 def upload_template(provider, username, password, upload_bucket_name,

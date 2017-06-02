@@ -1,6 +1,6 @@
 import pytest
 
-import utils.error as error
+from utils import error
 from cfme.middleware.deployment import MiddlewareDeployment
 from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider

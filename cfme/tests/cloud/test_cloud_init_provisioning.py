@@ -5,10 +5,6 @@ import fauxfactory
 import pytest
 
 from cfme.cloud.instance import Instance
-from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
-from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
-from cfme.cloud.instance.azure import AzureInstance  # NOQA
-from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import testgen, ssh
@@ -87,6 +83,6 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so
     # is a valid check
-    sshclient = ssh.SSHClient(hostname=connect_ip, username=provisioning['ci-username'],
-                              password=provisioning['ci-pass'])
-    wait_for(sshclient.uptime, num_sec=200, handle_exception=True)
+    with ssh.SSHClient(hostname=connect_ip, username=provisioning['ci-username'],
+                       password=provisioning['ci-pass']) as ssh_client:
+        wait_for(ssh_client.uptime, num_sec=200, handle_exception=True)

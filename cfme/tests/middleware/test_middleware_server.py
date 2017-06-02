@@ -2,6 +2,7 @@ import pytest
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import flash
+from utils import conf
 from utils import testgen
 from utils.version import current_version
 from server_methods import verify_server_running, verify_server_stopped
@@ -80,6 +81,34 @@ def test_server_details(provider):
          .format(srv_ui.name, srv_db.name, srv_mgmt.name))
     srv_db.validate_properties()
     srv_mgmt.validate_properties()
+
+
+def test_container_server_immutability(provider):
+    """Tests container based EAP server immutability on UI
+
+    Steps:
+        * Select container based EAP server details in UI
+        * Compare selected server UI details with CFME database and MGMT system
+        * Verify that all menu items are disabled and server is immutable
+    """
+    if 'eap7_template' not in conf.cfme_data.get('management_systems', {})[provider.key]:
+        pytest.skip("Skipping test, environment is not in OSCP")
+
+    server = get_eap_server(provider)
+    srv_ui = server.server(method='ui')
+    srv_db = server.server(method='db')
+    srv_mgmt = srv_ui.server(method='mgmt')
+    assert srv_ui, "Server was not found in UI"
+    assert srv_db, "Server was not found in DB"
+    assert srv_mgmt, "Server was not found in MGMT system"
+    assert srv_ui.name == srv_db.name == srv_mgmt.name, \
+        ("server name does not match between UI:{}, DB:{}, MGMT:{}"
+         .format(srv_ui.name, srv_db.name, srv_mgmt.name))
+    srv_db.validate_properties()
+    srv_mgmt.validate_properties()
+    assert conf.cfme_data.get('management_systems', {})[provider.key][
+        'eap7_template'] in srv_ui.hostname
+    assert srv_ui.is_immutable()
 
 
 # disabled as Hawkular server does not have 'Power' toolbar operation

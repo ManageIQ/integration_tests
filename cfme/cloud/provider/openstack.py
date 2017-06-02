@@ -1,19 +1,18 @@
-from utils.version import current_version
 from mgmtsystem.openstack import OpenstackSystem
 
 from . import CloudProvider
 
 
-@CloudProvider.add_provider_type
 class OpenStackProvider(CloudProvider):
     type_name = "openstack"
     mgmt_class = OpenstackSystem
+    db_types = ["Openstack::CloudManager"]
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
-                 tenant_mapping=None, infra_provider=None):
+                 tenant_mapping=None, infra_provider=None, appliance=None):
         super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
-                                                zone=zone, key=key)
+                                                zone=zone, key=key, appliance=appliance)
         self.hostname = hostname
         self.ip_address = ip_address
         self.api_port = api_port
@@ -27,7 +26,7 @@ class OpenStackProvider(CloudProvider):
         if self.infra_provider:
             self.infra_provider.create(validate_credentials=True, validate_inventory=True,
                                        check_existing=True)
-        if current_version() >= "5.6" and 'validate_credentials' not in kwargs:
+        if self.appliance.version >= "5.6" and 'validate_credentials' not in kwargs:
             # 5.6 requires validation, so unless we specify, we want to validate
             kwargs['validate_credentials'] = True
         return super(OpenStackProvider, self).create(*args, **kwargs)
@@ -67,7 +66,7 @@ class OpenStackProvider(CloudProvider):
         return {}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         from utils.providers import get_crud
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
@@ -77,7 +76,7 @@ class OpenStackProvider(CloudProvider):
                 prov_config['amqp_credentials'], cred_type='amqp')
             creds['amqp'] = amqp_credentials
         infra_prov_key = prov_config.get('infra_provider_key')
-        infra_provider = get_crud(infra_prov_key) if infra_prov_key else None
+        infra_provider = get_crud(infra_prov_key, appliance=appliance) if infra_prov_key else None
         return cls(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
@@ -87,4 +86,5 @@ class OpenStackProvider(CloudProvider):
             key=prov_key,
             sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
             tenant_mapping=prov_config.get('tenant_mapping', False),
-            infra_provider=infra_provider)
+            infra_provider=infra_provider,
+            appliance=appliance)

@@ -2,6 +2,7 @@ import re
 import pytest
 import random
 import attr
+from urlparse import urlparse
 from threading import Timer
 from utils import at_exit, conf
 from utils.appliance import IPAppliance, stack as appliance_stack
@@ -206,8 +207,16 @@ class SproutManager(object):
                 "Check if pool already exists for this %r Jenkins job", jenkins_job[0])
             jenkins_job_pools = self.client.find_pools_by_description(jenkins_job[0], partial=True)
             for pool in jenkins_job_pools:
-                log.info("Destroying the old pool %s for %r job.", pool, jenkins_job[0])
-                self.client.destroy_pool(pool)
+                # Some jobs have overlapping descriptions, sprout API doesn't support regex
+                # job-name-12345 vs job-name-master-12345
+                # the partial match alone will catch both of these, use regex to confirm pool
+                # description is an accurate match
+                if self.client.get_pool_description(pool) == '{}{}'.format(jenkins_job[0], pool):
+                    log.info("Destroying the old pool %s for %r job.", pool, jenkins_job[0])
+                    self.client.destroy_pool(pool)
+                else:
+                    log.info('Skipped pool destroy due to potential pool description overlap: %r',
+                             jenkins_job[0])
         except Exception:
             log.exception(
                 "Exception occurred during old pool deletion, this can be ignored"
@@ -247,3 +256,32 @@ class SproutManager(object):
             timeout = 60 + random.randint(0, 10)
         finally:
             self.reset_timer(timeout=timeout)
+
+
+def pytest_addhooks(pluginmanager):
+    pluginmanager.add_hookspecs(NewHooks)
+
+
+def pytest_miq_node_shutdown(config, nodeinfo):
+    if config.getoption('ui_coverage'):
+        # TODO: Ensure this gets called after pytest_sessionfinish
+        # This disables the appliance deletion when ui coverage is on. ^
+        # This is because we need one of the appliances to do the collection for us
+        return
+    if nodeinfo:
+        netloc = urlparse(nodeinfo).netloc
+        ip_address = netloc.split(":")[0]
+        log.debug("Trying to end appliance {}".format(ip_address))
+        try:
+            log.debug(config._sprout_mgr.client.call_method('appliance_data', ip_address))
+            log.debug(config._sprout_mgr.client.call_method('destroy_appliance', ip_address))
+        except Exception as e:
+            log.debug('Error trying to end sprout appliance %s', ip_address)
+            log.debug(e)
+    else:
+        log.debug('The IP address was not present - not terminating any appliance')
+
+
+class NewHooks(object):
+    def pytest_miq_node_shutdown(self, config, nodeinfo):
+        pass

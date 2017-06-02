@@ -3,7 +3,6 @@ import re
 from cfme.common import TopologyMixin, TimelinesMixin
 from . import MiddlewareProvider
 from utils.appliance import Navigatable
-from utils.db import cfmedb
 from utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
 from . import download, MiddlewareBase, auth_btn, mon_btn
@@ -11,7 +10,6 @@ from utils.appliance.implementations.ui import navigate_to
 from mgmtsystem.hawkular import Hawkular
 
 
-@MiddlewareProvider.add_provider_type
 class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, MiddlewareProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
@@ -39,9 +37,10 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'), ('provider_type', 'Type')]
     type_name = "hawkular"
     mgmt_class = Hawkular
+    db_types = ["Hawkular::MiddlewareManager"]
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None,
-            appliance=None, **kwargs):
+            appliance=None, sec_protocol=None, **kwargs):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.hostname = hostname
@@ -51,11 +50,13 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
             credentials = {}
         self.credentials = credentials
         self.key = key
+        self.sec_protocol = sec_protocol if sec_protocol else 'Non-SSL'
         self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Hawkular',
+                'sec_protocol': kwargs.get('sec_protocol'),
                 'hostname_text': kwargs.get('hostname'),
                 'port_text': kwargs.get('port')}
 
@@ -79,7 +80,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @variable(alias='db')
     def num_server_group(self):
-        res = cfmedb().engine.execute(
+        res = self.appliance.db.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, middleware_domains, middleware_server_groups "
             "WHERE middleware_domains.ems_id=ext_management_systems.id "
@@ -124,8 +125,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @is_refreshed.variant('db')
     def is_refreshed_db(self):
-        ems = cfmedb()['ext_management_systems']
-        dates = cfmedb().session.query(ems.created_on,
+        ems = self.appliance.db['ext_management_systems']
+        dates = self.appliance.db.session.query(ems.created_on,
                                        ems.updated_on).filter(ems.name == self.name).first()
         return dates.updated_on > dates.created_on
 
@@ -154,12 +155,14 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         mon_btn("Timelines")
 
     @staticmethod
-    def from_config(prov_config, prov_key):
+    def from_config(prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = HawkularProvider.process_credential_yaml_key(credentials_key)
         return HawkularProvider(
             name=prov_config['name'],
             key=prov_key,
             hostname=prov_config['hostname'],
+            sec_protocol=prov_config.get('sec_protocol', None),
             port=prov_config['port'],
-            credentials={'default': credentials})
+            credentials={'default': credentials},
+            appliance=appliance)

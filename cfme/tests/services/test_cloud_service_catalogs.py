@@ -38,12 +38,13 @@ def dialog():
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
+                                   element_data=element_data,
                                    submit=True, cancel=True,
                                    tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                                    tab_desc="my tab desc",
                                    box_label="box_" + fauxfactory.gen_alphanumeric(),
                                    box_desc="my box desc")
-    service_dialog.create(element_data)
+    service_dialog.create()
     flash.assert_success_message('Dialog "{}" was added'.format(dialog))
     yield dialog
 
@@ -92,13 +93,13 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
                                name=item_name,
                                description="my catalog",
                                display_in=True,
-                               catalog=catalog.name,
+                               catalog=catalog,
                                dialog=dialog,
                                catalog_name=image,
                                provider=provider,
                                prov_data=provisioning_data)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', item_name)

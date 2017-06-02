@@ -42,7 +42,7 @@ def parse_cmd_line():
                         help='comma separated list of the provider type, useful in case of gce,'
                              'azure, ec2 to get the insight into cost/vm listing')
     parser.add_argument('--outfile', dest='outfile', default=log_path.join(
-        'instance_list.log').strpath, help='outfile to list ')
+        'cleanup_old_vms.log').strpath, help='outfile to list ')
     args = parser.parse_args()
     return args
 
@@ -181,6 +181,10 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     matchers = [re.compile(text, re.IGNORECASE) for text in texts]
 
     for provider_key in providers:
+        # check for cleanup boolean
+        if not cfme_data['management_systems'][provider_key].get('cleanup', False):
+            print('Skipping {}, cleanup set to false in yaml'.format(provider_key))
+            continue
         ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress', None)
         if ipaddress and not net.is_pingable(ipaddress):
             continue

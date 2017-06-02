@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.exceptions import ImageNotFound, BlockTypeUnknown
-from cfme.common.vm import VM, Template
+from cfme.common.vm import Template
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar as tb, CheckboxTable, InfoBlock, match_location, \
     PagedTable
@@ -33,7 +33,6 @@ def details_page_check(name, provider):
             return False
 
 
-@VM.register_for_provider_type("cloud")
 class Image(Template, Navigatable):
     ALL_LIST_LOCATION = "clouds_images"
     TO_OPEN_EDIT = "Edit this Image"

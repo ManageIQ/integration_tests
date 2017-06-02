@@ -1,108 +1,150 @@
-# -*- coding: utf-8 -*-
-from functools import partial
-
-from navmazing import NavigateToSibling, NavigateToAttribute
-
-import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import (accordion, flash, form_buttons, Form, Input, Select,
-    match_location, toolbar as tb, PagedTable)
-from selenium.common.exceptions import NoSuchElementException
-from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
-from utils.appliance import Navigatable
+from widgetastic.widget import Text
+from widgetastic_patternfly import Button, Input, BootstrapSelect
+from widgetastic.exceptions import NoSuchElementException
+from navmazing import NavigateToAttribute, NavigateToSibling
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.base import Server
 
-order_button = "//button[@title='Order this Service']"
+from . import ServicesCatalogView
 
-accordion_tree = partial(accordion.tree, "Service Catalogs")
-list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
-# Forms
-stack_form = Form(
-    fields=[
-        ('timeout', Input("stack_timeout")),
-        ('db_user', Input("param_DBUser__protected")),
-        ('db_password', Input("param_DBPassword__protected")),
-        ('db_root_password', Input("param_DBRootPassword__protected")),
-        ('select_instance_type', Select("//select[@id='param_InstanceType']")),
-        ('stack_name', Input("stack_name")),
-        ('resource_group', Select("//select[@id='resource_group']")),
-        ('mode', Select("//select[@id='deploy_mode']")),
-        ('vm_name', Input("param_virtualMachineName")),
-        ('vm_user', Input("param_adminUserName")),
-        ('vm_password', Input("param_adminPassword__protected")),
-        ('vm_size', Select("//select[@id='param_virtualMachineSize']")),
-        ('user_image', Select("//select[@id='param_userImageName']")),
-        ('os_type', Select("//select[@id='param_operatingSystemType']")),
-        ('key_name', Input("param_KeyName")),
-        ('ssh_location', Input("param_SSHLocation"))
-    ])
+class OrderForm(ServicesCatalogView):
+    title = Text('#explorer_title_text')
 
-dialog_form = Form(
-    fields=[
-        ('default_select_value', Select("//select[@id='service_level']"))
-    ])
+    timeout = Input(name='stack_timeout')
+    db_user = Input(name="param_DBUser__protected")
+    db_root_password = Input(name='param_DBRootPassword__protected')
+    select_instance_type = BootstrapSelect("param_InstanceType")
+    stack_name = Input(name='stack_name')
+    resource_group = BootstrapSelect("resource_group")
+    mode = BootstrapSelect('deploy_mode')
+    vm_name = Input(name="param_virtualMachineName")
+    vm_user = Input(name='param_adminUserName')
+    vm_password = Input(name="param_adminPassword__protected")
+    vm_size = BootstrapSelect('param_virtualMachineSize')
+    user_image = BootstrapSelect("param_userImageName")
+    os_type = BootstrapSelect('param_operatingSystemType')
+    key_name = Input(name="param_KeyName")
+    ssh_location = Input(name="param_SSHLocation")
 
-match_page = partial(match_location, title='Catalogs', controller='catalog')
+    flavor = Input(name='param_flavor')
+    image = Input(name="param_image")
+    key = Input(name='param_key')
+    private_network = Input(name="param_private_network")
+    default_select_value = BootstrapSelect('service_level')
+
+
+class ServiceCatalogsView(ServicesCatalogView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'All Services' and
+            self.service_catalogs.is_opened and
+            self.service_catalogs.tree.currently_selected == ["All Services"])
+
+
+class ServiceCatalogsDefaultView(ServicesCatalogView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and
+            self.title.text == 'All Services' and
+            self.service_catalogs.is_opened)
+
+
+class DetailsServiceCatalogView(ServicesCatalogView):
+    title = Text("#explorer_title_text")
+
+    order_button = Button("Order")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and self.service_catalogs.is_opened and
+            self.title.text == 'Service "{}"'.format(self.context['object'].name)
+        )
+
+
+class OrderServiceCatalogView(OrderForm):
+    submit_button = Button('Submit')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_explorer and self.service_catalogs.is_opened and
+            self.title.text == 'Order Service "{}"'.format(self.context['object'].name)
+        )
 
 
 class ServiceCatalogs(Updateable, Pretty, Navigatable):
-    pretty_attrs = ['service_name']
 
-    def __init__(self, service_name=None, stack_data=None, dialog_values=None, appliance=None):
-        self.service_name = service_name
+    def __init__(self, catalog=None, name=None, stack_data=None,
+                 dialog_values=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
+        self.catalog = catalog
+        self.name = name
         self.stack_data = stack_data
         self.dialog_values = dialog_values
-        Navigatable.__init__(self, appliance=appliance)
 
     def order(self):
-        navigate_to(self, 'Order')
+        view = navigate_to(self, 'Order')
         if self.stack_data:
-            stack_form.fill(self.stack_data)
+            view.fill(self.stack_data)
         if self.dialog_values:
-            dialog_form.fill(self.dialog_values)
-        sel.click(form_buttons.submit)
-        # TO DO - needs to be reworked and remove sleep
-        sel.sleep(5)
-        flash.assert_success_message("Order Request was Submitted")
+            view.fill(self.dialog_values)
+        view.submit_button.click()
+        # Request page is displayed after this hence not asserting for view
+        view.flash.assert_success_message("Order Request was Submitted")
+
+
+@navigator.register(Server)
+class ServiceCatalogsDefault(CFMENavigateStep):
+    VIEW = ServiceCatalogsDefaultView
+
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
 
 
 @navigator.register(ServiceCatalogs, 'All')
 class ServiceCatalogsAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = ServiceCatalogsView
 
-    def am_i_here(self):
-        return match_page(summary='All Services')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Services', 'Catalogs')
-        tree = accordion.tree('Service Catalogs')
-        tree.click_path('All Services')
+        self.view.service_catalogs.tree.click_path("All Services")
 
 
 @navigator.register(ServiceCatalogs, 'Details')
 class ServiceCatalogDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = DetailsServiceCatalogView
 
-    def am_i_here(self):
-        return match_page(summary='Service "{}"'.format(self.obj.service_name))
+    prerequisite = NavigateToSibling('All')
 
     def step(self):
         try:
-            sel.click(list_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.service_name}))
+            self.prerequisite_view.service_catalogs.tree.click_path("All Services",
+                 self.obj.catalog.name, self.obj.name)
         except:
             raise NoSuchElementException()
-
-    def resetter(self):
-        tb.refresh()
 
 
 @navigator.register(ServiceCatalogs, 'Order')
 class ServiceCatalogOrder(CFMENavigateStep):
+    VIEW = OrderServiceCatalogView
+
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return match_page(summary='Order Service "{}"'.format(self.obj.service_name))
-
     def step(self):
-        sel.click(order_button)
+        self.prerequisite_view.order_button.click()

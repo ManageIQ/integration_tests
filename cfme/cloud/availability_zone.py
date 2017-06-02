@@ -1,25 +1,134 @@
 """ A page functions for Availability Zone
 """
-from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import View
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import Dropdown, Button
 
-from cfme.web_ui import PagedTable, CheckboxTable, toolbar as tb, match_location
+from cfme.base.login import BaseLoggedInPage
+from cfme.exceptions import AvailabilityZoneNotFound
+from cfme.web_ui import match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from widgetastic_manageiq import (
+    TimelinesView, ItemsToolBarViewSelector, Text, Table, Search, PaginationPane, BreadCrumb,
+    SummaryTable, Accordion, ManageIQTree)
 
-# Page specific locators
-listview_pagetable = PagedTable(table_locator="//div[@id='list_grid']//table")
-listview_checktable = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
-pol_btn = partial(tb.select, 'Policy')
-mon_btn = partial(tb.select, 'Monitoring')
+class AvailabilityZoneToolBar(View):
+    """View containing the toolbar widgets"""
+    policy = Dropdown('Policy')
+    download = Dropdown('Download')  # Title attribute, no displayed text
 
-match_page = partial(match_location, controller='availability_zone', title='Availability Zones')
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class AvailabilityZoneDetailsToolBar(View):
+    """View containing the toolbar widgets"""
+    policy = Dropdown('Policy')
+    monitoring = Dropdown('Monitoring')
+    download = Button(title='Download summary in PDF format')  # Title attribute, no displayed text
+
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class AvailabilityZoneEntities(View):
+    """View containing the widgets for the main content pane"""
+    title = Text('//div[@id="main-content"]//h1')
+    table = Table("//div[@id='list_grid']//table")
+    search = View.nested(Search)
+
+
+class AvailabilityZoneDetailsEntities(View):
+    """View containing the widgets for the main content pane on the details page"""
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    relationships = SummaryTable(title='Relationships')
+    smart_management = SummaryTable(title='Smart Management')
+
+
+class AvailabilityZoneDetailsAccordion(View):
+    """View containing the accordion widgets for the left side pane on details view"""
+    @View.nested
+    class properties(Accordion):  # noqa
+        tree = ManageIQTree()
+
+    @View.nested
+    class relationships(Accordion):  # noqa
+        tree = ManageIQTree()
+
+
+class AvailabilityZoneView(BaseLoggedInPage):
+    """Bare bones base view for page header matching"""
+    @property
+    def in_availability_zones(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Availability Zones'] and
+            match_location(controller='availability_zone', title='Availability Zones'))
+
+
+class AvailabilityZoneAllView(AvailabilityZoneView):
+    """Collect the view components into a single view"""
+    @property
+    def is_displayed(self):
+        return(
+            self.in_availability_zones and
+            self.entities.title.text == 'Availability Zones')
+
+    toolbar = View.nested(AvailabilityZoneToolBar)
+    entities = View.nested(AvailabilityZoneEntities)
+    paginator = View.nested(PaginationPane)
+
+
+class AvailabilityZoneDetailsView(AvailabilityZoneView):
+    """Collect the view components into a single view"""
+    @property
+    def is_displayed(self):
+        expected_title = "{} (Summary)".format(self.context['object'].name)
+        expected_detail = self.context['object'].provider.name
+        return (
+            self.in_availability_zones and
+            self.entities.title.text == expected_title and
+            self.entities.relationships.get_text_of('Cloud Provider') == expected_detail)
+
+    toolbar = View.nested(AvailabilityZoneDetailsToolBar)
+    sidebar = View.nested(AvailabilityZoneDetailsAccordion)
+    entities = View.nested(AvailabilityZoneDetailsEntities)
+
+
+class AvailabilityZoneEditTagsView(AvailabilityZoneView):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h3')
+    # TODO Add tag table support when rowspan is supported in SummaryTable
+    # TODO Add quadicon area
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_availability_zones and
+            self.title.text == 'Tag Assignment' and
+            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations)
+        # TODO Add quadicon check to this return
+
+
+class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_availability_zones and
+            self.breadcrumb.active_location == 'Timelines' and
+            "{} (Summary)".format(self.context['object'].name) in self.breadcrumb.locations and
+            super(TimelinesView, self).is_displayed)
 
 
 class AvailabilityZone(Navigatable):
-    def __init__(self, name, provider, appliance):
+    _param_name = "AvailabilityZone"
+
+    def __init__(self, name, provider, appliance=None):
         self.name = name
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
@@ -27,10 +136,8 @@ class AvailabilityZone(Navigatable):
 
 @navigator.register(AvailabilityZone, 'All')
 class AvailabilityZoneAll(CFMENavigateStep):
+    VIEW = AvailabilityZoneAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        match_page(summary='Availability Zones')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Availability Zones')
@@ -38,29 +145,35 @@ class AvailabilityZoneAll(CFMENavigateStep):
 
 @navigator.register(AvailabilityZone, 'Details')
 class AvailabilityZoneDetails(CFMENavigateStep):
+    VIEW = AvailabilityZoneDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self):
-        match_page(summary='{} (Summary)'.format(self.obj.name))
-
     def step(self, *args, **kwargs):
-        tb.select('List View')
-        listview_pagetable.find_row_by_cell_on_all_pages(
-            {'Name': self.obj.name,
-             'Cloud Provider': self.obj.provider.name})
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        try:
+            row = self.prerequisite_view.paginator.find_row_on_pages(
+                self.prerequisite_view.entities.table,
+                name=self.obj.name,
+                cloud_provider=self.obj.provider.name)
+        except NoSuchElementException:
+            raise AvailabilityZoneNotFound('Could not locate Availability Zone "{}" on provider {}'
+                                           .format(self.obj.name, self.obj.provider.name))
+        row.click()
 
 
 @navigator.register(AvailabilityZone, 'EditTags')
 class AvailabilityZoneEditTags(CFMENavigateStep):
+    VIEW = AvailabilityZoneEditTagsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(AvailabilityZone, 'Timelines')
 class AvailabilityZoneTimelines(CFMENavigateStep):
+    VIEW = CloudAvailabilityZoneTimelinesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        mon_btn('Timelines')
+        self.prerequisite_view.toolbar.monitoring.item_select('Timelines')

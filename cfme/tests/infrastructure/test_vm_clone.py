@@ -38,10 +38,11 @@ def dialog():
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
+                     element_data=element_data,
                      submit=True, cancel=True,
                      tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
                      box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
-    service_dialog.create(element_data)
+    service_dialog.create()
     flash.assert_success_message('Dialog "{}" was added'.format(dialog))
     yield dialog
 
@@ -104,7 +105,7 @@ def create_vm(provider, setup_provider, catalog_item, request):
 
 @pytest.mark.meta(blockers=[1255190])
 @pytest.mark.usefixtures("setup_provider")
-@pytest.mark.uncollectif(version.appliance_is_downstream())
+@pytest.mark.uncollectif(lambda: version.appliance_is_downstream())
 @pytest.mark.long_running
 def test_vm_clone(provider, clone_vm_name, request, create_vm):
     vm_name = create_vm + "_0001"

@@ -11,9 +11,9 @@ from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version, deferred_verpick
-from utils.db import cfmedb
 from utils.units import Unit
 from utils.varmeth import variable
+from utils.log import logger
 
 pol_btn = partial(toolbar.select, "Policy")
 
@@ -136,10 +136,10 @@ class Taggable(object):
         self.load_details(refresh=True)
         if not self.db_id or not self.taggable_type:
             raise KeyError("'db_id' and/or 'taggable_type' not set")
-        t_cls1 = aliased(cfmedb()['classifications'])
-        t_cls2 = aliased(cfmedb()['classifications'])
-        t_tgg = aliased(cfmedb()['taggings'])
-        query = cfmedb().session.query(t_cls1.tag_id, t_tgg.taggable_id.label('db_id'),
+        t_cls1 = aliased(self.appliance.db['classifications'])
+        t_cls2 = aliased(self.appliance.db['classifications'])
+        t_tgg = aliased(self.appliance.db['taggings'])
+        query = self.appliance.db.session.query(t_cls1.tag_id, t_tgg.taggable_id.label('db_id'),
                                        t_cls2.description.label('category'),
                                        t_cls1.description.label('tag_name'), t_cls1.single_value)\
             .join(t_cls2, t_cls1.parent_id == t_cls2.id)\
@@ -237,15 +237,27 @@ class SummaryTable(object):
 
     MULTIKEY_LOC = '../../../tbody/tr[1]/td/strong'
 
-    def __init__(self, o, text, entry):
+    def __init__(self, o, text, entry, skip_load=False):
         self._object = o
         self._text = text
         self._entry = entry
         self._raw_keys = []
         self._keys = []
-        self.load()
+        self._multitable = False
+        if not skip_load:
+            self.load()
+        else:
+            logger.warning(
+                "Child SummaryTable created for {table_name}, "
+                "this table wasn't initialized due to skip_load value".format(
+                    table_name=self._text))
 
     def __repr__(self):
+        if self._multitable:
+            return "<SummaryTable {main_table_name}:\n\t {sub_tables}>".format(
+                main_table_name=self._text,
+                sub_tables='\n\t'.join([repr(getattr(self, key)) for key in self._keys]))
+
         return "<SummaryTable {} {}>".format(
             repr(self._text),
             " ".join("{}={}".format(key, repr(getattr(self, key))) for key in self._keys))
@@ -255,8 +267,46 @@ class SummaryTable(object):
         self._keys = []
         key_values = []
         if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
-            # WE cannot process this kind of table yet.
+            logger.warning(
+                "Parent SummaryTable created for {table_name}, "
+                "it might create few un-initialized SummaryTable".format(
+                    table_name=self._text))
+            self._multitable = True
+            # get all table rows (include titles)
+            table_rows = sel.elements(self.ROWS, root=self._entry)
+
+            # parsing table titles
+            table_titles = sel.elements('./td', root=table_rows[0])
+            table_titles_text = [el.text.replace(" ", "_") for el in table_titles]
+
+            # match each line values with the relevant title
+            for row in table_rows[1:]:
+                # creating mapping between title and row values
+                row_mapping = dict(zip(table_titles_text,
+                                       [el.text for el in sel.elements('./td', root=row)]))
+
+                # set the value of the "name" column to be the key of the entire table,
+                # if "name" is not available setting the most left element to be the key
+                row_key = row_mapping.get("Name", row_mapping.keys()[0])
+
+                # creating empty table to populate the row data as regular table
+                table = SummaryTable(self._object,
+                                     row_key,
+                                     row, skip_load=True)
+                # set the keys of the table to table object
+                table._keys = row_mapping.keys()
+
+                # add attr for each key
+                for key in row_mapping.keys():
+                    setattr(table, key, row_mapping[key])
+
+                # add the entire table to parent table keys
+                self._keys.append(row_key)
+
+                # add attr to parent table
+                setattr(self, row_key, table)
             return
+
         for row in sel.elements(self.ROWS, root=self._entry):
             tds = sel.elements('./td', root=row)
             key = tds[0]

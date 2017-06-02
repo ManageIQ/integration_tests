@@ -8,7 +8,7 @@ from utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.fixture(scope="session")
-def widgets_generated(any_provider_session):
+def widgets_generated(setup_only_one_provider):
     navigate_to(Server, 'Dashboard')
     widget_list = []
     for widget in Widget.all():

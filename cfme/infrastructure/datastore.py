@@ -58,7 +58,7 @@ class Datastore(Pretty, Navigatable):
         self.type = type
         self.quad_name = 'datastore'
         if provider_key:
-            self.provider = get_crud(provider_key)
+            self.provider = get_crud(provider_key, appliance=appliance)
         else:
             self.provider = None
 
@@ -85,12 +85,8 @@ class Datastore(Pretty, Navigatable):
              message="Wait datastore to appear", num_sec=1000, fail_func=sel.refresh)
 
     def load_details(self):
-        # todo: to remove this context related functionality along with making provider
-        # param mandatory
-        if not self.provider:
-            navigate_to(self, 'Details')
-        else:
-            navigate_to(self, 'DetailsFromProvider')
+        # todo: to remove this context related functionality
+        navigate_to(self, 'Details')
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
@@ -110,10 +106,7 @@ class Datastore(Pretty, Navigatable):
         Returns: List of strings with names or `[]` if no hosts found.
         """
         self.load_details()
-        try:
-            sel.click(details_page.infoblock.element("Relationships", "Hosts"))
-        except sel.NoSuchElementException:
-            sel.click(InfoBlock('Relationships', 'Hosts'))
+        sel.click(InfoBlock('Relationships', 'Hosts'))
         return [q.name for q in Quadicon.all("host")]
 
     def get_vms(self):
@@ -141,6 +134,7 @@ class Datastore(Pretty, Navigatable):
         sel.click(details_page.infoblock.element("Relationships", "Hosts"))
         for q in Quadicon.all('host'):
             fill(q.checkbox(), True)
+        # TODO: This should really be an attr on the datastore called DELETE_BTN or something
         path = version.pick({
             version.LOWEST: "Remove Hosts from the VMDB",
             "5.4": "Remove items from the VMDB"})
@@ -186,15 +180,16 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        if version.current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             accordion.tree('Datastores', 'All Datastores')
         else:
             # todo: there is unsupported accordion in 5.6.3.3. currently it isn't necessary
             # for existing tests
             pass
         tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
 
 
 @navigator.register(Datastore, 'Details')
@@ -210,8 +205,10 @@ class Details(CFMENavigateStep):
 
 @navigator.register(Datastore, 'DetailsFromProvider')
 class DetailsFromProvider(CFMENavigateStep):
-    def step(self):
+    def prerequisite(self, *args, **kwargs):
         navigate_to(self.obj.provider, 'Details')
+
+    def step(self):
         list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 

@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
-from utils import db_queries as dbq
 
 pytestmark = [
     test_requirements.automate,
@@ -15,7 +14,7 @@ pytestmark = [
 
 
 @pytest.mark.parametrize("domain_name", ["ManageIQ", "RedHat"])
-def test_domain_present(domain_name, soft_assert):
+def test_domain_present(domain_name, soft_assert, appliance):
     """This test verifies presence of domains that are included in the appliance.
 
     Prerequisities:
@@ -30,4 +29,5 @@ def test_domain_present(domain_name, soft_assert):
     soft_assert(domain.exists, "Domain {} does not exist!".format(domain_name))
     soft_assert(domain.locked, "Domain {} is not locked!".format(domain_name))
     soft_assert(
-        dbq.check_domain_enabled(domain_name), "Domain {} is not enabled!".format(domain_name))
+        appliance.check_domain_enabled(
+            domain_name), "Domain {} is not enabled!".format(domain_name))

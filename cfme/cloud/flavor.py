@@ -1,29 +1,112 @@
 """ Page functions for Flavor pages
-
-
-:var list_page: A :py:class:`cfme.web_ui.Region` object describing elements on the list page.
-:var details_page: A :py:class:`cfme.web_ui.Region` object describing elements on the detail page.
 """
-from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import Dropdown, Button, View
 
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import PagedTable, toolbar as tb, match_location
+from cfme.base.ui import BaseLoggedInPage
+from cfme.exceptions import FlavorNotFound
+from cfme.web_ui import match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from widgetastic_manageiq import (
+    ItemsToolBarViewSelector, SummaryTable, Text, Table, PaginationPane, Accordion, ManageIQTree,
+    Search, BreadCrumb)
 
-listview_table = PagedTable(table_locator="//div[@id='list_grid']//table")
 
-pol_btn = partial(tb.select, 'Policy')
+class FlavorView(BaseLoggedInPage):
+    @property
+    def in_availability_zones(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Flavors'] and
+            match_location(controller='flavor', title='Flavors'))
 
-match_page = partial(match_location, controller='flavor', title='Flavors')
+
+class FlavorToolBar(View):
+    policy = Dropdown('Policy')
+    download = Dropdown('Download')
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class FlavorEntities(View):
+    title = Text('//div[@id="main-content"]//h1')
+    table = Table("//div[@id='list_grid']//table")
+    search = View.nested(Search)
+
+
+class FlavorDetailsToolBar(View):
+    policy = Dropdown('Policy')
+    download = Button(title='Download summary in PDF format')
+
+
+class FlavorDetailsAccordion(View):
+    @View.nested
+    class properties(Accordion):  # noqa
+        tree = ManageIQTree()
+
+    @View.nested
+    class relationships(Accordion):  # noqa
+        tree = ManageIQTree()
+
+
+class FlavorDetailsEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    properties = SummaryTable(title='Properties')
+    relationships = SummaryTable(title='Relationships')
+    smart_management = SummaryTable(title='Smart Management')
+
+
+class FlavorAllView(FlavorView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_availability_zones and
+            self.entities.title.text == 'Flavors')
+
+    toolbar = FlavorToolBar()
+    entities = FlavorEntities()
+    paginator = View.nested(PaginationPane)
+
+
+class FlavorDetailsView(FlavorView):
+    @property
+    def is_displayed(self):
+        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        expected_provider = self.context['object'].provider.name
+        return (
+            self.in_availability_zones and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title and
+            self.entities.relationships.get_text_of('Cloud Provider') == expected_provider)
+
+    toolbar = FlavorDetailsToolBar()
+    sidebar = FlavorDetailsAccordion()
+    entities = FlavorDetailsEntities()
+
+
+class FlavorEditTagsView(FlavorView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_availability_zones and
+            self.entities.title.text == 'Tag Assignment' and
+            '{} (Summary)'.format(self.context['object'].name) in self.entities.breadcrumb.locations
+        )
+
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h3')
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
 
 class Flavor(Navigatable):
     """
     Flavor class to support navigation
     """
+    _param_name = "Flavor"
 
     def __init__(self, name, provider, appliance=None):
         self.name = name
@@ -33,10 +116,8 @@ class Flavor(Navigatable):
 
 @navigator.register(Flavor, 'All')
 class FlavorAll(CFMENavigateStep):
+    VIEW = FlavorAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Flavors')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Flavors')
@@ -46,13 +127,17 @@ class FlavorAll(CFMENavigateStep):
 class FlavorDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Summary)'.format(self.obj.name))
-
     def step(self, *args, **kwargs):
-        sel.click(listview_table.find_row_by_cell_on_all_pages(
-            {'Name': self.obj.name,
-             'Cloud Provider': self.obj.provider.name}))
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        try:
+            row = self.prerequisite_view.paginator.find_row_on_all_pages(
+                self.prerequisite_view.entities.table,
+                name=self.obj.name,
+                cloud_provider=self.obj.provider.name)
+        except NoSuchElementException:
+            raise FlavorNotFound('Could not locate flavor "{}" on provider {}'
+                                 .format(self.obj.name, self.obj.provider.name))
+        row.click()
 
 
 @navigator.register(Flavor, 'EditTags')
@@ -60,4 +145,4 @@ class FlavorEditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

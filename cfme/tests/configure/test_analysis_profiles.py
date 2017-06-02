@@ -6,7 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.configure.configuration import AnalysisProfile
 from cfme.web_ui import Table, flash, toolbar as tb, form_buttons
 from utils.appliance.implementations.ui import navigate_to
-import utils.error as error
+from utils import error
 from utils.update import update
 
 

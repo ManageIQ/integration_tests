@@ -16,7 +16,6 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.control.explorer import actions, policies, policy_profiles
-from cfme.configure import tasks
 from cfme.configure.tasks import Tasks
 from cfme.infrastructure import host
 from cfme.services import requests
@@ -34,7 +33,7 @@ from utils.generators import random_vm_name
 from utils.log import logger
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
-from utils.wait import wait_for, TimedOutError
+from utils.wait import wait_for, wait_for_decorator, TimedOutError
 from utils.pretty import Pretty
 from cfme import test_requirements
 
@@ -448,7 +447,7 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm
 
 
 def test_action_power_on_logged(
-        request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
+        request, assign_policy_for_testing, vm, vm_off, appliance, vm_crud_refresh):
     """ This test tests action 'Generate log message'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -467,7 +466,7 @@ def test_action_power_on_logged(
 
     # Search the logs
     def search_logs():
-        rc, stdout = ssh_client.run_command(
+        rc, stdout = appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/policy.log | grep '{}'".format(policy_desc))
         if rc != 0:  # Nothing found, so shortcut
             return False
@@ -485,7 +484,7 @@ def test_action_power_on_logged(
 
 
 def test_action_power_on_audit(
-        request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
+        request, assign_policy_for_testing, vm, vm_off, appliance, vm_crud_refresh):
     """ This test tests action 'Generate Audit Event'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -504,7 +503,7 @@ def test_action_power_on_audit(
 
     # Search the logs
     def search_logs():
-        rc, stdout = ssh_client.run_command(
+        rc, stdout = appliance.ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/audit.log | grep '{}'".format(policy_desc)
         )
         if rc != 0:  # Nothing found, so shortcut
@@ -657,16 +656,14 @@ def test_action_initiate_smartstate_analysis(
 
     # Check that analyse job has appeared in the list
     # Wait for the task to finish
-    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
+    @wait_for_decorator(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
-        navigate_to(Tasks, 'AllVMContainerAnalysis')
-        vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
-            'task_name': "Scan from Vm {}".format(vm.name),
-            'state': 'finished'
-        })
-        return vm_analysis_finished is not None
+        view = navigate_to(Tasks, 'AllTasks')
+        vm_analysis_row = view.tabs.alltasks.table.row(task_name="Scan from Vm {}"
+                                                                 .format(vm.name))
+        return vm_analysis_row.state.text == 'Finished'
 
     # Wait for VM analysis to finish
     def wait_analysis_finished():
@@ -775,7 +772,7 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
     tag_unassign_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
-        action_values={"cat_service_level": True}
+        action_values={"remove_tag": ["Service Level"]}
     )
     assign_policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
 

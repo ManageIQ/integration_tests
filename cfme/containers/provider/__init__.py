@@ -1,21 +1,23 @@
 from functools import partial
+from random import sample
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common.provider import BaseProvider, import_all_modules_of
+from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
-    InfoBlock, Region, paginator, match_location)
+    InfoBlock, Region, paginator, match_location, PagedTable, CheckboxTable)
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.browser import ensure_browser_open
-from utils.db import cfmedb
 from utils.pretty import Pretty
 from utils.varmeth import variable
 
+
+paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 cfg_btn = partial(tb.select, 'Configuration')
 mon_btn = partial(tb.select, 'Monitoring')
@@ -49,12 +51,33 @@ properties_form_56 = TabStripForm(
         ],
     })
 
+properties_form_58 = TabStripForm(
+    fields=[
+        ('type_select', AngularSelect('ems_type')),
+        ('name_text', Input('name'))
+    ],
+    tab_fields={
+        "Default": [
+            ('hostname_text', Input("default_hostname")),
+            ('port_text', Input("default_api_port")),
+            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
+            ('trusted_ca_certificates', Input("default_tls_ca_certs"))
+        ],
+        "Hawkular": [
+            ('hawkular_hostname', Input("hawkular_hostname")),
+            ('hawkular_api_port', Input("hawkular_api_port")),
+            ('hawkular_sec_protocol', AngularSelect("hawkular_security_protocol", exact=True)),
+            ('hawkular_ca_certificates', Input("hawkular_tls_ca_certs"))
+        ],
+    })
+
 
 prop_region = Region(
     locators={
         'properties_form': {
             version.LOWEST: properties_form,
             '5.6': properties_form_56,
+            '5.8': properties_form_58
         }
     }
 )
@@ -63,7 +86,6 @@ match_page = partial(match_location, controller='ems_container',
                      title='Containers Providers')
 
 
-@BaseProvider.add_base_type
 class ContainersProvider(BaseProvider, Pretty):
     provider_types = {}
     in_version = ('5.5', version.LATEST)
@@ -75,14 +97,16 @@ class ContainersProvider(BaseProvider, Pretty):
         'num_replication_controller',
         'num_pod',
         'num_node',
+        'num_image_registry',
         'num_container']
-    # TODO add 'num_volume', 'num_image_registry'
+    # TODO add 'num_volume'
     string_name = "Containers"
     page_name = "containers"
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
     quad_name = None
+    db_types = ["ContainerManager"]
     _properties_region = prop_region  # This will get resolved in common to a real form
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Containers Provider"),
@@ -99,6 +123,8 @@ class ContainersProvider(BaseProvider, Pretty):
             zone=None,
             hostname=None,
             port=None,
+            sec_protocol=None,
+            hawkular_sec_protocol=None,
             provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -110,6 +136,8 @@ class ContainersProvider(BaseProvider, Pretty):
         self.zone = zone
         self.hostname = hostname
         self.port = port
+        self.sec_protocol = sec_protocol
+        self.hawkular_sec_protocol = hawkular_sec_protocol
         self.provider_data = provider_data
 
     def _on_detail_page(self):
@@ -147,7 +175,7 @@ class ContainersProvider(BaseProvider, Pretty):
 
     @num_service.variant('ui')
     def num_service_ui(self):
-        if version.current_version() < "5.7":
+        if self.appliance.version < "5.7":
             name = "Services"
         else:
             name = "Container Services"
@@ -190,7 +218,7 @@ class ContainersProvider(BaseProvider, Pretty):
     @variable(alias='db')
     def num_container(self):
         # Containers are linked to providers through container definitions and then through pods
-        res = cfmedb().engine.execute(
+        res = self.appliance.db.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, container_groups, container_definitions, containers "
             "WHERE containers.container_definition_id=container_definitions.id "
@@ -209,7 +237,7 @@ class ContainersProvider(BaseProvider, Pretty):
 
     @num_image.variant('ui')
     def num_image_ui(self):
-        if version.current_version() < "5.7":
+        if self.appliance.version < "5.7":
             name = "Images"
         else:
             name = "Container Images"
@@ -227,6 +255,9 @@ class ContainersProvider(BaseProvider, Pretty):
 @navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='Pods')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Providers')
@@ -258,6 +289,9 @@ class Details(CFMENavigateStep):
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+    def resetter(self):
+        tb.select("Summary View")
 
 
 @navigator.register(ContainersProvider, 'Edit')
@@ -310,4 +344,52 @@ class TopologyFromDetails(CFMENavigateStep):
         sel.click(InfoBlock('Overview', 'Topology'))
 
 
-import_all_modules_of('cfme.containers.provider')
+# Common methods:
+
+class ContainersTestItem(object):
+    """This is a generic test item. Especially used for parametrized functions
+    """
+    __test__ = False
+
+    def __init__(self, obj, polarion_id, **additional_attrs):
+        """Args:
+            * obj: The container object in this test (e.g. Image)
+            * The polarion test case ID
+        """
+        self.obj = obj
+        self.polarion_id = polarion_id
+        for name, value in additional_attrs.items():
+            self.__setattr__(name, value)
+
+    def pretty_id(self):
+        return '{} ({})'.format(
+            getattr(self.obj, '__name__', str(self.obj)),
+            self.polarion_id)
+
+
+def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
+                          silent_failure=False):
+    """Get <count> random rows from the obj list table,
+    if <count> is greater that the number of rows, return number of rows.
+
+    Args:
+        provider: containers provider
+        obj: the containers object
+        table: the object's Table object
+        count: number of random rows to return
+        silent_failure: If True and no records found for obj, it'll
+                        return None instead of raise exception
+
+    return: list of rows"""
+
+    navigate_to(obj, 'All')
+    tb.select('List View')
+    if sel.is_displayed_text("No Records Found.") and silent_failure:
+        return
+    paginator.results_per_page(1000)
+    table = table_class(table_locator="//div[@id='list_grid']//table")
+    rows = table.rows_as_list()
+    if not rows:
+        return []
+
+    return sample(rows, min(count, len(rows)))

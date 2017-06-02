@@ -4,6 +4,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
+from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.exceptions import (
     InstanceNotFound, OptionNotAvailable, DestinationNotFound,
@@ -18,12 +19,14 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from utils.wait import wait_for
 from utils.log import logger
+from widgetastic_manageiq import TimelinesView
 
 
 cfg_btn = partial(tb.select, 'Configuration')
 pwr_btn = partial(tb.select, 'Power')
 life_btn = partial(tb.select, 'Lifecycle')
 pol_btn = partial(tb.select, 'Policy')
+mon_btn = partial(tb.select, 'Monitoring')
 
 tree_inst_by_prov = partial(accordion.tree, "Instances by Provider")
 tree_instances = partial(accordion.tree, "Instances")
@@ -63,7 +66,14 @@ def details_page_check(name, provider):
             return False
 
 
-@VM.register_for_provider_type("cloud")
+class CloudInstanceTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Instances'] and \
+            super(TimelinesView, self).is_displayed
+
+
 class Instance(VM, Navigatable):
     """Represents a generic instance in CFME. This class is used if none of the inherited classes
     will match.
@@ -83,6 +93,8 @@ class Instance(VM, Navigatable):
 
     REMOVE_SINGLE = {'5.6': 'Remove from the VMDB',
                      '5.7': 'Remove Instance'}
+
+    TO_OPEN_EDIT = "Edit this Instance"
 
     def __init__(self, name, provider, template_name=None, appliance=None):
         super(Instance, self).__init__(name=name, provider=provider, template_name=template_name)
@@ -468,7 +480,7 @@ class InstanceAddFloatingIP(CFMENavigateStep):
     # No am_i_here because the page only indicates name and not provider
 
     def step(self):
-        if version.current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Associate a Floating IP with this Instance')
         else:
             raise DestinationNotFound('Floating IP assignment not available for appliance version')
@@ -481,7 +493,16 @@ class InstanceRemoveFloatingIP(CFMENavigateStep):
     # No am_i_here because the page only indicates name and not provider
 
     def step(self):
-        if version.current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Disassociate a Floating IP from this Instance')
         else:
             raise DestinationNotFound('Floating IP assignment not available for appliance version')
+
+
+@navigator.register(Instance, 'Timelines')
+class InstanceTimelines(CFMENavigateStep):
+    VIEW = CloudInstanceTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        mon_btn('Timelines')

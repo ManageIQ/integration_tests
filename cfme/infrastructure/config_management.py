@@ -1,9 +1,9 @@
 from functools import partial
+
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-
-import cfme
+from cfme.base.credential import Credential as BaseCredential
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.tabstrip as tabs
@@ -13,13 +13,12 @@ from cfme.web_ui import (
     AngularSelect, match_location
 )
 from utils import version, conf
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
-
 
 properties_form = Form(
     fields=[
@@ -49,6 +48,7 @@ page = Region(locators={
 add_manager_btn = form_buttons.FormButton('Add')
 edit_manager_btn = form_buttons.FormButton('Save changes')
 cfg_btn = partial(tb.select, 'Configuration')
+RELOAD_LOC = "//button[@name='summary_reload']"
 
 
 match_page = partial(match_location, controller='provider_foreman',
@@ -82,12 +82,13 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         self.key = key or name
 
     def _form_mapping(self, create=None, **kwargs):
+        provider_type = None if self.appliance.version >= '5.8' else (create and self.type)
         return {'name_text': kwargs.get('name'),
-                'type_select': create and self.type,
+                'type_select': provider_type,
                 'url_text': kwargs.get('url'),
                 'ssl_checkbox': kwargs.get('ssl')}
 
-    class Credential(cfme.Credential, Updateable):
+    class Credential(BaseCredential, Updateable):
         pass
 
     def _submit(self, cancel, submit_button):
@@ -197,7 +198,9 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def _refresh_flash_msg(self):
-        return 'Refresh Provider initiated for 1 provider ({})'.format(self.type)
+        return version.pick({'5.7': 'Refresh Provider initiated for 1 provider ({})'.
+                                    format(self.type),
+                             '5.8': 'Refresh Provider initiated for 1 provider'})
 
     @property
     def exists(self):
@@ -226,6 +229,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     def config_profiles(self):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
         navigate_to(self, 'Details')
+        # TODO - remove it later.Workaround for BZ 1452425
+        sel.click(RELOAD_LOC)
         tb.select('List View')
         wait_for(self._does_profile_exist, num_sec=300, delay=20, fail_func=sel.refresh)
         return [ConfigProfile(row['name'].text, self) for row in
@@ -256,7 +261,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def quad_name(self):
-        return '{} Configuration Manager'.format(self.name)
+        return version.pick({'5.7': '{} Configuration Manager'.format(self.name),
+                             '5.8': '{} Automation Manager'.format(self.name)})
 
 
 def get_config_manager_from_config(cfg_mgr_key):
@@ -441,17 +447,26 @@ class MgrAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version > '5.7.0.8':
-            self.prerequisite_view.navigation.select('Configuration', 'Management')
-        else:
+        if self.obj.appliance.version < '5.7':
             self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
+        elif self.obj.appliance.version > '5.7' and self.obj.appliance.version < '5.8':
+            self.prerequisite_view.navigation.select('Configuration', 'Management')
+        elif self.obj.appliance.version >= '5.8':
+            self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
 
     def resetter(self):
-        accordion.tree('Providers', 'All Configuration Manager Providers')
+        if self.obj.appliance.version >= '5.8':
+            accordion.tree('Providers', 'All Ansible Tower Providers')
+        else:
+            accordion.tree('Providers', 'All Configuration Manager Providers')
         tb.select('Grid View')
 
     def am_i_here(self):
-        return match_page('All Configuration Management Providers')
+        if self.obj.appliance.version >= '5.8':
+            page = 'All Ansible Tower Providers'
+        else:
+            page = 'All Configuration Manager Providers'
+        return match_page(page)
 
 
 @navigator.register(ConfigManager, 'Add')

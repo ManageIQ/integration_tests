@@ -16,15 +16,15 @@ def backup_file_name():
 
 
 @pytest.yield_fixture(scope="module")
-def rake(ssh_client, backup_file_name):
-    ssh_client.run_command("rm -f {}".format(backup_file_name))
-    ssh_client.run_rake_command("evm:automate:backup FILE={}".format(backup_file_name))
-    yield lambda command: ssh_client.run_rake_command(command)
-    ssh_client.run_rake_command("evm:automate:clear")
-    ssh_client.run_rake_command("evm:automate:restore FILE={}".format(backup_file_name))
+def rake(appliance, backup_file_name):
+    appliance.ssh_client.run_command("rm -f {}".format(backup_file_name))
+    appliance.ssh_client.run_rake_command("evm:automate:backup FILE={}".format(backup_file_name))
+    yield lambda command: appliance.ssh_client.run_rake_command(command)
+    appliance.ssh_client.run_rake_command("evm:automate:clear")
+    appliance.ssh_client.run_rake_command("evm:automate:restore FILE={}".format(backup_file_name))
 
 
-def test_import_export_5_2(ssh_client, rake):
+def test_import_export_5_2(appliance, rake):
     """Test that import and export work for Control.
 
     Steps:
@@ -35,8 +35,8 @@ def test_import_export_5_2(ssh_client, rake):
         * If ``diff`` returns $?==0, then it is all right
     """
     # How does this test work?
-    ssh_client.run_command("rm -f /tmp/impexp_test_1.xml")
-    ssh_client.run_command("rm -f /tmp/impexp_test_2.xml")
+    appliance.ssh_client.run_command("rm -f /tmp/impexp_test_1.xml")
+    appliance.ssh_client.run_command("rm -f /tmp/impexp_test_2.xml")
     # We pick namespace Automation
     rake("evm:automate:export NAMESPACE='Automation' FILE='/tmp/impexp_test_1.xml'")
     rake("evm:automate:clear")
@@ -45,5 +45,6 @@ def test_import_export_5_2(ssh_client, rake):
     # And do the backup
     rake("evm:automate:backup FILE='/tmp/impexp_test_2.xml'")
     # Check the difference
-    rc = ssh_client.run_command("diff '/tmp/impexp_test_1.xml' '/tmp/impexp_test_2.xml'")[0]
+    rc = appliance.ssh_client.run_command(
+        "diff '/tmp/impexp_test_1.xml' '/tmp/impexp_test_2.xml'")[0]
     assert rc == 0, "Could not verify import/export functionality of the appliance"

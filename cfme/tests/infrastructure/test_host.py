@@ -4,11 +4,11 @@ import random
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.host import credential_form
-from cfme.infrastructure.provider import details_page, InfraProvider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import Quadicon, fill, toolbar as tb, flash
 from utils import testgen
 from utils import version
-import utils.conf as conf
+from utils import conf
 from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
@@ -45,8 +45,8 @@ def pytest_generate_tests(metafunc):
 def test_multiple_host_good_creds(setup_provider, provider):
     """  Tests multiple host credentialing  with good credentials """
 
-    navigate_to(provider, 'Details')
-    sel.click(details_page.infoblock.element("Relationships", "Hosts"))
+    details_view = navigate_to(provider, 'Details')
+    details_view.contents.relationships.click_at('Hosts')
 
     quads = Quadicon.all("host", this_page=True)
     for quad in quads:
@@ -71,8 +71,8 @@ def test_multiple_host_good_creds(setup_provider, provider):
 def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials """
 
-    navigate_to(provider, 'Details')
-    sel.click(details_page.infoblock.element("Relationships", "Hosts"))
+    details_view = navigate_to(provider, 'Details')
+    details_view.contents.relationships.click_at('Hosts')
 
     quads = Quadicon.all("host", this_page=True)
     for quad in quads:

@@ -6,8 +6,9 @@ from widgetastic.widget import View
 from widgetastic_manageiq import Accordion, ManageIQTree
 from widgetastic_patternfly import Dropdown, FlashMessages
 
-from cfme import BaseLoggedInPage
 from cfme.base import Server
+from cfme.base.login import BaseLoggedInPage
+from cfme.base.ui import automate_menu_name
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -18,7 +19,8 @@ class AutomateExplorerView(BaseLoggedInPage):
     def in_explorer(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automate', 'Explorer'])
+            self.navigation.currently_selected == automate_menu_name(
+                self.context['object'].appliance) + ['Explorer'])
 
     @property
     def is_displayed(self):
@@ -37,10 +39,8 @@ class AutomateExplorer(CFMENavigateStep):
     VIEW = AutomateExplorerView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    # Repeat if alert because you might be at a page that asks you if you really want to leave
-    @CFMENavigateStep.repeat_if_alert(accept=True)
     def step(self):
-        self.view.navigation.select('Automate', 'Explorer')
+        self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Explorer'])
 
 
 def check_tree_path(actual, desired):

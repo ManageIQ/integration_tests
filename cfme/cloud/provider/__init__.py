@@ -13,8 +13,9 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme.base.login import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
-from cfme.common.provider import CloudInfraProvider, import_all_modules_of
+from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui import form_buttons, CFMECheckbox
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio, \
@@ -27,6 +28,7 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
+from widgetastic_manageiq import TimelinesView
 
 
 # Forms
@@ -113,7 +115,14 @@ mon_btn = partial(tb.select, 'Monitoring')
 match_page = partial(match_location, controller='ems_cloud', title='Cloud Providers')
 
 
-@CloudInfraProvider.add_base_type
+class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and \
+            super(TimelinesView, self).is_displayed
+
+
 class CloudProvider(Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
@@ -121,14 +130,14 @@ class CloudProvider(Pretty, CloudInfraProvider):
     Args:
         name: Name of the provider.
         details: a details record (see EC2Details, OpenStackDetails inner class).
-        credentials (:py:class:`Credential`): see Credential inner class.
+        credentials (:py:class:`Credential`): see Credential class.
         key: The CFME key of the provider in the yaml.
 
     Usage:
 
         myprov = EC2Provider(name='foo',
                              region='us-west-1',
-                             credentials=Provider.Credential(principal='admin', secret='foobar'))
+                             credentials=Credential(principal='admin', secret='foobar'))
         myprov.create()
 
     """
@@ -144,6 +153,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     vm_name = "Instances"
     template_name = "Images"
     _properties_region = prop_region  # This will get resolved in common to a real form
+    db_types = ["CloudManager"]
     # Specific Add button
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Cloud Provider"),
@@ -255,6 +265,7 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'Timelines')
 class Timelines(CFMENavigateStep):
+    VIEW = CloudProviderTimelinesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -302,7 +313,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
     wait for it to finish.
 
     Args:
-      credential (cfme.Credential):  Amazon discovery credentials.
+      credential (cfme.base.credential.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
     navigate_to(CloudProvider, 'Discover')
@@ -321,6 +332,3 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
-
-
-import_all_modules_of('cfme.cloud.provider')

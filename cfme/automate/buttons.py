@@ -51,8 +51,8 @@ class ButtonGroupDetailView(AutomateCustomizationView):
         return (
             self.in_customization and
             self.title.text == 'Button Group "{}"'.format(self.context['object'].text) and
-            self.buttons.is_dimmed and
             self.buttons.is_opened and
+            not self.buttons.is_dimmed and
             self.buttons.tree.currently_selected == [
                 'Object Types', self.context['object'].type, self.context['object'].text])
 
@@ -143,7 +143,7 @@ class ButtonGroup(Updateable, Navigatable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(ButtonGroupDetailView)
+        view = self.create_view(ButtonGroupDetailView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:

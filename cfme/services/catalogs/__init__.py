@@ -3,7 +3,7 @@ from widgetastic.widget import View
 from widgetastic_manageiq import Accordion, ManageIQTree
 from widgetastic_patternfly import Dropdown
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from cfme.base import Server
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
@@ -13,6 +13,10 @@ class ServicesCatalogView(BaseLoggedInPage):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Services', 'Catalogs'])
+
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.configuration.is_displayed and not self.catalogs.is_dimmed
 
     @View.nested
     class service_catalogs(Accordion):  # noqa
@@ -37,6 +41,7 @@ class ServicesCatalogView(BaseLoggedInPage):
         tree = ManageIQTree()
 
     configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
 
 @navigator.register(Server)

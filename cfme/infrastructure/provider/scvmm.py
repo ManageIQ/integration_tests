@@ -1,40 +1,48 @@
+from widgetastic_patternfly import BootstrapSelect, Input
+
+from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from . import InfraProvider
 from mgmtsystem.scvmm import SCVMMSystem
 
 
-@InfraProvider.add_provider_type
+class SCVMMEndpoint(DefaultEndpoint):
+    @property
+    def view_value_mapping(self):
+        return {'hostname': self.hostname,
+                'security_protocol': self.security_protocol,
+                'realm': self.security_realm
+                }
+
+
+class SCVMMEndpointForm(DefaultEndpointForm):
+    security_protocol = BootstrapSelect(id='default_security_protocol')
+    realm = Input('realm')  # appears when Kerberos is chosen in security_protocol
+
+
 class SCVMMProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
     mgmt_class = SCVMMSystem
+    db_types = ["Microsoft::InfraManager"]
+    endpoints_form = SCVMMEndpointForm
 
-    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
-                 provider_data=None):
-        super(SCVMMProvider, self).__init__(name=name, credentials=credentials,
-            zone=zone, key=key, provider_data=provider_data)
-
+    def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
+                 ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
+        super(SCVMMProvider, self).__init__(
+            name=name, endpoints=endpoints, zone=zone, key=key, provider_data=provider_data,
+            appliance=appliance)
         self.hostname = hostname
-        self.ip_address = ip_address
         self.start_ip = start_ip
         self.end_ip = end_ip
-        self.sec_protocol = sec_protocol
-        self.sec_realm = sec_realm
+        if ip_address:
+            self.ip_address = ip_address
 
-    def _form_mapping(self, create=None, **kwargs):
-
-        values = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'Microsoft System Center VMM',
-            'hostname_text': kwargs.get('hostname'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol')
+    @property
+    def view_value_mapping(self):
+        return {
+            'name': self.name,
+            'prov_type': 'Microsoft System Center VMM',
         }
-
-        if 'sec_protocol' in values and values['sec_protocol'] is 'Kerberos':
-            values['sec_realm'] = kwargs.get('sec_realm')
-
-        return values
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
@@ -48,9 +56,9 @@ class SCVMMProvider(InfraProvider):
         return values
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
-        credentials_key = prov_config['credentials']
-        credentials = cls.process_credential_yaml_key(credentials_key)
+    def from_config(cls, prov_config, prov_key, appliance=None):
+        endpoint = SCVMMEndpoint(**prov_config['endpoints']['default'])
+
         if prov_config.get('discovery_range', None):
             start_ip = prov_config['discovery_range']['start']
             end_ip = prov_config['discovery_range']['end']
@@ -58,11 +66,8 @@ class SCVMMProvider(InfraProvider):
             start_ip = end_ip = prov_config.get('ipaddress')
         return cls(
             name=prov_config['name'],
-            hostname=prov_config['hostname'],
-            ip_address=prov_config['ipaddress'],
-            credentials={'default': credentials},
+            endpoints={endpoint.name: endpoint},
             key=prov_key,
             start_ip=start_ip,
             end_ip=end_ip,
-            sec_protocol=prov_config['sec_protocol'],
-            sec_realm=prov_config['sec_realm'])
+            appliance=appliance)

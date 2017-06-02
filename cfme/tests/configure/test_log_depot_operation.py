@@ -5,22 +5,51 @@
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
+from datetime import datetime
 import fauxfactory
 import pytest
 import re
-from utils.timeutil import parsetime
-from utils import conf, testgen
-from utils.ftp import FTPClient
-from utils.path import log_path
+
 from cfme import test_requirements
 from cfme.configure import configuration as configure
-from cfme.web_ui import toolbar
-from utils.virtual_machines import deploy_template
-from utils.providers import get_mgmt
+from utils import conf, testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
+from utils.ftp import FTPClient
+from utils.providers import get_mgmt
+from utils.version import current_version
+from utils.virtual_machines import deploy_template
 
 
 pytestmark = [test_requirements.log_depot]
+
+
+class LogDepotType(object):
+    def __init__(self, protocol, credentials, access_dir=None, path=None):
+        self.protocol = protocol
+        self._param_name = self.protocol
+        self.credentials = credentials
+        self.access_dir = access_dir or ""
+        self.path = path
+        self.machine_ip = None
+
+    @property
+    def ftp(self):
+        if self.protocol == "anon_ftp":
+            ftp_user_name = "anonymous"
+            ftp_password = ""
+            # case anonymous connection cfme works only with hardcoded "incoming" directory
+            # incoming folder used for https://bugzilla.redhat.com/show_bug.cgi?id=1307019
+            upload_dir = "incoming"
+        else:
+            ftp_user_name = self.credentials["username"]
+            ftp_password = self.credentials["password"]
+            # if it's not anonymous using predefined credentials
+            upload_dir = "/"
+        return FTPClient(self.machine_ip,
+                         ftp_user_name,
+                         ftp_password,
+                         upload_dir)
 
 
 def pytest_generate_tests(metafunc):
@@ -29,10 +58,9 @@ def pytest_generate_tests(metafunc):
     YAML structure (shared with db backup tests) is as follows:
 
     log_db_depot:
-        machine1:
-            credentials: machine1_creds
+        credentials: credentials_key
+        protocols:
             smb:
-                hostname: smb.example.com/sharename
                 path_on_host: /path/on/host
                 use_for_log_collection: True
                 use_for_db_backups: False
@@ -43,143 +71,31 @@ def pytest_generate_tests(metafunc):
             ftp:
                 hostname: ftp.example.com
                 use_for_log_collection: True
-        machine2:
-            credentials: machine2_creds
-            smb:
-                hostname: smb.example2.com/sharename
-                path_on_host: /path/on/host
-                use_for_log_collection: True
-                use_for_db_backups: False
-            nfs:
-                hostname: nfs.example2.com/path/on/host
-                use_for_log_collection: False
-                use_for_db_backups: True
-            ftp:
-                hostname: ftp.example2.com
-                use_for_log_collection: True
-
-    Each Machine ID must have ftp configured to check uploaded files.
-    If ftp is not present for the machine, it will fail with an Exception.
-    The folders exposed over these three protocols should point into the same folder,
-    because checking is done by FTP.
-
-    This generator provides these fixtures:
-
-    - depot_type: ftp, smb or nfs.
-    - depot_machine_folder: sub folder from YAML.
-    - depot_credentials
-    - depot_ftp: FTP client targeted for the machine.
-
-    The first three are used for ``depot_configured`` fixture.
-    Because of this, these fixtures must preceed the ``depot_configured`` fixture
-    to ensure that they are filled before ``depot_configured`` gets called.
-
-    @todo: Think about using SSH for file check? Or FTP is enough?
     """
-    data = conf.cfme_data.get("log_db_operations", {})
-
-    # Fixtures used for parametrisation
-    fixtures = [
-        "depot_type",
-        "depot_machine_folder",
-        "depot_credentials",
-        "depot_ftp",
-
-    ]
-
-    # Permitted methods
-    methods = [
-        "ftp",
-        "smb",
-        "nfs",
-        "anon_ftp"
-    ]
-
-    # FTP credentials for machines
-    # Used for checking the uploaded content
-    machines_ftp = {}
-    try:
-        for fixture_name in fixtures:
-            assert fixture_name in metafunc.fixturenames
-    except AssertionError:
+    if metafunc.function.__name__ == 'test_collect_unconfigured':
         return
 
-    parametrized = []
-    for machine_id, machine_content in data.iteritems():
-        if machine_id == 'log_db_depot_template':
-            continue
-        credentials = machine_content.get("credentials", None)
-        if credentials:
-            try:
-                credentials = conf.credentials[credentials]
-            except KeyError:
-                raise Exception(
-                    "No credentials with id {} found in credentials file!".format(credentials))
-        else:
-            raise Exception("No credentials found in cfme_data for machine {}!".format(machine_id))
-        for depot_type, depot_type_content in machine_content.iteritems():
-            if depot_type == 'credentials':
-                continue
-            assert depot_type in methods, "{} is illegal depot type".format(depot_type)
-            # add sub_folder to hostname if it present in yaml
-            if "sub_folder" in depot_type_content:
-                hostname = depot_type_content["sub_folder"]
-            else:
-                hostname = ""
-            if depot_type == "ftp" and machine_id not in machines_ftp:
-                machines_ftp[machine_id] = credentials
-                machines_ftp[machine_id]["hostname"] = hostname
-
-            assert "use_for_log_collection" in depot_type_content,\
-                "cfme_data.yaml/log_db_depot/{}/{} does not contain use_for_log_collection key!"\
-                .format(machine_id, depot_type)
-            use_for_log_collection = depot_type_content["use_for_log_collection"]
-            if not use_for_log_collection:
-                continue
-            parametrized.append((depot_type, hostname, credentials, machine_id))
-    new_parametrized = []
-    # We have to inject also the ftp connection into the fixtures
-    for depot_type, hostname, credentials, machine_id in parametrized:
-        if depot_type != "anon_ftp":
-            assert machine_id in machines_ftp, "Machine {} does not have FTP access"\
-                .format(machine_id)
-            ftp_credentials = machines_ftp[machine_id]
-
-        def get_ftp(machine_ip, depot_type=depot_type):
-            """ Returns FTP client generator targeted to the depot machine.
-
-            Usage:
-
-            with depot_ftp() as ftp:
-                ftp.recursively_delete()    # And so on ...
-
-            """
-            # Condition to check if it anonymous ftp or not, use default anonymous user
-            if depot_type == "anon_ftp":
-                ftp_user_name = "anonymous"
-                ftp_password = ""
-                # case anonymous connection cfme works only with hardcoded "incoming" directory
-                # incoming folder used for https://bugzilla.redhat.com/show_bug.cgi?id=1307019
-                upload_dir = "incoming"
-                ftp_host_name = machine_ip + hostname
-            else:
-                ftp_user_name = ftp_credentials["username"]
-                ftp_password = ftp_credentials["password"]
-                # if it's not anonymous using predefined credentials
-                upload_dir = "/"
-                ftp_host_name = machine_ip + ftp_credentials["hostname"]
-            return FTPClient(ftp_host_name,
-                             ftp_user_name,
-                             ftp_password,
-                             upload_dir)
-        param_tuple = (depot_type, hostname, credentials, get_ftp)
-        if param_tuple not in new_parametrized:
-            new_parametrized.append(param_tuple)
-    testgen.parametrize(metafunc, fixtures, new_parametrized, scope="function")
+    fixtures = ['log_depot']
+    data = conf.cfme_data.get("log_db_operations", {})
+    depots = []
+    ids = []
+    creds = conf.credentials[data['credentials']]
+    for protocol, proto_data in data['protocols'].iteritems():
+        if proto_data['use_for_log_collection']:
+            depots.append([LogDepotType(
+                protocol, creds,
+                proto_data.get('sub_folder', None), proto_data.get('path_on_host', None))])
+            ids.append(protocol)
+    if metafunc.function.__name__ in ['test_collect_multiple_servers',
+                                      "test_collect_single_servers"]:
+        ids = ids[:1]
+        depots = depots[:1]
+    testgen.parametrize(metafunc, fixtures, depots, ids=ids, scope="function")
+    return
 
 
-@pytest.fixture(scope="module")
-def depot_machine_ip(request):
+@pytest.yield_fixture(scope="module")
+def depot_machine_ip():
     """ Deploy vm for depot test
 
     This fixture uses for deploy vm on provider from yaml and then receive it's ip
@@ -187,22 +103,31 @@ def depot_machine_ip(request):
     """
     depot_machine_name = "test_long_log_depot_{}".format(fauxfactory.gen_alphanumeric())
     data = conf.cfme_data.get("log_db_operations", {})
-    depot_provider_key = data["log_db_depot_template"]["provider_key"]
+    depot_provider_key = data["log_db_depot_template"]["provider"]
     depot_template_name = data["log_db_depot_template"]["template_name"]
     prov = get_mgmt(depot_provider_key)
     deploy_template(depot_provider_key,
                     depot_machine_name,
                     template_name=depot_template_name)
-
-    def fin():
-        prov.delete_vm(depot_machine_name)
-    request.addfinalizer(fin)
-    return prov.get_ip_address(depot_machine_name)
+    yield prov.get_ip_address(depot_machine_name)
+    prov.delete_vm(depot_machine_name)
 
 
-@pytest.fixture(scope="function")
-def depot_configured(request, depot_type, depot_machine_folder, depot_credentials,
-                     depot_machine_ip):
+@pytest.fixture(scope="module")
+def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
+                                  temp_appliance_unconfig):
+    hostname = temp_appliance_preconfig.address
+    temp_appliance_unconfig.appliance_console_cli.configure_appliance_external_join(hostname,
+        app_creds_modscope['username'], app_creds_modscope['password'], 'vmdb_production',
+        hostname, app_creds_modscope['sshlogin'], app_creds_modscope['sshpass'])
+    temp_appliance_unconfig.start_evm_service()
+    temp_appliance_unconfig.wait_for_evm_service()
+    temp_appliance_unconfig.wait_for_web_ui()
+    return temp_appliance_unconfig
+
+
+@pytest.yield_fixture(scope="function")
+def configured_depot(log_depot, depot_machine_ip):
     """ Configure selected depot provider
 
     This fixture used the trick that the fixtures are cached for given function.
@@ -211,35 +136,57 @@ def depot_configured(request, depot_type, depot_machine_folder, depot_credential
 
     It also provides a finalizer to disable the depot after test run.
     """
-    machine = depot_machine_ip + depot_machine_folder
-    if depot_type not in ["nfs", "anon_ftp"]:
-        credentials = configure.ServerLogDepot.Credentials(
-            depot_type,
-            fauxfactory.gen_alphanumeric(),
-            machine,
-            username=depot_credentials["username"],
-            password=depot_credentials["password"],
-        )
-    else:
-        credentials = configure.ServerLogDepot.Credentials(
-            depot_type,
-            fauxfactory.gen_alphanumeric(),
-            machine,
-        )
-    # Fails on upstream - BZ1108087
-    credentials.update()
-    request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
-    return credentials
+    log_depot.machine_ip = depot_machine_ip
+    uri = log_depot.machine_ip + log_depot.access_dir
+    log_depot = configure.ServerLogDepot(log_depot.protocol,
+                                         depot_name=fauxfactory.gen_alphanumeric(),
+                                         uri=uri,
+                                         username=log_depot.credentials["username"],
+                                         password=log_depot.credentials["password"]
+                                         )
+    log_depot.create()
+    yield log_depot
+    log_depot.clear()
+
+
+def check_ftp(ftp, server_name, server_zone_id):
+    server_string = server_name + "_" + str(server_zone_id)
+    with ftp:
+        # Files must have been created after start with server string in it (for ex. EVM_1)
+        zip_files = ftp.filesystem.search(re.compile(r"^.*{}.*?[.]zip$".format(server_string)),
+                                          directories=False)
+        assert zip_files, "No logs found!"
+    # Check the times of the files by names
+    datetimes = []
+    for file in zip_files:
+        # files looks like "Current_region_0_default_1_EVM_1_20170127_043343_20170127_051010.zip"
+        # 20170127_043343 - date and time
+        date = file.name.split("_")
+        date_from = date[7] + date[8]
+        # removing ".zip" from last item
+        date_to = date[9] + date[10][:-4]
+        try:
+            date_from = datetime.strptime(date_from, "%Y%m%d%H%M%S")
+            date_to = datetime.strptime(date_to, "%Y%m%d%H%M%S")
+        except ValueError:
+            assert False, "Wrong file matching of {}".format(file.name)
+        datetimes.append((date_from, date_to, file.name))
+
+    # Check for the gaps
+    if len(datetimes) > 1:
+        for i in range(len(datetimes) - 1):
+            dt = datetimes[i + 1][0] - datetimes[i][1]
+            assert dt.total_seconds() >= 0.0, \
+                "Negative gap between log files ({}, {})".format(
+                    datetimes[i][2], datetimes[i + 1][2])
 
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=[BZ(1341502, unblock=lambda depot_type: depot_type != "anon_ftp",
-                            forced_streams=["5.6", "upstream"])]
+@pytest.mark.meta(blockers=[BZ(1341502, unblock=lambda log_depot: log_depot.protocol != "anon_ftp",
+                            forced_streams=["5.6", "5.7", "5.8", "upstream"])]
                   )
-def test_collect_log_depot(depot_type, depot_machine_folder, depot_credentials, depot_ftp,
-                           depot_configured, soft_assert, depot_machine_ip,
-                           request):
+def test_collect_log_depot(log_depot, appliance, configured_depot, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
@@ -247,90 +194,129 @@ def test_collect_log_depot(depot_type, depot_machine_folder, depot_credentials, 
     # Wipe the FTP contents in the end
     @request.addfinalizer
     def _clear_ftp():
-        with depot_ftp(depot_machine_ip) as ftp:
+        with log_depot.ftp as ftp:
             ftp.cwd(ftp.upload_dir)
             ftp.recursively_delete()
 
     # Prepare empty workspace
-    with depot_ftp(depot_machine_ip) as ftp:
+    with log_depot.ftp as ftp:
         # move to upload folder
         ftp.cwd(ftp.upload_dir)
         # delete all files
         ftp.recursively_delete()
 
     # Start the collection
-    configure.ServerLogDepot.collect_all()
+    configured_depot.collect_all()
     # Check it on FTP
-    with depot_ftp(depot_machine_ip) as ftp:
-        # Files must have been created after start
-        zip_files = ftp.filesystem.search(re.compile(r"^.*?[.]zip$"), directories=False)
-        assert zip_files, "No logs found!"
-
-        # And must be older than the start time.
-        for file in zip_files:
-            soft_assert(file.local_time < parsetime.now(), "{} is older.".format(file.name))
-
-        # No file contains 'unknown_unknown' sequence
-        # BZ: 1018578
-        bad_files = ftp.filesystem.search(re.compile(r"^.*?unknown_unknown.*?[.]zip$"),
-                                          directories=False)
-        if bad_files:
-            print_list = []
-            for file in bad_files:
-                random_name = "{}.zip".format(fauxfactory.gen_alphanumeric())
-                download_file_name = log_path.join(random_name).strpath
-                file.download(download_file_name)
-                print_list.append((file, random_name))
-
-            pytest.fail(
-                "BUG1018578: Files {} present!".format(
-                    ", ".join("{} as {}".format(f, r) for f, r in print_list)))
-
-    # Check the times of the files by names
-    datetimes = []
-    regexp = re.compile(
-        r"^.*?_(?P<y1>[0-9]{4})(?P<m1>[0-9]{2})(?P<d1>[0-9]{2})_"
-        r"(?P<h1>[0-9]{2})(?P<M1>[0-9]{2})(?P<S1>[0-9]{2})"
-        r"_(?P<y2>[0-9]{4})(?P<m2>[0-9]{2})(?P<d2>[0-9]{2})_"
-        r"(?P<h2>[0-9]{2})(?P<M2>[0-9]{2})(?P<S2>[0-9]{2})[.]zip$"
-    )
-    failed = False
-    for file in zip_files:
-        data = regexp.match(file.name)
-        if not soft_assert(data, "Wrong file matching of {}".format(file.name)):
-            failed = True
-            continue
-        data = {key: int(value) for key, value in data.groupdict().iteritems()}
-        date_from = parsetime(
-            data["y1"], data["m1"], data["d1"], data["h1"], data["M1"], data["S1"])
-        date_to = parsetime(data["y2"], data["m2"], data["d2"], data["h2"], data["M2"], data["S2"])
-        datetimes.append((date_from, date_to, file.name))
-
-    if not failed:
-        # Check for the gaps
-        if len(datetimes) > 1:
-            for i in range(len(datetimes) - 1):
-                dt = datetimes[i + 1][0] - datetimes[i][1]
-                soft_assert(
-                    dt.total_seconds() >= 0.0,
-                    "Negative gap between log files ({}, {})".format(
-                        datetimes[i][2], datetimes[i + 1][2]))
+    check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
 
 
+@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
 @pytest.mark.tier(3)
-def test_collect_unconfigured(request, soft_assert):
+def test_collect_unconfigured(appliance):
     """ Test checking is collect button enable and disable after log depot was configured
 
     """
-    request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
-    log_credentials = configure.ServerLogDepot.Credentials("smb",
-                                                           "testname",
-                                                           "testhost",
-                                                           username="testusername",
-                                                           password="testpassword")
-    log_credentials.update(validate=False)
+    log_credentials = configure.ServerLogDepot("anon_ftp",
+                                               depot_name=fauxfactory.gen_alphanumeric(),
+                                               uri=fauxfactory.gen_alphanumeric())
+
+    log_credentials.create()
+    view = navigate_to(appliance.server, 'DiagnosticsCollectLogs')
     # check button is enable after adding log depot
-    soft_assert(toolbar.is_greyed("Collect", "Collect all logs") is False)
-    configure.ServerLogDepot.Credentials.clear()
+    assert view.collect.item_enabled('Collect all logs') is True
+    log_credentials.clear()
     # check button is disable after removing log depot
-    soft_assert(toolbar.is_greyed("Collect", "Collect all logs") is True)
+    assert view.collect.item_enabled('Collect all logs') is False
+
+
+@pytest.mark.uncollectif(lambda from_slave: from_slave and
+                         BZ.bugzilla.get_bug(1443927).is_opened and current_version() >= '5.8')
+@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
+@pytest.mark.parametrize('from_slave', [True, False], ids=['from_slave', 'from_master'])
+@pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
+@pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
+@pytest.mark.tier(3)
+def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_machine_ip, request,
+                                  configured_external_appliance, zone_collect, collect_type,
+                                  from_slave):
+
+    appliance = temp_appliance_preconfig
+    log_depot.machine_ip = depot_machine_ip
+
+    @request.addfinalizer
+    def _clear_ftp():
+        with log_depot.ftp as ftp:
+            ftp.cwd(ftp.upload_dir)
+            ftp.recursively_delete()
+
+    # Prepare empty workspace
+    with log_depot.ftp as ftp:
+        # move to upload folder
+        ftp.cwd(ftp.upload_dir)
+        # delete all files
+        ftp.recursively_delete()
+
+    with appliance:
+        uri = log_depot.machine_ip + log_depot.access_dir
+        depot = configure.ServerLogDepot(log_depot.protocol,
+                                         depot_name=fauxfactory.gen_alphanumeric(),
+                                         uri=uri,
+                                         username=log_depot.credentials["username"],
+                                         password=log_depot.credentials["password"],
+                                         second_server_collect=from_slave,
+                                         zone_collect=zone_collect
+                                         )
+        depot.create()
+
+        if collect_type == 'all':
+            depot.collect_all()
+        else:
+            depot.collect_current()
+
+    if from_slave and zone_collect:
+        check_ftp(log_depot.ftp, appliance.slave_server_name(), appliance.slave_server_zone_id())
+        check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+    elif from_slave:
+        check_ftp(log_depot.ftp, appliance.slave_server_name(), appliance.slave_server_zone_id())
+    else:
+        check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())
+
+
+@pytest.mark.meta(blockers=[BZ(1436367, forced_streams=["5.8"])])
+@pytest.mark.parametrize('zone_collect', [True, False], ids=['zone_collect', 'server_collect'])
+@pytest.mark.parametrize('collect_type', ['all', 'current'], ids=['collect_all', 'collect_current'])
+@pytest.mark.tier(3)
+def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request, zone_collect,
+                                collect_type):
+    log_depot.machine_ip = depot_machine_ip
+
+    @request.addfinalizer
+    def _clear_ftp():
+        with log_depot.ftp as ftp:
+            ftp.cwd(ftp.upload_dir)
+            ftp.recursively_delete()
+
+    # Prepare empty workspace
+    with log_depot.ftp as ftp:
+        # move to upload folder
+        ftp.cwd(ftp.upload_dir)
+        # delete all files
+        ftp.recursively_delete()
+
+    uri = log_depot.machine_ip + log_depot.access_dir
+    depot = configure.ServerLogDepot(log_depot.protocol,
+                                     depot_name=fauxfactory.gen_alphanumeric(),
+                                     uri=uri,
+                                     username=log_depot.credentials["username"],
+                                     password=log_depot.credentials["password"],
+                                     zone_collect=zone_collect
+                                     )
+
+    depot.create()
+    if collect_type == 'all':
+        depot.collect_all()
+    else:
+        depot.collect_current()
+
+    check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())

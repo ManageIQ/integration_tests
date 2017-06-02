@@ -1,27 +1,31 @@
 # -*- coding: utf-8 -*-
 
-import cfme.configure.access_control as ac
-import cfme.intelligence.chargeback as cb
+import re
+from datetime import date
+
 import fauxfactory
 import pytest
-import re
 
-from cfme import Credential
+import cfme.configure.access_control as ac
+import cfme.intelligence.chargeback as cb
 from cfme import test_requirements
+from cfme.base.credential import Credential
 from cfme.common.vm import VM
+from cfme.common.provider import BaseProvider
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
-from datetime import date
+from fixtures.provider import setup_or_skip
 from utils import testgen
+from utils.blockers import BZ
 from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for
 
-
 pytestmark = [
     pytest.mark.tier(2),
+    pytest.mark.meta(blockers=[BZ(1433984, forced_streams=["5.7", "5.8", "upstream"])]),
     test_requirements.chargeback
 ]
 
@@ -43,12 +47,20 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
+@pytest.yield_fixture(scope="module")
+def clean_setup_provider(request, provider):
+    BaseProvider.clear_providers()
+    setup_or_skip(request, provider)
+    yield
+    BaseProvider.clear_providers()
+
+
 def new_credential():
     return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='secret')
 
 
 @pytest.yield_fixture(scope="module")
-def vm_ownership(enable_candu, setup_provider_modscope, provider):
+def vm_ownership(enable_candu, clean_setup_provider, provider):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
     try:
@@ -73,7 +85,7 @@ def vm_ownership(enable_candu, setup_provider_modscope, provider):
 
 
 @pytest.yield_fixture(scope="module")
-def enable_candu(db):
+def enable_candu():
 
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
@@ -91,8 +103,8 @@ def enable_candu(db):
 
     yield
 
-    candu.disable_all()
     set_server_roles(**original_roles)
+    candu.disable_all()
 
 
 @pytest.fixture(scope="module")
@@ -129,13 +141,13 @@ def assign_compute_custom_rate(new_compute_rate, provider):
     enterprise.computeassign()
 
 
-def count_records_rollups_table(db, provider):
+def count_records_rollups_table(appliance, provider):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
-    ems = db['ext_management_systems']
-    provider_id = db.session.query(ems).filter(ems.name == provider.name).first().id
-    rollups = db['metric_rollups']
+    ems = appliance.db['ext_management_systems']
+    provider_id = appliance.db.session.query(ems).filter(ems.name == provider.name).first().id
+    rollups = appliance.db['metric_rollups']
 
-    count = db.session.query(rollups).filter(rollups.parent_ems_id == provider_id,
+    count = appliance.db.session.query(rollups).filter(rollups.parent_ems_id == provider_id,
         rollups.resource_name == vm_name).count()
     if count > 0:
         return count
@@ -143,7 +155,7 @@ def count_records_rollups_table(db, provider):
 
 
 @pytest.fixture(scope="module")
-def resource_usage(vm_ownership, db, provider, ssh_client_modscope):
+def resource_usage(vm_ownership, appliance, provider):
     # Retrieve resource usage values from metric_rollups table.
     average_cpu_used_in_mhz = 0
     average_memory_used_in_mb = 0
@@ -151,38 +163,49 @@ def resource_usage(vm_ownership, db, provider, ssh_client_modscope):
     average_disk_io = 0
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-    metrics = db['metrics']
-    rollups = db['metric_rollups']
-    ems = db['ext_management_systems']
-    logger.info('DELETING METRICS DATA FROM METRICS AND METRIC_ROLLUPS tables')
-    db.session.query(metrics).delete()
-    db.session.query(rollups).delete()
+    metrics = appliance.db['metrics']
+    rollups = appliance.db['metric_rollups']
+    ems = appliance.db['ext_management_systems']
+    logger.info('DELETING METRICS DATA FROM METRICS AND METRIC_ROLLUPS TABLES')
+    appliance.db.session.query(metrics).delete()
+    appliance.db.session.query(rollups).delete()
 
-    provider_id = db.session.query(ems).filter(ems.name == provider.name).first().id
+    provider_id = appliance.db.session.query(ems).filter(ems.name == provider.name).first().id
 
-    # Chargeback reporting is not done on real-time values.So, we are capturing C&U data
-    # and forcing hourly rollups by running these commands through the Rails console.
+    # Chargeback reporting is done on rollups and not  real-time values.So, we are capturing C&U
+    # data and forcing hourly rollups by running these commands through the Rails console.
+
+    command = ('Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
+    appliance.ssh_client.run_rails_command(command, timeout=None)
 
     logger.info('CAPTURING PERF DATA FOR VM {} running on {}'.format(vm_name, provider.name))
-    ssh_client_modscope.run_rails_command(
+    appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_capture('realtime',1.hour.ago.utc, Time.now.utc);\
         vm.perf_rollup_range('realtime',1.hour.ago.utc, Time.now.utc)\"".
         format(provider_id, repr(vm_name)))
-    wait_for(count_records_rollups_table, [db, provider], timeout=60, fail_condition=0,
+
+    # New C&U data may sneak in since 1)C&U server roles are running and 2)collection for clusters
+    # and hosts is on.This would mess up our Chargeback calculations, so we are disabling C&U
+    # collection after data has been fetched for the last hour.
+    command = ('Metric::Targets.perf_capture_always = {:storage=>false, :host_and_cluster=>false};')
+    appliance.ssh_client.run_rails_command(command, timeout=None)
+
+    wait_for(count_records_rollups_table, [appliance, provider], timeout=120, fail_condition=0,
         message="rollups")
 
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
     # in the metric_rollups DB table.The values from these hourly records are summed up.
 
-    with db.transaction:
+    with appliance.db.transaction:
         providers = (
-            db.session.query(rollups.id)
+            appliance.db.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
             .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
             ems.name == provider.name, rollups.timestamp >= date.today())
         )
-    for record in db.session.query(rollups).filter(rollups.id.in_(providers.subquery())):
+
+    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(providers.subquery())):
         if record.cpu_usagemhz_rate_average is None:
             pass
         else:
@@ -191,56 +214,51 @@ def resource_usage(vm_ownership, db, provider, ssh_client_modscope):
             average_network_io = average_network_io + record.net_usage_rate_average
             average_disk_io = average_disk_io + record.disk_usage_rate_average
 
-    average_cpu_used_in_mhz = average_cpu_used_in_mhz / 24
-    average_memory_used_in_mb = average_memory_used_in_mb / 24
-    average_network_io = average_network_io / 24
-    average_disk_io = average_disk_io / 24
-
     return {"average_cpu_used_in_mhz": average_cpu_used_in_mhz,
             "average_memory_used_in_mb": average_memory_used_in_mb,
             "average_network_io": average_network_io,
             "average_disk_io": average_disk_io}
 
 
-def query_rate(db, provider, metric, description, rate_type):
+def query_rate(appliance, provider, metric, description, rate_type):
     # Query the DB for Chargeback rates
-    tiers = db['chargeback_tiers']
-    details = db['chargeback_rate_details']
-    rates = db['chargeback_rates']
+    tiers = appliance.db['chargeback_tiers']
+    details = appliance.db['chargeback_rate_details']
+    rates = appliance.db['chargeback_rates']
 
-    with db.transaction:
+    with appliance.db.transaction:
         providers = (
-            db.session.query(tiers.variable_rate).
+            appliance.db.session.query(tiers.variable_rate).
             join(details, tiers.chargeback_rate_detail_id == details.id).
             join(rates, details.chargeback_rate_id == rates.id).
             filter(details.metric == metric).
             filter(rates.rate_type == rate_type).
             filter(rates.description == description)
         )
-    rate = db.session.query(tiers).filter(tiers.variable_rate.in_(
+    rate = appliance.db.session.query(tiers).filter(tiers.variable_rate.in_(
         providers.subquery())).first().variable_rate
     return rate
 
 
 @pytest.fixture(scope="module")
-def chargeback_costs_default(resource_usage, db, provider):
+def chargeback_costs_default(resource_usage, appliance, provider):
     # Estimate Chargeback costs using default Chargeback rate and resource usage from the DB.
     average_cpu_used_in_mhz = resource_usage['average_cpu_used_in_mhz']
     average_memory_used_in_mb = resource_usage['average_memory_used_in_mb']
     average_network_io = resource_usage['average_network_io']
     average_disk_io = resource_usage['average_disk_io']
 
-    cpu_rate = query_rate(db, provider, 'cpu_usagemhz_rate_average', 'Default', 'Compute')
-    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate) * 24
+    cpu_rate = query_rate(appliance, provider, 'cpu_usagemhz_rate_average', 'Default', 'Compute')
+    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate)
 
-    memory_rate = query_rate(db, provider, 'derived_memory_used', 'Default', 'Compute')
-    memory_used_cost = average_memory_used_in_mb * float(memory_rate) * 24
+    memory_rate = query_rate(appliance, provider, 'derived_memory_used', 'Default', 'Compute')
+    memory_used_cost = average_memory_used_in_mb * float(memory_rate)
 
-    network_rate = query_rate(db, provider, 'net_usage_rate_average', 'Default', 'Compute')
-    network_used_cost = average_network_io * float(network_rate) * 24
+    network_rate = query_rate(appliance, provider, 'net_usage_rate_average', 'Default', 'Compute')
+    network_used_cost = average_network_io * float(network_rate)
 
-    disk_rate = query_rate(db, provider, 'disk_usage_rate_average', 'Default', 'Compute')
-    disk_used_cost = average_disk_io * float(disk_rate) * 24
+    disk_rate = query_rate(appliance, provider, 'disk_usage_rate_average', 'Default', 'Compute')
+    disk_used_cost = average_disk_io * float(disk_rate)
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -249,7 +267,7 @@ def chargeback_costs_default(resource_usage, db, provider):
 
 
 @pytest.fixture(scope="module")
-def chargeback_costs_custom(resource_usage, new_compute_rate, db, provider):
+def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provider):
     # Estimate Chargeback costs using custom Chargeback rate and resource usage from the DB.
     description = new_compute_rate
 
@@ -258,17 +276,17 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, db, provider):
     average_network_io = resource_usage['average_network_io']
     average_disk_io = resource_usage['average_disk_io']
 
-    cpu_rate = query_rate(db, provider, 'cpu_usagemhz_rate_average', description, 'Compute')
-    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate) * 24
+    cpu_rate = query_rate(appliance, provider, 'cpu_usagemhz_rate_average', description, 'Compute')
+    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate)
 
-    memory_rate = query_rate(db, provider, 'derived_memory_used', description, 'Compute')
-    memory_used_cost = average_memory_used_in_mb * float(memory_rate) * 24
+    memory_rate = query_rate(appliance, provider, 'derived_memory_used', description, 'Compute')
+    memory_used_cost = average_memory_used_in_mb * float(memory_rate)
 
-    network_rate = query_rate(db, provider, 'net_usage_rate_average', description, 'Compute')
-    network_used_cost = average_network_io * float(network_rate) * 24
+    network_rate = query_rate(appliance, provider, 'net_usage_rate_average', description, 'Compute')
+    network_used_cost = average_network_io * float(network_rate)
 
-    disk_rate = query_rate(db, provider, 'disk_usage_rate_average', description, 'Compute')
-    disk_used_cost = average_disk_io * float(disk_rate) * 24
+    disk_rate = query_rate(appliance, provider, 'disk_usage_rate_average', description, 'Compute')
+    disk_used_cost = average_disk_io * float(disk_rate)
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -326,15 +344,16 @@ def chargeback_report_custom(vm_ownership, assign_compute_custom_rate, provider)
 
 @pytest.yield_fixture(scope="module")
 def new_compute_rate():
-    # Create a new Chargeback compute rate
+    # Create a new Compute Chargeback rate
     try:
         desc = 'custom_' + fauxfactory.gen_alphanumeric()
         ccb = cb.ComputeRate(description=desc,
-                         cpu_used_var=(3, cb.HOURLY),
-                         disk_io_var=(1, cb.HOURLY),
-                         mem_alloc=(0, cb.HOURLY),
-                         mem_used_var=(2, cb.HOURLY),
-                         net_io_var=(2, cb.HOURLY))
+                    fields={'Used CPU':
+                            {'per_time': 'Hourly', 'variable_rate': '3'},
+                            'Used Disk I/O':
+                            {'per_time': 'Hourly', 'variable_rate': '2'},
+                            'Used Memory':
+                            {'per_time': 'Hourly', 'variable_rate': '2'}})
         ccb.create()
         yield desc
     finally:

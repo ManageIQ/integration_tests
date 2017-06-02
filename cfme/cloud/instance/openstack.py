@@ -2,11 +2,9 @@ from utils import version, deferred_verpick
 from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui import fill, flash
 from cfme.fixtures import pytest_selenium as sel
-from cfme.common.vm import VM
 from . import Instance, select_provision_image
 
 
-@VM.register_for_provider_type("openstack")
 class OpenStackInstance(Instance):
     # CFME & provider power control options
     START = "Start"  # START also covers RESUME and UNPAUSE (same as in CFME 5.4+ web UI)
@@ -24,6 +22,8 @@ class OpenStackInstance(Instance):
     STOP = "Stop"
     PAUSE = "Pause"
     RESTART = "Restart"
+    SHELVE = "Shelve"
+    SHELVE_OFFLOAD = "Shelve Offload"
 
     # CFME power states
     STATE_ON = "on"
@@ -31,9 +31,24 @@ class OpenStackInstance(Instance):
     STATE_ERROR = "non-operational"
     STATE_PAUSED = "paused"
     STATE_SUSPENDED = "suspended"
+    STATE_REBOOTING = "reboot_in_progress"
+    STATE_SHELVED = "shelved"
+    STATE_SHELVED_OFFLOAD = "shelved_offloaded"
     STATE_UNKNOWN = "unknown"
     STATE_ARCHIVED = "archived"
     STATE_TERMINATED = "terminated"
+
+    @property
+    def ui_powerstates_available(self):
+        return {
+            'on': [self.SUSPEND, self.SOFT_REBOOT, self.HARD_REBOOT, self.TERMINATE],
+            'off': [self.START, self.TERMINATE]}
+
+    @property
+    def ui_powerstates_unavailable(self):
+        return {
+            'on': [self.START],
+            'off': [self.SUSPEND, self.SOFT_REBOOT, self.HARD_REBOOT]}
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,
                instance_type=None, cancel=False, **prov_fill_kwargs):
@@ -94,12 +109,14 @@ class OpenStackInstance(Instance):
             self.provider.mgmt.stop_vm(self.name)
         elif option == OpenStackInstance.SUSPEND:
             self.provider.mgmt.suspend_vm(self.name)
-        elif option == OpenStackInstance.RESUME:
-            self.provider.mgmt.resume_vm(self.name)
         elif option == OpenStackInstance.PAUSE:
             self.provider.mgmt.pause_vm(self.name)
-        elif option == OpenStackInstance.UNPAUSE:
-            self.provider.mgmt.unpause_vm(self.name)
+        elif option == OpenStackInstance.SHELVE:
+            # TODO: rewrite it once mgmtsystem will get shelve
+            # and shelve_offload methods
+            self.provider.mgmt._find_instance_by_name(self.name).shelve()
+        elif option == OpenStackInstance.SHELVE_OFFLOAD:
+            self.provider.mgmt._find_instance_by_name(self.name).shelve_offload()
         elif option == OpenStackInstance.RESTART:
             self.provider.mgmt.restart_vm(self.name)
         elif option == OpenStackInstance.TERMINATE:

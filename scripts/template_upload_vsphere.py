@@ -78,7 +78,8 @@ def upload_ova(hostname, username, password, name, datastore,
                cluster, datacenter, url, provider, proxy,
                ovf_tool_client, default_user, default_pass):
 
-    cmd_args = ['ovftool']
+    cmd_args = []
+    cmd_args.append('ovftool --noSSLVerify')
     cmd_args.append("--datastore={}".format(datastore))
     cmd_args.append("--name={}".format(name))
     cmd_args.append("--vCloudTemplate=True")
@@ -86,20 +87,18 @@ def upload_ova(hostname, username, password, name, datastore,
     if proxy:
         cmd_args.append("--proxy={}".format(proxy))
     cmd_args.append(url)
-    cmd_args.append("vi://{}:{}@{}/{}/host/{}".format(username, password, hostname,
+    cmd_args.append("'vi://{}:{}@{}/{}/host/{}'".format(username, password, hostname,
                                                       datacenter, cluster))
     print("VSPHERE:{} Running OVFTool...".format(provider))
 
-    sshclient = make_ssh_client(ovf_tool_client, default_user, default_pass)
-    try:
-        command = ' '.join(cmd_args)
-        output = sshclient.run_command(command)[1]
-    except Exception as e:
-        print(e)
-        print("VSPHERE:{} Upload did not complete".format(provider))
-        return False
-    finally:
-        sshclient.close()
+    command = ' '.join(cmd_args)
+    with make_ssh_client(ovf_tool_client, default_user, default_pass) as ssh_client:
+        try:
+            output = ssh_client.run_command(command)[1]
+        except Exception as e:
+            print(e)
+            print("VSPHERE:{} Upload did not complete".format(provider))
+            return False
 
     if "successfully" in output:
         print(" VSPHERE:{} Upload completed".format(provider))

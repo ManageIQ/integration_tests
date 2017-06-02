@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from utils.db import cfmedb
+from utils.appliance import current_appliance
 
-for table_name in cfmedb():
+for table_name in current_appliance.db:
     print(table_name)

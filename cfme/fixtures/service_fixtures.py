@@ -8,22 +8,24 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
+    service_name = fauxfactory.gen_alphanumeric()
     element_data = dict(
         ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
+        ele_name="service_name",
         ele_desc="my ele desc",
         choose_type="Text Box",
-        default_text_box="default value"
+        default_text_box=service_name
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
                      tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
-                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
-    service_dialog.create(element_data)
-    return dialog
+                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc",
+                     element_data=element_data)
+    service_dialog.create()
+    yield service_dialog
 
 
 @pytest.yield_fixture(scope="function")
@@ -39,7 +41,7 @@ def catalog():
 def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type, vlan = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
-    item_name = fauxfactory.gen_alphanumeric()
+    item_name = dialog.element_data.get("default_text_box")
     provisioning_data = dict(
         vm_name=vm_name,
         host_name={'name': [host]},

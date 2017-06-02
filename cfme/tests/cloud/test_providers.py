@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
-import fauxfactory
 import uuid
+import fauxfactory
 
 import pytest
 
-from manageiq_client.api import APIException
-
-import utils.error as error
+from utils import error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import Credential
+from cfme.base.credential import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, wait_for_a_provider,
     CloudProvider, prop_region)
@@ -18,17 +16,13 @@ from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
-from utils import testgen, version, providers
+from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
-from utils.log import logger
+from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
+from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 
 pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
-
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    return providers.setup_a_provider_by_class(CloudProvider)
 
 
 @pytest.mark.tier(3)
@@ -97,19 +91,24 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
+
+    cred_args = dict()
+    cred_args['secret'] = 'notyourday'
     if provider.type == "azure":
         flash = (
             "Credential validation was not successful: Incorrect credentials - "
             "check your Azure Client ID and Client Key"
         )
-        principal = str(uuid.uuid4())
+        cred_args['principal'] = str(uuid.uuid4())
+    elif provider.type == "gce":
+        flash = 'Credential validation was not successful: Invalid Google JSON key'
+        cred_args['cred_type'] = 'service_account'
+        cred_args['service_account'] = '{"test": "bad"}'
     else:
         flash = 'Login failed due to a bad username or password.'
-        principal = "bad"
-    provider.credentials['default'] = provider.Credential(
-        principal=principal,
-        secret='reallybad',
-    )
+        cred_args['principal'] = "bad"
+
+    provider.credentials['default'] = Credential(**cred_args)
     with error.expected(flash):
         provider.create(validate_credentials=True)
 
@@ -212,20 +211,6 @@ def test_host_name_required_validation(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
-def test_ip_address_required_validation(request):
-    """Test to validate the ip address while adding a provider"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=None)
-
-    request.addfinalizer(prov.delete_if_exists)
-    with error.expected("IP Address can't be blank"):
-        prov.create()
-
-
-@pytest.mark.tier(3)
 def test_api_port_blank_validation(request):
     """Test to validate blank api port while adding a provider"""
     prov = OpenStackProvider(
@@ -246,7 +231,7 @@ def test_api_port_blank_validation(request):
 
 @pytest.mark.tier(3)
 def test_user_id_max_character_validation():
-    cred = Credential(principal=fauxfactory.gen_alphanumeric(51))
+    cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
     discover(cred, d_type="Amazon")
 
 
@@ -262,18 +247,17 @@ def test_password_max_character_validation():
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_name_max_character_validation(request, setup_a_provider):
-    """Test to validate max character for name field"""
-    provider = setup_a_provider
-    request.addfinalizer(lambda: provider.delete_if_exists(cancel=False))
+def test_name_max_character_validation(request, cloud_provider):
+    """Test to validate that provider can have up to 255 characters in name"""
+    request.addfinalizer(lambda: cloud_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
-    provider.update({'name': name})
-    provider.name = name
-    assert provider.exists
+    with update(cloud_provider):
+        cloud_provider.name = name
+    assert cloud_provider.exists
 
 
 @pytest.mark.tier(3)
-def test_hostname_max_character_validation(request):
+def test_hostname_max_character_validation():
     """Test to validate max character for hostname field"""
     prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
@@ -289,7 +273,7 @@ def test_hostname_max_character_validation(request):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_api_port_max_character_validation(request):
+def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
     prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
@@ -305,8 +289,6 @@ def test_api_port_max_character_validation(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
-@pytest.mark.meta(blockers=[1278036])
 def test_openstack_provider_has_api_version():
     """Check whether the Keystone API version field is present for Openstack."""
     prov = CloudProvider()
@@ -318,82 +300,72 @@ def test_openstack_provider_has_api_version():
 
 
 class TestProvidersRESTAPI(object):
-    @pytest.yield_fixture(scope="function")
-    def arbitration_profiles(self, rest_api, setup_a_provider):
+    @pytest.fixture(scope="function")
+    def arbitration_profiles(self, request, appliance, cloud_provider):
         num_profiles = 2
-        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
-        body = []
-        providers = [{'id': provider.id}, {'href': provider.href}]
-        for i in range(num_profiles):
-            body.append({
-                'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),
-                'provider': providers[i % 2]
-            })
-        response = rest_api.collections.arbitration_profiles.action.create(*body)
+        response = _arbitration_profiles(
+            request, appliance.rest_api, cloud_provider, num=num_profiles)
+        assert appliance.rest_api.response.status_code == 200
         assert len(response) == num_profiles
 
-        yield response
-
-        try:
-            rest_api.collections.arbitration_profiles.action.delete(*response)
-        except APIException:
-            # profiles can be deleted by tests, just log warning
-            logger.warning("Failed to delete arbitration profiles.")
+        return response
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_cloud_networks_query(self, setup_a_provider, rest_api, from_detail):
+    def test_cloud_networks_query(self, cloud_provider, appliance, from_detail):
         """Tests querying cloud providers and cloud_networks collection for network info.
 
         Metadata:
             test_flag: rest
         """
         if from_detail:
-            networks = rest_api.collections.providers.get(name=setup_a_provider.name).cloud_networks
+            networks = appliance.rest_api.collections.providers.get(
+                name=cloud_provider.name).cloud_networks
         else:
-            networks = rest_api.collections.cloud_networks
-        assert rest_api.response.status_code == 200
-        assert len(networks) > 0
+            networks = appliance.rest_api.collections.cloud_networks
+        assert appliance.rest_api.response.status_code == 200
+        assert networks
         assert len(networks) == networks.subcount
         assert len(networks.find_by(enabled=True)) >= 1
         assert 'CloudNetwork' in networks[0].type
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_security_groups_query(self, setup_a_provider, rest_api):
+    def test_security_groups_query(self, cloud_provider, appliance):
         """Tests querying cloud networks subcollection for security groups info.
 
         Metadata:
             test_flag: rest
         """
-        network = rest_api.collections.providers.get(name=setup_a_provider.name).cloud_networks[0]
+        network = appliance.rest_api.collections.providers.get(
+            name=cloud_provider.name).cloud_networks[0]
         network.reload(attributes='security_groups')
         security_groups = network.security_groups
         # "security_groups" needs to be present, even if it's just an empty list
         assert isinstance(security_groups, list)
         # if it's not empty, check type
-        if len(security_groups) > 0:
+        if security_groups:
             assert 'SecurityGroup' in security_groups[0]['type']
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_create_arbitration_profiles(self, rest_api, arbitration_profiles):
+    def test_create_arbitration_profiles(self, appliance, arbitration_profiles):
         """Tests creation of arbitration profiles.
 
         Metadata:
             test_flag: rest
         """
         for profile in arbitration_profiles:
-            record = rest_api.collections.arbitration_profiles.get(id=profile.id)
-            assert rest_api.response.status_code == 200
+            record = appliance.rest_api.collections.arbitration_profiles.get(id=profile.id)
+            assert appliance.rest_api.response.status_code == 200
             assert record._data == profile._data
             assert 'ArbitrationProfile' in profile.type
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
-    def test_delete_arbitration_profiles_from_detail(self, rest_api, arbitration_profiles, method):
+    def test_delete_arbitration_profiles_from_detail(self, appliance, arbitration_profiles, method):
         """Tests delete arbitration profiles from detail.
 
         Metadata:
@@ -402,49 +374,97 @@ class TestProvidersRESTAPI(object):
         status = 204 if method == 'delete' else 200
         for entity in arbitration_profiles:
             entity.action.delete(force_method=method)
-            assert rest_api.response.status_code == status
+            assert appliance.rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
                 entity.action.delete(force_method=method)
-            assert rest_api.response.status_code == 404
+            assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_delete_arbitration_profiles_from_collection(self, rest_api, arbitration_profiles):
+    def test_delete_arbitration_profiles_from_collection(self, appliance, arbitration_profiles):
         """Tests delete arbitration profiles from collection.
 
         Metadata:
             test_flag: rest
         """
-        collection = rest_api.collections.arbitration_profiles
+        collection = appliance.rest_api.collections.arbitration_profiles
         collection.action.delete(*arbitration_profiles)
-        assert rest_api.response.status_code == 200
+        assert appliance.rest_api.response.status_code == 200
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_profiles)
-        assert rest_api.response.status_code == 404
+        assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_edit_arbitration_profiles(self, rest_api, arbitration_profiles, from_detail):
+    def test_edit_arbitration_profiles(self, appliance, arbitration_profiles, from_detail):
         """Tests editing of arbitration profiles.
 
         Metadata:
             test_flag: rest
         """
         response_len = len(arbitration_profiles)
-        zone = rest_api.collections.availability_zones[-1]
+        zone = appliance.rest_api.collections.availability_zones[-1]
         locators = [{'id': zone.id}, {'href': zone.href}]
         new = [{'availability_zone': locators[i % 2]} for i in range(response_len)]
         if from_detail:
             edited = []
             for i in range(response_len):
                 edited.append(arbitration_profiles[i].action.edit(**new[i]))
-                assert rest_api.response.status_code == 200
+                assert appliance.rest_api.response.status_code == 200
         else:
             for i in range(response_len):
                 new[i].update(arbitration_profiles[i]._ref_repr())
-            edited = rest_api.collections.arbitration_profiles.action.edit(*new)
-            assert rest_api.response.status_code == 200
+            edited = appliance.rest_api.collections.arbitration_profiles.action.edit(*new)
+            assert appliance.rest_api.response.status_code == 200
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].availability_zone_id == zone.id
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_create_arbitration_rules_with_profile(self, request, appliance, arbitration_profiles):
+        """Tests creation of arbitration rules referencing arbitration profiles.
+
+        Metadata:
+            test_flag: rest
+        """
+        num_rules = 2
+        profile = arbitration_profiles[0]
+        references = [{'id': profile.id}, {'href': profile._href}]
+        data = []
+        for index in range(num_rules):
+            data.append({
+                'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
+                'operation': 'inject',
+                'arbitration_profile': references[index % 2],
+                'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
+            })
+
+        response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
+        assert appliance.rest_api.response.status_code == 200
+        assert len(response) == num_rules
+        for rule in response:
+            record = appliance.rest_api.collections.arbitration_rules.get(id=rule.id)
+            assert record.arbitration_profile_id == rule.arbitration_profile_id == profile.id
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_create_arbitration_rule_with_invalid_profile(self, request, appliance):
+        """Tests creation of arbitration rule referencing invalid arbitration profile.
+
+        Metadata:
+            test_flag: rest
+        """
+        data = [{
+            'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
+            'operation': 'inject',
+            'arbitration_profile': 'invalid_value',
+            'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
+        }]
+
+        response = creating_skeleton(request, appliance.rest_api, 'arbitration_rules', data)
+        # this will fail once BZ 1433477 is fixed - change and expand the test accordingly
+        assert appliance.rest_api.response.status_code == 200
+        for rule in response:
+            assert not hasattr(rule, 'arbitration_profile_id')

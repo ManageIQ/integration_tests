@@ -244,6 +244,7 @@ def date_for_group_and_version(request):
                 "usable": True,
                 "preconfigured": preconfigured,
                 "provider__working": True,
+                'provider__disabled': False,
                 "provider__user_groups__in": request.user.groups.all(),
             }
             if version == "latest":
@@ -292,6 +293,7 @@ def providers_for_date_group_and_version(request):
                 "usable": True,
                 "preconfigured": preconfigured,
                 "provider__working": True,
+                "provider__disabled": False,
                 "provider__user_groups__in": request.user.groups.all(),
             }
             if version == "latest":
@@ -391,7 +393,12 @@ def my_appliances(request, show_user="my"):
         end_index -= start_index
         start_index = 0
     pages = pages[start_index:end_index]
-    groups = Group.objects.order_by("id")
+    available_groups = Group.objects.filter(
+        id__in=Template.objects.values_list('template_group', flat=True).distinct())
+    group_tuples = []
+    for group in available_groups:
+        group_tuples.append((group.templates.order_by('-date')[0].date, group))
+    group_tuples.sort(key=lambda gt: gt[0], reverse=True)
     can_order_pool = show_user == "my"
     new_pool_possible = True
     display_legend = False
@@ -577,6 +584,19 @@ def delete_template_provider(request):
         return HttpResponseForbidden("Only superusers can operate this action.")
     task = delete_template_from_provider.delay(template.id)
     return HttpResponse(task.id)
+
+
+@only_authenticated
+def clone_pool(request):
+    try:
+        count = int(request.POST["count"])
+        source_pool_id = int(request.POST["source_pool_id"])
+        pool = AppliancePool.objects.get(id=source_pool_id)
+        result_pool = pool.clone(num_appliances=count, owner=request.user)
+        messages.success(request, "Pool cloned - id {}".format(result_pool.id))
+    except Exception as e:
+        messages.warning(request, "{}: {}".format(type(e).__name__, e))
+    return go_back_or_home(request)
 
 
 @only_authenticated

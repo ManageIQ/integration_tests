@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from utils import error
+from utils.blockers import BZ
 from utils.update import update
 
 
@@ -55,13 +56,13 @@ def test_class_crud(namespace):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[1404788])
 def test_schema_crud(request, namespace):
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
     )
-    request.addfinalizer(a_class.delete_if_exists)
     f1 = fauxfactory.gen_alpha()
     f2 = fauxfactory.gen_alpha()
     f3 = fauxfactory.gen_alpha()
@@ -75,6 +76,25 @@ def test_schema_crud(request, namespace):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[1404788])
+def test_schema_duplicate_field_disallowed(request, domain):
+    ns = domain.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+    a_class = ns.classes.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    field = fauxfactory.gen_alpha()
+    a_class.schema.add_field(name=field, type='Relationship')
+    with error.expected('Name has already been taken'):
+        a_class.schema.add_field(name=field, type='Relationship')
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1428424, forced_streams=['5.8', 'upstream'])])
 def test_duplicate_class_disallowed(namespace):
     name = fauxfactory.gen_alphanumeric()
     namespace.classes.create(name=name)
@@ -88,12 +108,10 @@ def test_same_class_name_different_namespace(request, domain):
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
     )
-    request.addfinalizer(ns1.delete_if_exists)
     ns2 = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
     )
-    request.addfinalizer(ns2.delete_if_exists)
 
     c1 = ns1.classes.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -115,13 +133,13 @@ def test_same_class_name_different_namespace(request, domain):
 
 @pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
-def test_display_name_unset_from_ui(request, namespace):
+@pytest.mark.polarion('RHCF3-3455')
+def test_class_display_name_unset_from_ui(request, namespace):
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
     )
-    request.addfinalizer(a_class.delete_if_exists)
     with update(a_class):
         a_class.display_name = fauxfactory.gen_alphanumeric()
     assert a_class.exists

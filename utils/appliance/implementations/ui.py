@@ -2,6 +2,7 @@
 import json
 import time
 from jsmin import jsmin
+from inspect import isclass
 
 from utils.log import logger, create_sublogger
 from cfme import exceptions
@@ -120,25 +121,14 @@ class MiqBrowser(Browser):
         return self.appliance.version
 
 
+def can_skip_badness_test(fn):
+    """Decorator for setting a noop"""
+    fn._can_skip_badness_test = True
+    return fn
+
+
 class CFMENavigateStep(NavigateStep):
     VIEW = None
-
-    @staticmethod
-    def repeat_if_alert(accept=True):
-        """Repeats the step once more if an alert pops up and handles the alert as requested."""
-        def g(f):
-            def wrapped(self, *args, **kwargs):
-                try:
-                    return f(self, *args, **kwargs)
-                except UnexpectedAlertPresentException:
-                    logger.warning('Detected an alert, applying %r and retrying once', accept)
-                    wt = self.appliance.browser.widgetastic
-                    while wt.alert_present:
-                        wt.handle_alert(wait=0, cancel=not accept)
-                    return f(self, *args, **kwargs)
-            return wrapped
-
-        return g
 
     @cached_property
     def view(self):
@@ -160,12 +150,15 @@ class CFMENavigateStep(NavigateStep):
             return False
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
+        if getattr(fn, '_can_skip_badness_test', False):
+            # self.log_message('Op is a Nop! ({})'.format(fn.__name__))
+            return
+
         if self.VIEW:
             self.view.flush_widget_cache()
         go_kwargs = kwargs.copy()
         go_kwargs.update(nav_args)
         self.appliance.browser.open_browser()
-        self.appliance.browser.widgetastic.dismiss_any_alerts()
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
@@ -177,10 +170,17 @@ class CFMENavigateStep(NavigateStep):
         br = self.appliance.browser
 
         try:
-            br.widgetastic.execute_script('miqSparkleOff();')
-        except:  # Diaper OK (mfalesni)
+            br.widgetastic.execute_script('miqSparkleOff();', silent=True)
+        except:  # noqa
             # miqSparkleOff undefined, so it's definitely off.
-            pass
+            # Or maybe it is alerts? Let's only do this when we get an exception.
+            self.appliance.browser.widgetastic.dismiss_any_alerts()
+            # If we went so far, let's put diapers on one more miqSparkleOff just to be sure
+            # It can be spinning in the back
+            try:
+                br.widgetastic.execute_script('miqSparkleOff();', silent=True)
+            except:  # noqa
+                pass
 
         # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right
         # here
@@ -200,7 +200,7 @@ class CFMENavigateStep(NavigateStep):
 
         # Check if jQuery present
         try:
-            br.widgetastic.execute_script("jQuery")
+            br.widgetastic.execute_script("jQuery", silent=True)
         except Exception as e:
             if "jQuery" not in str(e):
                 logger.error("Checked for jQuery but got something different.")
@@ -229,8 +229,9 @@ class CFMENavigateStep(NavigateStep):
             logger.debug('Top Memory consumers:')
             logger.debug(store.current_appliance.ssh_client.run_command(
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
-            logger.debug('Managed Providers:')
-            logger.debug('%r', [prov.key for prov in store.current_appliance.managed_providers])
+            logger.debug('Managed known Providers:')
+            logger.debug(
+                '%r', [prov.key for prov in store.current_appliance.managed_known_providers])
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
             self.go(_tries, *args, **go_kwargs)
@@ -246,7 +247,8 @@ class CFMENavigateStep(NavigateStep):
         from cfme import login
 
         try:
-            logger.debug("Invoking {}, with {} and {}".format(fn, args, kwargs))
+            self.log_message(
+                "Invoking {}, with {} and {}".format(fn.func_name, args, kwargs), level="debug")
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
@@ -331,7 +333,7 @@ class CFMENavigateStep(NavigateStep):
                 logger.error("Could not determine the reason for failing the navigation. " +
                     " Reraising.  Exception: {}".format(str(e)))
                 logger.debug(store.current_appliance.ssh_client.run_command(
-                    'service evmserverd status').output)
+                    'systemctl status evmserverd').output)
                 raise
 
         if restart_evmserverd:
@@ -346,18 +348,33 @@ class CFMENavigateStep(NavigateStep):
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries, *args, **go_kwargs)
 
+    @can_skip_badness_test
+    def resetter(self, *args, **kwargs):
+        pass
+
+    @can_skip_badness_test
     def pre_navigate(self, *args, **kwargs):
         pass
 
+    @can_skip_badness_test
     def post_navigate(self, *args, **kwargs):
         pass
 
-    def log_message(self, msg):
-        logger.info("[UI-NAV/{}/{}]: {}".format(self.obj.__class__.__name__, self._name, msg))
+    def log_message(self, msg, level="debug"):
+        class_name = self.obj.__name__ if isclass(self.obj) else self.obj.__class__.__name__
+        str_msg = "[UI-NAV/{}/{}]: {}".format(class_name, self._name, msg)
+        getattr(logger, level)(str_msg)
+
+    def construst_message(self, here, resetter, view, duration):
+        str_here = "Already Here" if here else "Needed Navigation"
+        str_resetter = "Resetter Used" if resetter else "No Resetter"
+        str_view = "View Returned" if view else "No View Available"
+        return "{}/{}/{} (elapsed {}ms)".format(str_here, str_resetter, str_view, duration)
 
     def go(self, _tries=0, *args, **kwargs):
         nav_args = {'use_resetter': True}
-
+        self.log_message("Beginning Navigation...", level="info")
+        start_time = time.time()
         if _tries > 2:
             # Need at least three tries:
             # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
@@ -369,25 +386,25 @@ class CFMENavigateStep(NavigateStep):
             if arg in kwargs:
                 nav_args[arg] = kwargs.pop(arg)
         self.check_for_badness(self.pre_navigate, _tries, nav_args, *args, **kwargs)
-        self.log_message("Checking if already here")
         here = False
+        resetter_used = False
         try:
             here = self.check_for_badness(self.am_i_here, _tries, nav_args, *args, **kwargs)
         except Exception as e:
-            self.log_message("Exception raised [{}] whilst checking if already here".format(e))
-        if here:
-            self.log_message("Already here")
-        else:
-            self.log_message("Not here")
+            self.log_message(
+                "Exception raised [{}] whilst checking if already here".format(e), level="error")
+        if not here:
+            self.log_message("Prerequiesite Needed")
             self.prerequisite_view = self.prerequisite()
-            self.log_message("Heading to destination")
             self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
         if nav_args['use_resetter']:
-            self.log_message("Running resetter")
+            resetter_used = True
             self.check_for_badness(self.resetter, _tries, nav_args, *args, **kwargs)
         self.check_for_badness(self.post_navigate, _tries, nav_args, *args, **kwargs)
-        if self.VIEW is not None:
-            return self.view
+        view = self.view if self.VIEW is not None else None
+        duration = int((time.time() - start_time) * 1000)
+        self.log_message(self.construst_message(here, resetter_used, view, duration), level="info")
+        return view
 
 
 navigator = Navigate()

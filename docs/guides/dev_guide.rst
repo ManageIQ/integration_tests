@@ -231,7 +231,7 @@ Layout
   this directory will be auto loaded.
 * ``markers/`` py.test markers that can be used by any test. Modules in this
   directory will be auto loaded.
-* ``metaplugins/`` Plugins loaded by ``@pytest.mark.meta``. Further informations in
+* ``cfme/metaplugins/`` Plugins loaded by ``@pytest.mark.meta``. Further informations in
   :py:mod:`markers.meta`
 * ``utils/`` Utility functions that can be called inside our outside the
   test context. Generally, util functions benefit from having a related test

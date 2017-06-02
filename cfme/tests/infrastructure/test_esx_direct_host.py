@@ -6,9 +6,9 @@ not be difficult to extend the parametrizer.
 import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils.conf import credentials
-from utils.net import resolve_hostname
+from cfme.common.provider import DefaultEndpoint
 from utils import testgen
+from utils.net import resolve_hostname
 from utils.version import Version
 
 
@@ -38,20 +38,14 @@ def pytest_generate_tests(metafunc):
             continue
 
         host = hosts[0]
-        creds = credentials[host["credentials"]]
         ip_address = resolve_hostname(host["name"])
-        cred = VMwareProvider.Credential(
-            principal=creds["username"],
-            secret=creds["password"],
-            verify_secret=creds["password"]
-        )
+        endpoint = DefaultEndpoint(credentials=host["credentials"], hostname=host["name"])
         # Mock provider data
         provider_data = {}
         provider_data.update(args['provider'].data)
         provider_data["name"] = host["name"]
         provider_data["hostname"] = host["name"]
         provider_data["ipaddress"] = ip_address
-        provider_data["credentials"] = host["credentials"]
         provider_data.pop("host_provisioning", None)
         provider_data["hosts"] = [host]
         provider_data["discovery_range"] = {}
@@ -59,11 +53,9 @@ def pytest_generate_tests(metafunc):
         provider_data["discovery_range"]["end"] = ip_address
         host_provider = VMwareProvider(
             name=host["name"],
-            hostname=host["name"],
             ip_address=ip_address,
-            credentials={'default': cred},
-            provider_data=provider_data,
-        )
+            endpoints=endpoint,
+            provider_data=provider_data)
         argvalues[i].append(host_provider)
         idlist[i] = "{}/{}".format(args['provider'].key, host["name"])
         new_idlist.append(idlist[i])

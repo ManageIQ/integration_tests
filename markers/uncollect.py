@@ -52,12 +52,17 @@ Note:
 
 """
 import inspect
-import os
+import pytest
 
-from fixtures.pytest_store import store
-from utils.path import log_path
-from utils.log import logger
-from utils.pytest_shortcuts import extract_fixtures_values
+MARKDECORATOR_TYPE = type(pytest.mark.slip)
+
+
+# work around https://github.com/pytest-dev/pytest/issues/2400
+def get_uncollect_function(marker_or_markdecorator):
+    if isinstance(marker_or_markdecorator, MARKDECORATOR_TYPE):
+        return marker_or_markdecorator.args[0]
+    else:
+        return list(marker_or_markdecorator)[0].args[0]
 
 
 def uncollectif(item):
@@ -67,13 +72,16 @@ def uncollectif(item):
     if the item should be uncollected or not.
     """
 
+    from utils.pytest_shortcuts import extract_fixtures_values
     marker = item.get_marker('uncollectif')
     if marker:
-        log_msg = 'Trying uncollecting {}: {}'.format(item.name,
+        from utils.log import logger
+        log_msg = 'Trying uncollecting {}: {}'.format(
+            item.name,
             marker.kwargs.get('reason', 'No reason given'))
 
         try:
-            arg_names = inspect.getargspec(marker._arglist[0][0][0]).args
+            arg_names = inspect.getargspec(get_uncollect_function(marker)).args
         except TypeError:
             logger.debug(log_msg)
             return not bool(marker.args[0])
@@ -102,11 +110,13 @@ def uncollectif(item):
 
 
 def pytest_collection_modifyitems(session, config, items):
+    from fixtures.pytest_store import store
     len_collected = len(items)
 
     new_items = []
 
-    with open(os.path.join(log_path.strpath, 'uncollected.log'), 'w') as f:
+    from utils.path import log_path
+    with log_path.join('uncollected.log').open('w') as f:
         for item in items:
             # First filter out all items who have the uncollect mark
             if item.get_marker('uncollect') or not uncollectif(item):
@@ -126,11 +136,4 @@ def pytest_collection_modifyitems(session, config, items):
 
     len_filtered = len(items)
     filtered_count = len_collected - len_filtered
-
-    if filtered_count:
-        # A warning should go into log/cfme.log when a test has this mark applied.
-        # It might be good to write uncollected test names out via terminalreporter,
-        # but I suspect it would be extremely spammy. It might be useful in the
-        # --collect-only output?
-        store.terminalreporter.write('collected %d items' % len_filtered, bold=True)
-        store.terminalreporter.write(' (uncollected %d items)\n' % filtered_count)
+    store.uncollection_stats['uncollectif'] = filtered_count

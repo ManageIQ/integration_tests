@@ -59,8 +59,9 @@ class ApplianceAdmin(Admin):
     objectactions = ["power_off", "power_on", "suspend", "kill"]
     actions = objectactions
     list_display = [
-        "name", "owner", "template", "appliance_pool", "ready", "show_ip_address", "power_state"]
-    readonly_fields = ["owner"]
+        "name", "owner", "template", "appliance_pool", "ready", "show_ip_address", "power_state",
+        'age']
+    readonly_fields = ["owner", 'age']
 
     @action("Power off", "Power off selected appliance")
     def power_off(self, request, appliances):
@@ -125,10 +126,10 @@ class AppliancePoolAdmin(Admin):
     actions = objectactions
     list_display = [
         "id", "group", "version", "date", "owner", "fulfilled", "appliances_ready",
-        "queued_provision_tasks", "percent_finished", "total_count", "current_count"]
+        "queued_provision_tasks", "percent_finished", "total_count", "current_count", 'age']
     readonly_fields = [
         "fulfilled", "appliances_ready", "queued_provision_tasks", "percent_finished",
-        "current_count"]
+        "current_count", 'age']
 
     @action("Kill", "Kill the appliance pool")
     def kill(self, request, pools):
@@ -193,7 +194,8 @@ class ProviderAdmin(Admin):
 @register_for(Template)
 class TemplateAdmin(Admin):
     list_display = [
-        "name", "version", "original_name", "ready", "exists", "date", "template_group", "usable"]
+        "name", "version", "original_name", "ready", "exists", "date", "template_group", "usable",
+        'provider']
 
 
 @register_for(MismatchVersionMailer)

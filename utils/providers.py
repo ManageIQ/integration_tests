@@ -1,27 +1,19 @@
 """ Helper functions related to the creation, listing, filtering and destruction of providers
 
-The functions in this module that require the 'filters' parameter, such as list_providers,
-setup_a_provider etc depend on a (by default global) dict of filters by default.
-If you are writing tests or fixtures, you want to depend on those functions as de facto gateways.
+The list_providers function in this module depend on a (by default global) dict of filters.
+If you are writing tests or fixtures, you want to depend on this function as a de facto gateway.
 
-The rest of the functions, such as get_mgmt, get_crud etc ignore this global dict and will provide
-you with whatever you ask for with no limitations.
+The rest of the functions, such as get_mgmt, get_crud, get_provider_keys etc ignore this global
+dict and will provide you with whatever you ask for with no limitations.
 
 The main clue to know what is limited by the filters and what isn't is the 'filters' parameter.
 """
 import operator
-import random
 import six
 from collections import Mapping, OrderedDict
 from copy import copy
 
-from fixtures.pytest_store import store
-from cfme.common.provider import BaseProvider
-
-from cfme.containers import provider as containers_providers # NOQA
-from cfme.cloud import provider as cloud_providers # NOQA
-from cfme.infrastructure import provider as infrastructure_providers # NOQA
-from cfme.middleware import provider as middleware_providers # NOQA
+from cfme.common.provider import all_types
 
 from cfme.exceptions import UnknownProviderType
 from utils import conf, version
@@ -30,6 +22,21 @@ from utils.log import logger
 providers_data = conf.cfme_data.get("management_systems", {})
 # Dict of active provider filters {name: ProviderFilter}
 global_filters = {}
+
+
+def load_setuptools_entrypoints():
+    """ Load modules from querying the specified setuptools entrypoint name."""
+    from pkg_resources import (iter_entry_points, DistributionNotFound,
+                               VersionConflict)
+    for ep in iter_entry_points('manageiq_integration_tests'):
+        # is the plugin registered or blocked?
+        try:
+            ep.load()
+        except DistributionNotFound:
+            continue
+        except VersionConflict as e:
+            raise Exception(
+                "Plugin {} could not be loaded: {}!".format(ep.name, e))
 
 
 class ProviderFilter(object):
@@ -181,9 +188,9 @@ class ProviderFilter(object):
             ...or...
             pf = ProviderFilter(required_tags=['openstack', 'complete'])
             pf_inverted = ProviderFilter(required_tags=['disabled'], inverted=True)
-            provider = setup_a_provider([pf, pf_inverted])
-            ^ this will setup a provider that has both the "openstack" and "complete" tags set
-              and at the same time does not have the "disabled" tag
+            providers = list_providers([pf, pf_inverted])
+            ^ this will return providers that have both the "openstack" and "complete" tags set
+              and at the same time don't have the "disabled" tag
             ...or...
             pf = ProviderFilter(keys=['rhevm34'], class=CloudProvider, conjunctive=False)
             providers = list_providers([pf])
@@ -218,39 +225,47 @@ global_filters['enabled_only'] = ProviderFilter(required_tags=['disabled'], inve
 global_filters['restrict_version'] = ProviderFilter(restrict_version=True)
 
 
-def list_providers(filters=None, use_global_filters=True):
+def list_providers(filters=None, use_global_filters=True, appliance=None):
     """ Lists provider crud objects, global filter optional
 
     Args:
         filters: List if :py:class:`ProviderFilter` or None
         use_global_filters: Will apply global filters as well if `True`, will not otherwise
+        appliance: Optional :py:class:`utils.appliance.IPAppliance` to be passed to provider CRUD
+            objects
 
     Note: Requires the framework to be pointed at an appliance to succeed.
 
     Returns: List of provider crud objects.
     """
+    if isinstance(filters, six.string_types):
+        raise TypeError(
+            'You are probably using the old-style invocation of provider setup functions! '
+            'You need to change it appropriately.')
     filters = filters or []
     if use_global_filters:
         filters = filters + global_filters.values()
-    providers = [get_crud(prov_key) for prov_key in providers_data]
+    providers = [get_crud(prov_key, appliance=appliance) for prov_key in providers_data]
     for prov_filter in filters:
         providers = filter(prov_filter, providers)
     return providers
 
 
-def list_providers_by_class(prov_class, use_global_filters=True):
+def list_providers_by_class(prov_class, use_global_filters=True, appliance=None):
     """ Lists provider crud objects of a specific class (or its subclasses), global filter optional
 
     Args:
         prov_class: Provider class to apply for filtering
         use_global_filters: See :py:func:`list_providers`
+        appliance: Optional :py:class:`utils.appliance.IPAppliance` to be passed to provider CRUD
+            objects
 
     Note: Requires the framework to be pointed at an appliance to succeed.
 
     Returns: List of provider crud objects.
     """
     pf = ProviderFilter(classes=[prov_class])
-    return list_providers(filters=[pf], use_global_filters=use_global_filters)
+    return list_providers(filters=[pf], use_global_filters=use_global_filters, appliance=appliance)
 
 
 def list_provider_keys(provider_type=None):
@@ -278,110 +293,14 @@ def list_provider_keys(provider_type=None):
         return all_keys
 
 
-def setup_provider(provider_key, validate=True, check_existing=True):
-    provider = get_crud(provider_key)
-    provider.create(validate_credentials=True, validate_inventory=validate,
-                    check_existing=check_existing)
-    return provider
-
-
-def setup_a_provider(filters=None, use_global_filters=True, validate=True, check_existing=True):
-    """ Sets up a single provider robustly.
-
-    Does some counter-badness measures.
-
-    Args:
-        filters: List if :py:class:`ProviderFilter` or None; infra providers by default
-        use_global_filters: Will apply global filters as well if `True`, will not otherwise
-        validate: Whether to validate the provider.
-        check_existing: Whether to check if the provider already exists.
-    """
-    filters = filters or []
-
-    providers = list_providers(filters=filters, use_global_filters=use_global_filters)
-    if not providers:
-        raise Exception("All providers have been filtered out, cannot setup any providers")
-
-    # If there is a provider already set up matching the user's requirements, reuse it
-    for provider in providers:
-        if provider.exists:
-            return provider
-
-    # Activate the 'nonproblematic' filter to filter out problematic providers (if any)
-    if global_filters.get('problematic') is None:
-        global_filters['problematic'] = ProviderFilter(keys=[], inverted=True)
-
-    # If there are no non-problematic providers, reset the filter
-    nonproblematic_providers = list_providers(filters=filters)
-    if not nonproblematic_providers:
-        global_filters['problematic'].keys = []
-        store.terminalreporter.write_line(
-            "Reached the point where all possible providers forthis case are marked as bad. "
-            "Clearing the bad provider list for a fresh start and next chance.", yellow=True)
-    # Otherwise, make non-problematic the new cool
-    else:
-        providers = nonproblematic_providers
-
-    # If we have more than one provider, try to pick one that doesnt have the do_not_prefer flag set
-    if len(providers) > 1:
-        do_not_prefer_filter = ProviderFilter(required_fields=[("do_not_prefer", False)],
-                                              inverted=True)
-        # If we find any providers without the 'do_not_prefer' flag, add  the filter to the list
-        # of active filters and make preferred providers the new cool
-        preferred_providers = list_providers(filters=filters + [do_not_prefer_filter])
-        if preferred_providers:
-            filters.append(do_not_prefer_filter)
-            providers = preferred_providers
-
-    # Try to set up a nonexisting provider (return if successful, otherwise try another)
-    non_existing = [prov for prov in providers if not prov.exists]
-    random.shuffle(non_existing)  # Make the provider load even (long-term) by shuffling them around
-    for provider in non_existing:
-        try:
-            store.terminalreporter.write_line(
-                "Trying to set up provider {}\n".format(provider.key), green=True)
-            provider.create(validate_credentials=True, validate_inventory=validate,
-                            check_existing=check_existing)
-            return provider
-        except Exception as e:
-            # In case of a known provider error:
-            logger.exception(e)
-            message = "Provider {} is behaving badly, marking it as bad. {}: {}".format(
-                provider.key, type(e).__name__, str(e))
-            logger.warning(message)
-            store.terminalreporter.write_line(message + "\n", red=True)
-            global_filters['problematic'].keys.append(provider.key)
-            if provider.exists:
-                # Remove it in order to not explode on next calls
-                provider.delete(cancel=False)
-                provider.wait_for_delete()
-                message = "Provider {} was deleted because it failed to set up.".format(
-                    provider.key)
-                logger.warning(message)
-                store.terminalreporter.write_line(message + "\n", red=True)
-    else:
-        raise Exception("No providers could be set up matching the params")
-
-    return provider
-
-
-def setup_a_provider_by_class(prov_class, validate=True, check_existing=True):
-    pf = ProviderFilter(classes=[prov_class])
-    return setup_a_provider(filters=[pf], validate=validate, check_existing=check_existing)
-
-
 def get_class_from_type(prov_type):
-    """ Serves to translate both provider types and categories to actual classes """
-    all_classes_map = BaseProvider.base_types.copy()
-    for base_type in BaseProvider.base_types.itervalues():
-        all_classes_map.update(base_type.provider_types)
     try:
-        return all_classes_map[prov_type]
+        return all_types()[prov_type]
     except KeyError:
         raise UnknownProviderType("Unknown provider type: {}!".format(prov_type))
 
 
-def get_crud(provider_key):
+def get_crud(provider_key, appliance=None):
     """ Creates a Provider object given a management_system key in cfme_data.
 
     Usage:
@@ -392,10 +311,11 @@ def get_crud(provider_key):
     prov_config = providers_data[provider_key]
     prov_type = prov_config.get('type')
 
-    return get_class_from_type(prov_type).from_config(prov_config, provider_key)
+    return get_class_from_type(prov_type).from_config(
+        prov_config, provider_key, appliance=appliance)
 
 
-def get_crud_by_name(provider_name):
+def get_crud_by_name(provider_name, appliance=None):
     """ Creates a Provider object given a management_system name in cfme_data.
 
     Usage:
@@ -405,7 +325,7 @@ def get_crud_by_name(provider_name):
     """
     for provider_key, provider_data in providers_data.items():
         if provider_data.get("name") == provider_name:
-            return get_crud(provider_key)
+            return get_crud(provider_key, appliance=appliance)
     raise NameError("Could not find provider {}".format(provider_name))
 
 
@@ -434,7 +354,11 @@ def get_mgmt(provider_key, providers=None, credentials=None):
 
     if credentials is None:
         # We need to handle the in-place credentials
-        credentials = provider_data['credentials']
+
+        if provider_data.get('endpoints'):
+            credentials = provider_data['endpoints']['default']['credentials']
+        else:
+            credentials = provider_data['credentials']
         # If it is not a mapping, it most likely points to a credentials yaml (as by default)
         if not isinstance(credentials, Mapping):
             credentials = conf.credentials[credentials]
@@ -444,6 +368,11 @@ def get_mgmt(provider_key, providers=None, credentials=None):
     # Let the provider do whatever they need with them
     provider_kwargs = provider_data.copy()
     provider_kwargs.update(credentials)
+
+    if not provider_kwargs.get('username') and provider_kwargs.get('principal'):
+        provider_kwargs['username'] = provider_kwargs['principal']
+        provider_kwargs['password'] = provider_kwargs['secret']
+
     if isinstance(provider_key, six.string_types):
         provider_kwargs['provider_key'] = provider_key
     provider_kwargs['logger'] = logger

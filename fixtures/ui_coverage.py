@@ -30,7 +30,7 @@ Pre-testing (``pytest_configure`` hook):
 2. Install and require the coverage hook (copy ``coverage_hook`` to config/, add
    require line to the end of ``config/boot.rb``)
 3. Restart EVM (Rudely) to start running coverage on the appliance processes:
-   ``killall -9 ruby; service evmserverd start``
+   ``killall -9 ruby; sysemctl start evmserverd``
 4. TOUCH ALL THE THINGS (run ``thing_toucher.rb`` with the rails runner).
    Fork this process off and come back to it later
 
@@ -38,7 +38,7 @@ Post-testing (``pytest_unconfigure`` hook):
 
 1. Poll ``thing_toucher`` to make sure it completed; block if needed.
 2. Stop EVM, but nicely this time so the coverage atexit hooks run:
-   ``service evmserverd stop``
+   ``systemctl stop evmserverd``
 3. Run ``coverage_merger.rb`` with the rails runner, which compiles all the individual process
    reports and runs coverage again, additionally creating an rcov report
 4. Pull the coverage dir back for parsing and archiving
@@ -60,6 +60,7 @@ from fixtures.pytest_store import store
 from utils import conf, version
 from utils.log import create_sublogger
 from utils.path import conf_path, log_path, scripts_data_path
+from utils.quote import quote
 from utils.wait import wait_for, TimedOutError
 
 # paths to all of the coverage-related files
@@ -72,10 +73,10 @@ appliance_coverage_root = rails_root.join('coverage')
 
 # local
 coverage_data = scripts_data_path.join('coverage')
-gemfile = coverage_data.join('Gemfile.dev.rb')
-coverage_hook_lowest = coverage_data.join('coverage_hook_lowest.rb')
-coverage_hook_55 = coverage_data.join('coverage_hook_55.rb')
-coverage_hook_out_fn = 'coverage_hook.rb'
+gemfile = coverage_data.join('coverage_gem.rb')
+bundler_d = rails_root.join('bundler.d')
+coverage_hook_file_name = 'coverage_hook.rb'
+coverage_hook = coverage_data.join(coverage_hook_file_name)
 coverage_merger = coverage_data.join('coverage_merger.rb')
 thing_toucher = coverage_data.join('thing_toucher.rb')
 coverage_output_dir = log_path.join('coverage')
@@ -169,7 +170,7 @@ class CoverageManager(object):
 
     def _install_simplecov(self):
         self.log.info('Installing coverage gem on appliance')
-        self.ipapp.ssh_client.put_file(gemfile.strpath, rails_root.strpath)
+        self.ipapp.ssh_client.put_file(gemfile.strpath, bundler_d.strpath)
 
         # gem install for more recent downstream builds
         def _gem_install():
@@ -183,7 +184,6 @@ class CoverageManager(object):
         version.pick({
             version.LOWEST: _bundle_install,
             '5.4': _gem_install,
-            '5.5': _gem_install,
             version.LATEST: _bundle_install,
         })()
 
@@ -192,15 +192,11 @@ class CoverageManager(object):
         self.ipapp.ssh_client.run_command('rm -rf {}'.format(
             appliance_coverage_root.strpath))
         # Decide which coverage hook file to use based on version
-        coverage_hook = version.pick({
-            version.LOWEST: coverage_hook_lowest,
-            '5.5': coverage_hook_55
-        })
         # Put the coverage hook in the miq lib path
         self.ipapp.ssh_client.put_file(coverage_hook.strpath, rails_root.join(
-            '..', 'lib', coverage_hook_out_fn).strpath)
+            'lib', coverage_hook_file_name).strpath)
         replacements = {
-            'require': r"require 'coverage_hook'",
+            'require': r"require_relative '../lib/coverage_hook'",
             'config': rails_root.join('config').strpath
         }
         # grep/echo to try to add the require line only once
@@ -241,15 +237,20 @@ class CoverageManager(object):
 
     def _collect_reports(self):
         # restart evm to stop the proccesses and let the simplecov exit hook run
-        self.ipapp.ssh_client.run_command('service evmserverd stop')
+        self.ipapp.ssh_client.run_command('systemctl stop evmserverd')
         # collect back to the collection appliance if parallelized
         if store.current_appliance != self.collection_appliance:
             self.print_message('sending reports to {}'.format(self.collection_appliance.address))
-            self.ipapp.ssh_client.run_command('scp -o StrictHostKeyChecking=no '
+            result = self.ipapp.ssh_client.run_command(
+                'sshpass -p {passwd} '
+                'scp -o StrictHostKeyChecking=no '
                 '-r /var/www/miq/vmdb/coverage/* '
                 '{addr}:/var/www/miq/vmdb/coverage/'.format(
-                    addr=self.collection_appliance.address),
+                    addr=self.collection_appliance.address,
+                    passwd=quote(self.ipapp.ssh_client._connect_kwargs['password'])),
                 timeout=1800)
+            if not result:
+                self.print_message('There was an error sending reports: ' + str(result))
 
     def _retrieve_coverage_reports(self):
         # Before merging, archive and collect all the raw coverage results

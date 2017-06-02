@@ -36,8 +36,8 @@ def dialog():
                                    tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                                    tab_desc="my tab desc",
                                    box_label="box_" + fauxfactory.gen_alphanumeric(),
-                                   box_desc="my box desc")
-    service_dialog.create(element_data)
+                                   box_desc="my box desc", element_data=element_data)
+    service_dialog.create()
     flash.assert_success_message('Dialog "{}" was added'.format(dialog_name))
     yield service_dialog
 
@@ -70,7 +70,7 @@ def catalog_item(dialog, catalog):
     cat_item = CatalogItem(item_type="Generic",
                            name='test_item_' + fauxfactory.gen_alphanumeric(),
                            description="my catalog item", display_in=True,
-                           catalog=catalog.name, dialog=dialog.label)
+                           catalog=catalog, dialog=dialog)
     yield cat_item
 
     # fixture cleanup
@@ -92,11 +92,6 @@ def test_update_catalog_item(catalog_item):
         catalog_item.description = "my edited item description"
 
 
-def test_delete_catalog_item(catalog_item):
-    catalog_item.create()
-    catalog_item.delete()
-
-
 def test_add_button_group(catalog_item):
     catalog_item.create()
     catalog_item.add_button_group()
@@ -112,7 +107,7 @@ def test_edit_tags(catalog_item):
     catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.6", "5.7", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):

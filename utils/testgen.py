@@ -95,28 +95,69 @@ from utils.log import logger
 from utils.providers import ProviderFilter, list_providers
 
 
-def providers_by_class(metafunc, classes, required_fields=None):
-    """ Gets providers by their class
+def _param_check(metafunc, argnames, argvalues):
+    """Helper function to check if parametrizing is necessary
+
+    * If no argnames were specified, parametrization is unnecessary.
+    * If argvalues were generated, parametrization is necessary.
+    * If argnames were specified, but no values were generated, the test cannot run successfully,
+      and will be uncollected using the :py:mod:`markers.uncollect` mark.
+
+    See usage in :py:func:`parametrize`
 
     Args:
-        metafunc: Passed in by pytest
-        classes: List of classes to fetch
-        required_fields: See :py:class:`cfme.utils.provider.ProviderFilter`
+        metafunc: metafunc objects from pytest_generate_tests
+        argnames: argnames list for use in metafunc.parametrize
+        argvalues: argvalues list for use in metafunc.parametrize
 
-    Usage:
-        # In the function itself
-        def pytest_generate_tests(metafunc):
-            argnames, argvalues, idlist = testgen.providers_by_class(
-                [GCEProvider, AzureProvider], required_fields=['provisioning']
-            )
-        metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+    Returns:
+        * ``True`` if this test should be parametrized
+        * ``False`` if it shouldn't be parametrized
+        * ``None`` if the test will be uncollected
 
-        # Using the parametrize wrapper
-        pytest_generate_tests = testgen.parametrize(testgen.providers_by_class, [GCEProvider],
-            scope='module')
     """
-    pf = ProviderFilter(classes=classes, required_fields=required_fields)
-    return providers(metafunc, filters=[pf])
+    # If no parametrized args were named, don't parametrize
+    if not argnames:
+        return False
+    # If parametrized args were named and values were generated, parametrize
+    elif any(argvalues):
+        return True
+    # If parametrized args were named, but no values were generated, mark this test to be
+    # removed from the test collection. Otherwise, py.test will try to find values for the
+    # items in argnames by looking in its fixture pool, which will almost certainly fail.
+    else:
+        # module and class are optional, but function isn't
+        modname = getattr(metafunc.module, '__name__', None)
+        classname = getattr(metafunc.cls, '__name__', None)
+        funcname = metafunc.function.__name__
+
+        test_name = '.'.join(filter(None, (modname, classname, funcname)))
+        uncollect_msg = 'Parametrization for {} yielded no values,'\
+            ' marked for uncollection'.format(test_name)
+        logger.warning(uncollect_msg)
+
+        # apply the mark
+        pytest.mark.uncollect(reason=uncollect_msg)(metafunc.function)
+
+
+def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
+    """parametrize wrapper that calls :py:func:`_param_check`, and only parametrizes when needed
+
+    This can be used in any place where conditional parametrization is used.
+
+    """
+    if _param_check(metafunc, argnames, argvalues):
+        metafunc.parametrize(argnames, argvalues, *args, **kwargs)
+    # if param check failed and the test was supposed to be parametrized around a provider
+    elif 'provider' in metafunc.fixturenames:
+        try:
+            # hack to pass trough in case of a failed param_check
+            # where it sets a custom message
+            metafunc.function.uncollect
+        except AttributeError:
+            pytest.mark.uncollect(
+                reason="provider was not parametrized did you forget --use-provider?"
+            )(metafunc.function)
 
 
 def generate(*args, **kwargs):
@@ -138,10 +179,16 @@ def generate(*args, **kwargs):
     Usage:
 
         # Abstract example:
-        pytest_generate_tests = testgen.generate(testgen.test_gen_func, arg1, arg2, kwarg1='a')
+        pytest_generate_tests = testgen.generate(arg1, arg2, kwarg1='a')
 
-        # Concrete example using infra_providers and scope
-        pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
+        # Concrete example using all infrastructure providers and module scope
+        pytest_generate_tests = testgen.generate([InfraProvider], scope="module")
+
+        # Another concrete example using only VMware and SCVMM providers with 'retire' flag
+        pf = ProviderFilter(
+            classes=[WMwareProvider, SCVMMProvider]), required_flags=['retire'])
+        pytest_generate_tests = testgen.generate(
+            gen_func=testgen.providers, filters=[pf], scope="module")
 
     Note:
 
@@ -152,14 +199,30 @@ def generate(*args, **kwargs):
         at least one common argname in every test signature to give pytest a clue in sorting tests.
 
     """
-    # Pull out/default kwargs for this function and parametrize
+    # Pull out/default kwargs for this function and parametrize; any args and kwargs that are not
+    # pulled out here will be passed into gen_func within pytest_generate_tests below
     scope = kwargs.pop('scope', 'function')
     indirect = kwargs.pop('indirect', False)
     filter_unused = kwargs.pop('filter_unused', True)
     gen_func = kwargs.pop('gen_func', providers_by_class)
 
+    def fixture_filter(metafunc, argnames, argvalues):
+        """Filter fixtures based on fixturenames in the function represented by ``metafunc``"""
+        # Identify indeces of matches between argnames and fixturenames
+        keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
+
+        # Keep items at indices in keep_index
+        def f(l):
+            return [e[1] for e in enumerate(l) if e[0] in keep_index]
+
+        # Generate the new values
+        argnames = f(argnames)
+        argvalues = map(f, argvalues)
+        return argnames, argvalues
+
     # If parametrize doesn't get you what you need, steal this and modify as needed
     def pytest_generate_tests(metafunc):
+        # Pass through of args and kwargs
         argnames, argvalues, idlist = gen_func(metafunc, *args, **kwargs)
         # Filter out argnames that aren't requested on the metafunc test item, so not all tests
         # need all fixtures to run, and tests not using gen_func's fixtures aren't parametrized.
@@ -167,42 +230,8 @@ def generate(*args, **kwargs):
             argnames, argvalues = fixture_filter(metafunc, argnames, argvalues)
         # See if we have to parametrize at all after filtering
         parametrize(metafunc, argnames, argvalues, indirect=indirect, ids=idlist, scope=scope)
+
     return pytest_generate_tests
-
-
-def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
-    """parametrize wrapper that calls :py:func:`param_check`, and only parametrizes when needed
-
-    This can be used in any place where conditional parametrization is used.
-
-    """
-    if param_check(metafunc, argnames, argvalues):
-        metafunc.parametrize(argnames, argvalues, *args, **kwargs)
-    # if param check failed and the test was supposed to be parametrized around a provider
-    elif 'provider' in metafunc.fixturenames:
-        try:
-            # hack to pass trough in case of a failed param_check
-            # where it sets a custom message
-            metafunc.function.uncollect
-        except AttributeError:
-            pytest.mark.uncollect(
-                reason="provider was not parametrized did you forget --use-provider?"
-            )(metafunc.function)
-
-
-def fixture_filter(metafunc, argnames, argvalues):
-    """Filter fixtures based on fixturenames in the function represented by ``metafunc``"""
-    # Identify indeces of matches between argnames and fixturenames
-    keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
-
-    # Keep items at indices in keep_index
-    def f(l):
-        return [e[1] for e in enumerate(l) if e[0] in keep_index]
-
-    # Generate the new values
-    argnames = f(argnames)
-    argvalues = map(f, argvalues)
-    return argnames, argvalues
 
 
 def providers(metafunc, filters=None):
@@ -239,8 +268,33 @@ def providers(metafunc, filters=None):
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
             argnames.append('provider')
+        if metafunc.config.getoption('sauce'):
+            break
 
     return argnames, argvalues, idlist
+
+
+def providers_by_class(metafunc, classes, required_fields=None):
+    """ Gets providers by their class
+
+    Args:
+        metafunc: Passed in by pytest
+        classes: List of classes to fetch
+        required_fields: See :py:class:`cfme.utils.provider.ProviderFilter`
+
+    Usage:
+        # In the function itself
+        def pytest_generate_tests(metafunc):
+            argnames, argvalues, idlist = testgen.providers_by_class(
+                [GCEProvider, AzureProvider], required_fields=['provisioning']
+            )
+        metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+
+        # Using the parametrize wrapper
+        pytest_generate_tests = testgen.parametrize([GCEProvider], scope='module')
+    """
+    pf = ProviderFilter(classes=classes, required_fields=required_fields)
+    return providers(metafunc, filters=[pf])
 
 
 def all_providers(metafunc, **options):
@@ -307,48 +361,3 @@ def pxe_servers(metafunc):
                           get_pxe_server_from_config(pxe_server)])
         idlist.append(pxe_server)
     return argnames, argvalues, idlist
-
-
-def param_check(metafunc, argnames, argvalues):
-    """Helper function to check if parametrizing is necessary
-
-    * If no argnames were specified, parametrization is unnecessary.
-    * If argvalues were generated, parametrization is necessary.
-    * If argnames were specified, but no values were generated, the test cannot run successfully,
-      and will be uncollected using the :py:mod:`markers.uncollect` mark.
-
-    See usage in :py:func:`parametrize`
-
-    Args:
-        metafunc: metafunc objects from pytest_generate_tests
-        argnames: argnames list for use in metafunc.parametrize
-        argvalues: argvalues list for use in metafunc.parametrize
-
-    Returns:
-        * ``True`` if this test should be parametrized
-        * ``False`` if it shouldn't be parametrized
-        * ``None`` if the test will be uncollected
-
-    """
-    # If no parametrized args were named, don't parametrize
-    if not argnames:
-        return False
-    # If parametrized args were named and values were generated, parametrize
-    elif any(argvalues):
-        return True
-    # If parametrized args were named, but no values were generated, mark this test to be
-    # removed from the test collection. Otherwise, py.test will try to find values for the
-    # items in argnames by looking in its fixture pool, which will almost certainly fail.
-    else:
-        # module and class are optional, but function isn't
-        modname = getattr(metafunc.module, '__name__', None)
-        classname = getattr(metafunc.cls, '__name__', None)
-        funcname = metafunc.function.__name__
-
-        test_name = '.'.join(filter(None, (modname, classname, funcname)))
-        uncollect_msg = 'Parametrization for {} yielded no values,'\
-            ' marked for uncollection'.format(test_name)
-        logger.warning(uncollect_msg)
-
-        # apply the mark
-        pytest.mark.uncollect(reason=uncollect_msg)(metafunc.function)

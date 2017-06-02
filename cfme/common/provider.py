@@ -1,42 +1,59 @@
 import datetime
-import pkgutil
-import importlib
 from functools import partial
 
-import cfme
+from manageiq_client.api import APIException
+from widgetastic.widget import View, Text
+from widgetastic_patternfly import Input, Button
+
+from cfme.base.credential import (
+    Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential, AzureCredential,
+    ServiceAccountCredential)
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
-    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException
-)
-from cfme.web_ui import breadcrumbs_names, summary_title
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
-from cfme.web_ui import toolbar as tb
-from cfme.web_ui import form_buttons, paginator
-from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, version
+    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
+from cfme.web_ui import (
+    breadcrumbs_names, summary_title, flash, Quadicon, Region, fill, Form, toolbar as tb,
+    form_buttons, paginator)
+from utils import ParamClassName, version, conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.browser import ensure_browser_open
-from utils.db import cfmedb
 from utils.log import logger
-from utils.path import project_path
-from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
-
+from utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
 
-manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
-
 details_page = Region(infoblock_type='detail')
+
+
+def base_types():
+    from pkg_resources import iter_entry_points
+    return {ep.name: ep.resolve() for ep in iter_entry_points('manageiq.provider_categories')}
+
+
+def provider_types(category):
+    from pkg_resources import iter_entry_points
+    return {
+        ep.name: ep.resolve() for ep in iter_entry_points(
+            'manageiq.provider_types.{}'.format(category))
+    }
+
+
+def all_types():
+    all_types = base_types()
+    for category in all_types.keys():
+        all_types.update(provider_types(category))
+    return all_types
 
 
 class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
-    base_types = {}
+    _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""
@@ -48,83 +65,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     _properties_region = None
     add_provider_button = None
     save_button = None
-
-    @classmethod
-    def add_base_type(cls, nclass):
-        cls.base_types[nclass.category] = nclass
-        return nclass
-
-    @classmethod
-    def add_provider_type(cls, nclass):
-        cls.provider_types[nclass.type_name] = nclass
-        return nclass
-
-    class Credential(cfme.Credential, Updateable):
-        """Provider credentials
-
-           Args:
-             type: One of [amqp, candu, ssh, token] (optional)
-             domain: Domain for default credentials (optional)
-        """
-        @property
-        def form(self):
-            fields = [
-                ('token_secret_55', Input('bearer_token')),
-                ('google_service_account', Input('service_account')),
-            ]
-            tab_fields = {
-                ("Default", ('default_when_no_tabs', )): [
-                    ('default_principal', Input("default_userid")),
-                    ('default_secret', Input("default_password")),
-                    ('default_verify_secret', Input("default_verify")),
-                    ('token_secret', {
-                        version.LOWEST: Input('bearer_password'),
-                        '5.6': Input('default_password')
-                    }),
-                    ('token_verify_secret', {
-                        version.LOWEST: Input('bearer_verify'),
-                        '5.6': Input('default_verify')
-                    }),
-                ],
-
-                "RSA key pair": [
-                    ('ssh_user', Input("ssh_keypair_userid")),
-                    ('ssh_key', FileInput("ssh_keypair_password")),
-                ],
-
-                "C & U Database": [
-                    ('candu_principal', Input("metrics_userid")),
-                    ('candu_secret', Input("metrics_password")),
-                    ('candu_verify_secret', Input("metrics_verify")),
-                ],
-            }
-            fields_end = [
-                ('validate_btn', form_buttons.validate),
-            ]
-
-            if version.current_version() >= '5.6':
-                amevent = "Events"
-            else:
-                amevent = "AMQP"
-            tab_fields[amevent] = []
-            if version.current_version() >= "5.6":
-                tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
-            tab_fields[amevent].extend([
-                ('amqp_principal', Input("amqp_userid")),
-                ('amqp_secret', Input("amqp_password")),
-                ('amqp_verify_secret', Input("amqp_verify")),
-            ])
-
-            return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
-
-        def __init__(self, **kwargs):
-            super(BaseProvider.Credential, self).__init__(**kwargs)
-            self.type = kwargs.get('cred_type', None)
-            self.domain = kwargs.get('domain', None)
-            if self.type == 'token':
-                self.token = kwargs['token']
-            if self.type == 'service_account':
-                self.service_account = kwargs['service_account']
+    db_types = ["Providers"]
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -210,44 +151,168 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Returns:
             True if it was created, False if it already existed
         """
-        if check_existing and self.exists:
-            created = False
+        from cfme.infrastructure.provider import InfraProvider
+        if self.one_of(InfraProvider):
+            if check_existing and self.exists:
+                created = False
+            else:
+                created = True
+
+                logger.info('Setting up Infra Provider: %s', self.key)
+                main_view = navigate_to(self, 'Add')
+
+                if not cancel or (cancel and any(self.view_value_mapping.values())):
+                    # filling main part of dialog
+                    main_view.fill(self.view_value_mapping)
+
+                if not cancel or (cancel and self.endpoints):
+                    # filling endpoints
+                    for endpoint_name, endpoint in self.endpoints.items():
+                        try:
+                            # every endpoint class has name like 'default', 'events', etc.
+                            # endpoints view can have multiple tabs, the code below tries
+                            # to find right tab by passing endpoint name to endpoints view
+                            endp_view = getattr(self.endpoints_form(parent=main_view),
+                                                endpoint_name)
+                        except AttributeError:
+                            # tabs are absent in UI when there is only single (default) endpoint
+                            endp_view = self.endpoints_form(parent=main_view)
+
+                        endp_view.fill(endpoint.view_value_mapping)
+
+                        # filling credentials
+                        if hasattr(endpoint, 'credentials'):
+                            endp_view.fill(endpoint.credentials.view_value_mapping)
+
+                            if validate_credentials and hasattr(endp_view, 'validate'):
+                                # there are some endpoints which don't demand validation like
+                                #  RSA key pair
+                                endp_view.validate.click()
+
+                if cancel:
+                    created = False
+                    main_view.cancel.click()
+                    cancel_text = 'Add of Infrastructure Provider was cancelled by the user'
+                    flash.assert_message_match(cancel_text)
+                else:
+                    main_view.add.click()
+                    # todo: replace flash when main view is merged
+                    flash.assert_message_match(
+                        '{} Providers "{}" was saved'.format(self.string_name,
+                                                             self.name))
+            if validate_inventory:
+                self.validate()
+
+            return created
+
         else:
-            created = True
-            logger.info('Setting up provider: %s', self.key)
-            navigate_to(self, 'Add')
-            fill(self.properties_form, self._form_mapping(True, **self.__dict__))
-            for cred in self.credentials:
-                fill(self.credentials[cred].form, self.credentials[cred],
-                     validate=validate_credentials)
-            self._submit(cancel, self.add_provider_button)
-            if not cancel:
-                flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
-                                                                                self.name))
-        if validate_inventory:
-            self.validate()
+            # other providers, old code
+            if check_existing and self.exists:
+                created = False
+            else:
+                created = True
+                logger.info('Setting up provider: %s', self.key)
+                navigate_to(self, 'Add')
+                fill(self.properties_form, self._form_mapping(True, hawkular=False,
+                                                              **self.__dict__))
+                for cred in self.credentials:
+                    fill(self.credentials[cred].form, self.credentials[cred],
+                         validate=validate_credentials)
+                self._submit(cancel, self.add_provider_button)
+                if not cancel:
+                    flash.assert_message_match('{} Providers '
+                                               '"{}" was saved'.format(self.string_name, self.name))
+            if validate_inventory:
+                self.validate()
+            return created
 
-        return created
-
-    def update(self, updates, cancel=False, validate_credentials=True):
+    def update(self, updates, endpoints=None, cancel=False, validate_credentials=True):
         """
         Updates a provider in the UI.  Better to use utils.update.update context
         manager than call this directly.
 
         Args:
            updates (dict): fields that are changing.
+           endpoints (dict/list or single Endpoint): objects which hold information about
+           provider's endpoints.
            cancel (boolean): whether to cancel out of the update.
+           validate_credentials (boolean): whether credentials have to be validated
         """
-        navigate_to(self, 'Edit')
-        fill(self.properties_form, self._form_mapping(**updates))
-        for cred in self.credentials:
-            fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
-                 validate=validate_credentials)
-        self._submit(cancel, self.save_button)
-        name = updates.get('name', self.name)
-        if not cancel:
-            flash.assert_message_match(
-                '{} Provider "{}" was saved'.format(self.string_name, name))
+        from cfme.infrastructure.provider import InfraProvider
+        if self.one_of(InfraProvider):
+            main_view = navigate_to(self, 'Edit')
+            # todo: to replace/merge this code with create
+            # update values:
+            # filling main part of dialog
+            if updates:
+                main_view.fill(updates)
+
+            # filling endpoints
+            if endpoints:
+                endpoints = self._prepare_endpoints(endpoints)
+
+                for endpoint in endpoints.values():
+                    # every endpoint class has name like 'default', 'events', etc.
+                    # endpoints view can have multiple tabs, the code below tries
+                    # to find right tab by passing endpoint name to endpoints view
+                    endp_view = getattr(self.endpoints_form(parent=main_view), endpoint.name)
+                    endp_view.fill(endpoint.view_value_mapping)
+
+                    # filling credentials
+                    # the code below looks for existing endpoint equal to passed one and
+                    # compares their credentials. it fills passed credentials
+                    # if credentials are different
+                    cur_endpoint = self.endpoints[endpoint.name]
+                    if hasattr(endpoint, 'credentials'):
+                        if not hasattr(cur_endpoint, 'credentials') or \
+                                endpoint.credentials != cur_endpoint.credentials:
+                            if hasattr(endp_view, 'change_password'):
+                                endp_view.change_password.click()
+                            elif hasattr(endp_view, 'change_key'):
+                                endp_view.change_key.click()
+                            else:
+                                NotImplementedError(
+                                    "Such endpoint doesn't have change password/key button")
+
+                            endp_view.fill(endpoint.credentials.view_value_mapping)
+                            if validate_credentials:
+                                endpoint.view.validate.click()
+
+            if cancel:
+                main_view.cancel.click()
+                cancel_text = 'Edit of Infrastructure Provider "{name}" ' \
+                              'was cancelled by the user'.format(name=self.name)
+                flash.assert_message_match(cancel_text)
+            else:
+                main_view.save.click()
+                if endpoints:
+                    for endp_name, endp in endpoints.items():
+                        self.endpoints[endp_name] = endp
+                if updates:
+                    self.name = updates.get('name', self.name)
+
+                if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
+                    logger.warning('Skipping flash message verification because of BZ 1436341')
+                    return
+
+                # todo: replace flash when main view is merged
+                flash.assert_message_match(
+                    '{} Provider "{}" was saved'.format(self.string_name, self.name))
+        else:
+            # other providers, old code
+            navigate_to(self, 'Edit')
+            fill(self.properties_form, self._form_mapping(**updates))
+            for cred in self.credentials:
+                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
+                     validate=validate_credentials)
+            self._submit(cancel, self.save_button)
+            name = updates.get('name', self.name)
+            if not cancel:
+                if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
+                    logger.warning('Skipping flash message verification because of BZ 1436341')
+                    return
+                flash.assert_message_match(
+                    '{} Provider "{}" was saved'.format(self.string_name, name))
 
     def delete(self, cancel=True):
         """
@@ -264,6 +329,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             flash.assert_message_match(
                 'Delete initiated for 1 {} Provider from the {} Database'.format(
                     self.string_name, self.appliance.product_name))
+
+    def setup(self):
+        """
+        Sets up the provider robustly
+        """
+        return self.create(
+            cancel=False, validate_credentials=True, check_existing=True, validate_inventory=True)
 
     def delete_if_exists(self, *args, **kwargs):
         """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
@@ -373,7 +445,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Args:
             table_str: Name of the table; e.g. 'vms' or 'hosts'
         """
-        res = cfmedb().engine.execute(
+        res = self.appliance.db.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, {0} "
             "WHERE {0}.ems_id=ext_management_systems.id "
@@ -429,10 +501,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def exists(self):
-        """ Checks if exists among managed providers
-
+        """ Returns ``True`` if a provider of the same name exists on the appliance
         """
-        if self in self.appliance.managed_providers:
+        if self.name in self.appliance.managed_provider_names:
             return True
         return False
 
@@ -492,16 +563,26 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`BaseProvider.Credential` instance.
+            A :py:class:`cfme.base.credential.Credential` instance.
         """
         domain = credential_dict.get('domain', None)
         token = credential_dict.get('token', None)
-        return cls.Credential(
-            principal=credential_dict['username'],
-            secret=credential_dict['password'],
-            cred_type=cred_type,
-            domain=domain,
-            token=token)
+        if not cred_type:
+            return Credential(principal=credential_dict['username'],
+                              secret=credential_dict['password'],
+                              domain=domain)
+        elif cred_type == 'amqp':
+            return EventsCredential(principal=credential_dict['username'],
+                                    secret=credential_dict['password'])
+
+        elif cred_type == 'ssh':
+            return SSHCredential(principal=credential_dict['username'],
+                                 secret=credential_dict['password'])
+        elif cred_type == 'candu':
+            return CANDUCredential(principal=credential_dict['username'],
+                                   secret=credential_dict['password'])
+        elif cred_type == 'token':
+            return TokenCredential(token=token)
 
     @classmethod
     def get_credentials_from_config(cls, credential_config_name, cred_type=None):
@@ -512,7 +593,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             cred_type: Type of credential (None, token, ssh, amqp, ...)
 
         Returns:
-            A :py:class:`BaseProvider.Credential` instance.
+            A :py:class:`cfme.base.credential.Credential` instance.
         """
         creds = conf.credentials[credential_config_name]
         return cls.get_credentials(creds, cred_type=cred_type)
@@ -531,7 +612,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 considered as the credentials.
 
         Returns:
-            :py:class:`BaseProvider.Credentials` instance
+            :py:class:`cfme.base.credential.Credential` instance
         """
         if isinstance(cred_yaml_key, dict):
             return cls.get_credentials(cred_yaml_key, cred_type=cred_type)
@@ -539,30 +620,22 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             return cls.get_credentials_from_config(cred_yaml_key, cred_type=cred_type)
 
     # Move to collection
-    @staticmethod
-    def clear_providers_by_class(prov_class, validate=True):
-        """ Removes all providers that are an instance of given class or one of it's subclasses
-        """
-        from utils.providers import ProviderFilter, list_providers
-        pf = ProviderFilter(classes=[prov_class])
-        provs = list_providers(filters=[pf], use_global_filters=False)
-
-        # First, delete all
-        deleted_provs = []
-        for prov in provs:
-            existed = prov.delete_if_exists(cancel=False)
-            if existed:
-                deleted_provs.append(prov)
-        # Then, check that all were deleted
-        if validate:
-            for prov in deleted_provs:
-                prov.wait_for_delete()
-
-    # Move to collection
-    @staticmethod
-    def clear_providers():
-        """ Clear all providers on an appliance using UI """
-        BaseProvider.clear_providers_by_class(BaseProvider)
+    @classmethod
+    def clear_providers(cls):
+        """ Clear all providers of given class on the appliance """
+        from utils.appliance import current_appliance as app
+        app.rest_api.collections.providers.reload()
+        for prov in app.rest_api.collections.providers.all:
+            try:
+                if any([True for db_type in cls.db_types if db_type in prov.type]):
+                    logger.info('Deleting provider: %s', prov.name)
+                    prov.action.delete()
+                    prov.wait_not_exists()
+            except APIException as ex:
+                # Provider is already gone (usually caused by NetworkManager objs)
+                if 'RecordNotFound' not in str(ex):
+                    raise ex
+        app.rest_api.collections.providers.reload()
 
     def one_of(self, *classes):
         """ Returns true if provider is an instance of any of the classes or sublasses there of"""
@@ -579,6 +652,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
+    db_types = ["CloudManager", "InfraManager"]
 
     def wait_for_creds_ok(self):
         """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
@@ -636,9 +710,9 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     @variable(alias="db")
     def num_template(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        vms = cfmedb()["vms"]
-        temlist = list(cfmedb().session.query(vms.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        vms = self.appliance.db["vms"]
+        temlist = list(self.appliance.db.session.query(vms.name)
                        .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
                        .filter(ext_management_systems.name == self.name)
                        .filter(vms.template == True))  # NOQA
@@ -651,9 +725,9 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     @variable(alias="db")
     def num_vm(self):
         """ Returns the providers number of instances, as shown on the Details page."""
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        vms = cfmedb()["vms"]
-        vmlist = list(cfmedb().session.query(vms.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        vms = self.appliance.db["vms"]
+        vmlist = list(self.appliance.db.session.query(vms.name)
                       .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
                       .filter(ext_management_systems.name == self.name)
                       .filter(vms.template == False))  # NOQA
@@ -696,18 +770,24 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             return True
 
 
-@fill.method((Form, BaseProvider.Credential))
+@fill.method((Form, Credential))  # default credential
+@fill.method((Form, EventsCredential))
+@fill.method((Form, CANDUCredential))
+@fill.method((Form, AzureCredential))
+@fill.method((Form, SSHCredential))
+@fill.method((Form, TokenCredential))
+@fill.method((Form, ServiceAccountCredential))
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
-    if cred.type == 'amqp':
+    if isinstance(cred, EventsCredential):
         fill(cred.form, {
             'event_selection': 'amqp',
             'amqp_principal': cred.principal,
             'amqp_secret': cred.secret,
             'amqp_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    elif cred.type == 'candu':
+    elif isinstance(cred, CANDUCredential):
         fill(cred.form, {'candu_principal': cred.principal,
             'candu_secret': cred.secret,
             'candu_verify_secret': cred.verify_secret,
@@ -730,33 +810,33 @@ def _fill_credential(form, cred, validate=None):
                 # ``exc`` must have some contents by now since at least one except had to happen.
                 raise exc
 
-    elif cred.type == 'azure':
+    elif isinstance(cred, AzureCredential):
         fill(cred.form, {'default_username': cred.principal,
                          'default_password': cred.secret,
                          'default_verify': cred.secret})
-    elif cred.type == 'ssh':
+    elif isinstance(cred, SSHCredential):
         fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
-    elif cred.type == 'token':
-        if version.current_version() < "5.6":
-            fill(cred.form, {'token_secret_55': cred.token, 'validate_btn': validate})
-        else:
+    elif isinstance(cred, TokenCredential):
+        fill(cred.form, {
+            'token_secret': cred.token,
+            'token_verify_secret': cred.verify_token,
+            'validate_btn': validate
+        })
+        if validate:
+            # Validate default creds and move on to hawkular tab validation
+            flash.assert_no_errors()
             fill(cred.form, {
-                'token_secret': cred.token,
-                'token_verify_secret': cred.verify_token,
-                'validate_btn': validate
+                'hawkular_validate_btn': validate
             })
-    elif cred.type == 'service_account':
+    elif isinstance(cred, ServiceAccountCredential):
         fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
     else:
-        if cred.domain:
-            principal = r'{}\{}'.format(cred.domain, cred.principal)
-        else:
-            principal = cred.principal
-        fill(cred.form, {'default_principal': principal,
+        fill(cred.form, {'default_principal': cred.principal,
             'default_secret': cred.secret,
             'default_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    if validate and cred.type != 'candu':  # because we already validated it for the specific case
+    if validate and not isinstance(cred, CANDUCredential):
+        # because we already validated it for the specific case
         flash.assert_no_errors()
 
 
@@ -769,7 +849,63 @@ def cleanup_vm(vm_name, provider):
         logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)
 
 
-def import_all_modules_of(loc):
-    path = project_path.join('{}'.format(loc.replace('.', '/'))).strpath
-    for _, name, _ in pkgutil.iter_modules([path]):
-        importlib.import_module('{}.{}'.format(loc, name))
+class DefaultEndpoint(object):
+    credential_class = Credential
+    name = 'default'
+
+    def __init__(self, **kwargs):
+        for key, val in kwargs.items():
+            if key == 'credentials' and not isinstance(val, (Credential, TokenCredential)):
+                val = self.credential_class.from_config(val)
+            setattr(self, key, val)
+
+        if not hasattr(self, 'credentials'):
+            logger.warn("credentials weren't passed "
+                        "for endpoint {}".format(self.__class__.__name__))
+
+    @property
+    def view_value_mapping(self):
+        return {'hostname': self.hostname}
+
+
+class CANDUEndpoint(DefaultEndpoint):
+    credential_class = CANDUCredential
+    name = 'candu'
+
+    @property
+    def view_value_mapping(self):
+        return {'hostname': self.hostname,
+                'api_port': self.api_port,
+                'database_name': self.database}
+
+
+class EventsEndpoint(DefaultEndpoint):
+    credential_class = EventsCredential
+    name = 'events'
+
+    @property
+    def view_value_mapping(self):
+        return {'event_stream': self.event_stream,
+                'security_protocol': self.security_protocol,
+                'hostname': self.hostname,
+                'api_port': self.api_port,
+                }
+
+
+class SSHEndpoint(DefaultEndpoint):
+    credential_class = SSHCredential
+    name = 'rsa_keypair'
+
+    @property
+    def view_value_mapping(self):
+        return {}
+
+
+class DefaultEndpointForm(View):
+    hostname = Input('default_hostname')
+    username = Input('default_userid')
+    password = Input('default_password')
+    confirm_password = Input('default_verify')
+    change_password = Text(locator='.//a[normalize-space(.)="Change stored password"]')
+
+    validate = Button('Validate')

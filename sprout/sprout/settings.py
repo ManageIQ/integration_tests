@@ -245,6 +245,11 @@ CELERYBEAT_SCHEDULE = {
         'task': 'appliances.tasks.sync_provider_hw',
         'schedule': timedelta(minutes=61),
     },
+
+    'read-docker-images-from-url': {
+        'task': 'appliances.tasks.read_docker_images_from_url',
+        'schedule': timedelta(hours=12),
+    }
 }
 
 try:

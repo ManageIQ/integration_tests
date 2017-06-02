@@ -7,9 +7,8 @@ from cfme.middleware.provider import Deployable
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
@@ -20,10 +19,10 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 def _db_select_query(name=None, server=None, provider=None):
     """Column order: `id`, `nativeid`, `name`, `server_name`,
     `feed`, `provider_name`, `host_name`, `status`"""
-    t_ems = cfmedb()['ext_management_systems']
-    t_ms = cfmedb()['middleware_servers']
-    t_md = cfmedb()['middleware_deployments']
-    query = cfmedb().session.query(
+    t_ems = current_appliance.db['ext_management_systems']
+    t_ms = current_appliance.db['middleware_servers']
+    t_md = current_appliance.db['middleware_deployments']
+    query = current_appliance.db.session.query(
         t_md.id,
         t_md.nativeid.label('nativeid'),
         t_md.name,
@@ -234,5 +233,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        if paginator.page_controls_exist():
+            paginator.results_per_page(1000)
         list_tbl.click_row_by_cells({'Deployment Name': self.obj.name,
                                      'Server': self.obj.server.name})

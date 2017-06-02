@@ -4,8 +4,8 @@ from widgetastic.widget import View
 from widgetastic_manageiq import Accordion, ManageIQTree
 from widgetastic_patternfly import Dropdown
 
-from cfme import BaseLoggedInPage
 from cfme.base import Server
+from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import automate_menu_name
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
@@ -54,27 +54,3 @@ class AutomateCustomization(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Customization'])
-
-
-class AutomateExplorerView(BaseLoggedInPage):
-    @property
-    def is_displayed(self):
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == automate_menu_name(
-                self.context['object'].appliance) + ['Explorer'])
-
-    @View.nested
-    class datastore(Accordion):  # noqa
-        tree = ManageIQTree()
-
-    configuration = Dropdown('Configuration')
-
-
-@navigator.register(Server)
-class AutomateExplorer(CFMENavigateStep):
-    VIEW = AutomateExplorerView
-    prerequisite = NavigateToSibling('LoggedIn')
-
-    def step(self):
-        self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Explorer'])

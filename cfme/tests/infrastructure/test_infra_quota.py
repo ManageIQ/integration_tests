@@ -201,7 +201,7 @@ def test_group_quota_max_cpu_check_by_tagging(
             '(Group Allocated vCPUs 0 + Requested 8 \> Quota 2)'
 
 
-@pytest.mark.tier(1)
+@pytest.mark.tier(2)
 def test_tenant_quota_max_cpu_check(
         provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_cpu, bug):
     """Test Tenant Quota-Max CPU by UI.
@@ -238,7 +238,7 @@ def test_tenant_quota_max_cpu_check(
     assert row.reason.text == "Quota Exceeded"
 
 
-@pytest.mark.tier(1)
+@pytest.mark.tier(2)
 def test_tenant_quota_max_memory_check(
         provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_memory, bug):
     """Test Tenant Quota-Max Memory by UI.
@@ -271,7 +271,7 @@ def test_tenant_quota_max_memory_check(
     assert row.reason.text == "Quota Exceeded"
 
 
-@pytest.mark.tier(1)
+@pytest.mark.tier(2)
 def test_tenant_quota_max_storage_check(
         provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_storage, bug):
     """Test Tenant Quota-Max Storage by UI.
@@ -303,7 +303,7 @@ def test_tenant_quota_max_storage_check(
     assert row.reason.text == "Quota Exceeded"
 
 
-@pytest.mark.tier(1)
+@pytest.mark.tier(2)
 def test_tenant_quota_max_num_vms_check(
         provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_vm, bug):
     """Test Tenant Quota-Max number of vms by UI.

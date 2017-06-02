@@ -39,10 +39,11 @@ class LogValidator(object):
     """
 
     def __init__(self, remote_filename, **kwargs):
-        self._remote_file_tail = SSHTail(remote_filename)
-        self.skip_patterns = kwargs['skip_patterns'] if 'skip_patterns' in kwargs else []
-        self.failure_patterns = kwargs['failure_patterns'] if 'failure_patterns' in kwargs else []
-        self.matched_patterns = kwargs['matched_patterns'] if 'matched_patterns' in kwargs else []
+        self.skip_patterns = kwargs.pop('skip_patterns', [])
+        self.failure_patterns = kwargs.pop('failure_patterns', [])
+        self.matched_patterns = kwargs.pop('matched_patterns', [])
+
+        self._remote_file_tail = SSHTail(remote_filename, **kwargs)
         self.matches = {}
 
     def fix_before_start(self):
@@ -77,5 +78,5 @@ class LogValidator(object):
 
     def _verify_match_logs(self):
         for pattern in self.matched_patterns:
-            if not self.matches[pattern]:
+            if pattern not in self.matches:
                 pytest.fail('Expected pattern {} did not match'.format(pattern))

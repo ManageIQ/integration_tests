@@ -8,7 +8,6 @@ from cfme.web_ui import toolbar as tb
 from cfme.web_ui import Quadicon, match_location, mixins
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
-from utils import version
 
 
 match_page = partial(match_location, controller='cloud_object_store_container',
@@ -43,10 +42,11 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if version.current_version() >= "5.7":
+        if self.obj.appliance.version < "5.8":
             self.prerequisite_view.navigation.select('Storage', 'Object Stores')
         else:
-            self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Object Stores')
+            self.prerequisite_view.navigation.select(
+                'Storage', 'Object Storage', 'Object Store Containers')
 
     def resetter(self):
         tb.select("Grid View")

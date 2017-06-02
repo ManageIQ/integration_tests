@@ -99,6 +99,7 @@
                 With {{ pool.override_cpu }} cores
             </h2>
             {% endif %}
+            <h3>Age: {{pool.age|nice_timedelta}}</h3>
             {% if pool.current_count != pool.total_count %}
                 <p>{{ pool.current_count }} from {{ pool.total_count }} appliances provisioned</p>
             {% endif %}
@@ -139,6 +140,7 @@
                 <h4><a href="{% url 'user_appliances' pool.owner.username %}">{{ pool.owner|user_repr }}</a></h4>
             {% endif %}
         </div>
+        {% if pool.total_count > 0 %}
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
@@ -288,7 +290,24 @@
                 </tr>
                 {% endfor %}
             </tbody>
-            </table><hr>
+            </table>
+            {% else %}
+                <div class="container">
+                <h2>Clone this pool!</h2>
+                <form action="{% url 'clone_pool' %}" method="POST" class="form-horizontal">
+                    {% csrf_token %}
+                    <input type="hidden" name="source_pool_id" value="{{pool.id}}">
+                    <div class="form-group">
+                      <label for="count" class="col-md-2 control-label">Number of appliances wanted:</label>
+                      <div class="col-md-4">
+                        <input type="number" class="form-control" id="count" name="count" min="1" value="1" {% if per_pool_quota_enabled %}max="{{per_pool_quota}}"{% endif %}>
+                      </div>
+                    </div>
+                    <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Clone</button>
+                </form>
+                </div>
+            {% endif %}
+            <hr>
             <div class="form-horizontal">
                 <button class="btn btn-default btn-xs" data-toggle="collapse" data-target="#collapsible-{{ pool.id }}" style="margin-left: 10px; margin-bottom: 10px;"><span class="glyphicon glyphicon-arrow-down"></span> Open additional settings</button>
 
@@ -373,8 +392,8 @@
               <div class="col-md-4">
                   <select class="form-control" id="stream" name="stream">
                     <option value="<None>">Please select ...</option>
-                    {% for group in groups %}
-                    <option value="{{ group.id }}">{{ group.id }}</option>
+                    {% for date, group in group_tuples %}
+                    <option value="{{ group.id }}">{{ group.id }} ({{ date}})</option>
                     {% endfor %}
                   </select>
               </div>
@@ -473,6 +492,40 @@
             <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')" id="submit_button"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
         </form>
         <script type="text/javascript">
+        function selectValues(select_id) {
+            return $.map($('#' + select_id + ' option'), function(option) { return option.value; });
+        }
+
+        function selectHasValue(select_id, searched_value) {
+            var values = selectValues(select_id);
+            for(i = 0; i < values.length; i++) {
+                var value = values[i];
+                if(value == searched_value)
+                    return true;
+            }
+
+            return false;
+        }
+
+        function replaceSelectContents(name, data, submit_handling) {
+            if(submit_handling === undefined) submit_handling = false;
+            var old_val = $('select#' + name).val();
+            $('select#' + name).html(data);
+            if(selectHasValue(name, old_val))
+                $('select#' + name).val(old_val);
+            if(submit_handling){
+                if($("#" + name).find("option").length <= 1) {
+                    // No items available
+                    $("#submit_button")[0].disabled = true;
+                } else {
+                    // Items available
+                    $("#submit_button")[0].disabled = false;
+                }
+            }
+            $('select#' + name).trigger('change');
+            $('#' + name).prop('disabled', false);
+        }
+
         $(document).ready(function() {
             // Some UI stuff
             $('#enabled_ram').change(function(){
@@ -493,14 +546,14 @@
             });
             // Provisioning
             $('select#stream').change(function(){
+                $('#version').prop('disabled', true);
                 $.ajax({
                         type: "POST",
                         url: "{% url 'versions_for_group' %}",
                         data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
-                    $('select#version').html(data);
-                    $("select#version").trigger("change");
+                    replaceSelectContents('version', data)
                  });
             });
             $('#preconfigured').change(function(){
@@ -516,32 +569,25 @@
                 $("select#stream").trigger("change");  // a bit stupid but no better idea right now
             });
             $('select#version').change(function(){
+                $('#date').prop('disabled', true);
                 $.ajax({
                         type: "POST",
                         url: "{% url 'date_for_group_and_version' %}",
                         data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
-                    $('select#date').html(data);
-                    $("select#date").trigger("change");
+                    replaceSelectContents('date', data)
                  });
             });
             $('select#date').change(function(){
+                $('#provider').prop('disabled', true);
                 $.ajax({
                         type: "POST",
                         url: "{% url 'providers_for_date_group_and_version' %}",
                         data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
-                    $('select#provider').html(data);
-                    if($("#provider").find("option").length <= 1) {
-                        // No providers available
-                        $("#submit_button")[0].disabled = true;
-                    } else {
-                        // Providers available
-                        $("#submit_button")[0].disabled = false;
-                    }
-                    $("select#provider").trigger("change");
+                    replaceSelectContents('provider', data, true)
                  });
             });
 

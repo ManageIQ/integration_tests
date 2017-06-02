@@ -22,9 +22,8 @@ def select_first_provider_and_get_its_name():
     Quadicon.select_first_quad()
     return Quadicon.get_first_quad_title()
 
-# CMP-9880
 
-
+@pytest.mark.polarion('CMP-9880')
 def test_edit_selected_containers_provider():
     '''Testing Configuration -> Edit... button functionality
     Step:
@@ -38,9 +37,8 @@ def test_edit_selected_containers_provider():
     navigate_to(provider, 'EditFromDetails')
     assert 'Edit Containers Providers \'{}\''.format(name) == breadcrumbs_names()[-1]
 
-# CMP-9881
 
-
+@pytest.mark.polarion('CMP-9881')
 def test_remove_selected_containers_provider():
     '''Testing Configuration -> Remove... button functionality
     Step:

@@ -1,19 +1,18 @@
 import fauxfactory
 import pytest
+from Crypto.PublicKey import RSA
+
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.exceptions import KeyPairNotFound
 from utils import testgen
-from utils.version import current_version
-from utils.providers import setup_a_provider_by_class
+from utils.blockers import BZ
+from utils.appliance.implementations.ui import navigate_to
+from utils.wait import TimedOutError
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() > '5.7')
+    pytest.mark.usefixtures('setup_provider', 'openstack_provider')
 ]
-
-
-@pytest.fixture(scope="module")
-def a_provider():
-    return setup_a_provider_by_class(OpenStackProvider)
 
 
 def pytest_generate_tests(metafunc):
@@ -23,17 +22,64 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud(a_provider):
+def test_keypair_crud(openstack_provider):
     """ This will test whether it will create new Keypair and then deletes it.
-
-    Prerequisites:
-        * Cloud Provider must be added
 
     Steps:
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=a_provider)
+    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
+    try:
+        keypair.create()
+    except TimedOutError:
+        if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
+            pytest.skip('Timed out creating keypair, BZ1444520')
+        else:
+            pytest.fail('Timed out creating keypair')
+    view = navigate_to(keypair, 'Details')
+    assert view.is_displayed
+
+    keypair.delete(wait=True)
+    with pytest.raises(KeyPairNotFound):
+        navigate_to(keypair, 'Details')
+
+
+@pytest.mark.tier(3)
+def test_keypair_crud_with_key(openstack_provider):
+    """ This will test whether it will create new Keypair and then deletes it.
+
+    Steps:
+        * Provide Keypair name.
+        * Select Cloud Provider.
+        * Also delete it.
+    """
+    key = RSA.generate(1024)
+    public_key = key.publickey().exportKey('OpenSSH')
+    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(),
+                      public_key=public_key,
+                      provider=openstack_provider)
     keypair.create()
-    keypair.delete()
+    view = navigate_to(keypair, 'Details')
+    assert view.is_displayed
+
+    keypair.delete(wait=True)
+    with pytest.raises(KeyPairNotFound):
+        navigate_to(keypair, 'Details')
+
+
+@pytest.mark.tier(3)
+def test_keypair_create_cancel(openstack_provider):
+    """ This will test cancelling on adding a keypair
+
+    Steps:
+        * Provide Keypair name.
+        * Select Cloud Provider.
+        * Also delete it.
+    """
+    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
+    keypair.create(cancel=True)
+
+    with pytest.raises(KeyPairNotFound):
+        navigate_to(keypair, 'Details')

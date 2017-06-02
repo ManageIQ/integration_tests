@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
+import time
+from random import choice
+
 import pytest
+
 from utils import testgen
-from utils.version import current_version
+from utils.blockers import BZ
+from utils.wait import wait_for
+from utils.browser import WithZoom
+
 from cfme.web_ui.topology import Topology
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.topology import Topology as ContainerTopology
 from cfme.fixtures.pytest_selenium import is_displayed_text
-from random import choice
-from utils.wait import wait_for
-from utils.browser import WithZoom
+
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-# CMP-9996
-
-
-@WithZoom(-4)
+@pytest.mark.polarion('CMP-9996')
 def test_topology_display_names():
     """Testing Display Names functionality in Topology view/
 
@@ -35,14 +35,15 @@ def test_topology_display_names():
     for bool_ in (True, False):
         topo_obj.display_names.enable(bool_)
         elements = topo_obj.elements()
-        for elem in elements:
-            assert is_displayed_text(elem.name) == bool_
+        # The extreme zoom is in order to include all the view in the screen and don't miss any item
+        with WithZoom(-10):
+            time.sleep(5)
+            for elem in elements:
+                assert is_displayed_text(elem.name) == bool_
 
-# CMP-9998
 
-
-@WithZoom(-4)
-@pytest.mark.meta(blockers=[1415472])
+@pytest.mark.meta(blockers=[BZ(1415472, forced_streams=['5.6', '5.7'])])
+@pytest.mark.polarion('CMP-9998')
 def test_topology_search():
     """Testing search functionality in Topology view.
 
@@ -53,24 +54,28 @@ def test_topology_search():
         Entity found, should be highlighted and all other entities should be "disabled"
     """
     topo_obj = Topology(ContainerTopology)
+    topo_obj.display_names.enable(True)  # For better debugging on failures
     topo_obj.reload_elements()  # we reload again to prevent stale element exception
     wait_for(lambda: len(topo_obj.elements()) > 0, fail_func=topo_obj.reload_elements,
              delay=3, timeout=60.0)
     elements = topo_obj.elements()
     if not elements:
         raise Exception('No elements to test topology')
-    element_to_search = elements[choice(range(len(elements)))]
-    topo_obj.search_box.text(text=element_to_search.name)
+    element_to_search = choice(elements)
+    search_term = element_to_search.name[:len(element_to_search.name) / 2]
+    topo_obj.search_box.text(text=search_term)
     for el in topo_obj.elements():
-        if element_to_search.name in el.name:
-            assert not el.is_hidden
+        if search_term in el.name:
+            if el.is_hidden:
+                raise Exception('Element should be visible. search: "{}", element found: "{}"'
+                                .format(search_term, el.name))
         else:
-            assert el.is_hidden
+            if not el.is_hidden:
+                raise Exception('Element should be hidden. search: "{}", element found: "{}"'
+                                .format(search_term, el.name))
 
-# CMP-9999
 
-
-@WithZoom(-4)
+@pytest.mark.polarion('CMP-9999')
 def test_topology_toggle_display():
     """Testing display functionality in Topology view.
 
@@ -89,4 +94,12 @@ def test_topology_toggle_display():
             for elem in topo_obj.elements():
                 # legend.name.rstrip('s') because the 's' in the end, which is redundant
                 if elem.type == legend.name.rstrip('s'):
-                    assert elem.is_hidden != bool_
+                    if elem.is_hidden == bool_:
+                        vis_terms = {True: 'Visible', False: 'Hidden'}
+                        raise Exception(
+                            'Element is {} but should be {} since "{}" display is currently {}'
+                            .format(
+                                vis_terms[not bool_], vis_terms[bool_],
+                                legend_name, {True: 'on', False: 'off'}[bool_]
+                            )
+                        )

@@ -55,7 +55,7 @@ class ExpressionEditor(View, Pretty):
         type = BootstrapSelect("chosen_typ")
         field = BootstrapSelect("chosen_field")
         skey = BootstrapSelect("chosen_skey")
-        value = Input(name="#chosen_value")
+        value = Input(name="chosen_value")
         check = BootstrapSelect("chosen_check")
         cfield = BootstrapSelect("chosen_cfield")
         ckey = BootstrapSelect("chosen_ckey")
@@ -91,13 +91,34 @@ class ExpressionEditor(View, Pretty):
         Version.lowest(): "//img[@alt='Discard expression element changes']",
         "5.7.1": Button(title="Discard expression element changes"),
     })
-    REMOVE = "//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']"
-    NOT = ("//span[not(contains(@style, 'none'))]"
-           "//img[@alt='Wrap this expression element with a NOT']")
-    OR = "//span[not(contains(@style, 'none'))]//img[@alt='OR with a new expression element']"
-    AND = "//span[not(contains(@style, 'none'))]//img[@alt='AND with a new expression element']"
-    REDO = "//img[@alt='Redo']"
-    UNDO = "//img[@alt='Undo']"
+    REMOVE = VersionPick({
+        Version.lowest(): ("//span[not(contains(@style, 'none'))]/"
+            "/img[@alt='Remove this expression element']"),
+        "5.8": Button(title="Remove this expression element"),
+    })
+    NOT = VersionPick({
+        Version.lowest(): ("//span[not(contains(@style, 'none'))]"
+           "//img[@alt='Wrap this expression element with a NOT']"),
+        "5.8": Button(title="Wrap this expression element with a NOT"),
+    })
+    OR = VersionPick({
+        Version.lowest(): ("//span[not(contains(@style, 'none'))]/"
+            "/img[@alt='OR with a new expression element']"),
+        "5.8": Button(title="OR with a new expression element"),
+    })
+    AND = VersionPick({
+        Version.lowest(): ("//span[not(contains(@style, 'none'))]/"
+            "/img[@alt='AND with a new expression element']"),
+        "5.8": Button(title="AND with a new expression element"),
+    })
+    REDO = VersionPick({
+        Version.lowest(): "//img[@alt='Redo']",
+        "5.8": Button(title="Redo the last change"),
+    })
+    UNDO = VersionPick({
+        Version.lowest(): "//img[@alt='Undo']",
+        "5.8": Button(title="Undo the last change"),
+    })
     SELECT_SPECIFIC = "//img[@alt='Click to change to a specific Date/Time format']"
     SELECT_RELATIVE = "//img[@alt='Click to change to a relative Date/Time format']"
 
@@ -233,7 +254,6 @@ class ExpressionEditor(View, Pretty):
         Args:
             tag: Name of the field to compare.
             value: Value to check against.
-        Returns: See :py:func:`cfme.web_ui.fill`.
         """
         view = self.tag_form_view
         view.fill(dict(
@@ -285,7 +305,7 @@ class ExpressionEditor(View, Pretty):
         """
         field_norm = field.strip().lower()
         if ("date updated" in field_norm or "date created" in field_norm or
-                "boot time" in field_norm):
+                "boot time" in field_norm or "timestamp" in field_norm):
             no_date = False
         else:
             no_date = True

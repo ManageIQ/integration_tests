@@ -77,9 +77,9 @@ def generate_statistics(the_list, decimals=2):
 
 def get_worker_pid(worker_type):
     """Obtains the pid of the first worker with the worker_type specified"""
-    ssh_client = SSHClient()
-    exit_status, out = ssh_client.run_command('service evmserverd status 2> /dev/null | grep -m 1 '
-        '\'{}\' | awk \'{{print $7}}\''.format(worker_type))
+    with SSHClient() as ssh_client:
+        exit_status, out = ssh_client.run_command('systemctl status evmserverd 2> /dev/null | grep '
+            '-m 1 \'{}\' | awk \'{{print $7}}\''.format(worker_type))
     worker_pid = str(out).strip()
     if out:
         logger.info('Obtained {} PID: {}'.format(worker_type, worker_pid))
@@ -95,14 +95,14 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
     ui_worker_pid = '#{}'.format(get_worker_pid(validate_against_worker))
 
     logger.info('Setting log level_rails on appliance to {}'.format(level))
-    yaml = store.current_appliance.get_yaml_config('vmdb')
+    yaml = store.current_appliance.get_yaml_config()
     if not str(yaml['log']['level_rails']).lower() == level.lower():
         logger.info('Opening /var/www/miq/vmdb/log/evm.log for tail')
         evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
         evm_tail.set_initial_file_end()
 
         yaml['log']['level_rails'] = level
-        store.current_appliance.set_yaml_config("vmdb", yaml)
+        store.current_appliance.set_yaml_config(yaml)
 
         attempts = 0
         detected = False
@@ -121,5 +121,6 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
             # Note the error in the logger but continue as the appliance could be slow at logging
             # that the log level changed
             logger.error('Could not detect log level_rails change.')
+        evm_tail.close()
     else:
         logger.info('Log level_rails already set to {}'.format(level))

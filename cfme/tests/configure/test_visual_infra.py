@@ -8,7 +8,6 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb
-from utils.providers import setup_a_provider_by_class
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.provider import InfraProvider
 from utils.appliance.implementations.ui import navigate_to
@@ -16,7 +15,8 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
 
 pytestmark = [pytest.mark.tier(3),
-              test_requirements.settings]
+              test_requirements.settings,
+              pytest.mark.usefixtures("infra_provider")]
 
 # todo: infrastructure hosts, pools, stores, cluster are removed due to changing
 # navigation to navmazing. all items have to be put back once navigation change is fully done
@@ -45,11 +45,6 @@ landing_pages = [
     'Optimize / Planning',
     'Optimize / Bottlenecks',
 ]
-
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    return setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.yield_fixture(scope="module")
@@ -130,7 +125,7 @@ def set_template_quad():
 
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
+def test_infra_grid_page_per_item(request, page, set_grid):
     """ Tests grid items per page
 
     Metadata:
@@ -146,7 +141,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
 
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
+def test_infra_tile_page_per_item(request, page, set_tile):
     """ Tests tile items per page
 
     Metadata:
@@ -162,7 +157,7 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
 
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_list_page_per_item(request, setup_a_provider, page, set_list):
+def test_infra_list_page_per_item(request, page, set_list):
     """ Tests list items per page
 
     Metadata:
@@ -177,7 +172,7 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
-def test_report_page_per_item(setup_a_provider, set_report):
+def test_infra_report_page_per_item(set_report):
     """ Tests report items per page
 
     Metadata:
@@ -194,7 +189,7 @@ def test_report_page_per_item(setup_a_provider, set_report):
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_start_page(request, setup_a_provider, start_page):
+def test_infra_start_page(request, start_page):
     """ Tests start page
 
     Metadata:
@@ -214,27 +209,27 @@ def test_start_page(request, setup_a_provider, start_page):
     # assert nav.is_page_active(*steps) or nav.is_page_active(*longer_steps), "Landing Page Failed"
 
 
-def test_infraprovider_noquads(request, setup_a_provider, set_infra_provider_quad):
-    navigate_to(setup_a_provider, 'All')
+def test_infraprovider_noquads(request, set_infra_provider_quad):
+    navigate_to(InfraProvider, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 
-def test_host_noquads(request, setup_a_provider, set_host_quad):
+def test_host_noquads(request, set_host_quad):
     navigate_to(Host, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 
-def test_datastore_noquads(request, setup_a_provider, set_datastore_quad):
+def test_datastore_noquads(request, set_datastore_quad):
     navigate_to(Datastore, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 
-def test_vm_noquads(request, setup_a_provider, set_vm_quad):
+def test_vm_noquads(request, set_vm_quad):
     navigate_to(vms.Vm, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
-def test_template_noquads(request, setup_a_provider, set_template_quad):
+def test_template_noquads(request, set_template_quad):
     navigate_to(vms.Template, 'TemplatesOnly')
     assert visual.check_image_exists, "Image View Failed!"

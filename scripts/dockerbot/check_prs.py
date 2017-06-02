@@ -43,8 +43,9 @@ def send_message_to_bot(msg):
 #    message_type = docker_conf['gh_message_type']
     params = pika.URLParameters(url)
     params.socket_timeout = 5
-    connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
+    connection = None
     try:
+        connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
         channel = connection.channel()
         message = {"channel": irc_channel, "body": msg}
         channel.basic_publish(exchange='', routing_key=queue,
@@ -53,7 +54,8 @@ def send_message_to_bot(msg):
         output = traceback.format_exc()
         logger.warn("Exception while sending a message to the bot: {}".format(output))
     finally:
-        connection.close()
+        if connection:
+            connection.close()
 
 
 def perform_request(url):
@@ -238,7 +240,7 @@ def vm_reaper():
                 tapi.task(task['tid']).patch({'cleanup': True})
 
 
-def set_status(commit, status, context):
+def set_status(commit, status, context, runid):
     """ Puts a status for a given commit to GitHub
 
     This function takes a commit hash, a status, and a description and posts them to GitHub.
@@ -251,7 +253,7 @@ def set_status(commit, status, context):
     """
     data = {
         "state": status,
-        "description": status,
+        "description": "{} #{}".format(status, runid),
         "context": "ci/{}".format(context)
     }
     data_json = json.dumps(data)
@@ -305,14 +307,14 @@ def check_status(pr):
                     else:
                         logger.info('Setting task {} for pr {} to {}'
                                     .format(task['stream'], pr['number'], states[task['result']]))
-                        set_status(commit, states[task['result']], task['stream'])
+                        set_status(commit, states[task['result']], task['stream'], run_id)
                         task_updated_state = states[task['result']]
                         task_stream = task['stream']
                         break
             else:
                 logger.info('Setting task {} for pr {} to {}'
                             .format(task['stream'], pr['number'], states[task['result']]))
-                set_status(commit, states[task['result']], task['stream'])
+                set_status(commit, states[task['result']], task['stream'], run_id)
     except HttpClientError:
         pass
 

@@ -2,12 +2,12 @@ import pytest
 from py.error import ENOENT
 
 import utils.browser
-from cfme.fixtures.pytest_selenium import take_screenshot
-from fixtures.artifactor_plugin import art_client, get_test_idents
+from cfme.fixtures.pytest_selenium import ensure_browser_open, take_screenshot
+from fixtures.artifactor_plugin import fire_art_test_hook
 from utils.datafile import template_env
 from utils.path import log_path
-from utils import safe_string
-
+from utils import browser as browser_module, safe_string
+from utils.log import logger
 browser_fixtures = {'browser'}
 
 failed_test_tracking = {
@@ -29,37 +29,35 @@ def pytest_runtest_setup(item):
 
 
 def pytest_exception_interact(node, call, report):
-    from fixtures.artifactor_plugin import SLAVEID
+    from fixtures.pytest_store import store
     from httplib import BadStatusLine
     from socket import error
-    from utils.browser import WharfFactory
-
+    from utils.pytest_shortcuts import report_safe_longrepr
     import urllib2
 
-    name, location = get_test_idents(node)
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
 
     if isinstance(call.excinfo.value, (urllib2.URLError, BadStatusLine, error)):
+        logger.error("internal Exception:\n %s", str(call.excinfo))
         from utils.browser import manager
-        if isinstance(manager.factory, WharfFactory):
-            manager.factory.wharf.checkin()
-            manager.factory.wharf.checkout()
-        manager.start()
-        manager.ensure_open()
+        manager.start()  # start will quit first and cycle wharf as well
 
     short_tb = '{}\n{}'.format(
         call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
-    art_client.fire_hook('filedump', test_location=location, test_name=name,
-        description="Traceback", contents=str(report.longrepr), file_type="traceback",
+    longrepr = report_safe_longrepr(report)
+    fire_art_test_hook(
+        node, 'filedump',
+        description="Traceback", contents=longrepr, file_type="traceback",
         display_type="danger", display_glyph="align-justify", group_id="pytest-exception",
-        slaveid=SLAVEID)
-    art_client.fire_hook('filedump', test_location=location, test_name=name,
+        slaveid=store.slaveid)
+    fire_art_test_hook(
+        node, 'filedump',
         description="Short traceback", contents=short_tb, file_type="short_tb",
         display_type="danger", display_glyph="align-justify", group_id="pytest-exception",
-        slaveid=SLAVEID)
+        slaveid=store.slaveid)
 
     # base64 encoded to go into a data uri, same for screenshots
-    full_tb = str(report.longrepr).encode('base64').strip()
+    full_tb = longrepr.encode('base64').strip()
     # errors are when exceptions are thrown outside of the test call phase
     report.when = getattr(report, 'when', 'setup')
     is_error = report.when != 'call'
@@ -83,15 +81,17 @@ def pytest_exception_interact(node, call, report):
     template_data['screenshot'] = screenshot.png
     template_data['screenshot_error'] = screenshot.error
     if screenshot.png:
-        art_client.fire_hook('filedump', test_location=location, test_name=name,
+        fire_art_test_hook(
+            node, 'filedump',
             description="Exception screenshot", file_type="screenshot", mode="wb",
             contents_base64=True, contents=template_data['screenshot'], display_glyph="camera",
-            group_id="pytest-exception", slaveid=SLAVEID)
+            group_id="pytest-exception", slaveid=store.slaveid)
     if screenshot.error:
-        art_client.fire_hook('filedump', test_location=location, test_name=name,
+        fire_art_test_hook(
+            node, 'filedump',
             description="Screenshot error", mode="w", contents_base64=False,
             contents=template_data['screenshot_error'], display_type="danger",
-            group_id="pytest-exception", slaveid=SLAVEID)
+            group_id="pytest-exception", slaveid=store.slaveid)
 
     failed_test_tracking['tests'].append(template_data)
     if is_error:
@@ -118,12 +118,12 @@ def pytest_sessionfinish(session, exitstatus):
 
 @pytest.fixture(scope='session')
 def browser():
-    return utils.browser.browser
+    return browser_module.browser
 
 
 @pytest.yield_fixture(scope="function")
 def nuke_browser_after_test():
     """Some more disruptive tests have to take this measure."""
     yield
-    pytest.sel.quit()
-    pytest.sel.ensure_browser_open()
+    browser_module.quit()
+    ensure_browser_open()

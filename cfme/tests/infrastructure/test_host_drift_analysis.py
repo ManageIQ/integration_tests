@@ -3,7 +3,6 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.configure import tasks
 from cfme.configure.tasks import Tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host as host_obj
@@ -67,13 +66,16 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
         def test_host_remove_creds():
             test_host.update(
                 updates={
-                    'credentials': host.Host.Credential(
+                    'credentials': host_obj.Host.Credential(
                         principal="",
                         secret="",
                         verify_secret=""
                     )
                 }
             )
+    # clear table
+    view = navigate_to(Tasks, 'AllOtherTasks')
+    view.delete.item_select('Delete All', handle_alert=True)
 
     # initiate 1st analysis
     test_host.run_smartstate_analysis()
@@ -82,23 +84,20 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
     def is_host_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
-        navigate_to(Tasks, 'AllOther')
-        host_analysis_finished = tasks.tasks_table.find_row_by_cells({
-            'task_name': "SmartState Analysis for '{}'".format(test_host.name),
-            'state': 'Finished'
-        })
-        if host_analysis_finished:
-            # Delete the task
-            tasks.tasks_table.select_row_by_cells({
-                'task_name': "SmartState Analysis for '{}'".format(test_host.name),
-                'state': 'Finished'
-            })
-            tb.select('Delete Tasks', 'Delete', invokes_alert=True)
-            sel.handle_alert()
-        return host_analysis_finished is not None
+        finished = False
+        view = navigate_to(Tasks, 'AllOtherTasks')
+        host_analysis_row = view.tabs.allothertasks.table.row(
+            task_name="SmartState Analysis for '{}'".format(test_host.name))
+        if host_analysis_row.state.text == 'Finished':
+            finished = True
+            # select the row and delete the task
+            host_analysis_row[0].check()
+            view.delete.item_select('Delete', handle_alert=True)
+        else:
+            view.reload.click()
+        return finished
 
-    wait_for(is_host_analysis_finished,
-             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    wait_for(is_host_analysis_finished, delay=5, timeout="8m")
 
     # wait for for drift history num+1
     wait_for(
@@ -118,8 +117,7 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
     test_host.run_smartstate_analysis()
 
     # Wait for the task to finish
-    wait_for(is_host_analysis_finished,
-             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    wait_for(is_host_analysis_finished, delay=5, timeout="8m")
 
     # wait for for drift history num+2
     wait_for(

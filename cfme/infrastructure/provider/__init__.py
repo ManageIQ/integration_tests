@@ -1,129 +1,56 @@
 """ A model of an Infrastructure Provider in CFME
-
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Providers pages.
-:var discover_form: A :py:class:`cfme.web_ui.Form` object describing the discover form.
-:var properties_form: A :py:class:`cfme.web_ui.Form` object describing the main add form.
-:var default_form: A :py:class:`cfme.web_ui.Form` object describing the default credentials form.
-:var candu_form: A :py:class:`cfme.web_ui.Form` object describing the C&U credentials form.
 """
 from functools import partial
-
-from navmazing import NavigateToSibling, NavigateToAttribute
+from collections import Iterable
+from widgetastic.utils import Fillable
 
 from cached_property import cached_property
-from cfme.common.provider import CloudInfraProvider, import_all_modules_of
+from navmazing import NavigateToSibling, NavigateToObject
+
+from cfme.base.ui import Server
+from cfme.common.provider import CloudInfraProvider, DefaultEndpoint
+from cfme.common.provider_views import (ProviderAddView,
+                                        ProviderEditView,
+                                        ProviderDetailsView,
+                                        ProviderTimelinesView,
+                                        ProvidersDiscoverView,
+                                        ProvidersManagePoliciesView,
+                                        ProvidersEditTagsView,
+                                        ProvidersView)
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
-from cfme.web_ui import (
-    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location
-)
-from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, deferred_verpick, version
+from cfme.infrastructure.host import Host
+from cfme.web_ui import Quadicon, match_location
+from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
 from utils.log import logger
+from utils.net import resolve_hostname
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
 
-details_page = Region(infoblock_type='detail')
-
+# todo: get_rid of match_page and am_i_here
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
 
-# Forms
-discover_form = Form(
-    fields=[
-        ('rhevm_chk', Input("discover_type_rhevm")),
-        ('vmware_chk', Input("discover_type_virtualcenter")),
-        ('scvmm_chk', Input("discover_type_scvmm")),
-        ('from_0', Input("from_first")),
-        ('from_1', Input("from_second")),
-        ('from_2', Input("from_third")),
-        ('from_3', Input("from_fourth")),
-        ('to_3', Input("to_fourth")),
-        ('start_button', FormButton("Start the Host Discovery"))
-    ])
 
-properties_form = Form(
-    fields=[
-        ('type_select', {
-            version.LOWEST: Select('select#server_emstype'),
-            '5.5': AngularSelect("server_emstype")
-        }),
-        ('name_text', Input("name")),
-        ('hostname_text', {version.LOWEST: Input("hostname")}),
-        ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('api_port', Input("port")),
-        ('sec_protocol', {version.LOWEST: Select("select#security_protocol"),
-            '5.5': AngularSelect("security_protocol", exact=True)}),
-        ('sec_realm', Input("realm"))
-    ])
-
-
-properties_form_56 = TabStripForm(
-    fields=[
-        ('type_select', AngularSelect("emstype")),
-        ('name_text', Input("name")),
-        ("api_version", AngularSelect("api_version")),
-    ],
-    tab_fields={
-        "Default": [
-            ('hostname_text', Input("default_hostname")),
-            ('api_port', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
-        ],
-        "Events": [
-            ('event_selection', Radio('event_stream_selection')),
-            ('amqp_hostname_text', Input("amqp_hostname")),
-            ('amqp_api_port', Input("amqp_api_port")),
-            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
-        ],
-        "C & U Database": [
-            ('candu_hostname_text', Input("metrics_hostname")),
-            ('acandu_api_port', Input("metrics_api_port")),
-        ]
-    })
-
-
-prop_region = Region(
-    locators={
-        'properties_form': {
-            version.LOWEST: properties_form,
-            '5.6': properties_form_56,
-        }
-    }
-)
-
-manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
-
-cfg_btn = partial(tb.select, 'Configuration')
-pol_btn = partial(tb.select, 'Policy')
-mon_btn = partial(tb.select, 'Monitoring')
-
-
-@CloudInfraProvider.add_base_type
-class InfraProvider(Pretty, CloudInfraProvider):
+class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
     Args:
         name: Name of the provider.
         details: a details record (see VMwareDetails, RHEVMDetails inner class).
-        credentials (:py:class:`Credential`): see Credential inner class.
         key: The CFME key of the provider in the yaml.
-        candu: C&U credentials if this is a RHEVMDetails class.
-
+        endpoints: one or several provider endpoints like DefaultEndpoint. it should be either dict
+        in format dict{endpoint.name, endpoint, endpoint_n.name, endpoint_n}, list of endpoints or
+        mere one endpoint
     Usage:
-
+        credentials = Credential(principal='bad', secret='reallybad')
+        endpoint = DefaultEndpoint(hostname='some_host', api_port=65536, credentials=credentials)
         myprov = VMwareProvider(name='foo',
-                             region='us-west-1',
-                             credentials=Provider.Credential(principal='admin', secret='foobar'))
+                             region='us-west-1'
+                             endpoints=endpoint)
         myprov.create()
 
     """
@@ -136,31 +63,71 @@ class InfraProvider(Pretty, CloudInfraProvider):
     page_name = "infrastructure"
     templates_destination_name = "Templates"
     quad_name = "infra_prov"
-    _properties_region = prop_region  # This will get resolved in common to a real form
-    add_provider_button = deferred_verpick({
-        version.LOWEST: form_buttons.FormButton("Add this Infrastructure Provider"),
-        '5.6': form_buttons.add
-    })
-    save_button = deferred_verpick({
-        version.LOWEST: form_buttons.save,
-        '5.6': form_buttons.angular_save
-    })
+    db_types = ["InfraManager"]
 
     def __init__(
-            self, name=None, credentials=None, key=None, zone=None, provider_data=None,
+            self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
-        if not credentials:
-            credentials = {}
         self.name = name
-        self.credentials = credentials
+        self.endpoints = self._prepare_endpoints(endpoints)
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
         self.template_name = "Templates"
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name')}
+    @property
+    def default_endpoint(self):
+        try:
+            return self.endpoints['default']
+        except KeyError:
+            return None
+
+    @staticmethod
+    def _prepare_endpoints(endpoints):
+        if not endpoints:
+            return {}
+        elif isinstance(endpoints, dict):
+            return endpoints
+        elif isinstance(endpoints, Iterable):
+            return dict([(e.name, e) for e in endpoints])
+        elif isinstance(endpoints, DefaultEndpoint):
+            return {endpoints.name: endpoints}
+        else:
+            raise ValueError("Endpoints should be either dict or endpoint class")
+
+    @property
+    def hostname(self):
+        if self.default_endpoint:
+            return self.default_endpoint.hostname
+        else:
+            return None
+
+    @hostname.setter
+    def hostname(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.hostname = value
+        else:
+            logger.warn("can't set hostname because default endpoint is absent")
+
+    @property
+    def ip_address(self):
+        if hasattr(self.default_endpoint, 'ipaddress'):
+            return self.default_endpoint.ipaddress
+        else:
+            if self.hostname:
+                return resolve_hostname(self.hostname)
+            else:
+                return None
+
+    @ip_address.setter
+    def ip_address(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.ipaddress = value
+        else:
+            logger.warn("can't set ipaddress because default endpoint is absent")
 
     @cached_property
     def vm_name(self):
@@ -170,19 +137,14 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='db')
     def num_datastore(self):
-        storage_table_name = version.pick({version.LOWEST: 'hosts_storages',
-                                           '5.5.0.8': 'host_storages'})
         """ Returns the providers number of templates, as shown on the Details page."""
-
-        results = list(cfmedb().engine.execute(
+        results = list(self.appliance.db.engine.execute(
             'SELECT DISTINCT storages.name, hosts.ems_id '
-            'FROM ext_management_systems, hosts, storages, {} '
-            'WHERE hosts.id={}.host_id AND '
-            'storages.id={}.storage_id AND '
-            'hosts.ems_id=ext_management_systems.id AND '
-            'ext_management_systems.name=\'{}\''.format(storage_table_name,
-                                                        storage_table_name, storage_table_name,
-                                                        self.name)))
+            'FROM ext_management_systems ems, hosts, storages st, host_storages hst'
+            'WHERE hosts.id=hst.host_id AND '
+            'st.id=hst.storage_id AND '
+            'hosts.ems_id=ems.id AND '
+            'ems.name=\'{}\''.format(self.name)))
         return len(results)
 
     @num_datastore.variant('ui')
@@ -200,28 +162,27 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @num_host.variant('db')
     def num_host_db(self):
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        hosts = cfmedb()["hosts"]
-        hostlist = list(cfmedb().session.query(hosts.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        hosts = self.appliance.db["hosts"]
+        hostlist = list(self.appliance.db.session.query(hosts.name)
                         .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
                         .filter(ext_management_systems.name == self.name))
         return len(hostlist)
 
     @num_host.variant('ui')
     def num_host_ui(self):
-        if version.current_version() < "5.6":
-            host_src = "host.png"
-            node_src = "node.png"
-        else:
-            host_src = "host-"
-            node_src = "node-"
-
         try:
-            num = int(self.get_detail("Relationships", host_src, use_icon=True))
+            if self.appliance.version > '5.8':
+                num = self.get_detail("Relationships", 'Hosts')
+            else:
+                num = self.get_detail("Relationships", "host-", use_icon=True)
         except sel.NoSuchElementException:
             logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
-            num = int(self.get_detail("Relationships", node_src, use_icon=True))
-        return num
+            if self.appliance.version > '5.8':
+                num = self.get_detail("Relationships", 'Nodes')
+            else:
+                num = self.get_detail("Relationships", "node-", use_icon=True)
+        return int(num)
 
     @variable(alias='rest')
     def num_cluster(self):
@@ -235,9 +196,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
     @num_cluster.variant('db')
     def num_cluster_db(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = cfmedb()["ext_management_systems"]
-        clusters = cfmedb()["ems_clusters"]
-        clulist = list(cfmedb().session.query(clusters.name)
+        ext_management_systems = self.appliance.db["ext_management_systems"]
+        clusters = self.appliance.db["ems_clusters"]
+        clulist = list(self.appliance.db.session.query(clusters.name)
                        .join(ext_management_systems,
                              clusters.ems_id == ext_management_systems.id)
                        .filter(ext_management_systems.name == self.name))
@@ -245,12 +206,13 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @num_cluster.variant('ui')
     def num_cluster_ui(self):
-        if version.current_version() < "5.6":
-            return int(self.get_detail("Relationships", "cluster.png", use_icon=True))
+        if self.appliance.version > '5.8':
+            num = self.get_detail("Relationships", 'Clusters')
         else:
-            return int(self.get_detail("Relationships", "cluster-", use_icon=True))
+            num = self.get_detail("Relationships", "cluster-", use_icon=True)
+        return int(num)
 
-    def discover(self):
+    def discover(self):  # todo: move this to provider collections
         """
         Begins provider discovery from a provider instance
 
@@ -282,9 +244,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
         for host in self.get_yaml_data().get("hosts", []):
             creds = conf.credentials.get(host["credentials"], {})
             cred = Host.Credential(
-                principal=creds["username"],
-                secret=creds["password"],
-                verify_secret=creds["password"],
+                principal=creds["principal"],
+                secret=creds["secret"],
+                verify_secret=creds["secret"],
             )
             result.append(Host(name=host["name"],
                                credentials=cred,
@@ -294,79 +256,135 @@ class InfraProvider(Pretty, CloudInfraProvider):
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
         web_clusters = []
-        navigate_to(self, 'Details')
-        sel.click(InfoBlock.element('Relationships', 'Clusters'))
+        view = navigate_to(self, 'Details')
+        # todo: create nav location + view later
+        view.contents.relationships.click_at('Clusters')
         icons = Quadicon.all(qtype='cluster')
         for icon in icons:
             web_clusters.append(Cluster(icon.name, self))
         return web_clusters
 
+    def as_fill_value(self):
+        return self.name
 
+    @property
+    def view_value_mapping(self):
+        return {'name': self.name}
+
+
+@navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Infrastructure Providers')
+    VIEW = ProvidersView
+    prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')
 
     def resetter(self):
         # Reset view and selection
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        tb = self.view.toolbar
+        paginator = self.view.paginator
+        if 'Grid View' not in tb.view_selector.selected:
+            tb.view_selector.select('Grid View')
+        if paginator.exists:
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
+    VIEW = ProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Infrastructure Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New '
+                                                                 'Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
 class Discover(CFMENavigateStep):
+    VIEW = ProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Discover Infrastructure Providers')
+        self.prerequisite_view.toolbar.configuration.item_select('Discover '
+                                                                 'Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = ProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
+
+    def resetter(self):
+        # Reset view and selection
+        if version.current_version() >= '5.7':  # no view selector in 5.6
+            view_selector = self.view.toolbar.view_selector
+            if view_selector.selected != 'Summary View':
+                view_selector.select('Summary View')
 
 
 @navigator.register(InfraProvider, 'ManagePolicies')
 class ManagePolicies(CFMENavigateStep):
+    VIEW = ProvidersManagePoliciesView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        pol_btn('Manage Policies')
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
 class ManagePoliciesFromDetails(CFMENavigateStep):
+    VIEW = ProvidersManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Manage Policies')
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
+
+
+@navigator.register(InfraProvider, 'EditTags')
+class EditTags(CFMENavigateStep):
+    VIEW = ProvidersEditTagsView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+@navigator.register(InfraProvider, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = ProvidersEditTagsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = ProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg_btn('Edit Selected Infrastructure Providers')
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.configuration.item_select('Edit Selected '
+                                                                 'Infrastructure Providers')
+
+
+@navigator.register(InfraProvider, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = ProviderTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon = self.prerequisite_view.toolbar.monitoring
+        mon.item_select('Timelines')
 
 
 @navigator.register(InfraProvider, 'Instances')
@@ -377,7 +395,8 @@ class Instances(CFMENavigateStep):
         return match_page(summary='{} (All VMs)'.format(self.obj.name))
 
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'VMs and Instances'))
+        self.prerequisite_view.contents.relationships.click_at('VMs and Instances')
+        # todo: add vms view when it is done
 
 
 @navigator.register(InfraProvider, 'Templates')
@@ -388,20 +407,14 @@ class Templates(CFMENavigateStep):
         return match_page(summary='{} (All Templates)'.format(self.obj.name))
 
     def step(self, *args, **kwargs):
-        sel.click(InfoBlock.element('Relationships', 'Templates'))
+        self.prerequisite_view.contents.relationships.click_at('Templates')
+        # todo: add templates view when it is done
 
 
-def get_all_providers(do_not_navigate=False):
+def get_all_providers():
     """Returns list of all providers"""
-    if not do_not_navigate:
-        navigate_to(InfraProvider, 'All')
-    providers = set([])
-    link_marker = "ems_infra"
-    for page in paginator.pages():
-        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'{}/show')]".format(link_marker)):
-            providers.add(sel.get_attribute(title, "title"))
-    return providers
+    view = navigate_to(InfraProvider, 'All')
+    return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
 def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None, end_ip=None):
@@ -417,33 +430,32 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
         start_ip: String start of the IP range for discovery
         end_ip: String end of the IP range for discovery
     """
-    navigate_to(InfraProvider, 'Discover')
     form_data = {}
     if rhevm:
-        form_data.update({'rhevm_chk': True})
+        form_data.update({'rhevm': True})
     if vmware:
-        form_data.update({'vmware_chk': True})
+        form_data.update({'vmware': True})
     if scvmm:
-        form_data.update({'scvmm_chk': True})
+        form_data.update({'scvmm': True})
 
     if start_ip:
-        for idx, octet in enumerate(start_ip.split('.')):
-            key = 'from_%i' % idx
+        for idx, octet in enumerate(start_ip.split('.'), start=1):
+            key = 'from_ip{idx}'.format(idx=idx)
             form_data.update({key: octet})
     if end_ip:
         end_octet = end_ip.split('.')[-1]
-        form_data.update({'to_3': end_octet})
+        form_data.update({'to_ip4': end_octet})
 
-    fill(discover_form, form_data,
-         action=form_buttons.cancel if cancel else discover_form.start_button,
-         action_always=True)
+    view = navigate_to(InfraProvider, 'Discover')
+    view.fill(form_data)
+    if cancel:
+        view.cancel.click()
+    else:
+        view.start.click()
 
 
 def wait_for_a_provider():
-    navigate_to(InfraProvider, 'All')
+    view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
-             num_sec=1000, fail_func=sel.refresh)
-
-
-import_all_modules_of('cfme.infrastructure.provider')
+    wait_for(lambda: int(view.paginator.items_amount), fail_condition=0,
+             message="Wait for any provider to appear", num_sec=1000, fail_func=sel.refresh)

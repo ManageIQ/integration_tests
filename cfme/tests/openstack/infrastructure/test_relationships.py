@@ -5,8 +5,11 @@ results of the relationships
 """
 import pytest
 
+import cfme.fixtures.pytest_selenium as sel
+from selenium.common.exceptions import NoSuchElementException
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils import testgen, version
+from cfme.web_ui import InfoBlock, Table
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -17,30 +20,33 @@ pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_assigned_roles(provider):
     navigate_to(provider, 'Details')
-    assert int(provider.get_detail('Relationships', 'Deployment Roles')) > 0
+    try:
+        res = provider.get_detail('Relationships', 'Deployment Roles')
+    except NoSuchElementException:
+        res = provider.get_detail('Relationships', 'Clusters / Deployment Roles')
+    assert int(res) > 0
 
 
 def test_nodes(provider):
     navigate_to(provider, 'Details')
-    """
-    todo get the list of VM's from external resource and compare
-    it with result - currently not 0
-    """
+    nodes = len(provider.mgmt.list_node())
 
-    assert int(provider.get_detail('Relationships', 'Nodes')) > 0
+    assert int(provider.get_detail('Relationships', 'Nodes')) == nodes
 
 
-def test_templates(provider):
+def test_templates(provider, soft_assert):
     navigate_to(provider, 'Details')
-    """
-    todo get the list of images/templates from external resource and compare
-    it with result - currently  bigger than 0
-    """
+    images = [i.name for i in provider.mgmt.images]
 
-    assert int(provider.get_detail('Relationships', 'Templates')) > 0
+    assert int(provider.get_detail('Relationships', 'Templates')) == len(images)
+    sel.click(InfoBlock.element('Relationships', 'Templates'))
+    table = Table("//table[contains(@class, 'table')]")
+
+    for image in images:
+        cell = table.find_cell('Name', image)
+        soft_assert(cell, 'Missing template: {}'.format(image))
 
 
 def test_stacks(provider):

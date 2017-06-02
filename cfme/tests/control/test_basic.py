@@ -6,6 +6,7 @@ Can be also used as a unit-test for page model coverage.
 
 TODO: * Multiple expression types entering. (extend the update tests)
 """
+from collections import namedtuple
 import fauxfactory
 import pytest
 import random
@@ -15,6 +16,7 @@ from cfme.control.explorer import (actions, alert_profiles, alerts, conditions, 
 
 from utils.update import update
 from utils.version import current_version
+from utils.blockers import BZ
 from cfme import test_requirements
 
 pytestmark = [
@@ -22,29 +24,29 @@ pytestmark = [
     test_requirements.control
 ]
 
-VM_EXPRESSIONS_TO_TEST = [
+EXPRESSIONS_TO_TEST = [
     (
-        "fill_field(VM and Instance : Boot Time, BEFORE, Today)",
-        'VM and Instance : Boot Time BEFORE "Today"'
+        "Field",
+        "fill_field({} : Last Compliance Timestamp, BEFORE, 03/04/2014)",
+        '{} : Last Compliance Timestamp BEFORE "03/04/2014 00:00"'
     ),
     (
-        "fill_field(VM and Instance : Boot Time, BEFORE, 03/04/2014)",
-        'VM and Instance : Boot Time BEFORE "03/04/2014 00:00"'
+        "Count",
+        "fill_count({}.Compliance History, >, 0)",
+        'COUNT OF {}.Compliance History > 0'
     ),
     (
-        "fill_field(VM and Instance : Custom 6, RUBY, puts 'hello')",
-        'VM and Instance : Custom 6 RUBY <RUBY Expression>'
+        "Tag",
+        "fill_tag({}.User.My Company Tags : Location, Chicago)",
+        "{}.User.My Company Tags : Location CONTAINS 'Chicago'"
     ),
     (
-        "fill_field(VM and Instance : Format, IS NOT NULL)",
-        'VM and Instance : Format IS NOT NULL'
-    ),
-    (
-        "fill_count(VM and Instance.Files, =, 150)",
-        'COUNT OF VM and Instance.Files = 150'
-    ),
-    # ("fill_tag(VM and Instance.My Company Tags : Owner, Production Linux Team)",)
-    # Needs working input/select mutability
+        "Find",
+        "fill_find({}.Compliance History : Event Type, INCLUDES, some_string, Check Any,"
+        "Resource Type, =, another_string)",
+        'FIND {}.Compliance History : Event Type INCLUDES "some_string" CHECK ANY Resource Type'
+        ' = "another_string"'
+    )
 ]
 
 COMPLIANCE_POLICIES = [
@@ -73,10 +75,15 @@ CONDITIONS = [
     conditions.ReplicatorCondition,
     conditions.PodCondition,
     conditions.ContainerNodeCondition,
-    conditions.ContainerImageCondition
+    conditions.ContainerImageCondition,
+    conditions.ProviderCondition
 ]
 
-POLICIES_AND_CONDITIONS = zip(CONTROL_POLICIES, CONDITIONS)
+PolicyAndCondition = namedtuple('PolicyAndCondition', ['name', 'policy', 'condition'])
+POLICIES_AND_CONDITIONS = [
+    PolicyAndCondition(name=obj[0].__name__, policy=obj[0], condition=obj[1])
+    for obj in zip(CONTROL_POLICIES, CONDITIONS)
+]
 
 EVENTS = [
     "Datastore Analysis Complete",
@@ -258,12 +265,15 @@ def policy(policy_class):
     policy.delete()
 
 
-@pytest.yield_fixture(scope="module")
-def vm_condition_for_expressions():
-    cond = conditions.VMCondition(
+@pytest.yield_fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__,
+    scope="module")
+def condition_for_expressions(request):
+    condition_class = request.param
+    cond = condition_class(
         fauxfactory.gen_alphanumeric(),
-        expression="fill_field(VM and Instance : CPU Limit, =, 20)",
-        scope="fill_count(VM and Instance.Files, >, 150)"
+        expression="fill_field({} : Name, IS NOT EMPTY)".format(condition_class.FIELD_VALUE),
+        scope="fill_field({} : Name, INCLUDES, {})".format(condition_class.FIELD_VALUE,
+            fauxfactory.gen_alpha())
     )
     cond.create()
     yield cond
@@ -312,9 +322,9 @@ def condition(request):
     return cond
 
 
-@pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item[0].__name__)
+@pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
 def policy_and_condition(request):
-    condition_class = request.param[1]
+    condition_class = request.param.condition
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
@@ -323,7 +333,7 @@ def policy_and_condition(request):
         fauxfactory.gen_alphanumeric(),
         expression=expression
     )
-    policy = request.param[0](fauxfactory.gen_alphanumeric())
+    policy = request.param.policy(fauxfactory.gen_alphanumeric())
     policy.create()
     condition.create()
     yield policy, condition
@@ -332,6 +342,10 @@ def policy_and_condition(request):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.uncollectif(
+    lambda condition: condition is conditions.ProviderCondition and
+    current_version() < "5.7.1"
+)
 def test_condition_crud(condition):
     # CR
     condition.create()
@@ -410,15 +424,18 @@ def test_policy_profile_crud(random_vm_control_policy, random_host_control_polic
 
 
 @pytest.mark.tier(3)
-# RUBY expression type is no longer supported.
-@pytest.mark.uncollectif(lambda expression: "RUBY" in expression and current_version() >= "5.5")
-@pytest.mark.parametrize(("expression", "verify"), VM_EXPRESSIONS_TO_TEST)
-def test_modify_vm_condition_expression(
-        vm_condition_for_expressions, expression, verify, soft_assert):
-    with update(vm_condition_for_expressions):
-        vm_condition_for_expressions.expression = expression
-    if verify is not None:
-        soft_assert(vm_condition_for_expressions.read_expression() == verify)
+@pytest.mark.uncollectif(
+    lambda condition_for_expressions: condition_for_expressions is conditions.ProviderCondition and
+    current_version() < "5.7.1"
+)
+@pytest.mark.parametrize("fill_type,expression,verify", EXPRESSIONS_TO_TEST, ids=[
+    expr[0] for expr in EXPRESSIONS_TO_TEST])
+def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
+    with update(condition_for_expressions):
+        condition_for_expressions.expression = expression.format(
+            condition_for_expressions.FIELD_VALUE)
+    assert condition_for_expressions.read_expression() == verify.format(
+        condition_for_expressions.FIELD_VALUE)
 
 
 @pytest.mark.tier(2)
@@ -443,10 +460,25 @@ def test_control_alert_copy(random_alert):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda alert_profile: alert_profile.TYPE == "Middleware Server" and
+@pytest.mark.uncollectif(
+    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
     current_version() < "5.7")
 def test_alert_profile_crud(alert_profile):
     alert_profile.create()
     with update(alert_profile):
         alert_profile.notes = "Modified!"
+    alert_profile.delete()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1416311, forced_streams=["5.7"])])
+@pytest.mark.uncollectif(
+    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
+    current_version() < "5.7")
+def test_alert_profile_assigning(alert_profile):
+    alert_profile.create()
+    if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
+        alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
+    else:
+        alert_profile.assign_to("The Enterprise")
     alert_profile.delete()

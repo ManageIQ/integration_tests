@@ -82,6 +82,6 @@ def test_provision_cloud_init(setup_provider, provider, setup_ci_template,
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so
     # is a valid check
-    sshclient = ssh.SSHClient(hostname=connect_ip, username=provisioning['ci-username'],
-                              password=provisioning['ci-pass'])
-    wait_for(sshclient.uptime, num_sec=200, handle_exception=True)
+    with ssh.SSHClient(hostname=connect_ip, username=provisioning['ci-username'],
+                       password=provisioning['ci-pass']) as ssh_client:
+        wait_for(ssh_client.uptime, num_sec=200, handle_exception=True)

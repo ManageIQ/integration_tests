@@ -7,13 +7,14 @@ to speed things up. The base of all this is the session-scoped _smtp_test_sessio
 about the collector.
 """
 import logging
+import os
 import pytest
 import signal
 import subprocess
 import time
 
 from cfme.configure import configuration
-from fixtures.artifactor_plugin import art_client, get_test_idents
+from fixtures.artifactor_plugin import fire_art_test_hook
 from utils.conf import env
 from utils.log import setup_logger
 from utils.net import random_port, my_ip_address, net_check_remote
@@ -32,8 +33,8 @@ def smtp_test(request):
     """
     logger.info("Preparing start for e-mail collector")
     ports = env.get("mail_collector", {}).get("ports", {})
-    mail_server_port = ports.get("smtp", None) or random_port()
-    mail_query_port = ports.get("json", None) or random_port()
+    mail_server_port = ports.get("smtp", False) or os.getenv('SMTP', False) or random_port()
+    mail_query_port = ports.get("json", False) or os.getenv('JSON', False) or random_port()
     my_ip = my_ip_address()
     logger.info("Mind that it needs ports %s and %s open", mail_query_port, mail_server_port)
     smtp_conf = configuration.SMTPSettings(
@@ -107,13 +108,10 @@ def pytest_runtest_call(item):
         if "smtp_test" not in item.funcargs:
             return
 
-        name, location = get_test_idents(item)
-
         try:
-            art_client.fire_hook(
+            fire_art_test_hook(
+                item,
                 "filedump",
-                test_name=name,
-                test_location=location,
                 description="received e-mails",
                 contents=item.funcargs["smtp_test"].get_html_report(),
                 file_type="html",

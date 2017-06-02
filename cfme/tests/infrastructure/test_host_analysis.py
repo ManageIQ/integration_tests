@@ -7,9 +7,7 @@ from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
-from utils import conf
-from utils import testgen
-from utils import version
+from utils import conf, testgen, version
 from utils.update import update
 from utils.wait import wait_for
 
@@ -82,7 +80,8 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
                 test_host.credentials = host.Host.Credential(
                     principal="", secret="", verify_secret="")
 
-    register_event('Host', host_name, ["request_host_scan", "host_scan_complete"])
+    register_event(target_type='Host', target_name=host_name, event_type='request_host_scan')
+    register_event(target_type='Host', target_name=host_name, event_type='host_scan_complete')
 
     # Initiate analysis
     test_host.run_smartstate_analysis()

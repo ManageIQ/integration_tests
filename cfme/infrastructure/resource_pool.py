@@ -43,7 +43,7 @@ class ResourcePool(Pretty, Navigatable):
         self.quad_name = 'resource_pool'
         self.name = name
         if provider_key:
-            self.provider = get_crud(provider_key)
+            self.provider = get_crud(provider_key, appliance=appliance)
         else:
             self.provider = None
 

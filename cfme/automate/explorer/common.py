@@ -10,7 +10,7 @@ from utils.appliance.implementations.ui import navigate_to
 class CopyViewBase(View):
     title = Text('#explorer_title_text')
     to_domain_select = BootstrapSelect('domain')
-    to_domain_text = Text('.//div[./label[normalize-space(.)="To Domain"]]/div/p')
+    to_domain_text = Text('.//div[./label[normalize-space(.)="To Domain"]]/div/p[not(.//button)]')
     new_name = Input(name='new_name')
     override_source = Checkbox(name='override_source')
     override_existing = Checkbox(name='override_existing')

@@ -14,17 +14,18 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     PagedTable, CheckboxTable, toolbar as tb, match_location, Form, AngularSelect, Input,
     form_buttons, flash, paginator)
+from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for, TimedOutError
 
 create_tenant_form = Form(
     fields=[
         ('prov_select', AngularSelect("ems_id")),
         ('name', Input('name')),
-        ('save_button', form_buttons.angular_save),
+        ('save_button', {version.LOWEST: form_buttons.angular_save,
+                         '5.8': form_buttons.simple_save}),
         ('reset_button', form_buttons.reset)
     ])
 
@@ -38,6 +39,8 @@ match_page = partial(match_location, controller='cloud_tenant', title='Cloud Ten
 
 
 class Tenant(Navigatable):
+    _param_name = "Tenant"
+
     def __init__(self, name, provider, appliance=None):
         """Base class for a Tenant"""
         self.name = name
@@ -52,7 +55,9 @@ class Tenant(Navigatable):
         sel.click(form_buttons.cancel if cancel else create_tenant_form.save_button)
 
         if cancel:
-            return flash.assert_success_message('Add of new Cloud Tenant was cancelled by the user')
+            msg = version.pick({version.LOWEST: 'Add of new Cloud Tenant was cancelled by the user',
+                                '5.8': 'Add of Cloud Tenant was cancelled by the user'})
+            return flash.assert_success_message(msg)
         else:
             return flash.assert_success_message('Cloud Tenant "{}" created'.format(self.name))
 
@@ -67,8 +72,22 @@ class Tenant(Navigatable):
         except TimedOutError:
             logger.error('Timed out waiting for tenant to disappear, continuing')
 
+    def wait_for_appear(self, timeout=600):
+        return wait_for(self.exists, timeout=timeout, message='Wait for cloud tenant to appear',
+                        delay=10)
+
+    def update(self, updates, wait=True):
+        navigate_to(self, 'Edit')
+        updated_name = updates.get('name', self.name + '_edited')
+        create_tenant_form.fill({'name': updated_name})
+        sel.click(create_tenant_form.save_button)
+        self.provider.refresh_provider_relationships()
+        return wait_for(self.exists, fail_condition=False, timeout=600,
+                        message="Wait for cloud tenant to appear", delay=10,
+                        fail_func=sel.refresh)
+
     def delete(self, cancel=False, from_details=True, wait=True):
-        if current_version() < '5.7':
+        if self.appliance.version < '5.7':
             raise OptionNotAvailable('Cannot delete cloud tenants in CFME < 5.7')
         if from_details:
             if cancel:
@@ -108,8 +127,9 @@ class Tenant(Navigatable):
             # Flash message is the same whether deleted from details or by selection
             result = flash.assert_success_message('Delete initiated for 1 Cloud Tenant.')
             if wait:
-                result = self.wait_for_disappear()
-            return result
+                self.provider.refresh_provider_relationships()
+                result = self.wait_for_disappear(600)
+                return result
 
     def exists(self):
         try:
@@ -128,6 +148,9 @@ class TenantAll(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Tenants')
+
+    def resetter(self):
+        sel.refresh()
 
 
 @navigator.register(Tenant, 'Details')
@@ -151,7 +174,7 @@ class TenantAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        if current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Create Cloud Tenant')
         else:
             raise DestinationNotFound('Cannot add Cloud Tenants in CFME < 5.7')
@@ -162,7 +185,7 @@ class TenantEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        if current_version() >= '5.7':
+        if self.obj.appliance.version >= '5.7':
             cfg_btn('Edit Cloud Tenant')
         else:
             raise DestinationNotFound('Cannot edit Cloud Tenants in CFME < 5.7')

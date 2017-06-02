@@ -2,11 +2,9 @@ from utils import version, deferred_verpick
 from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui import fill, flash
 from cfme.fixtures import pytest_selenium as sel
-from cfme.common.vm import VM
 from . import Instance, select_provision_image
 
 
-@VM.register_for_provider_type("gce")
 class GCEInstance(Instance):
     # CFME & provider power control options
     START = "Start"
@@ -29,6 +27,18 @@ class GCEInstance(Instance):
     STATE_TERMINATED = "terminated"
     STATE_ARCHIVED = "archived"
     STATE_UNKNOWN = "unknown"
+
+    @property
+    def ui_powerstates_available(self):
+        return {
+            'on': [self.STOP, self.SOFT_REBOOT, self.TERMINATE],
+            'off': [self.START, self.TERMINATE]}
+
+    @property
+    def ui_powerstates_unavailable(self):
+        return {
+            'on': [self.START],
+            'off': [self.STOP, self.SOFT_REBOOT]}
 
     def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
                instance_type=None, cloud_network=None, boot_disk_size=None, cancel=False,

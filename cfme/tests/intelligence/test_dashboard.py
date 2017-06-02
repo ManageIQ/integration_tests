@@ -6,6 +6,7 @@ from collections import namedtuple
 from random import sample
 
 from cfme import dashboard
+from cfme.base import Server
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.dashboards import Dashboard, DefaultDashboard
 from utils.blockers import BZ
@@ -40,7 +41,7 @@ def widgets():
 
 @pytest.mark.meta(blockers=[1202394])
 def test_widgets_operation(request):
-    navigate_to(Dashboard, 'Main')
+    navigate_to(Server, 'Dashboard')
     request.addfinalizer(lambda: Widget.close_zoom())
     for widget in Widget.all():
         widget.minimize()

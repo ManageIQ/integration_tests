@@ -1,30 +1,23 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import uuid
+import fauxfactory
 
 import pytest
 
-from manageiq_client.api import APIException
-
 import cfme.web_ui.flash as flash
-import utils.error as error
-import cfme.fixtures.pytest_selenium as sel
-from cfme.common.provider import BaseProvider
+from utils import error
+from cfme.base.credential import Credential
+from cfme.common.provider_views import ProviderAddView
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen, providers, version
+from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
+from utils import testgen, version
 from utils.update import update
-from utils.log import logger
+from utils.blockers import BZ
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
-
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    return providers.setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.mark.tier(3)
@@ -65,25 +58,21 @@ def test_add_cancelled_validation():
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
     prov = InfraProvider()
-    err = version.pick(
-        {version.LOWEST: 'Type is required',
-         '5.6': FlashMessageException})
-
-    with error.expected(err):
+    with error.expected(FlashMessageException):
         prov.create()
 
-    if version.current_version() >= 5.6:
-        assert prov.add_provider_button.is_dimmed
+    view = prov.create_view(ProviderAddView)
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
+    endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(5))
     prov = VMwareProvider(
         name=None,
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address='10.10.10.10')
+        endpoints=endpoint)
 
     err = version.pick(
         {version.LOWEST: "Name can't be blank",
@@ -92,30 +81,29 @@ def test_name_required_validation():
     with error.expected(err):
         prov.create()
 
-    if version.current_version() >= 5.6:
-        assert prov.properties_form.name_text.angular_help_block == "Required"
-        assert prov.add_provider_button.is_dimmed
+    view = prov.create_view(ProviderAddView)
+    assert view.name.help_block == "Required"
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
+    endpoint = VirtualCenterEndpoint(hostname=None)
     prov = VMwareProvider(
         name=fauxfactory.gen_alphanumeric(5),
-        hostname=None,
-        ip_address='10.10.10.11')
+        endpoints=endpoint)
 
-    err = version.pick(
-        {version.LOWEST: "Host Name can't be blank",
-         '5.6': FlashMessageException})
+    err = FlashMessageException
 
     with error.expected(err):
         prov.create()
 
-    if version.current_version() >= 5.6:
-        assert prov.properties_form.hostname_text.angular_help_block == "Required"
-        assert prov.add_provider_button.is_dimmed
+    view = prov.create_view(prov.endpoints_form)
+    assert view.hostname.help_block == "Required"
+    view = prov.create_view(ProviderAddView)
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
@@ -134,47 +122,43 @@ def test_ip_required_validation():
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
-def test_name_max_character_validation(request, setup_a_provider):
+def test_name_max_character_validation(request, infra_provider):
     """Test to validate max character for name field"""
-    provider = setup_a_provider
-    request.addfinalizer(lambda: provider.delete_if_exists(cancel=False))
+    request.addfinalizer(lambda: infra_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
-    provider.update({'name': name})
-    provider.name = name
-    assert provider.exists
+    with update(infra_provider):
+        infra_provider.name = name
+    assert infra_provider.exists
 
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_host_name_max_character_validation():
     """Test to validate max character for host name field"""
-    prov = VMwareProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(256),
-        ip_address='10.10.10.13')
+    endpoint = VirtualCenterEndpoint(hostname=fauxfactory.gen_alphanumeric(256))
+    prov = VMwareProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
     except FlashMessageException:
-        element = sel.move_to_element(prov.properties_form.locators["hostname_text"])
-        text = element.get_attribute('value')
-        assert text == prov.hostname[0:255]
+        view = prov.create_view(prov.endpoints_form)
+        assert view.hostname.value == prov.hostname[0:255]
 
 
 @pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
-    prov = RHEVMProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address='10.10.10.15',
-        api_port=fauxfactory.gen_alphanumeric(16))
+    endpoint = RHEVMEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
+                             api_port=fauxfactory.gen_alphanumeric(16),
+                             verify_tls=None,
+                             ca_certs=None)
+    prov = RHEVMProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
     except FlashMessageException:
-        element = sel.move_to_element(prov.properties_form.locators["api_port"])
-        text = element.get_attribute('value')
-        assert text == prov.api_port[0:15]
+        view = prov.create_view(prov.endpoints_form)
+        text = view.default.api_port.value
+        assert text == prov.default_endpoint.api_port[0:15]
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')
@@ -188,7 +172,7 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(lambda: BaseProvider.clear_providers_by_class(InfraProvider))
+    request.addfinalizer(InfraProvider.clear_providers)
     wait_for_a_provider()
 
 
@@ -202,7 +186,7 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
-    provider.credentials['default'] = provider.Credential(
+    provider.default_endpoint.credentials = Credential(
         principal='bad',
         secret='reallybad',
         verify_secret='reallybad'
@@ -211,13 +195,7 @@ def test_provider_add_with_bad_credentials(provider):
         with error.expected('Cannot complete login due to an incorrect user name or password.'):
             provider.create(validate_credentials=True)
     elif isinstance(provider, RHEVMProvider):
-        error_message = version.pick({
-            '5.4': '401 Unauthorized',
-            '5.5': ('Credential validation was not successful: '
-                'Login failed due to a bad username or password.'),
-            '5.6': ('Credential validation was not successful: '
-                'Incorrect user name or password.'),
-        })
+        error_message = 'Credential validation was not successful: Incorrect user name or password.'
         with error.expected(error_message):
             provider.create(validate_credentials=True)
 
@@ -225,6 +203,7 @@ def test_provider_add_with_bad_credentials(provider):
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @test_requirements.provider_discovery
+@pytest.mark.meta(blockers=[BZ(1450527, unblock=lambda provider: provider.type != 'scvmm')])
 def test_provider_crud(provider):
     """Tests provider add with good credentials
 
@@ -248,8 +227,8 @@ def test_provider_crud(provider):
 
 class TestProvidersRESTAPI(object):
     @pytest.yield_fixture(scope="function")
-    def custom_attributes(self, rest_api, setup_a_provider):
-        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+    def custom_attributes(self, appliance, infra_provider):
+        provider = appliance.rest_api.collections.providers.get(name=infra_provider.name)
         body = []
         attrs_num = 2
         for _ in range(attrs_num):
@@ -263,16 +242,16 @@ class TestProvidersRESTAPI(object):
 
         yield attrs, provider
 
-        try:
-            provider.custom_attributes.action.delete(*attrs)
-        except APIException:
-            # custom attributes can be deleted by tests, just log warning
-            logger.warning("Failed to delete custom attribute.")
+        provider.custom_attributes.reload()
+        ids = [attr.id for attr in attrs]
+        delete_attrs = [attr for attr in provider.custom_attributes if attr.id in ids]
+        if delete_attrs:
+            provider.custom_attributes.action.delete(*delete_attrs)
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_add_custom_attributes(self, custom_attributes):
+    def test_add_custom_attributes(self, appliance, custom_attributes):
         """Test adding custom attributes to provider using REST API.
 
         Metadata:
@@ -281,39 +260,67 @@ class TestProvidersRESTAPI(object):
         attributes, provider = custom_attributes
         for attr in attributes:
             record = provider.custom_attributes.get(id=attr.id)
+            assert appliance.rest_api.response.status_code == 200
             assert record.name == attr.name
             assert record.value == attr.value
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    @pytest.mark.parametrize(
-        "from_detail", [True, False],
-        ids=["from_detail", "from_collection"])
-    def test_delete_custom_attributes(self, custom_attributes, from_detail):
-        """Test deleting custom attributes using REST API.
+    @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
+    def test_delete_custom_attributes_from_detail(self, appliance, custom_attributes, method):
+        """Test deleting custom attributes from detail using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        status = 204 if method == 'delete' else 200
+        attributes, _ = custom_attributes
+        for entity in attributes:
+            entity.action.delete(force_method=method)
+            assert appliance.rest_api.response.status_code == status
+            with error.expected('ActiveRecord::RecordNotFound'):
+                entity.action.delete(force_method=method)
+            assert appliance.rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    def test_delete_custom_attributes_from_collection(self, appliance, custom_attributes):
+        """Test deleting custom attributes from collection using REST API.
 
         Metadata:
             test_flag: rest
         """
         attributes, provider = custom_attributes
-        if from_detail:
-            for ent in attributes:
-                ent.action.delete()
-                with error.expected('ActiveRecord::RecordNotFound'):
-                    ent.action.delete()
-        else:
+        provider.custom_attributes.action.delete(*attributes)
+        assert appliance.rest_api.response.status_code == 200
+        with error.expected('ActiveRecord::RecordNotFound'):
             provider.custom_attributes.action.delete(*attributes)
-            with error.expected('ActiveRecord::RecordNotFound'):
-                provider.custom_attributes.action.delete(*attributes)
+        assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    @pytest.mark.parametrize(
-        "from_detail", [True, False],
-        ids=["from_detail", "from_collection"])
-    def test_edit_custom_attributes(self, custom_attributes, from_detail):
+    def test_delete_single_custom_attribute_from_collection(self, appliance, custom_attributes):
+        """Test deleting single custom attribute from collection using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        attributes, provider = custom_attributes
+        attribute = attributes[0]
+        provider.custom_attributes.action.delete(attribute)
+        assert appliance.rest_api.response.status_code == 200
+        with error.expected('ActiveRecord::RecordNotFound'):
+            provider.custom_attributes.action.delete(attribute)
+        assert appliance.rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
+    def test_edit_custom_attributes(self, appliance, custom_attributes, from_detail):
         """Test editing custom attributes using REST API.
 
         Metadata:
@@ -333,10 +340,12 @@ class TestProvidersRESTAPI(object):
             edited = []
             for i in range(response_len):
                 edited.append(attributes[i].action.edit(**body[i]))
+                assert appliance.rest_api.response.status_code == 200
         else:
             for i in range(response_len):
                 body[i].update(attributes[i]._ref_repr())
             edited = provider.custom_attributes.action.edit(*body)
+            assert appliance.rest_api.response.status_code == 200
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].name == body[i]['name']
@@ -345,10 +354,8 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    @pytest.mark.parametrize(
-        'from_detail', [True, False],
-        ids=['from_detail', 'from_collection'])
-    def test_edit_custom_attributes_bad_section(self, custom_attributes, from_detail):
+    @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
+    def test_edit_custom_attributes_bad_section(self, appliance, custom_attributes, from_detail):
         """Test that editing custom attributes using REST API and adding invalid section fails.
 
         Metadata:
@@ -363,23 +370,25 @@ class TestProvidersRESTAPI(object):
             for i in range(response_len):
                 with error.expected('Api::BadRequestError'):
                     attributes[i].action.edit(**body[i])
+                assert appliance.rest_api.response.status_code == 400
         else:
             for i in range(response_len):
                 body[i].update(attributes[i]._ref_repr())
             with error.expected('Api::BadRequestError'):
                 provider.custom_attributes.action.edit(*body)
+            assert appliance.rest_api.response.status_code == 400
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_add_custom_attributes_bad_section(self, rest_api, setup_a_provider):
+    def test_add_custom_attributes_bad_section(self, appliance, infra_provider):
         """Test that adding custom attributes with invalid section
         to provider using REST API fails.
 
         Metadata:
             test_flag: rest
         """
-        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+        provider = appliance.rest_api.collections.providers.get(name=infra_provider.name)
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
             'name': 'ca_name_{}'.format(uid),
@@ -388,3 +397,4 @@ class TestProvidersRESTAPI(object):
         }
         with error.expected('Api::BadRequestError'):
             provider.custom_attributes.action.add(body)
+        assert appliance.rest_api.response.status_code == 400

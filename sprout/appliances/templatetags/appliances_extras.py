@@ -51,7 +51,7 @@ def nice_timedelta(timedelta):
 
 @register.filter
 def user_repr(user):
-    if user.first_name:
-        return u'{} {}'.format(user.first_name, user.last_name)
+    if user.first_name and user.last_name:
+        return u' '.join([user.first_name, user.last_name])
     else:
         return user.username

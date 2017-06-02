@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """ A model of Workloads page in CFME
 """
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_manageiq import Accordion, ManageIQTree, Search
 
-from cfme import BaseLoggedInPage
+from cfme.base.login import BaseLoggedInPage
 from utils.appliance import Navigatable
+from cfme.base import Server
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -55,11 +56,22 @@ class WorkloadsVM(WorkloadsView):
     @property
     def is_displayed(self):
         return (
-            super(WorkloadsVM, self).in_workloads and
+            self.in_workloads and
             self.title.text == 'All VMs & Instances' and
             self.vms.is_opened and
             self.vms.tree.currently_selected == [
                 "All VMs & Instances"])
+
+
+class WorkloadsDefaultView(WorkloadsView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_workloads and
+            self.title.text == 'All VMs & Instances' and
+            self.vms.is_opened)
 
 
 class WorkloadsTemplate(WorkloadsView):
@@ -68,7 +80,7 @@ class WorkloadsTemplate(WorkloadsView):
     @property
     def is_displayed(self):
         return (
-            super(WorkloadsTemplate, self).in_workloads and
+            self.in_workloads and
             self.title.text == 'All Templates & Images' and
             self.templates.is_opened and
             self.templates.tree.currently_selected == [
@@ -92,6 +104,15 @@ class TemplatesImages(Navigatable):
 
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance)
+
+
+@navigator.register(Server)
+class WorkloadsDefault(CFMENavigateStep):
+    VIEW = WorkloadsDefaultView
+    prerequisite = NavigateToSibling("LoggedIn")
+
+    def step(self):
+        self.view.navigation.select("Services", "Workloads")
 
 
 @navigator.register(VmsInstances, 'All')

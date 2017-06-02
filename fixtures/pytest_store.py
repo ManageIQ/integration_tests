@@ -27,7 +27,7 @@ from _pytest.terminal import TerminalReporter
 from cached_property import cached_property
 from py.io import TerminalWriter
 
-from utils import diaper, property_or_none
+from utils import diaper
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -61,6 +61,8 @@ class Store(object):
     def current_appliance(self):
         # layz import due to loops and loops and loops
         from utils import appliance
+        # TODO: concieve a better way to detect/log import-time missuse
+        # assert self.config is not None, 'current appliance not in scope'
         return appliance.current_appliance
 
     def __init__(self):
@@ -79,6 +81,8 @@ class Store(object):
         #: hack variable until we get a more sustainable solution
         self.ssh_clients_to_close = []
 
+        self.uncollection_stats = {}
+
     @property
     def has_config(self):
         return self.config is not None
@@ -89,51 +93,55 @@ class Store(object):
             else, the base_url from the config is returned."""
         return self.current_appliance.url
 
+    def _maybe_get_plugin(self, name):
+        """ returns the plugin if the pluginmanager is availiable and the plugin exists"""
+        return self.pluginmanager and self.pluginmanager.getplugin(name)
+
     @property
     def in_pytest_session(self):
         return self.session is not None
 
-    @property_or_none
+    @property
     def fixturemanager(self):
         # "publicize" the fixturemanager
-        return self.session._fixturemanager
+        return self.session and self.session._fixturemanager
 
-    @property_or_none
+    @property
     def capturemanager(self):
-        return self.pluginmanager.getplugin('capturemanager')
+        return self._maybe_get_plugin('capturemanager')
 
-    @property_or_none
+    @property
     def pluginmanager(self):
         # Expose this directly on the store for convenience in getting/setting plugins
-        return self.config.pluginmanager
+        return self.config and self.config.pluginmanager
 
-    @property_or_none
+    @property
     def terminalreporter(self):
         if self._terminalreporter is not None:
             return self._terminalreporter
 
-        if self.pluginmanager is not None:
-            reporter = self.pluginmanager.getplugin('terminalreporter')
-            if reporter and isinstance(reporter, TerminalReporter):
-                self._terminalreporter = reporter
-                return reporter
+        reporter = self._maybe_get_plugin('terminalreporter')
+        if reporter and isinstance(reporter, TerminalReporter):
+            self._terminalreporter = reporter
+            return reporter
 
         return FlexibleTerminalReporter(self.config)
 
-    @property_or_none
+    @property
     def terminaldistreporter(self):
-        if self.pluginmanager is not None:
-            reporter = self.pluginmanager.getplugin('terminaldistreporter')
-            if reporter:
-                return reporter
+        return self._maybe_get_plugin('terminaldistreporter')
 
-    @property_or_none
+    @property
     def parallel_session(self):
-        return self.pluginmanager.getplugin('parallel_session')
+        return self._maybe_get_plugin('parallel_session')
 
-    @property_or_none
+    @property
     def slave_manager(self):
-        return self.pluginmanager.getplugin('slave_manager')
+        return self._maybe_get_plugin('slave_manager')
+
+    @property
+    def slaveid(self):
+        return getattr(self.slave_manager, 'slaveid', None)
 
     @cached_property
     def my_ip_address(self):
@@ -157,8 +165,10 @@ def pytest_namespace():
     return {'store': store}
 
 
-def pytest_configure(config):
-    store.config = config
+def pytest_plugin_registered(manager):
+    # config will be set at the second call to this hook
+    if store.config is None:
+        store.config = manager.getplugin('pytestconfig')
 
 
 def pytest_sessionstart(session):

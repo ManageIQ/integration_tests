@@ -3,12 +3,14 @@
 """ Module dealing with Configure/My Setting section."""
 
 from functools import partial
+import re
+
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     AngularSelect, Form, Region, fill, form_buttons, flash, Table, ButtonGroup, Quadicon,
-    CheckboxTree, Input, CFMECheckbox, BootstrapTreeview)
+    CheckboxTree, Input, CFMECheckbox, BootstrapTreeview, match_location)
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
@@ -33,10 +35,12 @@ class Timeprofile(Updateable, Navigatable):
             ("hours", CFMECheckbox("all_hours")),
         ]
     )
-    save_edit_button = form_buttons.FormButton('Save changes')
+    save_edit_button = deferred_verpick({'5.7': form_buttons.FormButton('Save changes'),
+                                         '5.8': form_buttons.FormButton('Save')})
     save_button = deferred_verpick({
         version.LOWEST: form_buttons.FormButton("Add this Time Profile"),
-        '5.7': form_buttons.FormButton('Add')
+        '5.7': form_buttons.FormButton('Add'),
+        '5.8': form_buttons.FormButton('Save')
     })
 
     def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None,
@@ -58,7 +62,7 @@ class Timeprofile(Updateable, Navigatable):
                                      })
         if not cancel:
             sel.click(self.save_button)
-            end = "saved" if version.current_version() > '5.7' else "added"
+            end = "saved" if self.appliance.version > '5.7' else "added"
             flash.assert_success_message('Time Profile "{}" was {}'
                                          .format(self.description, end))
 
@@ -82,7 +86,7 @@ class Timeprofile(Updateable, Navigatable):
         fill(self.timeprofile_form, {'description': new_timeprofile.description,
                               'scope': new_timeprofile.scope},
              action=self.save_button)
-        end = "saved" if version.current_version() > '5.7' else "added"
+        end = "saved" if self.appliance.version > '5.7' else "added"
         flash.assert_success_message('Time Profile "{}" was {}'
                                      .format(new_timeprofile.description, end))
         return new_timeprofile
@@ -160,7 +164,7 @@ class Visual(Updateable, Navigatable):
     @property
     def grid_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.grid_view.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.grid_view.first_selected_option_text)[0])
 
     @grid_view_limit.setter
     def grid_view_limit(self, value):
@@ -171,7 +175,7 @@ class Visual(Updateable, Navigatable):
     @property
     def tile_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.tile_view.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.tile_view.first_selected_option_text)[0])
 
     @tile_view_limit.setter
     def tile_view_limit(self, value):
@@ -182,7 +186,7 @@ class Visual(Updateable, Navigatable):
     @property
     def list_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.list_view.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.list_view.first_selected_option_text)[0])
 
     @list_view_limit.setter
     def list_view_limit(self, value):
@@ -193,7 +197,7 @@ class Visual(Updateable, Navigatable):
     @property
     def report_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.reports.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.reports.first_selected_option_text)[0])
 
     @report_view_limit.setter
     def report_view_limit(self, value):
@@ -347,16 +351,48 @@ class DefaultView(Updateable, Navigatable):
         Navigatable.__init__(self, appliance=appliance)
 
     @classmethod
-    def set_default_view(cls, button_group_name, default):
-        bg = ButtonGroup(button_group_name)
-        navigate_to(cls, 'All')
-        if bg.active != default:
-            bg.choose(default)
+    def set_default_view(cls, button_group_names, defaults, fieldset=None):
+
+        """This function sets default views for the objects.
+        Args:
+            * button_group_names: either the name of the button_group_name
+                                  or list of the button groups to set the
+                                  default view for.
+            * default: the default view to set. in case that button_group_names
+                       is a list, you can either set 1 view and it'll be set
+                       for all the button_group_names or you can use a list
+                       (default view per button_group_name).
+        Examples:
+            * set_default_view('Containers Providers, 'List View') --> set
+              'List View' default view to 'Containers Providers'
+            * set_default_view(['Images', 'Projects', 'Routes'], 'Tile View')
+              --> set 'Tile View' default view to 'Images', 'Projects' and 'Routes'
+            * set_default_view(['Images', 'Projects', 'Routes'],
+                               ['Tile View', 'Tile View', 'Grid View']) -->
+              set 'Tile View' default view to 'Images' and 'Projects' and 'Grid View'
+              default view to 'Routes'
+        """
+
+        if not isinstance(button_group_names, (list, tuple)):
+            button_group_names = [button_group_names]
+        if not isinstance(defaults, (list, tuple)):
+            defaults = [defaults] * len(button_group_names)
+        assert len(button_group_names) == len(defaults)
+
+        is_something_changed = False
+        for button_group_name, default in zip(button_group_names, defaults):
+            bg = ButtonGroup(button_group_name, fieldset=fieldset)
+            navigate_to(cls, 'All')
+            if bg.active != default:
+                bg.choose(default)
+                is_something_changed = True
+
+        if is_something_changed:
             sel.click(form_buttons.save)
 
     @classmethod
-    def get_default_view(cls, button_group_name):
-        bg = ButtonGroup(button_group_name)
+    def get_default_view(cls, button_group_name, fieldset=None):
+        bg = ButtonGroup(button_group_name, fieldset=fieldset)
         navigate_to(cls, 'All')
         return bg.active
 
@@ -364,6 +400,10 @@ class DefaultView(Updateable, Navigatable):
 @navigator.register(DefaultView, 'All')
 class DefaultViewAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+
+    def am_i_here(self):
+        if match_location(title='Configuration', controller='configuration'):
+            return tabs.is_tab_selected('Default Views')
 
     def step(self, *args, **kwargs):
         tabs.select_tab('Default Views')

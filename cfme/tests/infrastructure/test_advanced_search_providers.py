@@ -6,11 +6,8 @@ import fauxfactory
 import pytest
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
-# TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
 from fixtures.pytest_store import store
-from utils.providers import setup_a_provider_by_class
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from cfme.web_ui import search
@@ -19,25 +16,8 @@ from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
 
 
-pytestmark = [pytest.mark.usefixtures("setup_cleanup_search"), pytest.mark.tier(3)]
-
-
-@pytest.fixture(scope="module")
-def single_provider():
-    """Ensure the infra provider is setup"""
-    try:
-        return setup_a_provider_by_class(InfraProvider)
-    except Exception as ex:
-        pytest.skip("Exception while setting up providers, therefore skipping: {}".format(ex))
-
-
-@pytest.fixture(scope="module")
-def hosts_with_vm_count(hosts):
-    """Returns a list of tuples (hostname, vm_count)"""
-    hosts_with_vm_count = []
-    for host_name in hosts:
-        hosts_with_vm_count.append((host_name, int(host.find_quadicon(host_name, True).no_vm)))
-    return sorted(hosts_with_vm_count, key=lambda tup: tup[1])
+pytestmark = [
+    pytest.mark.usefixtures("setup_cleanup_search", "infra_provider"), pytest.mark.tier(3)]
 
 
 @pytest.yield_fixture(scope="function")
@@ -72,26 +52,26 @@ def rails_delete_filter(request):
         logger.warning('rails_delete_filter: failed to get filter_name')
 
 
-def test_can_do_advanced_search(single_provider):
+def test_can_do_advanced_search():
     navigate_to(InfraProvider, 'All')
     assert search.is_advanced_search_possible(), "Cannot do advanced search here!"
 
 
 @pytest.mark.requires("test_can_do_advanced_search")
-def test_can_open_advanced_search(single_provider):
+def test_can_open_advanced_search():
     navigate_to(InfraProvider, 'All')
     search.ensure_advanced_search_open()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_without_user_input(single_provider):
+def test_filter_without_user_input():
     # Set up the filter
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
     assert_no_cfme_exception()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_with_user_input(single_provider):
+def test_filter_with_user_input():
     # Set up the filter
     logger.debug('DEBUG: test_with_user_input: fill and apply')
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=)",
@@ -100,7 +80,7 @@ def test_filter_with_user_input(single_provider):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_with_user_input_and_cancellation(single_provider):
+def test_filter_with_user_input_and_cancellation():
     # Set up the filter
     search.fill_and_apply_filter(
         "fill_count(Infrastructure Provider.VMs, >=)", fill_callback={"COUNT": 0},
@@ -110,7 +90,7 @@ def test_filter_with_user_input_and_cancellation(single_provider):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_cancel(single_provider, rails_delete_filter):
+def test_filter_save_cancel(rails_delete_filter):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_cancel.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_cancel.filter_name))
@@ -127,7 +107,7 @@ def test_filter_save_cancel(single_provider, rails_delete_filter):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_and_load(single_provider, rails_delete_filter):
+def test_filter_save_and_load(rails_delete_filter):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_load.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_and_load.filter_name))
@@ -146,7 +126,7 @@ def test_filter_save_and_load(single_provider, rails_delete_filter):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_and_cancel_load(single_provider, rails_delete_filter):
+def test_filter_save_and_cancel_load(rails_delete_filter):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_cancel_load.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(test_filter_save_and_cancel_load.filter_name))
@@ -165,7 +145,7 @@ def test_filter_save_and_cancel_load(single_provider, rails_delete_filter):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_save_and_cancel_load_with_user_input(single_provider, rails_delete_filter):
+def test_filter_save_and_cancel_load_with_user_input(rails_delete_filter):
     # bind filter_name to the function for fixture cleanup
     test_filter_save_and_cancel_load_with_user_input.filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(
@@ -187,7 +167,7 @@ def test_filter_save_and_cancel_load_with_user_input(single_provider, rails_dele
     assert_no_cfme_exception()
 
 
-def test_quick_search_without_filter(request, single_provider):
+def test_quick_search_without_filter(request):
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
     request.addfinalizer(search.ensure_normal_search_empty)
@@ -196,7 +176,7 @@ def test_quick_search_without_filter(request, single_provider):
     assert_no_cfme_exception()
 
 
-def test_quick_search_with_filter(request, single_provider):
+def test_quick_search_with_filter(request):
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
@@ -206,7 +186,7 @@ def test_quick_search_with_filter(request, single_provider):
     assert_no_cfme_exception()
 
 
-def test_can_delete_filter(single_provider):
+def test_can_delete_filter():
     filter_name = fauxfactory.gen_alphanumeric()
     logger.debug('Set filter_name to: {}'.format(filter_name))
     assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
@@ -220,8 +200,7 @@ def test_can_delete_filter(single_provider):
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1320244])
-def test_delete_button_should_appear_after_save(single_provider, rails_delete_filter):
+def test_delete_button_should_appear_after_save(rails_delete_filter):
     """Delete button appears only after load, not after save"""
     # bind filter_name to the function for fixture cleanup
     test_delete_button_should_appear_after_save.filter_name = fauxfactory.gen_alphanumeric()
@@ -232,8 +211,7 @@ def test_delete_button_should_appear_after_save(single_provider, rails_delete_fi
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150, 1320244])
-def test_cannot_delete_more_than_once(single_provider):
+def test_cannot_delete_more_than_once():
     """When Delete button appars, it does not want to go away"""
     filter_name = fauxfactory.gen_alphanumeric()
     assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)

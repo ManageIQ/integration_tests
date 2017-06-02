@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+from cached_property import cached_property
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text
-from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect, ManageIQTree
+from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect, ManageIQTree, CheckboxSelect
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
@@ -27,9 +28,9 @@ class ActionsAllView(ControlExplorerView):
 
 class ActionFormCommon(ControlExplorerView):
 
-    description = Input(name="description")
+    description = Input("description")
     action_type = BootstrapSelect("miq_action_type")
-    snapshot_name = Input(name="snapshot_name")
+    snapshot_name = Input("snapshot_name")
     analysis_profile = BootstrapSelect("analysis_profile")
     alerts_to_evaluate = MultiBoxSelect(
         "formtest",
@@ -39,13 +40,13 @@ class ActionFormCommon(ControlExplorerView):
     snapshot_age = BootstrapSelect("snapshot_age")
     parent_type = BootstrapSelect("parent_type")
     cpu_number = BootstrapSelect("cpu_value")
-    memory_amount = Input(name="memory_value")
-    email_sender = Input(name="from")
-    email_recipient = Input(name="to")
-    vcenter_attr_name = Input(name="attribute")
-    vcenter_attr_value = Input(name="value")
+    memory_amount = Input("memory_value")
+    email_sender = Input("from")
+    email_recipient = Input("to")
+    vcenter_attr_name = Input("attribute")
+    vcenter_attr_value = Input("value")
     tag = ManageIQTree("action_tags_treebox")
-
+    remove_tag = CheckboxSelect("action_options_div")
     cancel_button = Button('Cancel')
 
 
@@ -109,7 +110,8 @@ class Action(Updateable, Navigatable, Pretty):
 
         >>> from cfme.control.explorer import Action
         >>> action = Action("some_action",
-        ...     "Tag", tag=("My Company Tags", "Department", "Accounting"))
+        ...     action_type="Tag",
+        ...     action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
         >>> action.create()
         >>> action.delete()
 
@@ -118,15 +120,13 @@ class Action(Updateable, Navigatable, Pretty):
         action_type: Type of the action, value from the dropdown select.
     """
     def __init__(self, description, action_type, action_values={}, appliance=None):
-        # assert action_type in self.sub_forms.keys(), "Unrecognized Action Type ({})".format(
-        #     action_type)
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.action_type = action_type
         self.snapshot_name = action_values.get("snapshot_name")
         self.analysis_profile = action_values.get("analysis_profile")
         self.snapshot_age = action_values.get("snapshot_age")
-        self.alerts_to_evaluate = action_values.get("alerts_to_evaluate")
+        self._alerts_to_evaluate = action_values.get("alerts_to_evaluate")
         self.parent_type = action_values.get("parent_type")
         self.categories = action_values.get("categories")
         self.cpu_number = action_values.get("cpu_number")
@@ -136,9 +136,17 @@ class Action(Updateable, Navigatable, Pretty):
         self.vcenter_attr_name = action_values.get("vcenter_attr_name")
         self.vcenter_attr_value = action_values.get("vcenter_attr_value")
         self.tag = action_values.get("tag")
+        self.remove_tag = action_values.get("remove_tag")
 
     def __str__(self):
         return self.description
+
+    @cached_property
+    def alerts_to_evaluate(self):
+        if self._alerts_to_evaluate is not None:
+            return [str(alert) for alert in self._alerts_to_evaluate]
+        else:
+            return self._alerts_to_evaluate
 
     def create(self):
         "Create this Action in UI."
@@ -149,7 +157,7 @@ class Action(Updateable, Navigatable, Pretty):
             "snapshot_name": self.snapshot_name,
             "analysis_profile": self.analysis_profile,
             "snapshot_age": self.snapshot_age,
-            "alerts_to_evaluate": [str(alert) for alert in self.alerts_to_evaluate],
+            "alerts_to_evaluate": self.alerts_to_evaluate,
             "parent_type": self.parent_type,
             "categories": self.categories,
             "cpu_number": self.cpu_number,
@@ -158,7 +166,8 @@ class Action(Updateable, Navigatable, Pretty):
             "email_recipient": self.email_recipient,
             "vcenter_attr_name": self.vcenter_attr_name,
             "vcenter_attr_value": self.vcenter_attr_value,
-            "tag": self.tag
+            "tag": self.tag,
+            "remove_tag": self.remove_tag
         })
         view.add_button.click()
         view = self.create_view(ActionDetailsView)

@@ -1,43 +1,31 @@
 # -*- coding: utf-8 -*-
 import datetime
 import pytest
-import fauxfactory
 
 from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
-from utils.version import current_version
-from utils.virtual_machines import deploy_template
+from cfme.rest.gen_data import vm as _vm
 from utils.wait import wait_for
 
 
 pytestmark = [test_requirements.retirement]
 
 
-@pytest.fixture(scope='function')
-def a_provider():
-    return _a_provider()
+@pytest.fixture(scope="function")
+def a_provider(request):
+    return _a_provider(request)
 
 
-@pytest.fixture(scope='function')
-def vm(request, a_provider, rest_api):
-    # Don't use cfme.rest.gen_data.vm because we don't need finalizer and delete vm after test
-    provider_rest = rest_api.collections.providers.get(name=a_provider.name)
-    vm_name = deploy_template(
-        a_provider.key,
-        "test_rest_vm_{}".format(fauxfactory.gen_alphanumeric(length=6)))
-    provider_rest.action.refresh()
-    wait_for(
-        lambda: len(rest_api.collections.vms.find_by(name=vm_name)) > 0,
-        num_sec=600, delay=5)
-    return vm_name
+@pytest.fixture(scope="function")
+def vm(request, a_provider, appliance):
+    return _vm(request, a_provider, appliance.rest_api)
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: current_version() <= "5.5.2.4")
 @pytest.mark.parametrize(
-    "multiple", [True, False],
+    "from_collection", [True, False],
     ids=["from_collection", "from_detail"])
-def test_retire_vm_now(rest_api, vm, multiple):
+def test_retire_vm_now(appliance, vm, from_collection):
     """Test retirement of vm
 
     Prerequisities:
@@ -49,17 +37,17 @@ def test_retire_vm_now(rest_api, vm, multiple):
 
         * POST /api/vms/<id> (method ``retire``)
         OR
-        * POST /api/vms (method ``retire``) with ``href`` of vm vm or vms
+        * POST /api/vms (method ``retire``) with ``href`` of the vm or vms
 
     Metadata:
         test_flag: rest
     """
-    assert "retire" in rest_api.collections.vms.action.all
-    retire_vm = rest_api.collections.vms.get(name=vm)
-    if multiple:
-        rest_api.collections.vms.action.retire(retire_vm)
+    retire_vm = appliance.rest_api.collections.vms.get(name=vm)
+    if from_collection:
+        appliance.rest_api.collections.vms.action.retire(retire_vm)
     else:
         retire_vm.action.retire()
+    assert appliance.rest_api.response.status_code == 200
 
     def _finished():
         retire_vm.reload()
@@ -67,19 +55,18 @@ def test_retire_vm_now(rest_api, vm, multiple):
         try:
             if retire_vm.retirement_state == "retired":
                 return True
-        except:
+        except AttributeError:
             pass
         return False
 
-    wait_for(_finished, num_sec=600, delay=10, message="REST vm retire now")
+    wait_for(_finished, num_sec=1500, delay=10, message="REST vm retire now")
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: current_version() <= "5.5.2.4")
 @pytest.mark.parametrize(
-    "multiple", [True, False],
+    "from_collection", [True, False],
     ids=["from_collection", "from_detail"])
-def test_retire_vm_future(rest_api, vm, multiple):
+def test_retire_vm_future(appliance, vm, from_collection):
     """Test retirement of vm
 
     Prerequisities:
@@ -96,29 +83,25 @@ def test_retire_vm_future(rest_api, vm, multiple):
     Metadata:
         test_flag: rest
     """
-
-    assert "retire" in rest_api.collections.vms.action.all
-
-    retire_vm = rest_api.collections.vms.get(name=vm)
-    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime('%m/%d/%Y')
+    retire_vm = appliance.rest_api.collections.vms.get(name=vm)
+    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime("%Y/%m/%d")
     future = {
         "date": date,
         "warn": "4",
     }
-    date_before = retire_vm.updated_on
-    if multiple:
-        future.update({'href': retire_vm.href})
-        rest_api.collections.vms.action.retire(future)
+    if from_collection:
+        future.update(retire_vm._ref_repr())
+        appliance.rest_api.collections.vms.action.retire(future)
     else:
-        retire_vm.action.retire(future)
+        retire_vm.action.retire(**future)
+    assert appliance.rest_api.response.status_code == 200
 
     def _finished():
         retire_vm.reload()
-        try:
-            if retire_vm.updated_on > date_before and retire_vm.retires_on:
-                return True
-        except:
-            pass
-        return False
+        if not hasattr(retire_vm, "retires_on"):
+            return False
+        if not hasattr(retire_vm, "retirement_warn"):
+            return False
+        return True
 
-    wait_for(_finished, num_sec=600, delay=10, message="REST vm retire future")
+    wait_for(_finished, num_sec=1500, delay=10, message="REST vm retire future")

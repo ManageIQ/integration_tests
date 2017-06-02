@@ -1,22 +1,18 @@
-import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.service_dialogs import ServiceDialog
 from cfme.configure.settings import DefaultView
 from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from utils import testgen, version
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import BZ
+
 
 pytestmark = [
     test_requirements.service,
-    pytest.mark.ignore_stream("5.5"),
     pytest.mark.tier(2)]
 
 
@@ -49,54 +45,23 @@ def config_manager(config_manager_obj):
     config_manager_obj.delete()
 
 
-@pytest.yield_fixture(scope="function")
-def dialog(request):
-    dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-    service_name = fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name="service_name",
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box=service_name
-    )
-    service_dialog = ServiceDialog(label=dialog_name, description="my dialog",
-                     submit=True, cancel=True,
-                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
-                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
-    service_dialog.create(element_data)
-    request.addfinalizer(service_dialog.delete)
-    yield dialog_name, service_name
-
-
-@pytest.yield_fixture(scope="function")
-def catalog(request):
-    catalog = "cat_" + fauxfactory.gen_alphanumeric()
-    cat = Catalog(name=catalog,
-                  description="my catalog")
-    cat.create()
-    request.addfinalizer(cat.delete)
-    yield catalog
-
-
 @pytest.fixture(scope="function")
 def catalog_item(request, config_manager, dialog, catalog):
-    dialog_name, service_name = dialog
     config_manager_obj = config_manager
+    provider_name = config_manager_obj.yaml_data.get('name')
     provisioning_data = config_manager_obj.yaml_data['provisioning_data']
-    item_type, provider_type, provider, template = map(provisioning_data.get,
-                                                       ('item_type',
-                                                        'provider_type',
-                                                        'provider',
-                                                        'template'))
-    item_name = service_name
+    item_type, provider_type, template = map(provisioning_data.get,
+                                            ('item_type', 'provider_type', 'template'))
+    item_name = dialog.element_data.get("default_text_box")
     catalog_item = CatalogItem(item_type=item_type,
                                name=item_name,
                                description="my catalog",
                                display_in=True,
                                catalog=catalog,
-                               dialog=dialog_name,
-                               provider=config_manager_obj,
+                               dialog=dialog,
+                               provider=version.pick({
+                                   '5.7': '{} Configuration Manager'.format(provider_name),
+                                   '5.8': '{} Automation Manager'.format(provider_name)}),
                                provider_type=provider_type,
                                config_template=template)
     request.addfinalizer(catalog_item.delete)
@@ -104,16 +69,14 @@ def catalog_item(request, config_manager, dialog, catalog):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq-ui-classic:267'])
-def test_order_catalog_item(catalog_item, request):
+def test_order_tower_catalog_item(catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
@@ -124,16 +87,14 @@ def test_order_catalog_item(catalog_item, request):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(blockers=[BZ(1420179, forced_streams=["5.6", "5.7", "upstream"])])
 def test_retire_ansible_service(catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
@@ -142,5 +103,3 @@ def test_retire_ansible_service(catalog_item, request):
     assert 'Provisioned Successfully' in row.last_message.text
     myservice = MyService(catalog_item.name)
     myservice.retire()
-    # this is to assert that service is deleted from VMDB after retirement
-    assert(myservice.exists()) is False
