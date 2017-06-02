@@ -60,6 +60,7 @@ from fixtures.pytest_store import store
 from utils import conf, version
 from utils.log import create_sublogger
 from utils.path import conf_path, log_path, scripts_data_path
+from utils.quote import quote
 from utils.wait import wait_for, TimedOutError
 
 # paths to all of the coverage-related files
@@ -240,11 +241,16 @@ class CoverageManager(object):
         # collect back to the collection appliance if parallelized
         if store.current_appliance != self.collection_appliance:
             self.print_message('sending reports to {}'.format(self.collection_appliance.address))
-            self.ipapp.ssh_client.run_command('scp -o StrictHostKeyChecking=no '
+            result = self.ipapp.ssh_client.run_command(
+                'sshpass -p {passwd} '
+                'scp -o StrictHostKeyChecking=no '
                 '-r /var/www/miq/vmdb/coverage/* '
                 '{addr}:/var/www/miq/vmdb/coverage/'.format(
-                    addr=self.collection_appliance.address),
+                    addr=self.collection_appliance.address,
+                    passwd=quote(self.ipapp.ssh_client._connect_kwargs['password'])),
                 timeout=1800)
+            if not result:
+                self.print_message('There was an error sending reports: ' + str(result))
 
     def _retrieve_coverage_reports(self):
         # Before merging, archive and collect all the raw coverage results
