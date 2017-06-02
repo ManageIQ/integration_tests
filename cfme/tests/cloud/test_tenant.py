@@ -44,8 +44,10 @@ def test_tenant_crud(tenant):
 
     tenant.wait_for_appear()
     assert tenant.exists()
+
     with update(tenant):
         tenant.name = fauxfactory.gen_alphanumeric(8)
+    tenant.wait_for_appear()
     assert tenant.exists()
 
     tenant.delete(from_details=False, cancel=True)
