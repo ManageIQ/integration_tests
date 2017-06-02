@@ -544,6 +544,8 @@ def _fill_credential(form, cred, validate=None):
 
 def get_credentials_from_config(credential_config_name):
     creds = conf.credentials[credential_config_name]
+    logger.info('credential name: {cred}'.format(cred=credential_config_name))
+    logger.info('credentials itself: {cred}'.format(cred=creds))
     return Host.Credential(principal=creds['username'],
                            secret=creds['password'])
 
