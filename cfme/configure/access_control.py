@@ -354,6 +354,8 @@ class EditGroupView(GroupForm):
 class AllGroupView(ConfigurationView):
     title = Text('#explorer_title_text')
 
+    table = Table("//div[@id='main_div']//table")
+
     @property
     def is_displayed(self):
         return (
@@ -362,7 +364,9 @@ class AllGroupView(ConfigurationView):
         )
 
 
-class EditGroupSequenceView(GroupForm):
+class EditGroupSequenceView(ConfigurationView):
+    title = Text('#explorer_title_text')
+
     group_order_selector = UpDownSelect(
         '#seq_fields',
         './/a[@title="Move selected fields up"]/img',
@@ -370,7 +374,9 @@ class EditGroupSequenceView(GroupForm):
 
     save_button = Button('Save')
     reset_button = Button('Reset')
+    cancel_button = Button('Cancel')
 
+    @property
     def is_displayed(self):
         return (
             self.in_configuration and self.access_control.is_opened and
@@ -512,7 +518,7 @@ class Group(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def set_group_order(self, items):
-        original_order = get_group_order()
+        original_order = self.get_group_order()
         view = self.create_view(EditGroupSequenceView)
         assert view.is_displayed
         # We pick only the same amount of items for comparing
@@ -522,6 +528,10 @@ class Group(Updateable, Pretty, Navigatable):
         view.group_order_selector.fill(items)
         view.save_button.click()
 
+    def get_group_order(self):
+        view = navigate_to(Group, 'EditGroupSequence')
+        return view.group_order_selector.items
+
     @property
     def exists(self):
         try:
@@ -529,11 +539,6 @@ class Group(Updateable, Pretty, Navigatable):
             return True
         except CandidateNotFound:
             return False
-
-
-def get_group_order():
-    view = navigate_to(Group, 'EditGroupSequence')
-    return view.group_order_selector.items
 
 
 @navigator.register(Group, 'All')
@@ -817,6 +822,15 @@ class DetailsTenantView(ConfigurationView):
         )
 
 
+class ParentDetailsTenantView(DetailsTenantView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_configuration and self.access_control.is_opened and
+            self.title.text == 'Tenant "{}"'.format(self.context['object'].parent_tenant.name)
+        )
+
+
 class EditTenantView(TenantForm):
     save_button = Button('Save')
     reset_button = Button('Reset')
@@ -907,7 +921,7 @@ class Tenant(Updateable, Pretty, Navigatable):
         view.fill({'name': self.name,
                    'description': self.description})
         view.add_button.click()
-        view = self.create_view(DetailsTenantView)
+        view = self.create_view(ParentDetailsTenantView)
         if isinstance(self, Tenant):
             view.flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
         elif isinstance(self, Project):
@@ -928,15 +942,16 @@ class Tenant(Updateable, Pretty, Navigatable):
             view.cancel_button.click()
             flash_message = 'Edit of Project "{}" was cancelled by the user'.format(
                 updates.get('name', self.name))
-        view = view.create(DetailsTenantView, override=updates)
+        view = self.create_view(DetailsTenantView, override=updates)
         view.flash.assert_message(flash_message)
         assert view.is_displayed
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this item', handle_alert=True)
-        view = self.create_view(DetailsTenantView)
+        view = self.create_view(ParentDetailsTenantView)
         view.flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
+        assert view.is_displayed
 
     def set_quota(self, **kwargs):
         view = navigate_to(self, 'ManageQuotas')
