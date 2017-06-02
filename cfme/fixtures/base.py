@@ -14,10 +14,16 @@ from utils.conf import env
 
 def pytest_sessionstart(session):
     appliance = get_or_create_current_appliance()
-    try:
-        appliance.check_no_conflicting_providers()
-    except ApplianceException as e:
-        raise pytest.UsageError("Conflicting providers were found: {}".format(e))
+    if not session.config.getvalue('no_provider_check'):
+        try:
+            appliance.check_no_conflicting_providers()
+        except ApplianceException as e:
+            raise pytest.UsageError("Conflicting providers were found: {}".format(e))
+
+
+def pytest_addoption(parser):
+    parser.addoption("--no-provider-check", action="store_true", default=False,
+                     help="Will not check validity of existing providers, when specified")
 
 
 @pytest.fixture(scope="session")
