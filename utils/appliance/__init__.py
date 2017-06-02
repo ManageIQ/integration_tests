@@ -1633,7 +1633,7 @@ class IPAppliance(object):
         return result
 
     @logger_wrap("Rebooting Appliance: {}")
-    def reboot(self, wait_for_web_ui=True, log_callback=None):
+    def reboot(self, wait_for_web_ui=True, quit_browser=False, log_callback=None):
         log_callback('Rebooting appliance')
         client = self.ssh_client
 
@@ -1645,6 +1645,8 @@ class IPAppliance(object):
 
         if wait_for_web_ui:
             self.wait_for_web_ui()
+        if quit_browser:
+            self.browser.quit_browser()
 
     @logger_wrap("Waiting for web_ui: {}")
     def wait_for_web_ui(self, timeout=900, running=True, log_callback=None):
@@ -1713,6 +1715,21 @@ class IPAppliance(object):
                                 wait_for_web_ui=wait_for_web_ui_after_reboot)
                 else:
                     log_callback('A reboot is required before vddk will work')
+
+    @logger_wrap("Uninstall VDDK: {}")
+    def uninstall_vddk(self, log_callback=None):
+        """Uninstall the vddk from a appliance"""
+        with self.ssh_client as client:
+            is_installed = client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64').success
+            if is_installed:
+                status, out = client.run_command('yum -y remove vmware-vix-disklib')
+                if status != 0:
+                    log_callback('VDDK removing failure (rc: {})\n{}'.format(out, status))
+                    raise Exception('VDDK removing failure (rc: {})\n{}'.format(out, status))
+                else:
+                    log_callback('VDDK has been successfully removed.')
+            else:
+                log_callback('VDDK is not installed.')
 
     @logger_wrap("Install Netapp SDK: {}")
     def install_netapp_sdk(self, sdk_url=None, reboot=False, log_callback=None):

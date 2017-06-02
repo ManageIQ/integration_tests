@@ -944,7 +944,7 @@ class VmAllWithTemplates(CFMENavigateStep):
         reset_page()
 
     def am_i_here(self, *args, **kwargs):
-            return match_page(summary='All VMs & Templates')
+        return match_page(summary='All VMs & Templates')
 
 
 @navigator.register(Template, 'AllForProvider')
