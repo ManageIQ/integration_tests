@@ -45,7 +45,7 @@ def parse_cmd_line():
                         default=None)
     parser.add_argument('--provider-type', dest='provider_type',
                         help='Type of provider to upload to (virtualcenter, rhevm,'
-                             'openstack, google, scvmm)',
+                             'openstack, gce, scvmm)',
                         default=None)
     parser.add_argument('--provider-version', dest='provider_version',
                         help='Version of chosen provider',
@@ -353,7 +353,7 @@ def main():
             module = 'template_upload_scvmm'
             if module not in dir_files.iterkeys():
                 continue
-        elif provider_type == 'google':
+        elif provider_type == 'gce':
             module = 'template_upload_gce'
             if module not in dir_files.iterkeys():
                 continue
