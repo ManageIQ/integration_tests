@@ -1,7 +1,9 @@
 from functools import partial
 from random import sample
 from navmazing import NavigateToSibling, NavigateToAttribute
-
+from cfme.base.login import BaseLoggedInPage
+from widgetastic_patternfly import SelectorDropdown
+import random
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
@@ -411,15 +413,11 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
 
     return sample(rows, min(count, len(rows)))
 
-from cfme.base.login import BaseLoggedInPage
-from widgetastic_patternfly import SelectorDropdown, Button
-import random
 
-class ad_hoc_matrice_view(BaseLoggedInPage):
+class ad_hoc_metrics_view(BaseLoggedInPage):
     filter_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
     apply_btn = form_buttons.apply_filters
     selected_filter = None
-
 
     @property
     def is_displayed(self):
@@ -437,9 +435,10 @@ class ad_hoc_matrice_view(BaseLoggedInPage):
     def get_total_results_count(self):
         return Text(self, 'h5.ng-binding').text.split()[0]
 
+
 @navigator.register(ContainersProvider, 'AdHoc')
 class AdHocMain(CFMENavigateStep):
-    VIEW = ad_hoc_matrice_view
+    VIEW = ad_hoc_metrics_view
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

@@ -5,7 +5,6 @@ from cfme.containers.provider import ContainersProvider, navigate_and_get_rows, 
 from utils.version import current_version
 from cfme.web_ui import toolbar, tabstrip, form_buttons
 from utils.appliance.implementations.ui import navigate_to
-import random
 
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.6"),
@@ -69,4 +68,5 @@ def test_ad_hoc_metrics_select_filter(provider, appliance):
 
     view.set_random_filter()
     view.apply_filter()
-    assert view.get_total_results_count() != 0, "No results found for {filter}".format(filter=view.selected_filter)
+    assert view.get_total_results_count() != 0,\
+        "No results found for {filter}".format(filter=view.selected_filter)
