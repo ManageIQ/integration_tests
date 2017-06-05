@@ -2,7 +2,8 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, Form, Input, Region, Select, fill, flash, form_buttons
+from cfme.web_ui import (CheckboxTable, Form, Input, Region, AngularSelect, Select, fill, flash,
+    form_buttons)
 from utils import version
 from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigate_to
@@ -56,7 +57,7 @@ update_buttons = Region(
 
 registration_form = Form(
     fields=[
-        ("service", Select("//select[@id='register_to']")),
+        ("service", AngularSelect('register_to')),
         ("url", Input('server_url')),
         ("repo_name", Input('repo_name')),
         ("use_proxy", Input('use_proxy')),
@@ -191,10 +192,9 @@ def update_registration(service,
     if set_default_repository:
         sel.click(registration_buttons.repo_default)
 
-    if validate and service != 'sat5':
-        sel.click(form_buttons.validate_short)
-        flash.assert_no_errors()
-        flash.dismiss()
+    sel.click(form_buttons.validate_short)
+    flash.assert_no_errors()
+    flash.dismiss()
 
     if organization_sat6:
         sel.select(registration_form.locators['organization_sat6'], organization_sat6)
