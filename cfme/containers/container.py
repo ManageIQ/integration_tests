@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 import random
+import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
@@ -12,6 +13,7 @@ from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.containers.provider import details_page, pol_btn, mon_btn
+
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -52,14 +54,9 @@ class Container(Taggable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         containers_list = provider.mgmt.list_container()
-        instances = []
         random.shuffle(containers_list)
-        while containers_list and len(instances) < count:
-            chosen = containers_list.pop()
-            instances.append(
-                cls(chosen.name, chosen.cg_name, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.name, obj.cg_name, appliance=appliance)
+                for obj in itertools.islice(containers_list, count)]
 
 
 @navigator.register(Container, 'All')

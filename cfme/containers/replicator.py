@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+import itertools
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -49,14 +50,9 @@ class Replicator(Taggable, Labelable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         rc_list = provider.mgmt.list_replication_controller()
-        instances = []
         random.shuffle(rc_list)
-        while rc_list and len(instances) < count:
-            chosen = rc_list.pop()
-            instances.append(
-                cls(chosen.name, chosen.project_name, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
+                for obj in itertools.islice(rc_list, count)]
 
 
 @navigator.register(Replicator, 'All')

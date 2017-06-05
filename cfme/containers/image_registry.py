@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 import random
+import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
@@ -40,14 +41,9 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         ir_list = provider.mgmt.list_image_registry()
-        instances = []
         random.shuffle(ir_list)
-        while ir_list and len(instances) < count:
-            chosen = ir_list.pop()
-            instances.append(
-                cls(chosen.host, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.host, provider, appliance=appliance)
+                for obj in itertools.islice(ir_list, count)]
 
 
 @navigator.register(ImageRegistry, 'All')
