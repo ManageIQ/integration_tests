@@ -15,6 +15,16 @@ class NullFormatter
 end
 
 SimpleCov.start 'rails' do
+  filters.clear
+  add_filter do |src|
+    # This is a modified version of the original block filter
+    include_file = src.filename =~ /\A#{Regexp.escape(SimpleCov.root)}/io
+    unless include_file
+      # A gem maybe?
+      include_file = src.filename =~ /\A\/opt\/rh\/cfme-gemset\/gems\/manageiq-/io
+    end
+    ! include_file
+  end
   # Set the coverage dir for this process to "RAILS_ROOT/coverage/[ipaddress]/[pid]/"
   eth0 = LinuxAdmin::NetworkInterface.new("eth0")
   coverage_dir File.join(rails_root, "coverage", eth0.address, Process.pid.to_s)
