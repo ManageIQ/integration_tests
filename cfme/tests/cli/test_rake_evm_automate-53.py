@@ -55,7 +55,7 @@ def test_evm_automate_import_export_works_upstream(appliance, rake, soft_assert)
         "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false "
         "SYSTEM=false")
     assert rc == 0, stdout
-    appliance.ssh_client.run_command("rm -f QECliTesting.yaml")
+    appliance.ssh_client.run_command("rm -f /root/QECliTesting.yaml")
     rc, stdout = rake("evm:automate:export DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml")
     assert rc == 0, stdout
     assert appliance.ssh_client.run_command(
