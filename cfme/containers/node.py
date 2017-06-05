@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
 from functools import partial
+import random
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_manageiq import (
@@ -9,7 +11,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import Taggable, SummaryMixin
-from cfme.containers.provider import ContainersProvider
+from cfme.containers.provider import ContainersProvider, Labelable
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
@@ -75,7 +77,7 @@ class NodeAllView(NodeView):
     paginator = PaginationPane()
 
 
-class Node(Taggable, SummaryMixin, Navigatable):
+class Node(Taggable, Labelable, SummaryMixin, Navigatable):
     def __init__(self, name, provider, collection=None, appliance=None):
         self.name = name
         self.provider = provider
@@ -97,6 +99,19 @@ class Node(Taggable, SummaryMixin, Navigatable):
         """
         self.load_details()
         return InfoBlock.text(*ident)
+
+    @classmethod
+    def get_random_instances(cls, provider, count=1, appliance=None):
+        """Generating random instances."""
+        node_list = provider.mgmt.list_node()
+        instances = []
+        random.shuffle(node_list)
+        while node_list and len(instances) < count:
+            chosen = node_list.pop()
+            instances.append(
+                cls(chosen.name, provider, appliance=appliance)
+            )
+        return instances
 
 
 # Still registering Node to keep on consistency on container objects navigations

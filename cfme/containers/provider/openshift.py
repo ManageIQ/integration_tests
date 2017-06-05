@@ -1,7 +1,10 @@
+from cached_property import cached_property
+
 from . import ContainersProvider
 from utils.varmeth import variable
 from os import path
 from mgmtsystem.openshift import Openshift
+from utils.ocp_cli import OcpCli
 
 
 class CustomAttribute(object):
@@ -25,6 +28,10 @@ class OpenshiftProvider(ContainersProvider):
             name=name, credentials=credentials, key=key, zone=zone, hostname=hostname, port=port,
             sec_protocol=sec_protocol, hawkular_sec_protocol=hawkular_sec_protocol,
             provider_data=provider_data, appliance=appliance)
+
+    @cached_property
+    def cli(self):
+        return OcpCli(self)
 
     def href(self):
         return self.appliance.rest_api.collections.providers\

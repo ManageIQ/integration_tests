@@ -109,10 +109,9 @@ def test_container_status_relationships_data_integrity(provider):
     rows = navigate_and_get_rows(provider, Pod, 3)
     if not rows:
         pytest.skip('No containers found to test. skipping...')
-    pod_names = [r.name.text for r in rows]
 
-    for name in pod_names:
-        obj = Pod(name, provider)
+    for row in rows:
+        obj = Pod(row.name.text, row.project_name.text, provider)
         assert obj.summary.relationships.containers.value == \
             obj.summary.container_statuses_summary.running.value + \
             obj.summary.container_statuses_summary.waiting.value + \

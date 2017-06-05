@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import random
+
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, paginator, match_location,\
     PagedTable, CheckboxTable
-from cfme.containers.provider import details_page
+from cfme.containers.provider import details_page, Labelable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -16,10 +18,11 @@ paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 match_page = partial(match_location, controller='container_routes', title='Routes')
 
 
-class Route(Taggable, SummaryMixin, Navigatable):
+class Route(Taggable, Labelable, SummaryMixin, Navigatable):
 
-    def __init__(self, name, provider, appliance=None):
+    def __init__(self, name, project_name, provider, appliance=None):
         self.name = name
+        self.project_name = project_name
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
 
@@ -40,6 +43,19 @@ class Route(Taggable, SummaryMixin, Navigatable):
         """
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
+
+    @classmethod
+    def get_random_instances(cls, provider, count=1, appliance=None):
+        """Generating random instances."""
+        route_list = provider.mgmt.list_route()
+        instances = []
+        random.shuffle(route_list)
+        while route_list and len(instances) < count:
+            chosen = route_list.pop()
+            instances.append(
+                cls(chosen.name, chosen.project_name, provider, appliance=appliance)
+            )
+        return instances
 
 
 @navigator.register(Route, 'All')
@@ -65,4 +81,5 @@ class Details(CFMENavigateStep):
 
     def step(self):
         tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name}))
+        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name,
+                                                           'Project Name': self.obj.project_name}))
