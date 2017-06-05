@@ -158,7 +158,7 @@ validate_multi_host = FormButton("Validate the credentials by logging into the s
 host_provision_submit = FormButton("Submit this provisioning request")
 host_provision_cancel = FormButton("Cancel this provisioning request")
 retrieve = FormButton("LDAP Group Lookup")
-
+apply_filters = FormButton("Apply Filters", ng_click="dash.applyFilters()")
 
 _stored_pw_script = '//a[contains(@id, "change_stored_password")]'
 _stored_pw_angular = "//a[contains(@ng-hide, 'bChangeStoredPassword')]"
