@@ -6,6 +6,7 @@ from datetime import timedelta
 from cfme.optimize.bottlenecks import Bottlenecks
 from utils import conf
 from utils.appliance.implementations.ui import navigate_to
+from utils.timeutil import parsetime
 from utils.ssh import SSHClient
 
 
@@ -40,7 +41,7 @@ def db_restore(temp_appliance_extended_db):
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])
     with db_storage_ssh as ssh_client:
         # Different files for different versions
-        ver = "_58" if temp_appliance_extended_db.version > '5.7' else ""
+        ver = "_58" if temp_appliance_extended_db.version > '5.7' else "_57"
         rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
         ssh_client.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver),
                             rand_filename)
@@ -105,7 +106,7 @@ def test_bottlenecks_report_time_zone(temp_appliance_extended_db, db_restore, db
         # Selecting row by uniq value
         db_row = db_events.filter(db_tbl.message == row[5].text)
         # Compare bottleneck's table timestamp with db
-        assert row[0].text == db_row[0][0].strftime("%m/%d/%y %H:%M:%S UTC")
+        assert row[0].text == db_row[0][0].strftime(parsetime.american_with_utc_format)
         # Changing time zone
         view.report.time_zone.fill('(GMT-04:00) La Paz')
         row = view.report.event_details[0]
@@ -153,7 +154,7 @@ def test_bottlenecks_summary_time_zone(temp_appliance_extended_db, db_restore, d
         # Selecting row by uniq value
         db_row = db_events.filter(db_tbl.message == events[0].message)
         # Compare event timestamp with db
-        assert events[0].time_stamp == db_row[0][0].strftime("%Y-%m-%d %H:%M:%S UTC")
+        assert events[0].time_stamp == db_row[0][0].strftime(parsetime.iso_with_utc_format)
         # Changing time zone
         view.summary.time_zone.fill('(GMT-04:00) La Paz')
         events = view.summary.chart.get_events()

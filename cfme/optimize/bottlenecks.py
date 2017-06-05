@@ -54,6 +54,7 @@ class All(CFMENavigateStep):
     VIEW = BottlenecksTabsView
 
     def resetter(self):
+        """ Set values to default """
         self.view.report.event_groups.fill('<ALL>')
         self.view.report.show_host_events.fill(False)
         self.view.report.time_zone.fill('(GMT+00:00) UTC')

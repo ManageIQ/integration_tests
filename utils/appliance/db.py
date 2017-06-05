@@ -125,6 +125,11 @@ class ApplianceDB(AppliancePlugin):
                 output)
             self.logger.error(msg)
             raise ApplianceException(msg)
+        if self.appliance.version > '5.8':
+            status, output = self.ssh_client.run_command("fix_auth --databaseyml -i {}".format(
+                conf.credentials['database'].password), timeout=45)
+            if status != 0:
+                self.logger.error("Failed to change invalid db password: {}".format(output))
 
     def setup(self, **kwargs):
         """Configure database
