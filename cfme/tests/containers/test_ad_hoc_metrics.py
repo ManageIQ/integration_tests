@@ -5,6 +5,7 @@ from cfme.containers.provider import ContainersProvider, navigate_and_get_rows, 
 from utils.version import current_version
 from cfme.web_ui import toolbar, tabstrip, form_buttons
 from utils.appliance.implementations.ui import navigate_to
+import random
 
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.6"),
@@ -21,7 +22,7 @@ def matrics_up_and_running(provider):
     hawkular_url = router["status"]["ingress"][0]["host"]
     response = requests.get("https://{url}:443".format(url=hawkular_url), verify=False)
     if not response.ok:
-        raise Exception("hawkular failed started!")
+        raise Exception("hawkular failed to start!")
     logger.info("hawkular started successfully")
 
 
@@ -32,20 +33,40 @@ def set_hawkular_without_validation(provider_object):
     form_buttons.validate()
 
 
-def navigate_to_ad_hoc_page(provider_object):
+def navigate_to_ad_hoc_view(provider_object):
     navigate_to(provider_object, 'Details')
-    is_greyed = toolbar.is_greyed('Monitoring', 'Ad hoc Metrics')
-    assert not is_greyed, "Monitoring --> Ad hoc Metrics not activated despite provider was set"
+    toolbar.select('Monitoring', 'Ad hoc Metrics')
+
+
+def is_ad_hoc_greyed(provider_object):
+    navigate_to(provider_object, 'Details')
+    return toolbar.is_greyed('Monitoring', 'Ad hoc Metrics')
 
 
 @pytest.mark.polarion('CMP-10643')
 def test_ad_hoc_metrics_overview(provider):
-    matrics_up_and_running(provider)
 
     chosen_provider = navigate_and_get_rows(provider, ContainersProvider, 1).pop()
     provider_object = obj_factory(ContainersProvider, chosen_provider, provider)
 
-    # TODO: replace with pavelz code if marged
+    # TODO: replace with pavelz code if meraged
     set_hawkular_without_validation(provider_object)
 
-    navigate_to_ad_hoc_page(provider_object)
+    assert not is_ad_hoc_greyed(provider_object), \
+        "Monitoring --> Ad hoc Metrics not activated despite provider was set"
+
+
+@pytest.mark.polarion('CMP-10645')
+def test_ad_hoc_metrics_select_filter(provider, appliance):
+
+    chosen_provider = navigate_and_get_rows(provider, ContainersProvider, 1).pop()
+    provider_object = obj_factory(ContainersProvider, chosen_provider, provider)
+
+    # TODO: replace with pavelz code if meraged
+    set_hawkular_without_validation(provider_object)
+
+    view = navigate_to(provider_object, 'AdHoc')
+
+    view.set_random_filter()
+    view.apply_filter()
+    assert view.get_total_results_count() != 0, "No results found for {filter}".format(filter=view.selected_filter)

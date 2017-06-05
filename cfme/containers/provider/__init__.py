@@ -1,6 +1,5 @@
 from functools import partial
 from random import sample
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.provider import BaseProvider
@@ -15,7 +14,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from utils.browser import ensure_browser_open
 from utils.pretty import Pretty
 from utils.varmeth import variable
-
+from widgetastic.widget import Text
 
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
@@ -411,3 +410,37 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
         return []
 
     return sample(rows, min(count, len(rows)))
+
+from cfme.base.login import BaseLoggedInPage
+from widgetastic_patternfly import SelectorDropdown, Button
+import random
+
+class ad_hoc_matrice_view(BaseLoggedInPage):
+    filter_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
+    apply_btn = form_buttons.apply_filters
+    selected_filter = None
+
+
+    @property
+    def is_displayed(self):
+        return False
+
+    def apply_filter(self):
+        form_buttons._fill_fb_bool(self.apply_btn, True)
+
+    def set_random_filter(self):
+
+        random_filter = str(random.choice(self.filter_dropdown.items))
+        self.selected_filter = random_filter
+        self.filter_dropdown.fill_with(random_filter)
+
+    def get_total_results_count(self):
+        return Text(self, 'h5.ng-binding').text.split()[0]
+
+@navigator.register(ContainersProvider, 'AdHoc')
+class AdHocMain(CFMENavigateStep):
+    VIEW = ad_hoc_matrice_view
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Ad hoc Metrics')
