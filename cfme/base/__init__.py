@@ -4,7 +4,7 @@ from utils.appliance import Navigatable
 from utils.pretty import Pretty
 
 
-class Server(Navigatable, sentaku.Element):
+class Server(Navigatable, sentaku.modeling.ElementMixin):
     def __init__(self, appliance, zone=None, name="EVM", sid=1):
         Navigatable.__init__(self, appliance=appliance)
         self.zone = zone or appliance.server.zone
@@ -14,7 +14,7 @@ class Server(Navigatable, sentaku.Element):
         self.parent = self.appliance.context
 
 
-class ZoneCollection(Navigatable, sentaku.Element):
+class ZoneCollection(Navigatable, sentaku.modeling.ElementMixin):
 
     create = sentaku.ContextualMethod()
 
@@ -24,7 +24,7 @@ class ZoneCollection(Navigatable, sentaku.Element):
         self.parent = self.appliance.context
 
 
-class Zone(Pretty, Navigatable, sentaku.Element):
+class Zone(Pretty, Navigatable, sentaku.modeling.ElementMixin):
     """ Configure/Configuration/Region/Zones functionality
 
     Create/Read/Update/Delete functionality.
@@ -53,7 +53,7 @@ class Zone(Pretty, Navigatable, sentaku.Element):
         self.parent = self.appliance.context
 
 
-class Region(Navigatable, sentaku.Element):
+class Region(Navigatable, sentaku.modeling.ElementMixin):
     def __init__(self, appliance, number=0):
         self.appliance = appliance
         self.zones = set()
