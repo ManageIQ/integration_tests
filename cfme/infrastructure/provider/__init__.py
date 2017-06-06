@@ -1,14 +1,13 @@
 """ A model of an Infrastructure Provider in CFME
 """
 from functools import partial
-from collections import Iterable
 from widgetastic.utils import Fillable
 
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
-from cfme.common.provider import CloudInfraProvider, DefaultEndpoint
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.provider_views import (ProviderAddView,
                                         ProviderEditView,
                                         ProviderDetailsView,
@@ -82,19 +81,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
             return self.endpoints['default']
         except KeyError:
             return None
-
-    @staticmethod
-    def _prepare_endpoints(endpoints):
-        if not endpoints:
-            return {}
-        elif isinstance(endpoints, dict):
-            return endpoints
-        elif isinstance(endpoints, Iterable):
-            return dict([(e.name, e) for e in endpoints])
-        elif isinstance(endpoints, DefaultEndpoint):
-            return {endpoints.name: endpoints}
-        else:
-            raise ValueError("Endpoints should be either dict or endpoint class")
 
     @property
     def hostname(self):

@@ -1,5 +1,7 @@
 import datetime
+from collections import Iterable
 from functools import partial
+
 
 from manageiq_client.api import APIException
 from widgetastic.widget import View, Text
@@ -654,6 +656,19 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def one_of(self, *classes):
         """ Returns true if provider is an instance of any of the classes or sublasses there of"""
         return isinstance(self, classes)
+
+    @staticmethod
+    def _prepare_endpoints(endpoints):
+        if not endpoints:
+            return {}
+        elif isinstance(endpoints, dict):
+            return endpoints
+        elif isinstance(endpoints, Iterable):
+            return dict([(e.name, e) for e in endpoints])
+        elif isinstance(endpoints, DefaultEndpoint):
+            return {endpoints.name: endpoints}
+        else:
+            raise ValueError("Endpoints should be either dict or endpoint class")
 
 
 def get_paginator_value():

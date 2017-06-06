@@ -162,17 +162,29 @@ class CloudProvider(Pretty, CloudInfraProvider):
         {version.LOWEST: form_buttons.save,
          '5.5': form_buttons.angular_save})
 
-    def __init__(self, name=None, credentials=None, zone=None, key=None, appliance=None):
+    def __init__(self, name=None, endpoints=None, zone=None, key=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
-        if not credentials:
-            credentials = {}
         self.name = name
-        self.credentials = credentials
         self.zone = zone
         self.key = key
+        self.endpoints = self._prepare_endpoints(endpoints)
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+    @property
+    def default_endpoint(self):
+        try:
+            return self.endpoints['default']
+        except KeyError:
+            return None
+
+    def as_fill_value(self):
+        return self.name
+
+    @property
+    def view_value_mapping(self):
+        return {'name': self.name}
 
 
 @navigator.register(CloudProvider, 'All')
