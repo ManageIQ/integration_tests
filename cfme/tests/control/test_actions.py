@@ -12,6 +12,8 @@ Required YAML keys:
 """
 import fauxfactory
 import pytest
+from datetime import datetime
+from functools import partial
 
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
@@ -22,8 +24,6 @@ from cfme.services import requests
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb
-from datetime import datetime
-from functools import partial
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
@@ -242,23 +242,6 @@ def policy_name(name_suffix):
 @pytest.fixture(scope="module")
 def policy_profile_name(name_suffix):
     return "action_testing: policy profile {}".format(name_suffix)
-
-
-@pytest.yield_fixture(scope="module")
-def automate_role_set(request):
-    """ Sets the Automate role that the VM can be provisioned.
-
-    Sets the Automate role state back when finished the module tests.
-    """
-    from cfme.configure import configuration
-    roles = configuration.get_server_roles()
-    old_roles = dict(roles)
-    roles["automate"] = True
-    roles["smartproxy"] = True
-    roles["smartstate"] = True
-    configuration.set_server_roles(**roles)
-    yield
-    configuration.set_server_roles(**old_roles)
 
 
 @pytest.fixture(scope="module")
