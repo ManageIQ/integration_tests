@@ -2,7 +2,6 @@
 """ Tests used to check whether assigned actions really do what they're supposed to do.
 
 Required YAML keys:
-    * Provider must have hostname (not amazon)
     * Provider must have section provisioning/template (otherwise test will be skipped)
     * RHEV-M provider must have provisioning/vlan specified, otherwise the test fails on provis.
     * There should be a 'datastores_not_for_provision' in the root, being a list of datastores that
@@ -12,29 +11,23 @@ Required YAML keys:
 """
 import fauxfactory
 import pytest
-from datetime import datetime
 from functools import partial
 
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.control.explorer import actions, policies, policy_profiles
-from cfme.configure.tasks import Tasks
-from cfme.infrastructure import host
 from cfme.services import requests
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.web_ui import toolbar as tb
+from cfme import test_requirements
 from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
-from utils.conf import cfme_data
 from utils.generators import random_vm_name
 from utils.log import logger
-from utils.version import current_version
+from utils.hosts import setup_host_creds
 from utils.virtual_machines import deploy_template
-from utils.wait import wait_for, wait_for_decorator, TimedOutError
+from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
-from cfme import test_requirements
+from . import vddk_url_map, do_scan
 
 
 class VMWrapper(Pretty):
@@ -62,27 +55,29 @@ class VMWrapper(Pretty):
         return partial(func, self._vm)
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(metafunc)
+# def pytest_generate_tests(metafunc):
+#     # Filter out providers without provisioning data or hosts defined
+#     argnames, argvalues, idlist = testgen.all_providers(metafunc)
 
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
+#     new_idlist = []
+#     new_argvalues = []
+#     for i, argvalue_tuple in enumerate(argvalues):
+#         args = dict(zip(argnames, argvalue_tuple))
 
-        if args["provider"].type in {"scvmm"}:
-            continue
+#         if args["provider"].type in {"scvmm"}:
+#             continue
 
-        if ((metafunc.function is test_action_create_snapshot_and_delete_last) or
-            (metafunc.function is test_action_create_snapshots_and_delete_them)) \
-                and args['provider'].type in {"rhevm", "openstack", "ec2"}:
-            continue
+#         if ((metafunc.function is test_action_create_snapshot_and_delete_last) or
+#             (metafunc.function is test_action_create_snapshots_and_delete_them)) \
+#                 and args['provider'].type in {"rhevm", "openstack", "ec2"}:
+#             continue
 
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
+#         new_idlist.append(idlist[i])
+#         new_argvalues.append(argvalues[i])
 
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+#     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+
+pytest_generate_tests = testgen.generate(gen_func=testgen.all_providers, scope="module")
 
 
 pytestmark = [
@@ -119,51 +114,25 @@ def vm_name(provider):
     return random_vm_name("action", max_length=16)
 
 
-def set_host_credentials(request, provider, vm):
-    # Add credentials to host
-    host_name = vm.api.host.name
-    test_host = host.Host(name=host_name, provider=provider)
-
-    host_list = cfme_data.get('management_systems', {})[vm._prov.key].get('hosts', [])
-    host_data = [x for x in host_list if x.name == host_name][0]
-
-    if not test_host.has_valid_credentials:
-        test_host.update(
-            updates={'credentials': host.get_credentials_from_config(host_data['credentials'])},
-            validate_credentials=True
-        )
-
-    # Remove creds after test
-    @request.addfinalizer
-    def _host_remove_creds():
-        test_host.update(
-            updates={'credentials': host.Host.Credential(
-                principal="", secret="", verify_secret="")},
-            validate_credentials=False
-        )
+@pytest.yield_fixture
+def configure_fleecing(request, appliance, setup_provider_modscope, provider, vm):
+    setup_host_creds(provider.key, vm.api.host.name)
+    appliance.install_vddk(reboot=False, vddk_url=vddk_url_map[str(provider.version)])
+    appliance.reboot(quit_browser=True)
+    yield
+    appliance.uninstall_vddk()
+    setup_host_creds(provider.key, vm.api.host.name, remove_creds=True)
 
 
-@pytest.fixture(scope="module")
-def local_setup_provider(request, appliance, setup_provider_modscope, provider):
-    if provider.type == 'virtualcenter':
-        appliance.install_vddk(reboot=True)
-        appliance.wait_for_web_ui()
-        try:
-            pytest.sel.refresh()
-        except AttributeError:
-            # In case no browser is started
-            pass
-
-
-def _get_vm(request, provider, template_name, vm_name):
+def _get_vm(request, appliance, provider, template_name, vm_name):
     if provider.type == "rhevm":
         kwargs = {"cluster": provider.data["default_cluster"]}
     elif provider.type == "virtualcenter":
         kwargs = {}
     elif provider.type == "openstack":
         kwargs = {}
-        if 'small_template_flavour' in provider.data:
-            kwargs = {"flavour_name": provider.data.get('small_template_flavour')}
+        if 'small_template' in provider.data:
+            kwargs = {"flavour_name": provider.data.get('small_template')}
     elif provider.type == "scvmm":
         kwargs = {
             "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
@@ -209,7 +178,7 @@ def _get_vm(request, provider, template_name, vm_name):
 
     # Get the REST API object
     api = wait_for(
-        lambda: get_vm_object(vm_name),
+        lambda: get_vm_object(appliance, vm_name),
         message="VM object {} appears in CFME".format(vm_name),
         fail_condition=None,
         num_sec=600,
@@ -220,13 +189,13 @@ def _get_vm(request, provider, template_name, vm_name):
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider, local_setup_provider, small_template_modscope, vm_name):
-    return _get_vm(request, provider, small_template_modscope, vm_name)
+def vm(request, appliance, provider, local_setup_provider, small_template_modscope, vm_name):
+    return _get_vm(request, appliance, provider, small_template_modscope, vm_name)
 
 
 @pytest.fixture(scope="module")
-def vm_big(request, provider, local_setup_provider, big_template_modscope, vm_name):
-    return _get_vm(request, provider, big_template_modscope, vm_name)
+def vm_big(request, appliance, provider, local_setup_provider, big_template_modscope, vm_name):
+    return _get_vm(request, appliance, provider, big_template_modscope, vm_name)
 
 
 @pytest.fixture(scope="module")
@@ -289,7 +258,7 @@ def vm_crud_refresh(vm_crud, provider):
 
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, provider):
-    """ Takes care of setting the appliance up for testing """
+    """Takes care of setting the appliance up for testing."""
     policy = policies.VMControlPolicy(
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
@@ -305,7 +274,7 @@ def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, 
 @pytest.yield_fixture(scope="module")
 def policy_for_testing_for_vm_big(
         automate_role_set, vm_big, policy_name, policy_profile_name, provider):
-    """ Takes care of setting the appliance up for testing """
+    """Takes care of setting the appliance up for testing."""
     policy = policies.VMControlPolicy(
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name)
@@ -601,8 +570,9 @@ def test_action_create_snapshots_and_delete_them(
              message="wait for snapshots to be deleted", delay=5)
 
 
-def test_action_initiate_smartstate_analysis(
-        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: provider.type != "virtualcenter")
+def test_action_initiate_smartstate_analysis(request, configure_fleecing, assign_policy_for_testing,
+        vm, vm_off, vm_crud_refresh):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
 
     This test sets the policy that it analyses VM after it's powered on. Then it checks whether
@@ -611,53 +581,14 @@ def test_action_initiate_smartstate_analysis(
     Metadata:
         test_flag: actions, provision
     """
-    # Set host credentials for VMWare
-    if isinstance(vm.provider, VMwareProvider.mgmt_class):
-        set_host_credentials(request, vm.provider, vm)
-
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On",
                                                       ["Initiate SmartState Analysis for VM"])
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
-    switched_on = datetime.utcnow()
     # Start the VM
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False, from_details=True)
-
-    # Wait for VM being tried analysed by CFME
-    def wait_analysis_tried():
-        if current_version() > "5.5":
-            vm.api.reload()
-        try:
-            return vm.api.last_scan_attempt_on.replace(tzinfo=None) >= switched_on
-        except AttributeError:
-            return False
     try:
-        wait_for(wait_analysis_tried, num_sec=360, message="wait for analysis attempt", delay=5)
-    except TimedOutError:
-        pytest.fail("CFME did not even try analysing the VM {}".format(vm.name))
-
-    # Check that analyse job has appeared in the list
-    # Wait for the task to finish
-    @wait_for_decorator(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
-    def is_vm_analysis_finished():
-        """ Check if analysis is finished - if not, reload page
-        """
-        view = navigate_to(Tasks, 'AllTasks')
-        vm_analysis_row = view.tabs.alltasks.table.row(task_name="Scan from Vm {}"
-                                                                 .format(vm.name))
-        return vm_analysis_row.state.text == 'Finished'
-
-    # Wait for VM analysis to finish
-    def wait_analysis_finished():
-        if current_version() > "5.5":
-            vm.api.reload()
-        try:
-            return vm.api.last_scan_on.replace(tzinfo=None) >= switched_on
-        except AttributeError:
-            return False
-    try:
-        wait_for(wait_analysis_finished, num_sec=15 * 60,
-                 message="wait for analysis finished", delay=60)
+        do_scan(vm.crud)
     except TimedOutError:
         pytest.fail("CFME did not finish analysing the VM {}".format(vm.name))
 

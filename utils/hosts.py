@@ -18,7 +18,7 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def setup_host_creds(provider_key, host_name, ignore_errors=False):
+def setup_host_creds(provider_key, host_name, remove_creds=False, ignore_errors=False):
     try:
         host_data = get_host_data_by_name(provider_key, host_name)
         test_host = host.Host(name=host_name)
@@ -39,6 +39,13 @@ def setup_host_creds(provider_key, host_name, ignore_errors=False):
                 delay=10,
                 num_sec=120,
                 fail_func=sel.refresh
+            )
+        elif test_host.has_valid_credentials and remove_creds:
+            test_host.update(
+                updates={'credentials': host.Host.Credential(
+                    principal="", secret="", verify_secret="")
+                },
+                validate_credentials=False
             )
     except Exception as e:
         if not ignore_errors:
