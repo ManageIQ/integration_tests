@@ -615,3 +615,38 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider.mgmt.volume_exists(volume_id):
                 provider.mgmt.delete_volume(volume_id)
+
+
+def test_cloud_provision_dialog_tag(request, provider, testing_instance):
+    """ Tests tagging instance using provisioning dialogs.
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, pick a tag.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit instance page, it should display the selected tags
+
+    Metadata:
+        test_flag: provision
+    """
+    instance, inst_args, image = testing_instance
+    inst_args["apply_tags"] = [(["Service Level *", "Gold"], True)]
+    instance.create(**inst_args)
+
+    logger.info('Waiting for cfme provision request for vm %s', instance.name)
+    row_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
+    cells = {'Description': row_description}
+    try:
+        row, __ = wait_for(requests.wait_for_request, [cells],
+                           fail_func=requests.reload, num_sec=1500, delay=20)
+    except Exception as e:
+        requests.debug_requests()
+        raise e
+    assert normalize_text(row.status.text) == 'ok' and \
+        normalize_text(row.request_state.text) == 'finished', \
+        "Provisioning failed with the message {}".format(row.last_message.text)
+    instance.wait_to_appear(timeout=800)
+
+    tags = instance.get_tags()
+    assert any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+               for tag in tags), "Service Level: Gold not in tags ({})".format(str(tags))
