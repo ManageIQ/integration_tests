@@ -23,7 +23,6 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb
 from datetime import datetime
-from fixtures.pytest_store import store
 from functools import partial
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -99,7 +98,7 @@ pytestmark = [
 ]
 
 
-def get_vm_object(vm_name):
+def get_vm_object(appliance, vm_name):
     """Looks up the CFME database for the VM.
 
     Args:
@@ -110,7 +109,7 @@ def get_vm_object(vm_name):
         If not, `None`
     """
     try:
-        return pytest.store.current_appliance.rest_api.collections.vms.find_by(name=vm_name)[0]
+        return appliance.rest_api.collections.vms.find_by(name=vm_name)[0]
     except IndexError:
         return None
 
@@ -145,10 +144,10 @@ def set_host_credentials(request, provider, vm):
 
 
 @pytest.fixture(scope="module")
-def local_setup_provider(request, setup_provider_modscope, provider):
+def local_setup_provider(request, appliance, setup_provider_modscope, provider):
     if provider.type == 'virtualcenter':
-        store.current_appliance.install_vddk(reboot=True)
-        store.current_appliance.wait_for_web_ui()
+        appliance.install_vddk(reboot=True)
+        appliance.wait_for_web_ui()
         try:
             pytest.sel.refresh()
         except AttributeError:
