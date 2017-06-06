@@ -466,7 +466,7 @@ class MgrAll(CFMENavigateStep):
             page = 'All Ansible Tower Providers'
         else:
             page = 'All Configuration Manager Providers'
-        return match_page(page)
+        return match_page(summary=page)
 
 
 @navigator.register(ConfigManager, 'Add')
