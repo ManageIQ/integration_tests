@@ -20,8 +20,8 @@ from fixtures.provider import setup_or_skip
 from utils import testgen
 from utils.blockers import BZ
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.tier(2),
@@ -76,7 +76,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
                 value_assign='Database')
         user.create()
         vm.set_ownership(user=user.name)
-        logger.info('ASSIGNED VM OWNERSHIP FOR {} RUNNING ON {}'.format(vm_name, provider.name))
+        logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 
         yield user.name
     finally:
@@ -86,7 +86,6 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
 
 @pytest.yield_fixture(scope="module")
 def enable_candu():
-
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
     original_roles = get_server_roles()
@@ -107,7 +106,7 @@ def enable_candu():
     candu.disable_all()
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def assign_compute_default_rate(provider):
     # Assign default Compute rate to the Enterprise and then queue the Chargeback report.
     enterprise = cb.Assign(
@@ -116,7 +115,17 @@ def assign_compute_default_rate(provider):
             "Enterprise": "Default"
         })
     enterprise.computeassign()
-    logger.info('ASSIGNING DEFAULT COMPUTE RATE')
+    logger.info('Assigning DEFAULT Compute rate')
+
+    yield
+
+    # Resetting the Chargeback rate assignment
+    enterprise = cb.Assign(
+        assign_to="The Enterprise",
+        selections={
+            "Enterprise": "<Nothing>"
+        })
+    enterprise.computeassign()
 
 
 @pytest.yield_fixture(scope="module")
@@ -129,29 +138,37 @@ def assign_compute_custom_rate(new_compute_rate, provider):
             "Enterprise": description
         })
     enterprise.computeassign()
-    logger.info('ASSIGNING CUSTOM COMPUTE RATE')
+    logger.info('Assigning CUSTOM Compute rate')
 
     yield
 
+    # Resetting the Chargeback rate assignment
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            "Enterprise": "Default"
+            "Enterprise": "<Nothing>"
         })
     enterprise.computeassign()
 
 
-def count_records_rollups_table(appliance, provider):
+def verify_records_rollups_table(appliance, provider):
+    # Verify that rollups are present in the metric_rollups table.
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     ems = appliance.db['ext_management_systems']
-    provider_id = appliance.db.session.query(ems).filter(ems.name == provider.name).first().id
     rollups = appliance.db['metric_rollups']
 
-    count = appliance.db.session.query(rollups).filter(rollups.parent_ems_id == provider_id,
-        rollups.resource_name == vm_name).count()
-    if count > 0:
-        return count
-    return 0
+    with appliance.db.transaction:
+        result = (
+            appliance.db.session.query(rollups.id)
+            .join(ems, rollups.parent_ems_id == ems.id)
+            .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
+            ems.name == provider.name, rollups.timestamp >= date.today())
+        )
+
+    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(result.subquery())):
+        if record.cpu_usagemhz_rate_average:
+            return True
+    return False
 
 
 @pytest.fixture(scope="module")
@@ -166,23 +183,25 @@ def resource_usage(vm_ownership, appliance, provider):
     metrics = appliance.db['metrics']
     rollups = appliance.db['metric_rollups']
     ems = appliance.db['ext_management_systems']
-    logger.info('DELETING METRICS DATA FROM METRICS AND METRIC_ROLLUPS TABLES')
+    logger.info('Deleting METRICS DATA from metrics and metric_rollups tables')
+
     appliance.db.session.query(metrics).delete()
     appliance.db.session.query(rollups).delete()
 
     provider_id = appliance.db.session.query(ems).filter(ems.name == provider.name).first().id
 
-    # Chargeback reporting is done on rollups and not  real-time values.So, we are capturing C&U
-    # data and forcing hourly rollups by running these commands through the Rails console.
+    # Chargeback reporting is done on hourly and daily rollup values and not real-time values.So, we
+    # are capturing C&U data and forcing hourly rollups by running these commands through
+    # the Rails console.
 
     command = ('Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
     appliance.ssh_client.run_rails_command(command, timeout=None)
 
-    logger.info('CAPTURING PERF DATA FOR VM {} running on {}'.format(vm_name, provider.name))
+    logger.info('capturing PERF data for VM {} running on {}'.format(vm_name, provider.name))
     appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_capture('realtime',1.hour.ago.utc, Time.now.utc);\
-        vm.perf_rollup_range('realtime',1.hour.ago.utc, Time.now.utc)\"".
+        vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime'))\"".
         format(provider_id, repr(vm_name)))
 
     # New C&U data may sneak in since 1)C&U server roles are running and 2)collection for clusters
@@ -191,21 +210,21 @@ def resource_usage(vm_ownership, appliance, provider):
     command = ('Metric::Targets.perf_capture_always = {:storage=>false, :host_and_cluster=>false};')
     appliance.ssh_client.run_rails_command(command, timeout=None)
 
-    wait_for(count_records_rollups_table, [appliance, provider], timeout=120, fail_condition=0,
-        message="rollups")
+    wait_for(verify_records_rollups_table, [appliance, provider], timeout=240, fail_condition=False,
+        message='Waiting for hourly rollups')
 
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
     # in the metric_rollups DB table.The values from these hourly records are summed up.
 
     with appliance.db.transaction:
-        providers = (
+        result = (
             appliance.db.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
             .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
             ems.name == provider.name, rollups.timestamp >= date.today())
         )
 
-    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(providers.subquery())):
+    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(result.subquery())):
         if record.cpu_usagemhz_rate_average is None:
             pass
         else:
@@ -220,24 +239,36 @@ def resource_usage(vm_ownership, appliance, provider):
             "average_disk_io": average_disk_io}
 
 
-def query_rate(appliance, provider, metric, description, rate_type):
+def resource_cost(appliance, provider, metric, usage, description, rate_type):
     # Query the DB for Chargeback rates
     tiers = appliance.db['chargeback_tiers']
     details = appliance.db['chargeback_rate_details']
     rates = appliance.db['chargeback_rates']
+    list_of_rates = []
+
+    def add_rate(tiered_rate):
+        list_of_rates.append(tiered_rate)
 
     with appliance.db.transaction:
-        providers = (
-            appliance.db.session.query(tiers.variable_rate).
+        result = (
+            appliance.db.session.query(tiers).
             join(details, tiers.chargeback_rate_detail_id == details.id).
             join(rates, details.chargeback_rate_id == rates.id).
             filter(details.metric == metric).
             filter(rates.rate_type == rate_type).
-            filter(rates.description == description)
+            filter(rates.description == description).all()
         )
-    rate = appliance.db.session.query(tiers).filter(tiers.variable_rate.in_(
-        providers.subquery())).first().variable_rate
-    return rate
+    for row in result:
+        tiered_rate = {var: getattr(row, var) for var in ['variable_rate', 'fixed_rate', 'start',
+            'finish']}
+        add_rate(tiered_rate)
+
+    # Check what tier the usage belongs to and then compute the usage cost based on Fixed and
+    # Variable Chargeback rates.
+    for d in list_of_rates:
+        if usage >= d['start'] and usage < d['finish']:
+            cost = (d['variable_rate'] * usage) + d['fixed_rate']
+            return cost
 
 
 @pytest.fixture(scope="module")
@@ -248,17 +279,17 @@ def chargeback_costs_default(resource_usage, appliance, provider):
     average_network_io = resource_usage['average_network_io']
     average_disk_io = resource_usage['average_disk_io']
 
-    cpu_rate = query_rate(appliance, provider, 'cpu_usagemhz_rate_average', 'Default', 'Compute')
-    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate)
+    cpu_used_cost = resource_cost(appliance, provider, 'cpu_usagemhz_rate_average',
+        average_cpu_used_in_mhz, 'Default', 'Compute')
 
-    memory_rate = query_rate(appliance, provider, 'derived_memory_used', 'Default', 'Compute')
-    memory_used_cost = average_memory_used_in_mb * float(memory_rate)
+    memory_used_cost = resource_cost(appliance, provider, 'derived_memory_used',
+        average_memory_used_in_mb, 'Default', 'Compute')
 
-    network_rate = query_rate(appliance, provider, 'net_usage_rate_average', 'Default', 'Compute')
-    network_used_cost = average_network_io * float(network_rate)
+    network_used_cost = resource_cost(appliance, provider, 'net_usage_rate_average',
+        average_network_io, 'Default', 'Compute')
 
-    disk_rate = query_rate(appliance, provider, 'disk_usage_rate_average', 'Default', 'Compute')
-    disk_used_cost = average_disk_io * float(disk_rate)
+    disk_used_cost = resource_cost(appliance, provider, 'disk_usage_rate_average',
+        average_disk_io, 'Default', 'Compute')
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -276,17 +307,17 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
     average_network_io = resource_usage['average_network_io']
     average_disk_io = resource_usage['average_disk_io']
 
-    cpu_rate = query_rate(appliance, provider, 'cpu_usagemhz_rate_average', description, 'Compute')
-    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate)
+    cpu_used_cost = resource_cost(appliance, provider, 'cpu_usagemhz_rate_average',
+        average_cpu_used_in_mhz, description, 'Compute')
 
-    memory_rate = query_rate(appliance, provider, 'derived_memory_used', description, 'Compute')
-    memory_used_cost = average_memory_used_in_mb * float(memory_rate)
+    memory_used_cost = resource_cost(appliance, provider, 'derived_memory_used',
+        average_memory_used_in_mb, description, 'Compute')
 
-    network_rate = query_rate(appliance, provider, 'net_usage_rate_average', description, 'Compute')
-    network_used_cost = average_network_io * float(network_rate)
+    network_used_cost = resource_cost(appliance, provider, 'net_usage_rate_average',
+        average_network_io, description, 'Compute')
 
-    disk_rate = query_rate(appliance, provider, 'disk_usage_rate_average', description, 'Compute')
-    disk_used_cost = average_disk_io * float(disk_rate)
+    disk_used_cost = resource_cost(appliance, provider, 'disk_usage_rate_average',
+        average_disk_io, description, 'Compute')
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -311,7 +342,7 @@ def chargeback_report_default(vm_ownership, assign_compute_default_rate, provide
     report = CustomReport(is_candu=True, **data)
     report.create()
 
-    logger.info('QUEUING DEFAULT CHARGEBACK REPORT FOR {} PROVIDER'.format(provider.name))
+    logger.info('Queuing chargeback report with default rate for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
     yield list(report.get_saved_reports()[0].data[0].rows)
@@ -335,7 +366,7 @@ def chargeback_report_custom(vm_ownership, assign_compute_custom_rate, provider)
     report = CustomReport(is_candu=True, **data)
     report.create()
 
-    logger.info('QUEUING CUSTOM CHARGEBACK REPORT FOR {} PROVIDER'.format(provider.name))
+    logger.info('Queuing chargeback report with custom rate for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
     yield list(report.get_saved_reports()[0].data[0].rows)
@@ -393,8 +424,6 @@ def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
             break
 
 
-@pytest.mark.uncollectif(
-    lambda provider: current_version() > "5.5")
 def test_validate_default_rate_network_usage_cost(chargeback_costs_default,
         chargeback_report_default):
     """Test to validate network usage cost.
@@ -456,8 +485,6 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             break
 
 
-@pytest.mark.uncollectif(
-    lambda provider: current_version() > "5.5")
 def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate network usage cost.
        Calculation is based on custom Chargeback rate.
