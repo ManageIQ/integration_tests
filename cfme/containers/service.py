@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+import itertools
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -48,14 +49,9 @@ class Service(Taggable, Labelable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         service_list = provider.mgmt.list_service()
-        instances = []
         random.shuffle(service_list)
-        while service_list and len(instances) < count:
-            chosen = service_list.pop()
-            instances.append(
-                cls(chosen.name, chosen.project_name, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
+                for obj in itertools.islice(service_list, count)]
 
 
 @navigator.register(Service, 'All')

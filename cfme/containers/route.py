@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+import itertools
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -48,14 +49,9 @@ class Route(Taggable, Labelable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         route_list = provider.mgmt.list_route()
-        instances = []
         random.shuffle(route_list)
-        while route_list and len(instances) < count:
-            chosen = route_list.pop()
-            instances.append(
-                cls(chosen.name, chosen.project_name, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
+                for obj in itertools.islice(route_list, count)]
 
 
 @navigator.register(Route, 'All')

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 import random
+import itertools
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -50,14 +51,9 @@ class Pod(Taggable, Labelable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         pod_list = provider.mgmt.list_container_group()
-        instances = []
         random.shuffle(pod_list)
-        while pod_list and len(instances) < count:
-            chosen = pod_list.pop()
-            instances.append(
-                cls(chosen.name, chosen.project_name, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
+                for obj in itertools.islice(pod_list, count)]
 
 
 @navigator.register(Pod, 'All')

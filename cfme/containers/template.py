@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+import itertools
 from functools import partial
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -51,14 +52,9 @@ class Template(Taggable, Labelable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         template_list = provider.mgmt.list_template()
-        instances = []
         random.shuffle(template_list)
-        while template_list and len(instances) < count:
-            chosen = template_list.pop()
-            instances.append(
-                cls(chosen.name, chosen.project_name, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.name, obj.project_name, provider, appliance=appliance)
+                for obj in itertools.islice(template_list, count)]
 
 
 @navigator.register(Template, 'All')

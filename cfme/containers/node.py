@@ -2,6 +2,7 @@
 # added new list_tbl definition
 from functools import partial
 import random
+import itertools
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View, Text
@@ -104,14 +105,9 @@ class Node(Taggable, Labelable, SummaryMixin, Navigatable):
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
         node_list = provider.mgmt.list_node()
-        instances = []
         random.shuffle(node_list)
-        while node_list and len(instances) < count:
-            chosen = node_list.pop()
-            instances.append(
-                cls(chosen.name, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(obj.name, provider, appliance=appliance)
+                for obj in itertools.islice(node_list, count)]
 
 
 # Still registering Node to keep on consistency on container objects navigations

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 import random
+import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -76,14 +77,9 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
                 'oc get images --all-namespaces'))
             rows = filter(lambda r: r.id.text.split('@sha256:')[-1] in list_by_cli,
                           rows)
-        instances = []
         random.shuffle(rows)
-        while rows and len(instances) < count:
-            row = rows.pop()
-            instances.append(
-                cls(row.name.text, row.id.text, provider, appliance=appliance)
-            )
-        return instances
+        return [cls(row.name.text, row.id.text, provider, appliance=appliance)
+                for row in itertools.islice(rows, count)]
 
     def check_compliance(self, wait_for_finish=True, timeout=240):
         """Initiates compliance check and waits for it to finish."""
