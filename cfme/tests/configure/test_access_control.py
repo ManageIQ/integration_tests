@@ -327,11 +327,11 @@ def test_edit_sequence_usergroups(request):
     group.create()
     request.addfinalizer(group.delete)
     view = navigate_to(Group, 'All')
-    row = view.table.row((2, group.description))
-    original_sequence = row[6].text
-    group.set_group_order([group.description])
-    row = view.table.row((2, group.description))
-    changed_sequence = row[6].text
+    row = view.table.row(name=group.description)
+    original_sequence = row.sequence.text
+    group.set_group_order(group.description)
+    row = view.table.row(name=group.description)
+    changed_sequence = row.sequence.text
     assert original_sequence != changed_sequence, "Edit Sequence Failed"
 
 

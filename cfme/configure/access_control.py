@@ -216,7 +216,7 @@ class User(Updateable, Pretty, Navigatable):
 
     def remove_tag(self, tag, value):
         view = navigate_to(self, 'EditTags')
-        row = view.tag_table.row((1, tag), (2, value))
+        row = view.tag_table.row(category=tag, assigned_value=value)
         row[0].click()
         view.save_button.click()
         view = self.create_view(DetailsUserView)
@@ -239,10 +239,9 @@ class User(Updateable, Pretty, Navigatable):
 @navigator.register(User, 'All')
 class UserAll(CFMENavigateStep):
     VIEW = AllUserView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.settings.select_item('Configuration')
         self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
                                                  'Users')
 
@@ -427,12 +426,9 @@ class Group(Updateable, Pretty, Navigatable):
             'role_select': self.role,
             'group_tenant': self.tenant
         })
-        if self.tag is not None:
-            view.my_company_tags.tag_tree.fill(self.tag)
-        if self.host_cluster is not None:
-            view.hosts_and_clusters.hosts_clusters_tree.fill(self.host_cluster)
-        if self.vm_template is not None:
-            view.vms_and_templates.vms_templates_tree.fill(self.vm_template)
+        self._set_group_restriction(view, self.tag)
+        self._set_group_restriction(view, self.host_cluster)
+        self._set_group_restriction(view, self.vm_template)
         view.add_button.click()
         view = self.create_view(AllGroupView)
         view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
@@ -480,7 +476,13 @@ class Group(Updateable, Pretty, Navigatable):
             'role_select': updates.get('role'),
             'group_tenant': updates.get('tenant')
         })
-        if changed:
+        changed_tag = self._set_group_restriction(view.my_company_tags, updates.get('tag'), True)
+        changed_host_cluster = self._set_group_restriction(
+            view.hosts_and_clusters, updates.get('host_cluster'), True)
+        changed_vm_template = self._set_group_restriction(
+            view.vms_and_templates, updates.get('vm_template'), True)
+
+        if changed or changed_tag or changed_host_cluster or changed_vm_template:
             view.save_button.click()
             flash_message = 'Group "{}" was saved'.format(
                 updates.get('description', self.description))
@@ -510,25 +512,38 @@ class Group(Updateable, Pretty, Navigatable):
 
     def remove_tag(self, tag, value):
         view = navigate_to(self, 'EditTags')
-        row = view.tag_table.row((1, tag), (2, value))
+        row = view.tag_table.row(category=tag, assigned_value=value)
         row[0].click()
         view.save_button.click()
         view = self.create_view(DetailsGroupView)
         view.flash.assert_success_message('Tag edits were successfully saved')
         assert view.is_displayed
 
-    def set_group_order(self, items):
-        original_order = self.get_group_order()
+    def set_group_order(self, updated_order):
+        original_order = self.group_order[:len(updated_order)]
         view = self.create_view(EditGroupSequenceView)
         assert view.is_displayed
         # We pick only the same amount of items for comparing
-        original_order = original_order[:len(items)]
-        if items == original_order:
+        if updated_order == original_order:
             return  # Ignore that, would cause error on Save click
-        view.group_order_selector.fill(items)
+        view.group_order_selector.fill(updated_order)
         view.save_button.click()
 
-    def get_group_order(self):
+    def _set_group_restriction(self, tab_view, item, update=False):
+        updated_result = False
+        if item is not None:
+            if update:
+                if tab_view.tag_tree.node_checked(item):
+                    tab_view.tag_tree.uncheck_node(item)
+                else:
+                    tab_view.tag_tree.check_node(item)
+                updated_result = True
+            else:
+                tab_view.tag_tree.fill(item)
+        return updated_result
+
+    @property
+    def group_order(self):
         view = navigate_to(Group, 'EditGroupSequence')
         return view.group_order_selector.items
 
@@ -544,10 +559,9 @@ class Group(Updateable, Pretty, Navigatable):
 @navigator.register(Group, 'All')
 class GroupAll(CFMENavigateStep):
     VIEW = AllGroupView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.settings.select_item('Configuration')
         self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
                                                  'Groups')
 
@@ -660,7 +674,7 @@ class Role(Updateable, Pretty, Navigatable):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.vm_restriction = vm_restriction
-        self.product_features = product_features
+        self.product_features = product_features or []
 
     def create(self):
         view = navigate_to(self, 'Add')
@@ -725,10 +739,9 @@ class Role(Updateable, Pretty, Navigatable):
 @navigator.register(Role, 'All')
 class RoleAll(CFMENavigateStep):
     VIEW = AllRolesView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.settings.select_item('Configuration')
         self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
                                                  'Roles')
 
@@ -974,10 +987,9 @@ class Tenant(Updateable, Pretty, Navigatable):
 @navigator.register(Tenant, 'All')
 class TenantAll(CFMENavigateStep):
     VIEW = AllTenantView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.settings.select_item('Configuration')
         self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
                                                  'Tenants')
 
