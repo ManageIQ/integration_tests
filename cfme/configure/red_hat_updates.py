@@ -68,8 +68,7 @@ registration_form = Form(
         ("username", Input('customer_userid')),
         ("password", Input('customer_password')),
         ("password_verify", Input('customer_password2')),  # 5.4+
-        ("organization_sat5", Input('customer_org')),
-        ("organization_sat6", Select("//select[@id='customer_org']"))
+        ("organization", Select("//select[@id='customer_org']"))
     ]
 )
 
@@ -158,15 +157,6 @@ def update_registration(service,
         password_verify = None
         proxy_password_verify = None
 
-    # Sat6 organization can be selected only after successful validation
-    # while Sat5 organization is selected normally
-    if service == 'sat6':
-        organization_sat5 = None
-        organization_sat6 = organization
-    else:
-        organization_sat5 = organization
-        organization_sat6 = None
-
     navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
     sel.click(update_buttons.edit_registration)
     details = dict(
@@ -176,7 +166,7 @@ def update_registration(service,
         password=password,
         password_verify=password_verify,
         repo_name=repo_name,
-        organization_sat5=organization_sat5,
+        organization=organization,
         use_proxy=use_proxy,
         proxy_url=proxy_url,
         proxy_username=proxy_username,
@@ -196,8 +186,8 @@ def update_registration(service,
     flash.assert_no_errors()
     flash.dismiss()
 
-    if organization_sat6:
-        sel.select(registration_form.locators['organization_sat6'], organization_sat6)
+    if organization:
+        sel.select(registration_form.locators['organization'], organization)
 
     if cancel:
         form_buttons.cancel()

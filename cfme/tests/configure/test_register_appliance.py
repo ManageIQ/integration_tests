@@ -49,9 +49,11 @@ def pytest_generate_tests(metafunc):
                 # proxy_creds = conf.credentials[proxy_creds_key]
                 argval = [reg_method, reg_data, proxy_url, None]
                 argid = '{}-{}'.format(reg_method, 'proxy_on')
-            else:
-                argval = [reg_method, reg_data, None, None]
-                argid = '{}-{}'.format(reg_method, 'proxy_off')
+                idlist.append(argid)
+                argvalues.append(argval)
+
+            argval = [reg_method, reg_data, None, None]
+            argid = '{}-{}'.format(reg_method, 'proxy_off')
             idlist.append(argid)
             argvalues.append(argval)
         parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
