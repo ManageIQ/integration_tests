@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Dropdown, BootstrapSelect
+from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, ManyItemsFound
@@ -231,6 +231,8 @@ class ProviderItems(View):
     """
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
     _quadicons = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
     _listitems = Table(locator='//div[@id="list_grid"]/table')
 
