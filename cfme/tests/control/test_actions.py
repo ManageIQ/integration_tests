@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-""" Tests used to check whether assigned actions really do what they're supposed to do.
+""" Tests used to check whether assigned actions really do what they're supposed to do. Events are
+note supported by ec2, gce, scvmm and openstack providers. Tests are uncollected for these
+providers. When the support will be implemented these tests can enabled for them.
 
 Required YAML keys:
     * Provider must have section provisioning/template (otherwise test will be skipped)
@@ -17,7 +19,13 @@ from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.control.explorer import actions, policies, policy_profiles
 from cfme.services import requests
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme import test_requirements
 from utils import testgen
 from utils.blockers import BZ
@@ -27,7 +35,22 @@ from utils.hosts import setup_host_creds
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
-from . import vddk_url_map, do_scan
+from . import vddk_url_map, do_scan, wait_for_ssa_enabled
+
+
+pytest_generate_tests = testgen.generate(gen_func=testgen.all_providers, scope="module")
+
+pytestmark = [
+    pytest.mark.long_running,
+    pytest.mark.meta(blockers=[
+        BZ(
+            1149128,
+            unblock=lambda provider: not provider.one_of(SCVMMProvider))
+    ]),
+    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
+    pytest.mark.tier(2),
+    test_requirements.control
+]
 
 
 class VMWrapper(Pretty):
@@ -55,44 +78,6 @@ class VMWrapper(Pretty):
         return partial(func, self._vm)
 
 
-# def pytest_generate_tests(metafunc):
-#     # Filter out providers without provisioning data or hosts defined
-#     argnames, argvalues, idlist = testgen.all_providers(metafunc)
-
-#     new_idlist = []
-#     new_argvalues = []
-#     for i, argvalue_tuple in enumerate(argvalues):
-#         args = dict(zip(argnames, argvalue_tuple))
-
-#         if args["provider"].type in {"scvmm"}:
-#             continue
-
-#         if ((metafunc.function is test_action_create_snapshot_and_delete_last) or
-#             (metafunc.function is test_action_create_snapshots_and_delete_them)) \
-#                 and args['provider'].type in {"rhevm", "openstack", "ec2"}:
-#             continue
-
-#         new_idlist.append(idlist[i])
-#         new_argvalues.append(argvalues[i])
-
-#     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
-
-pytest_generate_tests = testgen.generate(gen_func=testgen.all_providers, scope="module")
-
-
-pytestmark = [
-    pytest.mark.long_running,
-    pytest.mark.meta(blockers=[
-        BZ(
-            1149128,
-            unblock=lambda provider: not provider.one_of(SCVMMProvider))
-    ]),
-    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
-    pytest.mark.tier(2),
-    test_requirements.control
-]
-
-
 def get_vm_object(appliance, vm_name):
     """Looks up the CFME database for the VM.
 
@@ -114,26 +99,24 @@ def vm_name(provider):
     return random_vm_name("action", max_length=16)
 
 
-@pytest.yield_fixture
-def configure_fleecing(request, appliance, setup_provider_modscope, provider, vm):
+@pytest.yield_fixture(scope="function")
+def configure_fleecing(request, appliance, provider, vm):
     setup_host_creds(provider.key, vm.api.host.name)
-    appliance.install_vddk(reboot=False, vddk_url=vddk_url_map[str(provider.version)])
-    appliance.reboot(quit_browser=True)
+    appliance.install_vddk(reboot=True, vddk_url=vddk_url_map[str(provider.version)])
+    appliance.browser.quit_browser()
     yield
     appliance.uninstall_vddk()
     setup_host_creds(provider.key, vm.api.host.name, remove_creds=True)
 
 
 def _get_vm(request, appliance, provider, template_name, vm_name):
-    if provider.type == "rhevm":
+    if provider.one_of(RHEVMProvider):
         kwargs = {"cluster": provider.data["default_cluster"]}
-    elif provider.type == "virtualcenter":
-        kwargs = {}
-    elif provider.type == "openstack":
+    elif provider.one_of(OpenStackProvider):
         kwargs = {}
         if 'small_template' in provider.data:
             kwargs = {"flavour_name": provider.data.get('small_template')}
-    elif provider.type == "scvmm":
+    elif provider.one_of(SCVMMProvider):
         kwargs = {
             "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
     else:
@@ -163,7 +146,7 @@ def _get_vm(request, appliance, provider, template_name, vm_name):
     def _finalize():
         """if getting REST object failed, we would not get the VM deleted! So explicit teardown."""
         logger.info("Shutting down VM with name %s", vm_name)
-        if provider.mgmt.is_vm_suspended(vm_name):
+        if provider.one_of(InfraProvider, AzureProvider) and provider.mgmt.is_vm_suspended(vm_name):
             logger.info("Powering up VM %s to shut it down correctly.", vm_name)
             provider.mgmt.start_vm(vm_name)
         if provider.mgmt.is_vm_running(vm_name):
@@ -188,14 +171,14 @@ def _get_vm(request, appliance, provider, template_name, vm_name):
     return VMWrapper(provider, vm_name, api)
 
 
-@pytest.fixture(scope="module")
-def vm(request, appliance, provider, local_setup_provider, small_template_modscope, vm_name):
-    return _get_vm(request, appliance, provider, small_template_modscope, vm_name)
+@pytest.fixture(scope="function")
+def vm(request, appliance, has_no_providers, provider, setup_provider, small_template, vm_name):
+    return _get_vm(request, appliance, provider, small_template, vm_name)
 
 
-@pytest.fixture(scope="module")
-def vm_big(request, appliance, provider, local_setup_provider, big_template_modscope, vm_name):
-    return _get_vm(request, appliance, provider, big_template_modscope, vm_name)
+@pytest.fixture(scope="function")
+def vm_big(request, appliance, has_no_providers, provider, setup_provider, big_template, vm_name):
+    return _get_vm(request, appliance, provider, big_template, vm_name)
 
 
 @pytest.fixture(scope="module")
@@ -213,55 +196,50 @@ def policy_profile_name(name_suffix):
     return "action_testing: policy profile {}".format(name_suffix)
 
 
-@pytest.fixture(scope="module")
-def vm_crud(vm_name, provider):
-    return VM.factory(vm_name, provider)
-
-
 @pytest.fixture(scope="function")
-def vm_on(vm, vm_crud):
+def vm_on(vm):
     """ Ensures that the VM is on when the control goes to the test."""
     vm.wait_vm_steady()
     if not vm.is_vm_running():
         vm.start_vm()
         vm.wait_vm_running()
     # Make sure the state is consistent
-    vm_crud.refresh_relationships(from_details=True)
-    vm_crud.wait_for_vm_state_change(desired_state=vm_crud.STATE_ON, from_details=True)
+    vm.crud.refresh_relationships(from_details=True)
+    vm.crud.wait_for_vm_state_change(desired_state=vm.crud.STATE_ON, from_details=True)
     return vm
 
 
 @pytest.fixture(scope="function")
-def vm_off(vm, vm_crud):
+def vm_off(provider, vm):
     """ Ensures that the VM is off when the control goes to the test."""
     vm.wait_vm_steady()
-    if vm.is_vm_suspended():
+    if provider.one_of(InfraProvider) and vm.is_vm_suspended():
         vm.start_vm()
         vm.wait_vm_running()
     if not vm.is_vm_stopped():
         vm.stop_vm()
         vm.wait_vm_stopped()
     # Make sure the state is consistent
-    vm_crud.refresh_relationships(from_details=True)
-    vm_crud.wait_for_vm_state_change(desired_state=vm_crud.STATE_OFF, from_details=True)
+    vm.crud.refresh_relationships(from_details=True)
+    vm.crud.wait_for_vm_state_change(desired_state=vm.crud.STATE_OFF, from_details=True)
     return vm
 
 
 @pytest.fixture(scope="function")
-def vm_crud_refresh(vm_crud, provider):
+def vm_crud_refresh(vm, provider):
     """Refreshes the VM if that is needed for the provider."""
-    if provider.type in {"ec2"}:
-        return lambda: vm_crud.refresh_relationships(from_details=True)
+    if provider.one_of(EC2Provider):
+        return lambda: vm.crud.refresh_relationships(from_details=True)
     else:
         return lambda: None
 
 
 @pytest.yield_fixture(scope="module")
-def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, provider):
+def policy_for_testing(vm_name, policy_name, policy_profile_name, provider):
     """Takes care of setting the appliance up for testing."""
     policy = policies.VMControlPolicy(
         policy_name,
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
     )
     policy.create()
     policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
@@ -272,12 +250,11 @@ def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, 
 
 
 @pytest.yield_fixture(scope="module")
-def policy_for_testing_for_vm_big(
-        automate_role_set, vm_big, policy_name, policy_profile_name, provider):
+def policy_for_testing_for_vm_big(vm_name, policy_name, policy_profile_name, provider):
     """Takes care of setting the appliance up for testing."""
     policy = policies.VMControlPolicy(
         policy_name,
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name)
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
     )
     policy.create()
     policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
@@ -287,23 +264,24 @@ def policy_for_testing_for_vm_big(
     policy.delete()
 
 
-@pytest.yield_fixture(scope="module")
-def assign_policy_for_testing(vm, policy_for_testing, provider, policy_profile_name):
+@pytest.yield_fixture(scope="function")
+def assign_policy_for_testing(policy_for_testing, provider, policy_profile_name):
     provider.assign_policy_profiles(policy_profile_name)
     yield policy_for_testing
     provider.unassign_policy_profiles(policy_profile_name)
 
 
-@pytest.yield_fixture(scope="module")
-def assign_policy_for_testing_vm_big(
-        vm_big, policy_for_testing_for_vm_big, provider, policy_profile_name):
+@pytest.yield_fixture(scope="function")
+def assign_policy_for_testing_vm_big(policy_for_testing_for_vm_big, provider, policy_profile_name):
     provider.assign_policy_profiles(policy_profile_name)
     yield policy_for_testing_for_vm_big
     provider.unassign_policy_profiles(policy_profile_name)
 
 
-def test_action_start_virtual_machine_after_stopping(
-        request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, vm_crud_refresh,
+        assign_policy_for_testing):
     """ This test tests action 'Start Virtual Machine'
 
     This test sets the policy that it turns on the VM when it is turned off
@@ -326,8 +304,10 @@ def test_action_start_virtual_machine_after_stopping(
         pytest.fail("CFME did not power on the VM {}".format(vm.name))
 
 
-def test_action_stop_virtual_machine_after_starting(
-        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, vm_crud_refresh,
+        assign_policy_for_testing):
     """ This test tests action 'Stop Virtual Machine'
 
     This test sets the policy that it turns off the VM when it is turned on
@@ -350,8 +330,10 @@ def test_action_stop_virtual_machine_after_starting(
         pytest.fail("CFME did not power off the VM {}".format(vm.name))
 
 
-def test_action_suspend_virtual_machine_after_starting(
-        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, vm_crud_refresh,
+        assign_policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
 
     This test sets the policy that it suspends the VM when it's turned on. Then it powers on the vm,
@@ -374,7 +356,9 @@ def test_action_suspend_virtual_machine_after_starting(
 
 
 @pytest.mark.meta(blockers=[1142875])
-def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_prevent_event(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
     """ This test tests action 'Prevent current event from proceeding'
 
     This test sets the policy that it prevents powering the VM up. Then the vm is powered up
@@ -397,8 +381,10 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm
         pytest.fail("CFME did not prevent starting of the VM {}".format(vm.name))
 
 
-def test_action_power_on_logged(
-        request, assign_policy_for_testing, vm, vm_off, appliance, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_power_on_logged(request, vm, vm_off, appliance, vm_crud_refresh,
+        assign_policy_for_testing):
     """ This test tests action 'Generate log message'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -434,8 +420,10 @@ def test_action_power_on_logged(
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-def test_action_power_on_audit(
-        request, assign_policy_for_testing, vm, vm_off, appliance, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_power_on_audit(request, vm, vm_off, appliance, vm_crud_refresh,
+        assign_policy_for_testing):
     """ This test tests action 'Generate Audit Event'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -471,8 +459,9 @@ def test_action_power_on_audit(
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-def test_action_create_snapshot_and_delete_last(
-        request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_action_create_snapshot_and_delete_last(request, vm, vm_on, vm_crud_refresh,
+        assign_policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -515,8 +504,9 @@ def test_action_create_snapshot_and_delete_last(
              message="wait for snapshot deleted", delay=5)
 
 
-def test_action_create_snapshots_and_delete_them(
-        request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_action_create_snapshots_and_delete_them(request, vm, vm_on, vm_crud_refresh,
+        assign_policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
@@ -570,9 +560,9 @@ def test_action_create_snapshots_and_delete_them(
              message="wait for snapshots to be deleted", delay=5)
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != "virtualcenter")
-def test_action_initiate_smartstate_analysis(request, configure_fleecing, assign_policy_for_testing,
-        vm, vm_off, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm_off,
+        vm_crud_refresh, assign_policy_for_testing):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
 
     This test sets the policy that it analyses VM after it's powered on. Then it checks whether
@@ -587,6 +577,8 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, assign
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False, from_details=True)
+    vm.crud.load_details()
+    wait_for_ssa_enabled()
     try:
         do_scan(vm.crud)
     except TimedOutError:
@@ -630,7 +622,9 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, assign
 
 
 # Purely custom actions
-def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_tag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
     """ Tests action tag
 
     Metadata:
@@ -666,7 +660,9 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
 
 
 @pytest.mark.meta(blockers=[1205496])
-def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    AzureProvider))
+def test_action_untag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
     """ Tests action untag
 
     Metadata:
@@ -709,8 +705,8 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
 
 
 @pytest.mark.meta(blockers=[1381255])
-@pytest.mark.uncollectif(lambda provider: provider.type != "virtualcenter")
-def test_action_cancel_clone(request, provider, assign_policy_for_testing_vm_big, vm_big):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_action_cancel_clone(request, provider, vm_big, assign_policy_for_testing_vm_big):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9

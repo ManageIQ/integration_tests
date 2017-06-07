@@ -9,13 +9,14 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration import AnalysisProfile
-from cfme.web_ui import flash, toolbar
-from cfme import test_requirements
-from utils import testgen, version, conf
-from utils.hosts import setup_providers_hosts_credentials
+from fixtures.pytest_store import store
+from utils import testgen, version
+from utils.appliance import Appliance, ApplianceException, provision_appliance
 from utils.log import logger
 from utils.update import update
-from utils.wait import wait_for
+from urlparse import urlparse
+from cfme import test_requirements
+from . import do_scan, wait_for_ssa_enabled
 
 vddk_url_map = {
     "5.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v5_5"),
@@ -32,12 +33,6 @@ pytestmark = [
 
 
 pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
-
-
-def wait_for_ssa_enabled():
-    wait_for(
-        lambda: not toolbar.is_greyed('Configuration', 'Perform SmartState Analysis'),
-        delay=10, handle_exception=True, num_sec=600, fail_func=lambda: toolbar.select("Reload"))
 
 
 @pytest.fixture

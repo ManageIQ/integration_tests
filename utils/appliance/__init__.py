@@ -1456,7 +1456,7 @@ class IPAppliance(object):
 
     @logger_wrap("Uninstall VDDK: {}")
     def uninstall_vddk(self, log_callback=None):
-        """Uninstall the vddk from a appliance"""
+        """Uninstall the vddk from an appliance"""
         with self.ssh_client as client:
             is_installed = client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64').success
             if is_installed:

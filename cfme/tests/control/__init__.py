@@ -10,6 +10,12 @@ vddk_url_map = {
 }
 
 
+def wait_for_ssa_enabled():
+    wait_for(
+        lambda: not toolbar.is_greyed('Configuration', 'Perform SmartState Analysis'),
+        delay=10, handle_exception=True, num_sec=600, fail_func=lambda: toolbar.select("Reload"))
+
+
 def do_scan(vm, additional_item_check=None):
     if vm.rediscover_if_analysis_data_present():
         # policy profile assignment is lost so reassign
