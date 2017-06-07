@@ -37,14 +37,11 @@ def main(args):
                 os.path.join(args.venv, 'bin/pip'), 'freeze'
             ], stdout=sys.stdout)
         else:
-            with open(args.out) as out:
+            with open(args.out, 'w') as out:
                 subprocess.check_call([
                     os.path.join(args.venv, 'bin/pip'), 'freeze'
                 ], stdout=out)
 
-        subprocess.check_call([
-            os.path.join(args.venv, 'bin/pip'), 'freeze'
-        ], stdout=args.out)
     finally:
         if not args.keep_venv:
             shutil.rmtree(args.venv)
