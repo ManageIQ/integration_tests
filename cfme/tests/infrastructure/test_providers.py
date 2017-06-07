@@ -4,11 +4,11 @@ import fauxfactory
 
 import pytest
 
+
 import cfme.web_ui.flash as flash
 from utils import error
 from cfme.base.credential import Credential
 from cfme.common.provider_views import ProviderAddView
-from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
@@ -58,7 +58,7 @@ def test_add_cancelled_validation():
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
     prov = InfraProvider()
-    with error.expected(FlashMessageException):
+    with pytest.raises(AssertionError):
         prov.create()
 
     view = prov.create_view(ProviderAddView)
@@ -74,11 +74,7 @@ def test_name_required_validation():
         name=None,
         endpoints=endpoint)
 
-    err = version.pick(
-        {version.LOWEST: "Name can't be blank",
-         '5.6': FlashMessageException})
-
-    with error.expected(err):
+    with pytest.raises(AssertionError):
         prov.create()
 
     view = prov.create_view(ProviderAddView)
@@ -95,9 +91,7 @@ def test_host_name_required_validation():
         name=fauxfactory.gen_alphanumeric(5),
         endpoints=endpoint)
 
-    err = FlashMessageException
-
-    with error.expected(err):
+    with pytest.raises(AssertionError):
         prov.create()
 
     view = prov.create_view(prov.endpoints_form)
@@ -139,7 +133,7 @@ def test_host_name_max_character_validation():
     prov = VMwareProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
-    except FlashMessageException:
+    except AssertionError:
         view = prov.create_view(prov.endpoints_form)
         assert view.hostname.value == prov.hostname[0:255]
 
@@ -155,7 +149,7 @@ def test_api_port_max_character_validation():
     prov = RHEVMProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
-    except FlashMessageException:
+    except AssertionError:
         view = prov.create_view(prov.endpoints_form)
         text = view.default.api_port.value
         assert text == prov.default_endpoint.api_port[0:15]
@@ -191,13 +185,13 @@ def test_provider_add_with_bad_credentials(provider):
         secret='reallybad',
         verify_secret='reallybad'
     )
+
     if isinstance(provider, VMwareProvider):
-        with error.expected('Cannot complete login due to an incorrect user name or password.'):
-            provider.create(validate_credentials=True)
+        error_msg = 'Cannot complete login due to an incorrect user name or password.'
     elif isinstance(provider, RHEVMProvider):
-        error_message = 'Credential validation was not successful: Incorrect user name or password.'
-        with error.expected(error_message):
-            provider.create(validate_credentials=True)
+        error_msg = 'Credential validation was not successful: Incorrect user name or password.'
+    with error.expected(error_msg):
+        provider.create(validate_credentials=True)
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')

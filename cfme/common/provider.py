@@ -8,7 +8,7 @@ from widgetastic_patternfly import Input, Button
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential, AzureCredential,
     ServiceAccountCredential)
-from cfme.common.provider_views import ProvidersView
+from cfme.common.provider_views import ProvidersView, ProviderDetailsView
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
@@ -199,8 +199,15 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 else:
                     add_view.add.click()
                     main_view = self.create_view(ProvidersView)
-                    success_text = '{} Providers "{}" was saved'.format(self.string_name, self.name)
-                    main_view.items.flash.assert_message(success_text)
+                    if main_view.is_displayed:
+                        success_text = '{} Providers "{}" was saved'.format(self.string_name,
+                                                                            self.name)
+                        main_view.items.flash.assert_message(success_text)
+                    else:
+                        add_view.flash.assert_no_error()
+                        raise AssertionError("Provider wasn't added. It seems form isn't accurately"
+                                             " filled")
+
             if validate_inventory:
                 self.validate()
 
@@ -283,9 +290,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 edit_view.cancel.click()
                 cancel_text = 'Edit of Infrastructure Provider "{name}" ' \
                               'was cancelled by the user'.format(name=self.name)
-                main_view = self.create_view(ProvidersView)
-                main_view.items.flash.assert_message(cancel_text)
-                main_view.items.flash.assert_no_error()
+                details_view = self.create_view(ProvidersView)
+                details_view.items.flash.assert_message(cancel_text)
+                details_view.items.flash.assert_no_error()
             else:
                 edit_view.save.click()
                 if endpoints:
@@ -297,9 +304,15 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
-                success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
-                main_view = self.create_view(ProvidersView)
-                main_view.items.flash.assert_message(success_text)
+
+                details_view = self.create_view(ProviderDetailsView)
+                if details_view.is_displayed:
+                    success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+                    details_view.flash.assert_message(success_text)
+                else:
+                    edit_view.flash.assert_no_error()
+                    raise AssertionError("Provider wasn't updated. It seems form isn't accurately"
+                                         " filled")
         else:
             # other providers, old code
             navigate_to(self, 'Edit')
