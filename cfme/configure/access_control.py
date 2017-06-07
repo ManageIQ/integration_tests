@@ -2,10 +2,11 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import UpDownSelect, SummaryFormItem
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
-    BootstrapSwitch, CandidateNotFound)
-from widgetastic.widget import Text, Checkbox, View, Table
+    BootstrapSwitch, CandidateNotFound, Dropdown)
+from widgetastic.widget import Checkbox, View, Table
 
 from cfme.base.credential import Credential
+from cfme.base.ui import ConfigurationView
 from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui.form_buttons import change_stored_password
 from utils.appliance import Navigatable
@@ -14,8 +15,6 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
 
-from . import ConfigurationView
-
 
 def simple_user(userid, password):
     creds = Credential(principal=userid, secret=password)
@@ -23,8 +22,6 @@ def simple_user(userid, password):
 
 
 class UserForm(ConfigurationView):
-    title = Text('#explorer_title_text')
-
     name_txt = Input(name='name')
     userid_txt = Input(name='userid')
     password_txt = Input(id='password')
@@ -36,12 +33,13 @@ class UserForm(ConfigurationView):
 
 
 class AllUserView(ConfigurationView):
-    title = Text('#explorer_title_text')
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Access Control EVM Users'
         )
 
@@ -51,20 +49,18 @@ class AddUserView(UserForm):
 
     @property
     def is_displayed(self):
-        return (
-            self.in_configuration and self.access_control.is_opened and
-            self.title.text == "Adding a new User"
-        )
+        return self.accordions.accesscontrol.is_opened and self.title.text == "Adding a new User"
 
 
 class DetailsUserView(ConfigurationView):
-    title = Text('#explorer_title_text')
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
     @property
     def is_displayed(self):
         return (
             self.title.text == 'EVM User "{}"'.format(self.context['object'].name) and
-            self.access_control.is_opened
+            self.accordions.accesscontrol.is_opened
         )
 
 
@@ -76,13 +72,11 @@ class EditUserView(UserForm):
     def is_displayed(self):
         return (
             self.title.text == 'Editing User "{}"'.format(self.context['object'].name) and
-            self.access_control.is_opened
+            self.accordions.accesscontrol.is_opened
         )
 
 
 class EditTagsUserView(ConfigurationView):
-    title = Text('#explorer_title_text')
-
     tag_table = Table("//div[@id='assignments_div']//table")
     select_tag = BootstrapSelect(id='tag_cat')
     select_value = BootstrapSelect(id='tag_add')
@@ -94,7 +88,7 @@ class EditTagsUserView(ConfigurationView):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Editing My Company Tags for "EVM Users"'
         )
 
@@ -250,7 +244,7 @@ class UserAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Users')
 
 
@@ -269,7 +263,7 @@ class UserDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Users', self.obj.name)
 
 
@@ -292,8 +286,6 @@ class UserTagsEdit(CFMENavigateStep):
 
 
 class GroupForm(ConfigurationView):
-    title = Text('#explorer_title_text')
-
     ldap_groups_for_user = BootstrapSelect(id='ldap_groups_user')
     description_txt = Input(name='description')
     lookup_ldap_groups_chk = Checkbox(name='lookup')
@@ -330,18 +322,19 @@ class AddGroupView(GroupForm):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == "Adding a new Group"
         )
 
 
 class DetailsGroupView(ConfigurationView):
-    title = Text('#explorer_title_text')
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'EVM Group "{}"'.format(self.context['object'].description)
         )
 
@@ -353,27 +346,26 @@ class EditGroupView(GroupForm):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Editing Group "{}"'.format(self.context['object'].description)
         )
 
 
 class AllGroupView(ConfigurationView):
-    title = Text('#explorer_title_text')
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
     table = Table("//div[@id='main_div']//table")
 
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Access Control EVM Groups'
         )
 
 
 class EditGroupSequenceView(ConfigurationView):
-    title = Text('#explorer_title_text')
-
     group_order_selector = UpDownSelect(
         '#seq_fields',
         './/a[@title="Move selected fields up"]/img',
@@ -386,14 +378,12 @@ class EditGroupSequenceView(ConfigurationView):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == "Editing Sequence of User Groups"
         )
 
 
 class GroupEditTagsView(ConfigurationView):
-    title = Text('#explorer_title_text')
-
     tag_table = Table("//div[@id='assignments_div']//table")
 
     select_tag = BootstrapSelect(id='tag_cat')
@@ -406,7 +396,7 @@ class GroupEditTagsView(ConfigurationView):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Editing My Company Tags for "EVM Groups"'
         )
 
@@ -577,7 +567,7 @@ class GroupAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Groups')
 
 
@@ -606,7 +596,7 @@ class GroupDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Groups', self.obj.description)
 
 
@@ -630,8 +620,6 @@ class GroupTagsEdit(CFMENavigateStep):
 
 
 class RoleForm(ConfigurationView):
-    title = Text("#explorer_title_text")
-
     name_txt = Input(name='name')
     vm_restriction_select = BootstrapSelect(id='vm_restriction')
     product_features_tree = CheckableBootstrapTreeview("features_treebox")
@@ -645,7 +633,7 @@ class AddRoleView(RoleForm):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Adding a new Role'
         )
 
@@ -657,27 +645,31 @@ class EditRoleView(RoleForm):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Editing Role "{}"'.format(self.context['object'].name)
         )
 
 
 class DetailsRoleView(RoleForm):
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
+
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Role "{}"'.format(self.context['object'].name)
         )
 
 
 class AllRolesView(ConfigurationView):
-    title = Text('#explorer_title_text')
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Access Control Roles'
         )
 
@@ -765,7 +757,7 @@ class RoleAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Roles')
 
 
@@ -784,7 +776,7 @@ class RoleDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Roles', self.obj.name)
 
 
@@ -798,8 +790,6 @@ class RoleEdit(CFMENavigateStep):
 
 
 class TenantForm(ConfigurationView):
-    title = Text("#explorer_title_text")
-
     name = Input(name='name')
     description = Input(name='description')
 
@@ -807,8 +797,6 @@ class TenantForm(ConfigurationView):
 
 
 class TenantQuotaView(ConfigurationView):
-    title = Text("#explorer_title_text")
-
     cpu_cb = BootstrapSwitch(id='cpu_allocated')
     memory_cb = BootstrapSwitch(id='mem_allocated')
     storage_cb = BootstrapSwitch(id='storage_allocated')
@@ -826,12 +814,13 @@ class TenantQuotaView(ConfigurationView):
 
 
 class AllTenantView(ConfigurationView):
-    title = Text("#explorer_title_text")
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Access Control Tenants'
         )
 
@@ -842,18 +831,19 @@ class AddTenantView(TenantForm):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Adding a new Tenant'
         )
 
 
 class DetailsTenantView(ConfigurationView):
-    title = Text("#explorer_title_text")
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
 
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Tenant "{}"'.format(self.context['object'].name)
         )
 
@@ -862,7 +852,7 @@ class ParentDetailsTenantView(DetailsTenantView):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Tenant "{}"'.format(self.context['object'].parent_tenant.name)
         )
 
@@ -874,7 +864,7 @@ class EditTenantView(TenantForm):
     @property
     def is_displayed(self):
         return (
-            self.in_configuration and self.access_control.is_opened and
+            self.accordions.accesscontrol.is_opened and
             self.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name)
         )
 
@@ -958,12 +948,12 @@ class Tenant(Updateable, Pretty, Navigatable):
                    'description': self.description})
         if cancel:
             view.cancel_button.click()
-            tenant_flash_message = 'Tenant "{}" was saved'.format(self.name)
-            project_flash_message = 'Project "{}" was saved'.format(self.name)
-        else:
-            view.add_button.click()
             tenant_flash_message = 'Add of new Tenant was cancelled by the user'
             project_flash_message = 'Add of new Project was cancelled by the user'
+        else:
+            view.add_button.click()
+            tenant_flash_message = 'Tenant "{}" was saved'.format(self.name)
+            project_flash_message = 'Project "{}" was saved'.format(self.name)
         view = self.create_view(ParentDetailsTenantView)
         if isinstance(self, Tenant):
             view.flash.assert_success_message(tenant_flash_message)
@@ -1024,7 +1014,7 @@ class TenantAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Tenants')
 
 
@@ -1034,7 +1024,7 @@ class TenantDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Tenants', *self.obj.tree_path)
 
 
@@ -1045,7 +1035,7 @@ class TenantAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.access_control.tree.click_path(
+        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Tenants', *self.obj.parent_path)
         if isinstance(self.obj, Tenant):
             add_selector = 'Add child Tenant to this Tenant'
@@ -1054,7 +1044,7 @@ class TenantAdd(CFMENavigateStep):
         else:
             raise OptionNotAvailable('Object type unsupported for Tenant Add: {}'
                                      .format(type(self.obj).__name__))
-        self.view.configuration.item_select(add_selector)
+        self.prerequisite_view.configuration.item_select(add_selector)
 
 
 @navigator.register(Tenant, 'Edit')
