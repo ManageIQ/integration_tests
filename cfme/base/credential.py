@@ -150,7 +150,7 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
         return provider_credential_form()
 
 
-class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin):
+class ServiceAccountCredential(Pretty, Updateable):
     """
     A class to fill in credentials
 
@@ -178,6 +178,35 @@ class ServiceAccountCredential(Pretty, Updateable, FromConfigMixin):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    @classmethod
+    def from_config(cls, key):
+        creds = deepcopy(conf.credentials[key])
+        service_data = creds['service_account']
+        service_account = '''
+                  "type": "{type}",
+                  "project_id": "{project}",
+                  "private_key_id": "{private_key_id}",
+                  "private_key": "{private_key}",
+                  "client_email": "{email}",
+                  "client_id": "{client}",
+                  "auth_uri": "{auth}",
+                  "token_uri": "{token}",
+                  "auth_provider_x509_cert_url": "{auth_provider}",
+                  "client_x509_cert_url": "{cert_url}"
+                '''.format(
+            type=service_data.get('type'),
+            project=service_data.get('project_id'),
+            private_key_id=service_data.get('private_key_id'),
+            private_key=service_data.get('private_key').replace('\n', '\\n'),
+            email=service_data.get('client_email'),
+            client=service_data.get('client_id'),
+            auth=service_data.get('auth_uri'),
+            token=service_data.get('token_uri'),
+            auth_provider=service_data.get('auth_provider_x509_cert_url'),
+            cert_url=service_data.get('client_x509_cert_url'))
+        service_account = '{' + service_account + '}'
+        return cls(service_account=service_account)
 
     @property
     def form(self):

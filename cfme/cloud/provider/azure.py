@@ -2,6 +2,7 @@ from wrapanapi.azure import AzureSystem
 
 from . import CloudProvider
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from utils.version import pick
 
 
 class AzureEndpoint(DefaultEndpoint):
@@ -30,25 +31,14 @@ class AzureProvider(CloudProvider):
 
     @property
     def view_value_mapping(self):
-        region = self.region if isinstance(region, dict): pick(region)
+        region = pick(self.region) if isinstance(self.region, dict) else self.region
         return {
             'name': self.name,
             'prov_type': 'Azure',
-            'region':
+            'region': region,
             'tenant_id': self.tenant_id,
-            'subscription_id': self.subscription_id
+            'subscription': self.subscription_id
         }
-
-    # def _form_mapping(self, create=None, **kwargs):
-    #     region = kwargs.get('region')
-    #     if isinstance(region, dict):
-    #         region = pick(region)
-    #     # Will still need to figure out where to put the tenant id.
-    #     return {'name_text': kwargs.get('name'),
-    #             'type_select': create and 'Azure',
-    #             'region_select': region,
-    #             'azure_tenant_id': kwargs.get('tenant_id'),
-    #             'azure_subscription_id': kwargs.get('subscription_id')}
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
@@ -56,18 +46,14 @@ class AzureProvider(CloudProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        endpoint = SCVMMEndpoint(**prov_config['endpoints']['default'])
-
-
-        credentials_key = prov_config['credentials']
-        credentials = cls.process_credential_yaml_key(credentials_key)
+        endpoint = AzureEndpoint(**prov_config['endpoints']['default'])
         # HACK: stray domain entry in credentials, so ensure it is not there
-        credentials.domain = None
+        endpoint.credentials.domain = None
         return cls(
             name=prov_config['name'],
             region=prov_config.get('region'),
             tenant_id=prov_config['tenant_id'],
             subscription_id=prov_config['subscription_id'],
-            credentials={'default': credentials},
+            endpoints={endpoint.name: endpoint},
             key=prov_key,
             appliance=appliance)

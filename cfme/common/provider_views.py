@@ -94,16 +94,25 @@ class ProviderDetailsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        if self.context['object'].appliance.version >= '5.7':
-            subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
-                else 'Dashboard'
-        else:
-            subtitle = 'Summary'  # 5.6 has only only Summary view
-        title = '{name} ({subtitle})'.format(name=self.context['object'].name, subtitle=subtitle)
+        subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
+            else 'Dashboard'
+        title = '{name} ({subtitle})'.format(name=self.context['object'].name,
+                                             subtitle=subtitle)
+        return self.logged_in_as_current_user and self.breadcrumb.active_location == title
 
-        return self.logged_in_as_current_user and \
-            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
-            self.breadcrumb.active_location == title
+
+class InfraProviderDetailsView(ProviderDetailsView):
+    @property
+    def is_displayed(self):
+        return super(InfraProviderDetailsView, self).is_displayed and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers']
+
+
+class CloudProviderDetailsView(ProviderDetailsView):
+    @property
+    def is_displayed(self):
+        return super(CloudProviderDetailsView, self).is_displayed and \
+            self.navigation.currently_selected == ['Compute', 'Cloud', 'Providers']
 
 
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -310,11 +319,28 @@ class ProvidersView(BaseLoggedInPage):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
             self.items.title.text == 'Infrastructure Providers'
+        return self.logged_in_as_current_user
 
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
     items = View.nested(ProviderItems)
     paginator = View.nested(PaginationPane)
+
+
+class InfraProvidersView(ProvidersView):
+    @property
+    def is_displayed(self):
+        return super(InfraProvidersView, self).is_displayed and \
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
+            self.items.title.text == 'Infrastructure Providers'
+
+
+class CloudProvidersView(ProvidersView):
+    @property
+    def is_displayed(self):
+        return super(CloudProvidersView, self).is_displayed and \
+            self.navigation.currently_selected == ['Compute', ' Cloud', 'Providers'] and \
+            self.items.title.text == 'Cloud Providers'
 
 
 class BeforeFillMixin(object):
@@ -328,6 +354,7 @@ class ProviderAddView(BaseLoggedInPage):
     name = Input('name')
     prov_type = BootstrapSelect(id='emstype')
     api_version = BootstrapSelect(id='api_version')  # only for OpenStack
+    keystone_v3_domain_id = Input('keystone_v3_domain_id')  # OpenStack only
     zone = Input('zone')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -344,9 +371,32 @@ class ProviderAddView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.logged_in_as_current_user and \
+        return self.logged_in_as_current_user
+
+
+class InfraProviderAddView(ProviderAddView):
+    @property
+    def is_displayed(self):
+        return super(InfraProviderAddView, self).is_displayed and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
             self.title.text == 'Add New Infrastructure Provider'
+
+
+class CloudProviderAddView(ProviderAddView):
+    # bug in cfme this field has different ids for cloud and infra add views
+    prov_type = BootstrapSelect(id='ems_type')
+    region = BootstrapSelect(id='provider_region')  # Azure/AWS/GCE
+    tenant_id = Input('azure_tenant_id')  # only for Azure
+    subscription = Input('subscription')  # only for Azure
+    project_id = Input('project')  # only for Azure
+    infra_provider = BootstrapSelect(id='ems_infra_provider_id')  # OpenStack only
+    tenant_mapping = Checkbox(name='tenant_mapping_enabled')  # OpenStack only
+
+    @property
+    def is_displayed(self):
+        return super(CloudProviderAddView, self).is_displayed and \
+            self.navigation.currently_selected == ['Compute', 'Cloud', 'Providers'] and \
+            self.title.text == 'Add New Cloud Provider'
 
 
 class ProviderEditView(ProviderAddView):
@@ -364,6 +414,20 @@ class ProviderEditView(ProviderAddView):
 
     @property
     def is_displayed(self):
-        return self.logged_in_as_current_user and \
+        return self.logged_in_as_current_user
+
+
+class InfraProviderEditView(ProviderEditView):
+    @property
+    def is_displayed(self):
+        return super(InfraProviderEditView, self).is_displayed and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
             self.title.text == 'Edit Infrastructure Provider'
+
+
+class CloudProviderEditView(ProviderEditView):
+    @property
+    def is_displayed(self):
+        return super(CloudProviderEditView, self).is_displayed and \
+            self.navigation.currently_selected == ['Compute', 'Cloud', 'Providers'] and \
+            self.title.text == 'Edit Cloud Provider'

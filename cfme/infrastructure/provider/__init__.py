@@ -8,14 +8,14 @@ from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider
-from cfme.common.provider_views import (ProviderAddView,
-                                        ProviderEditView,
-                                        ProviderDetailsView,
+from cfme.common.provider_views import (InfraProviderAddView,
+                                        InfraProviderEditView,
+                                        InfraProviderDetailsView,
                                         ProviderTimelinesView,
                                         ProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
                                         ProvidersEditTagsView,
-                                        ProvidersView)
+                                        InfraProvidersView)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
@@ -261,7 +261,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 @navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
-    VIEW = ProvidersView
+    VIEW = InfraProvidersView
     prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def step(self):
@@ -280,7 +280,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
-    VIEW = ProviderAddView
+    VIEW = InfraProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -300,7 +300,7 @@ class Discover(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Details')
 class Details(CFMENavigateStep):
-    VIEW = ProviderDetailsView
+    VIEW = InfraProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -354,7 +354,7 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = ProviderEditView
+    VIEW = InfraProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):

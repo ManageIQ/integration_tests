@@ -154,8 +154,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Returns:
             True if it was created, False if it already existed
         """
-        from cfme.infrastructure.provider import InfraProvider
-        if self.one_of(InfraProvider):
+        if self.one_of(CloudInfraProvider):
             if check_existing and self.exists:
                 created = False
             else:
@@ -247,8 +246,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
            cancel (boolean): whether to cancel out of the update.
            validate_credentials (boolean): whether credentials have to be validated
         """
-        from cfme.infrastructure.provider import InfraProvider
-        if self.one_of(InfraProvider):
+        if self.one_of(CloudInfraProvider):
             edit_view = navigate_to(self, 'Edit')
             # todo: to replace/merge this code with create
             # update values:

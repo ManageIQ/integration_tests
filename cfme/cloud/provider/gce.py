@@ -1,38 +1,55 @@
 from wrapanapi.google import GoogleCloudSystem
+from widgetastic.widget import View
+from widgetastic_patternfly import Button, Input
 
 from cfme.base.credential import ServiceAccountCredential
-import cfme.fixtures.pytest_selenium as sel
+from cfme.common.provider import DefaultEndpoint
 from . import CloudProvider
+
+
+class GCEEndpoint(DefaultEndpoint):
+    credential_class = ServiceAccountCredential
+
+    @property
+    def view_value_mapping(self):
+        return {}
+
+
+class GCEEndpointForm(View):
+    service_account = Input('service_account')
+    validate = Button('Validate')
 
 
 class GCEProvider(CloudProvider):
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
     db_types = ["Google::CloudManager"]
+    endpoints_form = GCEEndpointForm
 
-    def __init__(
-            self, name=None, project=None, zone=None, region=None, credentials=None, key=None,
-            appliance=None):
-        super(GCEProvider, self).__init__(
-            name=name, zone=zone, key=key, credentials=credentials, appliance=appliance)
+    def __init__(self, name=None, project=None, zone=None, region=None, endpoints=None, key=None,
+                 appliance=None):
+        super(GCEProvider, self).__init__(name=name, zone=zone, key=key, endpoints=endpoints,
+                                          appliance=appliance)
         self.region = region
         self.project = project
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Google Compute Engine',
-                'google_region_select': sel.ByValue(kwargs.get('region')),
-                'google_project_text': kwargs.get('project')}
+    @property
+    def view_value_mapping(self):
+        return {
+            'name': self.name,
+            'prov_type': 'Google Compute Engine',
+            'region': self.region,
+            'project_id': self.project
+        }
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
-        sa_creds = cls.get_credentials_from_config(prov_config['credentials'],
-                                                   cred_type='service_account')
+        endpoint = GCEEndpoint(**prov_config['endpoints']['default'])
         return cls(name=prov_config['name'],
                    project=prov_config['project'],
                    zone=prov_config['zone'],
                    region=prov_config['region'],
-                   credentials={'service_account': sa_creds},
+                   endpoints={endpoint.name: endpoint},
                    key=prov_key,
                    appliance=appliance)
 
@@ -47,32 +64,4 @@ class GCEProvider(CloudProvider):
         Returns:
             A :py:class:`cfme.base.credential.ServiceAccountCredential` instance.
         """
-        service_account = credential_dict.get('service_account')
-        service_account = cls.gce_service_account_formating(service_account)
-        return ServiceAccountCredential(service_account=service_account)
-
-    @staticmethod
-    def gce_service_account_formating(data):
-        service_data = '''
-          "type": "{type}",
-          "project_id": "{project}",
-          "private_key_id": "{private_key_id}",
-          "private_key": "{private_key}",
-          "client_email": "{email}",
-          "client_id": "{client}",
-          "auth_uri": "{auth}",
-          "token_uri": "{token}",
-          "auth_provider_x509_cert_url": "{auth_provider}",
-          "client_x509_cert_url": "{cert_url}"
-        '''.format(
-            type=data.get('type'),
-            project=data.get('project_id'),
-            private_key_id=data.get('private_key_id'),
-            private_key=data.get('private_key').replace('\n', '\\n'),
-            email=data.get('client_email'),
-            client=data.get('client_id'),
-            auth=data.get('auth_uri'),
-            token=data.get('token_uri'),
-            auth_provider=data.get('auth_provider_x509_cert_url'),
-            cert_url=data.get('client_x509_cert_url'))
-        return '{' + service_data + '}'
+        return ServiceAccountCredential.from_config(credential_dict)
