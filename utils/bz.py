@@ -77,13 +77,13 @@ class Bugzilla(object):
 
     @classmethod
     def from_config(cls):
-        url = cfme_data.get("bugzilla", {}).get("url", None)
-        product = cfme_data.get("bugzilla", {}).get("product", None)
+        url = cfme_data.get("bugzilla", {}).get("url")
+        product = cfme_data.get("bugzilla", {}).get("product")
         if url is None:
             raise Exception("No Bugzilla URL specified!")
-        cr_root = cfme_data.get("bugzilla", {}).get("credentials", None)
-        username = credentials.get(cr_root, {}).get("username", None)
-        password = credentials.get(cr_root, {}).get("password", None)
+        cr_root = cfme_data.get("bugzilla", {}).get("credentials")
+        username = credentials.get(cr_root, {}).get("username")
+        password = credentials.get(cr_root, {}).get("password")
         return cls(
             url=url, user=username, password=password, cookiefile=None,
             tokenfile=None, product=product)

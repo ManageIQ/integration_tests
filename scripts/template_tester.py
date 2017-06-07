@@ -62,7 +62,7 @@ def mark(api, provider_key, template, usable, diagnose):
     diagnosis = None
     build_number = None
     if not usable:
-        build_number = os.environ.get('BUILD_NUMBER', None)
+        build_number = os.environ.get('BUILD_NUMBER')
 
 #   temporarily disabled; diagnosis is causing template marking to fail on downstream appliances :(
 #         if diagnose:

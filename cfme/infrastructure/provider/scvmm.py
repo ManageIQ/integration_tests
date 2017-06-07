@@ -59,7 +59,7 @@ class SCVMMProvider(InfraProvider):
     def from_config(cls, prov_config, prov_key, appliance=None):
         endpoint = SCVMMEndpoint(**prov_config['endpoints']['default'])
 
-        if prov_config.get('discovery_range', None):
+        if prov_config.get('discovery_range'):
             start_ip = prov_config['discovery_range']['start']
             end_ip = prov_config['discovery_range']['end']
         else:

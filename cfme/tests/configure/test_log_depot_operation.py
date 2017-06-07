@@ -84,7 +84,7 @@ def pytest_generate_tests(metafunc):
         if proto_data['use_for_log_collection']:
             depots.append([LogDepotType(
                 protocol, creds,
-                proto_data.get('sub_folder', None), proto_data.get('path_on_host', None))])
+                proto_data.get('sub_folder'), proto_data.get('path_on_host'))])
             ids.append(protocol)
     if metafunc.function.__name__ in ['test_collect_multiple_servers',
                                       "test_collect_single_servers"]:

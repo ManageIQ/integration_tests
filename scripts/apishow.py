@@ -222,7 +222,7 @@ if __name__ == '__main__':
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         '--address',
-        default=conf.env.get('base_url', None),
+        default=conf.env.get('base_url'),
         help="hostname or ip address of target appliance, "
              "default pulled from local environment conf")
     parser.add_argument(

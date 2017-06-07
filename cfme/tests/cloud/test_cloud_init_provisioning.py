@@ -45,7 +45,7 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     Metadata:
         test_flag: cloud_init, provision
     """
-    image = provisioning.get('ci-image', None) or provisioning['image']['name']
+    image = provisioning.get('ci-image') or provisioning['image']['name']
     note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
         image, vm_name, provider.key))
     logger.info(note)

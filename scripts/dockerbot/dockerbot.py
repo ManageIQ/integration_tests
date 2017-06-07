@@ -254,8 +254,8 @@ class DockerBot(object):
     def validate_args(self):
         ec = 0
 
-        appliance = self.args.get('appliance', None)
-        if self.args.get('appliance_name', None) and not appliance:
+        appliance = self.args.get('appliance')
+        if self.args.get('appliance_name') and not appliance:
             self.args['appliance'] = docker_conf['appliances'][self.args['appliance_name']]
 
         self.check_arg('nowait', False)
@@ -383,7 +383,7 @@ class DockerBot(object):
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
             self.pr_metadata = self.get_pr_metadata(self.args['pr'])
-            pytest = self.pr_metadata.get('pytest', None)
+            pytest = self.pr_metadata.get('pytest')
             self.args['sprout_appliances'] = self.pr_metadata.get('sprouts', 1)
             if pytest:
                 self.args['pytest'] = "py.test {}".format(pytest)

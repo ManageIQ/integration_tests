@@ -47,7 +47,7 @@ class GCEProvider(CloudProvider):
         Returns:
             A :py:class:`cfme.base.credential.ServiceAccountCredential` instance.
         """
-        service_account = credential_dict.get('service_account', None)
+        service_account = credential_dict.get('service_account')
         service_account = cls.gce_service_account_formating(service_account)
         return ServiceAccountCredential(service_account=service_account)
 

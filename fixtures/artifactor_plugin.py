@@ -44,7 +44,7 @@ UNDER_TEST = False  # set to true for artifactor using tests
 # Create a list of all our passwords for use with the sanitize request later in this module
 words = []
 for cred in credentials:
-    word = credentials[cred].get('password', None)
+    word = credentials[cred].get('password')
     if word:
         words.append(word)
 
@@ -219,10 +219,10 @@ def pytest_runtest_teardown(item, nextitem):
         slaveid=store.slaveid, ip=ip, grab_result=True)
     fire_art_test_hook(item, 'sanitize', words=words)
     jenkins_data = {
-        'build_url': os.environ.get('BUILD_URL', None),
-        'build_number': os.environ.get('BUILD_NUMBER', None),
-        'git_commit': os.environ.get('GIT_COMMIT', None),
-        'job_name': os.environ.get('JOB_NAME', None)
+        'build_url': os.environ.get('BUILD_URL'),
+        'build_number': os.environ.get('BUILD_NUMBER'),
+        'git_commit': os.environ.get('GIT_COMMIT'),
+        'job_name': os.environ.get('JOB_NAME')
     }
     fire_art_test_hook(
         item, 'ostriz_send',

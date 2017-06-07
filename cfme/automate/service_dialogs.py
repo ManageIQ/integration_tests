@@ -134,8 +134,8 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
 
     def update(self, updates):
         navigate_to(self, 'Edit')
-        fill(label_form, {'name_text': updates.get('name', None),
-                          'description_text': updates.get('description', None)})
+        fill(label_form, {'name_text': updates.get('name'),
+                          'description_text': updates.get('description')})
         sel.click(form_buttons.save)
         flash.assert_no_errors()
 

@@ -142,7 +142,7 @@ def make_kwargs(args, **kwargs):
     if len(kwargs) is 0:
         return args_kwargs
 
-    template_name = kwargs.get('template_name', None)
+    template_name = kwargs.get('template_name')
     if template_name is None:
         template_name = cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
@@ -170,7 +170,7 @@ def make_kwargs_rhos(cfme_data, provider):
     data = cfme_data['management_systems'][provider]
 
     if data.get('template_upload'):
-        tenant_id = data['template_upload'].get('tenant_id', None)
+        tenant_id = data['template_upload'].get('tenant_id')
     else:
         tenant_id = None
 

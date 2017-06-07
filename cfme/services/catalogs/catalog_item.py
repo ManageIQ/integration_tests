@@ -333,7 +333,7 @@ class CatalogBundle(Updateable, Pretty, Navigatable):
         view = navigate_to(self, 'BundleEdit')
         changed = view.fill(updates)
         tabstrip.select_tab("Resources")
-        view.fill({'select_resource': updates.get('catalog_items', None)},)
+        view.fill({'select_resource': updates.get('catalog_items')},)
         if changed:
             view.save_button.click()
         else:

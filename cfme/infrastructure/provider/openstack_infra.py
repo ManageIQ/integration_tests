@@ -93,7 +93,7 @@ class OpenstackInfraProvider(InfraProvider):
                 if expected_endpoint.name == endp:
                     endpoints[endp] = expected_endpoint(**prov_config['endpoints'][endp])
 
-        if prov_config.get('discovery_range', None):
+        if prov_config.get('discovery_range'):
             start_ip = prov_config['discovery_range']['start']
             end_ip = prov_config['discovery_range']['end']
         else:

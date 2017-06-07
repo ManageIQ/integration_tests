@@ -381,10 +381,10 @@ def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create
     action_status = rest_api.response.status_code
     search_str = '%{}%' if substr_search else '{}'
     for entity in col_data:
-        if entity.get('name', None):
+        if entity.get('name'):
             wait_for(lambda: collection.find_by(
                 name=search_str.format(entity.get('name'))) or False, num_sec=180, delay=10)
-        elif entity.get('description', None):
+        elif entity.get('description'):
             wait_for(lambda: collection.find_by(
                 description=search_str.format(entity.get('description'))) or False,
                 num_sec=180, delay=10)

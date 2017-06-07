@@ -3680,7 +3680,7 @@ class DynamicTable(Pretty):
 @fill.method((DynamicTable.Row, Mapping))
 def _fill_dt_row_map(dtr, m):
     for name, input in dtr.inputs_for_filling.iteritems():
-        fill(input, m.get(name, None))
+        fill(input, m.get(name))
 
 
 @fill.method((DynamicTable.Row, Anything))

@@ -202,7 +202,7 @@ class ComputeRate(Updateable, Pretty, Navigatable):
         self.fields = fields
 
     def __getitem__(self, name):
-        return self.fields.get(name, None)
+        return self.fields.get(name)
 
     def create(self):
         view = navigate_to(self, 'New')

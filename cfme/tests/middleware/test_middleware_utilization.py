@@ -92,7 +92,7 @@ def validate_data(chart):
             # verify UI, Table and Mgmt
             d_value = None
             # if mgmt has 0.0, change default value as 0
-            if mgmt_data.get(key, None) == 0:
+            if mgmt_data.get(key) == 0:
                 d_value = 0
             assert mgmt_data.get(key, d_value) == chart_data.get(key, d_value) == table_data\
                 .get(key, d_value), "data mismatch for the timestamp[{}], data[chart:{}, " \

@@ -60,7 +60,7 @@ class variable(object):
             # Decorator with parameters, the default function comes later in __call__
             self._name = None
             self._mapping = {}
-            self._alias = kwargs.get("alias", None)
+            self._alias = kwargs.get("alias")
 
     def __call__(self, f):
         if _default in self._mapping:

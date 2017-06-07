@@ -84,9 +84,9 @@ class OpenshiftProvider(ContainersProvider):
             credentials={'token': token_creds},
             key=prov_key,
             zone=prov_config['server_zone'],
-            hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
+            hostname=prov_config.get('hostname') or prov_config['ip_address'],
             port=prov_config['port'],
-            sec_protocol=prov_config.get('sec_protocol', None),
+            sec_protocol=prov_config.get('sec_protocol'),
             hawkular_sec_protocol=prov_config.get('hawkular_sec_protocol'),
             provider_data=prov_config,
             appliance=appliance)

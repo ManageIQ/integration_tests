@@ -124,7 +124,7 @@ class SSHClient(paramiko.SSHClient):
             'gss_auth': False
         }
         # Load credentials and destination from confs, if connect_kwargs is empty
-        if not connect_kwargs.get('hostname', None):
+        if not connect_kwargs.get('hostname'):
             parsed_url = urlparse(store.base_url)
             default_connect_kwargs["port"] = ports.SSH
             default_connect_kwargs['username'] = conf.credentials['ssh']['username']
@@ -144,7 +144,7 @@ class SSHClient(paramiko.SSHClient):
 
     @property
     def username(self):
-        return self._connect_kwargs.get('username', None)
+        return self._connect_kwargs.get('username')
 
     def __repr__(self):
         return "<SSHClient hostname={} port={}>".format(

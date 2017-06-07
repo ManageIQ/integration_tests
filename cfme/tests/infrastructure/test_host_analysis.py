@@ -34,7 +34,7 @@ def pytest_generate_tests(metafunc):
         for test_host in prov_hosts:
             if not test_host.get('test_fleece', False):
                 continue
-            assert test_host.get('type', None) in HOST_TYPES,\
+            assert test_host.get('type') in HOST_TYPES,\
                 'host type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(HOST_TYPES))
 

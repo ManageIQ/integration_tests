@@ -277,7 +277,7 @@ def template(template_location, provider):
                 # There is nothing in TEMPLATES, that means no trackerbot URL and no data pulled.
                 # This should normally not constitute an issue so continue.
                 return o
-            templates = TEMPLATES.get(provider.key, None)
+            templates = TEMPLATES.get(provider.key)
             if templates is not None:
                 if o in templates:
                     return o
@@ -286,16 +286,16 @@ def template(template_location, provider):
 
 
 def _get_template(provider, template_type_name):
-    template = provider.data.get(template_type_name, None)
+    template = provider.data.get(template_type_name)
     if isinstance(template, Mapping):
-        template_name = template.get("name", None)
+        template_name = template.get("name")
     else:
         template_name = template
     if template_name:
         if not TEMPLATES:
             # Same as couple of lines above
             return template
-        templates = TEMPLATES.get(provider.key, None)
+        templates = TEMPLATES.get(provider.key)
         if templates and template_name in templates:
             return template
     else:

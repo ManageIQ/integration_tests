@@ -1671,7 +1671,7 @@ class IPAppliance(object):
             raise exception_class(message)
 
         if vddk_url is None:  # fallback to VDDK 5.5
-            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", None).get("v5_5", None)
+            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", {}).get("v5_5")
         if vddk_url is None:
             raise Exception("vddk_url not specified!")
 
@@ -1831,9 +1831,9 @@ class IPAppliance(object):
     @cached_property
     def get_host_address(self):
         try:
-            server = self.get_yaml_config().get('server', None)
+            server = self.get_yaml_config().get('server')
             if server:
-                return server.get('host', None)
+                return server.get('host')
         except Exception as e:
             logger.exception(e)
             self.log.error('Exception occured while fetching host address')
@@ -2404,16 +2404,16 @@ class Appliance(IPAppliance):
             "log_callback",
             lambda msg: logger.info("Custom configure %s: %s", self.vmname, msg))
         region = kwargs.get('region', 0)
-        db_address = kwargs.get('db_address', None)
-        key_address = kwargs.get('key_address', None)
-        db_username = kwargs.get('db_username', None)
-        db_password = kwargs.get('ssh_password', None)
-        ssh_password = kwargs.get('ssh_password', None)
-        db_name = kwargs.get('db_name', None)
+        db_address = kwargs.get('db_address')
+        key_address = kwargs.get('key_address')
+        db_username = kwargs.get('db_username')
+        db_password = kwargs.get('ssh_password')
+        ssh_password = kwargs.get('ssh_password')
+        db_name = kwargs.get('db_name')
 
         if kwargs.get('fix_ntp_clock', True) is True:
             self.fix_ntp_clock(log_callback=log_callback)
-        if kwargs.get('db_address', None) is None:
+        if kwargs.get('db_address') is None:
             self.enable_internal_db(
                 region, key_address, db_password, ssh_password, log_callback=log_callback)
         else:
@@ -2424,7 +2424,7 @@ class Appliance(IPAppliance):
         if kwargs.get('loosen_pgssl', True) is True:
             self.loosen_pgssl(log_callback=log_callback)
 
-        name_to_set = kwargs.get('name_to_set', None)
+        name_to_set = kwargs.get('name_to_set')
         if name_to_set is not None and name_to_set != self.name:
             self.rename(name_to_set)
             self.restart_evm_service(log_callback=log_callback)
@@ -2645,7 +2645,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         api = trackerbot.api()
         stream = get_stream(version)
         template_data = trackerbot.latest_template(api, stream, provider_name)
-        return template_data.get('latest_template', None)
+        return template_data.get('latest_template')
 
     if provider_name is None:
         provider_name = conf.cfme_data.get('appliance_provisioning', {})['default_provider']
@@ -2724,13 +2724,13 @@ def get_or_create_current_appliance():
         if base_url is None or str(base_url.lower()) == 'none':
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
         openshift_creds = conf.env.get('openshift', {})
-        db_host = conf.env.get('db_host', None)
+        db_host = conf.env.get('db_host')
         if not isinstance(openshift_creds, dict):
             raise TypeError('The openshift entry in env.yaml must be a dictionary')
         stack.push(
             IPAppliance(
                 urlparse(base_url),
-                container=conf.env.get('container', None),
+                container=conf.env.get('container'),
                 openshift_creds=openshift_creds, db_host=db_host))
     return stack.top
 

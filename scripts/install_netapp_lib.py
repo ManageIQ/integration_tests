@@ -26,11 +26,11 @@ def main():
     parser.add_argument(
         '--address',
         help='hostname or ip address of target appliance',
-        default=parse_if_not_none(env.get("base_url", None)))
+        default=parse_if_not_none(env.get("base_url")))
     parser.add_argument(
         '--sdk_url',
         help='url to download sdk pkg',
-        default=cfme_data.get("basic_info", {}).get("netapp_sdk_url", None))
+        default=cfme_data.get("basic_info", {}).get("netapp_sdk_url"))
     parser.add_argument('--restart', help='restart evmserverd after installation ' +
         '(required for proper operation)', action="store_true")
 

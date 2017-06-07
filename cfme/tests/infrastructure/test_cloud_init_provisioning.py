@@ -51,7 +51,7 @@ def test_provision_cloud_init(setup_provider, provider, setup_ci_template,
         suite: infra_provisioning
     """
     # generate_tests makes sure these have values
-    template = provisioning.get('ci-image', None) or provisioning['image']['name']
+    template = provisioning.get('ci-image') or provisioning['image']['name']
     host, datastore = map(provisioning.get, ('host', 'datastore'))
 
     mgmt_system = provider.get_mgmt_system()

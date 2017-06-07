@@ -152,10 +152,10 @@ class ProviderFilter(object):
             # "version_restrictions" and it should be a sequence of restrictions with operators
             # so that we can create ranges like ">= 5.6" and "<= 5.8"
             version_restrictions = []
-            since_version = provider.data.get('since_version', None)
+            since_version = provider.data.get('since_version')
             if since_version:
                 version_restrictions.append('>= {}'.format(since_version))
-            restricted_version = provider.data.get('restricted_version', None)
+            restricted_version = provider.data.get('restricted_version')
             if restricted_version:
                 version_restrictions.append(restricted_version)
             for restriction in version_restrictions:

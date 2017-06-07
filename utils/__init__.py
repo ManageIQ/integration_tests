@@ -9,7 +9,7 @@ from cached_property import cached_property
 from functools import partial
 from werkzeug.local import LocalProxy
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 
 class FakeObject(object):

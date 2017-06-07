@@ -44,7 +44,7 @@ def make_kwargs(args, **kwargs):
     if len(kwargs) is 0:
         return args_kwargs
 
-    template_name = kwargs.get('template_name', None)
+    template_name = kwargs.get('template_name')
     if template_name is None:
         template_name = cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
