@@ -86,7 +86,7 @@ def is_registration_complete(used_repo_or_channel, appliance):
 
 @pytest.mark.ignore_stream("upstream")
 def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_creds):
-    repo = reg_data.get('enable_repo', None)
+    repo = reg_data.get('enable_repo')
     if not repo:
         set_default_repo = True
     else:
@@ -121,7 +121,7 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
 @pytest.mark.ignore_stream("upstream")
 def test_rh_registration(request, reg_method, reg_data, proxy_url, proxy_creds):
 
-    repo = reg_data.get('enable_repo', None)
+    repo = reg_data.get('enable_repo')
     if not repo:
         set_default_repo = True
     else:
