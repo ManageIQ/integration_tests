@@ -73,21 +73,17 @@ def set_and_test_view(group_name, view):
     DefaultView.set_default_view(group_name, old_default)
 
 
-@pytest.mark.meta(blockers=[1447971])
 def test_cloud_expanded_view(request):
     set_and_test_view('Compare', 'Expanded View')
 
 
-@pytest.mark.meta(blockers=[1447971])
 def test_cloud_compressed_view(request):
     set_and_test_view('Compare', 'Compressed View')
 
 
-@pytest.mark.meta(blockers=[1447971])
 def test_cloud_details_view(request):
     set_and_test_view('Compare Mode', 'Details Mode')
 
 
-@pytest.mark.meta(blockers=[1447971])
 def test_cloud_exists_view(request):
     set_and_test_view('Compare Mode', 'Exists Mode')
