@@ -2,31 +2,52 @@
 """
 outputs the frozen packages
 """
+from __future__ import print_function
 import sys
 import os
 import argparse
 import subprocess
+import tempfile
+import shutil
 parser = argparse.ArgumentParser(description=__doc__.strip())
-parser.add_argument('--venv', default='requirements/temporary_venv')
+parser.add_argument('--venv', default=None)
+parser.add_argument('--keep-venv', action='store_true')
 parser.add_argument(
     "--template", default="requirements/template.txt",)
 parser.add_argument(
-    "--out", default=sys.stdout, type=argparse.FileType('w'),
+    "--out", default=None,
     help='the file where packages should be written to')
 
 
 def main(args):
-    if not os.path.isdir(args.venv):
-        subprocess.check_call([
-            sys.executable, '-m', 'virtualenv', args.venv
-        ])
-    subprocess.check_call([
-        os.path.join(args.venv, 'bin/pip'),
-        'install', '-U', '-r', args.template])
+    if args.venv is None:
+        args.venv = tempfile.mkdtemp(suffix='-miq-QE-rebuild-venv')
 
-    subprocess.check_call([
-        os.path.join(args.venv, 'bin/pip'), 'freeze'
-    ], stdout=args.out)
+    try:
+        if not os.path.isdir(os.path.join(args.venv, 'bin')):
+            subprocess.check_call([
+                sys.executable, '-m', 'virtualenv', args.venv
+            ])
+        subprocess.check_call([
+            os.path.join(args.venv, 'bin/pip'),
+            'install', '-U', '-r', args.template])
+
+        if args.out is None:
+            subprocess.check_call([
+                os.path.join(args.venv, 'bin/pip'), 'freeze'
+            ], stdout=sys.stdout)
+        else:
+            with open(args.out) as out:
+                subprocess.check_call([
+                    os.path.join(args.venv, 'bin/pip'), 'freeze'
+                ], stdout=out)
+
+        subprocess.check_call([
+            os.path.join(args.venv, 'bin/pip'), 'freeze'
+        ], stdout=args.out)
+    finally:
+        if not args.keep_venv:
+            shutil.rmtree(args.venv)
 
 
 if __name__ == '__main__':
