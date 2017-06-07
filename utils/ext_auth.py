@@ -8,7 +8,7 @@ from cfme.login import login_admin, logout
 from utils.browser import ensure_browser_open
 from utils.conf import credentials
 from utils.ssh import SSHClient
-from utils import appliance
+from utils.appliance import get_or_create_current_appliance
 from utils.path import conf_path
 
 
@@ -36,16 +36,24 @@ def setup_external_auth_ipa(**data):
         'password': credentials['host_default']['password'],
         'hostname': data['ipaserver'],
     }
+    current_appliance = get_or_create_current_appliance()
     appliance_name = 'cfmeappliance{}'.format(fauxfactory.gen_alpha(7).lower())
-    appliance_address = appliance.IPAppliance().address
+    appliance_address = current_appliance.address
     appliance_fqdn = '{}.{}'.format(appliance_name, data['iparealm'].lower())
     with SSHClient(**connect_kwargs) as ipaserver_ssh:
         ipaserver_ssh.run_command('cp /etc/hosts /etc/hosts_bak')
         ipaserver_ssh.run_command("sed -i -r '/^{}/d' /etc/hosts".format(appliance_address))
         command = 'echo "{}\t{}" >> /etc/hosts'.format(appliance_address, appliance_fqdn)
         ipaserver_ssh.run_command(command)
-    with SSHClient() as ssh_client:
-        assert ssh_client.run_command('appliance_console_cli --host {}'.format(appliance_fqdn))
+    with current_appliance.ssh_client as ssh:
+        result = ssh.run_command('appliance_console_cli --host {}'.format(appliance_fqdn)).success
+        if not current_appliance.is_pod:
+            assert result
+        else:
+            # appliance_console_cli fails when calls hostnamectl --host. it seems docker issue
+            # raise BZ ?
+            assert str(ssh.run_command('hostname')).rstrip() == appliance_fqdn
+
         ensure_browser_open()
         login_admin()
         if data["ipaserver"] not in get_ntp_servers():
@@ -55,7 +63,7 @@ def setup_external_auth_ipa(**data):
         auth.setup()
         creds = credentials.get(data.pop("credentials"), {})
         data.update(**creds)
-        assert ssh_client.run_command(
+        assert ssh.run_command(
             "appliance_console_cli --ipaserver {ipaserver} --iparealm {iparealm} "
             "--ipaprincipal {principal} --ipapassword {password}".format(**data)
         )
@@ -76,9 +84,9 @@ def setup_external_auth_openldap(**data):
         'password': credentials['host_default']['password'],
         'hostname': data['ipaddress'],
     }
-    appliance_obj = appliance.IPAppliance()
+    current_appliance = get_or_create_current_appliance()
     appliance_name = 'cfmeappliance{}'.format(fauxfactory.gen_alpha(7).lower())
-    appliance_address = appliance_obj.address
+    appliance_address = current_appliance.address
     appliance_fqdn = '{}.{}'.format(appliance_name, data['domain_name'])
     with SSHClient(**connect_kwargs) as ldapserver_ssh:
         # updating the /etc/hosts is a workaround due to the
@@ -91,19 +99,20 @@ def setup_external_auth_openldap(**data):
     login_admin()
     auth = ExternalAuthSetting(get_groups=data.pop("get_groups", True))
     auth.setup()
-    appliance_obj.configure_appliance_for_openldap_ext_auth(appliance_fqdn)
+    current_appliance.configure_appliance_for_openldap_ext_auth(appliance_fqdn)
     logout()
 
 
 def disable_external_auth_ipa():
     """Unconfigure external auth."""
-    with SSHClient() as ssh_client:
+    current_appliance = get_or_create_current_appliance()
+    with current_appliance.ssh_client as ssh:
         ensure_browser_open()
         login_admin()
         auth = DatabaseAuthSetting()
         auth.update()
-        assert ssh_client.run_command("appliance_console_cli --uninstall-ipa")
-        appliance.IPAppliance().wait_for_web_ui()
+        assert ssh.run_command("appliance_console_cli --uninstall-ipa")
+        current_appliance.wait_for_web_ui()
     logout()
 
 
@@ -116,8 +125,9 @@ def disable_external_auth_openldap():
     manageiq_ext_auth = '/etc/httpd/conf.d/manageiq-external-auth.conf'
     command = 'rm -rf {} && rm -rf {} && rm -rf {} && rm -rf {}'.format(
         sssd_conf, httpd_auth, manageiq_ext_auth, manageiq_remoteuser)
-    with SSHClient() as ssh_client:
-        assert ssh_client.run_command(command)
-        ssh_client.run_command('systemctl restart evmserverd')
-        appliance.IPAppliance().wait_for_web_ui()
+    current_appliance = get_or_create_current_appliance()
+    with current_appliance.ssh_client as ssh:
+        assert ssh.run_command(command)
+        ssh.run_command('systemctl restart evmserverd')
+        get_or_create_current_appliance().wait_for_web_ui()
     logout()

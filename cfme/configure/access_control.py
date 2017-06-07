@@ -262,6 +262,7 @@ class Group(Updateable, Pretty, Navigatable):
 
     def add_group_from_ldap_lookup(self):
         self._retrieve_ldap_user_groups()
+        sel.wait_for_ajax()
         fill(self.group_form, {'ldap_groups_for_user': self.description,
                                'description_txt': self.description,
                                'role_select': self.role,
