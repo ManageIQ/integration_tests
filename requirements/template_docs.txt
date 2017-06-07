@@ -12,6 +12,7 @@ bottle-sqlite
 cached-property
 diaper
 docker-py
+dump2polarion
 fauxfactory>=2.0.7
 flake8
 functools32
