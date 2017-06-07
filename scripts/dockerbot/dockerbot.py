@@ -58,7 +58,6 @@ class DockerInstance(object):
 
     def remove(self):
         if not self.dry_run:
-            return
             dc.remove_container(self.container_id, v=True)
         else:
             print("Removing container")
