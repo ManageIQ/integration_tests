@@ -6,10 +6,11 @@ import pytest
 from cfme import test_requirements
 from cfme.base import Server
 from cfme.common.vm import VM
+from cfme.exceptions import CFMEExceptionOccured
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.control.explorer.actions import Action
-from cfme.control.explorer.alerts import Alert
+from cfme.control.explorer.alerts import Alert, AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
 from cfme.infrastructure.virtual_machines import Vm
@@ -277,3 +278,29 @@ def test_control_identical_descriptions(request, create_function):
     item = create_function.fn(request)
     with pytest.raises(AssertionError):
         item.create()
+
+
+@pytest.mark.meta(blockers=[1231889], automates=[1231889])
+def test_vmware_alarm_selection_does_not_fail():
+    """Test the bug that causes CFME UI to explode when VMware Alarm type is selected.
+
+    Metadata:
+        test_flag: alerts
+    """
+    alert = Alert(
+        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
+        active=True,
+        based_on="VM and Instance",
+        evaluate=("VMware Alarm", {}),
+        notification_frequency="5 Minutes",
+    )
+    try:
+        alert.create()
+    except CFMEExceptionOccured as e:
+        pytest.fail("The CFME has thrown an error: {}".format(str(e)))
+    except Exception as e:
+        view = alert.create_view(AlertDetailsView)
+        view.flash.assert_message("At least one of E-mail, SNMP Trap, Timeline Event, or"
+            " Management Event must be configured")
+    else:
+        pytest.fail("Creating this alert passed although it must fail.")

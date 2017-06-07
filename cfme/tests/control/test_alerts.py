@@ -7,7 +7,6 @@ from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
-from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.provider import InfraProvider
 from utils import ports, testgen
 from utils.conf import credentials
@@ -372,27 +371,3 @@ def test_alert_snmp(request, vm_name, snmp, provider, appliance):
             return False
 
     wait_for(_snmp_arrived, timeout="30m", delay=60, message="SNMP trap arrived.")
-
-
-@pytest.mark.meta(blockers=[1231889], automates=[1231889])
-def test_vmware_alarm_selection_does_not_fail():
-    """Test the bug that causes CFME UI to explode when VMware Alarm type is selected.
-
-    Metadata:
-        test_flag: alerts
-    """
-    alert = alerts.Alert(
-        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
-        active=True,
-        based_on="VM and Instance",
-        evaluate=("VMware Alarm", {}),
-        notification_frequency="5 Minutes",
-    )
-    try:
-        alert.create()
-    except CFMEExceptionOccured as e:
-        pytest.fail("The CFME has thrown an error: {}".format(str(e)))
-    except Exception as e:
-        flash.assert_message_contain("must be configured")
-    else:
-        pytest.fail("Creating this alert passed although it must fail.")
