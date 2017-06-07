@@ -129,7 +129,7 @@ class User(Updateable, Pretty, Navigatable):
             self.appliance.user = self._restore_user
             self._restore_user = None
 
-    def create(self):
+    def create(self, cancel=False):
         view = navigate_to(self, 'Add')
         view.fill({
             'name_txt': self.name,
@@ -139,9 +139,14 @@ class User(Updateable, Pretty, Navigatable):
             'email_txt': self.email,
             'user_group_select': getattr(self.group, 'description', None)
         })
-        view.add_button.click()
+        if cancel:
+            view.cancel_button.click()
+            flash_message = 'Add of new User was cancelled by the user'
+        else:
+            view.add_button.click()
+            flash_message = 'User "{}" was saved'.format(self.name)
         view = self.create_view(AllUserView)
-        view.flash.assert_success_message('User "{}" was saved'.format(self.name))
+        view.flash.assert_success_message(flash_message)
         assert view.is_displayed
 
     def update(self, updates):
@@ -198,11 +203,14 @@ class User(Updateable, Pretty, Navigatable):
         assert view.is_displayed
         return new_user
 
-    def delete(self):
+    def delete(self, cancel=True):
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Delete this User', handle_alert=True)
-        view = self.create_view(AllUserView)
-        view.flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
+        view.configuration.item_select('Delete this User', handle_alert=cancel)
+        if cancel:
+            view = self.create_view(AllUserView)
+            view.flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
+        else:
+            view = self.create_view(DetailsUserView)
         assert view.is_displayed
 
     def edit_tags(self, tag, value):
@@ -242,8 +250,8 @@ class UserAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Users')
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Users')
 
 
 @navigator.register(User, 'Add')
@@ -261,8 +269,8 @@ class UserDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Users', self.obj.name)
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Users', self.obj.name)
 
 
 @navigator.register(User, 'Edit')
@@ -271,7 +279,7 @@ class UserEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.view.configuration.item_select('Edit this User')
+        self.prerequisite_view.configuration.item_select('Edit this User')
 
 
 @navigator.register(User, 'EditTags')
@@ -280,7 +288,7 @@ class UserTagsEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.view.policy.item_select("Edit 'My Company' Tags for this User")
+        self.prerequisite_view.policy.item_select("Edit 'My Company' Tags for this User")
 
 
 class GroupForm(ConfigurationView):
@@ -419,19 +427,24 @@ class Group(Updateable, Pretty, Navigatable):
         self.host_cluster = host_cluster
         self.vm_template = vm_template
 
-    def create(self):
+    def create(self, cancel=False):
         view = navigate_to(self, 'Add')
         view.fill({
             'description_txt': self.description,
             'role_select': self.role,
             'group_tenant': self.tenant
         })
-        self._set_group_restriction(view, self.tag)
-        self._set_group_restriction(view, self.host_cluster)
-        self._set_group_restriction(view, self.vm_template)
-        view.add_button.click()
+        self._set_group_restriction(view.my_company_tags, self.tag)
+        self._set_group_restriction(view.hosts_and_clusters, self.host_cluster)
+        self._set_group_restriction(view.vms_and_templates, self.vm_template)
+        if cancel:
+            view.cancel_button.click()
+            flash_message = 'Add of new Group was cancelled by the user'
+        else:
+            view.add_button.click()
+            flash_message = 'Group "{}" was saved'.format(self.description)
         view = self.create_view(AllGroupView)
-        view.flash.assert_success_message('Group "{}" was saved'.format(self.description))
+        view.flash.assert_success_message(flash_message)
         assert view.is_displayed
 
     def _retrieve_ldap_user_groups(self):
@@ -464,7 +477,6 @@ class Group(Updateable, Pretty, Navigatable):
         view = self._retrieve_ldap_user_groups()
         self._fill_ldap_group_lookup(view)
 
-
     def add_group_from_ext_auth_lookup(self):
         view = self._retrieve_ext_auth_user_groups()
         self._fill_ldap_group_lookup(view)
@@ -493,12 +505,15 @@ class Group(Updateable, Pretty, Navigatable):
         view.flash.assert_message(flash_message)
         assert view.is_displayed
 
-    def delete(self):
+    def delete(self, cancel=True):
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Delete this Group', handle_alert=True)
-        view = self.create_view(AllGroupView)
-        view.flash.assert_success_message(
-            'EVM Group "{}": Delete successful'.format(self.description))
+        view.configuration.item_select('Delete this Group', handle_alert=cancel)
+        if cancel:
+            view = self.create_view(AllGroupView)
+            view.flash.assert_success_message(
+                'EVM Group "{}": Delete successful'.format(self.description))
+        else:
+            view = self.create_view(DetailsGroupView)
         assert view.is_displayed
 
     def edit_tags(self, tag, value):
@@ -562,8 +577,8 @@ class GroupAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Groups')
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Groups')
 
 
 @navigator.register(Group, 'Add')
@@ -591,8 +606,8 @@ class GroupDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Groups', self.obj.description)
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Groups', self.obj.description)
 
 
 @navigator.register(Group, 'Edit')
@@ -601,7 +616,7 @@ class GroupEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.view.configuration.item_select('Edit this Group')
+        self.prerequisite_view.configuration.item_select('Edit this Group')
 
 
 @navigator.register(Group, 'EditTags')
@@ -611,7 +626,7 @@ class GroupTagsEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.view.policy.item_select("Edit 'My Company' Tags for this Group")
+        self.prerequisite_view.policy.item_select("Edit 'My Company' Tags for this Group")
 
 
 class RoleForm(ConfigurationView):
@@ -676,14 +691,19 @@ class Role(Updateable, Pretty, Navigatable):
         self.vm_restriction = vm_restriction
         self.product_features = product_features or []
 
-    def create(self):
+    def create(self, cancel=False):
         view = navigate_to(self, 'Add')
         view.fill({'name_txt': self.name,
                    'vm_restriction_select': self.vm_restriction})
         self.set_role_product_features(view, self.product_features)
-        view.add_button.click()
+        if cancel:
+            view.cancel_button.click()
+            flash_message = 'Add of new Role was cancelled by the user'
+        else:
+            view.add_button.click()
+            flash_message = 'Role "{}" was saved'.format(self.name)
         view = self.create_view(AllRolesView)
-        view.flash.assert_success_message('Role "{}" was saved'.format(self.name))
+        view.flash.assert_success_message(flash_message)
         assert view.is_displayed
 
     def update(self, updates):
@@ -703,11 +723,14 @@ class Role(Updateable, Pretty, Navigatable):
         view.flash.assert_message(flash_message)
         assert view.is_displayed
 
-    def delete(self):
+    def delete(self, cancel=True):
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Delete this Role', handle_alert=True)
-        view = self.create_view(AllRolesView)
-        view.flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
+        view.configuration.item_select('Delete this Role', handle_alert=cancel)
+        if cancel:
+            view = self.create_view(AllRolesView)
+            view.flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
+        else:
+            view = self.create_view(DetailsRoleView)
         assert view.is_displayed
 
     def copy(self, name=None):
@@ -742,8 +765,8 @@ class RoleAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Roles')
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Roles')
 
 
 @navigator.register(Role, 'Add')
@@ -761,8 +784,8 @@ class RoleDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Roles', self.obj.name)
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Roles', self.obj.name)
 
 
 @navigator.register(Role, 'Edit')
@@ -771,7 +794,7 @@ class RoleEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.view.configuration.item_select('Edit this Role')
+        self.prerequisite_view.configuration.item_select('Edit this Role')
 
 
 class TenantForm(ConfigurationView):
@@ -926,19 +949,26 @@ class Tenant(Updateable, Pretty, Navigatable):
     def parent_path(self):
         return self.tree_path[:-1]
 
-    def create(self):
+    def create(self, cancel=False):
         if self._default:
             raise ValueError("Cannot create the root tenant {}".format(self.name))
 
         view = navigate_to(self, 'Add')
         view.fill({'name': self.name,
                    'description': self.description})
-        view.add_button.click()
+        if cancel:
+            view.cancel_button.click()
+            tenant_flash_message = 'Tenant "{}" was saved'.format(self.name)
+            project_flash_message = 'Project "{}" was saved'.format(self.name)
+        else:
+            view.add_button.click()
+            tenant_flash_message = 'Add of new Tenant was cancelled by the user'
+            project_flash_message = 'Add of new Project was cancelled by the user'
         view = self.create_view(ParentDetailsTenantView)
         if isinstance(self, Tenant):
-            view.flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
+            view.flash.assert_success_message(tenant_flash_message)
         elif isinstance(self, Project):
-            view.flash.assert_success_message('Project "{}" was saved'.format(self.name))
+            view.flash.assert_success_message(project_flash_message)
         else:
             raise TypeError(
                 'No Tenant or Project class passed to create method{}'.format(
@@ -959,11 +989,15 @@ class Tenant(Updateable, Pretty, Navigatable):
         view.flash.assert_message(flash_message)
         assert view.is_displayed
 
-    def delete(self):
+    def delete(self, cancel=True):
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Delete this item', handle_alert=True)
-        view = self.create_view(ParentDetailsTenantView)
-        view.flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
+        view.configuration.item_select('Delete this item', handle_alert=cancel)
+        if cancel:
+            view = self.create_view(ParentDetailsTenantView)
+            view.flash.assert_success_message(
+                'Tenant "{}": Delete successful'.format(self.description))
+        else:
+            view = self.create_view(DetailsRoleView)
         assert view.is_displayed
 
     def set_quota(self, **kwargs):
@@ -990,8 +1024,8 @@ class TenantAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Tenants')
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Tenants')
 
 
 @navigator.register(Tenant, 'Details')
@@ -1011,8 +1045,8 @@ class TenantAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.view.access_control.tree.click_path(self.obj.appliance.server_region_string(),
-                                                 'Tenants', *self.obj.parent_path)
+        self.prerequisite_view.access_control.tree.click_path(
+            self.obj.appliance.server_region_string(), 'Tenants', *self.obj.parent_path)
         if isinstance(self.obj, Tenant):
             add_selector = 'Add child Tenant to this Tenant'
         elif isinstance(self.obj, Project):
@@ -1029,7 +1063,7 @@ class TenantEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.view.configuration.item_select('Edit this item')
+        self.prerequisite_view.configuration.item_select('Edit this item')
 
 
 @navigator.register(Tenant, 'ManageQuotas')
@@ -1038,7 +1072,7 @@ class TenantManageQuotas(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.view.configuration.item_select('Manage Quotas')
+        self.prerequisite_view.configuration.item_select('Manage Quotas')
 
 
 class Project(Tenant):
