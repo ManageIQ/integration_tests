@@ -2,7 +2,7 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import (CheckboxTable, Form, Input, Region, AngularSelect, Select, fill, flash,
+from cfme.web_ui import (CheckboxTable, Form, Input, Region, AngularSelect, fill, flash,
     form_buttons)
 from utils import version
 from utils.appliance import current_appliance
@@ -68,7 +68,6 @@ registration_form = Form(
         ("username", Input('customer_userid')),
         ("password", Input('customer_password')),
         ("password_verify", Input('customer_password2')),  # 5.4+
-        # ("organization", Select("//select[@id='customer_org']"))
     ]
 )
 
@@ -185,9 +184,6 @@ def update_registration(service,
     sel.click(form_buttons.validate_short)
     flash.assert_no_errors()
     flash.dismiss()
-
-    # if organization:
-    #     sel.select(registration_form.locators['organization'], organization)
 
     if cancel:
         form_buttons.cancel()
