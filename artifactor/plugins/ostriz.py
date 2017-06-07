@@ -25,7 +25,7 @@ class Ostriz(ArtifactorBasePlugin):
         self.register_plugin_hook('ostriz_send', self.ostriz_send)
 
     def configure(self):
-        self.url = self.data.get('url', None)
+        self.url = self.data.get('url')
         self.configured = True
 
     @ArtifactorBasePlugin.check_configured

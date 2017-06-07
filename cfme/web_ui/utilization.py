@@ -118,7 +118,7 @@ class LineChart(object):
 
     @classmethod
     def _get_ui_key(cls, key):
-        ui_key = cls.key_ui_table_map.get(key, None)
+        ui_key = cls.key_ui_table_map.get(key)
         if ui_key:
             return ui_key
         return key
@@ -334,7 +334,7 @@ class LineChart(object):
                 _pre_dict = next((item for item in pre_final_data
                                   if item.get('timestamp') == _raw_data.get('start')),
                                  {'timestamp': _raw_data.get('start')})
-                _pre_dict.update({key: round_double(_raw_data.get('avg', None))})
+                _pre_dict.update({key: round_double(_raw_data.get('avg'))})
                 final_data.append(_pre_dict)
         return final_data
 

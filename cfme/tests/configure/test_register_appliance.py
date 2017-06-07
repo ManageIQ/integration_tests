@@ -42,7 +42,7 @@ def pytest_generate_tests(metafunc):
             if metafunc.function.__name__ == 'test_rh_creds_validation' and reg_method == 'sat5':
                 continue
 
-            reg_data = all_reg_data.get(reg_method, None)
+            reg_data = all_reg_data.get(reg_method)
             if not reg_data or not reg_data.get('test_registration', False):
                 continue
 
@@ -128,9 +128,9 @@ def is_registration_complete(used_repo_or_channel):
 def test_rh_creds_validation(request, unset_org_id,
                              reg_method, reg_data, proxy_url, proxy_creds):
     if reg_method in ('rhsm', 'sat6'):
-        repo_or_channel = reg_data.get('enable_repo', None)
+        repo_or_channel = reg_data.get('enable_repo')
     else:
-        repo_or_channel = reg_data.get('add_channel', None)
+        repo_or_channel = reg_data.get('add_channel')
 
     if not repo_or_channel:
         set_default_repo = True
@@ -153,7 +153,7 @@ def test_rh_creds_validation(request, unset_org_id,
         username=conf.credentials[reg_method]['username'],
         password=conf.credentials[reg_method]['password'],
         repo_name=repo_or_channel,
-        organization=reg_data.get('organization', None),
+        organization=reg_data.get('organization'),
         use_proxy=use_proxy,
         proxy_url=proxy_url,
         proxy_username=proxy_username,
@@ -175,9 +175,9 @@ def test_rh_registration(request, unset_org_id,
                          reg_method, reg_data, proxy_url, proxy_creds):
 
     if reg_method in ('rhsm', 'sat6'):
-        repo_or_channel = reg_data.get('enable_repo', None)
+        repo_or_channel = reg_data.get('enable_repo')
     else:
-        repo_or_channel = reg_data.get('add_channel', None)
+        repo_or_channel = reg_data.get('add_channel')
 
     if not repo_or_channel:
         set_default_repo = True
@@ -200,7 +200,7 @@ def test_rh_registration(request, unset_org_id,
         username=conf.credentials[reg_method]['username'],
         password=conf.credentials[reg_method]['password'],
         repo_name=repo_or_channel,
-        organization=reg_data.get('organization', None),
+        organization=reg_data.get('organization'),
         use_proxy=use_proxy,
         proxy_url=proxy_url,
         proxy_username=proxy_username,

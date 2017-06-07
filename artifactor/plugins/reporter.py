@@ -125,7 +125,7 @@ class ReporterBase(object):
             'skipped': 'info'}
         # Iterate through the tests and process the counts and durations
         for test_name, test in artifacts.iteritems():
-            if not test.get('statuses', None):
+            if not test.get('statuses'):
                 continue
             overall_status = overall_test_status(test['statuses'])
             counts[overall_status] += 1
@@ -141,12 +141,12 @@ class ReporterBase(object):
                 test_data['composite'] = test['composite']
 
             if 'skipped' in test:
-                if test['skipped'].get('type', None) == 'provider':
+                if test['skipped'].get('type') == 'provider':
                     provider_skip_count += 1
-                    test_data['skip_provider'] = test['skipped'].get('reason', None)
-                if test['skipped'].get('type', None) == 'blocker':
+                    test_data['skip_provider'] = test['skipped'].get('reason')
+                if test['skipped'].get('type') == 'blocker':
                     blocker_skip_count += 1
-                    test_data['skip_blocker'] = test['skipped'].get('reason', None)
+                    test_data['skip_blocker'] = test['skipped'].get('reason')
 
             if 'skip_blocker' in test_data:
                 # Fix the inconveniently long list of repeated blockers until we sort out sets
@@ -156,8 +156,8 @@ class ReporterBase(object):
             if test.get('old', False):
                 test_data['old'] = True
 
-            if test.get('start_time', None):
-                if test.get('finish_time', None):
+            if test.get('start_time'):
+                if test.get('finish_time'):
                     test_data['in_progress'] = False
                     test_data['duration'] = test['finish_time'] - test['start_time']
                 else:
@@ -229,7 +229,7 @@ class ReporterBase(object):
         template_data['ndata'] = self.build_li(tests)
 
         for test in template_data['tests']:
-            if test.get('duration', None):
+            if test.get('duration'):
                 test['duration'] = str(datetime.timedelta(
                     seconds=math.ceil(test['duration'])))
 

@@ -99,7 +99,7 @@ def prov_data(provider, provisioning):
             fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
         "manager_name": "{} {}".format(
             fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
-        "vlan": provisioning.get("vlan", None),
+        "vlan": provisioning.get("vlan"),
         "datastore_name": {"name": provisioning["datastore"]},
         "host_name": {"name": provisioning["host"]},
         "provision_type": "Native Clone" if provider.type == "rhevm" else "VMware"

@@ -303,7 +303,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             navigate_to(self, 'Edit')
             fill(self.properties_form, self._form_mapping(**updates))
             for cred in self.credentials:
-                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
+                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred),
                      validate=validate_credentials)
             self._submit(cancel, self.save_button)
             name = updates.get('name', self.name)
@@ -565,8 +565,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Returns:
             A :py:class:`cfme.base.credential.Credential` instance.
         """
-        domain = credential_dict.get('domain', None)
-        token = credential_dict.get('token', None)
+        domain = credential_dict.get('domain')
+        token = credential_dict.get('token')
         if not cred_type:
             return Credential(principal=credential_dict['username'],
                               secret=credential_dict['password'],

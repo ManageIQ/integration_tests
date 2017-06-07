@@ -64,13 +64,13 @@ class Blocker(object):
 
 
 class GH(Blocker):
-    DEFAULT_REPOSITORY = conf.env.get("github", {}).get("default_repo", None)
+    DEFAULT_REPOSITORY = conf.env.get("github", {}).get("default_repo")
     _issue_cache = {}
 
     @classproperty
     def github(cls):
         if not hasattr(cls, "_github"):
-            token = conf.env.get("github", {}).get("token", None)
+            token = conf.env.get("github", {}).get("token")
             if token is not None:
                 cls._github = Github(token)
             else:
@@ -82,8 +82,8 @@ class GH(Blocker):
         self._repo = None
         self.issue = None
         self.upstream_only = kwargs.get('upstream_only', True)
-        self.since = kwargs.get('since', None)
-        self.until = kwargs.get('until', None)
+        self.since = kwargs.get('since')
+        self.until = kwargs.get('until')
         if isinstance(description, (list, tuple)):
             try:
                 self.repo, self.issue = description

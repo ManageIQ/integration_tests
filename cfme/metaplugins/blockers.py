@@ -91,7 +91,7 @@ def resolve_blockers(item, blockers):
     # Unblocking
     discard_blockers = set([])
     for blocker in use_blockers:
-        unblock_func = kwargify(blocker.kwargs.get("unblock", None))
+        unblock_func = kwargify(blocker.kwargs.get("unblock"))
         local_env = {"blocker": blocker}
         local_env.update(global_env)
         if unblock_func(**local_env):

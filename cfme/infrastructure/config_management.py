@@ -160,7 +160,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         sel.wait_for_element(properties_form.name_text)
 
         fill(properties_form, self._form_mapping(**updates))
-        fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
+        fill(credential_form, updates.get('credentials'), validate=validate_credentials)
         self._submit(cancel, edit_manager_btn)
         name = updates['name'] or self.name
         if not cancel:

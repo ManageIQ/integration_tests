@@ -162,7 +162,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
             name=prov_config['name'],
             key=prov_key,
             hostname=prov_config['hostname'],
-            sec_protocol=prov_config.get('sec_protocol', None),
+            sec_protocol=prov_config.get('sec_protocol'),
             port=prov_config['port'],
             credentials={'default': credentials},
             appliance=appliance)

@@ -55,10 +55,10 @@ class SMTPCollectorClient(object):
 
         Returns: List of dicts with e-mails matching the criteria.
         """
-        if filter.get("time_from", None) is not None:
+        if filter.get("time_from") is not None:
             if isinstance(filter["time_from"], parsetime):
                 filter["time_from"] = filter["time_from"].to_request_format()
-        if filter.get("time_to", None) is not None:
+        if filter.get("time_to") is not None:
             if isinstance(filter["time_to"], parsetime):
                 filter["time_to"] = filter["time_to"].to_request_format()
         return self._query(requests.get, "messages", **filter).json()

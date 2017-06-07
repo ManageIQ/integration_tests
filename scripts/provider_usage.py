@@ -58,7 +58,7 @@ prov_key_db = {}
 
 
 for prov in li:
-    ip = li[prov].get('ipaddress', None)
+    ip = li[prov].get('ipaddress')
     prov_key_db[ip] = prov
     if li[prov]['type'] not in ['ec2', 'scvmm']:
         mgmt = get_mgmt(prov)

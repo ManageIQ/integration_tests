@@ -558,7 +558,7 @@ def make_kwargs(args, cfme_data, **kwargs):
     if len(kwargs) is 0:
         return args_kwargs
 
-    template_name = kwargs.get('template_name', None)
+    template_name = kwargs.get('template_name')
     if template_name is None:
         template_name = cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
@@ -581,13 +581,13 @@ def make_kwargs_rhevm(cfmeqe_data, provider):
     data = cfmeqe_data['management_systems'][provider]
     temp_up = cfme_data['template_upload']['template_upload_rhevm']
 
-    edomain = data['template_upload'].get('edomain', None)
-    sdomain = data['template_upload'].get('sdomain', None)
-    cluster = data['template_upload'].get('cluster', None)
-    mgmt_network = data['template_upload'].get('management_network', None)
-    disk_size = temp_up.get('disk_size', None)
-    disk_format = temp_up.get('disk_format', None)
-    disk_interface = temp_up.get('disk_interface', None)
+    edomain = data['template_upload'].get('edomain')
+    sdomain = data['template_upload'].get('sdomain')
+    cluster = data['template_upload'].get('cluster')
+    mgmt_network = data['template_upload'].get('management_network')
+    disk_size = temp_up.get('disk_size')
+    disk_format = temp_up.get('disk_format')
+    disk_interface = temp_up.get('disk_interface')
 
     kwargs = {'provider': provider}
     if edomain:
@@ -652,7 +652,7 @@ def upload_template(rhevip, sshname, sshpass, username, password,
                                 kwargs.get('cluster'), temp_template_name, provider)
                 print("RHEVM:{} Making a temporary VM from new template...".format(provider))
                 make_vm_from_template(api, kwargs.get('cluster'), temp_template_name, temp_vm_name,
-                                      provider, mgmt_network=kwargs.get('mgmt_network', None))
+                                      provider, mgmt_network=kwargs.get('mgmt_network'))
                 print("RHEVM:{} Adding disk to created VM...".format(provider))
                 add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
                                kwargs.get('disk_format'), kwargs.get('disk_interface'),

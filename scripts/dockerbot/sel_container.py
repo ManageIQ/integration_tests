@@ -35,7 +35,7 @@ if __name__ == "__main__":
     interaction.add_argument('--image', help='Chooses WebDriver port',
                              default=docker_conf.get('selff', 'cfme/sel_ff_chrome'))
     interaction.add_argument('--vncviewer', help='Chooses VNC viewer command',
-                             default=docker_conf.get('vncviewer', None))
+                             default=docker_conf.get('vncviewer'))
 
     args = parser.parse_args()
     ip = '127.0.0.1'

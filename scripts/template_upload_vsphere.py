@@ -251,7 +251,7 @@ def make_kwargs(args, **kwargs):
     if len(kwargs) is 0:
         return args_kwargs
 
-    template_name = kwargs.get('template_name', None)
+    template_name = kwargs.get('template_name')
     if template_name is None:
         template_name = cfme_data['basic_info']['appliance_template']
         kwargs.update({'template_name': template_name})
@@ -276,24 +276,24 @@ def make_kwargs_vsphere(cfmeqe_data, provider):
 
     kwargs = {'provider': provider}
     if data.get('template_upload'):
-        kwargs['cluster'] = data['template_upload'].get('cluster', None)
-        kwargs['datacenter'] = data['template_upload'].get('datacenter', None)
-        kwargs['host'] = data['template_upload'].get('host', None)
-        if data['template_upload'].get('proxy', None):
-            kwargs['proxy'] = data['template_upload'].get('proxy', None)
+        kwargs['cluster'] = data['template_upload'].get('cluster')
+        kwargs['datacenter'] = data['template_upload'].get('datacenter')
+        kwargs['host'] = data['template_upload'].get('host')
+        if data['template_upload'].get('proxy'):
+            kwargs['proxy'] = data['template_upload'].get('proxy')
     else:
         kwargs['cluster'] = None
         kwargs['datacenter'] = None
         kwargs['host'] = None
         kwargs['proxy'] = None
     if data.get('provisioning'):
-        kwargs['datastore'] = data['provisioning'].get('datastore', None)
+        kwargs['datastore'] = data['provisioning'].get('datastore')
     else:
         kwargs['datastore'] = None
-    upload = temp_up.get('upload', None)
-    disk = temp_up.get('disk', None)
-    template = temp_up.get('template', None)
-    kwargs['ovf_tool_client'] = temp_up.get('ovf_tool_client', None)
+    upload = temp_up.get('upload')
+    disk = temp_up.get('disk')
+    template = temp_up.get('template')
+    kwargs['ovf_tool_client'] = temp_up.get('ovf_tool_client')
 
     if template:
         kwargs['template'] = template

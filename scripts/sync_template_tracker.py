@@ -22,7 +22,7 @@ def main(trackerbot_url, mark_usable=None):
     unresponsive_providers = set()
     # Queue up list_template calls
     for provider_key in all_providers:
-        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress', None)
+        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress')
         if ipaddress and not net.is_pingable(ipaddress):
             continue
         thread = Thread(target=get_provider_templates,

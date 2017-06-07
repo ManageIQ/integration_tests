@@ -57,7 +57,7 @@ def prov_data(provisioning, provider):
             fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
         "manager_name": "{} {}".format(
             fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
-        "vlan": provisioning.get("vlan", None),
+        "vlan": provisioning.get("vlan"),
         # "datastore_create": False,
         "datastore_name": {"name": provisioning["datastore"]},
         "host_name": {"name": provisioning["host"]},

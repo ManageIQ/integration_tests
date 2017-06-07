@@ -86,13 +86,13 @@ def make_template(client, host_fqdn, name, library, network, os_type, username_s
 def check_kwargs(**kwargs):
 
     # If we don't have an image url, we're done.
-    url = kwargs.get('image_url', None)
+    url = kwargs.get('image_url')
     if url is None:
         print("SCVMM - There is nothing we can do without an image url set.  See help.")
         sys.exit(127)
 
     # If we don't have an provider, we're done.
-    provider = kwargs.get('provider', None)
+    provider = kwargs.get('provider')
     if provider is None:
         print("SCVMM - There is nothing we can do without a provider set.  See help.")
         sys.exit(127)
@@ -121,7 +121,7 @@ def make_kwargs(args, **kwargs):
 def make_kwargs_scvmm(cfme_data, provider, image_url, template_name):
     data = cfme_data['management_systems'][provider]
 
-    tenant_id = data['template_upload'].get('tenant_id', None)
+    tenant_id = data['template_upload'].get('tenant_id')
 
     scvmm_kwargs = cfme_data['template_upload']['template_upload_scvmm']
 
@@ -165,10 +165,10 @@ def run(**kwargs):
         }
         client = SCVMMSystem(**scvmm_args)
 
-        url = kwargs.get('image_url', None)
+        url = kwargs.get('image_url')
 
         # Template name equals either user input of we extract the name from the url
-        new_template_name = kwargs.get('template_name', None)
+        new_template_name = kwargs.get('template_name')
         if new_template_name is None:
             new_template_name = os.path.basename(url)[:-4]
 

@@ -227,7 +227,7 @@ def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, r
     Convenience fire_hook for built in hook
     """
     if test_name and test_location:
-        run_type = artifactor_config.get('per_run', None)
+        run_type = artifactor_config.get('per_run')
         overwrite = artifactor_config.get('reuse_dir', False)
         path = setup_artifact_dir(root_dir=artifact_dir, test_name=test_name,
                                   test_location=test_location, run_type=run_type,

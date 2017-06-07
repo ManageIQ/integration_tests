@@ -157,12 +157,12 @@ def make_kwargs_rhevm(cfme_data, provider):
     data = cfme_data['management_systems'][provider]
     temp_up = cfme_data['template_upload']['template_upload_rhevm']
 
-    edomain = data['template_upload'].get('edomain', None)
-    sdomain = data['template_upload'].get('sdomain', None)
-    cluster = data['template_upload'].get('cluster', None)
-    disk_size = temp_up.get('disk_size', None)
-    disk_format = temp_up.get('disk_format', None)
-    disk_interface = temp_up.get('disk_interface', None)
+    edomain = data['template_upload'].get('edomain')
+    sdomain = data['template_upload'].get('sdomain')
+    cluster = data['template_upload'].get('cluster')
+    disk_size = temp_up.get('disk_size')
+    disk_format = temp_up.get('disk_format')
+    disk_interface = temp_up.get('disk_interface')
 
     kwargs = {'provider': provider}
     if edomain:
@@ -184,7 +184,7 @@ def make_kwargs_rhevm(cfme_data, provider):
 def make_kwargs_rhos(cfme_data, provider):
     data = cfme_data['management_systems'][provider]
 
-    tenant_id = data['template_upload'].get('tenant_id', None)
+    tenant_id = data['template_upload'].get('tenant_id')
 
     kwargs = {'provider': provider}
     if tenant_id:
@@ -196,7 +196,7 @@ def make_kwargs_rhos(cfme_data, provider):
 def make_kwargs_scvmm(cfme_data, provider):
     data = cfme_data['management_systems'][provider]
 
-    tenant_id = data['template_upload'].get('tenant_id', None)
+    tenant_id = data['template_upload'].get('tenant_id')
 
     kwargs = {'provider': provider}
     if tenant_id:
@@ -209,14 +209,14 @@ def make_kwargs_vsphere(cfme_data, provider):
     data = cfme_data['management_systems'][provider]
     temp_up = cfme_data['template_upload']['template_upload_vsphere']
 
-    datastore = data['provisioning'].get('datastore', None)
-    cluster = data['template_upload'].get('cluster', None)
-    datacenter = data['template_upload'].get('datacenter', None)
-    host = data['template_upload'].get('host', None)
-    template = temp_up.get('template', None)
-    upload = temp_up.get('upload', None)
-    disk = temp_up.get('disk', None)
-    proxy = data['template_upload'].get('proxy', None)
+    datastore = data['provisioning'].get('datastore')
+    cluster = data['template_upload'].get('cluster')
+    datacenter = data['template_upload'].get('datacenter')
+    host = data['template_upload'].get('host')
+    template = temp_up.get('template')
+    upload = temp_up.get('upload')
+    disk = temp_up.get('disk')
+    proxy = data['template_upload'].get('proxy')
 
     kwargs = {'provider': provider}
     if datastore:
@@ -306,10 +306,10 @@ def main():
     if stream:
         urls = {}
         image_url = cfme_data['basic_info']['cfme_images_url']
-        urls[stream] = image_url.get(stream, None)
+        urls[stream] = image_url.get(stream)
         if not urls[stream]:
             image_url = cfme_data['basic_info']['cfme_old_images_url']
-            urls[stream] = image_url.get(stream, None)
+            urls[stream] = image_url.get(stream)
         if not urls[stream]:
             base_url = cfme_data['basic_info']['cfme_old_images_url']['base_url']
             version = ''.join(re.findall(r'(\d+)', stream))

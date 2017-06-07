@@ -96,7 +96,7 @@ def fill_snmp_trap_field_tuple(field, val):
 
 @fill.method((SNMPTrapField, Mapping))  # dict because we disassemble it in web_ui
 def fill_snmp_trap_field_dict(field, val):
-    return fill(field, (val["oid"], val["type"], val.get("value", None)))
+    return fill(field, (val["oid"], val["type"], val.get("value")))
 
 
 class SNMPTrapsField(Pretty):

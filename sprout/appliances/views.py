@@ -560,13 +560,13 @@ def set_pool_description(request):
     if not request.user.is_authenticated():
         raise PermissionDenied()
     try:
-        pool_id = request.POST.get("pool_id", None)
+        pool_id = request.POST.get("pool_id")
         pool = AppliancePool.objects.get(id=pool_id)
     except ObjectDoesNotExist:
         raise Http404('Pool with ID {} does not exist!.'.format(pool_id))
     if not can_operate_appliance_or_pool(pool, request.user):
         raise PermissionDenied()
-    description = request.POST.get("description", None)
+    description = request.POST.get("description")
     pool.description = description
     pool.save()
     return HttpResponse("")

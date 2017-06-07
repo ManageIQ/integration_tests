@@ -84,8 +84,8 @@ def get_data():
 
 @route('/gui/', method=["get", "post"])
 def lister():
-    op = request.forms.get('op', None)
-    name = request.forms.get('name', None)
+    op = request.forms.get('op')
+    name = request.forms.get('name')
     if op == "start":
         Loggers[name].start()
     elif op == "stop":
@@ -101,7 +101,7 @@ def lister():
     elif op == "raw":
         return Loggers[name].get()
     elif op == "add":
-        path = request.forms.get('filename', None)
+        path = request.forms.get('filename')
         if path:
             path = os.path.abspath(path)
             if any([path.startswith(allowed) for allowed in allowed_files]):

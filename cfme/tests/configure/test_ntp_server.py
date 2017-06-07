@@ -97,7 +97,7 @@ def test_ntp_server_check(request, appliance):
         # checking if ntp property is available, adding if it is not available
         configuration.set_ntp_servers(*cfme_data['clock_servers'])
         yaml_config = appliance.get_yaml_config()
-        ntp = yaml_config.get("ntp", None)
+        ntp = yaml_config.get("ntp")
         if not ntp:
             yaml_config["ntp"] = {}
         # adding the ntp interval to 1 minute and updating the configuration

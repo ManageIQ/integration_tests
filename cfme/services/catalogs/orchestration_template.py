@@ -156,10 +156,10 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
-        view.fill({'description': updates.get('description', None),
-                   'name': updates.get('template_name', None),
-                   'draft': updates.get('draft', None),
-                   'content': updates.get('content', None)})
+        view.fill({'description': updates.get('description'),
+                   'name': updates.get('template_name'),
+                   'draft': updates.get('draft'),
+                   'content': updates.get('content')})
         view.save_button.click()
         view.flash.assert_success_message('Orchestration Template "{}" was saved'.format(
             self.template_name))

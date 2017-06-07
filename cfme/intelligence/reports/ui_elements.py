@@ -339,8 +339,8 @@ def __fill_chft_map(chft, d):
     for key, value in d.iteritems():
         row = chft.find_row("column_name", key)
         if isinstance(value, dict):
-            header = value.get("header", None)
-            format = value.get("format", None)
+            header = value.get("header")
+            format = value.get("format")
         elif isinstance(value, basestring):
             header = value
             format = None

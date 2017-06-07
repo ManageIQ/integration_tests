@@ -29,7 +29,7 @@ def pytest_generate_tests(metafunc):
         if not hosts:
             continue
 
-        version = args['provider'].data.get("version", None)
+        version = args['provider'].data.get("version")
         if version is None:
             # No version, no test
             continue

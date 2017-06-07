@@ -86,7 +86,7 @@ def list_provider_vms(provider_key):
     try:
         provider = get_mgmt(provider_key)
         vm_list = provider.list_vm()
-        provider_type = cfme_data.get("management_systems", {})[provider_key].get('type', None)
+        provider_type = cfme_data.get("management_systems", {})[provider_key].get('type')
         now = datetime.datetime.now()
         for vm_name in vm_list:
             creation = provider.vm_creation_time(vm_name)
@@ -185,10 +185,10 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         if not cfme_data['management_systems'][provider_key].get('cleanup', False):
             print('Skipping {}, cleanup set to false in yaml'.format(provider_key))
             continue
-        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress', None)
+        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress')
         if ipaddress and not net.is_pingable(ipaddress):
             continue
-        provider_type = providers_data[provider_key].get('type', None)
+        provider_type = providers_data[provider_key].get('type')
         list_vms = args.list_vms and provider_type in args.provider_type
         thread = Thread(target=process_provider_vms,
                         args=(provider_key, provider_type, matchers,

@@ -188,7 +188,7 @@ class Provider(MetadataMixin):
 
     @property
     def api(self):
-        provider_data = self.metadata.get('provider_data', None)
+        provider_data = self.metadata.get('provider_data')
         if provider_data:
             return get_mgmt(provider_data)
         else:
@@ -272,7 +272,7 @@ class Provider(MetadataMixin):
 
     @property
     def provider_data(self):
-        data = self.metadata.get('provider_data', None)
+        data = self.metadata.get('provider_data')
         if data:
             return data
         else:
@@ -293,7 +293,7 @@ class Provider(MetadataMixin):
 
     @property
     def template_name_length(self):
-        return self.metadata.get("template_name_length", None)
+        return self.metadata.get("template_name_length")
 
     @template_name_length.setter
     def template_name_length(self, value):
@@ -599,7 +599,7 @@ class Template(MetadataMixin):
 
     @property
     def temporary_name(self):
-        return self.metadata.get("temporary_name", None)
+        return self.metadata.get("temporary_name")
 
     @temporary_name.setter
     def temporary_name(self, name):

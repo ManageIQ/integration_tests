@@ -44,7 +44,7 @@ def pytest_generate_tests(metafunc):
         for ds in datastores:
             if not ds.get('test_fleece', False):
                 continue
-            assert ds.get('type', None) in DATASTORE_TYPES,\
+            assert ds.get('type') in DATASTORE_TYPES,\
                 'datastore type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(DATASTORE_TYPES))
             argvs = argvalues[i][:]

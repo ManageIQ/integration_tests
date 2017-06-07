@@ -727,7 +727,7 @@ class Genealogy(object):
             sections: Which sections to compare.
             attributes: `all`, `different` or `same`. Default: `all`.
             mode: `exists` or `details`. Default: `exists`."""
-        sections = kwargs.get("sections", None)
+        sections = kwargs.get("sections")
         attributes = kwargs.get("attributes", "all").lower()
         mode = kwargs.get("mode", "exists").lower()
         assert len(objects) >= 2, "You must specify at least two objects"

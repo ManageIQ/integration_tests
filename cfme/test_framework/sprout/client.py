@@ -84,9 +84,9 @@ class SproutClient(object):
     def from_config(cls, **kwargs):
         host = env.get("sprout", {}).get("hostname", "localhost")
         port = env.get("sprout", {}).get("port", 8000)
-        user = os.environ.get("SPROUT_USER", credentials.get("sprout", {}).get("username", None))
+        user = os.environ.get("SPROUT_USER", credentials.get("sprout", {}).get("username"))
         password = os.environ.get(
-            "SPROUT_PASSWORD", credentials.get("sprout", {}).get("password", None))
+            "SPROUT_PASSWORD", credentials.get("sprout", {}).get("password"))
         if user and password:
             auth = user, password
         else:

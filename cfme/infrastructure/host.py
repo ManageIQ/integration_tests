@@ -209,7 +209,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
         navigate_to(self, 'Edit')
         change_stored_password()
-        fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
+        fill(credential_form, updates.get('credentials'), validate=validate_credentials)
 
         logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
         self._submit(cancel, self.forced_saved)
@@ -566,8 +566,8 @@ def get_from_config(provider_config_name):
     return Host(name=prov_config['name'],
                 hostname=prov_config['hostname'],
                 ip_address=prov_config['ipaddress'],
-                custom_ident=prov_config.get('custom_ident', None),
-                host_platform=prov_config.get('host_platform', None),
+                custom_ident=prov_config.get('custom_ident'),
+                host_platform=prov_config.get('host_platform'),
                 ipmi_address=prov_config['ipmi_address'],
                 mac_address=prov_config['mac_address'],
                 interface_type=prov_config.get('interface_type', 'lan'),

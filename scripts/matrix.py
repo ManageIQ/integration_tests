@@ -73,10 +73,10 @@ for test_data in elem:
         else:
             node_name = item_name
         suite_name = doc_data.get(node_name, {}).get('metadata', {}).get('from_docs', {}) \
-            .get('suite', None)
+            .get('suite')
         if suite_name:
-            suite_proper_name = suite_data.get(suite_name, {}).get('name', None)
-            suite_description = suite_data.get(suite_name, {}).get('description', None)
+            suite_proper_name = suite_data.get(suite_name, {}).get('name')
+            suite_description = suite_data.get(suite_name, {}).get('description')
         else:
             # suite_name = "zz" + item_class
             # suite_proper_name = item_class
@@ -89,7 +89,7 @@ for test_data in elem:
         # suite_proper_name = "/".join([p.capitalize() for p in suite_name.split(".")])
         # suite_description = "Unknown"
 
-        suite = cache_suites.get(suite_name, None)
+        suite = cache_suites.get(suite_name)
 
         if not suite:
             suite = Suite()
@@ -117,7 +117,7 @@ for test_data in elem:
             else:
                 status = 'Passed'
 
-        test = suite.cache_tests.get(node_name, None)
+        test = suite.cache_tests.get(node_name)
         if not test:
             test = Test()
             test.name = node_name

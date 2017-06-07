@@ -22,7 +22,7 @@ lock = Lock()
 
 
 def make_ssh_client(provider_mgmt):
-    creds = credentials[provider_mgmt.kwargs.get('ssh_creds', None)]
+    creds = credentials[provider_mgmt.kwargs.get('ssh_creds')]
 
     connect_kwargs = {
         'username': creds['username'],
@@ -67,7 +67,7 @@ def is_ovirt_engine_running(provider_mgmt):
 def change_edomain_state(provider_mgmt, state, edomain):
     try:
         # fetch name for logging
-        provider_name = provider_mgmt.kwargs.get('name', None)
+        provider_name = provider_mgmt.kwargs.get('name')
         log_args = (provider_name, edomain, state)
 
         api = provider_mgmt.api
@@ -116,7 +116,7 @@ def cleanup_empty_dir_on_edomain(provider_mgmt, edomain):
     """
     try:
         # We'll use this for logging
-        provider_name = provider_mgmt.kwargs.get('name', None)
+        provider_name = provider_mgmt.kwargs.get('name')
         # get path first
         path, edomain_ip = get_edomain_path(provider_mgmt.api, edomain)
         edomain_path = '{}:{}'.format(edomain_ip, path)
@@ -261,7 +261,7 @@ def make_kwargs(args, cfme_data, **kwargs):
     if not kwargs:
         return args_kwargs
 
-    template_name = kwargs.get('template_name', None)
+    template_name = kwargs.get('template_name')
     if template_name is None:
         template_name = cfme_data['basic_info']['appliance_template']
         kwargs.update(template_name=template_name)
@@ -290,13 +290,13 @@ def run(**kwargs):
     for provider in [prov for prov in providers if providers[prov]['type'] == 'rhevm']:
 
         # If a provider was passed, only cleanup on it, otherwise all rhevm providers
-        cli_provider = kwargs.get('provider', None)
+        cli_provider = kwargs.get('provider')
         if cli_provider and cli_provider != provider:
             continue
 
         provider_mgmt = get_mgmt(provider)
 
-        if not net.is_pingable(provider_mgmt.kwargs.get('ipaddress', None)):
+        if not net.is_pingable(provider_mgmt.kwargs.get('ipaddress')):
             continue
         elif not is_ovirt_engine_running(provider_mgmt):
             print('ovirt-engine service not running..')
@@ -304,7 +304,7 @@ def run(**kwargs):
 
         try:
             print('connecting to provider, to establish api handler')
-            edomain = kwargs.get('edomain', None)
+            edomain = kwargs.get('edomain')
             if not edomain:
                 edomain = provider_mgmt.kwargs['template_upload']['edomain']
         except Exception as e:

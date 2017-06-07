@@ -19,7 +19,7 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         '--address',
-        help='hostname or ip address of target appliance', default=env.get("base_url", None))
+        help='hostname or ip address of target appliance', default=env.get("base_url"))
     parser.add_argument('--vddk_url', help='url to download vddk pkg')
     parser.add_argument('--reboot', help='reboot after installation ' +
                         '(required for proper operation)', action="store_true")
