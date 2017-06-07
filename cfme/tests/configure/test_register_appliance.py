@@ -1,5 +1,4 @@
 import pytest
-import re
 
 from cfme.configure import red_hat_updates
 from cfme.web_ui import InfoBlock
@@ -59,31 +58,6 @@ def pytest_generate_tests(metafunc):
         parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-def rhsm_unregister(appliance):
-    appliance.ssh_client.run_command('subscription-manager remove --all')
-    appliance.ssh_client.run_command('subscription-manager unregister')
-    appliance.ssh_client.run_command('subscription-manager clean')
-
-
-def sat6_unregister(appliance):
-
-        appliance.ssh_client.run_command('subscription-manager remove --all')
-        appliance.ssh_client.run_command('subscription-manager unregister')
-        appliance.ssh_client.run_command('subscription-manager clean')
-        appliance.ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
-        appliance.ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
-
-
-def is_registration_complete(used_repo_or_channel, appliance):
-    ret, out = appliance.ssh_client.run_command('yum repolist enabled')
-    # Check that the specified (or default) repo (can be multiple, separated by a space)
-    # is enabled and that there are packages available
-    for repo_or_channel in used_repo_or_channel.split(' '):
-        if (repo_or_channel not in out) or (not re.search(r'repolist: [^0]', out)):
-            return False
-    return True
-
-
 @pytest.mark.ignore_stream("upstream")
 def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_creds):
     repo = reg_data.get('enable_repo')
@@ -94,8 +68,9 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
 
     if proxy_url:
         use_proxy = True
-        proxy_username = None  # proxy_creds['username']
-        proxy_password = None  # proxy_creds['password']
+        # add creds to new proxy server proxy_creds['username'] proxy_creds['password']
+        proxy_username = None
+        proxy_password = None
     else:
         use_proxy = False
         proxy_url = None
@@ -119,7 +94,7 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_rh_registration(request, reg_method, reg_data, proxy_url, proxy_creds):
+def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, proxy_creds):
 
     repo = reg_data.get('enable_repo')
     if not repo:
@@ -129,8 +104,9 @@ def test_rh_registration(request, reg_method, reg_data, proxy_url, proxy_creds):
 
     if proxy_url:
         use_proxy = True
-        proxy_username = None  # proxy_creds['username']
-        proxy_password = None  # proxy_creds['password']
+        # add creds to new proxy server proxy_creds['username'] proxy_creds['password']
+        proxy_username = None
+        proxy_password = None
     else:
         use_proxy = False
         proxy_url = None
@@ -159,12 +135,12 @@ def test_rh_registration(request, reg_method, reg_data, proxy_url, proxy_creds):
     red_hat_updates.register_appliances()  # Register all
 
     if reg_method == 'rhsm':
-        request.addfinalizer(rhsm_unregister)
+        request.addfinalizer(appliance.rhsm_unregister)
     else:
-        request.addfinalizer(sat6_unregister)
+        request.addfinalizer(appliance.sat6_unregister)
 
     wait_for(
-        func=is_registration_complete,
+        func=appliance.is_registration_complete,
         func_args=[used_repo_or_channel],
         delay=40,
         num_sec=400,

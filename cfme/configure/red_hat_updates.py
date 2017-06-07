@@ -68,7 +68,7 @@ registration_form = Form(
         ("username", Input('customer_userid')),
         ("password", Input('customer_password')),
         ("password_verify", Input('customer_password2')),  # 5.4+
-        ("organization", Select("//select[@id='customer_org']"))
+        # ("organization", Select("//select[@id='customer_org']"))
     ]
 )
 
@@ -186,8 +186,8 @@ def update_registration(service,
     flash.assert_no_errors()
     flash.dismiss()
 
-    if organization:
-        sel.select(registration_form.locators['organization'], organization)
+    # if organization:
+    #     sel.select(registration_form.locators['organization'], organization)
 
     if cancel:
         form_buttons.cancel()

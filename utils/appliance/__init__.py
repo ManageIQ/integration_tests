@@ -207,6 +207,28 @@ class IPAppliance(object):
         assert 'appliance' not in kwargs
         return cls(appliance=self, *args, **kwargs)
 
+    def rhsm_unregister(self):
+        self.ssh_client.run_command('subscription-manager remove --all')
+        self.ssh_client.run_command('subscription-manager unregister')
+        self.ssh_client.run_command('subscription-manager clean')
+
+    def sat6_unregister(self):
+
+        self.ssh_client.run_command('subscription-manager remove --all')
+        self.ssh_client.run_command('subscription-manager unregister')
+        self.ssh_client.run_command('subscription-manager clean')
+        self.ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
+        self.ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
+
+    def is_registration_complete(self, used_repo_or_channel):
+        ret, out = self.ssh_client.run_command('yum repolist enabled')
+        # Check that the specified (or default) repo (can be multiple, separated by a space)
+        # is enabled and that there are packages available
+        for repo in used_repo_or_channel.split(' '):
+            if (repo not in out) or (not re.search(r'repolist: [^0]', out)):
+                return False
+        return True
+
     @property
     def postgres_version(self):
         # postgres's version is in the service name and file paths when we pull it from SCL,
