@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ Tests used to check whether assigned actions really do what they're supposed to do. Events are
-note supported by ec2, gce, scvmm and openstack providers. Tests are uncollected for these
+note supported by ec2, gc and scvmm providers. Tests are uncollected for these
 providers. When the support will be implemented these tests can enabled for them.
 
 Required YAML keys:
@@ -279,7 +279,7 @@ def assign_policy_for_testing_vm_big(policy_for_testing_for_vm_big, provider, po
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, vm_crud_refresh,
         assign_policy_for_testing):
     """ This test tests action 'Start Virtual Machine'
@@ -305,7 +305,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, vm_crud
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, vm_crud_refresh,
         assign_policy_for_testing):
     """ This test tests action 'Stop Virtual Machine'
@@ -331,7 +331,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, vm_crud
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, vm_crud_refresh,
         assign_policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
@@ -357,7 +357,7 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, vm_c
 
 @pytest.mark.meta(blockers=[1142875])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_prevent_event(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
     """ This test tests action 'Prevent current event from proceeding'
 
@@ -382,7 +382,7 @@ def test_action_prevent_event(request, vm, vm_off, vm_crud_refresh, assign_polic
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_power_on_logged(request, vm, vm_off, appliance, vm_crud_refresh,
         assign_policy_for_testing):
     """ This test tests action 'Generate log message'.
@@ -421,7 +421,7 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, vm_crud_refresh,
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_power_on_audit(request, vm, vm_off, appliance, vm_crud_refresh,
         assign_policy_for_testing):
     """ This test tests action 'Generate Audit Event'.
@@ -623,7 +623,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 
 # Purely custom actions
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_tag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
     """ Tests action tag
 
@@ -661,7 +661,7 @@ def test_action_tag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_test
 
 @pytest.mark.meta(blockers=[1205496])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    AzureProvider))
+    OpenStackProvider, AzureProvider))
 def test_action_untag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
     """ Tests action untag
 
