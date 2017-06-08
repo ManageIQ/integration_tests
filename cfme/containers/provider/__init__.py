@@ -5,6 +5,10 @@ import json
 
 import fauxfactory
 from navmazing import NavigateToSibling, NavigateToAttribute
+from cfme.base.login import BaseLoggedInPage
+from widgetastic_patternfly import SelectorDropdown
+from widgetastic.widget import Text
+import random
 
 from cfme.common.provider import BaseProvider
 from cfme import exceptions
@@ -355,6 +359,38 @@ class TopologyFromDetails(CFMENavigateStep):
         sel.click(InfoBlock('Overview', 'Topology'))
 
 
+class adHocMetricsView(BaseLoggedInPage):
+    filter_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
+    apply_btn = form_buttons.apply_filters
+    selected_filter = None
+
+    @property
+    def is_displayed(self):
+        return False
+
+    def apply_filter(self):
+        form_buttons._fill_fb_bool(self.apply_btn, True)
+
+    def set_random_filter(self):
+        import time
+        time.sleep(5)
+        random_filter = str(random.choice(self.filter_dropdown.items))
+        self.selected_filter = random_filter
+        self.filter_dropdown.fill_with(random_filter)
+
+    def get_total_results_count(self):
+        return Text(self, 'h5.ng-binding').text.split()[0]
+
+
+@navigator.register(ContainersProvider, 'AdHoc')
+class AdHocMain(CFMENavigateStep):
+    VIEW = adHocMetricsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Ad hoc Metrics')
+
+
 # Common methods:
 
 class ContainersTestItem(object):
@@ -528,3 +564,21 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
         return []
 
     return sample(rows, min(count, len(rows)))
+
+
+def get_object_name(obj):
+    return obj.__module__.title().split(".")[-1]
+
+
+def obj_factory(obj_creator, row, provider):
+
+    factory = {"Provider": lambda row: {"name": row.name.text},
+               "Project": lambda row: {"name": row.name.text, "provider": provider},
+               "Pod": lambda row: {"name": row.name.text, "provider": provider},
+               "Node": lambda row: {"name": row.name.text, "provider": provider},
+               "Template": lambda row: {"name": row.name.text, "provider": provider},
+               "Image": lambda row: {"name": row.name.text,
+                                     "tag": row.tag.text, "provider": provider},
+               "Image_Registry": lambda row: {"host": row.host.text, "provider": provider}}
+
+    return obj_creator(**factory[get_object_name(obj_creator)](row))
