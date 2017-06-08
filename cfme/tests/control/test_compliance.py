@@ -76,8 +76,9 @@ def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
 @pytest.yield_fixture(scope="module")
 def configure_fleecing(appliance, has_no_providers_modscope, provider, setup_provider_modscope):
     setup_providers_hosts_credentials(provider.key)
-    appliance.install_vddk(reboot=False, vddk_url=vddk_url_map[str(provider.version)])
-    appliance.reboot(quit_browser=True)
+    appliance.install_vddk(reboot=True, vddk_url=vddk_url_map[str(provider.version)])
+    appliance.reboot()
+    appliance.browser.quit_browser()
     yield
     appliance.uninstall_vddk()
 
@@ -113,8 +114,9 @@ def analysis_profile():
     )
     if ap.exists:
         ap.delete()
-    with ap:
-        yield ap
+    ap.create()
+    yield ap
+    ap.delete()
 
 
 def do_scan(vm, additional_item_check=None):

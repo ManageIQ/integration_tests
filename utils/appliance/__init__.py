@@ -1633,7 +1633,7 @@ class IPAppliance(object):
         return result
 
     @logger_wrap("Rebooting Appliance: {}")
-    def reboot(self, wait_for_web_ui=True, quit_browser=False, log_callback=None):
+    def reboot(self, wait_for_web_ui=True, log_callback=None):
         log_callback('Rebooting appliance')
         client = self.ssh_client
 
@@ -1645,8 +1645,6 @@ class IPAppliance(object):
 
         if wait_for_web_ui:
             self.wait_for_web_ui()
-        if quit_browser:
-            self.browser.quit_browser()
 
     @logger_wrap("Waiting for web_ui: {}")
     def wait_for_web_ui(self, timeout=900, running=True, log_callback=None):
