@@ -1323,10 +1323,11 @@ class AppliancePool(MetadataMixin):
                     with appliance.kill_lock:
                         if (
                                 save_lives and
-                                appliance.ready and
-                                appliance.marked_for_deletion is False and
+                                not appliance.ready and
+                                not appliance.marked_for_deletion and
                                 not appliance.managed_providers and
                                 appliance.power_state not in appliance.BAD_POWER_STATES):
+                            # Only save appliances that are guaranteed to be untouched
                             appliance.appliance_pool = None
                             appliance.datetime_leased = None
                             appliance.save()
