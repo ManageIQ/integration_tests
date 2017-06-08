@@ -90,19 +90,16 @@ class SeleniumDocker(DockerInstance):
 
 
 class PytestDocker(DockerInstance):
-    def __init__(self, name, bindings, env, log_path, links, pytest_con, artifactor_dir,
-                 dry_run=False):
+    def __init__(self, name, bindings, env, log_path, links, pytest_con, dry_run=False):
         self.dry_run = dry_run
         self.links = links
         self.log_path = log_path
-        self.artifactor_dir = artifactor_dir
         self.process_bindings(bindings)
 
         if not self.dry_run:
             pt_name = name
             pt_create_info = dc.create_container(pytest_con, tty=True,
                                                  name=pt_name, environment=env,
-                                                 volumes=[artifactor_dir],
                                                  ports=self.ports)
             self.container_id = _dgci(pt_create_info, 'id')
             pt_container_info = dc.inspect_container(self.container_id)
@@ -110,9 +107,11 @@ class PytestDocker(DockerInstance):
 
     def run(self):
         if not self.dry_run:
-            dc.start(self.container_id, privileged=True, links=self.links,
-                     binds={self.log_path: {'bind': self.artifactor_dir, 'ro': False}},
-                     port_bindings=self.port_bindings)
+            dc.start(
+                self.container_id, privileged=True, links=self.links,
+                binds={
+                    self.log_path: {'bind': '/integration_tests/log/', 'ro': False}},
+                port_bindings=self.port_bindings)
         else:
             print("Dry run running pytest")
 
@@ -149,7 +148,6 @@ class DockerBot(object):
                               env=self.env_details, log_path=self.log_path,
                               links=links,
                               pytest_con=self.args['pytest_con'],
-                              artifactor_dir=self.args['artifactor_dir'],
                               dry_run=self.args['dry_run'])
         pytest.run()
 
@@ -309,7 +307,7 @@ class DockerBot(object):
             print("You must supply a CFME Credentials REPO")
             ec += 1
 
-        self.check_arg('selff', 'cfme/sel_ff_chrome')
+        self.check_arg('selff', 'cfmeqe/sel_ff_chrome')
 
         self.check_arg('gh_token', None)
         self.check_arg('gh_owner', None)
@@ -335,7 +333,6 @@ class DockerBot(object):
         self.check_arg('update_pip', False)
         self.check_arg('wheel_host_url', None)
         self.check_arg('auto_gen_test', False)
-        self.check_arg('artifactor_dir', '/log_depot')
 
         self.check_arg('log_depot', None)
 
@@ -426,7 +423,6 @@ class DockerBot(object):
                             'CFME_MY_IP_ADDRESS': self.args['server_ip'],
                             'PYTEST': self.args['pytest'],
                             'BRANCH': self.args['branch'],
-                            'ARTIFACTOR_DIR': self.args['artifactor_dir'],
                             'CFME_TESTS_KEY': self.enc_key(),
                             'YAYCL_CRYPT_KEY': self.enc_key()}
         print("  SERVER IP: {}".format(self.args['server_ip']))

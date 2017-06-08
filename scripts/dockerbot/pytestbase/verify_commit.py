@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/cfme_pristine_venv/bin/python2
 try:
     from cfme.utils import conf
 except ImportError:

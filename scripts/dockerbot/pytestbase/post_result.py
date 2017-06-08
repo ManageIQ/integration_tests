@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/cfme_pristine_venv/bin/python2
 import os
 import sys
 
