@@ -45,9 +45,9 @@ def pytest_generate_tests(metafunc):
             proxy_data = conf.cfme_data.get('redhat_updates', {}).get('http_proxy', False)
             if proxy_data and reg_data.get('use_http_proxy', False):
                 proxy_url = proxy_data['url']
-                # proxy_creds_key = proxy_data['credentials']
-                # proxy_creds = conf.credentials[proxy_creds_key]
-                argval = [reg_method, reg_data, proxy_url, None]
+                proxy_creds_key = proxy_data['credentials']
+                proxy_creds = conf.credentials[proxy_creds_key]
+                argval = [reg_method, reg_data, proxy_url, proxy_creds]
                 argid = '{}-{}'.format(reg_method, 'proxy_on')
                 idlist.append(argid)
                 argvalues.append(argval)
@@ -70,7 +70,8 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
 
     if proxy_url:
         use_proxy = True
-        # add creds to new proxy server proxy_creds['username'] proxy_creds['password']
+        proxy_creds['username']
+        proxy_creds['password']
         proxy_username = None
         proxy_password = None
     else:
@@ -106,7 +107,8 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 
     if proxy_url:
         use_proxy = True
-        # add creds to new proxy server proxy_creds['username'] proxy_creds['password']
+        proxy_creds['username']
+        proxy_creds['password']
         proxy_username = None
         proxy_password = None
     else:
@@ -127,7 +129,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         proxy_username=proxy_username,
         proxy_password=proxy_password,
         set_default_repository=set_default_repo,
-        # Satellite 6 registration requires validation to be able to choose organization
+        # Satellite 6 registration requires validation to be able to fetch organization
         validate=False if reg_method != 'sat6' else True
     )
 
