@@ -22,7 +22,8 @@ def vnc_ready(addr, port):
     return True
 
 
-if __name__ == "__main__":
+def main():
+    """Main function for running"""
     parser = argparse.ArgumentParser(argument_default=None)
 
     interaction = parser.add_argument_group('Ports')
@@ -74,3 +75,7 @@ if __name__ == "__main__":
         print(" Killing Container.....please wait...")
     dkb.kill()
     dkb.remove()
+
+
+if __name__ == "__main__":
+    main()
