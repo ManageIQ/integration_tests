@@ -70,6 +70,7 @@ def obj_factory(obj_creator, row, provider):
     return obj_creator(**factory[get_object_name(obj_creator)](row))
 
 
+# slkdfndsfnlfd
 @pytest.mark.parametrize('test_item',
                          TEST_ITEMS, ids=[item.args[1].pretty_id() for item in TEST_ITEMS])
 def test_smart_management_add_tag(provider, test_item):
