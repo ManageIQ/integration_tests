@@ -105,21 +105,6 @@ class Instance(VM, Navigatable):
         """
         raise NotImplementedError('create is not implemented.')
 
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        # BZ 1389299
-        # TODO: add refresh support back
-
-    def get_detail(self, *args, **kwargs):
-        # TODO: remove when bug 1389299 is fixed to use common.vm.get_detail()
-        # Navigate to all first to force reload of details screen without using refresh
-        navigate_to(self, 'All')
-        self.load_details()
-        if kwargs.get('icon_href', False):
-            return InfoBlock.icon_href(*kwargs.get('properties'))
-        else:
-            return InfoBlock.text(*kwargs.get('properties'))
-
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper instance details page.
 
