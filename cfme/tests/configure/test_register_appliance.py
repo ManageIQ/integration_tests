@@ -21,6 +21,7 @@ These tests do not check registration results in the web UI, only through SSH.
 
 
 def pytest_generate_tests(metafunc):
+    """ Generates tests specific to RHSM or SAT6 with proxy-on or off """
     argnames = ['reg_method', 'reg_data', 'proxy_url', 'proxy_creds']
     argvalues = []
     idlist = []
@@ -60,6 +61,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.mark.ignore_stream("upstream")
 def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_creds):
+    """ Tests whether credentials are validated correctly for RHSM and SAT6 """
     repo = reg_data.get('enable_repo')
     if not repo:
         set_default_repo = True
@@ -95,7 +97,7 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
 
 @pytest.mark.ignore_stream("upstream")
 def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, proxy_creds):
-
+    """ Tests whether an appliance can be registered againt RHSM and SAT6 """
     repo = reg_data.get('enable_repo')
     if not repo:
         set_default_repo = True

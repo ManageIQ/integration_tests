@@ -208,12 +208,13 @@ class IPAppliance(object):
         return cls(appliance=self, *args, **kwargs)
 
     def rhsm_unregister(self):
+        """ unregisters an appliance from RHSM subscription """
         self.ssh_client.run_command('subscription-manager remove --all')
         self.ssh_client.run_command('subscription-manager unregister')
         self.ssh_client.run_command('subscription-manager clean')
 
     def sat6_unregister(self):
-
+        """ unregisters an appliance from SAT6 subscription """
         self.ssh_client.run_command('subscription-manager remove --all')
         self.ssh_client.run_command('subscription-manager unregister')
         self.ssh_client.run_command('subscription-manager clean')
@@ -221,6 +222,7 @@ class IPAppliance(object):
         self.ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
 
     def is_registration_complete(self, used_repo_or_channel):
+        """ Checks if an appliance is correctly registered with RHSM or SAT6 """
         ret, out = self.ssh_client.run_command('yum repolist enabled')
         # Check that the specified (or default) repo (can be multiple, separated by a space)
         # is enabled and that there are packages available
