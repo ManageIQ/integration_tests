@@ -1,6 +1,10 @@
 #!/usr/bin/env python2
-from coverage import CoverageData, misc
-from utils.path import project_path
+from __future__ import print_function
+from coverage import CoverageData
+try:
+    from cfme.utils.path import project_path, log_path
+except ImportError:
+    from utils.path import project_path, log_path
 import sys
 import subprocess
 import re
@@ -9,9 +13,10 @@ import re
 def compute_coverage(branch):
     coverage_data = CoverageData()
     try:
-        coverage_data.read_file(project_path.join('.coverage').strpath)
-    except misc.CoverageException:
-        sys.stderr.write("No coverage data found")
+        with project_path.join('.coverage').open() as fp:
+            coverage_data.read_file(fp)
+    except Exception:
+        print("No coverage data found", file=sys.stderr)
 
     git_proc = subprocess.Popen(['git', 'diff', '-U0', branch],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -26,7 +31,7 @@ def compute_coverage(branch):
         if not filenames:
             continue
         filename = project_path.join(filenames[0][1])
-        if '.py' not in filename.strpath:
+        if '.py' != filename.ext:
             continue
         the_file += "git_output_checker"
         the_diffs = re.findall('(@@.*?@@.*?(?=@@|git_output_checker))', the_file, re.M | re.S, )
@@ -58,5 +63,4 @@ def compute_coverage(branch):
 
 if __name__ == "__main__":
     result = compute_coverage(sys.argv[1])
-    with open(project_path.join('coverage_result.txt').strpath, "w") as f:
-        f.write("{}".format(result))
+    log_path.join('coverage_result.txt').write(result)
