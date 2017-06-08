@@ -70,10 +70,8 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
 
     if proxy_url:
         use_proxy = True
-        proxy_creds['username']
-        proxy_creds['password']
-        proxy_username = None
-        proxy_password = None
+        proxy_username = proxy_creds['username']
+        proxy_password = proxy_creds['password']
     else:
         use_proxy = False
         proxy_url = None
@@ -107,10 +105,8 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 
     if proxy_url:
         use_proxy = True
-        proxy_creds['username']
-        proxy_creds['password']
-        proxy_username = None
-        proxy_password = None
+        proxy_username = proxy_creds['username']
+        proxy_password = proxy_creds['password']
     else:
         use_proxy = False
         proxy_url = None
