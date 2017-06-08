@@ -13,6 +13,10 @@ NULL = '--'
 
 
 def parse_cmd_line():
+    """
+    Specify and parse arguments
+    :return: args, kwargs, the usual
+    """
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--outfile',
                         default=log_path.join('list_provider_vms.log').strpath,
@@ -33,7 +37,7 @@ def parse_cmd_line():
     return args
 
 
-def process_tags(tags=[], provider_keys=[]):
+def process_tags(provider_keys, tags=[]):
     """
     Process the tags provided on command line to build a list of provider keys that match
     :param tags: list of tags to match against cfme_data
@@ -104,7 +108,7 @@ def list_vms(provider_key, output_queue):
 if __name__ == "__main__":
     args = parse_cmd_line()
     providers = args.provider
-    process_tags(args.tag, providers)
+    process_tags(providers, args.tag)
     providers = providers or list_provider_keys()
 
     queue = Queue()  # for MP output
