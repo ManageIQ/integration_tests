@@ -126,10 +126,13 @@ class ContainersProvider(BaseProvider, Pretty):
             credentials=None,
             key=None,
             zone=None,
+            hawkular=None,
             hostname=None,
-            port=None,
+            api_port=None,
             sec_protocol=None,
             hawkular_sec_protocol=None,
+            hawkular_hostname=None,
+            hawkular_api_port=None,
             provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -139,10 +142,13 @@ class ContainersProvider(BaseProvider, Pretty):
         self.credentials = credentials
         self.key = key
         self.zone = zone
+        self.hawkular = hawkular
         self.hostname = hostname
-        self.port = port
+        self.api_port = api_port
         self.sec_protocol = sec_protocol
         self.hawkular_sec_protocol = hawkular_sec_protocol
+        self.hawkular_hostname = hawkular_hostname
+        self.hawkular_api_port = hawkular_api_port
         self.provider_data = provider_data
 
     def _on_detail_page(self):
