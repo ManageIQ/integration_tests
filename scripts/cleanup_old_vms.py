@@ -279,7 +279,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     for thread in thread_queue:
         thread.join()
 
-    with open(args.outfile, 'w') as report:
+    with open(args.outfile, 'a') as report:
         report.write('## VM/Instances deleted via:\n'
                      '##   text matches: {}\n'
                      '##   age matches: {}\n'
@@ -287,7 +287,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         message = tabulate(deleted_vms_list,
                            headers=['Provider', 'Name', 'Age', 'Status', 'Delete RC'],
                            tablefmt='orgtbl')
-        report.write(message)
+        report.write(message + '\n')
     print(message)
     print("Deleting finished")
 
