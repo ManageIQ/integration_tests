@@ -1,13 +1,14 @@
 #!/usr/bin/env python2
 from __future__ import print_function
 
-import argparse
 from collections import defaultdict
 import datetime
 import re
 import requests
 import subprocess
 import textwrap
+
+import click
 
 from utils.conf import docker
 
@@ -19,33 +20,32 @@ def clean_commit(commit_msg):
     return commit_msg.strip(" ")
 
 
-def main():
-    parser = argparse.ArgumentParser(epilog=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('new_tag',
-        help='The new tag number')
-    parser.add_argument('--old-tag', default=None,
-        help='Build the release from an older tag')
-    parser.add_argument('--full', action="store_true", default=False,
-        help='Whether to generate full PR details')
-    parser.add_argument('--stats', action="store_true", default=False,
-        help='Whether to generate label stats')
-    parser.add_argument('--line-limit', default='80',
-        help='Line length limit')
+@click.command(help="Assist in generating release changelog")
+@click.argument('tag')
+@click.option('--old-tag', default=None,
+              help='Build the changelog from an older tag, instead of git describe')
+@click.option('--full', 'report_type', flag_value='full',
+              default=True, help="Generates a full report with all PR description")
+@click.option('--brief', 'report_type', flag_value='brief',
+              help="Generates brief report")
+@click.option('--stats', 'report_type', flag_value='stats',
+              help="Generates stats only report")
+@click.option('--line-limit', default='80', help='Line length limit')
+def main(tag, old_tag, report_type, line_limit):
+    """Script to assist in generating the release changelog
 
-    args = parser.parse_args()
+    This script will generate a simple or full diff of PRs that are merged
+    and present the data in a way that is easy to copy/paste into an email
+    or git tag.
+    """
+    line_length = int(line_limit)
 
-    line_length = int(args.line_limit)
-    full = args.full
-
-    new_ver = args.new_tag
-
-    if not args.old_tag:
+    if not old_tag:
         proc = subprocess.Popen(['git', 'describe', '--tags', '--abbrev=0'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         old_tag = proc.stdout.read().strip("\n")
     else:
-        old_tag = args.old_tag
+        old_tag = old_tag
     proc = subprocess.Popen(['git', 'log', '{}..master'.format(old_tag), '--oneline'],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     commits = proc.stdout.read()
@@ -55,9 +55,9 @@ def main():
         u'other', u'enhancement', u'fix-framework', u'new-test-or-feature', u'tech-debt'
     ]
 
-    print('integration_tests {} Released'.format(new_ver))
+    print('integration_tests {} Released'.format(tag))
     print('')
-    print('Includes: {} -> {}'.format(old_tag, new_ver))
+    print('Includes: {} -> {}'.format(old_tag, tag))
 
     max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
 
@@ -95,7 +95,7 @@ def main():
         print("Recognized labels: {}".format(', '.join(valid_labels)))
         return 1
 
-    if not args.stats:
+    if report_type in ['full', 'brief']:
         max_len_pr = len(
             reduce((lambda x, y: str(x) if len(str(x)) > len(str(y)) else str(y)), prs.keys()))
 
@@ -111,11 +111,12 @@ def main():
                     msg = "{} | {} | {}".format(
                         pr_number, label, title[0])
                     for line in title[1:]:
-                        msg += "\n{} | {} | {}".format(" " * max_len_pr, " " * max_len_labels, line)
-                    if full:
+                        msg += "\n{} | {} | {}".format(
+                            " " * max_len_pr, " " * max_len_labels, line.encode('ascii', 'ignore'))
+                    if report_type == "full":
                         print("=" * line_length)
                     print(msg)
-                    if full:
+                    if report_type == "full":
                         print("-" * line_length)
                         string = prs[pr_number]['body']
                         if string is None:
@@ -128,7 +129,7 @@ def main():
                         print("=" * line_length)
                         print("")
 
-    elif args.stats:
+    elif report_type == "stats":
         labels = defaultdict(int)
 
         for commit in commits.split("\n"):
