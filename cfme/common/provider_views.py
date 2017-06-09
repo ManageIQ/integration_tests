@@ -77,6 +77,7 @@ class ProviderDetailsView(BaseLoggedInPage):
         if item == 'contents':
             if self.context['object'].appliance.version >= '5.7':
                 view_type = self.toolbar.view_selector.selected
+                # cloud provider details view doesn't have such switch, BZ(1460772)
                 if view_type == 'Summary View':
                     return ProviderDetailsSummaryView(parent=self)
 
@@ -94,8 +95,12 @@ class ProviderDetailsView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        subtitle = 'Summary' if self.toolbar.view_selector.selected == 'Summary View' \
-            else 'Dashboard'
+        if (not self.toolbar.view_selector.is_displayed or
+                self.toolbar.view_selector.selected == 'Summary View'):
+            subtitle = 'Summary'
+        else:
+            subtitle = 'Dashboard'
+
         title = '{name} ({subtitle})'.format(name=self.context['object'].name,
                                              subtitle=subtitle)
         return self.logged_in_as_current_user and self.breadcrumb.active_location == title
@@ -112,7 +117,7 @@ class CloudProviderDetailsView(ProviderDetailsView):
     @property
     def is_displayed(self):
         return super(CloudProviderDetailsView, self).is_displayed and \
-            self.navigation.currently_selected == ['Compute', 'Cloud', 'Providers']
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers']
 
 
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -316,9 +321,6 @@ class ProviderSideBar(View):
 class ProvidersView(BaseLoggedInPage):
     @property
     def is_displayed(self):
-        return self.logged_in_as_current_user and \
-            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
-            self.items.title.text == 'Infrastructure Providers'
         return self.logged_in_as_current_user
 
     toolbar = View.nested(ProviderToolBar)
@@ -339,7 +341,7 @@ class CloudProvidersView(ProvidersView):
     @property
     def is_displayed(self):
         return super(CloudProvidersView, self).is_displayed and \
-            self.navigation.currently_selected == ['Compute', ' Cloud', 'Providers'] and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and \
             self.items.title.text == 'Cloud Providers'
 
 
@@ -395,7 +397,7 @@ class CloudProviderAddView(ProviderAddView):
     @property
     def is_displayed(self):
         return super(CloudProviderAddView, self).is_displayed and \
-            self.navigation.currently_selected == ['Compute', 'Cloud', 'Providers'] and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and \
             self.title.text == 'Add New Cloud Provider'
 
 
@@ -429,5 +431,5 @@ class CloudProviderEditView(ProviderEditView):
     @property
     def is_displayed(self):
         return super(CloudProviderEditView, self).is_displayed and \
-            self.navigation.currently_selected == ['Compute', 'Cloud', 'Providers'] and \
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and \
             self.title.text == 'Edit Cloud Provider'

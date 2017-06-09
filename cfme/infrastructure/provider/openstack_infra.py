@@ -14,9 +14,9 @@ from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, na
 class RHOSEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
-        return {'hostname': self.hostname,
+        return {'security_protocol': self.security_protocol,
+                'hostname': self.hostname,
                 'api_port': self.api_port,
-                'security_protocol': self.security_protocol,
                 }
 
 
@@ -24,8 +24,8 @@ class OpenStackInfraEndpointForm(View):
     @View.nested
     class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
         TAB_NAME = 'Default'
-        api_port = Input('default_api_port')
         security_protocol = BootstrapSelect('default_security_protocol')
+        api_port = Input('default_api_port')
 
     @View.nested
     class events(Tab, BeforeFillMixin):  # NOQA

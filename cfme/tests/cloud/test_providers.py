@@ -7,14 +7,14 @@ import fauxfactory
 import pytest
 
 from utils import error
-import cfme.fixtures.pytest_selenium as sel
 from cfme.base.credential import Credential
-from cfme.exceptions import FlashMessageException
-from cfme.cloud.provider import (discover, wait_for_a_provider,
-    CloudProvider, prop_region)
-from cfme import test_requirements
+from cfme.cloud.provider import (discover, wait_for_a_provider, CloudProvider, prop_region)
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
+from cfme.common.provider_views import CloudProviderAddView
+from cfme import test_requirements
 from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
@@ -91,24 +91,28 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
+    default_credentials = provider.default_endpoint.credentials
 
-    cred_args = dict()
-    cred_args['secret'] = 'notyourday'
-    if provider.type == "azure":
+    # default settings
+    flash = 'Login failed due to a bad username or password.'
+    default_credentials.principal = "bad"
+    default_credentials.secret = 'notyourday'
+
+    if provider.one_of(AzureProvider):
         flash = (
             "Credential validation was not successful: Incorrect credentials - "
             "check your Azure Client ID and Client Key"
         )
-        cred_args['principal'] = str(uuid.uuid4())
-    elif provider.type == "gce":
+        default_credentials.principal = str(uuid.uuid4())
+        default_credentials.secret = 'notyourday'
+    elif provider.one_of(GCEProvider):
         flash = 'Credential validation was not successful: Invalid Google JSON key'
-        cred_args['cred_type'] = 'service_account'
-        cred_args['service_account'] = '{"test": "bad"}'
-    else:
-        flash = 'Login failed due to a bad username or password.'
-        cred_args['principal'] = "bad"
+        default_credentials.service_account = '{"test": "bad"}'
+    elif provider.one_of(OpenStackProvider):
+        for endp_name in provider.endpoints.keys():
+            if endp_name != 'default':
+                del provider.endpoints[endp_name]
 
-    provider.credentials['default'] = Credential(**cred_args)
     with error.expected(flash):
         provider.create(validate_credentials=True)
 
@@ -159,35 +163,26 @@ def test_name_required_validation(request):
     """Tests to validate the name while adding a provider"""
     prov = EC2Provider(
         name=None,
-        region='us-east-1')
+        region='US East (Northern Virginia)')
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected("Name can't be blank"):
-            prov.create()
-    else:
-        # It must raise an exception because it keeps on the form
-        with error.expected(FlashMessageException):
-            prov.create()
-        assert prov.properties_form.name_text.angular_help_block == "Required"
+    with pytest.raises(AssertionError):
+        prov.create()
+    view = prov.create_view(CloudProviderAddView)
+    assert view.name.help_block == "Required"
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
 def test_region_required_validation(request, soft_assert):
     """Tests to validate the region while adding a provider"""
-    prov = EC2Provider(
-        name=fauxfactory.gen_alphanumeric(5),
-        region=None)
+    prov = EC2Provider(name=fauxfactory.gen_alphanumeric(5), region=None)
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected('Region is not included in the list'):
-            prov.create()
-    else:
-        with error.expected(FlashMessageException):
-            prov.create()
-        soft_assert(
-            "ng-invalid-required" in prov.properties_form.region_select.classes)
+    with pytest.raises(AssertionError):
+        prov.create()
+        view = prov.create_view(CloudProviderAddView)
+        soft_assert(view.region.help_block == "Required")
 
 
 @pytest.mark.tier(3)
@@ -200,33 +195,28 @@ def test_host_name_required_validation(request):
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected("Host Name can't be blank"):
-            prov.create()
-    else:
-        # It must raise an exception because it keeps on the form
-        with error.expected(FlashMessageException):
-            prov.create()
-        assert prov.properties_form.hostname_text.angular_help_block == "Required"
+    # It must raise an exception because it keeps on the form
+    with pytest.raises(AssertionError):
+        prov.create()
+    endpoints = prov.create_view(prov.endpoints_form)
+    assert endpoints.default.hostname.help_block == "Required"
 
 
 @pytest.mark.tier(3)
 def test_api_port_blank_validation(request):
     """Test to validate blank api port while adding a provider"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
-        api_port='')
+    endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
+                            ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
+                            api_port='',
+                            security_protocol='Non-SSL')
+    prov = OpenStackProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
+    # It must raise an exception because it keeps on the form
+    with pytest.raises(AssertionError):
         prov.create()
-    else:
-        # It must raise an exception because it keeps on the form
-        with error.expected(FlashMessageException):
-            prov.create()
-        assert prov.properties_form.api_port.angular_help_block == "Required"
+    endpoints = prov.create_view(prov.endpoints_form)
+    assert endpoints.default.api_port.help_block == "Required"
 
 
 @pytest.mark.tier(3)
@@ -259,33 +249,31 @@ def test_name_max_character_validation(request, cloud_provider):
 @pytest.mark.tier(3)
 def test_hostname_max_character_validation():
     """Test to validate max character for hostname field"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(256),
-        ip_address='10.10.10.13')
+    endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(256),
+                            api_port=None,
+                            security_protocol=None)
+    prov = OpenStackProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
-    except FlashMessageException:
-        element = sel.move_to_element(prov.properties_form.locators["hostname_text"])
-        text = element.get_attribute('value')
-        assert text == prov.hostname[0:255]
+    except AssertionError:
+        endpoints = prov.create_view(prov.endpoints_form)
+        assert endpoints.default.hostname.value == prov.hostname[0:255]
 
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
 def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address='10.10.10.15',
-        api_port=fauxfactory.gen_alphanumeric(16))
+    endpoint = RHOSEndpoint(hostname=fauxfactory.gen_alphanumeric(5),
+                            api_port=fauxfactory.gen_alphanumeric(16),
+                            security_protocol='Non-SSL')
+    prov = OpenStackProvider(name=fauxfactory.gen_alphanumeric(5), endpoints=endpoint)
     try:
         prov.create()
-    except FlashMessageException:
-        element = sel.move_to_element(prov.properties_form.locators["api_port"])
-        text = element.get_attribute('value')
-        assert text == prov.api_port[0:15]
+    except AssertionError:
+        view = prov.create_view(prov.endpoints_form)
+        text = view.default.api_port.value
+        assert text == prov.default_endpoint.api_port[0:15]
 
 
 @pytest.mark.tier(3)

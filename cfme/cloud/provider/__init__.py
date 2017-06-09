@@ -173,13 +173,6 @@ class CloudProvider(Pretty, CloudInfraProvider):
         self.key = key
         self.endpoints = self._prepare_endpoints(endpoints)
 
-    @property
-    def default_endpoint(self):
-        try:
-            return self.endpoints['default']
-        except KeyError:
-            return None
-
     def as_fill_value(self):
         return self.name
 

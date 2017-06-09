@@ -181,6 +181,7 @@ class ServiceAccountCredential(Pretty, Updateable):
 
     @classmethod
     def from_config(cls, key):
+        # TODO: refactor this. consider json.dumps
         creds = deepcopy(conf.credentials[key])
         service_data = creds['service_account']
         service_account = '''

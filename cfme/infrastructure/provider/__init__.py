@@ -24,7 +24,6 @@ from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
-from utils.net import resolve_hostname
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
@@ -74,46 +73,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         self.provider_data = provider_data
         self.zone = zone
         self.template_name = "Templates"
-
-    @property
-    def default_endpoint(self):
-        try:
-            return self.endpoints['default']
-        except KeyError:
-            return None
-
-    @property
-    def hostname(self):
-        if self.default_endpoint:
-            return self.default_endpoint.hostname
-        else:
-            return None
-
-    @hostname.setter
-    def hostname(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.hostname = value
-        else:
-            logger.warn("can't set hostname because default endpoint is absent")
-
-    @property
-    def ip_address(self):
-        if hasattr(self.default_endpoint, 'ipaddress'):
-            return self.default_endpoint.ipaddress
-        else:
-            if self.hostname:
-                return resolve_hostname(self.hostname)
-            else:
-                return None
-
-    @ip_address.setter
-    def ip_address(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.ipaddress = value
-        else:
-            logger.warn("can't set ipaddress because default endpoint is absent")
 
     @cached_property
     def vm_name(self):
