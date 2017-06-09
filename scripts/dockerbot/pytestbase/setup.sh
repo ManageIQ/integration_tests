@@ -17,7 +17,7 @@ run_n_log () {
 # Shutdown and destroy everything
 on_exit () {
     log "Beginning shutdown proc...#~"
-    echo $RES > /log_depot/result.txt
+    echo $RES > /integration_tests/log/result.txt
     log "Checking out master branch..."
     git checkout origin/master
     
