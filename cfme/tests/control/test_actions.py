@@ -24,7 +24,6 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme import test_requirements
 from utils import testgen
@@ -146,7 +145,8 @@ def _get_vm(request, appliance, provider, template_name, vm_name):
     def _finalize():
         """if getting REST object failed, we would not get the VM deleted! So explicit teardown."""
         logger.info("Shutting down VM with name %s", vm_name)
-        if provider.one_of(InfraProvider, AzureProvider) and provider.mgmt.is_vm_suspended(vm_name):
+        if (provider.one_of(InfraProvider, OpenStackProvider, AzureProvider) and
+                provider.mgmt.is_vm_suspended(vm_name)):
             logger.info("Powering up VM %s to shut it down correctly.", vm_name)
             provider.mgmt.start_vm(vm_name)
         if provider.mgmt.is_vm_running(vm_name):
@@ -213,7 +213,7 @@ def vm_on(vm):
 def vm_off(provider, vm):
     """ Ensures that the VM is off when the control goes to the test."""
     vm.wait_vm_steady()
-    if provider.one_of(InfraProvider) and vm.is_vm_suspended():
+    if provider.one_of(InfraProvider, AzureProvider, OpenStackProvider) and vm.is_vm_suspended():
         vm.start_vm()
         vm.wait_vm_running()
     if not vm.is_vm_stopped():
@@ -225,32 +225,8 @@ def vm_off(provider, vm):
     return vm
 
 
-@pytest.fixture(scope="function")
-def vm_crud_refresh(vm, provider):
-    """Refreshes the VM if that is needed for the provider."""
-    if provider.one_of(EC2Provider):
-        return lambda: vm.crud.refresh_relationships(from_details=True)
-    else:
-        return lambda: None
-
-
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(vm_name, policy_name, policy_profile_name, provider):
-    """Takes care of setting the appliance up for testing."""
-    policy = policies.VMControlPolicy(
-        policy_name,
-        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
-    )
-    policy.create()
-    policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
-    policy_profile.create()
-    yield policy
-    policy_profile.delete()
-    policy.delete()
-
-
-@pytest.yield_fixture(scope="module")
-def policy_for_testing_for_vm_big(vm_name, policy_name, policy_profile_name, provider):
     """Takes care of setting the appliance up for testing."""
     policy = policies.VMControlPolicy(
         policy_name,
@@ -271,17 +247,9 @@ def assign_policy_for_testing(policy_for_testing, provider, policy_profile_name)
     provider.unassign_policy_profiles(policy_profile_name)
 
 
-@pytest.yield_fixture(scope="function")
-def assign_policy_for_testing_vm_big(policy_for_testing_for_vm_big, provider, policy_profile_name):
-    provider.assign_policy_profiles(policy_profile_name)
-    yield policy_for_testing_for_vm_big
-    provider.unassign_policy_profiles(policy_profile_name)
-
-
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, vm_crud_refresh,
-        assign_policy_for_testing):
+def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, assign_policy_for_testing):
     """ This test tests action 'Start Virtual Machine'
 
     This test sets the policy that it turns on the VM when it is turned off
@@ -296,7 +264,6 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, vm_crud
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Stop the VM
     vm.stop_vm()
-    vm_crud_refresh()
     # Wait for VM powered on by CFME
     try:
         wait_for(vm.is_vm_running, num_sec=600, delay=5)
@@ -306,8 +273,7 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, vm_crud
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, vm_crud_refresh,
-        assign_policy_for_testing):
+def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, assign_policy_for_testing):
     """ This test tests action 'Stop Virtual Machine'
 
     This test sets the policy that it turns off the VM when it is turned on
@@ -322,7 +288,6 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, vm_crud
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
-    vm_crud_refresh()
     # Wait for VM powered off by CFME
     try:
         wait_for(vm.is_vm_stopped, num_sec=600, delay=5)
@@ -332,7 +297,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, vm_crud
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, vm_crud_refresh,
+def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off,
         assign_policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
 
@@ -347,7 +312,6 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, vm_c
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
-    vm_crud_refresh()
     # Wait for VM be suspended by CFME
     try:
         wait_for(vm.is_vm_suspended, num_sec=600, delay=5)
@@ -358,7 +322,7 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, vm_c
 @pytest.mark.meta(blockers=[1142875])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_prevent_event(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
+def test_action_prevent_event(request, vm, vm_off, assign_policy_for_testing):
     """ This test tests action 'Prevent current event from proceeding'
 
     This test sets the policy that it prevents powering the VM up. Then the vm is powered up
@@ -383,8 +347,7 @@ def test_action_prevent_event(request, vm, vm_off, vm_crud_refresh, assign_polic
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_power_on_logged(request, vm, vm_off, appliance, vm_crud_refresh,
-        assign_policy_for_testing):
+def test_action_power_on_logged(request, vm, vm_off, appliance, assign_policy_for_testing):
     """ This test tests action 'Generate log message'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -398,7 +361,6 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, vm_crud_refresh,
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
-    vm_crud_refresh()
     policy_desc = assign_policy_for_testing.description
 
     # Search the logs
@@ -422,8 +384,7 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, vm_crud_refresh,
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_power_on_audit(request, vm, vm_off, appliance, vm_crud_refresh,
-        assign_policy_for_testing):
+def test_action_power_on_audit(request, vm, vm_off, appliance, assign_policy_for_testing):
     """ This test tests action 'Generate Audit Event'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -437,7 +398,6 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, vm_crud_refresh,
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
-    vm_crud_refresh()
     policy_desc = assign_policy_for_testing.description
 
     # Search the logs
@@ -460,8 +420,7 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, vm_crud_refresh,
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_action_create_snapshot_and_delete_last(request, vm, vm_on, vm_crud_refresh,
-        assign_policy_for_testing):
+def test_action_create_snapshot_and_delete_last(request, vm, vm_on, assign_policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -491,7 +450,6 @@ def test_action_create_snapshot_and_delete_last(request, vm, vm_on, vm_crud_refr
     snapshots_before = vm.crud.total_snapshots
     # Power off to invoke snapshot creation
     vm.stop_vm()
-    vm_crud_refresh()
     wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
              message="wait for snapshot appear", delay=5)
     assert vm.crud.current_snapshot_description == "Created by EVM Policy Action"
@@ -505,8 +463,7 @@ def test_action_create_snapshot_and_delete_last(request, vm, vm_on, vm_crud_refr
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_action_create_snapshots_and_delete_them(request, vm, vm_on, vm_crud_refresh,
-        assign_policy_for_testing):
+def test_action_create_snapshots_and_delete_them(request, vm, vm_on, assign_policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
@@ -538,31 +495,27 @@ def test_action_create_snapshots_and_delete_them(request, vm, vm_on, vm_crud_ref
         # Power off to invoke snapshot creation
         snapshots_before = vm.crud.total_snapshots
         vm.stop_vm()
-        vm_crud_refresh()
         wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
                  message="wait for snapshot %d to appear" % (n + 1), delay=5)
         current_snapshot = vm.crud.current_snapshot_name
         logger.debug('Current Snapshot Name: {}'.format(current_snapshot))
         assert current_snapshot == snapshot_name
         vm.start_vm()
-        vm_crud_refresh()
 
     for i in range(4):
         create_one_snapshot(i)
     assign_policy_for_testing.assign_events()
     vm.stop_vm()
-    vm_crud_refresh()
     assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
     # Power on to invoke all snapshots deletion
     vm.start_vm()
-    vm_crud_refresh()
     wait_for(lambda: vm.crud.total_snapshots == 0, num_sec=800,
              message="wait for snapshots to be deleted", delay=5)
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm_off,
-        vm_crud_refresh, assign_policy_for_testing):
+        assign_policy_for_testing):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
 
     This test sets the policy that it analyses VM after it's powered on. Then it checks whether
@@ -624,7 +577,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 # Purely custom actions
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_tag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
+def test_action_tag(request, vm, vm_off, assign_policy_for_testing):
     """ Tests action tag
 
     Metadata:
@@ -647,7 +600,6 @@ def test_action_tag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_test
         tag_assign_action.delete()
 
     vm.start_vm()
-    vm_crud_refresh()
     try:
         wait_for(
             lambda: any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
@@ -662,7 +614,7 @@ def test_action_tag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_test
 @pytest.mark.meta(blockers=[1205496])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
-def test_action_untag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_testing):
+def test_action_untag(request, vm, vm_off, assign_policy_for_testing):
     """ Tests action untag
 
     Metadata:
@@ -691,7 +643,6 @@ def test_action_untag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_te
         tag_unassign_action.delete()
 
     vm.start_vm()
-    vm_crud_refresh()
     try:
 
         wait_for(
@@ -706,16 +657,16 @@ def test_action_untag(request, vm, vm_off, vm_crud_refresh, assign_policy_for_te
 
 @pytest.mark.meta(blockers=[1381255])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_action_cancel_clone(request, provider, vm_big, assign_policy_for_testing_vm_big):
+def test_action_cancel_clone(request, provider, vm_big, assign_policy_for_testing):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
     """
-    assign_policy_for_testing_vm_big.assign_events("VM Clone Start")
-    assign_policy_for_testing_vm_big.assign_actions_to_event(
+    assign_policy_for_testing.assign_events("VM Clone Start")
+    assign_policy_for_testing.assign_actions_to_event(
         "VM Clone Start", ["Cancel vCenter Task"])
     clone_vm_name = "{}-clone".format(vm_big.name)
-    request.addfinalizer(lambda: assign_policy_for_testing_vm_big.assign_events())
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     cells = {"Description": clone_vm_name}
