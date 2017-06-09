@@ -1,0 +1,5 @@
+FROM cfmeqe/dockerbot-base
+RUN git clone https://github.com/ManageIQ/integration_tests
+RUN cd /integration_tests && \
+	python -m cfme.scripting.quickstart && \
+	python -m cfme.scripting.quickstart --mk-virtualenv ../cfme_pristine_venv
