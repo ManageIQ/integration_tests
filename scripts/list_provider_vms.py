@@ -1,7 +1,8 @@
 import argparse
 from tabulate import tabulate
 from multiprocessing import Process, Queue
-from multiprocessing.queues import Empty
+
+from mgmtsystem.exceptions import VMError
 
 from utils.conf import cfme_data
 from utils.path import log_path
@@ -37,7 +38,7 @@ def parse_cmd_line():
     return args
 
 
-def process_tags(provider_keys, tags=[]):
+def process_tags(provider_keys, tags=None):
     """
     Process the tags provided on command line to build a list of provider keys that match
     :param tags: list of tags to match against cfme_data
@@ -52,7 +53,7 @@ def process_tags(provider_keys, tags=[]):
             yaml_tags = cfme_data['management_systems'][key]['tags']
             if any(tag in tags for tag in yaml_tags):
                 print('Matched tag from {} on provider {}:tags:{}'.format(tags, key, yaml_tags))
-                provider_keys.append(key)
+                provider_keys.add(key)
 
 
 def list_vms(provider_key, output_queue):
@@ -68,15 +69,27 @@ def list_vms(provider_key, output_queue):
     print('Listing VMS on provider {}'.format(provider_key))
     provider = get_mgmt(provider_key)
     try:
-        for vm_name in provider.list_vm():
+        vm_list = provider.list_vm()
+    except NotImplementedError:
+        print('Provider does not support list_vm: {}'.format(provider_key))
+        output_list.append([provider_key, 'Not Supported', NULL, NULL, NULL])
+        return
+    else:
+        # TODO thread metadata collection for further speed improvements
+        for vm_name in vm_list:
             # Init these meta values in case they fail to query
-            status = None
-            creation = None
-            vm_type = None
+            status, creation, vm_type = None, None, None
             try:
                 print('Collecting metadata for VM {} on provider {}'.format(vm_name, provider_key))
-                status = provider.vm_status(vm_name)
+                # VMError raised for some vms in bad status
+                # exception message contains useful information about VM status
+                try:
+                    status = provider.vm_status(vm_name)
+                except VMError as ex:
+                    status = ex.message
+
                 creation = provider.vm_creation_time(vm_name)
+
                 # different provider types implement different methods to get instance type info
                 try:
                     vm_type = provider.vm_type(vm_name)
@@ -85,6 +98,7 @@ def list_vms(provider_key, output_queue):
                 finally:
                     vm_type = vm_type or '--'
                     output_list.append([provider_key, vm_name, status, creation, str(vm_type)])
+
             except Exception as ex:
                 print('Exception during provider processing on {}: {}'
                       .format(provider_key, ex.message))
@@ -95,11 +109,6 @@ def list_vms(provider_key, output_queue):
                                     creation or NULL,
                                     str(vm_type) or NULL])
                 continue
-    except NotImplementedError:
-        print('Provider does not support list_vm: {}'.format(provider_key))
-        output_list.append(
-            [provider_key, 'Not Supported', NULL, NULL, NULL])
-        pass
 
     output_queue.put(output_list)
     return
@@ -107,7 +116,8 @@ def list_vms(provider_key, output_queue):
 
 if __name__ == "__main__":
     args = parse_cmd_line()
-    providers = args.provider
+    # providers as a set when processing tags to ensure unique entries
+    providers = set(args.provider)
     process_tags(providers, args.tag)
     providers = providers or list_provider_keys()
 
@@ -121,12 +131,12 @@ if __name__ == "__main__":
     for proc in proc_list:
         proc.join()
 
+    print('Done processing providers, assembling report...')
+
     # Now pull all the results off of the queue
     # Stacking the generator this way is equivalent to using list.extend instead of list.append
-    try:
-        output_data = [data for _ in proc_list for data in queue.get()]
-    except Empty:
-        pass
+    # Need to check queue.empty since a call to get will raise an Empty exception
+    output_data = [data for _ in proc_list if not queue.empty() for data in queue.get()]
 
     header = '''## VM/Instances on providers matching:
 ## providers: {}
