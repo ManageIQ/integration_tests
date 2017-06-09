@@ -16,6 +16,7 @@ setup(
 
     entry_points={
         'console_scripts': [
+            'miq = cfme.scripting.miq:cli',
             'miq-release = scripts.release:main',
             'miq-artifactor-server = artifactor.__main__:main',
             'miq-runtest = cfme.scripting.runtest:main',
