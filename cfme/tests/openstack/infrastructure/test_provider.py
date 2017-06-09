@@ -3,7 +3,6 @@
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
@@ -14,7 +13,7 @@ pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
 def test_api_port(provider):
-    port = provider.get_yaml_data()['port']
+    port = provider.get_yaml_data()['endpoints']['default']['api_port']
     assert provider.summary.properties.api_port.value == port, 'Invalid API Port'
 
 
@@ -28,4 +27,4 @@ def test_delete_provider(provider):
     provider.delete(cancel=False)
     provider.wait_for_delete()
     view = navigate_to(provider, 'All')
-    assert provider.name not in [item.name for item in view.items.get_all(surf_page=True)]
+    assert provider.name not in [item.name for item in view.items.get_all(surf_pages=True)]
