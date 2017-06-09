@@ -80,7 +80,7 @@ def encrypt(conf_name, delete):
 @main.command(help='Decrypts a yaml file')
 @click.argument('conf_name', default='credentials')
 @click.option('--delete', default=False, is_flag=True,
-              help='If supplieddelete the unencrypted config of the same name.')
+              help='If supplied delete the encrypted config of the same name.')
 def decrypt(conf_name, delete):
     """Function to decrypt a given conf file"""
     conf_name = conf_name.strip()
