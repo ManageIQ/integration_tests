@@ -97,7 +97,7 @@ def get_vm_config_modified_time(host_name, vm_name, datastore_url, provider_key)
             'hostname': hostname
         }
         datastore_path = re.findall(r'([^ds:`/*].*)', str(datastore_url))
-        command = 'find ~/{} -name {}.vmx | xargs  date -r'.format(
+        command = 'find ~/{} -exec date -r {} \; -name {}.vmx | xargs  date -r'.format(
             pathjoin(datastore_path[0], vm_name),
             vm_name)
 
@@ -166,7 +166,7 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
                 continue
 
         with lock:
-            print('{} finished'.format(provider_key))
+            print('{} finished processing for matches'.format(provider_key))
     except Exception as ex:
         with lock:
             # Print out the error message too because logs in the job get deleted
@@ -204,7 +204,7 @@ def delete_provider_vms(provider_key, provider_mgmt, names_ages):
             with lock:
                 deleted_vms_list.append([provider_key, vm_name, age, status, result])
     with lock:
-        print("{} is done!".format(provider_key))
+        print("{} is done deleting vms".format(provider_key))
 
 
 def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
@@ -289,8 +289,9 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
                            tablefmt='orgtbl')
         report.write(message)
     print(message)
-
     print("Deleting finished")
+
+    return 0
 
 
 if __name__ == "__main__":
