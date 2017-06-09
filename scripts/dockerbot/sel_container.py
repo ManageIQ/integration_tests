@@ -25,7 +25,7 @@ def vnc_ready(addr, port):
     return True
 
 
-@click.command(help='Starts a selenium container for running tests against')
+@click.command(help='Starts selenium container for testing against')
 @click.option('--watch', help='Opens VNC session', default=False, is_flag=True)
 @click.option('--vnc', help='Chooses VNC port', default=5900)
 @click.option('--webdriver', help='Chooses webdriver port', default=4444)
