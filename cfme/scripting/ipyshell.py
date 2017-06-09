@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import click
 import sys
 from . import quickstart
 
@@ -12,6 +13,7 @@ IMPORTS = [
 ]
 
 
+@click.command(help="Open an IPython shell")
 def main():
     """Use quickstart to ensure we have correct env, then execute imports in ipython and done."""
     quickstart.main(quickstart.parser.parse_args(['--mk-virtualenv', sys.prefix]))
