@@ -48,7 +48,6 @@ def test_keypair_crud(openstack_provider):
         get_mgmt(openstack_provider.name).api.keypairs.delete(keypair.name)
         pytest.fail('Timed out deleting keypair')
 
-
     with pytest.raises(KeyPairNotFound):
         navigate_to(keypair, 'Details')
 
