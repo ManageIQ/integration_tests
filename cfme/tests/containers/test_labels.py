@@ -49,7 +49,10 @@ def random_labels(provider, appliance):
     #                <instance>, <label_name>, <label_value>, <results_status>
     # Adding label to each object:
     for test_obj in TEST_OBJECTS:
-        instance = test_obj.get_random_instances(provider, count=1, appliance=appliance).pop()
+        get_random_kwargs = {'count': 1, 'appliance': appliance}
+        if test_obj is Image:
+            get_random_kwargs['ocp_only'] = True
+        instance = test_obj.get_random_instances(provider, **get_random_kwargs).pop()
         name = fauxfactory.gen_alpha(1) + fauxfactory.gen_alphanumeric(random.randrange(1, 62))
         value = fauxfactory.gen_alphanumeric(random.randrange(1, 63))
         try:

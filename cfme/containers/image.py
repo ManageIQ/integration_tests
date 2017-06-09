@@ -51,7 +51,7 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
     def sha256(self):
         return self.id.split('sha256:')[-1]
 
-    def perform_smartstate_analysis(self, wait_for_finish=False):
+    def perform_smartstate_analysis(self, wait_for_finish=False, timeout='7M'):
         """Performing SmartState Analysis on this Image
         """
         navigate_to(self, 'Details')
@@ -59,16 +59,15 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
         sel.handle_alert()
         flash.assert_message_contain('Analysis successfully initiated')
         if wait_for_finish:
-            ssa_timeout = '20M'
             try:
                 tasks.wait_analysis_finished('Container image analysis',
-                                             'container', timeout=ssa_timeout)
+                                             'container', timeout=timeout)
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
-                                    .format(ssa_timeout))
+                                    .format(timeout))
 
     @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None, ocp_only=True):
+    def get_random_instances(cls, provider, count=1, appliance=None, ocp_only=False):
         """Generating random instances. (ocp_only: means for images available in OCP only)"""
         # Grab the images from the UI since we have no way to calculate the name by API attributes
         rows = navigate_and_get_rows(provider, cls, count=1000)

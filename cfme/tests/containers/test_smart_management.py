@@ -13,7 +13,6 @@ from cfme.containers.node import Node
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
-from cfme.containers.provider import navigate_and_get_rows
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < "5.6"),
@@ -56,29 +55,15 @@ def set_random_tag(instance):
     return Tag(display_name=random_tag.text, category=random_cat.text)
 
 
-def obj_factory(obj_creator, row, provider):
-
-    factory = {"Provider": lambda row: {"name": row.name.text},
-               "Project": lambda row: {"name": row.name.text, "provider": provider},
-               "Pod": lambda row: {"name": row.name.text, "provider": provider},
-               "Node": lambda row: {"name": row.name.text, "provider": provider},
-               "Template": lambda row: {"name": row.name.text, "provider": provider},
-               "Image": lambda row: {"name": row.name.text,
-                                     "tag": row.tag.text, "provider": provider},
-               "Image_Registry": lambda row: {"host": row.host.text, "provider": provider}}
-
-    return obj_creator(**factory[get_object_name(obj_creator)](row))
-
-
 @pytest.mark.parametrize('test_item',
                          TEST_ITEMS, ids=[item.args[1].pretty_id() for item in TEST_ITEMS])
 def test_smart_management_add_tag(provider, test_item):
 
-    # Select random instanse from instanse table
-    chosen_row = navigate_and_get_rows(provider, test_item.obj, 1).pop()
-
     # validate no tag set to project
-    obj_inst = obj_factory(test_item.obj, chosen_row, provider)
+    if test_item.obj is ContainersProvider:
+        obj_inst = provider
+    else:
+        obj_inst = test_item.obj.get_random_instances(provider, count=1).pop()
 
     regex = r"([\w\s|\-|\*]+:([\w\s|\-|\*])+)|(No.*assigned)"
     try:

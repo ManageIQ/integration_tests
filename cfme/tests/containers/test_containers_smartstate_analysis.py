@@ -4,8 +4,7 @@ from collections import namedtuple
 import pytest
 
 from cfme.containers.image import Image
-from cfme.containers.provider import ContainersProvider, ContainersTestItem,\
-    navigate_and_get_rows
+from cfme.containers.provider import ContainersProvider, ContainersTestItem
 
 from utils import testgen
 from utils.blockers import BZ
@@ -52,8 +51,7 @@ def delete_all_container_tasks():
 
 @pytest.fixture(scope='function')
 def random_image_instance(provider):
-    chosen_row = navigate_and_get_rows(provider, Image, 1).pop()
-    return Image(chosen_row.name.text, chosen_row.id.text, provider)
+    return Image.get_random_instances(provider, count=1).pop()
 
 
 @pytest.mark.polarion('10030')

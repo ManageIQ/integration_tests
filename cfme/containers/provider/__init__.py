@@ -520,7 +520,7 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
     navigate_to(obj, 'All')
     tb.select('List View')
     if sel.is_displayed_text("No Records Found.") and silent_failure:
-        return
+        return []
     paginator.results_per_page(1000)
     table = table_class(table_locator="//div[@id='list_grid']//table")
     rows = table.rows_as_list()

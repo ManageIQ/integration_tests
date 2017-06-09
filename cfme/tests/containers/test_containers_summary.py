@@ -16,10 +16,10 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 container_object_types = \
-    ['persistent_volumes', 'routes', 'projects', 'container_images', 'image_registries',
+    ['routes', 'projects', 'container_images', 'image_registries',
      'container_services', 'containers', 'pods', 'nodes']
 container_object_types_lowest = \
-    ['persistent_volumes', 'routes', 'projects', 'images', 'image_registries',
+    ['routes', 'projects', 'images', 'image_registries',
      'services', 'containers', 'pods', 'nodes']
 objects_key = ({
     version.LOWEST: container_object_types_lowest,
