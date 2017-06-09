@@ -9,7 +9,6 @@ from utils import testgen
 from utils.blockers import BZ
 from utils.appliance.implementations.ui import navigate_to
 from utils.wait import TimedOutError
-from utils.providers import get_mgmt
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider', 'openstack_provider')
@@ -45,7 +44,7 @@ def test_keypair_crud(openstack_provider):
     try:
         keypair.delete(wait=True)
     except TimedOutError:
-        get_mgmt(openstack_provider.name).api.keypairs.delete(keypair.name)
+        openstack_provider.mgmt.api.keypairs.delete(keypair.name)
         pytest.fail('Timed out deleting keypair')
 
     with pytest.raises(KeyPairNotFound):
@@ -73,7 +72,7 @@ def test_keypair_crud_with_key(openstack_provider):
     try:
         keypair.delete(wait=True)
     except TimedOutError:
-        get_mgmt(openstack_provider.name).api.keypairs.delete(keypair.name)
+        openstack_provider.mgmt.api.keypairs.delete(keypair.name)
         pytest.fail('Timed out deleting keypair')
 
     with pytest.raises(KeyPairNotFound):
