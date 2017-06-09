@@ -9,7 +9,7 @@ from widgetastic_manageiq import ManageIQTree, Checkbox, AttributeValueForm, Sum
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
 from widgetastic.utils import Version, VersionPick
-from widgetastic.widget import View, Table, Text
+from widgetastic.widget import View, Table, Text, Image, FileInput
 
 
 from cfme.base.login import BaseLoggedInPage
@@ -1286,3 +1286,54 @@ class AutomateSimulation(CFMENavigateStep):
         from cfme.automate import automate_menu_name
         self.prerequisite_view.navigation.select(
             *automate_menu_name(self.obj.appliance) + ['Simulation'])
+
+
+class AutomateImportExportBaseView(BaseLoggedInPage):
+    flash = FlashMessages('div.import-flash-message')
+    title = Text('.//div[@id="main-content"]//h1')
+
+    @property
+    def in_import_export(self):
+        from cfme.automate import automate_menu_name
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == automate_menu_name(
+                self.context['object'].appliance) + ['Import / Export'] and
+            self.title.text == 'Import / Export')
+
+    @property
+    def is_displayed(self):
+        return self.in_import_export
+
+
+class AutomateImportExportView(AutomateImportExportBaseView):
+    class import_file(View):    # noqa
+        file = FileInput(name='upload_file')
+        upload = Button('Upload')
+
+    class import_git(View):     # noqa
+        ROOT = './/form[@id="retrieve-git-datastore-form"]'
+
+        url = Input(name='git_url')
+        username = Input(name='git_username')
+        password = Input(name='git_password')
+        verify_ssl = Checkbox(name='git_verify_ssl')
+        submit = Button(id='git-url-import')
+
+    export_all = Image('.//input[@title="Export all classes and instances"]')
+    reset_all = Image('.//img[starts-with(@alt, "Reset all components in the following domains:")]')
+
+    @property
+    def is_displayed(self):
+        return self.in_import_export and self.export_all.is_displayed
+
+
+@navigator.register(Server)
+class AutomateImportExport(CFMENavigateStep):
+    VIEW = AutomateImportExportView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        from cfme.automate import automate_menu_name
+        self.prerequisite_view.navigation.select(
+            *automate_menu_name(self.obj.appliance) + ['Import / Export'])
