@@ -271,5 +271,9 @@ def main(args):
         print("      .", os.path.join(args.mk_virtualenv, 'bin/activate'))
 
 
+def run_for_current_env(mk_virtualenv=sys.prefix,):
+    main(parser.parse_args(['--mk-virtualenv', sys.prefix]))
+
+
 if IS_SCRIPT:
     main(parser.parse_args())
