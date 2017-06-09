@@ -12,7 +12,7 @@ log () {
 
 # Runs given command and appends the stdout and stderr output to setup.txt
 run_n_log () {
-    eval "$1"  2>&1 | tee -a $LOGFILE
+    (set -o pipefail; eval "$1"  2>&1 | tee -a $LOGFILE)
 }
 # Shutdown and destroy everything
 on_exit () {
