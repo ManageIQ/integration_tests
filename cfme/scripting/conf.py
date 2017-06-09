@@ -67,8 +67,7 @@ def show_provider(provider_key):
 @main.command(help='Encrypts a yaml file')
 @click.argument('conf_name', default='credentials')
 @click.option('--delete', default=False, is_flag=True,
-              help='If set to False, encrypt_yaml will not delete the unencrypted '
-              'config of the same name.')
+              help='If supplied delete the unencrypted config of the same name.')
 def encrypt(conf_name, delete):
     """Function to encrypt a given conf file"""
     conf_name = conf_name.strip()
@@ -81,8 +80,7 @@ def encrypt(conf_name, delete):
 @main.command(help='Decrypts a yaml file')
 @click.argument('conf_name', default='credentials')
 @click.option('--delete', default=False, is_flag=True,
-              help='If set to False, decrypt_yaml will not delete the unencrypted '
-              'config of the same name.')
+              help='If supplieddelete the unencrypted config of the same name.')
 def decrypt(conf_name, delete):
     """Function to decrypt a given conf file"""
     conf_name = conf_name.strip()
