@@ -1,9 +1,10 @@
 #!/usr/bin/env python2
+import click
 
 from artifactor import Artifactor, initialize
-import argparse
 from artifactor.plugins import merkyl, logger, video, filedump, reporter, post_result, ostriz
 from utils.conf import env
+from utils.net import random_port
 from utils.path import log_path
 
 import bottle
@@ -44,13 +45,15 @@ def run(port, run_id=None):
     # log.logger.info('artifactor listening on port %d', art_config['server_port'])
 
 
-def main():
-    parser = argparse.ArgumentParser(argument_default=None)
-    parser.add_argument('--run-id', default=None)
-    parser.add_argument('--port')
-    args = parser.parse_args()
+@click.command(help="Starts an artifactor server manually")
+@click.option('--run-id', default=None)
+@click.option('--port', default=None)
+def main(run_id, port):
+    """Main function for running artifactor server"""
+    port = port if port else random_port()
     try:
-        run(args.port, args.run_id)
+        run(port, run_id)
+        print ("Artifactor server running on port: {}").format(port)
     except Exception as e:
         import traceback
         import sys
