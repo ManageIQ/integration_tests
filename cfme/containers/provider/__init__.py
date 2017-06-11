@@ -9,6 +9,8 @@ from cfme.base.login import BaseLoggedInPage
 from widgetastic_patternfly import SelectorDropdown
 from widgetastic.widget import Text
 import random
+from utils.wait import wait_for
+
 
 from cfme.common.provider import BaseProvider
 from cfme import exceptions
@@ -368,18 +370,23 @@ class adHocMetricsView(BaseLoggedInPage):
     def is_displayed(self):
         return False
 
+    def wait_for_filter_option_to_load(self):
+        wait_for(lambda :bool(self.filter_dropdown.items), delay=5, num_sec=60)
+
+    def wait_for_results_to_load(self):
+        # TODO: add this fucntion
+
     def apply_filter(self):
         form_buttons._fill_fb_bool(self.apply_btn, True)
 
     def set_random_filter(self):
-        import time
-        time.sleep(5)
+
         random_filter = str(random.choice(self.filter_dropdown.items))
         self.selected_filter = random_filter
         self.filter_dropdown.fill_with(random_filter)
 
     def get_total_results_count(self):
-        return Text(self, 'h5.ng-binding').text.split()[0]
+        return int(Text(self, 'h5.ng-binding').text.split()[0])
 
 
 @navigator.register(ContainersProvider, 'AdHoc')
