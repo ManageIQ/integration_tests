@@ -253,6 +253,13 @@ def setup_provider_modscope(request, provider):
     return setup_or_skip(request, provider)
 
 
+@pytest.fixture(scope='module')
+def setup_one_provider_modscope(request, provider):
+    """Module-scoped fixture to remove all existing providers and set up one"""
+    BaseProvider.clear_providers()
+    return setup_or_skip(request, provider)
+
+
 @pytest.fixture(scope='class')
 def setup_provider_clsscope(request, provider):
     """Module-scoped fixture to set up a provider"""

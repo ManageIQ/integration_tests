@@ -171,14 +171,15 @@ def _get_vm(request, appliance, provider, template_name, vm_name):
     return VMWrapper(provider, vm_name, api)
 
 
-@pytest.fixture(scope="function")
-def vm(request, appliance, has_no_providers, provider, setup_provider, small_template, vm_name):
-    return _get_vm(request, appliance, provider, small_template, vm_name)
+@pytest.fixture(scope="module")
+def vm(request, appliance, provider, setup_one_provider_modscope, small_template_modscope, vm_name):
+    return _get_vm(request, appliance, provider, small_template_modscope, vm_name)
 
 
-@pytest.fixture(scope="function")
-def vm_big(request, appliance, has_no_providers, provider, setup_provider, big_template, vm_name):
-    return _get_vm(request, appliance, provider, big_template, vm_name)
+@pytest.fixture(scope="module")
+def vm_big(request, appliance, provider, setup_one_provider_modscope, big_template_modscope,
+        vm_name):
+    return _get_vm(request, appliance, provider, big_template_modscope, vm_name)
 
 
 @pytest.fixture(scope="module")

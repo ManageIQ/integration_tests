@@ -9,20 +9,12 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration import AnalysisProfile
-from fixtures.pytest_store import store
-from utils import testgen, version
-from utils.appliance import Appliance, ApplianceException, provision_appliance
-from utils.log import logger
+from utils import testgen
+from utils.hosts import setup_providers_hosts_credentials
 from utils.update import update
-from urlparse import urlparse
 from cfme import test_requirements
-from . import do_scan, wait_for_ssa_enabled
+from . import do_scan, vddk_url_map
 
-vddk_url_map = {
-    "5.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v5_5"),
-    "6": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v6_0"),
-    "6.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v6_5")
-}
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -112,31 +104,6 @@ def analysis_profile():
     ap.create()
     yield ap
     ap.delete()
-
-
-def do_scan(vm, additional_item_check=None):
-    if vm.rediscover_if_analysis_data_present():
-        # policy profile assignment is lost so reassign
-        vm.assign_policy_profiles(*vm.assigned_policy_profiles)
-
-    def _scan():
-        return vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
-    original = _scan()
-    if additional_item_check is not None:
-        original_item = vm.get_detail(properties=additional_item_check)
-    vm.smartstate_scan(cancel=False, from_details=True)
-    flash.assert_message_contain(version.pick({
-        version.LOWEST: "Smart State Analysis initiated",
-        "5.5": "Analysis initiated for 1 VM and Instance from the CFME Database"}))
-    logger.info("Scan initiated")
-    wait_for(
-        lambda: _scan() != original,
-        num_sec=600, delay=5, fail_func=lambda: toolbar.select("Reload"))
-    if additional_item_check is not None:
-        wait_for(
-            lambda: vm.get_detail(properties=additional_item_check) != original_item,
-            num_sec=120, delay=5, fail_func=lambda: toolbar.select("Reload"))
-    logger.info("Scan finished")
 
 
 def test_check_package_presence(request, compliance_vm, analysis_profile):
