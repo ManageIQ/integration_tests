@@ -11,7 +11,7 @@ from utils.log import logger
 REG_METHODS = ('rhsm', 'sat6')
 
 """
-Tests RHSM and Sat6 registration and checks result over ssh
+Tests RHSM and Sat6 validation and registration, checks result over ssh
 (update is not performed - it is non-destructive).
 
 For setup, see test_update_appliances.py (red_hat_updates section in cfme_data yaml).
