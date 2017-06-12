@@ -22,6 +22,19 @@ def main():
     pass
 
 
+@click.group(help='Helper commands for db')
+def db():
+    """db related command group"""
+    pass
+
+
+main.add_command(db)
+groups = {
+    'main': main,
+    'db': db
+}
+
+
 @main.command('reboot', help='Reboots a provider')
 @click.argument('appliance_ip')
 @click.option('--wait_for_ui', is_flag=True, default=True)
@@ -33,13 +46,46 @@ def reboot_appliance(appliance_ip, wait_for_ui):
 
 # Useful Properties
 methods_to_install = [
-    'is_db_enabled',
-    'managed_provider_names',
-    'miqqe_version',
+    'address',
+    'build',
+    'build_date',
+    'build_datetime',
+    'company_name',
+    ('db', 'db_address'),
+    ('db', 'db_has_database'),
+    ('db', 'db_has_tables'),
+    ('db', 'db_online'),
+    ('db', 'db_partition_extended'),
+    'default_zone',
+    'evm_id',
+    'get_host_address',
+    'guid',
+    'has_cli',
+    'has_non_os_infra',
     'has_os_infra',
+    'hostname',
+    ('db', 'is_db_enabled'),
+    ('db', 'is_db_internal'),
+    ('db', 'is_db_ready'),
+    'is_downstream',
+    'is_embedded_ansible_running',
+    'is_embedded_ensible_role_enabled',
+    'is_idle',
+    'is_miqqe_patch_candidate',
+    'is_ssh_running',
+    'is_storage_enabled',
+    'is_supervisord_running',
+    'managed_provider_names',
+    'miqqe_patch_applied',
+    'miqqe_version',
     'os_version',
+    ('db', 'postgres_version'),
+    'product_name',
     'swap',
-    'miqqe_patch_applied']
+    'ui_port',
+    'url',
+    'version',
+]
 
 
 def fn(method, *args, **kwargs):
@@ -55,11 +101,15 @@ def fn(method, *args, **kwargs):
 
 
 for method in methods_to_install:
+    if isinstance(method, tuple):
+        group, method = method
+    else:
+        group = 'main'
     command = click.Command(
         method.replace('_', '-'),
         short_help='Returns the {} property'.format(method),
         callback=partial(fn, method), params=[click.Argument(['appliance_ip'])])
-    main.add_command(command)
+    groups[group].add_command(command)
 
 
 if __name__ == "__main__":
