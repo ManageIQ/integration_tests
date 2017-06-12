@@ -4,6 +4,7 @@ from cfme.scripting.conf import main as conf_main
 from cfme.scripting.ipyshell import main as shell_main
 from scripts.dockerbot.sel_container import main as sel_con_main
 from scripts.release import main as rel_main
+from cfme.scripting.ci import main as ci_main
 
 
 @click.group()
@@ -16,6 +17,8 @@ cli.add_command(art_main, name="artifactor-server")
 cli.add_command(rel_main, name="release")
 cli.add_command(shell_main, name="shell")
 cli.add_command(conf_main, name="conf")
+cli.add_command(ci_main, name="ci")
+
 
 if __name__ == '__main__':
     cli()
