@@ -23,6 +23,12 @@ def pytest_addoption(parser):
     parser.getgroup('cfme')
     parser.addoption("--generate-xmls", action="store_true", default=False,
         help="generate the xml files for import")
+    parser.addoption("--generate-legacy-xmls", action="store_true", default=False,
+        help="generate the legacy xml files for import")
+    parser.addoption("--xmls-testrun-id",
+        help="testrun id")
+    parser.addoption("--xmls-testrun-title",
+        help="testrun title")
 
 
 def testcase_gen(
@@ -49,8 +55,8 @@ def testcase_gen(
     test_steps.append(test_step)
     testcase.append(test_steps)
     custom_fields_el = etree.Element('custom-fields')
-    for id, content in custom_fields.iteritems():
-        custom_field = etree.Element('custom-field', id=id, content=content)
+    for tc_id, content in custom_fields.iteritems():
+        custom_field = etree.Element('custom-field', id=tc_id, content=content)
         custom_fields_el.append(custom_field)
     testcase.append(custom_fields_el)
     if linked_items:
@@ -66,6 +72,7 @@ def testcase_gen(
 
 def testresult_gen(test_name, parameters=None, result=None):
     testcase = etree.Element('testcase', name=test_name)
+    parameters = parameters or {}
     extra = None
     if result == "skipped" or not result:
         extra = etree.Element('skipped', message='Skipped', type='skipped')
@@ -87,13 +94,13 @@ def testresult_gen(test_name, parameters=None, result=None):
     return testcase
 
 
-def testrun_gen(tests, filename, collectonly=True):
+def testrun_gen(tests, filename, config, collectonly=True):
     prop_dict = {
-        'testrun-template-id': xunit['testrun_template_id'],
-        'testrun-title': xunit['testrun_title'],
-        'testrun-id': xunit['testrun_id'],
+        'testrun-template-id': xunit.get('testrun_template_id'),
+        'testrun-title': config.getoption('xmls_testrun_title') or xunit.get('testrun_title'),
+        'testrun-id': config.getoption('xmls_testrun_id') or xunit.get('testrun_id'),
         'project-id': xunit['project_id'],
-        'dry-run': xunit['dry_run'],
+        'dry-run': xunit.get('dry_run', False),
         'testrun-status-id': xunit['testrun_status_id'],
         'lookup-method': xunit['lookup_method']
     }
@@ -106,6 +113,8 @@ def testrun_gen(tests, filename, collectonly=True):
             xunit['response']['id']), value=xunit['response']['value'])
     properties.append(property_resp)
     for prop_name, prop_value in prop_dict.iteritems():
+        if prop_value is None:
+            continue
         prop_el = etree.Element(
             'property', name="polarion-{}".format(prop_name), value=str(prop_value))
         properties.append(prop_el)
@@ -122,10 +131,11 @@ def testrun_gen(tests, filename, collectonly=True):
     for data in tests:
         no_tests += 1
         if collectonly:
-            testsuite.append(testresult_gen(data['name'], data['params']))
+            testsuite.append(testresult_gen(data['name'], data.get('params')))
             results_count['skipped'] += 1
         else:
-            testsuite.append(testresult_gen(data['name'], data['params'], result=data['result']))
+            testsuite.append(testresult_gen(
+                data['name'], data.get('params'), result=data.get('result')))
             results_count[data['result']] += 1
     testsuite.attrib['tests'] = str(no_tests)
     testsuite.attrib['failures'] = str(results_count['failure'])
@@ -155,8 +165,10 @@ caselevels = {
 
 @pytest.mark.trylast
 def pytest_collection_modifyitems(session, config, items):
-    if not config.getoption('generate_xmls'):
+    if not config.getoption('generate_xmls') and not config.getoption('generate_legacy_xmls'):
         return
+    # all "legacy" conditions can be removed once parametrization is finished
+    legacy = True if config.getoption('generate_legacy_xmls') else False
     a = defaultdict(dict)
     ntr = []
     for item in items:
@@ -170,8 +182,6 @@ def pytest_collection_modifyitems(session, config, items):
                 else:
                     f.write("{}\n".format(test))
 
-    test_name = []
-
     testcases = etree.Element("testcases")
     testcases.attrib['project-id'] = xunit['project_id']
     response_properties = etree.Element("response-properties")
@@ -181,9 +191,12 @@ def pytest_collection_modifyitems(session, config, items):
     properties = etree.Element("properties")
     lookup = etree.Element("property", name="lookup-method", value="custom")
     properties.append(lookup)
+    dry_run = etree.Element("property", name="dry-run", value=str(xunit.get("dry_run", "false")))
+    properties.append(dry_run)
     testcases.append(response_properties)
     testcases.append(properties)
 
+    test_name = []
     for item in items:
         work_items = []
         custom_fields = {}
@@ -205,7 +218,7 @@ def pytest_collection_modifyitems(session, config, items):
         except:
             pass
 
-        param_list = extract_fixtures_values(item).keys()
+        param_list = extract_fixtures_values(item).keys() if not legacy else None
 
         manual = item.get_marker('manual')
         if not manual:
@@ -224,8 +237,7 @@ def pytest_collection_modifyitems(session, config, items):
             custom_fields['caseautomation'] = "manualonly"
             description = '{}'.format(description)
 
-        name = item.name
-        name = re.sub('\[.*\]', '', name)
+        name = re.sub('\[.*\]', '', item.name) if not legacy else item.name
         if name not in test_name:
             test_name.append(name)
             testcases.append(
@@ -239,13 +251,21 @@ def pytest_collection_modifyitems(session, config, items):
     xml = etree.ElementTree(testcases)
     xml.write('test_case_import.xml', pretty_print=True)
 
+    test_name = []
     tests = []
     for item in items:
-        name = re.sub('\[.*\]', '', item.name)
-        try:
-            params = item.callspec.params
-            param_dict = {p: get_name(v) for p, v in params.iteritems()}
-        except:
-            param_dict = {}
+        if legacy:
+            if item.name in test_name:
+                continue
+            name = item.name
+            param_dict = None
+            test_name.append(name)
+        else:
+            name = re.sub(r'\[.*\]', '', item.name)
+            try:
+                params = item.callspec.params
+                param_dict = {p: get_name(v) for p, v in params.iteritems()}
+            except Exception:
+                param_dict = {}
         tests.append({'name': name, 'params': param_dict, 'result': None})
-    testrun_gen(tests, 'test_run_import.xml', collectonly=True)
+    testrun_gen(tests, 'test_run_import.xml', config, collectonly=True)
