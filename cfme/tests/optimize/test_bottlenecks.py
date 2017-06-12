@@ -13,7 +13,7 @@ from utils.version import current_version
 @pytest.fixture(scope="module")
 def temp_appliance_extended_db(temp_appliance_preconfig):
     app = temp_appliance_preconfig
-    app.stop_evm_service()
+    app.evmserverd.stop()
     app.extend_db_partition()
     app.start_evm_service()
     return app
@@ -35,7 +35,7 @@ def db_events(temp_appliance_extended_db, db_tbl):
 @pytest.fixture(scope="module")
 def db_restore(temp_appliance_extended_db):
     app = temp_appliance_extended_db
-    app.stop_evm_service()
+    app.evmserverd.stop()
     app.drop_database()
     db_storage_hostname = conf.cfme_data['bottlenecks']['hostname']
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])

@@ -30,6 +30,7 @@ from utils.path import data_path, patches_path, scripts_path, conf_path
 from utils.version import Version, get_stream, pick, LATEST
 from utils.wait import wait_for
 from .implementations.ui import ViaUI
+from .services import SystemdService
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 
@@ -160,6 +161,8 @@ class IPAppliance(object):
             the host here.
     """
     _nav_steps = {}
+
+    evmserverd = SystemdService.declare(unit_name='evmserverd')
 
     def __init__(
             self, address=None, browser_steal=False, container=None, openshift_creds=None,
@@ -1591,12 +1594,6 @@ class IPAppliance(object):
         """
         return self._evm_service_command("status", log_callback=log_callback) == 0
 
-    @logger_wrap("Stop EVM Service: {}")
-    def stop_evm_service(self, log_callback=None):
-        """Stops the ``evmserverd`` service on this appliance
-        """
-        self._evm_service_command('stop', expected_exit_code=0, log_callback=log_callback)
-
     @logger_wrap("Start EVM Service: {}")
     def start_evm_service(self, log_callback=None):
         """Starts the ``evmserverd`` service on this appliance
@@ -2226,7 +2223,7 @@ class IPAppliance(object):
                     raise Exception('Could not add the dev_branch remote')
             # We now have the repo and now let's update it
             ssh_client.run_command('cd /var/www/miq/vmdb; git remote update')
-            self.stop_evm_service()
+            self.evmserverd.stop()
             ssh_client.run_command(
                 'cd /var/www/miq/vmdb; git checkout dev_branch/{}'.format(branch))
             ssh_client.run_command('cd /var/www/miq/vmdb; bin/update')

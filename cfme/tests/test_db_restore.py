@@ -104,7 +104,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         # Restore DB on the second appliance
-        appl2.ipapp.stop_evm_service()
+        appl2.ipapp.evmserverd.stop()
         appl2.ipapp.drop_database()
         appl2.ipapp.restore_database()
         appl2.ipapp.start_evm_service()
