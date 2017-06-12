@@ -6,5 +6,6 @@
 mgmtsystem>0.0.15
 ovirt-engine-sdk-python<4.0.0
 pycurl
+gitpython
 
 virtualenv
