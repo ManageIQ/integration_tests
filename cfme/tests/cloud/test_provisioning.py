@@ -134,9 +134,9 @@ def provision_check(request, provider):
         except Exception as e:
             requests.debug_requests()
             raise e
-        assert normalize_text(row.status.text) == 'ok' and \
-               normalize_text(row.request_state.text) == 'finished', \
-            "Provisioning failed with the message {}".format(row.last_message.text)
+        assert normalize_text(row.status.text) == 'ok' and normalize_text(
+            row.request_state.text) == 'finished', "Provisioning failed with the message {}".format(
+            row.last_message.text)
         instance.wait_to_appear(timeout=800)
         provider.refresh_provider_relationships()
         logger.info("Refreshing provider relationships and power states")
