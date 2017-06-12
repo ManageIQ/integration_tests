@@ -1,11 +1,13 @@
 from functools import partial
+from time import sleep
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.base.credential import Credential
-from cfme.exceptions import CandidateNotFound, OptionNotAvailable
+from cfme.exceptions import (
+    CandidateNotFound, OptionNotAvailable, FlashMessageException, RBACOperationBlocked)
 from cfme.web_ui import (
     AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
@@ -64,6 +66,7 @@ class User(Updateable, Pretty, Navigatable):
         self.cost_center = cost_center
         self.value_assign = value_assign
         self._restore_user = None
+        self.region = 0
 
     def __enter__(self):
         if self._restore_user != self.appliance.user:
@@ -82,6 +85,12 @@ class User(Updateable, Pretty, Navigatable):
             self._restore_user = None
 
     def create(self):
+        flash_blocked_msg = version.pick({
+            '5.8': ("Userid is not unique within region {}".format(self.region)),
+            '5.7': ("Userid has already been taken"), })
+        flash_success_msg = version.pick({
+            '5.6': ('User "{}" was saved'.format(self.name)), })
+
         navigate_to(self, 'Add')
         fill(self.user_form, {'name_txt': self.name,
                               'userid_txt': self.credential.principal,
@@ -91,9 +100,19 @@ class User(Updateable, Pretty, Navigatable):
                               'user_group_select': getattr(self.group,
                                                            'description', None)},
              action=form_buttons.add)
-        flash.assert_success_message('User "{}" was saved'.format(self.name))
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
+        flash.assert_success_message(flash_success_msg)
 
     def update(self, updates):
+        flash_success_msg = version.pick({
+            '5.6': 'User "{}" was saved'.format(updates.get('name', self.name)), })
+
         navigate_to(self, 'Edit')
         change_stored_password()
         new_updates = {}
@@ -113,8 +132,7 @@ class User(Updateable, Pretty, Navigatable):
                 'description', None)
         })
         fill(self.user_form, new_updates, action=form_buttons.save)
-        flash.assert_success_message(
-            'User "{}" was saved'.format(updates.get('name', self.name)))
+        flash.assert_success_message(flash_success_msg)
 
     def copy(self):
         navigate_to(self, 'Details')
@@ -233,13 +251,25 @@ class Group(Updateable, Pretty, Navigatable):
         self.tenant = tenant
         self.ldap_credentials = ldap_credentials
         self.user_to_lookup = user_to_lookup
+        self.all_group_table = Table("//div[@id='main_div']//table")
+        self.region = 0
 
     def create(self):
+        flash_blocked_msg = version.pick({
+            '5.8': ("Description is not unique within region {}".format(self.region)),
+            '5.7': ("Description has already been taken"), })
+
         navigate_to(self, 'Add')
         fill(self.group_form, {'description_txt': self.description,
                                'role_select': self.role,
                                'group_tenant': self.tenant},
              action=form_buttons.add)
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def _retrieve_ldap_user_groups(self):
@@ -281,8 +311,31 @@ class Group(Updateable, Pretty, Navigatable):
              action=form_buttons.add)
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
-    def update(self, updates):
-        navigate_to(self, 'Edit')
+    def _update_using_all_selection(self):
+        flash_blocked_msg = 'Read Only EVM Group "{}" can not be edited'.format(
+            self.description)
+
+        navigate_to(Group, 'All')
+        row = self.all_group_table.find_row_by_cells({'Name': self.description})
+        sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+
+        if tb.is_greyed('Configuration', 'Edit the selected Group'):
+            raise RBACOperationBlocked
+
+        tb.select('Configuration', 'Edit the selected Group')
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
+    def update(self, updates, all_group_selection=False):
+        if all_group_selection:
+            self._update_using_all_selection()
+        else:
+            navigate_to(self, 'Edit')
+
         fill(self.group_form, {'description_txt': updates.get('description'),
                                'role_select': updates.get('role'),
                                'group_tenant': updates.get('tenant')},
@@ -290,11 +343,85 @@ class Group(Updateable, Pretty, Navigatable):
         flash.assert_success_message(
             'Group "{}" was saved'.format(updates.get('description', self.description)))
 
-    def delete(self):
-        navigate_to(self, 'Details')
-        tb_select('Delete this Group', invokes_alert=True)
+    def is_delete_locked(self):
+        flash_msg = "EVM Group \"{}\": Error during delete: " \
+            "A read only group cannot be deleted."
+
+        try:
+            if self.appliance.version < "5.7":
+                flash.assert_message_match(flash_msg.format(self.description))
+        except FlashMessageException:
+            raise RBACOperationBlocked
+
+    def _delete_using_all_selection(self):
+        flash_blocked_msg = "EVM Group \"{}\": Error during delete: " \
+            "A read only group cannot be deleted."
+
+        navigate_to(Group, 'All')
+        row = self.all_group_table.find_row_by_cells({'Name': self.description})
+        sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+        sleep(10)  # todo: temporary fix of js issue, to remove when switch to widgetastic
+        tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('EVM Group "{}": Delete successful'.format(self.description))
+
+        try:
+            flash.assert_no_errors()
+            return True
+        except:
+            pass
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+        except FlashMessageException:
+            raise RBACOperationBlocked
+
+        return False
+
+    def delete(self, all_group_selection=False):
+        """
+        Delete the group referenced by this object
+
+        Args:
+            all_group_selection: Attempt to use the selection list by clicking
+                on the Access Control "Groups" header
+
+        Returns: True if group was deleted successfully
+
+        Exception:
+            RBACOperationBlocked - If the delete operation is disabled
+        """
+        flash_success_msg = "EVM Group \"{}\": Delete successful".format(self.description)
+        flash_blocked_assigned_user_msg = version.pick({
+            '5.6': ("EVM Group \"{}\": Error during delete: Still has users assigned.".format(
+                self.description)),
+            '5.5': ("EVM Group \"{}\": Error during \'destroy\': Still has users assigned".format(
+                self.description))})
+        delete_result = False
+
+        if all_group_selection:
+            delete_result = self._delete_using_all_selection()
+        else:
+            navigate_to(self, 'Details')
+
+            if tb.is_greyed('Configuration', 'Delete this Group'):
+                raise RBACOperationBlocked
+
+            tb_select('Delete this Group', invokes_alert=True)
+            sleep(10)
+            sel.handle_alert()
+            try:
+                flash.assert_message_match(flash_success_msg)
+                delete_result = True
+            except FlashMessageException:
+                pass
+
+        try:
+            flash.assert_message_match(flash_blocked_assigned_user_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
+        return delete_result
 
     def edit_tags(self, tag, value):
         navigate_to(self, 'Details')
@@ -368,6 +495,9 @@ class GroupEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        if tb.is_greyed('Configuration', 'Edit this Group'):
+            raise RBACOperationBlocked
+
         tb_select('Edit this Group')
 
 
@@ -412,7 +542,16 @@ class Role(Updateable, Pretty, Navigatable):
         flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
     def update(self, updates):
+        flash_blocked_msg = version.pick({
+            '5.6': ("Read Only Role \"{}\" can not be edited".format(self.name))})
         navigate_to(self, 'Edit')
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
         fill(self.form, {'name_txt': updates.get('name'),
                          'vm_restriction_select': updates.get('vm_restriction'),
                          'product_features_tree': updates.get('product_features')},
@@ -420,10 +559,34 @@ class Role(Updateable, Pretty, Navigatable):
         flash.assert_success_message('Role "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self):
+        flash_success_msg = 'Role "{}": Delete successful'.format(self.name)
+        flash_blocked_msg = version.pick({
+            '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
+                "because of dependent entitlements".format(self.name)),
+            '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
+                "because of dependent miq_groups".format(self.name))})
+        delete_result = False
+
         navigate_to(self, 'Details')
+        if tb.is_greyed('Configuration', 'Delete this Role'):
+            raise RBACOperationBlocked
+
         tb_select('Delete this Role', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
+
+        try:
+            flash.assert_success_message(flash_success_msg)
+            delete_result = False
+        except FlashMessageException:
+            pass
+
+        try:
+            flash.assert_message_match(flash_blocked_msg)
+            raise RBACOperationBlocked
+        except FlashMessageException:
+            pass
+
+        return delete_result
 
     def copy(self, name=None):
         if not name:
@@ -474,6 +637,8 @@ class RoleEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
+        if tb.is_greyed('Configuration', 'Edit this Role'):
+            raise RBACOperationBlocked
         tb_select('Edit this Role')
 
 
@@ -489,8 +654,7 @@ class Tenant(Updateable, Pretty, Navigatable):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
-    save_changes = deferred_verpick({'5.7': form_buttons.angular_save,
-                   '5.8': form_buttons.simple_save})
+    save_changes = deferred_verpick({'5.6': form_buttons.simple_save})
 
     # TODO:
     # Temporary defining elements with "//input" as Input() is not working.Seems to be
@@ -573,15 +737,18 @@ class Tenant(Updateable, Pretty, Navigatable):
         return self.tree_path[:-1]
 
     def create(self, cancel=False):
+        flash_tenant_success_msg = 'Tenant "{}" was saved'.format(self.name)
+        flash_project_success_msg = 'Project "{}" was saved'.format(self.name)
+
         if self._default:
             raise ValueError("Cannot create the root tenant {}".format(self.name))
 
         navigate_to(self, 'Add')
         fill(self.tenant_form, self, action=form_buttons.add)
         if type(self) is Tenant:
-            flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
+            flash.assert_success_message(flash_tenant_success_msg)
         elif type(self) is Project:
-            flash.assert_success_message('Project "{}" was saved'.format(self.name))
+            flash.assert_success_message(flash_project_success_msg)
         else:
             raise TypeError(
                 'No Tenant or Project class passed to create method{}'.format(
@@ -647,10 +814,11 @@ class TenantAdd(CFMENavigateStep):
         navigate_to(self.obj.parent_tenant, 'Details')
 
     def step(self, *args, **kwargs):
-        if isinstance(self.obj, Tenant):
-            add_selector = 'Add child Tenant to this Tenant'
-        elif isinstance(self.obj, Project):
+        # Check for Project before Tenant since isinstance returns True for base classes
+        if isinstance(self.obj, Project):
             add_selector = 'Add Project to this Tenant'
+        elif isinstance(self.obj, Tenant):
+            add_selector = 'Add child Tenant to this Tenant'
         else:
             raise OptionNotAvailable('Object type unsupported for Tenant Add: {}'
                                      .format(type(self.obj).__name__))

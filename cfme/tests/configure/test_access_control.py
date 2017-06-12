@@ -13,7 +13,7 @@ from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
 from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
-from cfme.exceptions import OptionNotAvailable
+from cfme.exceptions import OptionNotAvailable, RBACOperationBlocked
 from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.services.myservice import MyService
@@ -95,7 +95,8 @@ def test_user_login():
 def test_user_duplicate_name():
     nu = new_user()
     nu.create()
-    with error.expected("Userid has already been taken"):
+
+    with pytest.raises(RBACOperationBlocked):
         nu.create()
 
 
@@ -246,7 +247,7 @@ def test_group_crud():
 def test_group_duplicate_name():
     group = new_group()
     group.create()
-    with error.expected("Description has already been taken"):
+    with pytest.raises(RBACOperationBlocked):
         group.create()
 
 
@@ -281,39 +282,36 @@ def test_group_description_required_error_validation():
 
 @pytest.mark.tier(3)
 def test_delete_default_group():
-    flash_msg = "EVM Group \"{}\": Error during delete: A read only group cannot be deleted."
     group = Group(description='EvmGroup-administrator')
-    navigate_to(Group, 'All')
-    row = group_table.find_row_by_cells({'Name': group.description})
-    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    sleep(10)  # todo: temporary fix of js issue, to remove when switch to widgetastic
-    tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_match(flash_msg.format(group.description))
+    with pytest.raises(RBACOperationBlocked):
+        all_group_selection = False
+
+        if version.current_version() < "5.7":
+            all_group_selection = True
+
+        group.delete(all_group_selection=all_group_selection)
 
 
 @pytest.mark.tier(3)
 def test_delete_group_with_assigned_user():
-    flash_msg = version.pick({
-        '5.6': ("EVM Group \"{}\": Error during delete: Still has users assigned"),
-        '5.5': ("EVM Group \"{}\": Error during \'destroy\': Still has users assigned")})
     group = new_group()
     group.create()
     user = new_user(group=group)
     user.create()
-    with error.expected(flash_msg.format(group.description)):
+    with pytest.raises(RBACOperationBlocked):
         group.delete()
 
 
 @pytest.mark.tier(3)
 def test_edit_default_group():
-    flash_msg = 'Read Only EVM Group "{}" can not be edited'
     group = Group(description='EvmGroup-approver')
-    navigate_to(Group, 'All')
-    row = group_table.find_row_by_cells({'Name': group.description})
-    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    tb.select('Configuration', 'Edit the selected Group')
-    flash.assert_message_match(flash_msg.format(group.description))
+    all_group_selection = False
+
+    if version.current_version() < "5.7":
+        all_group_selection = True
+
+    with pytest.raises(RBACOperationBlocked):
+        group.update({}, all_group_selection)
 
 
 @pytest.mark.tier(3)
@@ -369,35 +367,27 @@ def test_rolename_duplicate_validation():
 
 @pytest.mark.tier(3)
 def test_delete_default_roles():
-    flash_msg = version.pick({
-        '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-            "because of dependent entitlements"),
-        '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-            "because of dependent miq_groups")})
     role = Role(name='EvmRole-approver')
-    with error.expected(flash_msg.format(role.name)):
+    with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 
 @pytest.mark.tier(3)
 def test_edit_default_roles():
     role = Role(name='EvmRole-auditor')
-    navigate_to(role, 'Edit')
-    flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
+
+    with pytest.raises(RBACOperationBlocked):
+        role.update({})
 
 
 @pytest.mark.tier(3)
 def test_delete_roles_with_assigned_group():
-    flash_msg = version.pick({
-        '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-            "because of dependent entitlements"),
-        '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-            "because of dependent miq_groups")})
     role = new_role()
     role.create()
     group = new_group(role=role.name)
     group.create()
-    with error.expected(flash_msg.format(role.name)):
+
+    with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 

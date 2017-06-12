@@ -415,3 +415,7 @@ class ItemNotFound(CFMEException):
 
 class ManyItemsFound(CFMEException):
     """Raised when one or no items were expected but several/many items were obtained instead."""
+
+
+class RBACOperationBlocked(CFMEException):
+    """Raised when a Role Based Access Control operation is blocked"""
