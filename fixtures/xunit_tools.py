@@ -18,6 +18,18 @@ default_custom_fields = {
 }
 
 
+blacklist = [
+    'cfme/tests/containers/',
+    'cfme/tests/middleware/',
+    'cfme/tests/openstack/',
+    'utils/',
+    'rhos',
+    'rhev',
+    'hawkular',
+]
+compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
+
+
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme')
@@ -29,6 +41,8 @@ def pytest_addoption(parser):
         help="testrun id")
     parser.addoption("--xmls-testrun-title",
         help="testrun title")
+    parser.addoption("--xmls-apply-blacklist", action="store_true", default=False,
+        help="filter testcases using the built-in blacklist")
 
 
 def testcase_gen(
@@ -196,8 +210,12 @@ def pytest_collection_modifyitems(session, config, items):
     testcases.append(response_properties)
     testcases.append(properties)
 
+    apply_blacklist = config.getoption('xmls_apply_blacklist')
+
     test_name = []
     for item in items:
+        if apply_blacklist and compiled_blacklist.search(item.nodeid):
+            continue
         work_items = []
         custom_fields = {}
         try:
@@ -254,6 +272,8 @@ def pytest_collection_modifyitems(session, config, items):
     test_name = []
     tests = []
     for item in items:
+        if apply_blacklist and compiled_blacklist.search(item.nodeid):
+            continue
         if legacy:
             if item.name in test_name:
                 continue
