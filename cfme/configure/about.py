@@ -1,85 +1,49 @@
 # -*- coding: utf-8 -*-
-import re
+from widgetastic.widget import View
+from widgetastic_patternfly import AboutModal
 
-import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import ElementOrBlockNotFound
-from cfme.web_ui import Region, InfoBlock
-from utils import version
 from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from utils.version import current_version
+
+# MIQ/CFME about field names
+VERSION = 'Version'
+SERVER = 'Server Name'
+USER = 'User Name'
+ROLE = 'User Role'
+BROWSER = 'Browser'
+BROWSER_VERSION = 'Browser Version'
+BROWSER_OS = 'Browser OS'
 
 
-product_assistance = Region(
-    locators={
-        'quick_start_guide': {
-            version.LOWEST: "//a[normalize-space(.)='Quick Start Guide']",
-            "5.4.0.1": None
-        },
-        'insight_guide': {
-            version.LOWEST: "//a[normalize-space(.)='Insight Guide']",
-            '5.5': "//a[normalize-space(.)='Infrastructure Inventory Guide']"
-        },
-        'control_guide': {
-            version.LOWEST: "//a[normalize-space(.)='Control Guide']",
-            '5.5': "//a[normalize-space(.)='Defining Policies Profiles Guide']"
-        },
-        'lifecycle_and_automation_guide': {
-            version.LOWEST: "//a[normalize-space(.)='Lifecycle and Automation Guide']",
-            '5.5': "//a[normalize-space(.)='Methods For Automation Guide']"
-        },
-        'integrate_guide': {
-            '5.4': "//a[normalize-space(.)='REST API Guide']",
-            '5.5': None
-        },
-        'user_guide': {
-            version.LOWEST: None,
-            "5.4.0.1": "//a[normalize-space(.)='User Guide']",
-            '5.5': "//a[normalize-space(.)='General Configuration Guide']"
-        },
-        'monitoring_guide': {
-            version.LOWEST: None,
-            '5.5': "//a[normalize-space(.)='Monitoring Alerts Reporting Guide']"
-        },
-        'providers_guide': {
-            version.LOWEST: None,
-            '5.5': "//a[normalize-space(.)='Providers Guide']"
-        },
-        'scripting_actions_guide': {
-            version.LOWEST: None,
-            '5.5': "//a[normalize-space(.)='Scripting Actions Guide']"
-        },
-        'vm_hosts_guide': {
-            version.LOWEST: None,
-            '5.5': "//a[normalize-space(.)='Virtual Machines Hosts Guide']"
-        },
-        'settings_and_operations_guide': {
-            version.LOWEST: "//a[normalize-space(.)='Settings and Operations Guide']",
-            '5.5': None
-        },
-        'red_hat_customer_portal': "//a[normalize-space(.)='Red Hat Customer Portal']"
-    },
-    title='About',
-    identifying_loc='quick_start_guide',
-    infoblock_type="form"
-)
+class AboutView(View):
+    """
+    The view for the about modal
+    """
+    @property
+    def is_displayed(self):
+        return self.modal.is_open
+
+    modal = AboutModal(id='aboutModal')
 
 
-def get_detail(properties):
-    navigate_to(current_appliance().server, 'About')
-    if current_version() < '5.7':
-        properties = ['Session Information', properties]
-        return InfoBlock.text(*properties).encode(
-            "utf-8").strip()
-    else:
-        locator = '//div[@class="product-versions-pf"]//li'
-        sel.wait_for_element(locator)
-        for element in sel.elements(locator):
-            logger.debug('Checking for detail match for "{}" in  "{}"'.format(properties,
-                                                                              element.text))
-            match = re.match("{}\s(?P<value>.*)".format(properties), element.text)
-            if match:
-                return match.group('value')
+def get_detail(field):
+    """
+    Open the about modal and fetch the value for one of the fields
+    'title' and 'trademark' fields are allowed and get the header/footer values
+    Raises ElementOrBlockNotFound if the field isn't in the about modal
+    :param field: string label for the detail field
+    :return: string value from the requested field
+    """
+    view = navigate_to(current_appliance().server, 'About')
+
+    try:
+        if field.lower() in ['title', 'trademark']:
+            return getattr(view.modal, field.lower())
         else:
-            raise ElementOrBlockNotFound('Could not match about detail {}'.format(properties))
+            return view.modal.items()[field]
+    except KeyError:
+        raise ElementOrBlockNotFound('No field named {} found in "About" modal.'.format(field))
+    finally:
+        # close since its a blocking modal and will break further navigation
+        view.modal.close()

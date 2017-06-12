@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-
 import pytest
+from functools import partial
+
 from cfme.configure import configuration
 from cfme.web_ui import flash
-from utils import conf, version
-from functools import partial
+from utils import conf
 
 try:
     server_roles_conf = conf.cfme_data.server_roles
@@ -18,11 +18,7 @@ except KeyError:
 @pytest.fixture(scope="session")
 def all_possible_roles():
     roles = server_roles_conf['all']
-    if version.current_version() < 5.6:
-        roles.remove('git_owner')
-        roles.remove('websocket')
-    if version.current_version() >= 5.7:
-        roles.remove('database_synchronization')
+    roles.remove('database_synchronization')
     return roles
 
 

@@ -288,6 +288,7 @@ class CFMENavigateStep(NavigateStep):
                     "UI failed in some way, jQuery not found, (probably) recycling the browser.")
                 recycle = True
             # If the page is blocked, then recycle...
+            # TODO .modal-backdrop.fade.in catches the 'About' modal resulting in nav loop
             if (
                     br.widgetastic.is_displayed("//div[@id='blocker_div' or @id='notification']") or
                     br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
