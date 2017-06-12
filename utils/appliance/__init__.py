@@ -361,6 +361,7 @@ class IPAppliance(object):
         key_address = kwargs.pop('key_address', None)
         with self as ipapp:
             ipapp.wait_for_ssh()
+            self.add_ca_certs(log_callback=log_callback)
             self.deploy_merkyl(start=True, log_callback=log_callback)
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
@@ -1172,6 +1173,24 @@ class IPAppliance(object):
             client.run_command('systemctl restart merkyl')
             log_callback("Setting it to start after reboot")
             client.run_command("chkconfig merkyl on")
+
+    @logger_wrap("Adding ca certs: {}")
+    def add_ca_certs(self, log_callback=None):
+        """Deploys CA cert"""
+
+        client = self.ssh_client
+
+        for filename in ['cmqe-tests-openshift-signer.crt']:
+            try:
+                src, dest = filename
+            except (TypeError, ValueError):
+                # object is not iterable or too many values to unpack
+                src = dest = filename
+            log_callback('Sending {} to appliance'.format(src))
+            client.put_file(data_path.join(
+                'cert-auths', src).strpath, os.path.join('/etc/pki/ca-trust/source/anchors', dest))
+
+        client.run_command('update-ca-trust')
 
     def get_repofile_list(self):
         """Returns list of repofiles present at the appliance.
