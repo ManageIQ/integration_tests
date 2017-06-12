@@ -8,6 +8,7 @@ from widgetastic_patternfly import Input, Button
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential, AzureCredential,
     ServiceAccountCredential)
+from cfme.common.provider_views import ProvidersView, ProviderDetailsView
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
@@ -159,11 +160,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 created = True
 
                 logger.info('Setting up Infra Provider: %s', self.key)
-                main_view = navigate_to(self, 'Add')
+                add_view = navigate_to(self, 'Add')
 
                 if not cancel or (cancel and any(self.view_value_mapping.values())):
                     # filling main part of dialog
-                    main_view.fill(self.view_value_mapping)
+                    add_view.fill(self.view_value_mapping)
 
                 if not cancel or (cancel and self.endpoints):
                     # filling endpoints
@@ -172,11 +173,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                             # every endpoint class has name like 'default', 'events', etc.
                             # endpoints view can have multiple tabs, the code below tries
                             # to find right tab by passing endpoint name to endpoints view
-                            endp_view = getattr(self.endpoints_form(parent=main_view),
+                            endp_view = getattr(self.endpoints_form(parent=add_view),
                                                 endpoint_name)
                         except AttributeError:
                             # tabs are absent in UI when there is only single (default) endpoint
-                            endp_view = self.endpoints_form(parent=main_view)
+                            endp_view = self.endpoints_form(parent=add_view)
 
                         endp_view.fill(endpoint.view_value_mapping)
 
@@ -188,18 +189,25 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                                 # there are some endpoints which don't demand validation like
                                 #  RSA key pair
                                 endp_view.validate.click()
-
                 if cancel:
                     created = False
-                    main_view.cancel.click()
+                    add_view.cancel.click()
                     cancel_text = 'Add of Infrastructure Provider was cancelled by the user'
-                    flash.assert_message_match(cancel_text)
+                    main_view = self.create_view(ProvidersView)
+                    main_view.items.flash.assert_message(cancel_text)
+                    main_view.items.flash.assert_no_error()
                 else:
-                    main_view.add.click()
-                    # todo: replace flash when main view is merged
-                    flash.assert_message_match(
-                        '{} Providers "{}" was saved'.format(self.string_name,
-                                                             self.name))
+                    add_view.add.click()
+                    main_view = self.create_view(ProvidersView)
+                    if main_view.is_displayed:
+                        success_text = '{} Providers "{}" was saved'.format(self.string_name,
+                                                                            self.name)
+                        main_view.items.flash.assert_message(success_text)
+                    else:
+                        add_view.flash.assert_no_error()
+                        raise AssertionError("Provider wasn't added. It seems form isn't accurately"
+                                             " filled")
+
             if validate_inventory:
                 self.validate()
 
@@ -239,12 +247,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         from cfme.infrastructure.provider import InfraProvider
         if self.one_of(InfraProvider):
-            main_view = navigate_to(self, 'Edit')
+            edit_view = navigate_to(self, 'Edit')
             # todo: to replace/merge this code with create
             # update values:
             # filling main part of dialog
             if updates:
-                main_view.fill(updates)
+                edit_view.fill(updates)
 
             # filling endpoints
             if endpoints:
@@ -254,7 +262,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     # every endpoint class has name like 'default', 'events', etc.
                     # endpoints view can have multiple tabs, the code below tries
                     # to find right tab by passing endpoint name to endpoints view
-                    endp_view = getattr(self.endpoints_form(parent=main_view), endpoint.name)
+                    endp_view = getattr(self.endpoints_form(parent=edit_view), endpoint.name)
                     endp_view.fill(endpoint.view_value_mapping)
 
                     # filling credentials
@@ -278,12 +286,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                                 endpoint.view.validate.click()
 
             if cancel:
-                main_view.cancel.click()
+                edit_view.cancel.click()
                 cancel_text = 'Edit of Infrastructure Provider "{name}" ' \
                               'was cancelled by the user'.format(name=self.name)
-                flash.assert_message_match(cancel_text)
+                details_view = self.create_view(ProvidersView)
+                details_view.items.flash.assert_message(cancel_text)
+                details_view.items.flash.assert_no_error()
             else:
-                main_view.save.click()
+                edit_view.save.click()
                 if endpoints:
                     for endp_name, endp in endpoints.items():
                         self.endpoints[endp_name] = endp
@@ -294,9 +304,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
 
-                # todo: replace flash when main view is merged
-                flash.assert_message_match(
-                    '{} Provider "{}" was saved'.format(self.string_name, self.name))
+                details_view = self.create_view(ProviderDetailsView)
+                if details_view.is_displayed:
+                    success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+                    details_view.flash.assert_message(success_text)
+                else:
+                    edit_view.flash.assert_no_error()
+                    raise AssertionError("Provider wasn't updated. It seems form isn't accurately"
+                                         " filled")
         else:
             # other providers, old code
             navigate_to(self, 'Edit')

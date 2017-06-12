@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text
-from widgetastic_patternfly import Dropdown, BootstrapSelect
+from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, ManyItemsFound
@@ -60,6 +60,8 @@ class ProviderDetailsView(BaseLoggedInPage):
     """
     title = Text('//div[@id="main-content"]//h1')
     breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
     toolbar = View.nested(ProviderDetailsToolBar)
 
     @View.nested
@@ -231,6 +233,8 @@ class ProviderItems(View):
     """
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
     _quadicons = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
     _listitems = Table(locator='//div[@id="list_grid"]/table')
 
@@ -305,7 +309,7 @@ class ProvidersView(BaseLoggedInPage):
     def is_displayed(self):
         return self.logged_in_as_current_user and \
             self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and \
-            self.entities.title.text == 'Infrastructure Providers'
+            self.items.title.text == 'Infrastructure Providers'
 
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
@@ -325,6 +329,8 @@ class ProviderAddView(BaseLoggedInPage):
     prov_type = BootstrapSelect(id='emstype')
     api_version = BootstrapSelect(id='api_version')  # only for OpenStack
     zone = Input('zone')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
 
     add = Button('Add')
     cancel = Button('Cancel')
@@ -349,6 +355,8 @@ class ProviderEditView(ProviderAddView):
     # only in edit view
     vnc_start_port = Input('host_default_vnc_port_start')
     vnc_end_port = Input('host_default_vnc_port_end')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
 
     save = Button('Save')
     reset = Button('Reset')
