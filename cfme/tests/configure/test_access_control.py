@@ -11,7 +11,6 @@ from cfme import login, test_requirements
 from cfme.base.credential import Credential
 from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
-from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
 from cfme.exceptions import OptionNotAvailable
 from cfme.common.provider import base_types
@@ -283,13 +282,11 @@ def test_group_description_required_error_validation():
 def test_delete_default_group():
     flash_msg = "EVM Group \"{}\": Error during delete: A read only group cannot be deleted."
     group = Group(description='EvmGroup-administrator')
-    navigate_to(Group, 'All')
+    view = navigate_to(Group, 'All')
     row = group_table.find_row_by_cells({'Name': group.description})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    sleep(10)  # todo: temporary fix of js issue, to remove when switch to widgetastic
-    tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_match(flash_msg.format(group.description))
+    view.configuration.item_select('Delete selected Groups', handle_alert=True)
+    view.flash.assert_message(flash_msg.format(group.description))
 
 
 @pytest.mark.tier(3)
@@ -329,12 +326,12 @@ def test_edit_sequence_usergroups(request):
     group = new_group()
     group.create()
     request.addfinalizer(group.delete)
-    navigate_to(Group, 'All')
-    row = group_table.find_row_by_cells({'Name': group.description})
-    original_sequence = sel.text(row.sequence)
-    set_group_order([group.description])
-    row = group_table.find_row_by_cells({'Name': group.description})
-    changed_sequence = sel.text(row.sequence)
+    view = navigate_to(Group, 'All')
+    row = view.table.row(name=group.description)
+    original_sequence = row.sequence.text
+    group.set_group_order(group.description)
+    row = view.table.row(name=group.description)
+    changed_sequence = row.sequence.text
     assert original_sequence != changed_sequence, "Edit Sequence Failed"
 
 
