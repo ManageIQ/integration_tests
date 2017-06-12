@@ -16,9 +16,9 @@ alphanumeric_name = gen_alphanumeric(10)
 long_alphanumeric_name = gen_alphanumeric(100)
 integer_name = str(gen_integer(0, 100000000))
 provider_names = alphanumeric_name, integer_name, long_alphanumeric_name
-DEFAULT_SEC_PROTOCOLS = (pytest.mark.polarion('CMP-9837')('SSL trusting custom CA'),
-                  pytest.mark.polarion('CMP-9838')('SSL without validation'),
-                  pytest.mark.polarion('CMP-9839')('SSL'))
+DEFAULT_SEC_PROTOCOLS = (pytest.mark.polarion('CMP-10598')('SSL trusting custom CA'),
+                  pytest.mark.polarion('CMP-10597')('SSL without validation'),
+                  pytest.mark.polarion('CMP-10599')('SSL'))
 
 TestItem = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
 TEST_ITEMS = (
