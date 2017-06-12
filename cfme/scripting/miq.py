@@ -1,5 +1,6 @@
 import click
 from artifactor.__main__ import main as art_main
+from cfme.scripting.appliance import main as app_main
 from cfme.scripting.conf import main as conf_main
 from cfme.scripting.ipyshell import main as shell_main
 from scripts.dockerbot.sel_container import main as sel_con_main
@@ -11,6 +12,7 @@ def cli():
     pass
 
 
+cli.add_command(app_main, name="appliance")
 cli.add_command(sel_con_main, name="selenium-container")
 cli.add_command(art_main, name="artifactor-server")
 cli.add_command(rel_main, name="release")
