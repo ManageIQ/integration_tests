@@ -11,7 +11,7 @@ def soft_get(obj,
              dict_=False,
              case_sensitive=False,
              best_match=True,
-             dont_include=[]):
+             dont_include=None):
     """
     This function used for cases that we want to get some attribute that we
     either know only few parts of its name or want to prevent from case issues.
@@ -38,6 +38,7 @@ def soft_get(obj,
     Returns:
         The value of the target attribute
     """
+    dont_include = dont_include or []
     signature = ('soft_get({}, {}, dict_={}, case_sensitive={})'
                  .format(obj, field_base_name, dict_, case_sensitive))
     if not case_sensitive:

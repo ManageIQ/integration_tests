@@ -135,8 +135,10 @@ class Bugzilla(object):
                 expanded.add(b)
         return found
 
-    def resolve_blocker(self, blocker, version=None, ignore_bugs=set([]), force_block_streams=[]):
+    def resolve_blocker(self, blocker, version=None, ignore_bugs=None, force_block_streams=None):
         # ignore_bugs is mutable but is not mutated here! Same force_block_streams
+        force_block_streams = force_block_streams or []
+        ignore_bugs = set([]) if not ignore_bugs else ignore_bugs
         if isinstance(id, BugWrapper):
             bug = blocker
         else:

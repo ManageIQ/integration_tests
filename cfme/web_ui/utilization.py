@@ -327,7 +327,8 @@ class LineChart(object):
         return _timestamp
 
     @classmethod
-    def _update_mgmt_data(cls, key, raw_data, pre_final_data=[]):
+    def _update_mgmt_data(cls, key, raw_data, pre_final_data=None):
+        pre_final_data = pre_final_data or []
         final_data = []
         for _raw_data in raw_data:
             if not _raw_data.get('empty', True):

@@ -119,8 +119,9 @@ class Action(Updateable, Navigatable, Pretty):
         description: Action name.
         action_type: Type of the action, value from the dropdown select.
     """
-    def __init__(self, description, action_type, action_values={}, appliance=None):
+    def __init__(self, description, action_type, action_values=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
+        action_values = action_values or {}
         self.description = description
         self.action_type = action_type
         self.snapshot_name = action_values.get("snapshot_name")
