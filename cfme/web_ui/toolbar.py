@@ -221,8 +221,12 @@ def is_greyed(root, sub=None):
     return False
 
 
-RELOAD_LOC = "//div[@title='Reload current display']|" \
-             "//button[@title='Reload Current Display' or @id='miq_request_reload']"
+RELOAD_LOC = (
+    ".//div[@title='Reload current display']|"
+    ".//button[@title='Reload Current Display' or "
+    "@title='Reload current display' or "
+    "@id='miq_request_reload']"
+)
 
 
 def refresh():
