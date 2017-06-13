@@ -8,6 +8,7 @@ from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import ports, testgen
 from utils.conf import credentials
 from utils.log import logger
@@ -25,7 +26,7 @@ pytestmark = [
     test_requirements.alert
 ]
 
-CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm
+CANDU_PROVIDER_TYPES = [VMwareProvider]  # TODO: rhevm
 
 
 pf1 = ProviderFilter(classes=[InfraProvider])
@@ -151,7 +152,7 @@ def vm(vm_name, full_template, provider, setup_one_provider_modscope):
     if not vm_obj.exists:
         provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
-    if provider.type in CANDU_PROVIDER_TYPES:
+    if provider.one_of(*CANDU_PROVIDER_TYPES):
         vm_obj.wait_candu_data_available(timeout=20 * 60)
     yield vm_obj
     try:
@@ -223,7 +224,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
     wait_for_alert(smtp_test, alert, delay=16 * 60)
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
 def test_alert_rtp(request, vm, smtp_test, provider, setup_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available.
@@ -256,7 +257,7 @@ def test_alert_rtp(request, vm, smtp_test, provider, setup_candu):
         "text": vm.name, "from_address": email})
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
 def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, provider, ssh,
         setup_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
@@ -302,7 +303,7 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
         pytest.fail("The event has not been found on the timeline. Event list: {}".format(events))
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
 def test_alert_snmp(request, vm, snmp, provider, appliance, setup_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
