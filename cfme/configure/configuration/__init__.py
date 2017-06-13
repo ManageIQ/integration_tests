@@ -3,6 +3,7 @@ from navmazing import (NavigateToAttribute,
                        NavigateToSibling,
                        NavigateToObject,
                        NavigationDestinationNotFound)
+from widgetastic_patternfly import CandidateNotFound
 
 from contextlib import contextmanager
 from fixtures.pytest_store import store
@@ -245,7 +246,7 @@ class AnalysisProfile(Pretty, Updateable, Navigatable):
     def exists(self):
         try:
             navigate_to(self, 'Details')
-        except NavigationDestinationNotFound:
+        except (NavigationDestinationNotFound, CandidateNotFound):
             return False
         else:
             return True

@@ -229,6 +229,11 @@ def has_no_providers(request):
     BaseProvider.clear_providers()
 
 
+@pytest.fixture(scope="module")
+def has_no_providers_modscope(request):
+    BaseProvider.clear_providers()
+
+
 @pytest.fixture(scope="function")
 def setup_only_one_provider(request, has_no_providers):
     return setup_one_or_skip(request)

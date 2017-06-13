@@ -1711,6 +1711,21 @@ class IPAppliance(object):
                 else:
                     log_callback('A reboot is required before vddk will work')
 
+    @logger_wrap("Uninstall VDDK: {}")
+    def uninstall_vddk(self, log_callback=None):
+        """Uninstall the vddk from a appliance"""
+        with self.ssh_client as client:
+            is_installed = client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64').success
+            if is_installed:
+                status, out = client.run_command('yum -y remove vmware-vix-disklib')
+                if status != 0:
+                    log_callback('VDDK removing failure (rc: {})\n{}'.format(out, status))
+                    raise Exception('VDDK removing failure (rc: {})\n{}'.format(out, status))
+                else:
+                    log_callback('VDDK has been successfully removed.')
+            else:
+                log_callback('VDDK is not installed.')
+
     @logger_wrap("Install Netapp SDK: {}")
     def install_netapp_sdk(self, sdk_url=None, reboot=False, log_callback=None):
         """Installs the Netapp SDK.
