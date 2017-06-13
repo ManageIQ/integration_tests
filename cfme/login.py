@@ -64,7 +64,7 @@ class LoginPage(View):
             self.browser.execute_script('miqAjaxAuth();')
         else:
             raise ValueError('Unknown method {}'.format(method))
-        if self.flash.is_displayed:
+        if self.is_displayed:
             self.flash.assert_no_error()
 
     def log_in(self, user, method='click_on_login'):

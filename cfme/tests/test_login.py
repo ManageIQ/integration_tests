@@ -76,4 +76,5 @@ def test_bad_password(request, appliance):
 
     with error.expected(error_message):
         login_page.log_in(user)
-        assert login_page.is_displayed
+
+    assert login_page.is_displayed
