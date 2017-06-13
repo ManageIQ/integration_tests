@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 from datetime import datetime, timedelta
 
-from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
@@ -128,54 +127,45 @@ def set_performance_capture_threshold(appliance):
     appliance.set_yaml_config(yaml)
 
 
-@pytest.yield_fixture(scope="module")
-def initialize_provider(provider):
-    # Remove all providers
-    BaseProvider.clear_providers()
-    # Setup the provider we want
-    provider.create(validate_credentials=True, validate_inventory=True, check_existing=True)
-    # Take care of C&U settings
-    if provider.type not in CANDU_PROVIDER_TYPES:
-        yield provider
-    else:
-        try:
-            with server_roles_enabled(
-                    'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor'):
-                candu.enable_all()
-                yield provider
-        finally:
-            candu.disable_all()
+@pytest.yield_fixture(scope="function")
+def setup_candu():
+    candu.enable_all()
+    with server_roles_enabled('ems_metrics_coordinator', 'ems_metrics_collector',
+            'ems_metrics_processor'):
+        yield
+    candu.disable_all()
 
 
-@pytest.fixture(scope="function")
-def vm_name(request, initialize_provider, full_template):
-    name = "test_alerts_{}".format(fauxfactory.gen_alpha())
+@pytest.fixture(scope="module")
+def vm_name():
+    return "test-alerts-{}".format(fauxfactory.gen_alpha(4))
 
-    @request.addfinalizer
-    def _cleanup_vm():
-        try:
-            if initialize_provider.mgmt.does_vm_exist(name):
-                initialize_provider.mgmt.delete_vm(name)
-            initialize_provider.refresh_provider_relationships()
-        except Exception as e:
-            logger.exception(e)
-    vm_obj = VM.factory(name, initialize_provider, template_name=full_template["name"])
+
+@pytest.yield_fixture(scope="function")
+def vm(vm_name, full_template, provider, setup_one_provider_modscope):
+    vm_obj = VM.factory(vm_name, provider, template_name=full_template["name"])
     vm_obj.create_on_provider(allow_skip="default")
-    initialize_provider.mgmt.start_vm(vm_obj.name)
-    initialize_provider.mgmt.wait_vm_running(vm_obj.name)
+    provider.mgmt.start_vm(vm_name)
+    provider.mgmt.wait_vm_running(vm_name)
     # In order to have seamless SSH connection
     vm_ip, _ = wait_for(
-        lambda: initialize_provider.mgmt.current_ip_address(vm_obj.name),
+        lambda: provider.mgmt.current_ip_address(vm_name),
         num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address.")
     wait_for(
         net_check, [ports.SSH, vm_ip], {"force": True},
         num_sec=300, delay=5, message="testing VM's SSH available")
     if not vm_obj.exists:
-        initialize_provider.refresh_provider_relationships()
+        provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
-    if initialize_provider.type in CANDU_PROVIDER_TYPES:
+    if provider.type in CANDU_PROVIDER_TYPES:
         vm_obj.wait_candu_data_available(timeout=20 * 60)
-    return name
+    yield vm_obj
+    try:
+        if provider.mgmt.does_vm_exist(vm_name):
+            provider.mgmt.delete_vm(vm_name)
+        provider.refresh_provider_relationships()
+    except Exception as e:
+        logger.exception(e)
 
 
 @pytest.yield_fixture(scope="function")
@@ -187,12 +177,6 @@ def ssh(provider, full_template, vm_name):
         yield ssh_client
 
 
-@pytest.fixture(scope="function")
-def vm_crud(provider, vm_name, full_template):
-    return VM.factory(vm_name, provider, template_name=full_template["name"])
-
-
-# TODO Replace this with the appliance fixture once complete
 @pytest.yield_fixture(scope="module")
 def snmp(appliance):
     appliance.ssh_client.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
@@ -202,8 +186,8 @@ def snmp(appliance):
     appliance.ssh_client.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
-def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
-        vm_name, vm_crud, provider, request, smtp_test, register_event):
+def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, vm, smtp_test,
+        register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
     Metadata:
@@ -214,39 +198,39 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         alert.active = True
         alert.emails = fauxfactory.gen_email()
 
-    setup_for_alerts(request, [alert], "VM Power On", vm_name, provider)
+    setup_for_alerts(request, [alert], "VM Power On", vm.name, provider)
 
-    if not provider.mgmt.is_vm_stopped(vm_name):
-        provider.mgmt.stop_vm(vm_name)
+    if not provider.mgmt.is_vm_stopped(vm.name):
+        provider.mgmt.stop_vm(vm.name)
     provider.refresh_provider_relationships()
 
     # preparing events to listen to
-    register_event(target_type='VmOrTemplate', target_name=vm_name,
+    register_event(target_type='VmOrTemplate', target_name=vm.name,
                    event_type='request_vm_poweroff')
-    register_event(target_type='VmOrTemplate', target_name=vm_name, event_type='vm_poweoff')
+    register_event(target_type='VmOrTemplate', target_name=vm.name, event_type='vm_poweoff')
 
-    vm_crud.wait_for_vm_state_change(vm_crud.STATE_OFF)
+    vm.wait_for_vm_state_change(vm.STATE_OFF)
     for i in range(5):
-        vm_crud.power_control_from_cfme(option=vm_crud.POWER_ON, cancel=False)
-        register_event(target_type='VmOrTemplate', target_name=vm_name,
+        vm.power_control_from_cfme(option=vm.POWER_ON, cancel=False)
+        register_event(target_type='VmOrTemplate', target_name=vm.name,
                        event_type='request_vm_start')
-        register_event(target_type='VmOrTemplate', target_name=vm_name, event_type='vm_start')
+        register_event(target_type='VmOrTemplate', target_name=vm.name, event_type='vm_start')
 
-        wait_for(lambda: provider.mgmt.is_vm_running(vm_name), num_sec=300)
-        vm_crud.wait_for_vm_state_change(vm_crud.STATE_ON)
-        vm_crud.power_control_from_cfme(option=vm_crud.POWER_OFF, cancel=False)
-        register_event(target_type='VmOrTemplate', target_name=vm_name,
+        wait_for(lambda: provider.mgmt.is_vm_running(vm.name), num_sec=300)
+        vm.wait_for_vm_state_change(vm.STATE_ON)
+        vm.power_control_from_cfme(option=vm.POWER_OFF, cancel=False)
+        register_event(target_type='VmOrTemplate', target_name=vm.name,
                        event_type='request_vm_poweroff')
-        register_event(target_type='VmOrTemplate', target_name=vm_name, event_type='vm_poweroff')
+        register_event(target_type='VmOrTemplate', target_name=vm.name, event_type='vm_poweroff')
 
-        wait_for(lambda: provider.mgmt.is_vm_stopped(vm_name), num_sec=300)
-        vm_crud.wait_for_vm_state_change(vm_crud.STATE_OFF)
+        wait_for(lambda: provider.mgmt.is_vm_stopped(vm.name), num_sec=300)
+        vm.wait_for_vm_state_change(vm.STATE_OFF)
 
     wait_for_alert(smtp_test, alert, delay=16 * 60)
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_rtp(request, vm_name, smtp_test, provider):
+def test_alert_rtp(request, vm, smtp_test, provider, setup_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available.
 
@@ -275,12 +259,12 @@ def test_alert_rtp(request, vm_name, smtp_test, provider):
 
     setup_for_alerts(request, [alert])
     wait_for_alert(smtp_test, alert, delay=30 * 60, additional_checks={
-        "text": vm_name, "from_address": email})
+        "text": vm.name, "from_address": email})
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_timeline_cpu(request, vm_name, set_performance_capture_threshold, provider, ssh,
-        vm_crud):
+def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, provider, ssh,
+        setup_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
     a CPU spike in the machine to trigger the threshold. The alert is displayed in the timelines.
 
@@ -306,10 +290,10 @@ def test_alert_timeline_cpu(request, vm_name, set_performance_capture_threshold,
     alert.create()
     request.addfinalizer(alert.delete)
 
-    setup_for_alerts(request, [alert], vm_name=vm_name)
+    setup_for_alerts(request, [alert], vm_name=vm.name)
     # Generate a 100% CPU spike for 15 minutes, that should be noticed by CFME.
     ssh.cpu_spike(seconds=60 * 15, cpus=2, ensure_user=True)
-    timeline = vm_crud.open_timelines()
+    timeline = vm.open_timelines()
     timeline.filter.fill({
         "event_category": "Alarm/Status Change/Errors",
         "time_range": "Days",
@@ -325,7 +309,7 @@ def test_alert_timeline_cpu(request, vm_name, set_performance_capture_threshold,
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_snmp(request, vm_name, snmp, provider, appliance):
+def test_alert_snmp(request, vm, snmp, provider, appliance, setup_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
