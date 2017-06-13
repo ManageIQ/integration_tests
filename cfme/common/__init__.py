@@ -574,7 +574,7 @@ class UtilizationMixin(object):
         page.utilization.jvm_heap_usage_bytes.list_data_chart()  # => returns data as list
         # You can get the data from table
         provider.utilization.jvm_heap_usage_bytes.list_data_table()  # => returns data as list
-        # You can get the data from mgmtsystem
+        # You can get the data from wrapanapi
         page.utilization.jvm_heap_usage_bytes.list_data_mgmt()  # => returns data as list
         # You can change chart option
         page.utilization.jvm_non_heap_usage_bytes.option.set_by_visible_text(op_interval='Daily')

@@ -2,7 +2,7 @@ import argparse
 from tabulate import tabulate
 from multiprocessing import Process, Queue
 
-from mgmtsystem.exceptions import VMError
+from wrapanapi.exceptions import VMError
 
 from utils.conf import cfme_data
 from utils.path import log_path

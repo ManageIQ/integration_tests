@@ -5,7 +5,7 @@ from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
 from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
-from mgmtsystem.hawkular import CanonicalPath
+from wrapanapi.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.varmeth import variable
 from utils.appliance import Navigatable, current_appliance

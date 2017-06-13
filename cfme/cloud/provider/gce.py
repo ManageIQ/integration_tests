@@ -1,4 +1,4 @@
-from mgmtsystem.google import GoogleCloudSystem
+from wrapanapi.google import GoogleCloudSystem
 
 from cfme.base.credential import ServiceAccountCredential
 import cfme.fixtures.pytest_selenium as sel

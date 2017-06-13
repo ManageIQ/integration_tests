@@ -1,5 +1,5 @@
 from . import ContainersProvider
-from mgmtsystem.kubernetes import Kubernetes
+from wrapanapi.kubernetes import Kubernetes
 
 
 class KubernetesProvider(ContainersProvider):

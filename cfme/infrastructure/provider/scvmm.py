@@ -2,7 +2,7 @@ from widgetastic_patternfly import BootstrapSelect, Input
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from . import InfraProvider
-from mgmtsystem.scvmm import SCVMMSystem
+from wrapanapi.scvmm import SCVMMSystem
 
 
 class SCVMMEndpoint(DefaultEndpoint):

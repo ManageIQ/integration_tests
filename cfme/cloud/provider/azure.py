@@ -1,6 +1,6 @@
 from . import CloudProvider
 from utils.version import pick
-from mgmtsystem.azure import AzureSystem
+from wrapanapi.azure import AzureSystem
 
 
 class AzureProvider(CloudProvider):

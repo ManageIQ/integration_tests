@@ -520,7 +520,7 @@ def task_result(task_id):
 def appliance_provider_type(user, appliance):
     """Return appliance's provider class.
 
-    Corresponds to the mgmtsystem class names.
+    Corresponds to the wrapanapi class names.
 
     You can specify appliance by IP address, id or name.
     """

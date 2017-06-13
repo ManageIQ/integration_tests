@@ -10,7 +10,7 @@ from ovirtsdk.api import API
 
 # VSPHERE
 from psphere.managedobjects import VirtualMachine
-from mgmtsystem.virtualcenter import VMWareSystem
+from wrapanapi.virtualcenter import VMWareSystem
 
 # RHOS
 from novaclient.v1_1 import client as novaclient

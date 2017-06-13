@@ -1,6 +1,6 @@
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from . import InfraProvider
-from mgmtsystem.virtualcenter import VMWareSystem
+from wrapanapi.virtualcenter import VMWareSystem
 
 
 class VirtualCenterEndpoint(DefaultEndpoint):

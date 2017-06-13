@@ -34,7 +34,7 @@ items are stored. Each element of ``argvalues`` is a list containing a value for
 ``provider_obj`` and ``provider_mgmt_sys``. Thus, taking an element from ``argvalues``
 gives us the values to unpack to make up one test. An example is below, where we assume
 that a provider object is obtained via the ``Provider`` class, and the ``mgmt_sys object``
-is obtained via a ``MgmtSystem`` class.
+is obtained via a ``Wrapanapi`` class.
 
 ===== =============== =================
 ~     provider_obj    test_vm

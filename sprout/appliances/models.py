@@ -8,7 +8,7 @@ try:
 except ImportError:
     import pickle   # NOQA
 
-import mgmtsystem
+import wrapanapi
 
 from cached_property import cached_property
 from celery import chain
@@ -356,7 +356,7 @@ class Provider(MetadataMixin):
     def cleanup(self):
         """Put any cleanup tasks that might help the application stability here"""
         self.logger.info("Running cleanup on provider {}".format(self.id))
-        if isinstance(self.api, mgmtsystem.openstack.OpenstackSystem):
+        if isinstance(self.api, wrapanapi.openstack.OpenstackSystem):
             # Openstack cleanup
             # Clean up the floating IPs
             for floating_ip in self.api.api.floating_ips.findall(fixed_ip=None):
@@ -370,7 +370,7 @@ class Provider(MetadataMixin):
     def vnc_console_link_for(self, appliance):
         if appliance.uuid is None:
             return None
-        if isinstance(self.api, mgmtsystem.openstack.OpenstackSystem):
+        if isinstance(self.api, wrapanapi.openstack.OpenstackSystem):
             return "http://{}/dashboard/project/instances/{}/?tab=instance_details__console".format(
                 self.ip_address, appliance.uuid
             )

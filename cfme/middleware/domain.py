@@ -6,7 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
-from mgmtsystem.hawkular import CanonicalPath
+from wrapanapi.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to

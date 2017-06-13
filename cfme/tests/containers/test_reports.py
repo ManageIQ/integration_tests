@@ -40,7 +40,7 @@ def node_hardwares_db_data(appliance):
 @pytest.fixture(scope='function')
 def pods_per_ready_status(provider):
     """Grabing the pods and their ready status from API"""
-    #  TODO: Add later this logic to mgmtsystem
+    #  TODO: Add later this logic to wrapanapi
     entities_j = provider.mgmt.api.get('pod')[1]['items']
     out = {}
     for entity_j in entities_j:

@@ -18,7 +18,7 @@ from utils.providers import list_provider_keys
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.wait import wait_for
-from mgmtsystem.scvmm import SCVMMSystem
+from wrapanapi.scvmm import SCVMMSystem
 
 
 def parse_cmd_line():

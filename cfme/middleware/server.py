@@ -9,7 +9,7 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui import toolbar as tb
-from mgmtsystem.hawkular import CanonicalPath
+from wrapanapi.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable, current_appliance
