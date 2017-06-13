@@ -18,10 +18,13 @@ def pytest_collection_modifyitems(session, config, items):
 
     new_items = []
     for item in items:
-        if config.getvalue('manual') and not item.get_marker('manual'):
-            continue
+        if config.getvalue('manual'):
+            if not item.get_marker('manual'):
+                continue
         else:
-            new_items.append(item)
+            if item.get_marker('manual'):
+                continue
+        new_items.append(item)
     items[:] = new_items
 
     len_filtered = len(items)
