@@ -3,8 +3,6 @@ import diaper
 import fauxfactory
 import pytest
 
-from mgmtsystem import exceptions
-
 from cfme.common.vm import VM
 from cfme.control.explorer.policies import VMCompliancePolicy, HostCompliancePolicy
 from cfme.control.explorer.conditions import VMCondition
@@ -12,16 +10,19 @@ from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider import InfraProvider
 from cfme.configure.configuration import AnalysisProfile
 from cfme.web_ui import flash, toolbar
-from fixtures.pytest_store import store
 from utils import testgen, version
-from utils.appliance import Appliance, ApplianceException, provision_appliance
 from utils.log import logger
+from utils.providers import setup_a_provider_by_class
 from utils.update import update
 from utils.wait import wait_for
-from urlparse import urlparse
 from cfme import test_requirements
 
 PREFIX = "test_compliance_"
+
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    setup_a_provider_by_class(InfraProvider)
 
 pytestmark = [
     # TODO: Problems with fleecing configuration - revisit later
@@ -29,6 +30,7 @@ pytestmark = [
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
     pytest.mark.uncollectif(lambda provider: provider.type in {"scvmm"}),
     pytest.mark.tier(3),
+    pytest.mark.usefixtures("setup_a_provider"),
     test_requirements.control
 ]
 
@@ -77,37 +79,11 @@ def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
 
 
 @pytest.yield_fixture(scope="module")
-def compliance_vm(request, provider):
-    try:
-        ip_addr = urlparse(store.base_url).hostname
-        appl_name = provider.mgmt.get_vm_name_from_ip(ip_addr)
-        appliance = Appliance(provider.key, appl_name)
-        logger.info(
-            "The tested appliance (%s) is already on this provider (%s) so reusing it.",
-            appl_name, provider.key)
-        try:
-            appliance.configure_fleecing()
-        except (EOFError, ApplianceException) as e:
-            # If something was happening, restart and wait for the UI to reappear to prevent errors
-            appliance.ipapp.reboot()
-            pytest.skip(
-                "Error during appliance configuration. Skipping:\n{}: {}".format(
-                    type(e).__name__, str(e)))
-        vm = VM.factory(appl_name, provider)
-    except exceptions.VMNotFoundViaIP:
-        logger.info("Provisioning a new appliance on provider %s.", provider.key)
-        appliance = provision_appliance(
-            vm_name_prefix=PREFIX + "host_",
-            version=str(version.current_version()),
-            provider_name=provider.key)
-        request.addfinalizer(lambda: diaper(appliance.destroy))
-        try:
-            appliance.configure(setup_fleece=True)
-        except (EOFError, ApplianceException) as e:   # Add known exceptions as needed.
-            pytest.skip(
-                "Error during appliance configuration. Skipping:\n{}: {}".format(
-                    type(e).__name__, str(e)))
-        vm = VM.factory(appliance.vm_name, provider)
+def compliance_vm(request, provider, temp_appliance_for_cur_provider):
+    appliance = temp_appliance_for_cur_provider
+    appliance.configure_fleecing()
+    vm = VM.factory(appliance.vm_name, provider)
+
     if provider.type in {"rhevm"}:
         request.addfinalizer(appliance.remove_rhev_direct_lun_disk)
     # Do the final touches
@@ -131,15 +107,9 @@ def analysis_profile(compliance_vm):
 
 
 @pytest.fixture(scope="module")
-def fleecing_vm(request, compliance_vm, provider, analysis_profile):
-    logger.info("Provisioning an appliance for fleecing on %s", provider.key)
-    # TODO: When we get something smaller, use it!
-    appliance = provision_appliance(
-        vm_name_prefix=PREFIX + "for_fleece_",
-        version=str(version.current_version()),
-        provider_name=provider.key)
-    request.addfinalizer(lambda: diaper(appliance.destroy))
-    logger.info("Appliance %s provisioned", appliance.vm_name)
+def fleecing_vm(request, compliance_vm, provider, analysis_profile,
+                temp_appliance_for_cur_provider):
+    appliance = temp_appliance_for_cur_provider
     vm = VM.factory(appliance.vm_name, provider)
     provider.refresh_provider_relationships()
     vm.wait_to_appear()
