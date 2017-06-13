@@ -7,6 +7,7 @@ from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from utils import ports, testgen
 from utils.conf import credentials
 from utils.log import logger
@@ -14,12 +15,12 @@ from utils.net import net_check
 from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
+from utils.providers import ProviderFilter
 from cfme import test_requirements
 
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+notifier"]),
-    pytest.mark.usefixtures("provider", "full_template"),
     pytest.mark.tier(3),
     test_requirements.alert
 ]
@@ -27,20 +28,13 @@ pytestmark = [
 CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [InfraProvider])
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-
-        if args["provider"].type in {"scvmm"}:
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+pf1 = ProviderFilter(classes=[InfraProvider])
+pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)
+pytest_generate_tests = testgen.generate(
+    gen_func=testgen.providers,
+    filters=[pf1, pf2],
+    scope="module"
+)
 
 
 def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
