@@ -39,7 +39,7 @@ class Ostriz(ArtifactorBasePlugin):
         json_data['slaveid'] = slaveid
         json_data['source'] = self.data['source']
         json_data['version'] = version
-        json_data['build'] = build
+        json_data['build'] = build.strip()
         json_data['stream'] = stream
         json_data['method'] = "automated"
         json_data['jenkins'] = jenkins or None
