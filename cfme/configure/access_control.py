@@ -22,6 +22,10 @@ def simple_user(userid, password):
 
 
 class UserForm(ConfigurationView):
+    """ User Form View.
+        Args:
+            ConfigurationView
+    """
     name_txt = Input(name='name')
     userid_txt = Input(name='userid')
     password_txt = Input(id='password')
@@ -33,6 +37,10 @@ class UserForm(ConfigurationView):
 
 
 class AllUserView(ConfigurationView):
+    """ All Users View.
+        Args:
+            ConfigurationView
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -45,6 +53,10 @@ class AllUserView(ConfigurationView):
 
 
 class AddUserView(UserForm):
+    """ Add User View.
+        Args:
+            UserForm
+    """
     add_button = Button('Add')
 
     @property
@@ -53,6 +65,10 @@ class AddUserView(UserForm):
 
 
 class DetailsUserView(ConfigurationView):
+    """ User Details view.
+        Args:
+            ConfigurationView
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -65,6 +81,10 @@ class DetailsUserView(ConfigurationView):
 
 
 class EditUserView(UserForm):
+    """ User Edit View
+        Args:
+            UserForm
+    """
     save_button = Button('Save')
     reset_button = Button('Reset')
 
@@ -77,6 +97,10 @@ class EditUserView(UserForm):
 
 
 class EditTagsUserView(ConfigurationView):
+    """ Tags edit for Users view.
+        Args:
+            ConfigurationView
+    """
     tag_table = Table("//div[@id='assignments_div']//table")
     select_tag = BootstrapSelect(id='tag_cat')
     select_value = BootstrapSelect(id='tag_add')
@@ -94,6 +118,16 @@ class EditTagsUserView(ConfigurationView):
 
 
 class User(Updateable, Pretty, Navigatable):
+    """ Class represents an user in CFME UI
+        Args:
+            name: Name of the user
+            credential: User's credentials
+            email: User's email
+            group: User's group for assigment
+            cost_center: User's cost center
+            value_assign: user's value to assign
+            appliance: appliance under test
+    """
     pretty_attrs = ['name', 'group']
 
     def __init__(self, name=None, credential=None, email=None, group=None, cost_center=None,
@@ -124,6 +158,11 @@ class User(Updateable, Pretty, Navigatable):
             self._restore_user = None
 
     def create(self, cancel=False):
+        """ User creation method
+        Args:
+            cancel: True - if you want to cancel user creation,
+                    by defaul user will be created
+        """
         view = navigate_to(self, 'Add')
         view.fill({
             'name_txt': self.name,
@@ -144,6 +183,12 @@ class User(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def update(self, updates):
+        """ Update user method
+            Args:
+                updates: user data that should be changed
+        Note: In case updates is the same as original user data, update will be canceled,
+        as 'Save' button will not be active
+        """
         view = navigate_to(self, 'Edit')
         change_stored_password()
         new_updates = {}
@@ -179,6 +224,9 @@ class User(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def copy(self):
+        """ Creates copy of existing user
+            return: User object of copied user
+        """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Copy this User to a new User')
         view = self.create_view(AddUserView)
@@ -198,6 +246,11 @@ class User(Updateable, Pretty, Navigatable):
         return new_user
 
     def delete(self, cancel=True):
+        """ Delete existing user
+            Args:
+                cancel: Default value 'True', user will be deleted
+                        'False' - deletion of user will be canceled
+        """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this User', handle_alert=cancel)
         if cancel:
@@ -208,6 +261,11 @@ class User(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def edit_tags(self, tag, value):
+        """ Edits tag for existing user
+            Args:
+                tag: Tag category
+                value: Tag name
+        """
         view = navigate_to(self, 'EditTags')
         view.fill({'select_tag': tag,
                    'select_value': value})
@@ -217,6 +275,11 @@ class User(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def remove_tag(self, tag, value):
+        """ Remove tag from existing user
+            Args:
+                tag: Tag category
+                value: Tag name
+        """
         view = navigate_to(self, 'EditTags')
         row = view.tag_table.row(category=tag, assigned_value=value)
         row[0].click()
@@ -286,6 +349,9 @@ class UserTagsEdit(CFMENavigateStep):
 
 
 class GroupForm(ConfigurationView):
+    """ Group Form in CFME UI
+        Args: ConfigurationView
+    """
     ldap_groups_for_user = BootstrapSelect(id='ldap_groups_user')
     description_txt = Input(name='description')
     lookup_ldap_groups_chk = Checkbox(name='lookup')
@@ -302,21 +368,33 @@ class GroupForm(ConfigurationView):
 
     @View.nested
     class my_company_tags(Tab):     # noqa
+        """ Represents 'My company tags' tab in Group Form
+            Args: Tab
+        """
         TAB_NAME = "My Company Tags"
         tag_tree = CheckableBootstrapTreeview('tags_treebox')
 
     @View.nested
     class hosts_and_clusters(Tab):      # noqa
+        """ Represents 'Hosts and Clusters' tab in Group Form
+            Args: Tab
+        """
         TAB_NAME = "Hosts & Clusters"
         hosts_clusters_tree = CheckableBootstrapTreeview('hac_treebox')
 
     @View.nested
     class vms_and_templates(Tab):       # noqa
+        """ Represents 'VM's and Templates' tab in Group Form
+            Args: Tab
+        """
         TAB_NAME = "VMs & Templates"
         vms_templates_tree = CheckableBootstrapTreeview('vat_treebox')
 
 
 class AddGroupView(GroupForm):
+    """ Add Group View in CFME UI
+        Args: GroupForm
+    """
     add_button = Button("Add")
 
     @property
@@ -328,6 +406,9 @@ class AddGroupView(GroupForm):
 
 
 class DetailsGroupView(ConfigurationView):
+    """ Details Group View in CFME UI
+        Args: ConfigurationView
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -340,6 +421,9 @@ class DetailsGroupView(ConfigurationView):
 
 
 class EditGroupView(GroupForm):
+    """ Edit Group View in CFME UI
+        Args: GroupForm
+    """
     save_button = Button("Save")
     reset_button = Button('Reset')
 
@@ -352,6 +436,9 @@ class EditGroupView(GroupForm):
 
 
 class AllGroupView(ConfigurationView):
+    """ All Groups View in CFME UI
+        Args: ConfigurationView
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -366,6 +453,9 @@ class AllGroupView(ConfigurationView):
 
 
 class EditGroupSequenceView(ConfigurationView):
+    """ Edit Groups Sequence View in CFME UI
+        Args: ConfigurationView
+    """
     group_order_selector = UpDownSelect(
         '#seq_fields',
         './/a[@title="Move selected fields up"]/img',
@@ -384,6 +474,9 @@ class EditGroupSequenceView(ConfigurationView):
 
 
 class GroupEditTagsView(ConfigurationView):
+    """ Edit Groups Tags View in CFME UI
+        Args: ConfigurationView
+    """
     tag_table = Table("//div[@id='assignments_div']//table")
 
     select_tag = BootstrapSelect(id='tag_cat')
@@ -402,6 +495,18 @@ class GroupEditTagsView(ConfigurationView):
 
 
 class Group(Updateable, Pretty, Navigatable):
+    """Represents a group in CFME UI
+        Args:
+            description: group description
+            role: group role
+            tenant: group tenant
+            user_to_lookup: ldap user to lookup
+            ldap_credentials: ldap user credentials
+            tag: tag for group restriction
+            host_cluster: host/cluster for group restriction
+            vm_template: vm/template for group restriction
+            appliance: appliance under test
+    """
     pretty_attrs = ['description', 'role']
 
     def __init__(self, description=None, role=None, tenant="My Company", user_to_lookup=None,
@@ -418,6 +523,11 @@ class Group(Updateable, Pretty, Navigatable):
         self.vm_template = vm_template
 
     def create(self, cancel=False):
+        """ Create group method
+            Args:
+                cancel: True - if you want to cancel group creation,
+                        by defaul group will be created
+        """
         view = navigate_to(self, 'Add')
         view.fill({
             'description_txt': self.description,
@@ -438,6 +548,9 @@ class Group(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def _retrieve_ldap_user_groups(self):
+        """ Retrive ldap user groups
+            return: AddGroupView
+        """
         view = navigate_to(self, 'Add')
         view.fill({'lookup_ldap_groups_chk': True,
                    'user_to_look_up': self.user_to_lookup,
@@ -447,6 +560,9 @@ class Group(Updateable, Pretty, Navigatable):
         return view
 
     def _retrieve_ext_auth_user_groups(self):
+        """ Retrive external authorization user groups
+            return: AddGroupView
+        """
         view = navigate_to(self, 'Add')
         view.fill({'lookup_ldap_groups_chk': True,
                    'user_to_look_up': self.user_to_lookup})
@@ -454,6 +570,9 @@ class Group(Updateable, Pretty, Navigatable):
         return view
 
     def _fill_ldap_group_lookup(self, view):
+        """ Fills ldap info for group lookup
+            Args: view: view for group creation(AddGroupView)
+        """
         view.fill({'ldap_groups_for_user': self.description,
                    'description_txt': self.description,
                    'role_select': self.role,
@@ -464,14 +583,22 @@ class Group(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def add_group_from_ldap_lookup(self):
+        """Adds a group from ldap lookup"""
         view = self._retrieve_ldap_user_groups()
         self._fill_ldap_group_lookup(view)
 
     def add_group_from_ext_auth_lookup(self):
+        """Adds a group from external authorization lookup"""
         view = self._retrieve_ext_auth_user_groups()
         self._fill_ldap_group_lookup(view)
 
     def update(self, updates):
+        """ Update group method
+            Args:
+                updates: group data that should be changed
+        Note: In case updates is the same as original group data, update will be canceled,
+        as 'Save' button will not be active
+        """
         view = navigate_to(self, 'Edit')
         changed = view.fill({
             'description_txt': updates.get('description'),
@@ -496,6 +623,11 @@ class Group(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def delete(self, cancel=True):
+        """ Delete existing group
+            Args:
+                cancel: Default value 'True', group will be deleted
+                        'False' - deletion of group will be canceled
+        """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Group', handle_alert=cancel)
         if cancel:
@@ -507,6 +639,11 @@ class Group(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def edit_tags(self, tag, value):
+        """ Edits tag for existing group
+            Args:
+                tag: Tag category
+                value: Tag name
+        """
         view = navigate_to(self, 'EditTags')
         view.fill({'select_tag': tag,
                    'select_value': value})
@@ -516,6 +653,11 @@ class Group(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def remove_tag(self, tag, value):
+        """ Delete tag for existing group
+            Args:
+                tag: Tag category
+                value: Tag name
+        """
         view = navigate_to(self, 'EditTags')
         row = view.tag_table.row(category=tag, assigned_value=value)
         row[0].click()
@@ -525,6 +667,10 @@ class Group(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def set_group_order(self, updated_order):
+        """ Sets group order for group lookup
+            Args:
+                updated_order: group order list
+        """
         original_order = self.group_order[:len(updated_order)]
         view = self.create_view(EditGroupSequenceView)
         assert view.is_displayed
@@ -535,6 +681,13 @@ class Group(Updateable, Pretty, Navigatable):
         view.save_button.click()
 
     def _set_group_restriction(self, tab_view, item, update=False):
+        """ Sets tag/host/template restriction for the group
+            Args:
+                tab_view: tab view
+                item: path to check box that should be selected/deselected
+                update: If True - checkbox state will be updated
+            return: True - if update is successful
+        """
         updated_result = False
         if item is not None:
             if update:
@@ -620,6 +773,10 @@ class GroupTagsEdit(CFMENavigateStep):
 
 
 class RoleForm(ConfigurationView):
+    """ Role Form for CFME UI
+        Args:
+            ConfigurationView
+    """
     name_txt = Input(name='name')
     vm_restriction_select = BootstrapSelect(id='vm_restriction')
     product_features_tree = CheckableBootstrapTreeview("features_treebox")
@@ -628,6 +785,10 @@ class RoleForm(ConfigurationView):
 
 
 class AddRoleView(RoleForm):
+    """ Add Role View
+        Args:
+            RoleForm
+    """
     add_button = Button('Add')
 
     @property
@@ -639,6 +800,10 @@ class AddRoleView(RoleForm):
 
 
 class EditRoleView(RoleForm):
+    """ Edit Role View
+        Args:
+            RoleForm
+    """
     save_button = Button('Save')
     reset_button = Button('Reset')
 
@@ -651,6 +816,10 @@ class EditRoleView(RoleForm):
 
 
 class DetailsRoleView(RoleForm):
+    """ Details Role View
+        Args:
+            RoleForm
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -663,6 +832,10 @@ class DetailsRoleView(RoleForm):
 
 
 class AllRolesView(ConfigurationView):
+    """ All Roles View
+        Args:
+            ConfigurationView
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -675,6 +848,14 @@ class AllRolesView(ConfigurationView):
 
 
 class Role(Updateable, Pretty, Navigatable):
+    """ Represents a role in CFME UI
+        Args:
+            name: role name
+            vm_restriction: restriction used for role
+            product_features: product feature to select
+            appliance: appliance unter test
+    """
+
     pretty_attrs = ['name', 'product_features']
 
     def __init__(self, name=None, vm_restriction=None, product_features=None, appliance=None):
@@ -684,6 +865,11 @@ class Role(Updateable, Pretty, Navigatable):
         self.product_features = product_features or []
 
     def create(self, cancel=False):
+        """ Create role method
+            Args:
+                cancel: True - if you want to cancel role creation,
+                        by defaul, role will be created
+        """
         view = navigate_to(self, 'Add')
         view.fill({'name_txt': self.name,
                    'vm_restriction_select': self.vm_restriction})
@@ -699,6 +885,12 @@ class Role(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def update(self, updates):
+        """ Update role method
+            Args:
+                updates: role data that should be changed
+        Note: In case updates is the same as original role data, update will be canceled,
+        as 'Save' button will not be active
+        """
         view = navigate_to(self, 'Edit')
         changed = view.fill({
             'name_txt': updates.get('name'),
@@ -716,6 +908,11 @@ class Role(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def delete(self, cancel=True):
+        """ Delete existing role
+            Args:
+                cancel: Default value 'True', role will be deleted
+                        'False' - deletion of role will be canceled
+        """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Role', handle_alert=cancel)
         if cancel:
@@ -726,6 +923,9 @@ class Role(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def copy(self, name=None):
+        """ Creates copy of existing role
+            return: Role object of copied role
+        """
         if name is None:
             name = "{}_copy".format(self.name)
         view = navigate_to(self, 'Details')
@@ -740,6 +940,11 @@ class Role(Updateable, Pretty, Navigatable):
         return new_role
 
     def set_role_product_features(self, view, product_features):
+        """ Sets product features for role restriction
+            Args:
+                view: AddRoleView or EditRoleView
+                product_features: list of product features with options to select
+        """
         feature_update = False
         if product_features is not None and isinstance(product_features, (list, tuple, set)):
             for path, option in product_features:
@@ -790,6 +995,10 @@ class RoleEdit(CFMENavigateStep):
 
 
 class TenantForm(ConfigurationView):
+    """ Tenant Form
+        Args:
+            ConfigurationView
+    """
     name = Input(name='name')
     description = Input(name='description')
 
@@ -797,6 +1006,10 @@ class TenantForm(ConfigurationView):
 
 
 class TenantQuotaView(ConfigurationView):
+    """ Tenant Quota View
+        Args:
+            ConfigurationView
+    """
     cpu_cb = BootstrapSwitch(id='cpu_allocated')
     memory_cb = BootstrapSwitch(id='mem_allocated')
     storage_cb = BootstrapSwitch(id='storage_allocated')
@@ -814,6 +1027,10 @@ class TenantQuotaView(ConfigurationView):
 
 
 class AllTenantView(ConfigurationView):
+    """ All Tenants View
+        Args:
+            ConfigurationView
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -826,6 +1043,10 @@ class AllTenantView(ConfigurationView):
 
 
 class AddTenantView(TenantForm):
+    """ Add Tenant View
+        Args:
+            TenantForm
+    """
     add_button = Button('Add')
 
     @property
@@ -837,6 +1058,10 @@ class AddTenantView(TenantForm):
 
 
 class DetailsTenantView(ConfigurationView):
+    """ Details Tenant View
+        Args:
+            ConfigurationView
+    """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -849,6 +1074,10 @@ class DetailsTenantView(ConfigurationView):
 
 
 class ParentDetailsTenantView(DetailsTenantView):
+    """ Parent Tenant Details View
+        Args:
+            DetailsTenantView
+    """
     @property
     def is_displayed(self):
         return (
@@ -858,6 +1087,10 @@ class ParentDetailsTenantView(DetailsTenantView):
 
 
 class EditTenantView(TenantForm):
+    """ Edit Tenant View
+        Args:
+            TenantForm
+    """
     save_button = Button('Save')
     reset_button = Button('Reset')
 
@@ -940,6 +1173,11 @@ class Tenant(Updateable, Pretty, Navigatable):
         return self.tree_path[:-1]
 
     def create(self, cancel=False):
+        """ Create role method
+            Args:
+                cancel: True - if you want to cancel role creation,
+                        by defaul(False), role will be created
+        """
         if self._default:
             raise ValueError("Cannot create the root tenant {}".format(self.name))
 
@@ -966,6 +1204,12 @@ class Tenant(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def update(self, updates):
+        """ Update tenant/project method
+            Args:
+                updates: tenant/project data that should be changed
+        Note: In case updates is the same as original tenant/project data, update will be canceled,
+        as 'Save' button will not be active
+        """
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
         if changed:
@@ -980,6 +1224,11 @@ class Tenant(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def delete(self, cancel=True):
+        """ Delete existing role
+            Args:
+                cancel: Default value 'True', role will be deleted
+                        'False' - deletion of role will be canceled
+        """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this item', handle_alert=cancel)
         if cancel:
@@ -991,6 +1240,7 @@ class Tenant(Updateable, Pretty, Navigatable):
         assert view.is_displayed
 
     def set_quota(self, **kwargs):
+        """ Sets tenant quotas """
         view = navigate_to(self, 'ManageQuotas')
         view.fill({'cpu_cb': kwargs.get('cpu_cb'),
                    'cpu_txt': kwargs.get('cpu'),
