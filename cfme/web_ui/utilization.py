@@ -6,7 +6,7 @@ import re
 from cfme import web_ui
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Table, toolbar as tb, flash
-from mgmtsystem.hawkular import MetricEnumCounter, MetricEnumGauge
+from wrapanapi.hawkular import MetricEnumCounter, MetricEnumGauge
 from utils import attributize_string
 from utils.browser import ensure_browser_open
 from utils.units import Unit
@@ -340,7 +340,7 @@ class LineChart(object):
         return final_data
 
     def list_data_mgmt(self):
-        """Returns data from mgmtsystem for the chart option selected"""
+        """Returns data from wrapanapi for the chart option selected"""
         self.load_chart_reference()
         dt = datetime.now()
         dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)

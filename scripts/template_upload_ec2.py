@@ -16,7 +16,7 @@ import os
 import urllib2
 from threading import Lock
 
-from mgmtsystem import EC2System
+from wrapanapi import EC2System
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.providers import list_provider_keys

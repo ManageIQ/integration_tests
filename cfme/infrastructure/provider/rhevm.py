@@ -5,7 +5,7 @@ from cfme.common.provider_views import BeforeFillMixin
 from utils import version
 from . import InfraProvider
 from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm
-from mgmtsystem.rhevm import RHEVMSystem
+from wrapanapi.rhevm import RHEVMSystem
 
 
 class RHEVMEndpoint(DefaultEndpoint):

@@ -4,7 +4,7 @@ Given the name of a provider from cfme_data and using credentials from
 the credentials stash, call the corresponding action on that provider, along
 with any additional action arguments.
 
-See mgmtsystem for documentation on the callable methods themselves.
+See wrapanapi for documentation on the callable methods themselves.
 
 Example usage:
 

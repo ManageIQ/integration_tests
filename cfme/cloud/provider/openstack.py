@@ -1,4 +1,4 @@
-from mgmtsystem.openstack import OpenstackSystem
+from wrapanapi.openstack import OpenstackSystem
 
 from . import CloudProvider
 

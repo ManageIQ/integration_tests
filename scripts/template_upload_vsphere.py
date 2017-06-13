@@ -22,7 +22,7 @@ from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
-from mgmtsystem import VMWareSystem
+from wrapanapi import VMWareSystem
 from utils.wait import wait_for
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.

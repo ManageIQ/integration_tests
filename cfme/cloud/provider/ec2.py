@@ -1,6 +1,6 @@
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
-from mgmtsystem.ec2 import EC2System
+from wrapanapi.ec2 import EC2System
 
 
 class EC2Provider(CloudProvider):

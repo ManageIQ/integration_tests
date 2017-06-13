@@ -278,11 +278,11 @@ texinfo_documents = [
 autodoc_default_flags = ['members']
 
 
-MOCK_MODULES = ['pycurl', 'mgmtsystem', 'ovirt-engine-sdk-python',
-                'mgmtsystem.base', 'mgmtsystem.exceptions',
-                'mgmtsystem.ec2', 'mgmtsystem.openstack', 'mgmtsystem.rhevm',
-                'mgmtsystem.scvmm', 'mgmtsystem.virtualcenter', 'mgmtsystem.kubernetes',
-                'mgmtsystem.openshift', 'mgmtsystem.rest_client', 'mgmtsystem.openstack_infra',
-                'mgmtsystem.hawkular', 'mgmtsystem.azure', 'mgmtsystem.google', 'ovirtsdk',
+MOCK_MODULES = ['pycurl', 'wrapanapi', 'ovirt-engine-sdk-python',
+                'wrapanapi.base', 'wrapanapi.exceptions',
+                'wrapanapi.ec2', 'wrapanapi.openstack', 'wrapanapi.rhevm',
+                'wrapanapi.scvmm', 'wrapanapi.virtualcenter', 'wrapanapi.kubernetes',
+                'wrapanapi.openshift', 'wrapanapi.rest_client', 'wrapanapi.openstack_infra',
+                'wrapanapi.hawkular', 'wrapanapi.azure', 'wrapanapi.google', 'ovirtsdk',
                 'ovirtsdk.xml', 'ovirtsdk.infrastructure', 'ovirtsdk.infrastructure.errors']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

@@ -4,7 +4,7 @@ from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator, flash, toolbar as tb
-from mgmtsystem.hawkular import CanonicalPath
+from wrapanapi.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable, current_appliance

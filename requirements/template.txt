@@ -3,7 +3,7 @@
 
 # add what breaks on RTD
 
-mgmtsystem>0.0.15
+wrapanapi>2.0.0
 ovirt-engine-sdk-python<4.0.0
 pycurl
 

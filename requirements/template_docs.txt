@@ -38,7 +38,7 @@ py
 pycrypto
 pygal
 
-# required for an import that we get from mgmtsystem
+# required for an import that we get from wrapanapi
 python-novaclient<7.0.0
 
 PyGithub

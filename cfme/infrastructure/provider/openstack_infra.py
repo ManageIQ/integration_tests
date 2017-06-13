@@ -2,7 +2,7 @@ from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSelect, Button
 from widgetastic_manageiq import RadioGroup, FileInput
-from mgmtsystem.openstack_infra import OpenstackInfraSystem
+from wrapanapi.openstack_infra import OpenstackInfraSystem
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm

@@ -330,7 +330,7 @@ def get_crud_by_name(provider_name, appliance=None):
 
 
 def get_mgmt(provider_key, providers=None, credentials=None):
-    """ Provides a ``mgmtsystem`` object, based on the request.
+    """ Provides a ``wrapanapi`` object, based on the request.
 
     Args:
         provider_key: The name of a provider, as supplied in the yaml configuration files.
@@ -340,7 +340,7 @@ def get_mgmt(provider_key, providers=None, credentials=None):
             locations. Expects a dict.
         credentials: A set of credentials in the same format as the ``credentials`` yamls files.
             If ``None`` then credentials are loaded from the default locations. Expects a dict.
-    Return: A provider instance of the appropriate ``mgmtsystem.MgmtSystemAPIBase``
+    Return: A provider instance of the appropriate ``wrapanapi.WrapanapiAPIBase``
         subclass
     """
     if providers is None:

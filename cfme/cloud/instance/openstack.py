@@ -112,7 +112,7 @@ class OpenStackInstance(Instance):
         elif option == OpenStackInstance.PAUSE:
             self.provider.mgmt.pause_vm(self.name)
         elif option == OpenStackInstance.SHELVE:
-            # TODO: rewrite it once mgmtsystem will get shelve
+            # TODO: rewrite it once wrapanapi will get shelve
             # and shelve_offload methods
             self.provider.mgmt._find_instance_by_name(self.name).shelve()
         elif option == OpenStackInstance.SHELVE_OFFLOAD:

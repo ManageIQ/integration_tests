@@ -158,7 +158,7 @@ def test_properties(provider, test_item, soft_assert):
 
 def test_pods_conditions(provider, soft_assert):
 
-    #  TODO: Add later this logic to mgmtsystem
+    #  TODO: Add later this logic to wrapanapi
     selected_pods_cfme = {row.name.text: Pod(row.name.text, row.project_name.text, provider)
                           for row in navigate_and_get_rows(provider, Pod, 3)}
     selected_pods_ose = {pod["metadata"]["name"]: pod for pod in

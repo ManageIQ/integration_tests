@@ -1,9 +1,9 @@
 # Imports for backward compatility and convenience
 # NOQA all the things because
 import time
-from mgmtsystem.base import VMInfo, MgmtSystemAPIBase, ContainerMgmtSystemAPIBase, Logger  # NOQA
-from mgmtsystem import exceptions  # NOQA
-from mgmtsystem.rhevm import RHEVMSystem as RHEVMSystemBase  # NOQA
+from wrapanapi.base import VMInfo, WrapanapiAPIBase, ContainerWrapanapiAPIBase, Logger  # NOQA
+from wrapanapi import exceptions  # NOQA
+from wrapanapi.rhevm import RHEVMSystem as RHEVMSystemBase  # NOQA
 
 from utils import conf
 from utils.log import logger
