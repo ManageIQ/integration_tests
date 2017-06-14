@@ -21,9 +21,9 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
-# TODO: fix polarion ID for Container object
+
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-10320')(ContainersTestItem(Container, 'CMP-10320')),
+    pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(Image, 'CMP-9981')),
@@ -65,7 +65,7 @@ def obj_factory(obj_creator, row, provider):
                "Pod": lambda row: {"name": row.name.text, "provider": provider},
                "Node": lambda row: {"name": row.name.text, "provider": provider},
                "Template": lambda row: {"name": row.name.text, "provider": provider},
-               "Container": lambda row: {"name": row.name.text, "pod": row.pod.text},
+               "Container": lambda row: {"name": row.name.text, "pod": row.pod_name.text},
                "Image": lambda row: {"name": row.name.text,
                                      "tag": row.tag.text, "provider": provider},
                "Image_Registry": lambda row: {"host": row.host.text, "provider": provider}}
