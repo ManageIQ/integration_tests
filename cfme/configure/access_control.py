@@ -22,10 +22,7 @@ def simple_user(userid, password):
 
 
 class UserForm(ConfigurationView):
-    """ User Form View.
-        Args:
-            ConfigurationView
-    """
+    """ User Form View."""
     name_txt = Input(name='name')
     userid_txt = Input(name='userid')
     password_txt = Input(id='password')
@@ -37,10 +34,7 @@ class UserForm(ConfigurationView):
 
 
 class AllUserView(ConfigurationView):
-    """ All Users View.
-        Args:
-            ConfigurationView
-    """
+    """ All Users View."""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -53,10 +47,7 @@ class AllUserView(ConfigurationView):
 
 
 class AddUserView(UserForm):
-    """ Add User View.
-        Args:
-            UserForm
-    """
+    """ Add User View."""
     add_button = Button('Add')
 
     @property
@@ -65,10 +56,7 @@ class AddUserView(UserForm):
 
 
 class DetailsUserView(ConfigurationView):
-    """ User Details view.
-        Args:
-            ConfigurationView
-    """
+    """ User Details view."""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -81,10 +69,7 @@ class DetailsUserView(ConfigurationView):
 
 
 class EditUserView(UserForm):
-    """ User Edit View
-        Args:
-            UserForm
-    """
+    """ User Edit View."""
     save_button = Button('Save')
     reset_button = Button('Reset')
 
@@ -97,10 +82,7 @@ class EditUserView(UserForm):
 
 
 class EditTagsUserView(ConfigurationView):
-    """ Tags edit for Users view.
-        Args:
-            ConfigurationView
-    """
+    """ Tags edit for Users view."""
     tag_table = Table("//div[@id='assignments_div']//table")
     select_tag = BootstrapSelect(id='tag_cat')
     select_value = BootstrapSelect(id='tag_add')
@@ -349,9 +331,7 @@ class UserTagsEdit(CFMENavigateStep):
 
 
 class GroupForm(ConfigurationView):
-    """ Group Form in CFME UI
-        Args: ConfigurationView
-    """
+    """ Group Form in CFME UI."""
     ldap_groups_for_user = BootstrapSelect(id='ldap_groups_user')
     description_txt = Input(name='description')
     lookup_ldap_groups_chk = Checkbox(name='lookup')
@@ -368,33 +348,25 @@ class GroupForm(ConfigurationView):
 
     @View.nested
     class my_company_tags(Tab):     # noqa
-        """ Represents 'My company tags' tab in Group Form
-            Args: Tab
-        """
+        """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
         tag_tree = CheckableBootstrapTreeview('tags_treebox')
 
     @View.nested
     class hosts_and_clusters(Tab):      # noqa
-        """ Represents 'Hosts and Clusters' tab in Group Form
-            Args: Tab
-        """
+        """ Represents 'Hosts and Clusters' tab in Group Form """
         TAB_NAME = "Hosts & Clusters"
         hosts_clusters_tree = CheckableBootstrapTreeview('hac_treebox')
 
     @View.nested
     class vms_and_templates(Tab):       # noqa
-        """ Represents 'VM's and Templates' tab in Group Form
-            Args: Tab
-        """
+        """ Represents 'VM's and Templates' tab in Group Form """
         TAB_NAME = "VMs & Templates"
         vms_templates_tree = CheckableBootstrapTreeview('vat_treebox')
 
 
 class AddGroupView(GroupForm):
-    """ Add Group View in CFME UI
-        Args: GroupForm
-    """
+    """ Add Group View in CFME UI """
     add_button = Button("Add")
 
     @property
@@ -406,9 +378,7 @@ class AddGroupView(GroupForm):
 
 
 class DetailsGroupView(ConfigurationView):
-    """ Details Group View in CFME UI
-        Args: ConfigurationView
-    """
+    """ Details Group View in CFME UI """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -421,9 +391,7 @@ class DetailsGroupView(ConfigurationView):
 
 
 class EditGroupView(GroupForm):
-    """ Edit Group View in CFME UI
-        Args: GroupForm
-    """
+    """ Edit Group View in CFME UI """
     save_button = Button("Save")
     reset_button = Button('Reset')
 
@@ -436,9 +404,7 @@ class EditGroupView(GroupForm):
 
 
 class AllGroupView(ConfigurationView):
-    """ All Groups View in CFME UI
-        Args: ConfigurationView
-    """
+    """ All Groups View in CFME UI """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -453,9 +419,7 @@ class AllGroupView(ConfigurationView):
 
 
 class EditGroupSequenceView(ConfigurationView):
-    """ Edit Groups Sequence View in CFME UI
-        Args: ConfigurationView
-    """
+    """ Edit Groups Sequence View in CFME UI """
     group_order_selector = UpDownSelect(
         '#seq_fields',
         './/a[@title="Move selected fields up"]/img',
@@ -474,9 +438,7 @@ class EditGroupSequenceView(ConfigurationView):
 
 
 class GroupEditTagsView(ConfigurationView):
-    """ Edit Groups Tags View in CFME UI
-        Args: ConfigurationView
-    """
+    """ Edit Groups Tags View in CFME UI """
     tag_table = Table("//div[@id='assignments_div']//table")
 
     select_tag = BootstrapSelect(id='tag_cat')
@@ -773,10 +735,7 @@ class GroupTagsEdit(CFMENavigateStep):
 
 
 class RoleForm(ConfigurationView):
-    """ Role Form for CFME UI
-        Args:
-            ConfigurationView
-    """
+    """ Role Form for CFME UI """
     name_txt = Input(name='name')
     vm_restriction_select = BootstrapSelect(id='vm_restriction')
     product_features_tree = CheckableBootstrapTreeview("features_treebox")
@@ -785,10 +744,7 @@ class RoleForm(ConfigurationView):
 
 
 class AddRoleView(RoleForm):
-    """ Add Role View
-        Args:
-            RoleForm
-    """
+    """ Add Role View """
     add_button = Button('Add')
 
     @property
@@ -800,10 +756,7 @@ class AddRoleView(RoleForm):
 
 
 class EditRoleView(RoleForm):
-    """ Edit Role View
-        Args:
-            RoleForm
-    """
+    """ Edit Role View """
     save_button = Button('Save')
     reset_button = Button('Reset')
 
@@ -816,10 +769,7 @@ class EditRoleView(RoleForm):
 
 
 class DetailsRoleView(RoleForm):
-    """ Details Role View
-        Args:
-            RoleForm
-    """
+    """ Details Role View """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -832,10 +782,7 @@ class DetailsRoleView(RoleForm):
 
 
 class AllRolesView(ConfigurationView):
-    """ All Roles View
-        Args:
-            ConfigurationView
-    """
+    """ All Roles View """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -995,10 +942,7 @@ class RoleEdit(CFMENavigateStep):
 
 
 class TenantForm(ConfigurationView):
-    """ Tenant Form
-        Args:
-            ConfigurationView
-    """
+    """ Tenant Form """
     name = Input(name='name')
     description = Input(name='description')
 
@@ -1006,10 +950,7 @@ class TenantForm(ConfigurationView):
 
 
 class TenantQuotaView(ConfigurationView):
-    """ Tenant Quota View
-        Args:
-            ConfigurationView
-    """
+    """ Tenant Quota View """
     cpu_cb = BootstrapSwitch(id='cpu_allocated')
     memory_cb = BootstrapSwitch(id='mem_allocated')
     storage_cb = BootstrapSwitch(id='storage_allocated')
@@ -1027,10 +968,7 @@ class TenantQuotaView(ConfigurationView):
 
 
 class AllTenantView(ConfigurationView):
-    """ All Tenants View
-        Args:
-            ConfigurationView
-    """
+    """ All Tenants View """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -1043,10 +981,7 @@ class AllTenantView(ConfigurationView):
 
 
 class AddTenantView(TenantForm):
-    """ Add Tenant View
-        Args:
-            TenantForm
-    """
+    """ Add Tenant View """
     add_button = Button('Add')
 
     @property
@@ -1058,10 +993,7 @@ class AddTenantView(TenantForm):
 
 
 class DetailsTenantView(ConfigurationView):
-    """ Details Tenant View
-        Args:
-            ConfigurationView
-    """
+    """ Details Tenant View """
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
@@ -1074,10 +1006,7 @@ class DetailsTenantView(ConfigurationView):
 
 
 class ParentDetailsTenantView(DetailsTenantView):
-    """ Parent Tenant Details View
-        Args:
-            DetailsTenantView
-    """
+    """ Parent Tenant Details View """
     @property
     def is_displayed(self):
         return (
@@ -1087,10 +1016,7 @@ class ParentDetailsTenantView(DetailsTenantView):
 
 
 class EditTenantView(TenantForm):
-    """ Edit Tenant View
-        Args:
-            TenantForm
-    """
+    """ Edit Tenant View """
     save_button = Button('Save')
     reset_button = Button('Reset')
 
