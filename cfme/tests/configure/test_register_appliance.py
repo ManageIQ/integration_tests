@@ -134,10 +134,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
 
     red_hat_updates.register_appliances()  # Register all
 
-    if reg_method == 'rhsm':
-        request.addfinalizer(appliance.rhsm_unregister)
-    else:
-        request.addfinalizer(appliance.sat6_unregister)
+    request.addfinalizer(appliance.unregister)
 
     wait_for(
         func=appliance.is_registration_complete,

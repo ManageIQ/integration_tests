@@ -207,14 +207,8 @@ class IPAppliance(object):
         assert 'appliance' not in kwargs
         return cls(appliance=self, *args, **kwargs)
 
-    def rhsm_unregister(self):
-        """ unregisters an appliance from RHSM subscription """
-        self.ssh_client.run_command('subscription-manager remove --all')
-        self.ssh_client.run_command('subscription-manager unregister')
-        self.ssh_client.run_command('subscription-manager clean')
-
-    def sat6_unregister(self):
-        """ unregisters an appliance from SAT6 subscription """
+    def unregister(self):
+        """ unregisters an appliance from RHSM/SAT6 subscription """
         self.ssh_client.run_command('subscription-manager remove --all')
         self.ssh_client.run_command('subscription-manager unregister')
         self.ssh_client.run_command('subscription-manager clean')
