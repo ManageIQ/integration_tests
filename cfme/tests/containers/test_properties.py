@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.containers.provider import ContainersProvider, navigate_and_get_rows,\
+from cfme.containers.provider import ContainersProvider,\
     ContainersTestItem
 from cfme.containers.route import Route
 from cfme.containers.project import Project
@@ -139,7 +139,7 @@ def test_properties(provider, test_item, soft_assert):
     if current_version() < "5.7" and test_item.obj == Template:
         pytest.skip('Templates are not exist in CFME version lower than 5.7. skipping...')
 
-    instances = test_item.get_random_instances(provider, count=2)
+    instances = test_item.obj.get_random_instances(provider, count=2)
 
     for instance in instances:
 
@@ -156,11 +156,13 @@ def test_properties(provider, test_item, soft_assert):
                                    .format(test_item.obj.__name__, instance.name, field))
 
 
-def test_pods_conditions(provider, soft_assert):
+def test_pods_conditions(provider, appliance, soft_assert):
 
-    #  TODO: Add later this logic to wrapanapi
-    selected_pods_cfme = {row.name.text: Pod(row.name.text, row.project_name.text, provider)
-                          for row in navigate_and_get_rows(provider, Pod, 3)}
+    #  TODO: Add later this logic to mgmtsystem
+    selected_pods_cfme = {pd.name: pd
+                          for pd in Pod.get_random_instances(
+                              provider, count=3, appliance=appliance)}
+
     selected_pods_ose = {pod["metadata"]["name"]: pod for pod in
                          provider.mgmt.api.get('pod')[1]['items'] if pod["metadata"]["name"] in
                          selected_pods_cfme}

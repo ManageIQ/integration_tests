@@ -7,7 +7,7 @@ from utils.version import current_version
 from cfme.web_ui import paginator, summary_title
 
 from cfme.containers.pod import Pod
-from cfme.containers.provider import ContainersProvider, navigate_and_get_rows,\
+from cfme.containers.provider import ContainersProvider,\
     ContainersTestItem
 from cfme.containers.service import Service
 from cfme.containers.node import Node
@@ -83,36 +83,29 @@ def test_relationships_tables(provider, test_item):
     if current_version() < "5.7" and test_item.obj == Template:
         pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
 
-    rows = navigate_and_get_rows(provider, test_item.obj, 1)
-    if not rows:
-        pytest.skip('No objects to test for relationships for {}'.format(test_item.obj.__name__))
-    row = rows[-1]
-
-    if test_item.obj is Container:
-        instance = test_item.obj(row.name.text, row.pod_name.text)
-    elif test_item.obj is ImageRegistry:
-        instance = test_item.obj(row.host.text, provider)
-    elif test_item.obj is Image:
-        instance = test_item.obj(row.name.text, row.id.text, provider)
+    if test_item.obj is ContainersProvider:
+        instance = provider
     else:
-        instance = test_item.obj(row.name.text, provider)
+        rand_instances = test_item.obj.get_random_instances(provider, count=1)
+        if not rand_instances:
+            pytest.skip('Could not find instance of {} to test relationships.'
+                        .format(test_item.obj.__class__.__name__))
+        instance = rand_instances.pop()
 
     check_relationships(instance)
 
 
 @pytest.mark.polarion('CMP-9934')
-def test_container_status_relationships_data_integrity(provider):
+def test_container_status_relationships_data_integrity(provider, appliance, soft_assert):
     """ This test verifies that the sum of running, waiting and terminated containers
         in the status summary table
         is the same number that appears in the Relationships table containers field
     """
-    rows = navigate_and_get_rows(provider, Pod, 3)
-    if not rows:
-        pytest.skip('No containers found to test. skipping...')
-
-    for row in rows:
-        obj = Pod(row.name.text, row.project_name.text, provider)
-        assert obj.summary.relationships.containers.value == \
-            obj.summary.container_statuses_summary.running.value + \
-            obj.summary.container_statuses_summary.waiting.value + \
-            obj.summary.container_statuses_summary.terminated.value
+    for obj in Pod.get_random_instances(provider, count=3, appliance=appliance):
+        all_containers = obj.summary.relationships.containers.value
+        running = obj.summary.container_statuses_summary.running.value
+        waiting = obj.summary.container_statuses_summary.waiting.value
+        terminated = obj.summary.container_statuses_summary.terminated.value
+        soft_assert(
+            all_containers == sum([running, waiting, terminated])
+        )

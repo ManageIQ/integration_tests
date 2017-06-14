@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 import random
-import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import SummaryMixin, Taggable
+from cfme.containers.provider import pol_btn, navigate_and_get_rows
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location,\
     PagedTable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.containers.provider import pol_btn
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -40,10 +39,10 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
     @classmethod
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
-        ir_list = provider.mgmt.list_image_registry()
-        random.shuffle(ir_list)
-        return [cls(obj.host, provider, appliance=appliance)
-                for obj in itertools.islice(ir_list, count)]
+        ir_rows_list = navigate_and_get_rows(provider, cls, count, silent_failure=True)
+        random.shuffle(ir_rows_list)
+        return [cls(row.host.text, provider, appliance=appliance)
+                for row in ir_rows_list]
 
 
 @navigator.register(ImageRegistry, 'All')

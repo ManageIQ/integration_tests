@@ -18,7 +18,9 @@ from utils.version import current_version
 from utils.blockers import BZ
 
 
-pytestmark = [pytest.mark.uncollectif(lambda: current_version() < "5.8")]
+pytestmark = [
+    pytest.mark.uncollectif(lambda: current_version() < "5.8"),
+    pytest.mark.usefixtures("setup_provider")]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
@@ -45,7 +47,7 @@ def test_start_page(appliance, soft_assert):
             data_set.match_page(),
             'Configured start page is "{}", but the start page now'
             ' is "{}" instead of "{}"'.format(
-                data_set.start_page_name, data_set.match_page.keywords['title'],
-                browser_title()
+                data_set.start_page_name, browser_title(),
+                data_set.match_page.keywords['title'],
             )
         )

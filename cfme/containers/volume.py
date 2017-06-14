@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+import random
+import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
@@ -9,6 +11,7 @@ from cfme.web_ui import toolbar as tb, paginator, match_location, InfoBlock,\
     PagedTable, CheckboxTable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
+from cfme.containers.provider import navigate_and_get_rows
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -39,6 +42,15 @@ class Volume(Taggable, SummaryMixin, Navigatable):
         """
         navigate_to(self, 'Details')
         return InfoBlock.text(*ident)
+
+    @classmethod
+    def get_random_instances(cls, provider, count=1, appliance=None):
+        """Generating random instances."""
+        rows = navigate_and_get_rows(provider, cls, count=count, silent_failure=True)
+        rows = filter(lambda r: r.provider == provider.name, rows)
+        random.shuffle(rows)
+        return [cls(row.name, row.provider, appliance=appliance)
+                for row in itertools.islice(rows, count)]
 
 
 @navigator.register(Volume, 'All')
