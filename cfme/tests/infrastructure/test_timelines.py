@@ -206,3 +206,8 @@ class TestInfraVmEventRESTAPI(object):
 @pytest.mark.manual
 def test_policy_events():
     pass
+
+
+@pytest.mark.manual
+def test_timelines_ui():
+    pass
