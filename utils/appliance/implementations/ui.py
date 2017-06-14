@@ -15,7 +15,7 @@ from selenium.common.exceptions import (
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
 
-from utils.browser import manager
+from utils import browser as uibrowser
 from fixtures.pytest_store import store
 
 from cached_property import cached_property
@@ -317,7 +317,7 @@ class CFMENavigateStep(NavigateStep):
                 logger.exception("Rails exception before force navigate started!: %r:%r at %r",
                     br.widgetastic.text("//body/div[@class='dialog']/h1"),
                     br.widgetastic.text("//body/div[@class='dialog']/p"),
-                    getattr(manager.browser, 'current_url', "error://dead-browser")
+                    getattr(uibrowser.manager, 'current_url', "error://dead-browser")
                 )
                 recycle = True
             elif br.widgetastic.elements("//ul[@id='maintab']/li[@class='inactive']") and not\
@@ -429,15 +429,15 @@ class ViaUI(object):
         """This gives us a widgetastic browser."""
         browser = self.open_browser()
         wt = MiqBrowser(browser, self)
-        manager.add_cleanup(self._reset_cache)
+        uibrowser.manager.add_cleanup(self._reset_cache)
         return wt
 
     def open_browser(self):
         # TODO: self.appliance.server.address() instead of None
-        return manager.ensure_open(url_key=None)
+        return uibrowser.manager.ensure_open(url_key=None)
 
     def quit_browser(self):
-        manager.quit()
+        uibrowser.manager.quit()
 
     def _reset_cache(self):
         try:
