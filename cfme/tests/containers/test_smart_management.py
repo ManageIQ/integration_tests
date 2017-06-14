@@ -8,6 +8,7 @@ from cfme.web_ui import toolbar, AngularSelect, form_buttons
 from cfme.configure.configuration import Tag
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.image import Image
+from cfme.containers.container import Container
 from cfme.containers.project import Project
 from cfme.containers.node import Node
 from cfme.containers.image_registry import ImageRegistry
@@ -20,7 +21,9 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
+# TODO: fix polarion ID for Container object
 TEST_ITEMS = [
+    pytest.mark.polarion('CMP-10320')(ContainersTestItem(Container, 'CMP-10320')),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(Image, 'CMP-9981')),
@@ -53,6 +56,21 @@ def set_random_tag(instance):
     form_buttons.save()
 
     return Tag(display_name=random_tag.text, category=random_cat.text)
+
+
+def obj_factory(obj_creator, row, provider):
+
+    factory = {"Provider": lambda row: {"name": row.name.text},
+               "Project": lambda row: {"name": row.name.text, "provider": provider},
+               "Pod": lambda row: {"name": row.name.text, "provider": provider},
+               "Node": lambda row: {"name": row.name.text, "provider": provider},
+               "Template": lambda row: {"name": row.name.text, "provider": provider},
+               "Container": lambda row: {"name": row.name.text, "pod": row.pod.text},
+               "Image": lambda row: {"name": row.name.text,
+                                     "tag": row.tag.text, "provider": provider},
+               "Image_Registry": lambda row: {"host": row.host.text, "provider": provider}}
+
+    return obj_creator(**factory[get_object_name(obj_creator)](row))
 
 
 @pytest.mark.parametrize('test_item',
