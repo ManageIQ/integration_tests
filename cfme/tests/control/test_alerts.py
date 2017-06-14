@@ -173,7 +173,7 @@ def ssh(provider, full_template, vm_name):
 
 
 @pytest.yield_fixture(scope="module")
-def snmp(appliance):
+def setup_snmp(appliance):
     appliance.ssh_client.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
     appliance.ssh_client.run_command("systemctl start snmptrapd.service")
     yield
@@ -304,7 +304,7 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
-def test_alert_snmp(request, vm, snmp, provider, appliance, setup_candu):
+def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
