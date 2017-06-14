@@ -250,7 +250,7 @@ class TestTagsViaREST(object):
         # add some more tags in supported formats
         new_tags.append({'category': 'department', 'name': 'finance'})
         new_tags.append({'name': '/managed/department/presales'})
-        tags_ids = set([t.id for t in tags_mod])
+        tags_ids = {t.id for t in tags_mod}
         tags_ids.add(
             appliance.rest_api.collections.tags.get(name='/managed/department/finance').id)
         tags_ids.add(
@@ -271,13 +271,13 @@ class TestTagsViaREST(object):
         _verify_action_result()
         for entity in entities:
             entity.tags.reload()
-            assert len(tags_ids - set([t.id for t in entity.tags.all])) == 0
+            assert len(tags_ids - {t.id for t in entity.tags.all}) == 0
 
         collection.action.unassign_tags(*entities, tags=new_tags)
         _verify_action_result()
         for entity in entities:
             entity.tags.reload()
-            assert len(set([t.id for t in entity.tags.all]) - tags_ids) == entity.tags.subcount
+            assert len({t.id for t in entity.tags.all} - tags_ids) == entity.tags.subcount
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.tier(3)

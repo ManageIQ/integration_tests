@@ -157,7 +157,7 @@ for suite in sorted(cache_suites.keys()):
     # iterate through the tests (which will be sorted)
     for test in this_suite.tests:
         # find a list of params for this test
-        params = set([param for param, res in test.results])
+        params = {param for param, res in test.results}
         # iterate through the groups in the suite to find which one to add to
         for group in this_suite.groups:
             # if the groups params intersect with the tests params, it must be the right group
