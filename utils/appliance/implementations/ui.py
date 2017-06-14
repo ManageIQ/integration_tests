@@ -23,6 +23,9 @@ from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
 from utils.version import Version
 from utils.wait import wait_for
+
+from . import Implementation
+
 VersionPick.VERSION_CLASS = Version
 
 
@@ -158,7 +161,7 @@ class CFMENavigateStep(NavigateStep):
             self.view.flush_widget_cache()
         go_kwargs = kwargs.copy()
         go_kwargs.update(nav_args)
-        self.appliance.browser.open_browser()
+        self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
@@ -214,7 +217,7 @@ class CFMENavigateStep(NavigateStep):
             sleep(10)   # Give it some rest
             self.appliance.wait_for_web_ui()
             self.appliance.browser.quit_browser()
-            self.appliance.browser.open_browser()
+            self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
             self.go(_tries, *args, **go_kwargs)
 
         # Same with rails errors
@@ -243,8 +246,6 @@ class CFMENavigateStep(NavigateStep):
         # Set this to True in handlers to restart evmserverd on the appliance
         # Includes recycling so you don't need to specify recycle = False
         restart_evmserverd = False
-
-        from cfme import login
 
         try:
             self.log_message(
@@ -325,7 +326,7 @@ class CFMENavigateStep(NavigateStep):
                 # If upstream and is the bottom part of menu is not displayed
                 logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
                 recycle = True
-            elif not login.logged_in():
+            elif not self.obj.appliance.server.logged_in():
                 # Session timeout or whatever like that, login screen appears.
                 logger.exception("Looks like we are logged out. Try again.")
                 recycle = True
@@ -411,54 +412,16 @@ navigator = Navigate()
 navigate_to = navigator.navigate
 
 
-class ViaUI(object):
+class ViaUI(Implementation):
     """UI implementation using the normal ux"""
-    # ** Wow, a lot to talk about here. so we introduced the idea of this "endpoint" object at
-    # ** the moment. This endpoint object contains everything you need to talk to that endpoint.
-    # ** Sessions, endpoint sepcific functions(a la force navigate). The base class does precious
-    # ** little. It's more an organizational level thing.
-    def __init__(self, owner):
-        self.owner = owner
 
-    @property
-    def appliance(self):
-        return self.owner
+    def __str__(self):
+        return 'UI'
 
     @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        browser = self.open_browser()
+        browser = self.open_browser(url_key=self.appliance.server.address())
         wt = MiqBrowser(browser, self)
         manager.add_cleanup(self._reset_cache)
         return wt
-
-    def open_browser(self):
-        # TODO: self.appliance.server.address() instead of None
-        return manager.ensure_open(url_key=None)
-
-    def quit_browser(self):
-        manager.quit()
-
-    def _reset_cache(self):
-        try:
-            del self.widgetastic
-        except AttributeError:
-            pass
-
-    def create_view(self, view_class, additional_context=None):
-        """Method that is used to instantiate a Widgetastic View.
-
-        Args:
-            view_class: A view class, subclass of ``widgetastic.widget.View``
-            additional_context: Additional informations passed to the view (user name, VM name, ...)
-
-        Returns:
-            An instance of the ``view_class``
-        """
-        additional_context = additional_context or {}
-        view = view_class(
-            self.widgetastic,
-            additional_context=additional_context,
-            logger=logger)
-
-        return view

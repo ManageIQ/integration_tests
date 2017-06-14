@@ -4,7 +4,7 @@ from time import sleep
 
 from cfme.configure.configuration import (
     DatabaseAuthSetting, ExternalAuthSetting, get_ntp_servers, set_ntp_servers)
-from cfme.login import login_admin, logout
+from utils import appliance
 from utils.browser import ensure_browser_open
 from utils.conf import credentials
 from utils.ssh import SSHClient
@@ -55,7 +55,7 @@ def setup_external_auth_ipa(**data):
             assert str(ssh.run_command('hostname')).rstrip() == appliance_fqdn
 
         ensure_browser_open()
-        login_admin()
+        appliance.current_appliance.server.login_admin()
         if data["ipaserver"] not in get_ntp_servers():
             set_ntp_servers(data["ipaserver"])
             sleep(120)
@@ -67,7 +67,7 @@ def setup_external_auth_ipa(**data):
             "appliance_console_cli --ipaserver {ipaserver} --iparealm {iparealm} "
             "--ipaprincipal {principal} --ipapassword {password}".format(**data)
         )
-    login_admin()
+    appliance.current_appliance.server.login_admin()
 
 
 def setup_external_auth_openldap(**data):
@@ -96,11 +96,11 @@ def setup_external_auth_openldap(**data):
         ldapserver_ssh.get_file(remote_file=data['cert_filepath'],
                                 local_path=conf_path.strpath)
     ensure_browser_open()
-    login_admin()
+    appliance.current_appliance.server.login_admin()
     auth = ExternalAuthSetting(get_groups=data.pop("get_groups", True))
     auth.setup()
     current_appliance.configure_appliance_for_openldap_ext_auth(appliance_fqdn)
-    logout()
+    appliance.current_appliance.server.logout()
 
 
 def disable_external_auth_ipa():
@@ -108,12 +108,12 @@ def disable_external_auth_ipa():
     current_appliance = get_or_create_current_appliance()
     with current_appliance.ssh_client as ssh:
         ensure_browser_open()
-        login_admin()
+        appliance.current_appliance.server.login_admin()
         auth = DatabaseAuthSetting()
         auth.update()
         assert ssh.run_command("appliance_console_cli --uninstall-ipa")
         current_appliance.wait_for_web_ui()
-    logout()
+    appliance.current_appliance.server.logout()
 
 
 def disable_external_auth_openldap():
@@ -130,4 +130,4 @@ def disable_external_auth_openldap():
         assert ssh.run_command(command)
         ssh.run_command('systemctl restart evmserverd')
         get_or_create_current_appliance().wait_for_web_ui()
-    logout()
+    appliance.current_appliance.server.logout()

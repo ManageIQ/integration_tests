@@ -1,6 +1,7 @@
 import pytest
 
-from cfme import login, test_requirements
+from cfme import test_requirements
+from cfme.base import ui
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
@@ -14,7 +15,7 @@ pytestmark = pytest.mark.usefixtures('browser')
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.smoke
-@pytest.mark.parametrize("method", login.LOGIN_METHODS)
+@pytest.mark.parametrize("method", ui.LOGIN_METHODS)
 def test_login(method, appliance):
     """ Tests that the appliance can be logged into and shows dashboard page. """
 
