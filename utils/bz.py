@@ -258,7 +258,7 @@ class BugWrapper(object):
 
         Should be able to handle cases like 'foo::bar', or 'abc:'.
         """
-        return set([x.strip() for x in self._bug.qa_whiteboard.strip().split(":") if x.strip()])
+        return {x.strip() for x in self._bug.qa_whiteboard.strip().split(":") if x.strip()}
 
     @property
     def copy_of(self):

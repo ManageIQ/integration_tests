@@ -79,7 +79,7 @@ def test_paginator(some_dialogs, soft_assert):
             "Incorrect paginator value, expected {0} <= {1} <= {2}".format(
                 current_rec_offset, current_rec_end, current_total)
 
-    assert set([dlg.label for dlg in some_dialogs]) <= dialogs_found, \
+    assert {dlg.label for dlg in some_dialogs} <= dialogs_found, \
         "Could not find all dialogs by clicking the paginator!"
 
 
