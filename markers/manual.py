@@ -15,17 +15,8 @@ def pytest_addoption(parser):
 
 def pytest_collection_modifyitems(session, config, items):
     len_collected = len(items)
-
-    new_items = []
-    for item in items:
-        if config.getvalue('manual'):
-            if not item.get_marker('manual'):
-                continue
-        else:
-            if item.get_marker('manual'):
-                continue
-        new_items.append(item)
-    items[:] = new_items
+    is_manual = config.getvalue('manual')
+    items[:] = [item for item in items if bool(item.get_marker('manual')) == is_manual]
 
     len_filtered = len(items)
     filtered_count = len_collected - len_filtered
