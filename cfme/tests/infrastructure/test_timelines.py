@@ -201,3 +201,13 @@ class TestInfraVmEventRESTAPI(object):
             lifecycle_events.event == event["event"],
         ))
         assert events_list, "Could not find the lifecycle event in the database"
+
+
+@pytest.mark.manual
+def test_policy_events():
+    pass
+
+
+@pytest.mark.manual
+def test_timelines_ui():
+    pass

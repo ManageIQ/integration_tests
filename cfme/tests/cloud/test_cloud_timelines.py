@@ -107,3 +107,8 @@ def test_cloud_instance_event(gen_events, new_instance):
     """
     wait_for(count_events, [new_instance, new_instance], timeout='5m', fail_condition=0,
              message="events to appear")
+
+
+@pytest.mark.manual
+def test_policy_events():
+    pass
