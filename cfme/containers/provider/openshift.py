@@ -44,8 +44,8 @@ class OpenshiftProvider(ContainersProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         sec_protocol = kwargs.get('sec_protocol')
-        hawkular = kwargs.get('hawkular')
         hawkular_hostname = kwargs.get('hawkular_hostname')
+        hawkular = kwargs.get('hawkular')
         hawkular_sec_protocol = kwargs.get('hawkular_sec_protocol')
         default_ca_certificate = self.get_cert()
         hawkular_ca_certificate = default_ca_certificate
@@ -98,12 +98,12 @@ class OpenshiftProvider(ContainersProvider):
     def from_config(prov_config, prov_key, appliance=None):
         token_creds = OpenshiftProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
-	hawkular_hostname = prov_config['endpoints']['hawkular'].hostname
-	hawkular_api_port = prov_config['endpoints']['hawkular'].api_port
-	if hawkular_hostname and hawkular_api_port:
-	    hawkular = True
-	else:
-	    hawkular = False
+        hawkular_hostname = prov_config['endpoints']['hawkular'].hostname
+        hawkular_api_port = prov_config['endpoints']['hawkular'].api_port
+        if hawkular_hostname and hawkular_api_port:
+            hawkular = True
+        else:
+            hawkular = False
         return OpenshiftProvider(
             name=prov_config['name'],
             credentials={'token': token_creds},
@@ -113,10 +113,10 @@ class OpenshiftProvider(ContainersProvider):
             api_port=prov_config['endpoints']['default'].api_port,
             sec_protocol=prov_config['endpoints']['default'].sec_protocol,
             hawkular_sec_protocol=prov_config['endpoints']['hawkular'].sec_protocol,
-            hawkular_hostname=prov_config['endpoints']['hawkular'].hostname,
-            hawkular_api_port=prov_config['endpoints']['hawkular'].api_port,
+            hawkular_hostname=hawkular_hostname,
+            hawkular_api_port=hawkular_api_port,
             hawkular=hawkular,
-	    provider_data=prov_config,
+            provider_data=prov_config,
             appliance=appliance)
 
     def custom_attributes(self):
