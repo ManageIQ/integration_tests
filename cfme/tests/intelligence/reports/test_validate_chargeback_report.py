@@ -159,18 +159,20 @@ def assign_custom_rate(new_compute_rate, provider):
 def verify_records_rollups_table(appliance, provider):
     # Verify that rollups are present in the metric_rollups table.
     vm_name = provider.data['cap_and_util']['chargeback_vm']
-    ems = appliance.db['ext_management_systems']
-    rollups = appliance.db['metric_rollups']
 
-    with appliance.db.transaction:
+    ems = appliance.db.client['ext_management_systems']
+    rollups = appliance.db.client['metric_rollups']
+
+    with appliance.db.client.transaction:
         result = (
-            appliance.db.session.query(rollups.id)
+            appliance.db.client.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
             .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
             ems.name == provider.name, rollups.timestamp >= date.today())
         )
 
-    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(result.subquery())):
+    for record in appliance.db.client.session.query(rollups).filter(
+            rollups.id.in_(result.subquery())):
         if record.cpu_usagemhz_rate_average:
             return True
     return False
@@ -186,15 +188,16 @@ def resource_usage(vm_ownership, appliance, provider):
     average_storage_used = 0
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-    metrics = appliance.db['metrics']
-    rollups = appliance.db['metric_rollups']
-    ems = appliance.db['ext_management_systems']
+    metrics = appliance.db.client['metrics']
+    rollups = appliance.db.client['metric_rollups']
+    ems = appliance.db.client['ext_management_systems']
     logger.info('Deleting METRICS DATA from metrics and metric_rollups tables')
 
-    appliance.db.session.query(metrics).delete()
-    appliance.db.session.query(rollups).delete()
+    appliance.db.client.session.query(metrics).delete()
+    appliance.db.client.session.query(rollups).delete()
 
-    provider_id = appliance.db.session.query(ems).filter(ems.name == provider.name).first().id
+    provider_id = appliance.db.client.session.query(ems).filter(
+        ems.name == provider.name).first().id
 
     # Chargeback reporting is done on hourly and daily rollup values and not real-time values.So, we
     # are capturing C&U data and forcing hourly rollups by running these commands through
@@ -222,15 +225,16 @@ def resource_usage(vm_ownership, appliance, provider):
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
     # in the metric_rollups DB table.The values from these hourly records are summed up.
 
-    with appliance.db.transaction:
+    with appliance.db.clienttransaction:
         result = (
-            appliance.db.session.query(rollups.id)
+            appliance.db.client.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
             .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vm_name,
             ems.name == provider.name, rollups.timestamp >= date.today())
         )
 
-    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(result.subquery())):
+    for record in appliance.db.client.session.query(rollups).filter(
+            rollups.id.in_(result.subquery())):
         if record.cpu_usagemhz_rate_average:
             average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
             average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
@@ -253,17 +257,17 @@ def resource_usage(vm_ownership, appliance, provider):
 
 def resource_cost(appliance, provider, metric, usage, description, rate_type):
     # Query the DB for Chargeback rates
-    tiers = appliance.db['chargeback_tiers']
-    details = appliance.db['chargeback_rate_details']
-    rates = appliance.db['chargeback_rates']
+    tiers = appliance.db.client['chargeback_tiers']
+    details = appliance.db.client['chargeback_rate_details']
+    rates = appliance.db.client['chargeback_rates']
     list_of_rates = []
 
     def add_rate(tiered_rate):
         list_of_rates.append(tiered_rate)
 
-    with appliance.db.transaction:
+    with appliance.db.client.transaction:
         result = (
-            appliance.db.session.query(tiers).
+            appliance.db.client.session.query(tiers).
             join(details, tiers.chargeback_rate_detail_id == details.id).
             join(rates, details.chargeback_rate_id == rates.id).
             filter(details.metric == metric).

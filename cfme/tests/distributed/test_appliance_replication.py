@@ -46,14 +46,14 @@ def get_ssh_client(hostname):
 def stop_db_process(address):
     with get_ssh_client(address) as ssh_client:
         assert ssh_client.run_command('service {}-postgresql stop'.format(
-            current_appliance.postgres_version))[0] == 0,\
+            current_appliance.db.client.postgres_version))[0] == 0,\
             "Could not stop postgres process on {}".format(address)
 
 
 def start_db_process(address):
     with get_ssh_client(address) as ssh_client:
         assert ssh_client.run_command('systemctl start {}-postgresql'
-            .format(current_appliance.postgres_version))[0] == 0,\
+            .format(current_appliance.db.client.postgres_version))[0] == 0,\
             "Could not start postgres process on {}".format(address)
 
 

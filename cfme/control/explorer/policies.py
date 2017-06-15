@@ -432,18 +432,18 @@ class BasePolicy(Updateable, Navigatable, Pretty):
 
     @property
     def exists(self):
-        policies = self.appliance.db["miq_policies"]
-        return self.appliance.db.session\
+        policies = self.appliance.db.client["miq_policies"]
+        return self.appliance.db.client.session\
             .query(policies.description)\
             .filter(policies.description == self.description)\
             .count() > 0
 
     @property
     def assigned_events(self):
-        policies = self.appliance.db["miq_policies"]
-        events = self.appliance.db["miq_event_definitions"]
-        policy_contents = self.appliance.db["miq_policy_contents"]
-        session = self.appliance.db.session
+        policies = self.appliance.db.client["miq_policies"]
+        events = self.appliance.db.client["miq_event_definitions"]
+        policy_contents = self.appliance.db.client["miq_policy_contents"]
+        session = self.appliance.db.client.session
         policy_id = session.query(policies.id).filter(policies.description == self.description)
         assigned_events = session.query(policy_contents.miq_event_definition_id).filter(
             policy_contents.miq_policy_id == policy_id)

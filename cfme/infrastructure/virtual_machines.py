@@ -217,7 +217,7 @@ class VMConfiguration(Pretty):
     def _load(self):
         """Loads the configuration from the VM object's appliance (through DB)
         """
-        appl_db = self.vm.appliance.db
+        appl_db = self.vm.appliance.db.client
 
         # Hardware
         ems = appl_db['ext_management_systems']

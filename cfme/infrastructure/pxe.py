@@ -171,7 +171,7 @@ class PXEServer(Updateable, Pretty, Navigatable):
         """
         Checks if the PXE server already exists
         """
-        dbs = self.appliance.db
+        dbs = self.appliance.db.client
         candidates = list(dbs.session.query(dbs["pxe_servers"]))
         return self.name in [s.name for s in candidates]
 
@@ -243,10 +243,10 @@ class PXEServer(Updateable, Pretty, Navigatable):
 
     @variable(alias='db')
     def get_pxe_image_type(self, image_name):
-        pxe_i = self.appliance.db["pxe_images"]
-        pxe_s = self.appliance.db["pxe_servers"]
-        pxe_t = self.appliance.db["pxe_image_types"]
-        hosts = list(self.appliance.db.session.query(pxe_t.name)
+        pxe_i = self.appliance.db.client["pxe_images"]
+        pxe_s = self.appliance.db.client["pxe_servers"]
+        pxe_t = self.appliance.db.client["pxe_image_types"]
+        hosts = list(self.appliance.db.client.session.query(pxe_t.name)
                      .join(pxe_i, pxe_i.pxe_image_type_id == pxe_t.id)
                      .join(pxe_s, pxe_i.pxe_server_id == pxe_s.id)
                      .filter(pxe_s.name == self.name)
@@ -364,7 +364,7 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         """
         Checks if the Customization template already exists
         """
-        dbs = self.appliance.db
+        dbs = self.appliance.db.client
         candidates = list(dbs.session.query(dbs["customization_templates"]))
         return self.name in [s.name for s in candidates]
 
@@ -612,10 +612,10 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
         Checks if the ISO Datastore already exists via db
         """
-        iso = self.appliance.db['iso_datastores']
-        ems = self.appliance.db['ext_management_systems']
+        iso = self.appliance.db.client['iso_datastores']
+        ems = self.appliance.db.client['ext_management_systems']
         name = self.provider
-        iso_ds = list(self.appliance.db.session.query(iso.id)
+        iso_ds = list(self.appliance.db.client.session.query(iso.id)
                       .join(ems, iso.ems_id == ems.id)
                       .filter(ems.name == name))
         if iso_ds:

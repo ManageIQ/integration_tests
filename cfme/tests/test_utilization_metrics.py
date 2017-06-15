@@ -71,11 +71,11 @@ def metrics_collection(clean_setup_provider, provider, enable_candu):
     Metadata:
         test_flag: metrics_collection
     """
-    metrics_tbl = store.current_appliance.db['metrics']
-    mgmt_systems_tbl = store.current_appliance.db['ext_management_systems']
+    metrics_tbl = store.current_appliance.db.client['metrics']
+    mgmt_systems_tbl = store.current_appliance.db.client['ext_management_systems']
 
     logger.info("Fetching provider ID for %s", provider.key)
-    mgmt_system_id = store.current_appliance.db.session.query(mgmt_systems_tbl).filter(
+    mgmt_system_id = store.current_appliance.db.client.session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
 
@@ -92,11 +92,11 @@ def metrics_collection(clean_setup_provider, provider, enable_candu):
         logger.info("name: %s, id: %s, vms: %s, hosts: %s",
             provider.key, mgmt_system_id, vm_count, host_count)
         # Count host and vm metrics for the provider we're testing
-        host_count = store.current_appliance.db.session.query(metrics_tbl).filter(
+        host_count = store.current_appliance.db.client.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "Host"
         ).count()
-        vm_count = store.current_appliance.db.session.query(metrics_tbl).filter(
+        vm_count = store.current_appliance.db.client.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "VmOrTemplate"
         ).count()
@@ -135,14 +135,15 @@ def query_metric_db(appliance_db, provider, metric, vm_name=None, host_name=None
     elif vm_name is not None:
         object_name = vm_name
 
-    with appliance_db.transaction:
+    with appliance_db.client.transaction:
         provs = (
             appliance_db.session.query(metrics_tbl.id)
             .join(ems, metrics_tbl.parent_ems_id == ems.id)
             .filter(metrics_tbl.resource_name == object_name,
             ems.name == provider.name)
         )
-    return appliance_db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery()))
+    return appliance_db.session.query(metrics_tbl).filter(
+        metrics_tbl.id.in_(provs.subquery()))
 
 
 # Tests to check that specific metrics are being collected
@@ -151,11 +152,11 @@ def query_metric_db(appliance_db, provider, metric, vm_name=None, host_name=None
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     if provider.category == "infra":
-        query = query_metric_db(appliance.db, provider, 'cpu_usagemhz_rate_average',
+        query = query_metric_db(appliance.db.client, provider, 'cpu_usagemhz_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usagemhz_rate_average')
     elif provider.category == "cloud":
-        query = query_metric_db(appliance.db, provider, 'cpu_usage_rate_average',
+        query = query_metric_db(appliance.db.client, provider, 'cpu_usage_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usagemhz_rate_average')
 
@@ -171,11 +172,11 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
 
     if provider.type == 'azure':
-        query = query_metric_db(appliance.db, provider, 'mem_usage_absolute_average',
+        query = query_metric_db(appliance.db.client, provider, 'mem_usage_absolute_average',
             vm_name)
         average_rate = attrgetter('mem_usage_absolute_average')
     else:
-        query = query_metric_db(appliance.db, provider, 'derived_memory_used',
+        query = query_metric_db(appliance.db.client, provider, 'derived_memory_used',
             vm_name)
         average_rate = attrgetter('derived_memory_used')
 
@@ -193,7 +194,7 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 )
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
-    query = query_metric_db(appliance.db, provider, 'net_usage_rate_average',
+    query = query_metric_db(appliance.db.client, provider, 'net_usage_rate_average',
         vm_name)
 
     for record in query:
@@ -210,7 +211,7 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 )
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
-    query = query_metric_db(appliance.db, provider, 'disk_usage_rate_average',
+    query = query_metric_db(appliance.db.client, provider, 'disk_usage_rate_average',
         vm_name)
 
     for record in query:
@@ -223,7 +224,7 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db, provider, 'cpu_usagemhz_rate_average',
+    query = query_metric_db(appliance.db.client, provider, 'cpu_usagemhz_rate_average',
         host_name)
 
     for record in query:
@@ -236,7 +237,7 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db, provider, 'derived_memory_used',
+    query = query_metric_db(appliance.db.client, provider, 'derived_memory_used',
         host_name)
 
     for record in query:
@@ -249,7 +250,7 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_network(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db, provider, 'net_usage_rate_average',
+    query = query_metric_db(appliance.db.client, provider, 'net_usage_rate_average',
         host_name)
 
     for record in query:
@@ -266,7 +267,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 )
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db, provider, 'disk_usage_rate_average',
+    query = query_metric_db(appliance.db.client, provider, 'disk_usage_rate_average',
         host_name)
 
     for record in query:

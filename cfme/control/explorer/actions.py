@@ -224,8 +224,8 @@ class Action(Updateable, Navigatable, Pretty):
 
         Returns: :py:class:`bool` signalizing the presence of the Action in the database.
         """
-        actions = self.appliance.db["miq_actions"]
-        return self.appliance.db.session\
+        actions = self.appliance.db.client["miq_actions"]
+        return self.appliance.db.client.session\
             .query(actions.description)\
             .filter(actions.description == self.description)\
             .count() > 0

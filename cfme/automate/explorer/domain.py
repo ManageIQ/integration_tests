@@ -111,8 +111,8 @@ class DomainCollection(Navigatable):
                 appliance=self.appliance)
 
     def all(self):
-        table = self.appliance.db['miq_ae_namespaces']
-        query = self.appliance.db.session.query(
+        table = self.appliance.db.client['miq_ae_namespaces']
+        query = self.appliance.db.client.session.query(
             table.name, table.description, table.enabled, table.source)
         query = query.filter(table.name != '$', table.parent_id == None)  # noqa
         result = []
@@ -237,9 +237,9 @@ class Domain(Navigatable, Fillable):
 
     @cached_property
     def db_id(self):
-        table = self.appliance.db['miq_ae_namespaces']
+        table = self.appliance.db.client['miq_ae_namespaces']
         try:
-            return self.appliance.db.session.query(table.id).filter(
+            return self.appliance.db.client.session.query(table.id).filter(
                 table.name == self.name,
                 table.parent_id == None)[0]  # noqa
         except IndexError:
@@ -249,8 +249,8 @@ class Domain(Navigatable, Fillable):
     def db_object(self):
         if self.db_id is None:
             return None
-        table = self.appliance.db['miq_ae_namespaces']
-        return self.appliance.db.session.query(table).filter(table.id == self.db_id).first()
+        table = self.appliance.db.client['miq_ae_namespaces']
+        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
 
     @cached_property
     def enabled(self):

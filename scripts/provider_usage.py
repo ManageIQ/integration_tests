@@ -23,10 +23,10 @@ def process_vm(vm, mgmt, user, prov):
             try:
                 ver = app.version
                 assert ver
-                ems = app.db['ext_management_systems']
-                with app.db.transaction:
+                ems = app.db.client['ext_management_systems']
+                with app.db.client.transaction:
                     providers = (
-                        app.db.session.query(ems.ipaddress, ems.type)
+                        app.db.client.session.query(ems.ipaddress, ems.type)
                     )
                 providers = [a[0] for a in providers if a[1] in
                              ['EmsVmware', 'EmsOpenstack', 'EmsRedhat', 'EmsMicrosoft']]

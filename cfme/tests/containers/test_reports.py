@@ -23,7 +23,7 @@ def node_hardwares_db_data(appliance):
 
     """Grabbing hardwares table data for nodes"""
 
-    db = appliance.db
+    db = appliance.db.client
     hardwares_table = db['hardwares']
     container_nodes = db['container_nodes']
 
@@ -176,8 +176,8 @@ def test_report_nodes_by_number_of_cpu_cores(soft_assert, node_hardwares_db_data
 @pytest.mark.polarion('CMP-10008')
 def test_report_projects_by_number_of_pods(appliance, soft_assert):
 
-    container_projects = appliance.db['container_projects']
-    container_pods = appliance.db['container_groups']
+    container_projects = appliance.db.client['container_projects']
+    container_pods = appliance.db.client['container_groups']
 
     report = get_report('Projects by Number of Pods')
     for row in report.data.rows:

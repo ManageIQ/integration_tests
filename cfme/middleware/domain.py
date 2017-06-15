@@ -20,9 +20,9 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 def _db_select_query(name=None, feed=None, provider=None):
     """column order: `id`, `name`, `feed`,
     `provider_name`, `ems_ref`, `properties`"""
-    t_md = current_appliance.db['middleware_domains']
-    t_ems = current_appliance.db['ext_management_systems']
-    query = current_appliance.db.session.query(t_md.id, t_md.name, t_md.feed,
+    t_md = current_appliance.db.client['middleware_domains']
+    t_ems = current_appliance.db.client['ext_management_systems']
+    query = current_appliance.db.client.session.query(t_md.id, t_md.name, t_md.feed,
                                    t_ems.name.label('provider_name'),
                                    t_md.ems_ref, t_md.properties)\
         .join(t_ems, t_md.ems_id == t_ems.id)

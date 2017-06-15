@@ -5,7 +5,6 @@ import socket
 import traceback
 from copy import copy
 from tempfile import NamedTemporaryFile
-from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
 
@@ -21,17 +20,18 @@ from werkzeug.local import LocalStack, LocalProxy
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
 from utils import clear_property_cache
-from utils import conf, datafile, db, ssh, ports
+from utils import conf, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventListener
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path, conf_path
-from utils.version import Version, get_stream, pick, LATEST
+from utils.version import Version, get_stream, pick
 from utils.wait import wait_for
+
+from .db import ApplianceDB
 from .implementations.ui import ViaUI
 from .implementations.ssui import ViaSSUI
-
 from .services import SystemdService
 
 
@@ -39,7 +39,8 @@ RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false
 
 # EMS types recognized by IP or credentials
 RECOGNIZED_BY_IP = [
-    "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"]
+    "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"
+]
 RECOGNIZED_BY_CREDS = ["CloudManager"]
 
 # A helper for the IDs
@@ -166,6 +167,7 @@ class IPAppliance(object):
     _nav_steps = {}
 
     evmserverd = SystemdService.declare(unit_name='evmserverd')
+    db = ApplianceDB.declare()
 
     def __init__(
             self, address=None, browser_steal=False, container=None, openshift_creds=None,
@@ -187,7 +189,6 @@ class IPAppliance(object):
         self.container = container
         self.openshift_creds = openshift_creds or {}
         self.db_host = db_host
-        self._db_ssh_client = None
         self._user = None
         self.appliance_console = ApplianceConsole(self)
         self.appliance_console_cli = ApplianceConsoleCli(self)
@@ -210,12 +211,6 @@ class IPAppliance(object):
         """
         assert 'appliance' not in kwargs
         return cls(appliance=self, *args, **kwargs)
-
-    @property
-    def postgres_version(self):
-        # postgres's version is in the service name and file paths when we pull it from SCL,
-        # so this is a little resolver to help keep the version picking centralized
-        return 'rh-postgresql95'
 
     @property
     def default_zone(self):
@@ -368,8 +363,8 @@ class IPAppliance(object):
             self.deploy_merkyl(start=True, log_callback=log_callback)
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
-                # TODO: Handle external DB setup. Also in setup_database
-            self.setup_database(
+                # TODO: Handle external DB setup
+            self.db.setup(
                 region=region,
                 key_address=key_address,
                 log_callback=log_callback)
@@ -379,7 +374,7 @@ class IPAppliance(object):
             # restarted:
             restart_evm = False
             if loosen_pgssl:
-                self.loosen_pgssl(log_callback=log_callback)
+                self.db.loosen_pgssl(log_callback=log_callback)
                 restart_evm = True
             if self.version >= '5.8':
                 self.configure_vm_console_cert(log_callback=log_callback)
@@ -395,50 +390,13 @@ class IPAppliance(object):
         self.deploy_merkyl(start=True, log_callback=log_callback)
         # TODO: Fix NTP on GCE instances.
         # self.fix_ntp_clock(log_callback=log_callback)
-        self.enable_internal_db(log_callback=log_callback)
+        self.db.enable_internal(log_callback=log_callback)
         # evm serverd does not auto start on GCE instance..
         self.start_evm_service(log_callback=log_callback)
         self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        self.loosen_pgssl(log_callback=log_callback)
+        self.db.loosen_pgssl(log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-    @property
-    def db_partition_extended(self):
-        return self.ssh_client.run_command("ls /var/www/miq/vmdb/.db_partition_extended") == 0
-
-    @logger_wrap("Extend DB partition")
-    def extend_db_partition(self, log_callback=None):
-        """Extends the /var partition with DB while shrinking the unused /repo partition"""
-        if self.db_partition_extended:
-            return
-        with self.ssh_client as ssh:
-            rc, out = ssh.run_command("df -h")
-            log_callback("File systems before extending the DB partition:\n{}".format(out))
-            ssh.run_command("umount /repo")
-            ssh.run_command("lvreduce --force --size -9GB /dev/mapper/VG--CFME-lv_repo")
-            ssh.run_command("mkfs.xfs -f /dev/mapper/VG--CFME-lv_repo")
-            ssh.run_command("lvextend --resizefs --size +9GB /dev/mapper/VG--CFME-lv_var")
-            ssh.run_command("mount -a")
-            rc, out = ssh.run_command("df -h")
-            log_callback("File systems after extending the DB partition:\n{}".format(out))
-            ssh.run_command("touch /var/www/miq/vmdb/.db_partition_extended")
-
-    @logger_wrap("Wait for no postgres connections")
-    def drop_database(self, log_callback=None):
-        """ Drops the vmdb_production database
-
-            Note: EVM service has to be stopped for this to work.
-        """
-        def _db_dropped():
-            rc, out = self.ssh_client.run_command(
-                'systemctl restart {}-postgresql'.format(self.postgres_version), timeout=60)
-            assert rc == 0, "Failed to restart postgres service: {}".format(out)
-            self.ssh_client.run_command('dropdb vmdb_production', timeout=15)
-            rc, out = self.ssh_client.run_command(
-                "psql -l | grep vmdb_production | wc -l", timeout=15)
-            return rc == 0
-        wait_for(_db_dropped, delay=5, timeout=60, message="drop the vmdb_production DB")
 
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""
@@ -491,9 +449,9 @@ class IPAppliance(object):
             logging.disable(logging.NOTSET)
 
     def _get_ems_ips(self, ems):
-        ep_table = self.db["endpoints"]
+        ep_table = self.db.client["endpoints"]
         ip_addresses = set()
-        for ep in self.db.session.query(ep_table).filter(ep_table.resource_id == ems.id):
+        for ep in self.db.client.session.query(ep_table).filter(ep_table.resource_id == ems.id):
             if ep.ipaddress is not None:
                 ip_addresses.add(ep.ipaddress)
             elif ep.hostname is not None:
@@ -506,11 +464,11 @@ class IPAppliance(object):
         return list(ip_addresses)
 
     def _list_ems(self):
-        self.db.session.expire_all()
-        ems_table = self.db["ext_management_systems"]
+        self.db.client.session.expire_all()
+        ems_table = self.db.client["ext_management_systems"]
         # Fetch all providers at once, return empty list otherwise
         try:
-            ems_list = list(self.db.session.query(ems_table))
+            ems_list = list(self.db.client.session.query(ems_table))
         except Exception as ex:
             self.log.warning("Unable to query DB for managed providers: %s", str(ex))
             return []
@@ -523,22 +481,22 @@ class IPAppliance(object):
         return known_ems_list
 
     def _query_endpoints(self):
-        if "endpoints" in self.db:
+        if "endpoints" in self.db.client:
             return self._query_post_endpoints()
         else:
             return self._query_pre_endpoints()
 
     def _query_pre_endpoints(self):
-        ems_table = self.db["ext_management_systems"]
-        for ems in self.db.session.query(ems_table):
+        ems_table = self.db.client["ext_management_systems"]
+        for ems in self.db.client.session.query(ems_table):
             yield ems.ipaddress, ems.hostname
 
     def _query_post_endpoints(self):
         """After Oct 5th, 2015, the ipaddresses and stuff was separated in a separate table."""
-        ems_table = self.db["ext_management_systems"]
-        ep = self.db["endpoints"]
-        for ems in self.db.session.query(ems_table):
-            for endpoint in self.db.session.query(ep).filter(ep.resource_id == ems.id):
+        ems_table = self.db.client["ext_management_systems"]
+        ep = self.db.client["endpoints"]
+        for ems in self.db.client.session.query(ems_table):
+            for endpoint in self.db.client.session.query(ep).filter(ep.resource_id == ems.id):
                 ipaddress = endpoint.ipaddress
                 hostname = endpoint.hostname
                 yield ipaddress, hostname
@@ -607,14 +565,14 @@ class IPAppliance(object):
 
         def _recognized_by_creds(provider, ems):
             if any(p_type in ems.type for p_type in RECOGNIZED_BY_CREDS):
-                creds_table = self.db["authentications"]
+                creds_table = self.db.client["authentications"]
                 try:
                     default_creds = provider.credentials['default']
                 except KeyError:
                     # Provider has no default credentials; it should be looked up by IP address,
                     # not by credentials
                     return False
-                auth = self.db.session.query(creds_table)\
+                auth = self.db.client.session.query(creds_table)\
                     .filter(creds_table.resource_id == ems.id)\
                     .filter(creds_table.userid == default_creds.principal)\
                     .filter(creds_table.password == self._encrypt_string(default_creds.secret))\
@@ -642,18 +600,18 @@ class IPAppliance(object):
     @property
     def has_os_infra(self):
         """If there is an OS Infra set up as a provider, some of the UI changes"""
-        ems_table = self.db["ext_management_systems"]
-        self.db.session.query(ems_table)
-        count = self.db.session.query(ems_table).filter(
+        ems_table = self.db.client["ext_management_systems"]
+        self.db.client.session.query(ems_table)
+        count = self.db.client.session.query(ems_table).filter(
             ems_table.type == "EmsOpenstackInfra").count()
         return count > 0
 
     @property
     def has_non_os_infra(self):
         """If there is any non-OS-infra set up as a provider, some of the UI changes"""
-        ems_table = self.db["ext_management_systems"]
-        self.db.session.query(ems_table)
-        count = self.db.session.query(ems_table).filter(
+        ems_table = self.db.client["ext_management_systems"]
+        self.db.client.session.query(ems_table)
+        count = self.db.client.session.query(ems_table).filter(
             ems_table.type != "EmsOpenstackInfra").count()
         return count > 0
 
@@ -826,16 +784,6 @@ class IPAppliance(object):
         return ssh_client
 
     @property
-    def db_ssh_client(self, **connect_kwargs):
-        # Not lazycached to allow for the db address changing
-        if self.is_db_internal:
-            return self.ssh_client
-        else:
-            if self._db_ssh_client is None:
-                self._db_ssh_client = self.ssh_client(hostname=self.db_address)
-            return self._db_ssh_client
-
-    @property
     def swap(self):
         """Retrieves the value of swap for the appliance. Might raise an exception if SSH fails.
 
@@ -878,19 +826,19 @@ class IPAppliance(object):
 
         # Now for the DB
         logger.info('Checking appliance database')
-        if not self.db_online:
+        if not self.db.online:
             # postgres isn't running, try to start it
-            cmd = 'systemctl restart {}-postgresql'.format(self.postgres_version)
-            result = self.db_ssh_client.run_command(cmd)
+            cmd = 'systemctl restart {}-postgresql'.format(self.db.postgres_version)
+            result = self.db.ssh_client.run_command(cmd)
             if result.rc != 0:
                 return 'postgres failed to start:\n{}'.format(result.output)
             else:
                 return 'postgres was not running for unknown reasons'
 
-        if not self.db_has_database:
+        if not self.db.has_database:
             return 'vmdb_production database does not exist'
 
-        if not self.db_has_tables:
+        if not self.db.has_tables:
             return 'vmdb_production has no tables'
 
         # try to start EVM
@@ -1050,54 +998,6 @@ class IPAppliance(object):
         store.terminalreporter.write_line('Asset precompilation done')
         return status
 
-    @logger_wrap("Backup database: {}")
-    def backup_database(self, database_path="/tmp/evm_db.backup", log_callback=None):
-        """Backup VMDB database
-
-        """
-        log_callback('Backing up database')
-        status, output = self.ssh_client.run_rake_command(
-            'evm:db:backup:local --trace -- --local-file "{}" --dbname vmdb_production'.format(
-                database_path))
-        if status != 0:
-            msg = 'Failed to backup database'
-            log_callback(msg)
-            raise ApplianceException(msg)
-
-    @logger_wrap("Restore database: {}")
-    def restore_database(self, database_path="/tmp/evm_db.backup", log_callback=None):
-        """Restore VMDB database
-
-        """
-        log_callback('Restoring database')
-        status, output = self.ssh_client.run_rake_command(
-            'evm:db:restore:local --trace -- --local-file "{}"'.format(database_path))
-        if status != 0:
-            msg = 'Failed to restore database on appl {}, output is {}'.format(self.address,
-                output)
-            log_callback(msg)
-            raise ApplianceException(msg)
-
-    @logger_wrap("Database setup: {}")
-    def setup_database(self, log_callback=None, **kwargs):
-        """Configure database
-
-        On downstream appliances, invokes the internal database setup.
-        On all appliances waits for database to be ready.
-
-        """
-        log_callback('Starting DB setup')
-        if self.version != LATEST:
-            # We only execute this on downstream appliances.
-            # TODO: Handle external DB setup. Probably pop the db_address and decide on that one.
-            self.enable_internal_db(log_callback=log_callback, **kwargs)
-
-        # Make sure the database is ready
-        wait_for(func=lambda: self.is_db_ready,
-            message='appliance db ready', delay=20, num_sec=1200)
-
-        log_callback('DB setup complete')
-
     @logger_wrap("Clone automate domain: {}")
     def clone_domain(self, source="ManageIQ", dest="Default", log_callback=None):
         """Clones Automate domain
@@ -1111,7 +1011,7 @@ class IPAppliance(object):
 
         # Make sure the database is ready
         log_callback('Waiting for database')
-        self.wait_for_db()
+        self.db.wait_for()
 
         # Make sure the working dir exists
         client.run_command('mkdir -p /tmp/{}'.format(source))
@@ -1358,183 +1258,6 @@ class IPAppliance(object):
         else:
             raise Exception("Couldn't get datetime: {}".format(output))
 
-    @logger_wrap("Loosen pgssl: {}")
-    def loosen_pgssl(self, with_ssl=False, log_callback=None):
-        """Loosens postgres connections"""
-
-        log_callback('Loosening postgres permissions')
-
-        # Init SSH client
-        client = self.ssh_client
-
-        # set root password
-        cmd = "psql -d vmdb_production -c \"alter user {} with password '{}'\"".format(
-            conf.credentials['database']['username'], conf.credentials['database']['password']
-        )
-        client.run_command(cmd)
-
-        # back up pg_hba.conf
-        scl = self.postgres_version
-        client.run_command('mv /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf '
-                           '/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf.sav'.format(scl=scl))
-
-        if with_ssl:
-            ssl = 'hostssl all all all cert map=sslmap'
-        else:
-            ssl = ''
-
-        # rewrite pg_hba.conf
-        write_pg_hba = dedent("""\
-        cat > /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf <<EOF
-        local all postgres,root trust
-        host all all 0.0.0.0/0 md5
-        {ssl}
-        EOF
-        """.format(ssl=ssl, scl=scl))
-        client.run_command(write_pg_hba)
-        client.run_command("chown postgres:postgres "
-            "/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf".format(scl=scl))
-
-        # restart postgres
-        status, out = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
-        return status
-
-    @logger_wrap("Enable internal DB: {}")
-    def enable_internal_db(self, region=0, key_address=None, db_password=None,
-                           ssh_password=None, log_callback=None):
-        """Enables internal database
-
-        Args:
-            region: Region number of the CFME appliance.
-            key_address: Address of CFME appliance where key can be fetched.
-
-        Note:
-            If key_address is None, a new encryption key is generated for the appliance.
-        """
-        log_callback('Enabling internal DB (region {}) on {}.'.format(region, self.address))
-        self.db_address = self.address
-        clear_property_cache(self, 'db')
-
-        client = self.ssh_client
-
-        # Defaults
-        db_password = db_password or conf.credentials['database']['password']
-        ssh_password = ssh_password or conf.credentials['ssh']['password']
-
-        if self.has_cli:
-            # use the cli
-            if key_address:
-                status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal --fetch-key {} -p {} -a {}'
-                    .format(region, key_address, db_password, ssh_password)
-                )
-            else:
-                status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal --force-key -p {}'
-                    .format(region, db_password)
-                )
-        else:
-            # no cli, use the enable internal db script
-            rbt_repl = {
-                'miq_lib': '/var/www/miq/lib',
-                'region': region,
-                'postgres_version': self.postgres_version
-            }
-
-            # Find and load our rb template with replacements
-            rbt = datafile.data_path_for_filename('enable-internal-db.rbt', scripts_path.strpath)
-            rb = datafile.load_data_file(rbt, rbt_repl)
-
-            # sent rb file over to /tmp
-            remote_file = '/tmp/{}'.format(fauxfactory.gen_alphanumeric())
-            client.put_file(rb.name, remote_file)
-
-            # Run the rb script, clean it up when done
-            status, out = client.run_command('ruby {}'.format(remote_file))
-            client.run_command('rm {}'.format(remote_file))
-
-        return status, out
-
-    @logger_wrap("Enable external DB: {}")
-    def enable_external_db(self, db_address, region=0, db_name=None,
-            db_username=None, db_password=None, log_callback=None):
-        """Enables external database
-
-        Args:
-            db_address: Address of the external database
-            region: Number of region to join
-            db_name: Name of the external DB
-            db_username: Username to access the external DB
-            db_password: Password to access the external DB
-
-        Returns a tuple of (exitstatus, script_output) for reporting, if desired
-        """
-        log_callback('Enabling external DB (db_address {}, region {}) on {}.'
-            .format(db_address, region, self.address))
-        # reset the db address and clear the cached db object if we have one
-        self.db_address = db_address
-        clear_property_cache(self, 'db')
-
-        # default
-        db_name = db_name or 'vmdb_production'
-        db_username = db_username or conf.credentials['database']['username']
-        db_password = db_password or conf.credentials['database']['password']
-
-        client = self.ssh_client
-
-        if self.has_cli:
-            # copy v2 key
-            master_client = client(hostname=self.db_address)
-            rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
-            master_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
-            client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
-
-            # enable external DB with cli
-            status, out = client.run_command(
-                'appliance_console_cli '
-                '--hostname {} --region {} --dbname {} --username {} --password {}'.format(
-                    self.db_address, region, db_name, db_username, db_password
-                )
-            )
-        else:
-            # no cli, use the enable external db script
-            rbt_repl = {
-                'miq_lib': '/var/www/miq/lib',
-                'host': self.db_address,
-                'region': region,
-                'database': db_name,
-                'username': db_username,
-                'password': db_password
-            }
-
-            # Find and load our rb template with replacements
-            rbt = datafile.data_path_for_filename('enable-internal-db.rbt', scripts_path.strpath)
-            rb = datafile.load_data_file(rbt, rbt_repl)
-
-            # Init SSH client and sent rb file over to /tmp
-            remote_file = '/tmp/{}'.format(fauxfactory.gen_alphanumeric())
-            client.put_file(rb.name, remote_file)
-
-            # Run the rb script, clean it up when done
-            status, out = client.run_command('ruby {}'.format(remote_file))
-            client.run_command('rm {}'.format(remote_file))
-
-        if status != 0:
-            self.log.error('error enabling external db')
-            self.log.error(out)
-            msg = ('Appliance {} failed to enable external DB running on {}'
-                  .format(self.address, db_address))
-            log_callback(msg)
-            raise ApplianceException(msg)
-
-        return status, out
-
-    def is_dedicated_db_active(self):
-        return_code, output = self.ssh_client.run_command(
-            "systemctl status {}-postgresql.service | grep running".format(
-                self.postgres_version))
-        return return_code == 0
-
     def _check_appliance_ui_wait_fn(self):
         # Get the URL, don't verify ssl cert
         try:
@@ -1614,7 +1337,7 @@ class IPAppliance(object):
                 log_callback('restarting evm service by killing processes')
                 status, msg = ssh.run_command(
                     'killall -9 ruby; systemctl restart {}-postgresql'.format(
-                        self.postgres_version))
+                        self.db.postgres_version))
                 self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
             else:
                 self._evm_service_command(
@@ -1796,17 +1519,6 @@ class IPAppliance(object):
                     'Appliance must be restarted before the netapp functionality can be used.')
         clear_property_cache(self, 'is_storage_enabled')
 
-    def wait_for_db(self, timeout=600):
-        """Waits for appliance database to be ready
-
-        Args:
-            timeout: Number of seconds to wait until timeout (default ``180``)
-        """
-        wait_for(func=lambda: self.is_db_ready,
-                 message='appliance.is_db_ready',
-                 delay=20,
-                 num_sec=timeout)
-
     def wait_for_ssh(self, timeout=600):
         """Waits for appliance SSH connection to be ready
 
@@ -1864,72 +1576,6 @@ class IPAppliance(object):
         except Exception as e:
             logger.exception(e)
             self.log.error('waiting for host address from yaml_config timedout')
-
-    @cached_property
-    def db_address(self):
-        # pulls the db address from the appliance by default, falling back to the appliance
-        # ip address (and issuing a warning) if that fails. methods that set up the internal
-        # db should set db_address to something else when they do that
-        if self.db_host:
-            return self.db_host
-        try:
-            db = self.wait_for_host_address()
-            if db is None:
-                return self.address
-            db = db.strip()
-            ip_addr = self.ssh_client.run_command('ip address show')
-            if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
-                # address is local, use the appliance address
-                return self.address
-            else:
-                return db
-        except (IOError, KeyError) as exc:
-            self.log.error('Unable to pull database address from appliance')
-            self.log.exception(exc)
-            return self.address
-
-    @cached_property
-    def db(self):
-        # slightly crappy: anything that changes self.db_address should also del(self.db)
-        return db.Db(self.db_address)
-
-    @property
-    def is_db_enabled(self):
-        if self.db_address is None:
-            return False
-        return True
-
-    @property
-    def is_db_internal(self):
-        if self.db_address == self.address:
-            return True
-        return False
-
-    @property
-    def is_db_ready(self):
-        # Using 'and' chain instead of all(...) to
-        # prevent calling more things after a step fails
-        return self.db_online and self.db_has_database and self.db_has_tables
-
-    @property
-    def db_online(self):
-        db_check_command = ('psql -U postgres -t  -c "select now()" postgres')
-        result = self.db_ssh_client.run_command(db_check_command)
-        return result.rc == 0
-
-    @property
-    def db_has_database(self):
-        db_check_command = ('psql -U postgres -t  -c "SELECT datname FROM pg_database '
-            'WHERE datname LIKE \'vmdb_%\';" postgres | grep -q vmdb_production')
-        result = self.db_ssh_client.run_command(db_check_command)
-        return result.rc == 0
-
-    @property
-    def db_has_tables(self):
-        db_check_command = ('psql -U postgres -t  -c "SELECT * FROM information_schema.tables '
-            'WHERE table_schema = \'public\';" vmdb_production | grep -q vmdb_production')
-        result = self.db_ssh_client.run_command(db_check_command)
-        return result.rc == 0
 
     @property
     def is_ssh_running(self):
@@ -1991,17 +1637,18 @@ class IPAppliance(object):
 
     @cached_property
     def evm_id(self):
-        miq_servers = self.db['miq_servers']
-        return self.db.session.query(miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
+        miq_servers = self.db.client['miq_servers']
+        return self.db.client.session.query(
+            miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
 
     @property
     def server_roles(self):
         """Return a dictionary of server roles from database"""
-        asr = self.db['assigned_server_roles']
-        sr = self.db['server_roles']
-        all_role_names = {row[0] for row in self.db.session.query(sr.name)}
+        asr = self.db.client['assigned_server_roles']
+        sr = self.db.client['server_roles']
+        all_role_names = {row[0] for row in self.db.client.session.query(sr.name)}
         # Query all active server roles assigned to this server
-        query = self.db.session\
+        query = self.db.client.session\
             .query(sr.name)\
             .join(asr, asr.server_role_id == sr.id)\
             .filter(asr.miq_server_id == self.evm_id)\
@@ -2047,11 +1694,11 @@ class IPAppliance(object):
             server id, server zone id)``
         """
         try:
-            miq_servers = self.db['miq_servers']
-            for region in self.db.session.query(self.db['miq_regions']):
+            miq_servers = self.db.client['miq_servers']
+            for region in self.db.client.session.query(self.db.client['miq_regions']):
                 reg_min = region.region * SEQ_FACT
                 reg_max = reg_min + SEQ_FACT
-                all_servers = self.db.session.query(miq_servers).all()
+                all_servers = self.db.client.session.query(miq_servers).all()
                 server = None
                 if len(all_servers) == 1:
                     # If there's only one server, it's the one we want
@@ -2063,7 +1710,7 @@ class IPAppliance(object):
                             server.id >= reg_min,
                             server.id < reg_max,
                             # second check because of openstack ip addresses
-                            server.ipaddress == self.db.hostname or server.guid == self.guid
+                            server.ipaddress == self.db.address or server.guid == self.guid
                         ])
                     servers = filter(server_filter, all_servers)
                     if servers:
@@ -2108,16 +1755,17 @@ class IPAppliance(object):
             self.product_name, r, r)
 
     def slave_server_zone_id(self):
-        table = self.db["miq_servers"]
+        table = self.db.client["miq_servers"]
         try:
-            return self.db.session.query(table.id).filter(table.is_master == 'false').first()[0]
+            return self.db.client.session.query(table.id).filter(
+                table.is_master == 'false').first()[0]
         except TypeError:
             return None
 
     def slave_server_name(self):
-        table = self.db["miq_servers"]
+        table = self.db.client["miq_servers"]
         try:
-            return self.db.session.query(table.name).filter(
+            return self.db.client.session.query(table.name).filter(
                 table.id == self.slave_server_zone_id()).first()[0]
         except TypeError:
             return None
@@ -2130,8 +1778,8 @@ class IPAppliance(object):
     def zone_description(self):
         zone_id = self.server_zone_id()
         zones = list(
-            self.db.session.query(self.db["zones"]).filter(
-                self.db["zones"].id == zone_id
+            self.db.client.session.query(self.db.client["zones"]).filter(
+                self.db.client["zones"].id == zone_id
             )
         )
         if zones:
@@ -2141,8 +1789,8 @@ class IPAppliance(object):
 
     def host_id(self, hostname):
         hosts = list(
-            self.db.session.query(self.db["hosts"]).filter(
-                self.db["hosts"].name == hostname
+            self.db.client.session.query(self.db.client["hosts"]).filter(
+                self.db.client["hosts"].name == hostname
             )
         )
         if hosts:
@@ -2251,8 +1899,8 @@ class IPAppliance(object):
             self.wait_for_web_ui()
 
     def check_domain_enabled(self, domain):
-        namespaces = self.db["miq_ae_namespaces"]
-        q = self.db.session.query(namespaces).filter(
+        namespaces = self.db.client["miq_ae_namespaces"]
+        q = self.db.client.session.query(namespaces).filter(
             namespaces.parent_id == None, namespaces.name == domain)  # NOQA (for is/==)
         try:
             return list(q)[0].enabled
@@ -2430,15 +2078,15 @@ class Appliance(IPAppliance):
         if kwargs.get('fix_ntp_clock', True) is True:
             self.fix_ntp_clock(log_callback=log_callback)
         if kwargs.get('db_address') is None:
-            self.enable_internal_db(
+            self.db.enable_internal(
                 region, key_address, db_password, ssh_password, log_callback=log_callback)
         else:
-            self.enable_external_db(
+            self.db.enable_external(
                 db_address, region, db_name, db_username, db_password,
                 log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         if kwargs.get('loosen_pgssl', True) is True:
-            self.loosen_pgssl(log_callback=log_callback)
+            self.db.loosen_pgssl(log_callback=log_callback)
 
         name_to_set = kwargs.get('name_to_set')
         if name_to_set is not None and name_to_set != self.name:
@@ -2641,7 +2289,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         my_appliance = provision_appliance('5.5.1.8', 'my_tests')
         my_appliance.fix_ntp_clock()
         ...other configuration...
-        my_appliance.enable_internal_db()
+        my_appliance.db.enable_internal()
         my_appliance.wait_for_web_ui()
         or
         my_appliance = provision_appliance('5.5.1.8', 'my_tests')

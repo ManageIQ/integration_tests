@@ -147,9 +147,9 @@ class RepositoryCollection(Navigatable):
 
         Returns: a :py:class:`list` of :py:class:`cfme.ansible.repositories.Repository` instances
         """
-        table = self.appliance.db["configuration_script_sources"]
+        table = self.appliance.db.client["configuration_script_sources"]
         result = []
-        for row in self.appliance.db.session.query(table):
+        for row in self.appliance.db.client.session.query(table):
             result.append(
                 Repository(
                     row.name,
@@ -216,8 +216,8 @@ class Repository(Navigatable):
 
     @property
     def db_object(self):
-        table = self.appliance.db["configuration_script_sources"]
-        return self.appliance.db.sessionmaker(autocommit=True).query(table).filter(
+        table = self.appliance.db.client["configuration_script_sources"]
+        return self.appliance.db.client.sessionmaker(autocommit=True).query(table).filter(
             table.name == self.name).first()
 
     def update(self, updates):

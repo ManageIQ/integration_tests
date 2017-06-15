@@ -36,24 +36,24 @@ class EventTool(object):
     @property
     def miq_event_definitions(self):
         """``miq_event_definitions`` table."""
-        return self.appliance.db['miq_event_definitions']
+        return self.appliance.db.client['miq_event_definitions']
 
     @property
     def event_streams(self):
         """``event_streams`` table."""
-        return self.appliance.db['event_streams']
+        return self.appliance.db.client['event_streams']
 
     @cached_property
     def event_streams_attributes(self):
         """``event_streams`` columns and python's column types"""
-        self.appliance.db._table('event_streams')
-        event_table = [tbl for tbl in self.appliance.db.metadata.sorted_tables
+        self.appliance.db.client._table('event_streams')
+        event_table = [tbl for tbl in self.appliance.db.client.metadata.sorted_tables
                        if tbl.name == 'event_streams'][-1]
         return [(cl.name, cl.type.python_type) for cl in event_table.c.values()]
 
     def query(self, *args, **kwargs):
         """Wrapper for the SQLAlchemy query method."""
-        return self.appliance.db.session.query(*args, **kwargs)
+        return self.appliance.db.client.session.query(*args, **kwargs)
 
     @cached_property
     def all_event_types(self):
@@ -84,10 +84,11 @@ class EventTool(object):
                 ('Type {} is not specified in the auto-coercion OBJECT_TABLE. '
                  'Pass a real id of the object or extend the table').format(target_type))
         table_name, name_column, id_column = self.OBJECT_TABLE[target_type]
-        table = self.appliance.db[table_name]
+        table = self.appliance.db.client[table_name]
         name_column = getattr(table, name_column)
         id_column = getattr(table, id_column)
-        o = self.appliance.db.session.query(id_column).filter(name_column == target_name).first()
+        o = self.appliance.db.client.session.query(id_column).filter(
+            name_column == target_name).first()
         if not o:
             raise ValueError('{} with name {} not found.'.format(target_type, target_name))
         return o[0]
