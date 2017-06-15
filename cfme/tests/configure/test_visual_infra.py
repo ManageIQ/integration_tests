@@ -4,7 +4,6 @@ from copy import copy
 import pytest
 
 from cfme import test_requirements
-from cfme.base import ui
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb
@@ -189,7 +188,7 @@ def test_infra_report_page_per_item(set_report):
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_infra_start_page(request, start_page):
+def test_infra_start_page(request, appliance, start_page):
     """ Tests start page
 
     Metadata:
@@ -198,8 +197,8 @@ def test_infra_start_page(request, start_page):
     request.addfinalizer(set_default_page)
     if visual.login_page != start_page:
         visual.login_page = start_page
-    ui.logout()
-    ui.login_admin()
+    appliance.server.logout()
+    appliance.server.login_admin()
     steps = map(lambda x: x.strip(), start_page.split('/'))
     longer_steps = copy(steps)
     longer_steps.insert(0, None)

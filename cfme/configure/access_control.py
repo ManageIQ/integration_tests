@@ -125,17 +125,15 @@ class User(Updateable, Pretty, Navigatable):
 
     def __enter__(self):
         if self._restore_user != self.appliance.user:
-            from cfme.login import logout
             logger.info('Switching to new user: %s', self.credential.principal)
             self._restore_user = self.appliance.user
-            logout()
+            self.appliance.server.logout()
             self.appliance.user = self
 
     def __exit__(self, *args, **kwargs):
         if self._restore_user != self.appliance.user:
-            from cfme.login import logout
             logger.info('Restoring to old user: %s', self._restore_user.credential.principal)
-            logout()
+            self.appliance.server.logout()
             self.appliance.user = self._restore_user
             self._restore_user = None
 

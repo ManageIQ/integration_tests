@@ -7,7 +7,6 @@ from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from cfme.configure.configuration import Tag, Category
 from utils import testgen
-from utils.appliance import current_appliance
 
 
 def pytest_generate_tests(metafunc):
@@ -69,7 +68,7 @@ def new_user(new_group):
                    group=new_group)
     user.create()
     yield user
-    current_appliance.server.login_admin()
+    user.appliance.server.login_admin()
     user.delete()
 
 
@@ -79,7 +78,7 @@ def tagged_vm(new_tag, setup_provider_modscope, provider):
     tag_vm = VM.factory(ownership_vm, provider)
     tag_vm.add_tag(new_tag)
     yield tag_vm
-    current_appliance.server.login_admin()
+    tag_vm.appliance.server.login_admin()
     tag_vm.remove_tag(new_tag)
 
 

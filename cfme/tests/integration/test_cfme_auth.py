@@ -4,7 +4,6 @@ import pytest
 from cfme.base.credential import Credential
 from cfme.configure.access_control import Group, User
 from utils import browser
-from utils.appliance import current_appliance
 from utils.conf import cfme_data
 
 
@@ -17,11 +16,6 @@ def pytest_generate_tests(metafunc):
     argvalues = [[authmode] for authmode in auth_modes]
     if 'configure_auth' in metafunc.fixturenames:
         metafunc.parametrize(['auth_mode'], argvalues)
-
-
-def auth_finalizer():
-    browser.browser().refresh()
-    current_appliance.server.login_admin()
 
 
 @pytest.fixture()
@@ -74,7 +68,7 @@ def user(request, data, add_group):
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(
     "add_group", ['create_group', 'retrieve_group', 'evm_default_group'])
-def test_auth_configure(request, configure_auth, group, user, data):
+def test_auth_configure(appliance, request, configure_auth, group, user, data):
     """This test checks whether different cfme auth modes are working correctly.
        authmodes tested as part of this test: ext_ipa, ext_openldap, miq_openldap
        e.g. test_auth[ext-ipa_create-group]
@@ -84,10 +78,11 @@ def test_auth_configure(request, configure_auth, group, user, data):
             * Make sure corresponding auth_modes data is updated to ``cfme_data.yaml``
             * this test fetches the auth_modes from yaml and generates tests per auth_mode.
     """
-    request.addfinalizer(auth_finalizer)
+
+    request.addfinalizer(appliance.server.login_admin)
     with user:
-        current_appliance.server.login(user, submit_method='click_on_login')
-        assert current_appliance.server.current_full_name() == data['fullname']
-        current_appliance.server.logout()
-    current_appliance.server.login_admin()
+        appliance.server.login(user, submit_method='click_on_login')
+        assert appliance.server.current_full_name() == data['fullname']
+        appliance.server.logout()
+    appliance.server.login_admin()
     assert user.exists is True

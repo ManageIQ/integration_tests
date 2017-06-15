@@ -7,7 +7,6 @@ from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from utils import testgen
 from utils.blockers import BZ
-from utils.appliance import current_appliance
 
 
 def pytest_generate_tests(metafunc):
@@ -23,44 +22,44 @@ pytestmark = [
 
 
 @pytest.yield_fixture(scope="module")
-def role_only_user_owned():
-    current_appliance.server.login_admin()
+def role_only_user_owned(appliance):
+    appliance.server.login_admin()
     role = ac.Role(name='role_only_user_owned_' + fauxfactory.gen_alphanumeric(),
                    vm_restriction='Only User Owned')
     role.create()
     yield role
-    current_appliance.server.login_admin()
+    appliance.server.login_admin()
     role.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def group_only_user_owned(role_only_user_owned):
+def group_only_user_owned(appliance, role_only_user_owned):
     group = ac.Group(description='group_only_user_owned_' + fauxfactory.gen_alphanumeric(),
                      role=role_only_user_owned.name)
     group.create()
     yield group
-    current_appliance.server.login_admin()
+    appliance.server.login_admin()
     group.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def role_user_or_group_owned():
-    current_appliance.server.login_admin()
+def role_user_or_group_owned(appliance):
+    appliance.server.login_admin()
     role = ac.Role(name='role_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
                    vm_restriction='Only User or Group Owned')
     role.create()
     yield role
-    current_appliance.server.login_admin()
+    appliance.server.login_admin()
     role.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def group_user_or_group_owned(role_user_or_group_owned):
+def group_user_or_group_owned(appliance, role_user_or_group_owned):
     group = ac.Group(description='group_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
                      role=role_user_or_group_owned.name)
     group.create()
     yield group
-    current_appliance.server.login_admin()
+    appliance.server.login_admin()
     group.delete()
 
 
@@ -72,26 +71,26 @@ def new_credential():
 
 
 @pytest.yield_fixture(scope="module")
-def user1(group_only_user_owned):
+def user1(appliance, group_only_user_owned):
     user1 = new_user(group_only_user_owned)
     yield user1
-    current_appliance.server.login_admin()
+    appliance.server.login_admin()
     user1.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def user2(group_only_user_owned):
+def user2(appliance, group_only_user_owned):
     user2 = new_user(group_only_user_owned)
     yield user2
-    current_appliance.server.login_admin()
+    appliance.server.login_admin()
     user2.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def user3(group_user_or_group_owned):
+def user3(appliance, group_user_or_group_owned):
     user3 = new_user(group_user_or_group_owned)
     yield user3
-    current_appliance.server.login_admin()
+    appliance.server.login_admin()
     user3.delete()
 
 
