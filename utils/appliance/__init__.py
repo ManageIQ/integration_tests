@@ -922,28 +922,38 @@ class IPAppliance(object):
             client.run_command('systemctl enable chronyd')
             client.run_command('systemctl daemon-reload')
 
-        # # deploy config and start chrony if it isn't running
+        # Retrieve time servers from yamls
         server_template = 'server {srv} iburst'
-        base_config = ['driftfile /var/lib/chrony/drift', 'makestep 10 10', 'rtcsync']
+        time_servers = []
         try:
             logger.debug('obtaining clock servers from config file')
             clock_servers = conf.cfme_data.get('clock_servers', {})
             for clock_server in clock_servers:
-                base_config.append(server_template.format(srv=clock_server))
+                time_servers.append(server_template.format(srv=clock_server))
         except IndexError:
             msg = 'No clock servers configured in cfme_data.yaml'
             log_callback(msg)
             raise ApplianceException(msg)
 
         filename = '/etc/chrony.conf'
-        config_file = "\n".join(base_config)
+        chrony_conf = client.run_command("cat {f}".format(f=filename)).output.strip().split('\n')
 
-        old_conf_file = client.run_command("cat {f}".format(f=filename)).output
-        conf_file_updated = False
-        if config_file != old_conf_file:
-            logger.debug("chrony's config file isn't equal to prepared one, overwriting it")
-            client.run_command('echo "{txt}" > {f}'.format(txt=config_file, f=filename))
-            conf_file_updated = True
+        # Get list of servers which will be added into chrony.conf
+        for line in chrony_conf:
+            for time_server in time_servers:
+                if time_server in line:
+                    # modified_chrony_file.append(line)
+                    index_of_element = time_servers.index(time_server)
+                    time_servers.pop(index_of_element)
+
+        if len(time_servers) > 0:
+            for time_server in time_servers:
+                chrony_conf.append(time_server)
+
+        modified_chrony_conf = "\n".join(chrony_conf)
+        client.run_command('echo "{txt}" > {f}'.format(txt=modified_chrony_conf, f=filename))
+        logger.info("chrony's config file updated")
+        conf_file_updated = True
 
         if conf_file_updated or client.run_command('systemctl status chronyd').rc != 0:
             logger.debug('restarting chronyd')
