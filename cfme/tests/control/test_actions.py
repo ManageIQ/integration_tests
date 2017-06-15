@@ -108,7 +108,7 @@ def configure_fleecing(request, appliance, provider, vm):
     setup_host_creds(provider.key, vm.api.host.name, remove_creds=True)
 
 
-def _get_vm(request, appliance, provider, template_name, vm_name):
+def _get_vm(request, provider, template_name, vm_name):
     if provider.one_of(RHEVMProvider):
         kwargs = {"cluster": provider.data["default_cluster"]}
     elif provider.one_of(OpenStackProvider):
@@ -161,7 +161,7 @@ def _get_vm(request, appliance, provider, template_name, vm_name):
 
     # Get the REST API object
     api = wait_for(
-        lambda: get_vm_object(appliance, vm_name),
+        lambda: get_vm_object(provider.appliance, vm_name),
         message="VM object {} appears in CFME".format(vm_name),
         fail_condition=None,
         num_sec=600,
@@ -172,14 +172,13 @@ def _get_vm(request, appliance, provider, template_name, vm_name):
 
 
 @pytest.fixture(scope="module")
-def vm(request, appliance, provider, setup_one_provider_modscope, small_template_modscope, vm_name):
-    return _get_vm(request, appliance, provider, small_template_modscope, vm_name)
+def vm(request, provider, setup_one_provider_modscope, small_template_modscope, vm_name):
+    return _get_vm(request, provider, small_template_modscope, vm_name)
 
 
 @pytest.fixture(scope="module")
-def vm_big(request, appliance, provider, setup_one_provider_modscope, big_template_modscope,
-        vm_name):
-    return _get_vm(request, appliance, provider, big_template_modscope, vm_name)
+def vm_big(request, provider, setup_one_provider_modscope, big_template_modscope, vm_name):
+    return _get_vm(request, provider, big_template_modscope, vm_name)
 
 
 @pytest.fixture(scope="module")
