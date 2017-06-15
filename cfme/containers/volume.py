@@ -23,6 +23,8 @@ match_page = partial(match_location, controller='container_volume',
 
 class Volume(Taggable, SummaryMixin, Navigatable):
 
+    PLURAL = 'Volumes'
+
     def __init__(self, name, provider, appliance=None):
         self.name = name
         self.provider = provider

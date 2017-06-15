@@ -26,6 +26,8 @@ match_page = partial(match_location, controller='container_image',
 
 class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssignable):
 
+    PLURAL = 'Container Images'
+
     def __init__(self, name, image_id, provider, appliance=None):
         self.name = name
         self.id = image_id

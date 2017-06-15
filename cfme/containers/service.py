@@ -21,6 +21,8 @@ match_page = partial(match_location, controller='container_service', title='Serv
 
 class Service(Taggable, Labelable, SummaryMixin, Navigatable):
 
+    PLURAL = 'Container Services'
+
     def __init__(self, name, project_name, provider, appliance=None):
         self.name = name
         self.provider = provider

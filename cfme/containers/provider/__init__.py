@@ -91,6 +91,7 @@ match_page = partial(match_location, controller='ems_container',
 
 
 class ContainersProvider(BaseProvider, Pretty):
+    PLURAL = 'Providers'
     provider_types = {}
     in_version = ('5.5', version.LATEST)
     category = "container"

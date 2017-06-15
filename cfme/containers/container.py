@@ -23,6 +23,8 @@ match_page = partial(match_location, controller='container', title='Containers')
 
 class Container(Taggable, SummaryMixin, Navigatable):
 
+    PLURAL = 'Containers'
+
     def __init__(self, name, pod, appliance=None):
         self.name = name
         self.pod = pod

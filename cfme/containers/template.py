@@ -23,6 +23,8 @@ match_page = partial(match_location, controller='container_templates', title='Co
 
 class Template(Taggable, Labelable, SummaryMixin, Navigatable):
 
+    PLURAL = 'Templates'
+
     def __init__(self, name, project_name, provider, appliance=None):
         self.name = name
         self.project_name = project_name

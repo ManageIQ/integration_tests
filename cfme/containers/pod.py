@@ -22,6 +22,8 @@ match_page = partial(match_location, controller='container_group', title='Pods')
 
 class Pod(Taggable, Labelable, SummaryMixin, Navigatable):
 
+    PLURAL = 'Pods'
+
     def __init__(self, name, project_name, provider, appliance=None):
         self.name = name
         self.provider = provider

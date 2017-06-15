@@ -79,6 +79,9 @@ class NodeAllView(NodeView):
 
 
 class Node(Taggable, Labelable, SummaryMixin, Navigatable):
+
+    PLURAL = 'Nodes'
+
     def __init__(self, name, provider, collection=None, appliance=None):
         self.name = name
         self.provider = provider
