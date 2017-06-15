@@ -447,11 +447,9 @@ class MgrAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version < '5.7':
-            self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
-        elif self.obj.appliance.version > '5.7' and self.obj.appliance.version < '5.8':
+        if self.obj.appliance.version < '5.8' or self.obj.type != 'Ansible Tower':
             self.prerequisite_view.navigation.select('Configuration', 'Management')
-        elif self.obj.appliance.version >= '5.8':
+        else:
             self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
 
     def resetter(self):

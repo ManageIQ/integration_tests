@@ -9,7 +9,7 @@ from utils.blockers import BZ
 
 pytest_generate_tests = generate(gen_func=config_managers)
 pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
-                                      config_manager_obj.type == "Ansible Tower"and
+                                      config_manager_obj.type == "Ansible Tower" and
                                       version.current_version() > "5.6"),
               pytest.mark.meta(blockers=[BZ(1393987)])]
 
