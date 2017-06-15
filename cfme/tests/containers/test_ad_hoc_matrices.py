@@ -5,9 +5,10 @@ from cfme.containers.provider import ContainersProvider, navigate_and_get_rows, 
 from utils.version import current_version
 from cfme.web_ui import toolbar, tabstrip, form_buttons
 from utils.appliance.implementations.ui import navigate_to
+from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.6"),
+    pytest.mark.uncollectif(lambda provider: current_version() < "5.7"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
@@ -24,11 +25,13 @@ def matrics_up_and_running(provider):
         raise Exception("hawkular failed to start!")
     logger.info("hawkular started successfully")
 
+
 def set_hawkular_without_validation(provider_object):
     navigate_to(provider_object, 'Details')
     toolbar.select('Configurations', 'Edit this Containers Provider')
     tabstrip.select_tab("Hawkular")
     form_buttons.validate()
+
 
 def navigate_to_ad_hoc_view(provider_object):
     navigate_to(provider_object, 'Details')
@@ -39,8 +42,6 @@ def is_ad_hoc_greyed(provider_object):
     navigate_to(provider_object, 'Details')
     return toolbar.is_greyed('Monitoring', 'Ad hoc Metrics')
 
-
-#set_hawkular_without_validation(provider)
 
 @pytest.mark.polarion('CMP-10643')
 def test_ad_hoc_metrics_overview(provider):
@@ -53,10 +54,15 @@ def test_ad_hoc_metrics_overview(provider):
 
 
 @pytest.mark.polarion('CMP-10645')
-def test_ad_hoc_metrics_select_filter(provider, appliance):
+def test_ad_hoc_metrics_select_filter(provider):
 
     chosen_provider = navigate_and_get_rows(provider, ContainersProvider, 1).pop()
     provider_object = obj_factory(ContainersProvider, chosen_provider, provider)
+
+    # in case of new provider was added wait for up to 25 minutes
+    # for system to collect first metrics
+    wait_for(lambda: provider_object.summary.status.last_metrics_collection != 'None',
+             delay=60, num_sec=25 * 60)
 
     view = navigate_to(provider_object, 'AdHoc')
     view.wait_for_filter_option_to_load()

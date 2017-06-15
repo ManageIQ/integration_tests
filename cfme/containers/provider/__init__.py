@@ -374,7 +374,7 @@ class adHocMetricsView(BaseLoggedInPage):
         wait_for(lambda :bool(self.filter_dropdown.items), delay=5, num_sec=60)
 
     def wait_for_results_to_load(self):
-        # TODO: add this fucntion
+        wait_for(lambda: bool(int(Text(self, 'h5.ng-binding').text.split()[0])), delay=5, num_sec=60)
 
     def apply_filter(self):
         form_buttons._fill_fb_bool(self.apply_btn, True)
