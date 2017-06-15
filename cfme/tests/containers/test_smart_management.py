@@ -64,6 +64,7 @@ def test_smart_management_add_tag(provider, test_item):
 
     # validate no tag set to project
     if test_item.obj is ContainersProvider:
+        pytest.skip("This test is currently skipped due to instability issues. ")
         obj_inst = provider
     else:
         obj_inst = test_item.obj.get_random_instances(provider, count=1).pop()

@@ -156,6 +156,7 @@ def test_properties(provider, test_item, soft_assert):
                                    .format(test_item.obj.__name__, instance.name, field))
 
 
+@pytest.mark.skip(reason="This test is currently skipped due to instability issues. ")
 def test_pods_conditions(provider, appliance, soft_assert):
 
     #  TODO: Add later this logic to mgmtsystem

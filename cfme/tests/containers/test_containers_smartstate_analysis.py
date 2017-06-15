@@ -7,7 +7,6 @@ from cfme.containers.image import Image
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 
 from utils import testgen
-from utils.blockers import BZ
 from utils.wait import wait_for
 from cfme.configure.tasks import delete_all_tasks
 
@@ -65,9 +64,8 @@ def test_check_compliance(random_image_instance):
     random_image_instance.check_compliance()
 
 
-@pytest.mark.meta(blockers=[BZ(1382326), BZ(1408255), BZ(1371896),
-                            BZ(1447655, forced_streams=['5.7', '5.8', 'upstream'])])
 @pytest.mark.parametrize(('test_item'), TEST_ITEMS)
+@pytest.mark.skip(reason="This test is currently skipped due to instability issues. ")
 def test_containers_smartstate_analysis(provider, test_item, soft_assert,
                                         delete_all_container_tasks,
                                         random_image_instance):
