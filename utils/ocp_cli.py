@@ -1,4 +1,4 @@
-from utils import conf
+from utils.conf import credentials
 from utils.log import logger
 from utils.ssh import SSHClient
 
@@ -10,19 +10,22 @@ class OcpCli(object):
 
         provider_cfme_data = provider.get_yaml_data()
         self.hostname = provider_cfme_data['hostname']
-        creds = conf.configuration.yaycl_config.credentials
-        if hasattr(creds, provider.key):
-            prov_creds = getattr(creds, provider.key)
-            self.username = prov_creds.username
-            self.password = prov_creds.password
-            self.ssh_client = SSHClient(hostname=self.hostname,
-                                        username=self.username,
-                                        password=self.password)
+        creds = provider_cfme_data.get('ssh_creds')
+
+        if not creds:
+            raise Exception('Could not find ssh_creds in provider\'s cfme data.')
+        if isinstance(creds, dict):
+            self.username = creds.get('username')
+            self.password = creds.get('password')
         else:
-            # Try with known hosts
-            self.ssh_client = SSHClient()
+            self.username = credentials[creds].get('username')
+            self.password = credentials[creds].get('password')
+
+        with SSHClient(hostname=self.hostname, username=self.username,
+                       password=self.password, look_for_keys=True) as ssh_client:
+            self.ssh_client = ssh_client
             self.ssh_client.load_system_host_keys()
-            self.ssh_client.connect(self.hostname)
+
         self._command_counter = 0
         self.log_line_limit = 500
 

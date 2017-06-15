@@ -17,14 +17,12 @@ from cfme.containers.template import Template
 from cfme.exceptions import SetLabelException
 
 from utils import testgen
-from utils.version import current_version
 from utils.wait import wait_for
 from utils.log import logger
 from utils.blockers import BZ
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider_modscope'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
