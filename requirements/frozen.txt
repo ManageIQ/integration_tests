@@ -31,7 +31,7 @@ docker-py==1.10.6
 docker-pycreds==0.2.1
 docutils==0.13.1
 dogpile.cache==0.6.3
-dump2polarion==0.4
+dump2polarion==0.5
 entrypoints==0.2.2
 enum34==1.1.6
 fauxfactory==2.1.0
@@ -187,7 +187,7 @@ webencodings==0.5.1
 websocket-client==0.40.0
 Werkzeug==0.12.2
 widgetastic.core==0.7.0
-widgetastic.patternfly==0.0.5
+widgetastic.patternfly==0.0.6
 widgetsnbextension==2.0.0
 wrapanapi==2.0.0
 wrapt==1.10.10
