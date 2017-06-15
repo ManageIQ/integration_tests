@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme import login
+
 from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.cloud.availability_zone import AvailabilityZone
@@ -13,6 +13,7 @@ from cfme.cloud.stack import Stack
 from cfme.cloud.tenant import Tenant
 from cfme.web_ui import paginator, toolbar as tb, match_location
 from utils.appliance.implementations.ui import navigate_to
+
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -139,7 +140,7 @@ def test_cloud_list_page_per_item(request, page, set_list):
 
 
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_cloud_start_page(request, start_page):
+def test_cloud_start_page(request, appliance, start_page):
     """ Tests start page
 
     Metadata:
@@ -147,8 +148,8 @@ def test_cloud_start_page(request, start_page):
     """
     request.addfinalizer(set_default_page)
     visual.login_page = start_page
-    login.logout()
-    login.login_admin()
+    appliance.server.logout()
+    appliance.server.login_admin()
     match_args = landing_pages[start_page]
     assert match_location(**match_args), "Landing Page Failed"
 
