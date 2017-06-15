@@ -74,8 +74,8 @@ class Schedule(Updateable, Pretty, Navigatable):
 
     @property
     def exists(self):
-        schedules = self.appliance.db["miq_schedules"]
-        return self.appliance.db.session\
+        schedules = self.appliance.db.client["miq_schedules"]
+        return self.appliance.db.client.session\
             .query(schedules.name)\
             .filter(schedules.name == self.name)\
             .count() > 0

@@ -156,9 +156,9 @@ class Namespace(Navigatable):
 
     @cached_property
     def db_id(self):
-        table = self.appliance.db['miq_ae_namespaces']
+        table = self.appliance.db.client['miq_ae_namespaces']
         try:
-            return self.appliance.db.session.query(table.id).filter(
+            return self.appliance.db.client.session.query(table.id).filter(
                 table.name == self.name,
                 table.parent_id == self.parent.db_id)[0]  # noqa
         except IndexError:
@@ -166,8 +166,8 @@ class Namespace(Navigatable):
 
     @property
     def db_object(self):
-        table = self.appliance.db['miq_ae_namespaces']
-        return self.appliance.db.session.query(table).filter(table.id == self.db_id).first()
+        table = self.appliance.db.client['miq_ae_namespaces']
+        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
 
     @property
     def parent(self):

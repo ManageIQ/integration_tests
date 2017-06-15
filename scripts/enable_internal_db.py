@@ -28,7 +28,7 @@ def main():
 
     print('Initializing Appliance Internal DB')
     ip_a = IPAppliance(args.address)
-    status, out = ip_a.enable_internal_db(args.region)
+    status, out = ip_a.db.enable_internal(args.region)
 
     if status != 0:
         print('Enabling DB failed with error:')

@@ -208,8 +208,8 @@ class BaseCondition(Updateable, Navigatable, Pretty):
 
         Returns: :py:class:`bool` signalizing the presence of the Condition in the database.
         """
-        conditions = self.appliance.db["conditions"]
-        return self.appliance.db.session\
+        conditions = self.appliance.db.client["conditions"]
+        return self.appliance.db.client.session\
             .query(conditions.description)\
             .filter(conditions.description == self.description)\
             .count() > 0

@@ -19,10 +19,10 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 def _db_select_query(name=None, server=None, provider=None):
     """Column order: `id`, `nativeid`, `name`, `server_name`,
     `feed`, `provider_name`, `host_name`, `status`"""
-    t_ems = current_appliance.db['ext_management_systems']
-    t_ms = current_appliance.db['middleware_servers']
-    t_md = current_appliance.db['middleware_deployments']
-    query = current_appliance.db.session.query(
+    t_ems = current_appliance.db.client['ext_management_systems']
+    t_ms = current_appliance.db.client['middleware_servers']
+    t_md = current_appliance.db.client['middleware_deployments']
+    query = current_appliance.db.client.session.query(
         t_md.id,
         t_md.nativeid.label('nativeid'),
         t_md.name,

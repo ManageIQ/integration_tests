@@ -155,8 +155,8 @@ class PolicyProfile(Updateable, Navigatable, Pretty):
 
         Returns: :py:class:`bool` signalizing the presence of the Policy Profile in database.
         """
-        miq_sets = self.appliance.db["miq_sets"]
-        return self.appliance.db.session\
+        miq_sets = self.appliance.db.client["miq_sets"]
+        return self.appliance.db.client.session\
             .query(miq_sets.description)\
             .filter(
                 miq_sets.description == self.description and miq_sets.set_type == "MiqPolicySet")\

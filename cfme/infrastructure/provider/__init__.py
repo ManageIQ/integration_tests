@@ -138,7 +138,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     @variable(alias='db')
     def num_datastore(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        results = list(self.appliance.db.engine.execute(
+        results = list(self.appliance.db.client.engine.execute(
             'SELECT DISTINCT storages.name, hosts.ems_id '
             'FROM ext_management_systems ems, hosts, storages st, host_storages hst'
             'WHERE hosts.id=hst.host_id AND '
@@ -162,9 +162,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     @num_host.variant('db')
     def num_host_db(self):
-        ext_management_systems = self.appliance.db["ext_management_systems"]
-        hosts = self.appliance.db["hosts"]
-        hostlist = list(self.appliance.db.session.query(hosts.name)
+        ext_management_systems = self.appliance.db.client["ext_management_systems"]
+        hosts = self.appliance.db.client["hosts"]
+        hostlist = list(self.appliance.db.client.session.query(hosts.name)
                         .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
                         .filter(ext_management_systems.name == self.name))
         return len(hostlist)
@@ -196,9 +196,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     @num_cluster.variant('db')
     def num_cluster_db(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = self.appliance.db["ext_management_systems"]
-        clusters = self.appliance.db["ems_clusters"]
-        clulist = list(self.appliance.db.session.query(clusters.name)
+        ext_management_systems = self.appliance.db.client["ext_management_systems"]
+        clusters = self.appliance.db.client["ems_clusters"]
+        clulist = list(self.appliance.db.client.session.query(clusters.name)
                        .join(ext_management_systems,
                              clusters.ems_id == ext_management_systems.id)
                        .filter(ext_management_systems.name == self.name))

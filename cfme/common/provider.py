@@ -459,7 +459,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Args:
             table_str: Name of the table; e.g. 'vms' or 'hosts'
         """
-        res = self.appliance.db.engine.execute(
+        res = self.appliance.db.client.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, {0} "
             "WHERE {0}.ems_id=ext_management_systems.id "
@@ -724,9 +724,9 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     @variable(alias="db")
     def num_template(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        ext_management_systems = self.appliance.db["ext_management_systems"]
-        vms = self.appliance.db["vms"]
-        temlist = list(self.appliance.db.session.query(vms.name)
+        ext_management_systems = self.appliance.db.client["ext_management_systems"]
+        vms = self.appliance.db.client["vms"]
+        temlist = list(self.appliance.db.client.session.query(vms.name)
                        .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
                        .filter(ext_management_systems.name == self.name)
                        .filter(vms.template == True))  # NOQA
@@ -739,9 +739,9 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     @variable(alias="db")
     def num_vm(self):
         """ Returns the providers number of instances, as shown on the Details page."""
-        ext_management_systems = self.appliance.db["ext_management_systems"]
-        vms = self.appliance.db["vms"]
-        vmlist = list(self.appliance.db.session.query(vms.name)
+        ext_management_systems = self.appliance.db.client["ext_management_systems"]
+        vms = self.appliance.db.client["vms"]
+        vmlist = list(self.appliance.db.client.session.query(vms.name)
                       .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
                       .filter(ext_management_systems.name == self.name)
                       .filter(vms.template == False))  # NOQA

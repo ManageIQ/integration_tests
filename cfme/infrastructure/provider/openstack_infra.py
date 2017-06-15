@@ -129,8 +129,8 @@ class OpenstackInfraProvider(InfraProvider):
         """
         nodes = self.mgmt.list_node()
         nodes_dict = {i.name: i for i in nodes}
-        query = self.appliance.db.session.query(
-            self.appliance.db['hosts'], 'guid')
+        query = self.appliance.db.client.session.query(
+            self.appliance.db.client['hosts'], 'guid')
         node_uuid = str(nodes_dict[name])
         for db_node in query.all():
             return db_node.hosts.name == str(node_uuid.uuid)

@@ -41,7 +41,7 @@ def main():
 
     print('Initializing Appliance External DB')
     ip_a = IPAppliance(args.address)
-    status, out = ip_a.enable_external_db(args.db_address, args.region, args.database,
+    status, out = ip_a.db.enable_external(args.db_address, args.region, args.database,
         args.username, args.password)
 
     if status != 0:

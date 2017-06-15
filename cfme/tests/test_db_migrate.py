@@ -24,7 +24,7 @@ def pytest_generate_tests(metafunc):
 def temp_appliance_extended_db(temp_appliance_preconfig):
     app = temp_appliance_preconfig
     app.evmserverd.stop()
-    app.extend_db_partition()
+    app.db.extend_partition()
     app.start_evm_service()
     return app
 
@@ -52,7 +52,7 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
 
     # Stop EVM service and drop vmdb_production DB
     app.evmserverd.stop()
-    app.drop_database()
+    app.db.drop()
 
     # restore new DB and migrate it
     with app.ssh_client as ssh:

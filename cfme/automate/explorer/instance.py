@@ -250,9 +250,9 @@ class Instance(Navigatable, Copiable):
 
     @cached_property
     def db_id(self):
-        table = self.appliance.db['miq_ae_instances']
+        table = self.appliance.db.client['miq_ae_instances']
         try:
-            return self.appliance.db.session.query(table.id).filter(
+            return self.appliance.db.client.session.query(table.id).filter(
                 table.name == self.name,
                 table.class_id == self.klass.db_id)[0]  # noqa
         except IndexError:
@@ -260,8 +260,8 @@ class Instance(Navigatable, Copiable):
 
     @property
     def db_object(self):
-        table = self.appliance.db['miq_ae_instances']
-        return self.appliance.db.session.query(table).filter(table.id == self.db_id).first()
+        table = self.appliance.db.client['miq_ae_instances']
+        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
 
     @property
     def klass(self):

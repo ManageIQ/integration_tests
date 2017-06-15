@@ -88,7 +88,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
         cloud_provider.wait_for_a_provider()
 
         providers_appl1 = appl1.ipapp.managed_known_providers
-        appl1.ipapp.backup_database()
+        appl1.ipapp.db.backup()
 
     # Fetch v2_key and DB backup from the first appliance
     with appl1.ipapp.ssh_client as ssh:
@@ -105,8 +105,8 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     with appl2.ipapp:
         # Restore DB on the second appliance
         appl2.ipapp.evmserverd.stop()
-        appl2.ipapp.drop_database()
-        appl2.ipapp.restore_database()
+        appl2.ipapp.db.drop()
+        appl2.ipapp.db.restore()
         appl2.ipapp.start_evm_service()
         appl2.ipapp.wait_for_web_ui()
         wait_for_a_provider()

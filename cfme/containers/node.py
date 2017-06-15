@@ -53,9 +53,9 @@ class NodeCollection(Navigatable):
 
     def all(self):
         # container_nodes table has ems_id, join with ext_mgmgt_systems on id for provider name
-        node_table = self.appliance.db['container_nodes']
-        ems_table = self.appliance.db['ext_management_systems']
-        node_query = self.appliance.db.session.query(node_table.name, ems_table.name)\
+        node_table = self.appliance.db.client['container_nodes']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        node_query = self.appliance.db.client.session.query(node_table.name, ems_table.name)\
             .join(ems_table, node_table.ems_id == ems_table.id)
         nodes = []
         for name, provider_name in node_query.all():

@@ -38,8 +38,8 @@ details_page = Region(infoblock_type='detail')
 
 def _db_select_query(name=None, type=None):
     """column order: `id`, `name`, `type`"""
-    t_ems = current_appliance.db['ext_management_systems']
-    query = current_appliance.db.session.query(t_ems.id, t_ems.name, t_ems.type)
+    t_ems = current_appliance.db.client['ext_management_systems']
+    query = current_appliance.db.client.session.query(t_ems.id, t_ems.name, t_ems.type)
     if name:
         query = query.filter(t_ems.name == name)
     if type:

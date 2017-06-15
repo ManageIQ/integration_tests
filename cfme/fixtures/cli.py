@@ -26,7 +26,7 @@ def dedicated_db_appliance(app_creds, appliance):
                 command_set = (
                     'ap', '', '8', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
             apps[0].appliance_console.run_commands(command_set)
-            wait_for(apps[0].is_dedicated_db_active)
+            wait_for(apps[0].db.is_dedicated_active)
             yield apps[0]
     else:
         raise Exception("Can't setup dedicated db on appliance below 5.7 builds")

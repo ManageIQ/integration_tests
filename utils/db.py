@@ -72,7 +72,7 @@ class Db(Mapping):
     def __init__(self, hostname=None, credentials=None):
         self._table_cache = {}
         if hostname is None:
-            self.hostname = store.current_appliance.db_address
+            self.hostname = store.current_appliance.db.address
         else:
             self.hostname = hostname
 

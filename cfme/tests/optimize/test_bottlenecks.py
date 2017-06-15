@@ -14,7 +14,7 @@ from utils.version import current_version
 def temp_appliance_extended_db(temp_appliance_preconfig):
     app = temp_appliance_preconfig
     app.evmserverd.stop()
-    app.extend_db_partition()
+    app.db.extend_partition()
     app.start_evm_service()
     return app
 
@@ -22,13 +22,13 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
 @pytest.fixture(scope="module")
 def db_tbl(temp_appliance_extended_db):
     app = temp_appliance_extended_db
-    return app.db['bottleneck_events']
+    return app.db.client['bottleneck_events']
 
 
 @pytest.fixture(scope="module")
 def db_events(temp_appliance_extended_db, db_tbl):
     app = temp_appliance_extended_db
-    return app.db.session.query(db_tbl.timestamp,
+    return app.db.client.session.query(db_tbl.timestamp,
     db_tbl.resource_type, db_tbl.resource_name, db_tbl.event_type, db_tbl.severity, db_tbl.message)
 
 
@@ -36,7 +36,7 @@ def db_events(temp_appliance_extended_db, db_tbl):
 def db_restore(temp_appliance_extended_db):
     app = temp_appliance_extended_db
     app.evmserverd.stop()
-    app.drop_database()
+    app.db.drop()
     db_storage_hostname = conf.cfme_data['bottlenecks']['hostname']
     db_storage_ssh = SSHClient(hostname=db_storage_hostname, **conf.credentials['bottlenecks'])
     with db_storage_ssh as ssh_client:
@@ -61,7 +61,7 @@ def db_restore(temp_appliance_extended_db):
         ssh_client.put_file(region_filename, "/var/www/miq/vmdb/REGION")
         ssh_client.put_file(guid_filename, "/var/www/miq/vmdb/GUID")
 
-    app.restore_database()
+    app.db.restore()
     app.start_evm_service()
     app.wait_for_web_ui()
 

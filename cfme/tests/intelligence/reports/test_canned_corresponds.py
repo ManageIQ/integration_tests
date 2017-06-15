@@ -90,7 +90,7 @@ def test_cluster_relationships(soft_assert):
 @pytest.mark.usefixtures('setup_provider')
 def test_operations_vm_on(soft_assert, appliance):
 
-    adb = appliance.db
+    adb = appliance.db.client
     vms = adb['vms']
     hosts = adb['hosts']
     storages = adb['storages']
@@ -129,7 +129,7 @@ def test_datastores_summary(soft_assert, appliance):
     """Checks Datastores Summary report with DB data. Checks all data in report, even rounded
     storage sizes."""
 
-    adb = appliance.db
+    adb = appliance.db.client
     storages = adb['storages']
     vms = adb['vms']
     host_storages = adb['host_storages']

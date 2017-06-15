@@ -229,7 +229,7 @@ class ContainersProvider(BaseProvider, Pretty):
     @variable(alias='db')
     def num_container(self):
         # Containers are linked to providers through container definitions and then through pods
-        res = self.appliance.db.engine.execute(
+        res = self.appliance.db.client.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, container_groups, container_definitions, containers "
             "WHERE containers.container_definition_id=container_definitions.id "

@@ -25,10 +25,10 @@ def _db_select_query(name=None, feed=None, provider=None, server_group=None,
                      product=None):
     """column order: `id`, `name`, `hostname`, `feed`, `product`,
     `provider_name`, `ems_ref`, `properties`, `server_group_name`"""
-    t_ms = current_appliance.db['middleware_servers']
-    t_msgr = current_appliance.db['middleware_server_groups']
-    t_ems = current_appliance.db['ext_management_systems']
-    query = current_appliance.db.session.query(
+    t_ms = current_appliance.db.client['middleware_servers']
+    t_msgr = current_appliance.db.client['middleware_server_groups']
+    t_ems = current_appliance.db.client['ext_management_systems']
+    query = current_appliance.db.client.session.query(
         t_ms.id, t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
         t_ems.name.label('provider_name'),
         t_ms.ems_ref, t_ms.properties,

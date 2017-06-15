@@ -286,8 +286,8 @@ class Alert(Updateable, Navigatable, Pretty):
 
         Returns: :py:class:`bool` signalizing the presence of the Alert in the database.
         """
-        alerts = self.appliance.db["miq_alerts"]
-        return self.appliance.db.session\
+        alerts = self.appliance.db.client["miq_alerts"]
+        return self.appliance.db.client.session\
             .query(alerts.description)\
             .filter(alerts.description == self.description)\
             .count() > 0

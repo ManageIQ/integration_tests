@@ -53,7 +53,7 @@ def vporizer(appliance):
     """Grabbing vim_performance_operating_ranges table data for nodes and projects.
     In case that no such data exists, inserting fake rows"""
 
-    db = appliance.db
+    db = appliance.db.client
     vpor = db['vim_performance_operating_ranges']
 
     container_nodes = db['container_nodes']

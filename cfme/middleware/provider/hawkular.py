@@ -80,7 +80,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @variable(alias='db')
     def num_server_group(self):
-        res = self.appliance.db.engine.execute(
+        res = self.appliance.db.client.engine.execute(
             "SELECT count(*) "
             "FROM ext_management_systems, middleware_domains, middleware_server_groups "
             "WHERE middleware_domains.ems_id=ext_management_systems.id "
@@ -125,8 +125,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @is_refreshed.variant('db')
     def is_refreshed_db(self):
-        ems = self.appliance.db['ext_management_systems']
-        dates = self.appliance.db.session.query(ems.created_on,
+        ems = self.appliance.db.client['ext_management_systems']
+        dates = self.appliance.db.client.session.query(ems.created_on,
                                        ems.updated_on).filter(ems.name == self.name).first()
         return dates.updated_on > dates.created_on
 

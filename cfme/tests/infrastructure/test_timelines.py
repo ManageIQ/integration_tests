@@ -153,8 +153,8 @@ class TestInfraVmEventRESTAPI(object):
         for response in responses:
             assert response["success"] is True, "Could not add event"
 
-        events = appliance.db["event_streams"]
-        events_list = list(appliance.db.session.query(events).filter(
+        events = appliance.db.client["event_streams"]
+        events_list = list(appliance.db.client.session.query(events).filter(
             events.vm_name == vm,
             events.message == event["event_message"],
             events.event_type == event["event_type"],
@@ -194,8 +194,8 @@ class TestInfraVmEventRESTAPI(object):
             assert response["success"] is True, "Could not add event"
 
         # DB check
-        lifecycle_events = appliance.db["lifecycle_events"]
-        events_list = list(appliance.db.session.query(lifecycle_events).filter(
+        lifecycle_events = appliance.db.client["lifecycle_events"]
+        events_list = list(appliance.db.client.session.query(lifecycle_events).filter(
             lifecycle_events.message == event["message"],
             lifecycle_events.status == event["status"],
             lifecycle_events.event == event["event"],

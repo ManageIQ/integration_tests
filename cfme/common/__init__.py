@@ -136,12 +136,13 @@ class Taggable(object):
         self.load_details(refresh=True)
         if not self.db_id or not self.taggable_type:
             raise KeyError("'db_id' and/or 'taggable_type' not set")
-        t_cls1 = aliased(self.appliance.db['classifications'])
-        t_cls2 = aliased(self.appliance.db['classifications'])
-        t_tgg = aliased(self.appliance.db['taggings'])
-        query = self.appliance.db.session.query(t_cls1.tag_id, t_tgg.taggable_id.label('db_id'),
-                                       t_cls2.description.label('category'),
-                                       t_cls1.description.label('tag_name'), t_cls1.single_value)\
+        t_cls1 = aliased(self.appliance.db.client['classifications'])
+        t_cls2 = aliased(self.appliance.db.client['classifications'])
+        t_tgg = aliased(self.appliance.db.client['taggings'])
+        query = self.appliance.db.client.session.query(
+            t_cls1.tag_id, t_tgg.taggable_id.label('db_id'),
+            t_cls2.description.label('category'),
+            t_cls1.description.label('tag_name'), t_cls1.single_value)\
             .join(t_cls2, t_cls1.parent_id == t_cls2.id)\
             .join(t_tgg, t_tgg.tag_id == t_cls1.tag_id)\
             .filter(t_tgg.taggable_id == self.db_id)\

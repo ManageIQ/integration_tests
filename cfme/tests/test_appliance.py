@@ -70,7 +70,7 @@ def test_evm_running(appliance):
 def test_service_enabled(appliance, service):
     """Verifies if key services are configured to start on boot up"""
     if service == 'postgresql':
-        service = '{}-postgresql'.format(appliance.postgres_version)
+        service = '{}-postgresql'.format(appliance.db.postgres_version)
     if pytest.store.current_appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
     else:
@@ -164,7 +164,7 @@ def test_db_connection(appliance):
     This looks for a row in the miq_databases table, which should always exist
     on an appliance with a working database and UI
     """
-    databases = appliance.db.session.query(appliance.db['miq_databases']).all()
+    databases = appliance.db.client.session.query(appliance.db.client['miq_databases']).all()
     assert len(databases) > 0
 
 
