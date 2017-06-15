@@ -17,6 +17,7 @@ from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
 from utils.providers import ProviderFilter
+from utils.generators import random_vm_name
 from cfme import test_requirements
 
 pytestmark = [
@@ -133,18 +134,18 @@ def setup_candu():
 
 @pytest.fixture(scope="module")
 def vm_name():
-    return "test-alerts-{}".format(fauxfactory.gen_alpha(4))
+    return random_vm_name(context="alert")
 
 
 @pytest.yield_fixture(scope="function")
 def vm(vm_name, full_template, provider, setup_one_provider_modscope):
     vm_obj = VM.factory(vm_name, provider, template_name=full_template["name"])
     vm_obj.create_on_provider(allow_skip="default")
-    provider.mgmt.start_vm(vm_name)
-    provider.mgmt.wait_vm_running(vm_name)
+    provider.mgmt.start_vm(vm_obj.name)
+    provider.mgmt.wait_vm_running(vm_obj.name)
     # In order to have seamless SSH connection
     vm_ip, _ = wait_for(
-        lambda: provider.mgmt.current_ip_address(vm_name),
+        lambda: provider.mgmt.current_ip_address(vm_obj.name),
         num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address.")
     wait_for(
         net_check, [ports.SSH, vm_ip], {"force": True},
@@ -156,8 +157,8 @@ def vm(vm_name, full_template, provider, setup_one_provider_modscope):
         vm_obj.wait_candu_data_available(timeout=20 * 60)
     yield vm_obj
     try:
-        if provider.mgmt.does_vm_exist(vm_name):
-            provider.mgmt.delete_vm(vm_name)
+        if provider.mgmt.does_vm_exist(vm_obj.name):
+            provider.mgmt.delete_vm(vm_obj.name)
         provider.refresh_provider_relationships()
     except Exception as e:
         logger.exception(e)
