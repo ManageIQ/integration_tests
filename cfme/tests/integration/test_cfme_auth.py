@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme import login
 from cfme.base.credential import Credential
 from cfme.configure.access_control import Group, User
 from utils import browser
+from utils.appliance import current_appliance
 from utils.conf import cfme_data
+
 
 RETRIEVE_GROUP = 'retrieve_group'
 CREATE_GROUP = 'create_group'
@@ -20,7 +21,7 @@ def pytest_generate_tests(metafunc):
 
 def auth_finalizer():
     browser.browser().refresh()
-    login.login_admin()
+    current_appliance.server.login_admin()
 
 
 @pytest.fixture()
@@ -85,8 +86,8 @@ def test_auth_configure(request, configure_auth, group, user, data):
     """
     request.addfinalizer(auth_finalizer)
     with user:
-        login.login(user, submit_method='click_on_login')
-        assert login.current_full_name() == data['fullname']
-        login.logout()
-    login.login_admin()
+        current_appliance.server.login(user, submit_method='click_on_login')
+        assert current_appliance.server.current_full_name() == data['fullname']
+        current_appliance.server.logout()
+    current_appliance.server.login_admin()
     assert user.exists is True

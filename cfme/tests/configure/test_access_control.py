@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from time import sleep
 import traceback
 
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
 from utils import error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import login, test_requirements
+from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
@@ -18,6 +17,7 @@ from cfme.infrastructure import virtual_machines as vms
 from cfme.services.myservice import MyService
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.configure import tasks
+from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
@@ -87,7 +87,7 @@ def test_user_login():
         with user:
             navigate_to(Server, 'Dashboard')
     finally:
-        login.login_admin()
+        current_appliance.server.login_admin()
 
 
 @pytest.mark.tier(3)
@@ -220,7 +220,7 @@ def test_current_user_login_delete(request):
         group=group_user)
     user.create()
     request.addfinalizer(user.delete)
-    request.addfinalizer(login.login_admin)
+    request.addfinalizer(current_appliance.server.login_admin())
     with user:
         if version.current_version() >= '5.7':
             navigate_to(user, 'Details')
@@ -446,7 +446,7 @@ def test_permission_edit(request, product_features, action):
     Ensures that changes in permissions are enforced on next login
     """
     product_features = version.pick(product_features)
-    request.addfinalizer(login.login_admin)
+    request.addfinalizer(current_appliance.server.login_admin())
     role_name = fauxfactory.gen_alphanumeric()
     role = Role(name=role_name,
         vm_restriction=None,
@@ -462,7 +462,7 @@ def test_permission_edit(request, product_features, action):
             action()
         except Exception:
             pytest.fail('Incorrect permissions set')
-    login.login_admin()
+    current_appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
                                      [(k, False) for k in product_features]
                  })
@@ -527,7 +527,7 @@ def test_permissions(role, allowed_actions, disallowed_actions):
     fails = {}
     try:
         with user:
-            login.login(user)
+            current_appliance.server.login_admin()
             for name, action_thunk in allowed_actions.items():
                 try:
                     action_thunk()
@@ -545,7 +545,7 @@ def test_permissions(role, allowed_actions, disallowed_actions):
                     message = "{}\n\n{}".format(message, failure)
                 raise Exception(message)
     finally:
-        login.login_admin()
+        current_appliance.server.login_admin()
 
 
 def single_task_permission_test(product_features, actions):
@@ -652,12 +652,12 @@ def test_user_change_password(request):
     )
     user.create()
     request.addfinalizer(user.delete)
-    request.addfinalizer(login.login_admin)
+    request.addfinalizer(current_appliance.server.login_admin())
     with user:
-        assert not login.logged_in()
-        login.login(user)
-        assert login.current_full_name() == user.name
-    login.login_admin()
+        assert not current_appliance.server.logged_in()
+        current_appliance.server.login(user)
+        assert current_appliance.server.current_full_name() == user.name
+    current_appliance.server.login_admin()
     with update(user):
         user.credential = Credential(
             principal=user.credential.principal,
@@ -665,9 +665,9 @@ def test_user_change_password(request):
             verify_secret="another_very_secret",
         )
     with user:
-        assert not login.logged_in()
-        login.login(user)
-        assert login.current_full_name() == user.name
+        assert not current_appliance.server.logged_in()
+        current_appliance.server.login(user)
+        assert current_appliance.server.current_full_name() == user.name
 
 
 # Tenant/Project test cases

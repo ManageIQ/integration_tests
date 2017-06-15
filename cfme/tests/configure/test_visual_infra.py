@@ -3,8 +3,8 @@
 from copy import copy
 import pytest
 
-from cfme import login
 from cfme import test_requirements
+from cfme.base import ui
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb
@@ -198,8 +198,8 @@ def test_infra_start_page(request, start_page):
     request.addfinalizer(set_default_page)
     if visual.login_page != start_page:
         visual.login_page = start_page
-    login.logout()
-    login.login_admin()
+    ui.logout()
+    ui.login_admin()
     steps = map(lambda x: x.strip(), start_page.split('/'))
     longer_steps = copy(steps)
     longer_steps.insert(0, None)
