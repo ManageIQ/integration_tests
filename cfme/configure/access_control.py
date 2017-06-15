@@ -3,6 +3,7 @@ from widgetastic_manageiq import UpDownSelect, SummaryFormItem
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
+from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Table, Text
 
 from cfme.base.credential import Credential
@@ -367,19 +368,23 @@ class GroupForm(ConfigurationView):
     class my_company_tags(Tab):     # noqa
         """ Represents 'My company tags' tab in Group Form """
         TAB_NAME = "My Company Tags"
-        tag_tree = CheckableBootstrapTreeview('tags_treebox')
+        tree_locator = VersionPick({
+            Version.lowest(): 'tagsbox',
+            '5.8': 'tags_treebox'}
+        )
+        tree = CheckableBootstrapTreeview(tree_locator)
 
     @View.nested
     class hosts_and_clusters(Tab):      # noqa
         """ Represents 'Hosts and Clusters' tab in Group Form """
         TAB_NAME = "Hosts & Clusters"
-        hosts_clusters_tree = CheckableBootstrapTreeview('hac_treebox')
+        tree = CheckableBootstrapTreeview('hac_treebox')
 
     @View.nested
     class vms_and_templates(Tab):       # noqa
         """ Represents 'VM's and Templates' tab in Group Form """
         TAB_NAME = "VMs & Templates"
-        vms_templates_tree = CheckableBootstrapTreeview('vat_treebox')
+        tree = CheckableBootstrapTreeview('vat_treebox')
 
 
 class AddGroupView(GroupForm):
@@ -670,13 +675,13 @@ class Group(Updateable, Pretty, Navigatable):
         updated_result = False
         if item is not None:
             if update:
-                if tab_view.tag_tree.node_checked(item):
-                    tab_view.tag_tree.uncheck_node(item)
+                if tab_view.tree.node_checked(*item):
+                    tab_view.tree.uncheck_node(*item)
                 else:
-                    tab_view.tag_tree.check_node(item)
+                    tab_view.tree.check_node(*item)
                 updated_result = True
             else:
-                tab_view.tag_tree.fill(item)
+                tab_view.tree.fill(item)
         return updated_result
 
     @property

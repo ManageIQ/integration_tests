@@ -8,18 +8,21 @@ from utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.automate.explorer import AutomateExplorer # NOQA
+from cfme.automate.explorer import AutomateExplorer  # NOQA
 from cfme.base import Server
-from cfme.control.explorer import ControlExplorer # NOQA
+from cfme.control.explorer import ControlExplorer  # NOQA
 from cfme.exceptions import OptionNotAvailable
 from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.configure import tasks
+from fixtures.provider import setup_one_or_skip
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
+from utils.providers import ProviderFilter
 from utils.update import update
 from utils import version
 
@@ -29,10 +32,13 @@ usergrp = Group(description='EvmGroup-user')
 group_table = Table("//div[@id='main_div']//table")
 
 
-# due to pytest.mark.meta(blockers=[1035399]), non admin users can't login
-# with no providers added
-pytestmark = [test_requirements.rbac,
-              pytest.mark.usefixtures("infra_provider")]
+pytestmark = test_requirements.rbac
+
+
+@pytest.fixture(scope='module')
+def a_provider(request):
+    prov_filter = ProviderFilter(classes=[VMwareProvider])
+    return setup_one_or_skip(request, filters=[prov_filter])
 
 
 def new_credential():
@@ -63,6 +69,19 @@ def new_role():
 
 def get_tag():
     return InfoBlock('Smart Management', 'My Company Tags').text
+
+
+@pytest.fixture(scope='function')
+def check_item_visibility(tag):
+    def _check_item_visibility(item, user_restricted):
+        category_name = ' '.join((tag.category.display_name, '*'))
+        item.edit_tags(category_name, tag.display_name)
+        with user_restricted:
+            assert item.exists
+        item.remove_tag(category_name, tag.display_name)
+        with user_restricted:
+            assert not item.exists
+    return _check_item_visibility
 
 
 # User test cases
@@ -190,7 +209,7 @@ def test_delete_default_user():
     user = User(name='Administrator')
     navigate_to(User, 'All')
     column = version.pick({version.LOWEST: "Name",
-        "5.4": "Full Name"})
+                           "5.4": "Full Name"})
     row = records_table.find_row_by_cells({column: user.name})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Delete selected Users', invokes_alert=True)
@@ -230,6 +249,21 @@ def test_current_user_login_delete(request):
                 user.delete()
 
 
+@pytest.mark.tier(3)
+def test_tagvis_user(user_restricted, check_item_visibility):
+    """ Tests if group honour tag visibility feature
+    Prerequirement:
+        Catalog, tag, role, group and restricted user should be created
+
+    Steps:
+        1. As admin add tag to group
+        2. Login as restricted user, group is visible for user
+        3. As admin remove tag from group
+        4. Login as restricted user, group is not visible for user
+    """
+    check_item_visibility(user_restricted, user_restricted)
+
+
 @pytest.mark.tier(2)
 # Group test cases
 def test_group_crud():
@@ -237,6 +271,34 @@ def test_group_crud():
     group.create()
     with update(group):
         group.description = group.description + "edited"
+    group.delete()
+
+
+@pytest.mark.tier(2)
+def test_group_crud_with_tag(a_provider, category, tag):
+    """Test for verifying group create with tag defined
+
+    Steps:
+        * Login as Admin user
+        * Navigate to add group page
+        * Fill all fields
+        * Set tag
+        * Save group
+    """
+    group = Group(
+        description='grp{}'.format(fauxfactory.gen_alphanumeric()),
+        role='EvmRole-approver',
+        tag=[category.display_name, tag.display_name],
+        host_cluster=[a_provider.data['name']],
+        vm_template=[a_provider.data['name'], a_provider.data['datacenters'][0],
+                     'Discovered virtual machine']
+    )
+    group.create()
+    with update(group):
+        group.tag = [tag.category.display_name, tag.display_name]
+        group.host_cluster = [a_provider.data['name']]
+        group.vm_template = [a_provider.data['name'], a_provider.data['datacenters'][0],
+                             'Discovered virtual machine']
     group.delete()
 
 
@@ -334,6 +396,21 @@ def test_edit_sequence_usergroups(request):
     assert original_sequence != changed_sequence, "Edit Sequence Failed"
 
 
+@pytest.mark.tier(3)
+def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
+    """ Tests if group honour tag visibility feature
+    Prerequirement:
+        Catalog, tag, role, group and restricted user should be created
+
+    Steps:
+        1. As admin add tag to group
+        2. Login as restricted user, group is visible for user
+        3. As admin remove tag from group
+        4. Login as restricted user, group is not visible for user
+    """
+    check_item_visibility(group_with_tag, user_restricted)
+
+
 # Role test cases
 @pytest.mark.tier(2)
 def test_role_crud():
@@ -367,9 +444,9 @@ def test_rolename_duplicate_validation():
 def test_delete_default_roles():
     flash_msg = version.pick({
         '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-            "because of dependent entitlements"),
+                "because of dependent entitlements"),
         '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-            "because of dependent miq_groups")})
+                "because of dependent miq_groups")})
     role = Role(name='EvmRole-approver')
     with error.expected(flash_msg.format(role.name)):
         role.delete()
@@ -386,9 +463,9 @@ def test_edit_default_roles():
 def test_delete_roles_with_assigned_group():
     flash_msg = version.pick({
         '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-            "because of dependent entitlements"),
+                "because of dependent entitlements"),
         '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-            "because of dependent miq_groups")})
+                "because of dependent miq_groups")})
     role = new_role()
     role.create()
     group = new_group(role=role.name)
@@ -448,9 +525,9 @@ def test_permission_edit(appliance, request, product_features, action):
     request.addfinalizer(appliance.server.login_admin())
     role_name = fauxfactory.gen_alphanumeric()
     role = Role(name=role_name,
-        vm_restriction=None,
-        product_features=[(['Everything'], False)] +    # role_features
-            [(k, True) for k in product_features])
+                vm_restriction=None,
+                product_features=[(['Everything'], False)] +  # role_features
+                                 [(k, True) for k in product_features])
     role.create()
     group = new_group(role=role.name)
     group.create()
@@ -480,8 +557,8 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
     """
     name = name or fauxfactory.gen_alphanumeric()
     return lambda: Role(name=name,
-        vm_restriction=vm_restriction,
-        product_features=product_features)
+                        vm_restriction=vm_restriction,
+                        product_features=product_features)
 
 
 def _go_to(cls, dest='All'):
