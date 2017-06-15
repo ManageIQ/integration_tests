@@ -58,21 +58,6 @@ def set_random_tag(instance):
     return Tag(display_name=random_tag.text, category=random_cat.text)
 
 
-def obj_factory(obj_creator, row, provider):
-
-    factory = {"Provider": lambda row: {"name": row.name.text},
-               "Project": lambda row: {"name": row.name.text, "provider": provider},
-               "Pod": lambda row: {"name": row.name.text, "provider": provider},
-               "Node": lambda row: {"name": row.name.text, "provider": provider},
-               "Template": lambda row: {"name": row.name.text, "provider": provider},
-               "Container": lambda row: {"name": row.name.text, "pod": row.pod_name.text},
-               "Image": lambda row: {"name": row.name.text,
-                                     "tag": row.tag.text, "provider": provider},
-               "Image_Registry": lambda row: {"host": row.host.text, "provider": provider}}
-
-    return obj_creator(**factory[get_object_name(obj_creator)](row))
-
-
 @pytest.mark.parametrize('test_item',
                          TEST_ITEMS, ids=[item.args[1].pretty_id() for item in TEST_ITEMS])
 def test_smart_management_add_tag(provider, test_item):
