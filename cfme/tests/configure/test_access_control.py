@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from time import sleep
 import traceback
 
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
 from utils import error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import login, test_requirements
+from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.automate.explorer import AutomateExplorer # NOQA
 from cfme.base import Server
@@ -87,7 +86,7 @@ def test_user_login():
         with user:
             navigate_to(Server, 'Dashboard')
     finally:
-        login.login_admin()
+        user.appliance.login_admin()
 
 
 @pytest.mark.tier(3)
@@ -203,7 +202,7 @@ def test_delete_default_user():
 @pytest.mark.meta(automates=[BZ(1090877)])
 @pytest.mark.meta(blockers=[BZ(1408479)], forced_streams=["5.7", "upstream"])
 @pytest.mark.uncollectif(lambda: version.current_version() >= "5.7")
-def test_current_user_login_delete(request):
+def test_current_user_login_delete(request, appliance):
     """Test for deleting current user login.
 
     Steps:
@@ -220,7 +219,7 @@ def test_current_user_login_delete(request):
         group=group_user)
     user.create()
     request.addfinalizer(user.delete)
-    request.addfinalizer(login.login_admin)
+    request.addfinalizer(appliance.server.login_admin)
     with user:
         if version.current_version() >= '5.7':
             navigate_to(user, 'Details')
@@ -441,12 +440,12 @@ def _test_vm_removal():
             ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
              'Provision VMs']]},
         _test_vm_provision)])
-def test_permission_edit(request, product_features, action):
+def test_permission_edit(request, appliance, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
     """
     product_features = version.pick(product_features)
-    request.addfinalizer(login.login_admin)
+    request.addfinalizer(appliance.server.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
     role = Role(name=role_name,
         vm_restriction=None,
@@ -462,7 +461,7 @@ def test_permission_edit(request, product_features, action):
             action()
         except Exception:
             pytest.fail('Incorrect permissions set')
-    login.login_admin()
+    appliance.server.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
                                      [(k, False) for k in product_features]
                  })
@@ -516,7 +515,7 @@ cat_name = "Settings"
           'automate explorer': _go_to(Server, 'AutomateExplorer')},
       {}]])
 @pytest.mark.meta(blockers=[1262759])
-def test_permissions(role, allowed_actions, disallowed_actions):
+def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     # create a user and role
     role = role()  # call function to get role
     role.create()
@@ -527,7 +526,7 @@ def test_permissions(role, allowed_actions, disallowed_actions):
     fails = {}
     try:
         with user:
-            login.login(user)
+            appliance.server.login(user)
             for name, action_thunk in allowed_actions.items():
                 try:
                     action_thunk()
@@ -545,7 +544,7 @@ def test_permissions(role, allowed_actions, disallowed_actions):
                     message = "{}\n\n{}".format(message, failure)
                 raise Exception(message)
     finally:
-        login.login_admin()
+        appliance.server.login_admin()
 
 
 def single_task_permission_test(product_features, actions):
@@ -639,7 +638,7 @@ def test_permissions_vm_provisioning():
 
 
 @pytest.mark.tier(2)
-def test_user_change_password(request):
+def test_user_change_password(request, appliance):
     user = User(
         name="user {}".format(fauxfactory.gen_alphanumeric()),
         credential=Credential(
@@ -652,12 +651,12 @@ def test_user_change_password(request):
     )
     user.create()
     request.addfinalizer(user.delete)
-    request.addfinalizer(login.login_admin)
+    request.addfinalizer(appliance.server.login_admin())
     with user:
-        assert not login.logged_in()
-        login.login(user)
-        assert login.current_full_name() == user.name
-    login.login_admin()
+        appliance.server.logout()
+        appliance.server.login(user)
+        assert appliance.server.current_full_name() == user.name
+    appliance.server.login_admin()
     with update(user):
         user.credential = Credential(
             principal=user.credential.principal,
@@ -665,9 +664,9 @@ def test_user_change_password(request):
             verify_secret="another_very_secret",
         )
     with user:
-        assert not login.logged_in()
-        login.login(user)
-        assert login.current_full_name() == user.name
+        appliance.server.logout()
+        appliance.server.login(user)
+        assert appliance.server.current_full_name() == user.name
 
 
 # Tenant/Project test cases
