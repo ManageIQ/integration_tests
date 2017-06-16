@@ -208,27 +208,12 @@ class IPAppliance(object):
         return cls(appliance=self, *args, **kwargs)
 
     def unregister(self):
-        """ unregisters an appliance from RHSM/SAT6 this runs twice due to make sure its removed """
+        """ unregisters appliance from RHSM/SAT6 """
         self.ssh_client.run_command('subscription-manager remove --all')
         self.ssh_client.run_command('subscription-manager unregister')
         self.ssh_client.run_command('subscription-manager clean')
         self.ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
         self.ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
-        self.ssh_client.run_command('subscription-manager remove --all')
-        self.ssh_client.run_command('subscription-manager unregister')
-        self.ssh_client.run_command('subscription-manager clean')
-        self.ssh_client.run_command('mv -f /etc/rhsm/rhsm.conf.kat-backup /etc/rhsm/rhsm.conf')
-        self.ssh_client.run_command('rpm -qa | grep katello-ca-consumer | xargs rpm -e')
-
-    def is_unregistration_complete(self, used_repo_or_channel):
-        """ Checks if an appliance is correctly unregistered with RHSM or SAT6 """
-        ret, out = self.ssh_client.run_command('yum repolist enabled')
-        # Check that the specified (or default) repo (can be multiple, separated by a space)
-        # is enabled and that there are packages available
-        for repo in used_repo_or_channel.split(' '):
-            if (repo not in out) or (not re.search(r'repolist: [^0]', out)):
-                return True
-        return False
 
     def is_registration_complete(self, used_repo_or_channel):
         """ Checks if an appliance is correctly registered with RHSM or SAT6 """

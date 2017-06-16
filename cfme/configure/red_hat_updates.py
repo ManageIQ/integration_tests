@@ -82,9 +82,8 @@ registration_buttons = Region(
 
 
 service_types = {
-    'rhsm': 'sm_hosted',
-    'sat5': 'rhn_satellite',
-    'sat6': 'rhn_satellite6'
+    'rhsm': 'Red Hat Subscription Management',
+    'sat6': 'Red Hat Satellite 6'
 }
 
 
