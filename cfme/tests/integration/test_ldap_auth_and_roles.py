@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.configure.access_control import simple_user
-from cfme.login import login, login_admin
 from utils.conf import credentials
 from utils.testgen import auth_groups, generate
 from utils import version
@@ -12,14 +11,14 @@ pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='ldap')
 @pytest.mark.uncollect('Needs to be fixed after menu removed')
 @pytest.mark.tier(2)
 def test_group_roles(
-        request, configure_ldap_auth_mode, group_name, group_data, infra_provider):
+        request, appliance, configure_ldap_auth_mode, group_name, group_data, infra_provider):
     """Basic default LDAP group role RBAC test
 
     Validates expected menu and submenu names are present for default
     LDAP group roles
 
     """
-    request.addfinalizer(login_admin)
+    request.addfinalizer(appliance.server.login_admin)
 
     # This should be removed but currently these roles are subject to a bug
     if version.current_version() >= '5.4' and group_name in ['evmgroup-administrator',
@@ -37,5 +36,5 @@ def test_group_roles(
     except KeyError:
         pytest.fail('No match in credentials file for group "{}"'.format(group_name))
 
-    login(simple_user(username, password))
+    appliance.server.login(simple_user(username, password))
     # assert set(menu.nav.visible_pages()) == set(group_data)

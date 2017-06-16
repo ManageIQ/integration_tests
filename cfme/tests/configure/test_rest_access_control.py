@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
-from cfme.login import login, login_admin
 from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import roles as _roles
 from cfme.rest.gen_data import tenants as _tenants
@@ -353,14 +352,14 @@ class TestUsersViaREST(object):
         Metadata:
             test_flag: rest
         """
-        request.addfinalizer(login_admin)
+        request.addfinalizer(appliance.server.login_admin)
         user = users[0]
         new_password = fauxfactory.gen_alphanumeric()
         user.action.edit(password=new_password)
         assert appliance.rest_api.response.status_code == 200
         cred = Credential(principal=user.userid, secret=new_password)
         new_user = User(credential=cred)
-        login(new_user)
+        appliance.server.login(new_user)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])

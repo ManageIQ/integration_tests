@@ -1,7 +1,6 @@
 import pytest
 from os import path as os_path
 
-from cfme.login import login
 from utils import version
 from utils.appliance import ApplianceException
 from utils.blockers import BZ
@@ -114,4 +113,4 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
         .format(app.user.credential.secret))
     assert rc == 0, "Failed to change UI password of {} to {}:" \
                     .format(app.user.credential.principal, app.user.credential.secret, out)
-    login(app.user)
+    app.server.login(app.user)

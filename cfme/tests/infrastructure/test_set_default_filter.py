@@ -4,7 +4,6 @@ from functools import partial
 import pytest
 
 from cfme.infrastructure import host, datastore
-from cfme.login import login_admin, logout
 from cfme.web_ui.search import search_box
 from utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc
@@ -16,7 +15,7 @@ from cfme.infrastructure.datastore import Datastore
 pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("virtualcenter_provider")]
 
 
-def test_set_default_host_filter(request):
+def test_set_default_host_filter(request, appliance):
     """ Test for setting default filter for hosts."""
 
     # Add cleanup finalizer
@@ -29,8 +28,8 @@ def test_set_default_host_filter(request):
     navigate_to(Host, 'All')
     list_acc.select('Filters', 'Status / Running', by_title=False)
     pytest.sel.click(host.default_host_filter_btn)
-    logout()
-    login_admin()
+    appliance.server.logout()
+    appliance.server.login_admin()
     navigate_to(Host, 'All')
     assert list_acc.is_selected('Filters', 'Status / Running (Default)', by_title=False),\
         'Status / Running filter not set as default'
