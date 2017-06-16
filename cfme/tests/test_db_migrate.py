@@ -108,10 +108,14 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
         rc, out = app.ssh_client.run_rake_command("evm:start")
         assert rc == 0, "Couldn't start evmserverd: {}".format(out)
     app.wait_for_web_ui(timeout=600)
-    # Reset user's password, just in case (necessary for customer DBs)
-    rc, out = ssh.run_rails_command(
-        '"u = User.find_by_userid(\'admin\'); u.password = \'{}\'; u.save!"'
-        .format(app.user.credential.secret))
-    assert rc == 0, "Failed to change UI password of {} to {}:" \
-                    .format(app.user.credential.principal, app.user.credential.secret, out)
-    login(app.user)
+
+    with app:
+        # Reset user's password, just in case (necessary for customer DBs)
+        rc, out = app.ssh_client.run_rails_command(
+            '"u = User.find_by_userid(\'admin\'); u.password = \'{}\'; u.save!"'
+            .format(app.user.credential.secret))
+        assert rc == 0, "Failed to change UI password of {} to {}:" \
+                        .format(app.user.credential.principal, app.user.credential.secret, out)
+        login(app.user)
+        for prov in app.managed_known_providers:
+            prov.validate_stats(ui=True)
