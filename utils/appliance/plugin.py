@@ -7,17 +7,21 @@ class AppliancePluginException(Exception):
     pass
 
 
+@attr.s(slots=True)
 class AppliancePluginDescriptor(object):
-    def __init__(self, cls, args, kwargs):
-        self.cls = cls
-        self.args = args
-        self.kwargs = kwargs
+    cls = attr.ib()
+    args = attr.ib()
+    kwargs = attr.ib()
+    cache = attr.ib(init=False, default=attr.Factory(dict), repr=False)
 
     def __get__(self, o, t=None):
         if o is None:
             return self
 
-        return self.cls(o, *self.args, **self.kwargs)
+        if o not in self.cache:
+            self.cache[o] = self.cls(o, *self.args, **self.kwargs)
+
+        return self.cache[o]
 
 
 @attr.s
