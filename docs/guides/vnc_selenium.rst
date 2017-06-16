@@ -150,15 +150,19 @@ An example of the yaml is below:
                platform: LINUX
                browserName: 'chrome'
                # for the selenium-server version 3.4.0 you will need to use 
-               # following capabilities if you have written 'firefox' in browserName
-               acceptInsecureCerts: true
-               ensureCleanSession: true
+               # following capabilities instead of using CLI arguments (uncomment next 2 lines)
+               # and do not use '-ensureCleanSession -trustAllSSLCertificates' in java -jar command
+               # which is used to launch selenium-server in xstartup script as shown 
+               # in 'Configure the startup script' section
+               # acceptInsecureCerts: true
+               # ensureCleanSession: true
 
 
 Note: 
-You might see issue related 'mouseMoveTo' which is open on GitHub:
- * https://github.com/SeleniumHQ/selenium/issues/4008
- * https://github.com/SeleniumHQ/selenium/issues/3808
+If you are using selenium server 3.4.0 then you might see issue related 'mouseMoveTo' which is open on GitHub:
+* https://github.com/SeleniumHQ/selenium/issues/4008
+* https://github.com/SeleniumHQ/selenium/issues/3808
+
 
 Security
 --------
