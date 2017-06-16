@@ -7,7 +7,6 @@ import cfme.provisioning
 from cfme import test_requirements
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.fixtures import pytest_selenium as sel
-from cfme.login import login_admin
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
@@ -44,7 +43,8 @@ def vm_name():
 
 
 @pytest.yield_fixture(scope="module")
-def generated_request(infra_provider, provider_data, provisioning, template_name, vm_name):
+def generated_request(appliance,
+                      infra_provider, provider_data, provisioning, template_name, vm_name):
     """Creates a provision request, that is not automatically approved, and returns the search data.
 
     After finishing the test, request should be automatically deleted.
@@ -91,7 +91,7 @@ def generated_request(infra_provider, provider_data, provisioning, template_name
     yield request_cells
 
     browser().get(store.base_url)
-    login_admin()
+    appliance.server.login_admin()
 
     requests.delete_request(request_cells)
     flash.assert_no_errors()
