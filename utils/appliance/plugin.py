@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+from weakref import WeakKeyDictionary, proxy
+
 import attr
 from cached_property import cached_property
 
 
 class AppliancePluginException(Exception):
-    pass
+    """Base class for all custom exceptions raised from plugins."""
 
 
 @attr.s(slots=True)
@@ -12,7 +14,7 @@ class AppliancePluginDescriptor(object):
     cls = attr.ib()
     args = attr.ib()
     kwargs = attr.ib()
-    cache = attr.ib(init=False, default=attr.Factory(dict), repr=False)
+    cache = attr.ib(init=False, default=attr.Factory(WeakKeyDictionary), repr=False)
 
     def __get__(self, o, t=None):
         if o is None:
@@ -26,7 +28,20 @@ class AppliancePluginDescriptor(object):
 
 @attr.s
 class AppliancePlugin(object):
-    appliance = attr.ib(repr=False)
+    """Base class for all appliance plugins.
+
+    Usage:
+
+        .. code-block:: python
+
+            class IPAppliance(object):
+                # ...
+
+                foo = FooPlugin.declare(parameter='value')
+
+    Instance of such plugin is then created upon first access.
+    """
+    appliance = attr.ib(repr=False, convert=proxy)
 
     @cached_property
     def logger(self):
