@@ -12,7 +12,11 @@ from cfme.web_ui.search import search_box
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from utils.log import logger
-from . import cfg_btn, life_btn, pol_btn
+
+# TODO get rid of this garbage with widgets
+cfg_btn = partial(tb.select, 'Configuration')
+life_btn = partial(tb.select, 'Lifecycle')
+pol_btn = partial(tb.select, 'Policy')
 
 list_table = PagedTable(table_locator="//div[@id='list_grid']//table")
 
