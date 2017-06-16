@@ -98,8 +98,11 @@ class OpenshiftProvider(ContainersProvider):
     def from_config(prov_config, prov_key, appliance=None):
         token_creds = OpenshiftProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
-        hawkular_hostname = prov_config['endpoints']['hawkular'].hostname
-        hawkular_api_port = prov_config['endpoints']['hawkular'].api_port
+        try:
+            hawkular_hostname = prov_config['endpoints']['hawkular'].hostname
+        except:
+            hawkular_hostname = None
+            hawkular_api_port = None
         if hawkular_hostname and hawkular_api_port:
             hawkular = True
         else:
