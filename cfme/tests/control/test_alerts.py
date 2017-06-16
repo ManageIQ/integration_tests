@@ -124,10 +124,11 @@ def set_performance_capture_threshold(appliance):
 
 
 @pytest.yield_fixture(scope="function")
-def setup_candu():
+def setup_candu(vm):
     candu.enable_all()
     with server_roles_enabled('ems_metrics_coordinator', 'ems_metrics_collector',
             'ems_metrics_processor'):
+        vm.wait_candu_data_available(timeout=20 * 60)
         yield
     candu.disable_all()
 
@@ -153,8 +154,6 @@ def vm(vm_name, full_template, provider, setup_one_provider_modscope):
     if not vm_obj.exists:
         provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
-    if provider.one_of(*CANDU_PROVIDER_TYPES):
-        vm_obj.wait_candu_data_available(timeout=20 * 60)
     yield vm_obj
     try:
         if provider.mgmt.does_vm_exist(vm_obj.name):
