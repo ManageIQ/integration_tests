@@ -100,9 +100,12 @@ class OpenshiftProvider(ContainersProvider):
             prov_config['credentials'], cred_type='token')
         try:
             hawkular_hostname = prov_config['endpoints']['hawkular'].hostname
+            hawkular_api_port = prov_config['endpoints']['hawkular'].api_port
+            hawkular_sec_protocol = prov_config['endpoints']['hawkular'].sec_protocol
         except:
             hawkular_hostname = None
             hawkular_api_port = None
+            hawkular_sec_protocol = None
         if hawkular_hostname and hawkular_api_port:
             hawkular = True
         else:
@@ -115,7 +118,7 @@ class OpenshiftProvider(ContainersProvider):
             hostname=prov_config['endpoints']['default'].hostname or prov_config['ipaddress'],
             api_port=prov_config['endpoints']['default'].api_port,
             sec_protocol=prov_config['endpoints']['default'].sec_protocol,
-            hawkular_sec_protocol=prov_config['endpoints']['hawkular'].sec_protocol,
+            hawkular_sec_protocol=hawkular_sec_protocol,
             hawkular_hostname=hawkular_hostname,
             hawkular_api_port=hawkular_api_port,
             hawkular=hawkular,
