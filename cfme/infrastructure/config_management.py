@@ -46,7 +46,7 @@ page = Region(locators={
     'list_table_config_systems': cfm_mgr_table()})
 
 add_manager_btn = form_buttons.FormButton('Add')
-edit_manager_btn = form_buttons.FormButton('Save changes')
+edit_manager_btn = form_buttons.FormButton('Save')
 cfg_btn = partial(tb.select, 'Configuration')
 RELOAD_LOC = "//button[@name='summary_reload']"
 
@@ -233,8 +233,14 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         sel.click(RELOAD_LOC)
         tb.select('List View')
         wait_for(self._does_profile_exist, num_sec=300, delay=20, fail_func=sel.refresh)
-        return [ConfigProfile(row['name'].text, self) for row in
-                page.list_table_config_profiles.rows()]
+        config_profiles = []
+        for row in page.list_table_config_profiles.rows():
+            if self.type == 'Ansible Tower' and version.current_version() >= '5.8':
+                name = row['name'].text
+            else:
+                name = row['Description'].text
+            config_profiles.append(ConfigProfile(name=name, manager=self))
+        return config_profiles
 
     @property
     def systems(self):
@@ -261,8 +267,10 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
     @property
     def quad_name(self):
-        return version.pick({'5.7': '{} Configuration Manager'.format(self.name),
-                             '5.8': '{} Automation Manager'.format(self.name)})
+        if version.current_version() >= '5.8' and self.type == 'Ansible Tower':
+            return '{} Automation Manager'.format(self.name)
+        else:
+            return '{} Configuration Manager'.format(self.name)
 
 
 def get_config_manager_from_config(cfg_mgr_key):
@@ -286,7 +294,7 @@ def _fill_credential(form, cred, validate=None):
         flash.assert_no_errors()
 
 
-class ConfigProfile(Pretty):
+class ConfigProfile(Pretty, Navigatable):
     """Configuration profile object (foreman-side hostgroup)
 
     Args:
@@ -295,7 +303,8 @@ class ConfigProfile(Pretty):
     """
     pretty_attrs = ['name', 'manager']
 
-    def __init__(self, name, manager):
+    def __init__(self, name, manager, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.manager = manager
 
@@ -319,11 +328,12 @@ class ConfigProfile(Pretty):
         return list()
 
 
-class ConfigSystem(Pretty):
+class ConfigSystem(Pretty, Navigatable):
 
     pretty_attrs = ['name', 'manager_key']
 
-    def __init__(self, name, profile):
+    def __init__(self, name, profile, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.profile = profile
 
@@ -453,14 +463,14 @@ class MgrAll(CFMENavigateStep):
             self.prerequisite_view.navigation.select('Automation', 'Ansible Tower', 'Explorer')
 
     def resetter(self):
-        if self.obj.appliance.version >= '5.8':
+        if self.obj.appliance.version >= '5.8' and self.obj.type == 'Ansible Tower':
             accordion.tree('Providers', 'All Ansible Tower Providers')
         else:
             accordion.tree('Providers', 'All Configuration Manager Providers')
         tb.select('Grid View')
 
     def am_i_here(self):
-        if self.obj.appliance.version >= '5.8':
+        if self.obj.appliance.version >= '5.8' and self.obj.type == 'Ansible Tower':
             page = 'All Ansible Tower Providers'
         else:
             page = 'All Configuration Manager Providers'
@@ -521,7 +531,7 @@ class SysAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
+        self.prerequisite_view.navigation.select('Configuration', 'Management')
 
     def resetter(self):
         accordion.tree('Configured Systems', 'All Configured Systems')
