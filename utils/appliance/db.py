@@ -205,7 +205,7 @@ class ApplianceDB(AppliancePlugin):
         db_password = db_password or conf.credentials['database']['password']
         ssh_password = ssh_password or conf.credentials['ssh']['password']
 
-        if self.has_cli:
+        if self.appliance.has_cli:
             # use the cli
             if key_address:
                 status, out = client.run_command(
