@@ -2,7 +2,8 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import (CheckboxTable, Form, Input, Region, AngularSelect, fill, flash,
+from cfme.base.ui import RedHatUpdatesView
+from cfme.web_ui import (CheckboxTable, Form, Input, Region, AngularSelect, flash,
     form_buttons)
 from utils import version
 from utils.appliance import current_appliance
@@ -155,16 +156,15 @@ def update_registration(service,
         password_verify = None
         proxy_password_verify = None
 
-    navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
-    sel.click(update_buttons.edit_registration)
+    view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdatesEdit')
+
     details = dict(
-        service=sel.ByValue(service_value),
+        register_to=service_value,
         url=url,
         username=username,
         password=password,
         password_verify=password_verify,
         repo_name=repo_name,
-        organization=organization,
         use_proxy=use_proxy,
         proxy_url=proxy_url,
         proxy_username=proxy_username,
@@ -172,24 +172,23 @@ def update_registration(service,
         proxy_password_verify=proxy_password_verify
     )
 
-    fill(registration_form, details)
+    view.fill(details)
 
     if set_default_rhsm_address:
-        sel.click(registration_buttons.url_default)
+        view.rhn_default_url.click()
 
     if set_default_repository:
-        sel.click(registration_buttons.repo_default)
+        view.repo_default_name.click()
 
-    sel.click(form_buttons.validate_short)
-    flash.assert_no_errors()
-    flash.dismiss()
+    view.validate.click()
 
     if cancel:
         form_buttons.cancel()
     else:
         form_buttons.save()
-        flash.assert_message_match("Customer Information successfully saved")
-        flash.dismiss()
+        main_view = current_appliance.server.create_view(RedHatUpdatesView)
+        success_text = 'Customer Information successfully saved'
+        main_view.flash.assert_message(success_text)
 
 
 def refresh():

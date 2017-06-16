@@ -600,9 +600,39 @@ class CANDUCollection(CFMENavigateStep):
         self.prerequisite_view.canducollection.select()
 
 
+class RedHatUpdatesView(RegionView):
+    title = Text('//div[@id="main-content"]//h3[1]')
+    edit_registration = Button('Edit Registration')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+
+class RedHatUpdatesEditView(RegionView):
+    title = Text('//div[@id="main-content"]//h3[1]')
+
+    register_to = BootstrapSelect(id='register_to')
+    url = Input('server_url')
+    repo_name = Input('repo_name')
+    use_proxy = Checkbox('use_proxy')  # Could be checkbox
+    proxy_url = Input('proxy_address')
+    proxy_username = Input('proxy_userid')
+    proxy_password = Input('proxy_password')
+    proxy_password_verify = Input('proxy_password2')
+    username = Input('customer_userid')
+    password = Input('customer_password')
+    password_verify = Input('customer_password2')
+
+    repo_default_name = Button(id='repo_default_name')
+    rhn_default_url = Button(id='rhn_default_button')
+
+    validate = Button('Validate')
+    reset = Button('Reset')
+    save = Button('Save')
+    cancel = Button('Cancel')
+
+
 @navigator.register(Region)
 class RedHatUpdates(CFMENavigateStep):
-    VIEW = RegionView
+    VIEW = RedHatUpdatesView
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
@@ -610,6 +640,18 @@ class RedHatUpdates(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.redhatupdates.select()
+
+
+@navigator.register(Region)
+class RedHatUpdatesEdit(CFMENavigateStep):
+    VIEW = RedHatUpdatesEditView
+    prerequisite = NavigateToSibling('RedHatUpdates')
+
+    def am_i_here(self):
+        return False
+
+    def step(self):
+        self.prerequisite_view.edit_registration.click()
 
 
 @navigator.register(Region)
