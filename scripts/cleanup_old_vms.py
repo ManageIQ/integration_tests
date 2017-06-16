@@ -11,7 +11,7 @@ from dateutil import parser
 from tabulate import tabulate
 from threading import Lock, Thread
 from tzlocal import get_localzone
-from mgmtsystem.virtualcenter import VMWareSystem
+from wrapanapi.virtualcenter import VMWareSystem
 
 from utils import net
 from utils.log import logger
