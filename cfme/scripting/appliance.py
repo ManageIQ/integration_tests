@@ -13,7 +13,15 @@ import click
 
 from functools import partial
 
-from utils.appliance import IPAppliance
+
+def get_appliance(appliance_ip):
+    """Checks an appliance is not None and if so, loads the appropriate things"""
+    from utils.appliance import IPAppliance, get_or_create_current_appliance
+    if not appliance_ip:
+        app = get_or_create_current_appliance()
+    else:
+        app = IPAppliance(appliance_ip)
+    return app
 
 
 @click.group(help='Helper commands for appliances')
@@ -23,11 +31,11 @@ def main():
 
 
 @main.command('reboot', help='Reboots a provider')
-@click.argument('appliance_ip')
-@click.option('--wait_for_ui', is_flag=True, default=True)
+@click.argument('appliance_ip', default=None, required=False)
+@click.option('--wait-for-ui', is_flag=True, default=True)
 def reboot_appliance(appliance_ip, wait_for_ui):
     """Reboots an appliance"""
-    app = IPAppliance(appliance_ip)
+    app = get_appliance(appliance_ip)
     app.reboot(wait_for_ui)
 
 
@@ -44,7 +52,9 @@ methods_to_install = [
 
 def fn(method, *args, **kwargs):
     """Helper to access the right properties"""
-    app = IPAppliance(kwargs['appliance_ip'])
+    from utils.appliance import IPAppliance
+    appliance_ip = kwargs.get('appliance_ip', None)
+    app = get_appliance(appliance_ip)
     descriptor = getattr(IPAppliance, method)
     if isinstance(descriptor, (cached_property, property)):
         out = getattr(app, method)
@@ -58,7 +68,8 @@ for method in methods_to_install:
     command = click.Command(
         method.replace('_', '-'),
         short_help='Returns the {} property'.format(method),
-        callback=partial(fn, method), params=[click.Argument(['appliance_ip'])])
+        callback=partial(fn, method), params=[
+            click.Argument(['appliance_ip'], default=None, required=False)])
     main.add_command(command)
 
 
