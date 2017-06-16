@@ -35,7 +35,7 @@ class ApplianceDB(AppliancePlugin):
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
         if self.appliance.db_host:
-            return self.appliace.db_host
+            return self.appliance.db_host
         try:
             db_addr = self.appliance.wait_for_host_address()
             if db_addr is None:
