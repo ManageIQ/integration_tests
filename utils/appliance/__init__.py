@@ -364,17 +364,14 @@ class IPAppliance(object):
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
-            self.db.setup(
-                region=region,
-                key_address=key_address,
-                log_callback=log_callback)
+            self.db.setup(region=region, key_address=key_address)
             self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
 
             # Some conditionally ran items require the evm service be
             # restarted:
             restart_evm = False
             if loosen_pgssl:
-                self.db.loosen_pgssl(log_callback=log_callback)
+                self.db.loosen_pgssl()
                 restart_evm = True
             if self.version >= '5.8':
                 self.configure_vm_console_cert(log_callback=log_callback)
@@ -390,12 +387,12 @@ class IPAppliance(object):
         self.deploy_merkyl(start=True, log_callback=log_callback)
         # TODO: Fix NTP on GCE instances.
         # self.fix_ntp_clock(log_callback=log_callback)
-        self.db.enable_internal(log_callback=log_callback)
+        self.db.enable_internal()
         # evm serverd does not auto start on GCE instance..
         self.start_evm_service(log_callback=log_callback)
         self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        self.db.loosen_pgssl(log_callback=log_callback)
+        self.db.loosen_pgssl()
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def seal_for_templatizing(self):
@@ -2079,14 +2076,13 @@ class Appliance(IPAppliance):
             self.fix_ntp_clock(log_callback=log_callback)
         if kwargs.get('db_address') is None:
             self.db.enable_internal(
-                region, key_address, db_password, ssh_password, log_callback=log_callback)
+                region, key_address, db_password, ssh_password)
         else:
             self.db.enable_external(
-                db_address, region, db_name, db_username, db_password,
-                log_callback=log_callback)
+                db_address, region, db_name, db_username, db_password)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         if kwargs.get('loosen_pgssl', True) is True:
-            self.db.loosen_pgssl(log_callback=log_callback)
+            self.db.loosen_pgssl()
 
         name_to_set = kwargs.get('name_to_set')
         if name_to_set is not None and name_to_set != self.name:
