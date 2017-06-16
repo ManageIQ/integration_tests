@@ -1,7 +1,7 @@
 import pytest
 from os import path as os_path
 
-from cfme.login import login
+from cfme.base.ui import login
 from utils import version
 from utils.appliance import ApplianceException
 from utils.blockers import BZ

@@ -4,7 +4,7 @@ from functools import partial
 import pytest
 
 from cfme.infrastructure import host, datastore
-from cfme.login import login_admin, logout
+from cfme.base.ui import login_admin, logout
 from cfme.web_ui.search import search_box
 from utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc

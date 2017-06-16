@@ -7,7 +7,7 @@ import cfme.provisioning
 from cfme import test_requirements
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.fixtures import pytest_selenium as sel
-from cfme.login import login_admin
+from cfme.base.ui import login_admin
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill

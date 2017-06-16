@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.configure.access_control import simple_user
-from cfme.login import login, login_admin
+from cfme.base.ui import login, login_admin
 from utils.conf import credentials
 from utils.testgen import auth_groups, generate
 from utils import version

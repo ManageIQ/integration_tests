@@ -2,8 +2,7 @@
 import pytest
 
 from cfme import dashboard
-from cfme.login import LoginPage
-from cfme.base.ui import Server
+from cfme.base.ui import Server, LoginPage
 from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for, TimedOutError
 
