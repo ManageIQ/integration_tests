@@ -137,7 +137,12 @@ class ApplianceDB(AppliancePlugin):
         if self.appliance.version != LATEST:
             # We only execute this on downstream appliances.
             # TODO: Handle external DB setup. Probably pop the db_address and decide on that one.
-            self.enable_internal(**kwargs)
+            self.enable_internal(
+                region=kwargs.get('region', 0),
+                key_address=kwargs.get('key_address'),
+                db_password=kwargs.get('db_password'),
+                ssh_password=kwargs.get('ssh_password')
+            )
 
         # Make sure the database is ready
         wait_for(func=lambda: self.is_ready,
