@@ -20,17 +20,17 @@ DEFAULT_SEC_PROTOCOLS = (pytest.mark.polarion('CMP-10598')('SSL trusting custom 
                   pytest.mark.polarion('CMP-10597')('SSL without validation'),
                   pytest.mark.polarion('CMP-10599')('SSL'))
 
-testitem = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
+checked_item = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
 TEST_ITEMS = (
-    pytest.mark.polarion('CMP-10593')(testitem('SSL trusting custom CA', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10594')(testitem('SSL trusting custom CA', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10589')(testitem('SSL trusting custom CA', 'SSL')),
-    pytest.mark.polarion('CMP-10595')(testitem('SSL without validation', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10596')(testitem('SSL without validation', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10590')(testitem('SSL without validation', 'SSL')),
-    pytest.mark.polarion('CMP-10588')(testitem('SSL', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10592')(testitem('SSL', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10588')(testitem('SSL', 'SSL')),
+    pytest.mark.polarion('CMP-10593')(checked_item('SSL trusting custom CA', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10594')(checked_item('SSL trusting custom CA', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10589')(checked_item('SSL trusting custom CA', 'SSL')),
+    pytest.mark.polarion('CMP-10595')(checked_item('SSL without validation', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10596')(checked_item('SSL without validation', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10590')(checked_item('SSL without validation', 'SSL')),
+    pytest.mark.polarion('CMP-10588')(checked_item('SSL', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10592')(checked_item('SSL', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10588')(checked_item('SSL', 'SSL')),
 )
 
 
