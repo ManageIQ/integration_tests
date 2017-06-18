@@ -20,17 +20,17 @@ DEFAULT_SEC_PROTOCOLS = (pytest.mark.polarion('CMP-10598')('SSL trusting custom 
                   pytest.mark.polarion('CMP-10597')('SSL without validation'),
                   pytest.mark.polarion('CMP-10599')('SSL'))
 
-TestItem = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
+testitem = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
 TEST_ITEMS = (
-    pytest.mark.polarion('CMP-10593')(TestItem('SSL trusting custom CA', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10594')(TestItem('SSL trusting custom CA', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10589')(TestItem('SSL trusting custom CA', 'SSL')),
-    pytest.mark.polarion('CMP-10595')(TestItem('SSL without validation', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10596')(TestItem('SSL without validation', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10590')(TestItem('SSL without validation', 'SSL')),
-    pytest.mark.polarion('CMP-10588')(TestItem('SSL', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10592')(TestItem('SSL', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10588')(TestItem('SSL', 'SSL')),
+    pytest.mark.polarion('CMP-10593')(testitem('SSL trusting custom CA', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10594')(testitem('SSL trusting custom CA', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10589')(testitem('SSL trusting custom CA', 'SSL')),
+    pytest.mark.polarion('CMP-10595')(testitem('SSL without validation', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10596')(testitem('SSL without validation', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10590')(testitem('SSL without validation', 'SSL')),
+    pytest.mark.polarion('CMP-10588')(testitem('SSL', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10592')(testitem('SSL', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10588')(testitem('SSL', 'SSL')),
 )
 
 
