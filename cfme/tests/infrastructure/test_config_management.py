@@ -9,7 +9,7 @@ from utils.blockers import BZ
 
 pytest_generate_tests = generate(gen_func=config_managers)
 pytestmark = [pytest.mark.uncollectif(lambda config_manager_obj:
-                                      config_manager_obj.type == "Ansible Tower"and
+                                      config_manager_obj.type == "Ansible Tower" and
                                       version.current_version() > "5.6"),
               pytest.mark.meta(blockers=[BZ(1393987)])]
 
@@ -72,14 +72,7 @@ def test_config_manager_add(request, config_manager_obj):
 def test_config_manager_add_invalid_url(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.url = "invalid_url"
-    if config_manager_obj.type == "Ansible Tower":
-        error_message = 'getaddrinfo: Name or service not known'
-    else:
-        # BZ about bad text is raised 1382671
-        error_message = 'Could not load data from invalid_url - is your server down? - was ' \
-                        'rake apipie:cache run when using apipie cache? ' \
-                        '(typical production settings)'
-
+    error_message = 'getaddrinfo: Name or service not known'
     with error.expected(error_message):
         config_manager_obj.create()
 
@@ -88,16 +81,12 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
-    with error.expected('Invalid username/password'):
+    with error.expected('Credential validation was not successful: 401 Unauthorized'):
         config_manager_obj.create()
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(
-    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
-        config_manager_obj.type != "Ansible Tower")]
-)
+@pytest.mark.meta(blockers=[BZ(1462311, forced_streams=["5.7", "5.8"])])
 def test_config_manager_edit(request, config_manager):
     new_name = fauxfactory.gen_alpha(8)
     old_name = config_manager.name
