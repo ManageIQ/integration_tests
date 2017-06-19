@@ -29,8 +29,8 @@ def new_instance(provider):
         'request': {'email': fauxfactory.gen_email(),
                     'first_name': fauxfactory.gen_alpha(),
                     'last_name': fauxfactory.gen_alpha()},
-        'catalog': {'num_instances': 1,
-                    'vm_name': fauxfactory.gen_alpha()},
+        'catalog': {'num_instances': '1',
+                    'vm_name': instance.name},
         'environment': {'cloud_network': prov_data['cloud_network']},
         'properties': {'instance_type': prov_data['instance_type']},
 
