@@ -1,9 +1,9 @@
 import pytest
 from utils import testgen
 from utils.log import logger
-from cfme.containers.provider import ContainersProvider, navigate_and_get_rows, obj_factory
+from cfme.containers.provider import ContainersProvider
 from utils.version import current_version
-from cfme.web_ui import toolbar, tabstrip, form_buttons
+from cfme.web_ui import toolbar
 from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
@@ -14,6 +14,7 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
+@pytest.fixture
 def matrics_up_and_running(provider):
     import requests
 
@@ -26,45 +27,27 @@ def matrics_up_and_running(provider):
     logger.info("hawkular started successfully")
 
 
-def set_hawkular_without_validation(provider_object):
-    navigate_to(provider_object, 'Details')
-    toolbar.select('Configurations', 'Edit this Containers Provider')
-    tabstrip.select_tab("Hawkular")
-    form_buttons.validate()
-
-
-def navigate_to_ad_hoc_view(provider_object):
-    navigate_to(provider_object, 'Details')
-    toolbar.select('Monitoring', 'Ad hoc Metrics')
-
-
 def is_ad_hoc_greyed(provider_object):
     navigate_to(provider_object, 'Details')
     return toolbar.is_greyed('Monitoring', 'Ad hoc Metrics')
 
 
 @pytest.mark.polarion('CMP-10643')
-def test_ad_hoc_metrics_overview(provider):
+def test_ad_hoc_metrics_overview(provider, matrics_up_and_running):
 
-    chosen_provider = navigate_and_get_rows(provider, ContainersProvider, 1).pop()
-    provider_object = obj_factory(ContainersProvider, chosen_provider, provider)
-
-    assert not is_ad_hoc_greyed(provider_object), \
+    assert not is_ad_hoc_greyed(provider), \
         "Monitoring --> Ad hoc Metrics not activated despite provider was set"
 
 
 @pytest.mark.polarion('CMP-10645')
-def test_ad_hoc_metrics_select_filter(provider):
-
-    chosen_provider = navigate_and_get_rows(provider, ContainersProvider, 1).pop()
-    provider_object = obj_factory(ContainersProvider, chosen_provider, provider)
+def test_ad_hoc_metrics_select_filter(provider, matrics_up_and_running):
 
     # in case of new provider was added wait for up to 25 minutes
     # for system to collect first metrics
-    wait_for(lambda: provider_object.summary.status.last_metrics_collection != 'None',
+    wait_for(lambda: provider.summary.status.last_metrics_collection != 'None',
              delay=60, num_sec=25 * 60)
 
-    view = navigate_to(provider_object, 'AdHoc')
+    view = navigate_to(provider, 'AdHoc')
     view.wait_for_filter_option_to_load()
     view.set_random_filter()
     view.apply_filter()
