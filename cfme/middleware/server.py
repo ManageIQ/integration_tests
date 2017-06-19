@@ -92,6 +92,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
     property_tuples = [('name', 'Name'), ('feed', 'Feed'),
                        ('bound_address', 'Bind Address')]
     taggable_type = 'MiddlewareServer'
+    deployment_message = 'Deployment "{}" has been initiated on this server.'
 
     def __init__(self, name, provider=None, appliance=None, **kwargs):
         Navigatable.__init__(self, appliance=appliance)

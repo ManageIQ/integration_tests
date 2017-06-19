@@ -4,8 +4,20 @@ from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server_group import MiddlewareServerGroup
+from cfme.web_ui import flash
 from utils import testgen
 from utils.version import current_version
+from server_group_methods import (
+    verify_server_group_stopped, verify_server_group_running,
+    verify_server_group_suspended,
+    check_group_deployment_enabled,
+    check_group_deployment_disabled,
+    check_group_deployment_content
+)
+from deployment_methods import deploy
+from deployment_methods import RESOURCE_JAR_NAME, RESOURCE_WAR_NAME
+from deployment_methods import WAR_EXT, RESOURCE_WAR_NAME_NEW
+from deployment_methods import RESOURCE_WAR_CONTENT, RESOURCE_WAR_CONTENT_NEW
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -14,6 +26,23 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 ITEMS_LIMIT = 1  # when we have big list, limit number of items to test
+
+
+@pytest.yield_fixture(scope="function")
+def main_server_group(provider):
+    domain_list = MiddlewareDomain.domains_in_db(provider=provider, strict=False)
+    assert domain_list, "Domain was not found in DB"
+    domain = domain_list[0]
+    server_group_list = MiddlewareServerGroup.server_groups_in_db(
+        domain=domain, name="main-server-group", strict=False)
+    assert server_group_list, "Server group was not found in DB"
+    server_group = server_group_list[0]
+    yield server_group
+    # make sure server is resumed just in case, if after test server group is suspended
+    server_group.resume_server_group()
+    # resume does not start stopped server group
+    # make sure server is started after test execution
+    server_group.start_server_group()
 
 
 def test_list_provider_server_groups(provider):
@@ -71,6 +100,143 @@ def test_server_group_details(provider):
                  .format(svgr_ui.name, svgr_db.name, svgr_mgmt.name))
             svgr_db.validate_properties()
             svgr_mgmt.validate_properties()
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_server_group_restart(provider, main_server_group):
+    """Tests domain server group restart operation on UI
+
+    Steps:
+        * Invokes 'Restart Server Group' toolbar operation
+        * Waits for some time
+        * Checks that all servers in that server group have status running in UI, in DB and in MGMT.
+    """
+    verify_server_group_running(provider, main_server_group)
+    main_server_group.restart_server_group()
+    flash.assert_success_message('Restart')
+    verify_server_group_running(provider, main_server_group)
+
+
+@pytest.mark.smoke
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_server_group_suspend_resume(provider, main_server_group):
+    """Tests domain mode server group suspend/resume operation on UI
+
+    Steps:
+        * Invokes 'Suspend Server Group' toolbar operation
+        * Checks that server group's servers status is not running in UI, in DB and in MGMT.
+        * Invokes 'Resume Server Group' toolbar operation
+        * Waits for some time
+        * Checks that server group's server status is running in UI, in DB and in MGMT.
+    """
+    verify_server_group_running(provider, main_server_group)
+    main_server_group.suspend_server_group()
+    flash.assert_success_message('Suspend initiated for given server group.')
+    verify_server_group_suspended(provider, main_server_group)
+    main_server_group.resume_server_group()
+    flash.assert_success_message('Resume')
+    verify_server_group_running(provider, main_server_group)
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_server_group_reload(provider, main_server_group):
+    """Tests domain mode server group reload operation on UI
+
+    Steps:
+        * Invokes 'Reload Server Group' toolbar operation
+        * Waits for some time
+        * Checks that server group's server status is running in UI, in DB and in MGMT.
+    """
+    verify_server_group_running(provider, main_server_group)
+    main_server_group.reload_server_group()
+    flash.assert_success_message('Reload')
+    verify_server_group_running(provider, main_server_group)
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_server_group_stop_start(provider, main_server_group):
+    """Tests domain mode server group stop/start operation on UI
+
+    Steps:
+        * Invokes 'Stop Server Group' toolbar operation
+        * Checks that server status is stopped in UI, in DB and in MGMT.
+        * Invokes 'Start Server Group' toolbar operation
+        * Waits for some time
+        * Checks that server group's server status is running in UI, in DB and in MGMT.
+    """
+    verify_server_group_running(provider, main_server_group)
+    main_server_group.stop_server_group()
+    flash.assert_success_message('Stop initiated for given server group.')
+    verify_server_group_stopped(provider, main_server_group)
+    main_server_group.start_server_group()
+    flash.assert_success_message('Start')
+    verify_server_group_running(provider, main_server_group)
+
+
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME])
+def test_deploy(provider, main_server_group, archive_name):
+    """Tests Deployment of provided archive into main_server_group
+
+    Steps:
+        * Get server groups list from UI
+        * Chooses main_server_group from list
+        * Invokes 'Add Deployment' toolbar operation
+        * Selects "war" file to upload.
+        * Chose random Runtime Name.
+        * Checks that notification message is shown.
+        * Refreshes the provider.
+        * Verifies that deployment is shown in list of all servers from main_server_group
+        * and is Enabled.
+    """
+    runtime_name = deploy(provider, main_server_group, archive_name)
+    check_group_deployment_enabled(provider, main_server_group, runtime_name)
+
+
+@pytest.mark.parametrize("archive_name", [RESOURCE_JAR_NAME])
+def test_deploy_disabled(provider, main_server_group, archive_name):
+    """Tests Deployment of provided archive into main_server_group as Disabled
+
+    Steps:
+        * Get server groups list from UI
+        * Chooses main_server_group from lmain_server_groupist
+        * Invokes 'Add Deployment' toolbar operation
+        * Selects "war" file to upload.
+        * Chose random Runtime Name.
+        * Check "No" for "Enable Deployment".
+        * Checks that notification message is shown.
+        * Refreshes the provider.
+        * Verifies that deployment is shown in list of all servers from main_server_group
+        * and is Enabled.
+    """
+    runtime_name = deploy(provider, main_server_group, archive_name, enabled=False)
+    check_group_deployment_disabled(provider, main_server_group, runtime_name)
+
+
+def test_redeploy_overwrite(provider, main_server_group):
+    """Tests Force Redeployment of already deployed archive into main_server_group
+
+    Steps:
+        * Get server groups list from UI
+        * Chooses main_server_group from list
+        * Deploys some deployment archive into main_server_group.
+        * Refreshes the provider.
+        * Lists all deployments on main_server_group's servers.
+        * Verified the recently deployed archive's status is Enabled.
+        * Deploys newer version of the same deployment archive into main_server_group,
+          check to overwrite deployment.
+        * Refreshes the provider.
+        * Lists all deployments on main_server_group's servers.
+        * Verified the recently deployed archive's status is Enabled.
+    """
+    runtime_name = deploy(provider, main_server_group, RESOURCE_WAR_NAME)
+    check_group_deployment_enabled(provider, main_server_group, runtime_name)
+    check_group_deployment_content(provider, main_server_group, runtime_name.replace(WAR_EXT, ''),
+                             RESOURCE_WAR_CONTENT)
+    deploy(provider, main_server_group, RESOURCE_WAR_NAME_NEW, runtime_name=runtime_name,
+           overwrite=True)
+    check_group_deployment_enabled(provider, main_server_group, runtime_name)
+    check_group_deployment_content(provider, main_server_group, runtime_name.replace(WAR_EXT, ''),
+                             RESOURCE_WAR_CONTENT_NEW)
 
 
 def get_server_group_set(server_groups):

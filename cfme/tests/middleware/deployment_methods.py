@@ -7,6 +7,7 @@ from urllib2 import urlopen, HTTPError, URLError
 from cfme.middleware.deployment import MiddlewareDeployment
 from utils.wait import wait_for
 from utils.path import middleware_resources_path
+from server_methods import refresh
 
 RESOURCE_WAR_NAME = 'cfme_test_war_middleware.war'
 RESOURCE_WAR_NAME_NEW = 'new_cfme_test_war_middleware.war'
@@ -74,47 +75,51 @@ def get_deployments_statuses(deployments):
 
 
 def check_deployment_appears(provider, server, runtime_name):
-    provider.refresh_provider_relationships(method='rest')
+    refresh(provider)
     wait_for(lambda: runtime_name in
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider, server=server)),
         delay=30, num_sec=1200,
         message='Deployment {} must be found for server {}'
-        .format(runtime_name, server.name))
+        .format(runtime_name, server.name),
+        fail_func=lambda: refresh(provider))
 
 
 def check_deployment_not_listed(provider, server, runtime_name):
-    provider.refresh_provider_relationships(method='rest')
+    refresh(provider)
     wait_for(lambda: runtime_name not in
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider, server=server)),
         delay=30, num_sec=1200,
         message='Deployment {} must not be found for server {}'
-        .format(runtime_name, server.name))
+        .format(runtime_name, server.name),
+        fail_func=lambda: refresh(provider))
 
 
 def check_deployment_enabled(provider, server, runtime_name):
     check_deployment_appears(provider, server, runtime_name)
-    provider.refresh_provider_relationships(method='rest')
+    refresh(provider)
     wait_for(lambda:
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider,
                 server=server))[runtime_name] == 'Enabled',
         delay=120, num_sec=1800,
         message='Deployment {} must be Enabled for server {}'
-        .format(runtime_name, server.name))
+        .format(runtime_name, server.name),
+        fail_func=lambda: refresh(provider))
 
 
 def check_deployment_disabled(provider, server, runtime_name):
     check_deployment_appears(provider, server, runtime_name)
-    provider.refresh_provider_relationships(method='rest')
+    refresh(provider)
     wait_for(lambda:
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider,
                 server=server))[runtime_name] == 'Disabled',
         delay=120, num_sec=1800,
         message='Deployment {} must be Disabled for server {}'
-        .format(runtime_name, server.name))
+        .format(runtime_name, server.name),
+        fail_func=lambda: refresh(provider))
 
 
 def check_deployment_content(provider, server, archive_name, content=None, not_found=False):

@@ -3,16 +3,20 @@ from navmazing import NavigateToSibling
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware.provider import parse_properties
-from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
+from cfme.middleware.provider import parse_properties, Container
+from cfme.web_ui import (
+    CheckboxTable, paginator, InfoBlock, toolbar as tb, Form, Input, fill
+)
+from cfme.web_ui.form_buttons import FormButton
 from wrapanapi.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.varmeth import variable
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
+from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, pwr_btn
 from cfme.middleware.domain import MiddlewareDomain
 from cfme.exceptions import MiddlewareDomainNotFound
+
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -38,7 +42,17 @@ def _get_server_groups_page(domain):
     navigate_to(domain, 'DomainServerGroups')
 
 
-class MiddlewareServerGroup(MiddlewareBase, Taggable, Navigatable):
+timeout_form = Form(
+    fields=[
+        ("timeout", Input("timeout", use_id=True)),
+        ('suspend_button', FormButton("Suspend")),
+        ('stop_button', FormButton("Stop")),
+        ('cancel_button', FormButton("Cancel"))
+    ]
+)
+
+
+class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
     """
     MiddlewareServerGroup class provides actions and details on Server Group page.
     Class method available to get existing server groups list
@@ -59,6 +73,7 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Navigatable):
     """
     property_tuples = [('name', 'Name'), ('profile', 'Profile')]
     taggable_type = 'MiddlewareServerGroup'
+    deployment_message = 'Deployment "{}" has been initiated on this group.'
 
     def __init__(self, name, domain, appliance=None, **kwargs):
         Navigatable.__init__(self, appliance=appliance)
@@ -184,6 +199,44 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Navigatable):
     def download(cls, extension, domain):
         _get_server_groups_page(domain)
         download(extension)
+
+    def restart_server_group(self):
+        self.load_details(refresh=True)
+        pwr_btn("Restart Server Group", invokes_alert=True)
+        sel.handle_alert()
+
+    def start_server_group(self):
+        self.load_details(refresh=True)
+        pwr_btn("Start Server Group", invokes_alert=True)
+        sel.handle_alert()
+
+    def suspend_server_group(self, timeout=10, cancel=False):
+        self.load_details(refresh=True)
+        pwr_btn("Suspend Server Group", invokes_alert=True)
+        fill(
+            timeout_form,
+            {"timeout": timeout},
+        )
+        sel.click(timeout_form.cancel_button if cancel else timeout_form.suspend_button)
+
+    def resume_server_group(self):
+        self.load_details(refresh=True)
+        pwr_btn("Resume Server Group", invokes_alert=True)
+        sel.handle_alert()
+
+    def reload_server_group(self):
+        self.load_details(refresh=True)
+        pwr_btn("Reload Server Group", invokes_alert=True)
+        sel.handle_alert()
+
+    def stop_server_group(self, timeout=10, cancel=False):
+        self.load_details(refresh=True)
+        pwr_btn("Stop Server Group", invokes_alert=True)
+        fill(
+            timeout_form,
+            {"timeout": timeout},
+        )
+        sel.click(timeout_form.cancel_button if cancel else timeout_form.stop_button)
 
 
 @navigator.register(MiddlewareServerGroup, 'Details')
