@@ -66,35 +66,23 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
     # assigned ownership.
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-    def _cu_vm_running():
-        if not provider.mgmt.does_vm_exist(vm_name):
-            pytest.skip("Skipping test, cu-24x7 VM does not exist")
-        if provider.mgmt.is_vm_running(vm_name):
-            return True
-        elif provider.mgmt.is_vm_stopped(vm_name) or \
-            provider.mgmt.can_suspend and provider.mgmt.is_vm_suspended(vm_name) or \
-                provider.mgmt.can_pause and provider.mgmt.is_vm_paused(vm_name):
-                provider.mgmt.start_vm(vm_name)
-
-        logger.debug("Sleeping 15secs...(current state: {}, needed state: running)".format(
-            provider.mgmt.vm_status(vm_name)
-        ))
-        return False
-
-    wait_for(_cu_vm_running, num_sec=360, delay=15)
-
+    if not provider.mgmt.does_vm_exist(vm_name):
+        pytest.skip("Skipping test, cu-24x7 VM does not exist")
     if not provider.mgmt.is_vm_running(vm_name):
-        pytest.skip("Skipping test, cu-24x7 VM is not running")
+        provider.mgmt.start_vm(vm_name)
+        provider.mgmt.wait_vm_running(vm_name)
+
+    cb_group = ac.Group(description='EvmGroup-user')
+    user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
+        credential=new_credential(),
+        email='abc@example.com',
+        group=cb_group,
+        cost_center='Workload',
+        value_assign='Database')
+
+    vm = VM.factory(vm_name, provider)
 
     try:
-        vm = VM.factory(vm_name, provider)
-        cb_group = ac.Group(description='EvmGroup-user')
-        user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
-                credential=new_credential(),
-                email='abc@example.com',
-                group=cb_group,
-                cost_center='Workload',
-                value_assign='Database')
         user.create()
         vm.set_ownership(user=user.name)
         logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
@@ -239,7 +227,7 @@ def resource_usage(vm_ownership, appliance, provider):
     command = ('Metric::Targets.perf_capture_always = {:storage=>false, :host_and_cluster=>false};')
     appliance.ssh_client.run_rails_command(command, timeout=None)
 
-    wait_for(verify_records_rollups_table, [appliance, provider], timeout=360, fail_condition=False,
+    wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,
         message='Waiting for hourly rollups')
 
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
@@ -261,7 +249,8 @@ def resource_usage(vm_ownership, appliance, provider):
             average_network_io = average_network_io + record.net_usage_rate_average
             average_disk_io = average_disk_io + record.disk_usage_rate_average
 
-    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(result.subquery())):
+    for record in appliance.db.client.session.query(rollups).filter(
+            rollups.id.in_(result.subquery())):
         if record.derived_vm_used_disk_storage:
             average_storage_used = average_storage_used + record.derived_vm_used_disk_storage
 
