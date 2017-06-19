@@ -659,7 +659,7 @@ class TestNotificationsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        if method == 'delete' and BZ('1420872', forced_streams=['5.7', 'upstream']).blocks:
+        if method == 'delete' and BZ('1420872', forced_streams=['5.7', '5.8', 'upstream']).blocks:
             pytest.skip("Affected by BZ1420872, cannot test.")
         collection = appliance.rest_api.collections.notifications
         collection.reload()
