@@ -47,11 +47,19 @@ REDHAT_PACKAGES_F25 = (
     " redhat-rpm-config gcc-c++ openssl-devel"
     " libffi-devel python2-devel")
 
+REDHAT_PACKAGES_F26 = (
+    " python2-virtualenv gcc postgresql-devel libxml2-devel"
+    " libxslt-devel zeromq-devel libcurl-devel"
+    " redhat-rpm-config gcc-c++ openssl-devel"
+    " libffi-devel python2-devel")
+
 
 if REDHAT_BASED:
     os.environ['PYCURL_SSL_LIBRARY'] = 'nss'
     if DISTRO_DATA == ("Fedora", "25"):
         REDHAT_PACKAGES = REDHAT_PACKAGES_F25
+    elif DISTRO_DATA == ("Fedora", "26"):
+        REDHAT_PACKAGES = REDHAT_PACKAGES_F26
     else:
         REDHAT_PACKAGES = REDHAT_PACKAGES_OLD
 
