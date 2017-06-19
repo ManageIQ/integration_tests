@@ -215,7 +215,7 @@ def pytest_runtest_teardown(item, nextitem):
     ip = urlparse(env['base_url']).netloc
     fire_art_test_hook(
         item, 'finish_test',
-        slaveid=store.slaveid, ip=ip, grab_result=True)
+        slaveid=store.slaveid, ip=ip, wait_for_task=True)
     fire_art_test_hook(item, 'sanitize', words=words)
     jenkins_data = {
         'build_url': os.environ.get('BUILD_URL'),
