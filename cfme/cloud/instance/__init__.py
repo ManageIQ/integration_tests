@@ -183,7 +183,6 @@ class ProvisionView(CloudInstanceView):
     def is_displayed(self):
         return False
 
-
 class InstanceTimelinesView(CloudInstanceView, TimelinesView):
     @property
     def is_displayed(self):

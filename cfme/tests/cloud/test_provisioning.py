@@ -641,7 +641,7 @@ def test_cloud_provision_dialog_tag(testing_instance, provision_check, soft_asse
         test_flag: provision
     """
     instance, inst_args, image = testing_instance
-    inst_args["apply_tags"] = [(["Service Level *", "Gold"], True)]
+    inst_args['purpose'] = {'apply_tags': ('Service Level *', 'Gold')}
     instance = provision_check(instance, inst_args, image)
 
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
