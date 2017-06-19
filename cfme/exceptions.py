@@ -295,6 +295,13 @@ class KeyPairNotFound(CFMEException):
     pass
 
 
+class ResourcePoolNotFound(CFMEException):
+    """
+    Raised if a specific cloud key pair cannot be found in the UI
+    """
+    pass
+
+
 class AvailabilityZoneNotFound(CFMEException):
     """
     Raised if a specific Cloud Availability Zone cannot be found.
