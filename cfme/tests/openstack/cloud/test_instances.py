@@ -26,13 +26,13 @@ def new_instance(provider):
     instance = OpenStackInstance(fauxfactory.gen_alpha(), provider,
                                  template_name=prov_data['image']['name'])
     prov_form_data = {
-        'Request': {'email': fauxfactory.gen_email(),
+        'request': {'email': fauxfactory.gen_email(),
                     'first_name': fauxfactory.gen_alpha(),
                     'last_name': fauxfactory.gen_alpha()},
-        'Catalog': {'num_instances': 1,
+        'catalog': {'num_instances': 1,
                     'vm_name': fauxfactory.gen_alpha()},
-        'Environment': {'cloud_network': prov_data['cloud_network']},
-        'Properties': {'instance_type': prov_data['instance_type']},
+        'environment': {'cloud_network': prov_data['cloud_network']},
+        'properties': {'instance_type': prov_data['instance_type']},
 
     }
     instance.create(False, **prov_form_data)
