@@ -43,9 +43,9 @@ class OpenshiftProvider(ContainersProvider):
             .find_by(name=self.name).resources[0].href
 
     def _form_mapping(self, create=None, **kwargs):
-        hawkular = kwargs.get('hawkular')
         sec_protocol = kwargs.get('sec_protocol')
         hawkular_hostname = kwargs.get('hawkular_hostname')
+        hawkular = kwargs.get('hawkular')
         hawkular_sec_protocol = kwargs.get('hawkular_sec_protocol')
         default_ca_certificate = self.get_cert()
         hawkular_ca_certificate = default_ca_certificate
@@ -98,6 +98,18 @@ class OpenshiftProvider(ContainersProvider):
     def from_config(prov_config, prov_key, appliance=None):
         token_creds = OpenshiftProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
+        try:
+            hawkular_hostname = prov_config['endpoints']['hawkular'].hostname
+            hawkular_api_port = prov_config['endpoints']['hawkular'].api_port
+            hawkular_sec_protocol = prov_config['endpoints']['hawkular'].sec_protocol
+        except:
+            hawkular_hostname = None
+            hawkular_api_port = None
+            hawkular_sec_protocol = None
+        if hawkular_hostname and hawkular_api_port:
+            hawkular = True
+        else:
+            hawkular = False
         return OpenshiftProvider(
             name=prov_config['name'],
             credentials={'token': token_creds},
@@ -106,9 +118,10 @@ class OpenshiftProvider(ContainersProvider):
             hostname=prov_config['endpoints']['default'].hostname or prov_config['ipaddress'],
             api_port=prov_config['endpoints']['default'].api_port,
             sec_protocol=prov_config['endpoints']['default'].sec_protocol,
-            hawkular_sec_protocol=prov_config['endpoints']['hawkular'].sec_protocol,
-            hawkular_hostname=prov_config['endpoints']['hawkular'].hostname,
-            hawkular_api_port=prov_config['endpoints']['hawkular'].api_port,
+            hawkular_sec_protocol=hawkular_sec_protocol,
+            hawkular_hostname=hawkular_hostname,
+            hawkular_api_port=hawkular_api_port,
+            hawkular=hawkular,
             provider_data=prov_config,
             appliance=appliance)
 
