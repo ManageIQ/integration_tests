@@ -20,17 +20,26 @@ DEFAULT_SEC_PROTOCOLS = (pytest.mark.polarion('CMP-10598')('SSL trusting custom 
                   pytest.mark.polarion('CMP-10597')('SSL without validation'),
                   pytest.mark.polarion('CMP-10599')('SSL'))
 
-TestItem = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
+checked_item = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
 TEST_ITEMS = (
-    pytest.mark.polarion('CMP-10593')(TestItem('SSL trusting custom CA', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10594')(TestItem('SSL trusting custom CA', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10589')(TestItem('SSL trusting custom CA', 'SSL')),
-    pytest.mark.polarion('CMP-10595')(TestItem('SSL without validation', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10596')(TestItem('SSL without validation', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10590')(TestItem('SSL without validation', 'SSL')),
-    pytest.mark.polarion('CMP-10588')(TestItem('SSL', 'SSL trusting custom CA')),
-    pytest.mark.polarion('CMP-10592')(TestItem('SSL', 'SSL without validation')),
-    pytest.mark.polarion('CMP-10588')(TestItem('SSL', 'SSL')),
+    pytest.mark.polarion('CMP-10593')
+    (checked_item('SSL trusting custom CA', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10594')
+    (checked_item('SSL trusting custom CA', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10589')
+    (checked_item('SSL trusting custom CA', 'SSL')),
+    pytest.mark.polarion('CMP-10595')
+    (checked_item('SSL without validation', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10596')
+    (checked_item('SSL without validation', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10590')
+    (checked_item('SSL without validation', 'SSL')),
+    pytest.mark.polarion('CMP-10588')
+    (checked_item('SSL', 'SSL trusting custom CA')),
+    pytest.mark.polarion('CMP-10592')
+    (checked_item('SSL', 'SSL without validation')),
+    pytest.mark.polarion('CMP-10588')
+    (checked_item('SSL', 'SSL')),
 )
 
 
