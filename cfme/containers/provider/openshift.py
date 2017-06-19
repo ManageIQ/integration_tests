@@ -102,7 +102,7 @@ class OpenshiftProvider(ContainersProvider):
             hawkular_hostname = prov_config['endpoints']['hawkular'].hostname
             hawkular_api_port = prov_config['endpoints']['hawkular'].api_port
             hawkular_sec_protocol = prov_config['endpoints']['hawkular'].sec_protocol
-        except:
+        except KeyError:
             hawkular_hostname = None
             hawkular_api_port = None
             hawkular_sec_protocol = None
