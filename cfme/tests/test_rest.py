@@ -548,7 +548,7 @@ class TestArbitrationRulesRESTAPI(object):
         assert len(response) == num_rules
         return response
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
     def test_create_arbitration_rules(self, arbitration_rules, appliance):
         """Tests create arbitration rules.
 
@@ -559,23 +559,22 @@ class TestArbitrationRulesRESTAPI(object):
             record = appliance.rest_api.collections.arbitration_rules.get(id=rule.id)
             assert record.description == rule.description
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
-    @pytest.mark.parametrize('method', ['post', 'delete'])
-    def test_delete_arbitration_rules_from_detail(self, arbitration_rules, appliance, method):
+    # there's no test for the DELETE method as it is not working and won't be fixed, see BZ 1410504
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
+    def test_delete_arbitration_rules_from_detail_post(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from detail.
 
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == 'delete' else 200
         for entity in arbitration_rules:
-            entity.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            entity.action.delete.POST()
+            assert appliance.rest_api.response
             with error.expected('ActiveRecord::RecordNotFound'):
-                entity.action.delete(force_method=method)
+                entity.action.delete.POST()
             assert appliance.rest_api.response.status_code == 404
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
     def test_delete_arbitration_rules_from_collection(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from collection.
 
@@ -589,7 +588,7 @@ class TestArbitrationRulesRESTAPI(object):
             collection.action.delete(*arbitration_rules)
         assert appliance.rest_api.response.status_code == 404
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
