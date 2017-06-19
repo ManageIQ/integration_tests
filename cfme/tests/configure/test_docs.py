@@ -110,7 +110,7 @@ def test_info(appliance, soft_assert):
     Verify image anchor href matches link text href"""
     view = navigate_to(appliance.server, 'Documentation')
     for link_widget in view.links.sub_widgets:
-        if not hasattr(link_widget, 'img_anchor') and not hasattr(link_widget, 'img'):
+        if not (hasattr(link_widget, 'img_anchor') or hasattr(link_widget, 'img')):
             # This check only applies to the PDF links, essentially factors out customer portal link
             continue
         # Check img_anchor title attribute against img alt attribute
