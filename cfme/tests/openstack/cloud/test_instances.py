@@ -25,13 +25,17 @@ def new_instance(provider):
     prov_data = provider.get_yaml_data()['provisioning']
     instance = OpenStackInstance(fauxfactory.gen_alpha(), provider,
                                  template_name=prov_data['image']['name'])
-    navigate_to(instance, 'Provision')
-    instance.create(fauxfactory.gen_email(), fauxfactory.gen_alpha(),
-                    fauxfactory.gen_alpha(), prov_data['cloud_network'],
-                    prov_data['instance_type'], False,
-                    security_groups='default',
-                    availability_zone=prov_data['availability_zone'],
-                    cloud_tenant=prov_data['cloud_tenant'])
+    prov_form_data = {
+        'Request': {'email': fauxfactory.gen_email(),
+                    'first_name': fauxfactory.gen_alpha(),
+                    'last_name': fauxfactory.gen_alpha()},
+        'Catalog': {'num_instances': 1,
+                    'vm_name': fauxfactory.gen_alpha()},
+        'Environment': {'cloud_network': prov_data['cloud_network']},
+        'Properties': {'instance_type': prov_data['instance_type']},
+
+    }
+    instance.create(False, **prov_form_data)
     instance.wait_to_appear()
     yield instance
     try:
