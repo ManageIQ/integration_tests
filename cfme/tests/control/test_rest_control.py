@@ -127,8 +127,8 @@ class TestPoliciesRESTAPI(object):
                 policy.action.delete(force_method='post')
             assert appliance.rest_api.response.status_code == 404
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-    @pytest.mark.meta(blockers=[BZ(1435773, forced_streams=['5.8', 'upstream'])])
+    @pytest.mark.uncollectif(lambda: current_version() < '5.9')
+    @pytest.mark.meta(blockers=[BZ(1435773, forced_streams=['5.9'])])
     def test_delete_policies_from_detail_delete(self, policies, appliance):
         """Tests delete policies from detail using DELETE method.
 
