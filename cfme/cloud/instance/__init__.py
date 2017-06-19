@@ -179,6 +179,7 @@ class ProvisionView(CloudInstanceView):
             sleep(3)
             self.flush_widget_cache()
 
+    @property
     def is_displayed(self):
         return False
 
