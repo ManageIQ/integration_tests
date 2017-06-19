@@ -493,9 +493,6 @@ class Provision(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select('Provision Instances')
 
-    def am_i_here(self):
-        return match_location(summary='Provision Instances - Select an Image')
-
 
 @navigator.register(Instance, 'Reconfigure')
 class Reconfigure(CFMENavigateStep):
