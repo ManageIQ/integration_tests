@@ -261,20 +261,36 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
-    def test_delete_custom_attributes_from_detail(self, appliance, custom_attributes, method):
-        """Test deleting custom attributes from detail using REST API.
+    def test_delete_custom_attributes_from_detail_post(self, appliance, custom_attributes):
+        """Test deleting custom attributes from detail using POST method.
 
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == 'delete' else 200
         attributes, _ = custom_attributes
         for entity in attributes:
-            entity.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            entity.action.delete.POST()
+            assert appliance.rest_api.response
             with error.expected('ActiveRecord::RecordNotFound'):
-                entity.action.delete(force_method=method)
+                entity.action.delete.POST()
+            assert appliance.rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.meta(blockers=[BZ(1422596, forced_streams=['5.7', '5.8', 'upstream'])])
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    def test_delete_custom_attributes_from_detail_delete(self, appliance, custom_attributes):
+        """Test deleting custom attributes from detail using DELETE method.
+
+        Metadata:
+            test_flag: rest
+        """
+        attributes, _ = custom_attributes
+        for entity in attributes:
+            entity.action.delete.DELETE()
+            assert appliance.rest_api.response
+            with error.expected('ActiveRecord::RecordNotFound'):
+                entity.action.delete.DELETE()
             assert appliance.rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
