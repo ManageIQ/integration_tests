@@ -46,6 +46,14 @@ def testing_vm(request, provider, vm_name):
 
 
 @pytest.fixture(scope="function")
+def archive_vm(provider, testing_vm):
+    """Fixture to archive testing VM"""
+    provider.mgmt.delete_vm(testing_vm.name)
+    testing_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
+                                        from_details=False, from_any_provider=True)
+
+
+@pytest.fixture(scope="function")
 def testing_vm_tools(request, provider, vm_name, full_template):
     """Fixture to provision vm with preinstalled tools to the provider being tested"""
     vm = VM.factory(vm_name, provider, template_name=full_template["name"])
@@ -312,6 +320,19 @@ def test_no_template_power_control(provider, soft_assert):
     # Ensure there isn't a power button on the details page
     pytest.sel.click(quadicon)
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
+
+
+def test_no_power_controls_on_archived_vm(testing_vm, archive_vm, soft_assert):
+    """ Ensures that no power button is displayed from details view of archived vm
+
+    Prerequisities:
+        * Archived VM
+    Steps:
+        * Open the view of VM Details
+        * Verify the Power toolbar button is not visible
+    """
+    testing_vm.load_details()
+    assert not toolbar.exists("Power"), "Power displayed in template details!"
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm')
