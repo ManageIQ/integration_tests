@@ -244,9 +244,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         for host in self.get_yaml_data().get("hosts", []):
             creds = conf.credentials.get(host["credentials"], {})
             cred = Host.Credential(
-                principal=creds["principal"],
-                secret=creds["secret"],
-                verify_secret=creds["secret"],
+                principal=creds["username"],
+                secret=creds["password"],
+                verify_secret=creds["password"],
             )
             result.append(Host(name=host["name"],
                                credentials=cred,
