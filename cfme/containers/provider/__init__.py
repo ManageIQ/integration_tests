@@ -380,11 +380,12 @@ class AdHocMetricsView(BaseLoggedInPage):
     def apply_filter(self):
         form_buttons._fill_fb_bool(self.apply_btn, True)
 
-    def set_random_filter(self):
+    def set_filter(self, desired_filter):
+        self.selected_filter = desired_filter
+        self.filter_dropdown.fill_with(desired_filter)
 
-        random_filter = str(random.choice(self.filter_dropdown.items))
-        self.selected_filter = random_filter
-        self.filter_dropdown.fill_with(random_filter)
+    def get_random_filter(self):
+        return str(random.choice(self.filter_dropdown.items))
 
     def get_total_results_count(self):
         return int(Text(self, 'h5.ng-binding').text.split()[0])

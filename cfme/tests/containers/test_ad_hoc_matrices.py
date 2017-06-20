@@ -45,7 +45,7 @@ def test_ad_hoc_metrics_select_filter(provider,
 
     view = navigate_to(provider, 'AdHoc')
     view.wait_for_filter_option_to_load()
-    view.set_random_filter()
+    view.set_filter(view.get_random_filter())
     view.apply_filter()
     view.wait_for_results_to_load()
 
