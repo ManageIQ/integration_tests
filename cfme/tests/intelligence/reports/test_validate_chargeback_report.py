@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import re
-from datetime import date
-
-import fauxfactory
-import math
-import pytest
-
 import cfme.configure.access_control as ac
 import cfme.intelligence.chargeback.rates as rates
 import cfme.intelligence.chargeback.assignments as cb
+import fauxfactory
+import math
+import pytest
+import re
+
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
@@ -19,6 +19,7 @@ from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
+from datetime import date
 from fixtures.provider import setup_or_skip
 from utils import testgen
 from utils.blockers import BZ
@@ -29,7 +30,9 @@ from utils.wait import wait_for
 pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.meta(blockers=[BZ(1433984, forced_streams=["5.7", "5.8", "upstream"]),
-                               BZ(1465387, forced_streams=["5.8"])]),
+                               BZ(1468729, forced_streams=["5.9"]),
+                               BZ(1486529, unblock=lambda provider: not provider.one_of(
+                                  GCEProvider))]),
     test_requirements.chargeback
 ]
 
@@ -37,7 +40,7 @@ pytestmark = [
 def pytest_generate_tests(metafunc):
     # Filter out providers not meant for Chargeback Testing
     argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [VMwareProvider, RHEVMProvider],
+        metafunc, [VMwareProvider, RHEVMProvider, AzureProvider, GCEProvider],
         required_fields=[(['cap_and_util', 'test_chargeback'], True)]
     )
 
@@ -97,7 +100,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
 
 
 @pytest.yield_fixture(scope="module")
-def enable_candu():
+def enable_candu(provider):
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
     candu = CANDUCollection()
@@ -169,7 +172,7 @@ def assign_custom_rate(new_compute_rate, provider):
 
 
 def verify_records_rollups_table(appliance, provider):
-    # Verify that rollups are present in the metric_rollups table.
+    # Verify that hourly rollups are present in the metric_rollups table.
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     ems = appliance.db.client['ext_management_systems']
@@ -185,7 +188,11 @@ def verify_records_rollups_table(appliance, provider):
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
-        if record.cpu_usagemhz_rate_average:
+        if (record.cpu_usagemhz_rate_average or
+           record.cpu_usage_rate_average or
+           record.derived_memory_used or
+           record.net_usage_rate_average or
+           record.disk_usage_rate_average):
             return True
     return False
 
@@ -198,6 +205,7 @@ def resource_usage(vm_ownership, appliance, provider):
     average_network_io = 0
     average_disk_io = 0
     average_storage_used = 0
+    consumed_hours = 0
     vm_name = provider.data['cap_and_util']['chargeback_vm']
 
     metrics = appliance.db.client['metrics']
@@ -215,21 +223,54 @@ def resource_usage(vm_ownership, appliance, provider):
     # are capturing C&U data and forcing hourly rollups by running these commands through
     # the Rails console.
 
-    command = ('Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
-    appliance.ssh_client.run_rails_command(command, timeout=None)
+    def verify_records_metrics_table(appliance, provider):
+        # Verify that rollups are present in the metric_rollups table.
+        vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-    logger.info('capturing PERF data for VM {} running on {}'.format(vm_name, provider.name))
-    appliance.ssh_client.run_rails_command(
-        "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
-        vm.perf_capture('realtime',1.hour.ago.utc, Time.now.utc);\
-        vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime'))\"".
-        format(provider_id, repr(vm_name)))
+        ems = appliance.db.client['ext_management_systems']
+        metrics = appliance.db.client['metrics']
+
+        rc, out = appliance.ssh_client.run_rails_command(
+            "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
+            vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
+            .format(provider_id, repr(vm_name)))
+        assert rc == 0, "Failed to capture VM C&U data:".format(out)
+
+        with appliance.db.client.transaction:
+            result = (
+                appliance.db.client.session.query(metrics.id)
+                .join(ems, metrics.parent_ems_id == ems.id)
+                .filter(metrics.capture_interval_name == 'realtime',
+                metrics.resource_name == vm_name,
+                ems.name == provider.name, metrics.timestamp >= date.today())
+            )
+
+        for record in appliance.db.client.session.query(metrics).filter(
+                metrics.id.in_(result.subquery())):
+            if record.cpu_usagemhz_rate_average:
+                return True
+        return False
+
+    wait_for(verify_records_metrics_table, [appliance, provider], timeout=600,
+        fail_condition=False, message='Waiting for VM real-time data')
 
     # New C&U data may sneak in since 1)C&U server roles are running and 2)collection for clusters
     # and hosts is on.This would mess up our Chargeback calculations, so we are disabling C&U
     # collection after data has been fetched for the last hour.
-    command = ('Metric::Targets.perf_capture_always = {:storage=>false, :host_and_cluster=>false};')
-    appliance.ssh_client.run_rails_command(command, timeout=None)
+
+    original_roles = get_server_roles()
+    new_roles = original_roles.copy()
+    new_roles.update({
+        'ems_metrics_coordinator': False,
+        'ems_metrics_collector': False})
+
+    set_server_roles(**new_roles)
+
+    rc, out = appliance.ssh_client.run_rails_command(
+        "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
+        vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
+        format(provider_id, repr(vm_name)))
+    assert rc == 0, "Failed to rollup VM C&U data:".format(out)
 
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,
         message='Waiting for hourly rollups')
@@ -247,7 +288,12 @@ def resource_usage(vm_ownership, appliance, provider):
 
     for record in appliance.db.client.session.query(rollups).filter(
             rollups.id.in_(result.subquery())):
-        if record.cpu_usagemhz_rate_average:
+        consumed_hours = consumed_hours + 1
+        if (record.cpu_usagemhz_rate_average or
+           record.cpu_usage_rate_average or
+           record.derived_memory_used or
+           record.net_usage_rate_average or
+           record.disk_usage_rate_average):
             average_cpu_used_in_mhz = average_cpu_used_in_mhz + record.cpu_usagemhz_rate_average
             average_memory_used_in_mb = average_memory_used_in_mb + record.derived_memory_used
             average_network_io = average_network_io + record.net_usage_rate_average
@@ -265,10 +311,11 @@ def resource_usage(vm_ownership, appliance, provider):
             "average_memory_used_in_mb": average_memory_used_in_mb,
             "average_network_io": average_network_io,
             "average_disk_io": average_disk_io,
-            "average_storage_used": average_storage_used}
+            "average_storage_used": average_storage_used,
+            "consumed_hours": consumed_hours}
 
 
-def resource_cost(appliance, provider, metric, usage, description, rate_type):
+def resource_cost(appliance, provider, metric, usage, description, rate_type, consumed_hours):
     # Query the DB for Chargeback rates
     tiers = appliance.db.client['chargeback_tiers']
     details = appliance.db.client['chargeback_rate_details']
@@ -296,7 +343,7 @@ def resource_cost(appliance, provider, metric, usage, description, rate_type):
     # Variable Chargeback rates.
     for d in list_of_rates:
         if usage >= d['start'] and usage < d['finish']:
-            cost = (d['variable_rate'] * usage) + d['fixed_rate']
+            cost = (d['variable_rate'] * usage) + (d['fixed_rate'] * consumed_hours)
             return cost
 
 
@@ -308,21 +355,22 @@ def chargeback_costs_default(resource_usage, appliance, provider):
     average_network_io = resource_usage['average_network_io']
     average_disk_io = resource_usage['average_disk_io']
     average_storage_used = resource_usage['average_storage_used']
+    consumed_hours = resource_usage['consumed_hours']
 
     cpu_used_cost = resource_cost(appliance, provider, 'cpu_usagemhz_rate_average',
-        average_cpu_used_in_mhz, 'Default', 'Compute')
+        average_cpu_used_in_mhz, 'Default', 'Compute', consumed_hours)
 
     memory_used_cost = resource_cost(appliance, provider, 'derived_memory_used',
-        average_memory_used_in_mb, 'Default', 'Compute')
+        average_memory_used_in_mb, 'Default', 'Compute', consumed_hours)
 
     network_used_cost = resource_cost(appliance, provider, 'net_usage_rate_average',
-        average_network_io, 'Default', 'Compute')
+        average_network_io, 'Default', 'Compute', consumed_hours)
 
     disk_used_cost = resource_cost(appliance, provider, 'disk_usage_rate_average',
-        average_disk_io, 'Default', 'Compute')
+        average_disk_io, 'Default', 'Compute', consumed_hours)
 
     storage_used_cost = resource_cost(appliance, provider, 'derived_vm_used_disk_storage',
-        average_storage_used, 'Default', 'Storage')
+        average_storage_used, 'Default', 'Storage', consumed_hours)
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -341,21 +389,22 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
     average_network_io = resource_usage['average_network_io']
     average_disk_io = resource_usage['average_disk_io']
     average_storage_used = resource_usage['average_storage_used']
+    consumed_hours = resource_usage['consumed_hours']
 
     cpu_used_cost = resource_cost(appliance, provider, 'cpu_usagemhz_rate_average',
-        average_cpu_used_in_mhz, description, 'Compute')
+        average_cpu_used_in_mhz, description, 'Compute', consumed_hours)
 
     memory_used_cost = resource_cost(appliance, provider, 'derived_memory_used',
-        average_memory_used_in_mb, description, 'Compute')
+        average_memory_used_in_mb, description, 'Compute', consumed_hours)
 
     network_used_cost = resource_cost(appliance, provider, 'net_usage_rate_average',
-        average_network_io, description, 'Compute')
+        average_network_io, description, 'Compute', consumed_hours)
 
     disk_used_cost = resource_cost(appliance, provider, 'disk_usage_rate_average',
-        average_disk_io, description, 'Compute')
+        average_disk_io, description, 'Compute', consumed_hours)
 
     storage_used_cost = resource_cost(appliance, provider, 'derived_vm_used_disk_storage',
-        average_storage_used, description, 'Storage')
+        average_storage_used, description, 'Storage', consumed_hours)
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -448,6 +497,8 @@ def new_compute_rate():
 # Tests to validate costs reported in the Chargeback report for various metrics.
 # The costs reported in the Chargeback report should be approximately equal to the
 # costs estimated in the chargeback_costs_default/chargeback_costs_custom fixtures.
+@pytest.mark.uncollectif(
+    lambda provider: provider.category == 'cloud')
 def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeback_report_default):
     """Test to validate CPU usage cost.
        Calculation is based on default Chargeback rate.
@@ -462,6 +513,8 @@ def test_validate_default_rate_cpu_usage_cost(chargeback_costs_default, chargeba
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.one_of(GCEProvider))
 def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
         chargeback_report_default):
     """Test to validate memory usage cost.
@@ -524,6 +577,8 @@ def test_validate_default_rate_storage_usage_cost(chargeback_costs_default,
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.category == 'cloud')
 def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate CPU usage cost.
        Calculation is based on custom Chargeback rate.
@@ -539,6 +594,8 @@ def test_validate_custom_rate_cpu_usage_cost(chargeback_costs_custom, chargeback
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.one_of(GCEProvider))
 def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate memory usage cost.
        Calculation is based on custom Chargeback rate.
