@@ -8,6 +8,7 @@ from cfme.web_ui import toolbar, AngularSelect, form_buttons
 from cfme.configure.configuration import Tag
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.image import Image
+from cfme.containers.container import Container
 from cfme.containers.project import Project
 from cfme.containers.node import Node
 from cfme.containers.image_registry import ImageRegistry
@@ -20,7 +21,9 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
+
 TEST_ITEMS = [
+    pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(Image, 'CMP-9981')),
