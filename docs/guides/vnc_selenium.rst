@@ -85,7 +85,7 @@ Here's an example script that does those things:
 Important things:
 * The script **MUST** start with `#!/bin/sh` (or your shell shebang of choice).
 * The script **MUST** be executable (`chmod +x ~/.vnc/xstartup`)
-* The "-ensureCleanSession -trustAllSSLCertificates"  won't work with the latest selenium-server which is 3.4.0. 
+* The "-ensureCleanSession -trustAllSSLCertificates"  won't work with the selenium-server which is 3.x.x onward.
 Start the server
 ^^^^^^^^^^^^^^^^
 
@@ -149,7 +149,7 @@ An example of the yaml is below:
            desired_capabilities:
                platform: LINUX
                browserName: 'chrome'
-               # for the selenium-server version 3.4.0 you will need to use 
+               # for the selenium-server version 3.x.x onward you will need to use
                # following capabilities instead of using CLI arguments (uncomment next 2 lines)
                # and do not use '-ensureCleanSession -trustAllSSLCertificates' in java -jar command
                # which is used to launch selenium-server in xstartup script as shown 
