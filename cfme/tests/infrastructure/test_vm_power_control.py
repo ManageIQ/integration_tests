@@ -332,7 +332,7 @@ def test_no_power_controls_on_archived_vm(testing_vm, archive_vm, soft_assert):
         * Verify the Power toolbar button is not visible
     """
     testing_vm.load_details()
-    assert not toolbar.exists("Power"), "Power displayed in template details!"
+    soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm')
