@@ -603,8 +603,10 @@ class CANDUCollection(CFMENavigateStep):
 class RedHatUpdatesView(RegionView):
     title = Text('//div[@id="main-content"]//h3[1]')
     edit_registration = Button('Edit Registration')
+    updates_table = Table("//div[@id='form_div']/table")
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
+
 
 class RedHatUpdatesEditView(RegionView):
     title = Text('//div[@id="main-content"]//h3[1]')

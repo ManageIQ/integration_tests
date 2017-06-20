@@ -35,8 +35,8 @@ Usage:
     platform_updates_available('EVM_1', 'EVM_2')
 
 Note:
-    Argument `organization` can be only used with Satellite 5/6
-    (i.e. when service is either `sat5` or `sat6`).
+    Argument `organization` can be only used with Satellite 6
+    (i.e. when service is either `sat6`).
 """
 
 
@@ -118,7 +118,7 @@ def update_registration(service,
         password_verify: 2nd entry of password for verification.
                          Same as 'password' if None.
         repo_or_channel: Repository/channel to enable.
-        organization: Organization (sat5/sat6 only).
+        organization: Organization (sat6 only).
         use_proxy: `True` if proxy should be used, `False` otherwise
                    (default `False`).
         proxy_url: Address of the proxy server.
@@ -233,19 +233,31 @@ def check_updates(*appliance_names):
     flash.dismiss()
 
 
-def are_registered(*appliance_names):
+def is_registering(*appliance_names):
+    """ Check if appliances are registering """
+    view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
+    row = view.updates_table.row(appliance="EVM")
+    if row.last_message.text.lower() == 'registering':
+        return True
+    else:
+        return False
+
+
+def is_registered(*appliance_names):
     """ Check if appliances are registered
 
     Args:
         appliance_names: Names of appliances to check; will check all if empty
     """
-    for row in get_appliance_rows(*appliance_names):
-        if row.update_status.text.lower() == 'not registered':
-            return False
-    return True
+    view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
+    row = view.updates_table.row(appliance="EVM")
+    if row.last_message.text.lower() == 'registered':
+        return True
+    else:
+        return False
 
 
-def are_subscribed(*appliance_names):
+def is_subscribed(*appliance_names):
     """ Check if appliances are subscribed
 
     Args:

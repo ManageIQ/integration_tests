@@ -137,9 +137,22 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     request.addfinalizer(appliance.unregister)
 
     wait_for(
+        func=red_hat_updates.is_registering,
+        delay=5,
+        num_sec=100,
+        fail_func=red_hat_updates.refresh
+    )
+
+    wait_for(
+        func=red_hat_updates.is_registered,
+        delay=20,
+        num_sec=400,
+        fail_func=red_hat_updates.refresh
+    )
+
+    wait_for(
         func=appliance.is_registration_complete,
         func_args=[used_repo_or_channel],
-        delay=40,
-        num_sec=400,
-        fail_func=red_hat_updates.register_appliances
+        delay=20,
+        num_sec=400
     )
