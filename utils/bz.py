@@ -328,7 +328,7 @@ class BugWrapper(object):
         # With these states, the change is in upstream
         if self.status not in {"POST", "MODIFIED", "ON_QA", "VERIFIED", "RELEASE_PENDING"}:
             return False
-        history = self.get_history()["bugs"][0]["history"]
+        history = self.get_history_raw()["bugs"][0]["history"]
         changes = []
         # We look for status changes in the history
         for event in history:
