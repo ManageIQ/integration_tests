@@ -5,7 +5,6 @@ from cfme.containers.provider import ContainersProvider
 from utils.version import current_version
 from cfme.web_ui import toolbar
 from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
@@ -22,17 +21,9 @@ def matrics_up_and_running(provider):
               router["metadata"]["name"] == "hawkular-metrics"].pop()
     hawkular_url = router["status"]["ingress"][0]["host"]
     response = requests.get("https://{url}:443".format(url=hawkular_url), verify=False)
-    if not response.ok:
-        raise Exception("hawkular failed to start!")
+
+    assert response.ok, "hawkular failed to start!"
     logger.info("hawkular started successfully")
-
-
-@pytest.fixture
-def wait_for_metrics_population(provider):
-    # in case of new provider was added wait for up to 25 minutes
-    # for system to collect first metrics
-    wait_for(lambda: provider.summary.status.last_metrics_collection.text_value != 'None',
-             delay=60, num_sec=25 * 60)
 
 
 def is_ad_hoc_greyed(provider_object):

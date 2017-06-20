@@ -572,21 +572,3 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
         return []
 
     return sample(rows, min(count, len(rows)))
-
-
-def get_object_name(obj):
-    return obj.__module__.title().split(".")[-1]
-
-
-def obj_factory(obj_creator, row, provider):
-
-    factory = {"Provider": lambda row: {"name": row.name.text},
-               "Project": lambda row: {"name": row.name.text, "provider": provider},
-               "Pod": lambda row: {"name": row.name.text, "provider": provider},
-               "Node": lambda row: {"name": row.name.text, "provider": provider},
-               "Template": lambda row: {"name": row.name.text, "provider": provider},
-               "Image": lambda row: {"name": row.name.text,
-                                     "tag": row.tag.text, "provider": provider},
-               "Image_Registry": lambda row: {"host": row.host.text, "provider": provider}}
-
-    return obj_creator(**factory[get_object_name(obj_creator)](row))
