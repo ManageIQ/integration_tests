@@ -8,7 +8,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.7"),
+    pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
@@ -27,25 +27,30 @@ def matrics_up_and_running(provider):
     logger.info("hawkular started successfully")
 
 
+@pytest.fixture
+def wait_for_metrics_population(provider):
+    # in case of new provider was added wait for up to 25 minutes
+    # for system to collect first metrics
+    wait_for(lambda: provider.summary.status.last_metrics_collection.text_value != 'None',
+             delay=60, num_sec=25 * 60)
+
+
 def is_ad_hoc_greyed(provider_object):
     navigate_to(provider_object, 'Details')
     return toolbar.is_greyed('Monitoring', 'Ad hoc Metrics')
 
 
 @pytest.mark.polarion('CMP-10643')
-def test_ad_hoc_metrics_overview(provider, matrics_up_and_running):
+def test_ad_hoc_metrics_overview(provider,
+                                 matrics_up_and_running):
 
     assert not is_ad_hoc_greyed(provider), \
         "Monitoring --> Ad hoc Metrics not activated despite provider was set"
 
 
 @pytest.mark.polarion('CMP-10645')
-def test_ad_hoc_metrics_select_filter(provider, matrics_up_and_running):
-
-    # in case of new provider was added wait for up to 25 minutes
-    # for system to collect first metrics
-    wait_for(lambda: provider.summary.status.last_metrics_collection != 'None',
-             delay=60, num_sec=25 * 60)
+def test_ad_hoc_metrics_select_filter(provider,
+                                      matrics_up_and_running):
 
     view = navigate_to(provider, 'AdHoc')
     view.wait_for_filter_option_to_load()
