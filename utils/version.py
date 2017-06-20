@@ -41,7 +41,7 @@ def get_version(obj=None):
     If obj is None, the version will be retrieved from the current appliance
 
     """
-    if isinstance(obj, Version):
+    if isinstance(obj, Version) or isinstance(obj, float):
         return obj
     if obj.startswith('master'):
         return Version.latest()
