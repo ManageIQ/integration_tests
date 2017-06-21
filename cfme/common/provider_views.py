@@ -137,7 +137,7 @@ class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
                 TimelinesView.is_displayed)
 
 
-class ProvidersDiscoverView(BaseLoggedInPage):
+class InfraProvidersDiscoverView(BaseLoggedInPage):
     """
      Discover View from Infrastructure Providers page
     """
@@ -161,6 +161,27 @@ class ProvidersDiscoverView(BaseLoggedInPage):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == 'Infrastructure Providers Discovery')
+
+
+class CloudProvidersDiscoverView(BaseLoggedInPage):
+    """
+     Discover View from Infrastructure Providers page
+    """
+    title = Text('//div[@id="main-content"]//h1')
+
+    discover_type = BootstrapSelect('discover_type_selected')
+    username = Input(name='userid')
+    password = Input(name='password')
+    confirm_password = Input(name='verify')
+
+    start = Button('Start')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+                self.title.text == 'Cloud Providers Discovery')
 
 
 class ProvidersManagePoliciesView(BaseLoggedInPage):
