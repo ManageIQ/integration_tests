@@ -250,6 +250,19 @@ def test_server_info(appliance):
     assert all(item in appliance.rest_api.server_info for item in ('appliance', 'build', 'version'))
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_server_info_href(appliance):
+    """Check that appliance's server, zone and region is present.
+
+    Metadata:
+        test_flag: rest
+    """
+    items = ('server_href', 'zone_href', 'region_href')
+    for item in items:
+        assert item in appliance.rest_api.server_info
+        assert 'id' in appliance.rest_api.get(appliance.rest_api.server_info[item])
+
+
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_product_info(appliance):
     """Check that product info is present.
