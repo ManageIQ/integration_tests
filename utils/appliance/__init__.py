@@ -565,7 +565,7 @@ class IPAppliance(object):
                 creds_table = self.db.client["authentications"]
                 try:
                     # TODO: fix this when all providers are moved to endpoints
-                    if provider.default_endpoint:
+                    if hasattr(provider, 'default_endpoint'):
                         default_creds = provider.default_endpoint.credentials
                     else:
                         default_creds = provider.credentials['default']
