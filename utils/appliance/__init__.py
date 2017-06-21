@@ -564,7 +564,11 @@ class IPAppliance(object):
             if any(p_type in ems.type for p_type in RECOGNIZED_BY_CREDS):
                 creds_table = self.db.client["authentications"]
                 try:
-                    default_creds = provider.credentials['default']
+                    # TODO: fix this when all providers are moved to endpoints
+                    if provider.default_endpoint:
+                        default_creds = provider.default_endpoint.credentials
+                    else:
+                        default_creds = provider.credentials['default']
                 except KeyError:
                     # Provider has no default credentials; it should be looked up by IP address,
                     # not by credentials
