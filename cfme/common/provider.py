@@ -718,7 +718,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         elif isinstance(endpoints, dict):
             return endpoints
         elif isinstance(endpoints, Iterable):
-            return dict([(e.name, e) for e in endpoints])
+            return {(e.name, e) for e in endpoints}
         elif isinstance(endpoints, DefaultEndpoint):
             return {endpoints.name: endpoints}
         else:

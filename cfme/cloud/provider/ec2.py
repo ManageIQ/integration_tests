@@ -5,16 +5,26 @@ from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 
 
 class EC2Endpoint(DefaultEndpoint):
+    """
+     represents default Amazon endpoint (Add/Edit dialogs)
+    """
     @property
     def view_value_mapping(self):
         return {}
 
 
 class EC2EndpointForm(DefaultEndpointForm):
+    """
+     represents default Amazon endpoint form in UI (Add/Edit dialogs)
+    """
     pass
 
 
 class EC2Provider(CloudProvider):
+    """
+     BaseProvider->CloudProvider->EC2Provider class.
+     represents CFME provider and operations available in UI
+    """
     type_name = "ec2"
     mgmt_class = EC2System
     db_types = ["Amazon::CloudManager"]

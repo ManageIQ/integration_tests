@@ -8,6 +8,9 @@ from . import CloudProvider
 
 
 class GCEEndpoint(DefaultEndpoint):
+    """
+     represents default GCE endpoint (Add/Edit dialogs)
+    """
     credential_class = ServiceAccountCredential
 
     @property
@@ -16,11 +19,18 @@ class GCEEndpoint(DefaultEndpoint):
 
 
 class GCEEndpointForm(View):
+    """
+     represents default GCE endpoint form in UI (Add/Edit dialogs)
+    """
     service_account = Input('service_account')
     validate = Button('Validate')
 
 
 class GCEProvider(CloudProvider):
+    """
+     BaseProvider->CloudProvider->GCEProvider class.
+     represents CFME provider and operations available in UI
+    """
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
     db_types = ["Google::CloudManager"]

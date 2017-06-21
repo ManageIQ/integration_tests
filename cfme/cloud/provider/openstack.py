@@ -6,6 +6,10 @@ from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStack
 
 
 class OpenStackProvider(CloudProvider):
+    """
+     BaseProvider->CloudProvider->OpenStackProvider class.
+     represents CFME provider and operations available in UI
+    """
     type_name = "openstack"
     mgmt_class = OpenstackSystem
     db_types = ["Openstack::CloudManager"]
@@ -61,10 +65,8 @@ class OpenStackProvider(CloudProvider):
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
         endpoints = {}
-        for endp in prov_config['endpoints']:
-            for expected_endpoint in (RHOSEndpoint, EventsEndpoint):
-                if expected_endpoint.name == endp:
-                    endpoints[endp] = expected_endpoint(**prov_config['endpoints'][endp])
+        for exp_endp in (RHOSEndpoint, EventsEndpoint):
+            endpoints[exp_endp.name] = exp_endp(**prov_config['endpoints'][exp_endp.name])
 
         from utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')

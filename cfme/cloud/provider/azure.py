@@ -6,16 +6,26 @@ from utils.version import pick
 
 
 class AzureEndpoint(DefaultEndpoint):
+    """
+     represents default Azure endpoint (Add/Edit dialogs)
+    """
     @property
     def view_value_mapping(self):
         return {}
 
 
 class AzureEndpointForm(DefaultEndpointForm):
+    """
+     represents default Azure endpoint form in UI (Add/Edit dialogs)
+    """
     pass
 
 
 class AzureProvider(CloudProvider):
+    """
+     BaseProvider->CloudProvider->AzureProvider class.
+     represents CFME provider and operations available in UI
+    """
     type_name = "azure"
     mgmt_class = AzureSystem
     db_types = ["Azure::CloudManager"]
