@@ -14,6 +14,8 @@ from widgetastic.widget import View, Table, Text
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential
+from cfme.configure.about import AboutView
+from cfme.configure.documentation import DocView
 from cfme.configure.tasks import TasksView
 from cfme.dashboard import DashboardView
 from cfme.intelligence.rss import RSSView
@@ -328,14 +330,12 @@ class MySettings(CFMENavigateStep):
 
 @navigator.register(Server)
 class About(CFMENavigateStep):
+    VIEW = AboutView
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version > '5.7':
-            from cfme.dashboard import click_help
-            click_help('About')
-        else:
-            self.prerequisite_view.navigation.select('Settings', 'About')
+        from cfme.dashboard import click_help
+        click_help('About')
 
 
 @navigator.register(Server)
@@ -349,14 +349,12 @@ class RSS(CFMENavigateStep):
 
 @navigator.register(Server)
 class Documentation(CFMENavigateStep):
+    VIEW = DocView
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        if self.obj.appliance.version > '5.7':
-            from cfme.dashboard import click_help
-            click_help('Documentation')
-        else:
-            self.prerequisite_view.navigation.select('Settings', 'About')
+        from cfme.dashboard import click_help
+        click_help('Documentation')
 
 
 @navigator.register(Server)

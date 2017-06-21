@@ -1,45 +1,39 @@
 # -*- coding: utf-8 -*-
-
 import pytest
-from cfme.configure import configuration
-from cfme.web_ui import flash
-from utils import conf, version
 from functools import partial
 
-try:
-    server_roles_conf = conf.cfme_data.server_roles
-except KeyError:
-    server_roles_conf = {
-        'all': [],
-        'sets': {},
-    }
+from cfme.configure import configuration
+from cfme.web_ui import flash
+from utils.conf import cfme_data
+
+server_roles_conf = cfme_data.get('server_roles',
+                                  {'all': [], 'sets': {}})
 
 
 @pytest.fixture(scope="session")
 def all_possible_roles():
     roles = server_roles_conf['all']
-    if version.current_version() < 5.6:
-        roles.remove('git_owner')
-        roles.remove('websocket')
-    if version.current_version() >= 5.7:
-        roles.remove('database_synchronization')
+    roles.remove('database_synchronization')
     return roles
 
 
 @pytest.fixture(scope="module", params=server_roles_conf['sets'].keys())
-def roles(request, all_possible_roles):
+def roles(request, all_possible_roles, appliance):
     result = {}
     for role in all_possible_roles:
-        result[role] = role in conf.cfme_data.get("server_roles", {})["sets"][request.param]
+        result[role] = role in cfme_data.get("server_roles", {})["sets"][request.param]
     # Hard-coded protection
     result["user_interface"] = True
+
+    # ansible role introduced in CFME 5.8
+    if appliance.version < '5.8' and result.get('embedded_ansible'):
+        del result['embedded_ansible']
     return result
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.uncollectif(lambda: not server_roles_conf["all"])
-@pytest.mark.meta(blockers=[1351716])
 def test_server_roles_changing(request, roles):
     """ Test that sets and verifies the server roles in configuration.
 

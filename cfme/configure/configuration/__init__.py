@@ -56,6 +56,7 @@ replication_process = UIRegion(locators={
 
 server_roles = Form(
     fields=[
+        # TODO embedded_ansible is only present in CFME 5.8 (MIQ Fine+)
         ('embedded_ansible', CFMECheckbox("server_roles_embedded_ansible")),
         ('ems_metrics_coordinator', CFMECheckbox("server_roles_ems_metrics_coordinator")),
         ('ems_operations', CFMECheckbox("server_roles_ems_operations")),
