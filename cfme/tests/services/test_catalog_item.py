@@ -7,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
 from cfme.automate.service_dialogs import ServiceDialog
-from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.services.catalogs.catalog_item import CatalogItem, CatalogBundle
 from cfme.services.catalogs.catalog import Catalog
 from cfme.web_ui import flash
 from utils import error
@@ -81,6 +81,24 @@ def catalog_item(dialog, catalog):
                        'not found'.format(cat_item.name))
 
 
+@pytest.yield_fixture(scope="function")
+def catalog_bundle(catalog_item):
+    catalog_item.create()
+    bundle_name = "bundle" + fauxfactory.gen_alphanumeric()
+    catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
+                                   display_in=True, catalog=catalog_item.catalog,
+                                   dialog=catalog_item.dialog,
+                                   catalog_items=[catalog_item.name])
+    yield catalog_bundle
+
+    # fixture cleanup
+    try:
+        catalog_bundle.delete()
+    except NoSuchElementException:
+        logger.warning('test_catalog_item: catalog_item yield fixture cleanup, catalog item "{}" '
+                       'not found'.format(catalog_bundle.name))
+
+
 def test_create_catalog_item(catalog_item):
     catalog_item.create()
     flash.assert_success_message('Service Catalog Item "{}" was added'.format(catalog_item.name))
@@ -119,3 +137,47 @@ def test_permissions_catalog_item_add(catalog_item):
     tac.single_task_permission_test([['Everything', 'Services', 'Catalogs Explorer',
                                       'Catalog Items']],
                                     {'Add Catalog Item': catalog_item.create})
+
+
+def test_tagvis_catalog_item(catalog_item, user_restricted, tag):
+    """ Checks catalog item tag visibility for restricted user
+    Prerequisites:
+        Catalog, tag, role, group and restricted user should be created
+
+    Steps:
+        1. As admin add tag to catalog item
+        2. Login as restricted user, catalog item is visible for user
+        3. As admin remove tag
+        4. Login as restricted user, catalog item is not visible for user
+    """
+    catalog_item.create()
+    category_name = ' '.join((tag.category.display_name, '*'))
+    catalog_item.edit_tags(category_name, tag.display_name)
+    with user_restricted:
+        assert catalog_item.exists
+
+    catalog_item.remove_tag(category_name, tag.display_name)
+    with user_restricted:
+        assert not catalog_item.exists
+
+
+def test_tagvis_catalog_bundle(user_restricted, tag, catalog_bundle):
+    """ Checks catalog item tag visibility for restricted user
+        Prerequisites:
+            Catalog, tag, role, group, catalog item and restricted user should be created
+
+        Steps:
+            1. As admin add tag to catalog bundle
+            2. Login as restricted user, catalog bundle is visible for user
+            3. As admin remove tag
+            4. Login as restricted user, catalog bundle is not visible for user
+        """
+    catalog_bundle.create()
+    category_name = ' '.join((tag.category.display_name, '*'))
+    catalog_bundle.edit_tags(category_name, tag.display_name)
+    with user_restricted:
+        assert catalog_bundle.exists
+
+    catalog_bundle.remove_tag(category_name, tag.display_name)
+    with user_restricted:
+        assert not catalog_bundle.exists
