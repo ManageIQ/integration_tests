@@ -10,6 +10,7 @@ from utils import testgen
 from utils import version
 from utils import conf
 from utils.appliance.implementations.ui import navigate_to
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 
 pytestmark = [
     pytest.mark.meta(blockers=[1296258]),
@@ -87,6 +88,10 @@ def test_multiple_host_bad_creds(setup_provider, provider):
                            'validate_host': cfme_host["name"]})
 
     sel.click(credential_form.validate_multi_host)
-    flash.assert_message_match('Cannot complete login due to an incorrect user name or password.')
+    if provider.one_of(RHEVMProvider):
+        msg = 'Login failed due to a bad username or password.'
+    else:
+        msg = 'Cannot complete login due to an incorrect user name or password.'
+    flash.assert_message_match(msg)
 
     sel.click(credential_form.cancel_changes)
