@@ -177,8 +177,10 @@ def login(self, user=None, submit_method=LOGIN_METHODS[-1]):
         login_view.log_in(user, method=submit_method)
         logged_in_view.flush_widget_cache()
         user.name = logged_in_view.current_fullname
-        assert logged_in_view.logged_in_as_user
-        logged_in_view.flash.assert_no_error()
+        try:
+            assert logged_in_view.logged_in_as_user
+        except AssertionError:
+            login_view.flash.assert_no_error()
         self.appliance.user = user
 
 
