@@ -402,4 +402,4 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(lambda: int(view.paginator.items_amount), fail_condition=0,
              message="Wait for any provider to appear", num_sec=1000,
-             fail_func=view.browser.selenium.refresh)
+             fail_func=view.browser.refresh)

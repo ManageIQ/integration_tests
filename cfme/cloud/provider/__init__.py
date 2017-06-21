@@ -1,12 +1,4 @@
 """ A model of a Cloud Provider in CFME
-
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Providers pages.
-:var discover_form: A :py:class:`cfme.web_ui.Form` object describing the discover form.
-:var properties_form: A :py:class:`cfme.web_ui.Form` object describing the main add form.
-:var default_form: A :py:class:`cfme.web_ui.Form` object describing the default credentials form.
-:var amqp_form: A :py:class:`cfme.web_ui.Form` object describing the AMQP credentials form.
 """
 
 from functools import partial
@@ -24,17 +16,13 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         ProvidersEditTagsView)
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider
-from cfme.web_ui import form_buttons
-from cfme.web_ui import toolbar as tb
-from cfme.web_ui import Region, fill, paginator, InfoBlock, match_location
+from cfme.web_ui import InfoBlock, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
 
-
-details_page = Region(infoblock_type='detail')
 
 match_page = partial(match_location, controller='ems_cloud', title='Cloud Providers')
 
@@ -53,17 +41,18 @@ class CloudProvider(Pretty, CloudInfraProvider):
 
     Args:
         name: Name of the provider.
-        details: a details record (see EC2Details, OpenStackDetails inner class).
-        credentials (:py:class:`Credential`): see Credential class.
+        endpoints: one or several provider endpoints like DefaultEndpoint. it should be either dict
+        in format dict{endpoint.name, endpoint, endpoint_n.name, endpoint_n}, list of endpoints or
+        mere one endpoint
         key: The CFME key of the provider in the yaml.
 
     Usage:
 
-        myprov = EC2Provider(name='foo',
-                             region='us-west-1',
-                             credentials=Credential(principal='admin', secret='foobar'))
+        credentials = Credential(principal='bad', secret='reallybad')
+        endpoint = DefaultEndpoint(hostname='some_host', region='us-west', credentials=credentials)
+        myprov = VMwareProvider(name='foo',
+                             endpoints=endpoint)
         myprov.create()
-
     """
     provider_types = {}
     category = "cloud"
@@ -225,17 +214,10 @@ class Images(CFMENavigateStep):
         sel.click(InfoBlock.element('Relationships', 'Images'))
 
 
-def get_all_providers(do_not_navigate=False):
+def get_all_providers():
     """Returns list of all providers"""
-    if not do_not_navigate:
-        navigate_to(CloudProvider, 'All')
-    providers = set([])
-    link_marker = "ems_cloud"
-    for page in paginator.pages():
-        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'{}/show')]".format(link_marker)):
-            providers.add(sel.get_attribute(title, "title"))
-    return providers
+    view = navigate_to(CloudProvider, 'All')
+    return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
 def discover(credential, cancel=False, d_type="Amazon"):
@@ -264,4 +246,4 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(lambda: int(view.paginator.items_amount), fail_condition=0,
              message="Wait for any provider to appear", num_sec=1000,
-             fail_func=view.browser.selenium.refresh)
+             fail_func=view.browser.refresh)
