@@ -10,7 +10,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 class ControlLogView(BaseLoggedInPage):
     """Basic view for Control/Log tab."""
-    title = Text(".//div[@id='main_content']//h1")
+    title = Text(".//div[@id='main-content']//h1")
     subtitle = Text(".//div[@id='main_div']/h3")
     refresh_button = Button(id="refresh_log")
     download_button = Button(id="fetch_log")
