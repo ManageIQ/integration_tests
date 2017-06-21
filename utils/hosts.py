@@ -3,12 +3,14 @@ utils.hosts
 --------------
 
 """
-from cfme.infrastructure import host
-from utils.wait import wait_for
+import socket
+
 from utils import conf
 from utils.log import logger
+from utils.wait import wait_for
+from utils.update import update
+from cfme.infrastructure import host
 import cfme.fixtures.pytest_selenium as sel
-import socket
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -24,16 +26,10 @@ def setup_host_creds(provider_key, host_name, remove_creds=False, ignore_errors=
         test_host = host.Host(name=host_name)
         if not test_host.has_valid_credentials:
             logger.info("Setting up creds for host: %s", host_name)
-
-            # double check ip address (issue around added ipv6 to the test
-            #    beds for upcoming support)
-            if test_host.ip_address is None:
-                test_host.ip_address = socket.gethostbyname_ex(host_name)[2][0]
-            test_host.update(
-                updates={'credentials': host.get_credentials_from_config(host_data['credentials']),
-                         'ip_address': test_host.ip_address}
-            )
-
+            with update(test_host):
+                if test_host.ip_address is None:
+                    test_host.ip_address = socket.gethostbyname_ex(host_name)[2][0]
+                test_host.credentials = host.get_credentials_from_config(host_data['credentials'])
             wait_for(
                 lambda: test_host.has_valid_credentials,
                 delay=10,
@@ -41,12 +37,10 @@ def setup_host_creds(provider_key, host_name, remove_creds=False, ignore_errors=
                 fail_func=sel.refresh
             )
         elif test_host.has_valid_credentials and remove_creds:
-            test_host.update(
-                updates={'credentials': host.Host.Credential(
-                    principal="", secret="", verify_secret="")
-                },
-                validate_credentials=False
-            )
+            with update(test_host):
+                test_host.credentials = host.Host.Credential(principal="", secret="",
+                    verify_secret="")
+                test_host.validate_credentials = False
     except Exception as e:
         if not ignore_errors:
             raise e
