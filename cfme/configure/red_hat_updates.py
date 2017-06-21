@@ -234,27 +234,29 @@ def check_updates(*appliance_names):
 
 
 def is_registering(*appliance_names):
-    """ Check if appliances are registering """
+    """ Check if at least one appliance is registering """
     view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
-    row = view.updates_table.row(appliance="EVM")
-    if row.last_message.text.lower() == 'registering':
-        return True
-    else:
-        return False
+    for appliance_name in appliance_names:
+        row = view.updates_table.row(appliance=appliance_name)
+        if row.last_message.text.lower() == 'registering':
+            return True
+        else:
+            return False
 
 
 def is_registered(*appliance_names):
-    """ Check if appliances are registered
+    """ Check if each appliance is registered
 
     Args:
         appliance_names: Names of appliances to check; will check all if empty
     """
     view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
-    row = view.updates_table.row(appliance="EVM")
-    if row.last_message.text.lower() == 'registered':
-        return True
-    else:
-        return False
+    for appliance_name in appliance_names:
+        row = view.updates_table.row(appliance=appliance_name)
+        if row.last_message.text.lower() == 'registered':
+            return True
+        else:
+            return False
 
 
 def is_subscribed(*appliance_names):

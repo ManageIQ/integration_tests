@@ -3,9 +3,12 @@ import pytest
 from cfme.configure import red_hat_updates
 from cfme.web_ui import InfoBlock
 from utils import conf, version
+from utils.log_validator import LogValidator
 from utils.testgen import parametrize
 from utils.wait import wait_for
 from utils.log import logger
+
+from wait_for import TimedOutError
 
 
 REG_METHODS = ('rhsm', 'sat6')
@@ -132,27 +135,50 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
     used_repo_or_channel = InfoBlock(
         'Red Hat Software Updates', 'Repository Name(s)').text
 
+    evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                            matched_patterns=['*ERROR:dbus.proxies:Introspect*'])
+    evm_tail.fix_before_start()
+
     red_hat_updates.register_appliances()  # Register all
 
     request.addfinalizer(appliance.unregister)
 
     wait_for(
         func=red_hat_updates.is_registering,
-        delay=5,
+        func_args=[appliance.server.name],
+        delay=10,
         num_sec=100,
         fail_func=red_hat_updates.refresh
     )
 
-    wait_for(
-        func=red_hat_updates.is_registered,
-        delay=20,
-        num_sec=400,
-        fail_func=red_hat_updates.refresh
-    )
+    '''Try/eceptions added to overcome bz #1463588 these can be removed once fixed'''
 
-    wait_for(
-        func=appliance.is_registration_complete,
-        func_args=[used_repo_or_channel],
-        delay=20,
-        num_sec=400
-    )
+    try:
+        wait_for(
+            func=red_hat_updates.is_registered,
+            handle_exception=True,
+            func_args=[appliance.server.name],
+            delay=40,
+            num_sec=1000,
+            fail_func=red_hat_updates.refresh
+        )
+    except TimedOutError:
+        try:
+            wait_for(evm_tail.validate_logs, handle_exception=True, delay=30, num_sec=300)
+
+            red_hat_updates.register_appliances()
+
+            wait_for(
+                func=red_hat_updates.is_registered,
+                func_args=[appliance.server.name],
+                delay=40,
+                num_sec=400,
+                fail_func=red_hat_updates.refresh
+            )
+        except TimedOutError:
+            wait_for(
+                func=appliance.is_registration_complete,
+                func_args=[used_repo_or_channel],
+                delay=20,
+                num_sec=400
+            )
