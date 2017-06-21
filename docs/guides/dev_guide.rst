@@ -84,20 +84,37 @@ We also do a few things that aren't explicitly called out in PEP 8:
   width of 100 characters. As a result, our maximum line length is 100 characters,
   rather than 80.
 
+* Use parentheses ``()`` for line continuation::
+
+    # in imports
+    import (module1, module2, module3, module4,
+        module5)
+
+    # for long strings
+    very_long_string = (
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt "
+        "ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation "
+        "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in "
+        "reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur "
+        "sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id "
+        "est laborum."
+    )
+
+
 * When wrapping blocks of long lines, indent the trailing lines once, instead of
   indenting to the opening bracket. This helps when there are large blocks of long
   lines, to preserve some readability::
 
-    _really_really_long_locator_name = (True, 'div > tr > td > a[title="this \
-        is just a little too long"]')
-    _another_really_super_long_locator_name = (True, 'div > tr > td > \
-        a[title="this is getting silly now"]')
+    _really_really_long_locator_name = (True, ('div > tr > td > a[title="this '
+        'is just a little too long"]'))
+    _another_really_super_long_locator_name = (True, ('div > tr > td > '
+        'a[title="this is getting silly now"]'))
 
 - When wrapping long conditionals, indent trailing lines twice, just like with
   function names and any other block statement (they usually end with colons)::
 
-    if this_extremely_long_variable_name_takes_up_the_whole_line and \
-            you_need_to_wrap_your_conditional_to_the_next_line:
+    if (this_extremely_long_variable_name_takes_up_the_whole_line and
+            you_need_to_wrap_your_conditional_to_the_next_line):
         # Two indents help clearly separate the wrapped conditional
         # from the following code.
 
@@ -184,6 +201,14 @@ We also do a few things that aren't explicitly called out in PEP 8:
 
     "{0} and another {0}".format("something")
 
+* There is a one exception for string formatting. According
+  `<https://docs.python.org/3/howto/logging.html#optimization>`_ use old style ``%s``,
+  but without the actual ``%`` formatting operation::
+
+    from utils.log import logger
+
+    logger.info("Some message %s", some_string)
+
 General Notes
 """""""""""""
 
@@ -197,6 +222,7 @@ General Notes
 * If you feel icky about something you've written but don't know how to make
   it better, ask someone. It's better to have it fixed before submitting it as
   a pull request ;)
+* Use :py:mod:`six` library to write Python 3 compatible code.
 
 Other useful code style guidelines:
 
