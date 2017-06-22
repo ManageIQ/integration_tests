@@ -64,17 +64,25 @@ def new_credential():
 def vm_ownership(enable_candu, clean_setup_provider, provider):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
-    try:
-        vm_name = provider.data['cap_and_util']['chargeback_vm']
-        vm = VM.factory(vm_name, provider)
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
 
-        cb_group = ac.Group(description='EvmGroup-user')
-        user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
-                credential=new_credential(),
-                email='abc@example.com',
-                group=cb_group,
-                cost_center='Workload',
-                value_assign='Database')
+    if not provider.mgmt.does_vm_exist(vm_name):
+        pytest.skip("Skipping test, cu-24x7 VM does not exist")
+    if not provider.mgmt.is_vm_running(vm_name):
+        provider.mgmt.start_vm(vm_name)
+        provider.mgmt.wait_vm_running(vm_name)
+
+    cb_group = ac.Group(description='EvmGroup-user')
+    user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
+        credential=new_credential(),
+        email='abc@example.com',
+        group=cb_group,
+        cost_center='Workload',
+        value_assign='Database')
+
+    vm = VM.factory(vm_name, provider)
+
+    try:
         user.create()
         vm.set_ownership(user=user.name)
         logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
@@ -219,13 +227,13 @@ def resource_usage(vm_ownership, appliance, provider):
     command = ('Metric::Targets.perf_capture_always = {:storage=>false, :host_and_cluster=>false};')
     appliance.ssh_client.run_rails_command(command, timeout=None)
 
-    wait_for(verify_records_rollups_table, [appliance, provider], timeout=360, fail_condition=False,
+    wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,
         message='Waiting for hourly rollups')
 
     # Since we are collecting C&U data for > 1 hour, there will be multiple hourly records per VM
     # in the metric_rollups DB table.The values from these hourly records are summed up.
 
-    with appliance.db.clienttransaction:
+    with appliance.db.client.transaction:
         result = (
             appliance.db.client.session.query(rollups.id)
             .join(ems, rollups.parent_ems_id == ems.id)
@@ -241,7 +249,8 @@ def resource_usage(vm_ownership, appliance, provider):
             average_network_io = average_network_io + record.net_usage_rate_average
             average_disk_io = average_disk_io + record.disk_usage_rate_average
 
-    for record in appliance.db.session.query(rollups).filter(rollups.id.in_(result.subquery())):
+    for record in appliance.db.client.session.query(rollups).filter(
+            rollups.id.in_(result.subquery())):
         if record.derived_vm_used_disk_storage:
             average_storage_used = average_storage_used + record.derived_vm_used_disk_storage
 
