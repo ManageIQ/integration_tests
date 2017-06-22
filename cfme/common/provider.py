@@ -1,4 +1,5 @@
 import datetime
+from collections import Iterable
 from functools import partial
 
 from manageiq_client.api import APIException
@@ -8,7 +9,10 @@ from widgetastic_patternfly import Input, Button
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential, AzureCredential,
     ServiceAccountCredential)
-from cfme.common.provider_views import ProvidersView, ProviderDetailsView
+from cfme.common.provider_views import (InfraProvidersView,
+                                        CloudProvidersView,
+                                        InfraProviderDetailsView,
+                                        CloudProviderDetailsView)
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
@@ -21,6 +25,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.browser import ensure_browser_open
 from utils.log import logger
+from utils.net import resolve_hostname
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
@@ -101,6 +106,34 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """ Used in utils.virtual_machines and usually overidden"""
         return {}
 
+    @property
+    def default_endpoint(self):
+        return self.endpoints.get('default') if hasattr(self, 'endpoints') else None
+
+    @property
+    def hostname(self):
+        return getattr(self.default_endpoint, "hostname", None)
+
+    @hostname.setter
+    def hostname(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.hostname = value
+        else:
+            logger.warn("can't set hostname because default endpoint is absent")
+
+    @property
+    def ip_address(self):
+        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
+
+    @ip_address.setter
+    def ip_address(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.ipaddress = value
+        else:
+            logger.warn("can't set ipaddress because default endpoint is absent")
+
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
         """
@@ -153,7 +186,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             True if it was created, False if it already existed
         """
         from cfme.infrastructure.provider import InfraProvider
-        if self.one_of(InfraProvider):
+        from cfme.cloud.provider import CloudProvider
+        if self.one_of(CloudProvider, InfraProvider):
             if check_existing and self.exists:
                 created = False
             else:
@@ -189,16 +223,21 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                                 # there are some endpoints which don't demand validation like
                                 #  RSA key pair
                                 endp_view.validate.click()
+                if self.one_of(InfraProvider):
+                    main_view_obj = InfraProvidersView
+                elif self.one_of(CloudProvider):
+                    main_view_obj = CloudProvidersView
+                main_view = self.create_view(main_view_obj)
                 if cancel:
                     created = False
                     add_view.cancel.click()
-                    cancel_text = 'Add of Infrastructure Provider was cancelled by the user'
-                    main_view = self.create_view(ProvidersView)
+                    cancel_text = ('Add of {} Provider was '
+                                   'cancelled by the user'.format(self.string_name))
+
                     main_view.items.flash.assert_message(cancel_text)
                     main_view.items.flash.assert_no_error()
                 else:
                     add_view.add.click()
-                    main_view = self.create_view(ProvidersView)
                     if main_view.is_displayed:
                         success_text = '{} Providers "{}" was saved'.format(self.string_name,
                                                                             self.name)
@@ -246,7 +285,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
            validate_credentials (boolean): whether credentials have to be validated
         """
         from cfme.infrastructure.provider import InfraProvider
-        if self.one_of(InfraProvider):
+        from cfme.cloud.provider import CloudProvider
+        if self.one_of(CloudProvider, InfraProvider):
             edit_view = navigate_to(self, 'Edit')
             # todo: to replace/merge this code with create
             # update values:
@@ -285,13 +325,30 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                             if validate_credentials:
                                 endpoint.view.validate.click()
 
+            # cloud rhos provider always requires validation of all endpoints
+            # there should be a bz about that
+            from cfme.cloud.provider.openstack import OpenStackProvider
+            if self.one_of(OpenStackProvider):
+                for endp in self.endpoints.values():
+                    endp_view = getattr(self.endpoints_form(parent=edit_view), endp.name)
+                    endp_view.validate.click()
+
+            if self.one_of(InfraProvider):
+                details_view_obj = InfraProviderDetailsView
+                main_view_obj = InfraProvidersView
+            elif self.one_of(CloudProvider):
+                details_view_obj = CloudProviderDetailsView
+                main_view_obj = CloudProvidersView
+            details_view = self.create_view(details_view_obj)
+            main_view = self.create_view(main_view_obj)
+
             if cancel:
                 edit_view.cancel.click()
-                cancel_text = 'Edit of Infrastructure Provider "{name}" ' \
-                              'was cancelled by the user'.format(name=self.name)
-                details_view = self.create_view(ProvidersView)
-                details_view.items.flash.assert_message(cancel_text)
-                details_view.items.flash.assert_no_error()
+                cancel_text = 'Edit of {type} Provider "{name}" ' \
+                              'was cancelled by the user'.format(type=self.string_name,
+                                                                 name=self.name)
+                main_view.items.flash.assert_message(cancel_text)
+                main_view.items.flash.assert_no_error()
             else:
                 edit_view.save.click()
                 if endpoints:
@@ -304,7 +361,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
 
-                details_view = self.create_view(ProviderDetailsView)
                 if details_view.is_displayed:
                     success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
                     details_view.flash.assert_message(success_text)
@@ -654,6 +710,19 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def one_of(self, *classes):
         """ Returns true if provider is an instance of any of the classes or sublasses there of"""
         return isinstance(self, classes)
+
+    @staticmethod
+    def _prepare_endpoints(endpoints):
+        if not endpoints:
+            return {}
+        elif isinstance(endpoints, dict):
+            return endpoints
+        elif isinstance(endpoints, Iterable):
+            return {(e.name, e) for e in endpoints}
+        elif isinstance(endpoints, DefaultEndpoint):
+            return {endpoints.name: endpoints}
+        else:
+            raise ValueError("Endpoints should be either dict or endpoint class")
 
 
 def get_paginator_value():

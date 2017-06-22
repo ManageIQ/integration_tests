@@ -12,8 +12,13 @@
 from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic_manageiq import TimelinesView
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common.provider_views import (CloudProviderAddView,
+                                        CloudProviderEditView,
+                                        CloudProviderDetailsView,
+                                        CloudProvidersView)
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui import form_buttons, CFMECheckbox
@@ -28,7 +33,6 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
-from widgetastic_manageiq import TimelinesView
 
 
 # Forms
@@ -162,38 +166,46 @@ class CloudProvider(Pretty, CloudInfraProvider):
         {version.LOWEST: form_buttons.save,
          '5.5': form_buttons.angular_save})
 
-    def __init__(self, name=None, credentials=None, zone=None, key=None, appliance=None):
+    def __init__(self, name=None, endpoints=None, zone=None, key=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
-        if not credentials:
-            credentials = {}
         self.name = name
-        self.credentials = credentials
         self.zone = zone
         self.key = key
+        self.endpoints = self._prepare_endpoints(endpoints)
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name')}
+    def as_fill_value(self):
+        return self.name
+
+    @property
+    def view_value_mapping(self):
+        return {'name': self.name}
 
 
 @navigator.register(CloudProvider, 'All')
 class All(CFMENavigateStep):
+    VIEW = CloudProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Providers')
 
     def resetter(self):
-        tb.select('Grid View')
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        tb = self.view.toolbar
+        paginator = self.view.paginator
+        if 'Grid View' not in tb.view_selector.selected:
+            tb.view_selector.select('Grid View')
+        if paginator.exists:
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(CloudProvider, 'Add')
 class New(CFMENavigateStep):
+    VIEW = CloudProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Cloud Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New Cloud Provider')
 
 
 @navigator.register(CloudProvider, 'Discover')
@@ -206,23 +218,26 @@ class Discover(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = CloudProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
 
 
 @navigator.register(CloudProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = CloudProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg_btn('Edit Selected Cloud Provider')
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Cloud Provider')
 
 
 @navigator.register(CloudProvider, 'EditFromDetails')
 class EditFromDetails(CFMENavigateStep):
+    VIEW = CloudProviderEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

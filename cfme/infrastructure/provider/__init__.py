@@ -1,22 +1,21 @@
 """ A model of an Infrastructure Provider in CFME
 """
 from functools import partial
-from collections import Iterable
 from widgetastic.utils import Fillable
 
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
-from cfme.common.provider import CloudInfraProvider, DefaultEndpoint
-from cfme.common.provider_views import (ProviderAddView,
-                                        ProviderEditView,
-                                        ProviderDetailsView,
+from cfme.common.provider import CloudInfraProvider
+from cfme.common.provider_views import (InfraProviderAddView,
+                                        InfraProviderEditView,
+                                        InfraProviderDetailsView,
                                         ProviderTimelinesView,
                                         ProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
                                         ProvidersEditTagsView,
-                                        ProvidersView)
+                                        InfraProvidersView)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
@@ -25,7 +24,6 @@ from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
-from utils.net import resolve_hostname
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
@@ -75,59 +73,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         self.provider_data = provider_data
         self.zone = zone
         self.template_name = "Templates"
-
-    @property
-    def default_endpoint(self):
-        try:
-            return self.endpoints['default']
-        except KeyError:
-            return None
-
-    @staticmethod
-    def _prepare_endpoints(endpoints):
-        if not endpoints:
-            return {}
-        elif isinstance(endpoints, dict):
-            return endpoints
-        elif isinstance(endpoints, Iterable):
-            return dict([(e.name, e) for e in endpoints])
-        elif isinstance(endpoints, DefaultEndpoint):
-            return {endpoints.name: endpoints}
-        else:
-            raise ValueError("Endpoints should be either dict or endpoint class")
-
-    @property
-    def hostname(self):
-        if self.default_endpoint:
-            return self.default_endpoint.hostname
-        else:
-            return None
-
-    @hostname.setter
-    def hostname(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.hostname = value
-        else:
-            logger.warn("can't set hostname because default endpoint is absent")
-
-    @property
-    def ip_address(self):
-        if hasattr(self.default_endpoint, 'ipaddress'):
-            return self.default_endpoint.ipaddress
-        else:
-            if self.hostname:
-                return resolve_hostname(self.hostname)
-            else:
-                return None
-
-    @ip_address.setter
-    def ip_address(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.ipaddress = value
-        else:
-            logger.warn("can't set ipaddress because default endpoint is absent")
 
     @cached_property
     def vm_name(self):
@@ -275,7 +220,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 @navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
-    VIEW = ProvidersView
+    VIEW = InfraProvidersView
     prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def step(self):
@@ -294,7 +239,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
-    VIEW = ProviderAddView
+    VIEW = InfraProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -314,7 +259,7 @@ class Discover(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Details')
 class Details(CFMENavigateStep):
-    VIEW = ProviderDetailsView
+    VIEW = InfraProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -368,7 +313,7 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
-    VIEW = ProviderEditView
+    VIEW = InfraProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):

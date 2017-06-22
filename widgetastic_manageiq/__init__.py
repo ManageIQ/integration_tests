@@ -1350,6 +1350,12 @@ class DetailsToolBarViewSelector(View):
     def selected(self):
         return next(btn.title for btn in self._view_buttons if btn.active)
 
+    @property
+    def is_displayed(self):
+        # cloud provider detail page has empty view selector.
+        # so, default is_displayed works wrong in such case
+        return self.summary_button.is_displayed
+
 
 class Search(View):
     """ Represents search_text control

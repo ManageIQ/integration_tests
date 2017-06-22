@@ -1,17 +1,24 @@
 from wrapanapi.openstack import OpenstackSystem
 
 from . import CloudProvider
+from cfme.common.provider import EventsEndpoint
+from cfme.infrastructure.provider.openstack_infra import RHOSEndpoint, OpenStackInfraEndpointForm
 
 
 class OpenStackProvider(CloudProvider):
+    """
+     BaseProvider->CloudProvider->OpenStackProvider class.
+     represents CFME provider and operations available in UI
+    """
     type_name = "openstack"
     mgmt_class = OpenstackSystem
     db_types = ["Openstack::CloudManager"]
+    endpoints_form = OpenStackInfraEndpointForm
 
-    def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
+    def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
                  tenant_mapping=None, infra_provider=None, appliance=None):
-        super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
+        super(OpenStackProvider, self).__init__(name=name, endpoints=endpoints,
                                                 zone=zone, key=key, appliance=appliance)
         self.hostname = hostname
         self.ip_address = ip_address
@@ -31,33 +38,23 @@ class OpenStackProvider(CloudProvider):
             kwargs['validate_credentials'] = True
         return super(OpenStackProvider, self).create(*args, **kwargs)
 
-    def _form_mapping(self, create=None, **kwargs):
-        infra_provider = kwargs.get('infra_provider')
-        if infra_provider is None:
+    @property
+    def view_value_mapping(self):
+        if self.infra_provider is None:
             # Don't look for the selectbox; it's either not there or we don't care what's selected
             infra_provider_name = None
-        elif infra_provider is False:
+        elif self.infra_provider is False:
             # Select nothing (i.e. deselect anything that is potentially currently selected)
             infra_provider_name = "---"
         else:
-            infra_provider_name = infra_provider.name
-        data_dict = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'OpenStack',
-            'hostname_text': kwargs.get('hostname'),
-            'api_port': kwargs.get('api_port'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol'),
-            'tenant_mapping': kwargs.get('tenant_mapping'),
-            'infra_provider': infra_provider_name}
-        if 'amqp' in self.credentials:
-            data_dict.update({
-                'event_selection': 'amqp',
-                'amqp_hostname_text': kwargs.get('hostname'),
-                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
-                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
-            })
-        return data_dict
+            infra_provider_name = self.infra_provider.name
+        return {
+            'name': self.name,
+            'prov_type': 'OpenStack',
+            'region': None,
+            'infra_provider': infra_provider_name,
+            'tenant_mapping': self.tenant_mapping,
+        }
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
@@ -67,24 +64,21 @@ class OpenStackProvider(CloudProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
+        endpoints = {}
+        for exp_endp in (RHOSEndpoint, EventsEndpoint):
+            endpoints[exp_endp.name] = exp_endp(**prov_config['endpoints'][exp_endp.name])
+
         from utils.providers import get_crud
-        credentials_key = prov_config['credentials']
-        credentials = cls.process_credential_yaml_key(credentials_key)
-        creds = {'default': credentials}
-        if 'amqp_credentials' in prov_config:
-            amqp_credentials = cls.process_credential_yaml_key(
-                prov_config['amqp_credentials'], cred_type='amqp')
-            creds['amqp'] = amqp_credentials
         infra_prov_key = prov_config.get('infra_provider_key')
         infra_provider = get_crud(infra_prov_key, appliance=appliance) if infra_prov_key else None
         return cls(name=prov_config['name'],
-            hostname=prov_config['hostname'],
-            ip_address=prov_config['ipaddress'],
-            api_port=prov_config['port'],
-            credentials=creds,
-            zone=prov_config['server_zone'],
-            key=prov_key,
-            sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
-            tenant_mapping=prov_config.get('tenant_mapping', False),
-            infra_provider=infra_provider,
-            appliance=appliance)
+                   hostname=prov_config['hostname'],
+                   ip_address=prov_config['ipaddress'],
+                   api_port=prov_config['port'],
+                   endpoints=endpoints,
+                   zone=prov_config['server_zone'],
+                   key=prov_key,
+                   sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
+                   tenant_mapping=prov_config.get('tenant_mapping', False),
+                   infra_provider=infra_provider,
+                   appliance=appliance)
