@@ -65,8 +65,11 @@ class OpenStackProvider(CloudProvider):
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
         endpoints = {}
-        for exp_endp in (RHOSEndpoint, EventsEndpoint):
-            endpoints[exp_endp.name] = exp_endp(**prov_config['endpoints'][exp_endp.name])
+        endpoints[RHOSEndpoint.name] = RHOSEndpoint(**prov_config['endpoints'][RHOSEndpoint.name])
+
+        endp_name = EventsEndpoint.name
+        if prov_config['endpoints'].get(endp_name):
+            endpoints[endp_name] = EventsEndpoint(**prov_config['endpoints'][endp_name])
 
         from utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
