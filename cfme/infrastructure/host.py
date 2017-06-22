@@ -9,7 +9,7 @@
 
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import Dropdown, Tab, Button
+from widgetastic_patternfly import Dropdown, Tab, Button, BootstrapSelect
 from widgetastic.widget import Text, Input, View
 from selenium.common.exceptions import NoSuchElementException
 
@@ -33,7 +33,7 @@ from utils import deferred_verpick, version, conf
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
-from widgetastic_manageiq import TimelinesView, HostQuadIconItem, PaginationPane
+from widgetastic_manageiq import TimelinesView, PaginationPane, SummaryTable
 
 from cfme.common import PolicyProfileAssignable
 
@@ -183,6 +183,14 @@ class InfraHostDetailsView(BaseLoggedInPage):
     monitoring = Dropdown("Monitoring")
     power = Dropdown("Power")
 
+    # Summary
+    properties = SummaryTable(title="Properties")
+    relationships = SummaryTable(title="Relationships")
+    compliance = SummaryTable(title="Compliance")
+    configuration_summary = SummaryTable(title="Configuration")
+    smart_management = SummaryTable(title="Smart Management")
+    authentication_status = SummaryTable(title="Authentication Status")
+
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
 
     @property
@@ -190,7 +198,7 @@ class InfraHostDetailsView(BaseLoggedInPage):
         return self.title.text == "{} (Summary)".format(self.context["object"].name)
 
 
-class InfraHostEditView(BaseLoggedInPage):
+class InfraHostFormView(BaseLoggedInPage):
     # Info/Settings
     title = Text(".//div[@id='main-content']//h1")
     name = Input(name="name")
@@ -231,10 +239,18 @@ class InfraHostEditView(BaseLoggedInPage):
         confirm_password = Input(name="ipmi_verify")
         validate_button = Button("Validate")
 
-    # Buttons
+    cancel_button = Button("Cancel")
+
+
+class InfraHostAddView(InfraHostFormView):
+    host_platform = BootstrapSelect("user_assigned_os")
+    add_button = Button("Add")
+    cancel_button = Button("Cancel")
+
+
+class InfraHostEditView(InfraHostFormView):
     save_button = Button("Save")
     reset_button = Button("Reset")
-    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
