@@ -157,18 +157,22 @@ class InfraHostTimelinesView(TimelinesView, BaseLoggedInPage):
         )
 
 
-class InfraHostsAllView(BaseLoggedInPage):
-    title = Text(".//div[@id='main-content']//h1")
-    # Toolbar
+class CommonToolbar(View):
     configuration = Dropdown("Configuration")
     policy = Dropdown("Policy")
     lifecycle = Dropdown("Lifecycle")
     power = Dropdown("Power")
-    grid_view_button = Button(title="Grid View")
-    tile_view_button = Button(title="Tile View")
-    list_view_button = Button(title="List View")
 
+
+class InfraHostsAllView(BaseLoggedInPage):
+    title = Text(".//div[@id='main-content']//h1")
     pagination_pane = PaginationPane()
+
+    @View.nested
+    class toolbar(CommonToolbar):
+        grid_view_button = Button(title="Grid View")
+        tile_view_button = Button(title="Tile View")
+        list_view_button = Button(title="List View")
 
     @property
     def is_displayed(self):
@@ -176,22 +180,18 @@ class InfraHostsAllView(BaseLoggedInPage):
 
 
 class InfraHostDetailsView(BaseLoggedInPage):
-    # Toolbar
-    configuration = Dropdown("Configuration")
-    policy = Dropdown("Policy")
-    lifecycle = Dropdown("Lifecycle")
-    monitoring = Dropdown("Monitoring")
-    power = Dropdown("Power")
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
+    toolbar = CommonToolbar()
 
     # Summary
-    properties = SummaryTable(title="Properties")
-    relationships = SummaryTable(title="Relationships")
-    compliance = SummaryTable(title="Compliance")
-    configuration_summary = SummaryTable(title="Configuration")
-    smart_management = SummaryTable(title="Smart Management")
-    authentication_status = SummaryTable(title="Authentication Status")
-
-    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
+    @View.nested
+    class summary(View):  # noqa
+        properties = SummaryTable(title="Properties")
+        relationships = SummaryTable(title="Relationships")
+        compliance = SummaryTable(title="Compliance")
+        configuration = SummaryTable(title="Configuration")
+        smart_management = SummaryTable(title="Smart Management")
+        authentication_status = SummaryTable(title="Authentication Status")
 
     @property
     def is_displayed(self):
@@ -377,7 +377,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
 
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Remove item", handle_alert=cancel)
+        view.toolbar.configuration.item_select("Remove item", handle_alert=cancel)
         if not cancel:
             view = self.create_view(InfraHostsAllView)
             assert view.is_displayed
@@ -439,17 +439,16 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
                     password=self.ipmi_credentials.secret, interface_type=self.interface_type)
 
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific host.
+    def get_detail(self, title, field):
+        """ Gets details from the details summary tables
 
         Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
+            title (str): Summary Table title
+            field (str): Summary table field name
+        Returns: A string representing the contents of the SummaryTable's value.
         """
-        navigate_to(self, 'Details')
-        return details_page.infoblock.text(*ident)
+        view = navigate_to(self, "Details")
+        return getattr(view.summary, title.lower().replace(" ", "_")).read()[field]
 
     @property
     def exists(self):
@@ -603,16 +602,16 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 @navigator.register(Host)
 class All(CFMENavigateStep):
     VIEW = InfraHostsAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
     def step(self):
         try:
-            self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Hosts')
+            self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Hosts")
         except NoSuchElementException:
-            self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Nodes')
+            self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Nodes")
 
     def resetter(self):
-        self.view.grid_view_button.click()
+        self.view.toolbar.grid_view_button.click()
         self.view.pagination_pane.check_all()
         self.view.pagination_pane.uncheck_all()
 
@@ -620,7 +619,7 @@ class All(CFMENavigateStep):
 @navigator.register(Host)
 class Details(CFMENavigateStep):
     VIEW = InfraHostDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling("All")
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
@@ -629,51 +628,53 @@ class Details(CFMENavigateStep):
 @navigator.register(Host)
 class Edit(CFMENavigateStep):
     VIEW = InfraHostEditView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit this item')
+        self.prerequisite_view.toolbar.configuration.item_select("Edit this item")
 
 
-@navigator.register(Host, 'Add')
+@navigator.register(Host)
 class Add(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = InfraHostAddView
+    prerequisite = NavigateToSibling("All")
 
     def step(self):
-        cfg_btn('Add a New item')
+        self.prerequisite_view.toolbar.configuration.item_select("Add a New item")
 
 
-@navigator.register(Host, 'Discover')
+@navigator.register(Host)
 class Discover(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = InfraHostDiscoverView
+    prerequisite = NavigateToSibling("All")
 
     def step(self):
-        cfg_btn('Discover items')
+        self.prerequisite_view.toolbar.configuration.item_select("Discover items")
 
 
 @navigator.register(Host)
 class PolicyAssignment(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.prerequisite_view.policy.item_select('Manage Policies')
+        self.prerequisite_view.toolbar.policy.item_select("Manage Policies")
 
 
 @navigator.register(Host)
 class Provision(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.prerequisite_view.Lifecycle.item_select('Provision this item')
+        self.prerequisite_view.toolbar.lifecycle.item_select("Provision this item")
 
 
-@navigator.register(Host, 'Timelines')
+@navigator.register(Host)
 class Timelines(CFMENavigateStep):
     VIEW = InfraHostTimelinesView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.prerequisite_view.monitoring.item_select('Timelines')
+        self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
 
 
 @fill.method((Form, Host.Credential))
