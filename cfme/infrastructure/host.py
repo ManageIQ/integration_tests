@@ -9,6 +9,8 @@
 
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic_patternfly import Dropdown, Tab, Button
+from widgetastic.widget import Text, Input, View
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.login import BaseLoggedInPage
@@ -158,6 +160,72 @@ class InfraHostTimelinesView(TimelinesView, BaseLoggedInPage):
         )
 
 
+class InfraHostDetailsView(BaseLoggedInPage):
+    # Toolbar
+    configuration = Dropdown("Configuration")
+    policy = Dropdown("Policy")
+    lifecycle = Dropdown("Lifecycle")
+    monitoring = Dropdown("Monitoring")
+    power = Dropdown("Power")
+
+    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
+
+    @property
+    def is_displayed(self):
+        return self.title.text == "{} (Summary)".format(self.context["object"].name)
+
+
+class InfraHostEditView(BaseLoggedInPage):
+    # Info/Settings
+    title = Text(".//div[@id='main-content']//h1")
+    name = Input(name="name")
+    hostname = Input(name="hostname")
+    custom_ident = Input(name="custom_1")
+    ipmi_address = Input(name="ipmi_address")
+    mac_address = Input(name="mac_address")
+
+    # Endpoints
+    @View.nested
+    class default(Tab):  # noqa
+        username = Input(name="default_userid")
+        password = Input(name="default_password")
+        confirm_password = Input(name="default_verify")
+        validate_button = Button("Validate")
+
+    @View.nested
+    class remote_login(Tab):  # noqa
+        TAB_NAME = "Remote Login"
+        username = Input(name="remote_userid")
+        password = Input(name="remote_password")
+        confirm_password = Input(name="remote_verify")
+        validate_button = Button("Validate")
+
+    @View.nested
+    class web_services(Tab):  # noqa
+        TAB_NAME = "Web Services"
+        username = Input(name="ws_userid")
+        password = Input(name="ws_password")
+        confirm_password = Input(name="ws_verify")
+        validate_button = Button("Validate")
+
+    @View.nested
+    class ipmi(Tab):  # noqa
+        TAB_NAME = "IPMI"
+        username = Input(name="ipmi_userid")
+        password = Input(name="ipmi_password")
+        confirm_password = Input(name="ipmi_verify")
+        validate_button = Button("Validate")
+
+    # Buttons
+    save_button = Button("Save")
+    reset_button = Button("Reset")
+    cancel_button = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        return self.title.text == "Info/Settings"
+
+
 class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     """
     Model of an infrastructure host in cfme.
@@ -182,11 +250,12 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     """
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
-    forced_saved = deferred_verpick(
-        {version.LOWEST: form_buttons.FormButton(
+    forced_saved = deferred_verpick({
+        version.LOWEST: form_buttons.FormButton(
             "Save changes", dimmed_alt="Save changes", force_click=True),
-         '5.8': form_buttons.FormButton(
-            "Save", dimmed_alt="Save", force_click=True)})
+        '5.8': form_buttons.FormButton(
+            "Save", dimmed_alt="Save", force_click=True)
+    })
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
@@ -207,13 +276,15 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         self.provider = provider
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'hostname_text': kwargs.get('hostname'),
-                'ipaddress_text': kwargs.get('ip_address'),
-                'custom_ident_text': kwargs.get('custom_ident'),
-                'host_platform': kwargs.get('host_platform'),
-                'ipmi_address_text': kwargs.get('ipmi_address'),
-                'mac_address_text': kwargs.get('mac_address')}
+        return {
+            'name_text': kwargs.get('name'),
+            'hostname_text': kwargs.get('hostname'),
+            'ipaddress_text': kwargs.get('ip_address'),
+            'custom_ident_text': kwargs.get('custom_ident'),
+            'host_platform': kwargs.get('host_platform'),
+            'ipmi_address_text': kwargs.get('ipmi_address'),
+            'mac_address_text': kwargs.get('mac_address')
+        }
 
     class Credential(BaseCredential, Updateable):
         """Provider credentials
@@ -514,23 +585,22 @@ class All(CFMENavigateStep):
         sel.uncheck(paginator.check_all())
 
 
-@navigator.register(Host, 'Details')
+@navigator.register(Host)
 class Details(CFMENavigateStep):
+    VIEW = InfraHostDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
-    def am_i_here(self):
-        return match_page(summary="{} (Summary)".format(self.obj.name))
 
-
-@navigator.register(Host, 'Edit')
+@navigator.register(Host)
 class Edit(CFMENavigateStep):
+    VIEW = InfraHostEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this item')
+        self.prerequisite_view.configuration.item_select('Edit this item')
 
 
 @navigator.register(Host, 'Add')
@@ -549,20 +619,20 @@ class Discover(CFMENavigateStep):
         cfg_btn('Discover items')
 
 
-@navigator.register(Host, 'PolicyAssignment')
+@navigator.register(Host)
 class PolicyAssignment(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Manage Policies')
+        self.prerequisite_view.policy.item_select('Manage Policies')
 
 
-@navigator.register(Host, 'Provision')
+@navigator.register(Host)
 class Provision(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        lif_btn('Provision this item')
+        self.prerequisite_view.Lifecycle.item_select('Provision this item')
 
 
 @navigator.register(Host, 'Timelines')
@@ -571,7 +641,7 @@ class Timelines(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Timelines')
+        self.prerequisite_view.monitoring.item_select('Timelines')
 
 
 @fill.method((Form, Host.Credential))
