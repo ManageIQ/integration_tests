@@ -279,6 +279,7 @@ class ConfigurationView(BaseLoggedInPage):
         @View.nested
         class settings(Accordion):  # noqa
             ACCORDION_NAME = "Settings"
+            INDIRECT = True
             tree = ManageIQTree()
 
         @View.nested

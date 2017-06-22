@@ -8,8 +8,8 @@ from cfme.control.explorer.policies import VMCompliancePolicy, HostCompliancePol
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.configure.configuration import AnalysisProfile
-from utils import conf, testgen
+from cfme.configure.configuration.analysis_profile import AnalysisProfile
+from utils import testgen, conf
 from utils.hosts import setup_providers_hosts_credentials
 from utils.update import update
 from cfme import test_requirements
@@ -105,7 +105,7 @@ def analysis_profile():
     ap = AnalysisProfile(
         name="default",
         description="ap-desc",
-        profile_type="VM",
+        profile_type=AnalysisProfile.VM_TYPE,
         categories=[
             "check_services",
             "check_accounts",
