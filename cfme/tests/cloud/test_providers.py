@@ -8,14 +8,16 @@ import pytest
 
 from utils import error
 from cfme.base.credential import Credential
-from cfme.cloud.provider import (discover, wait_for_a_provider, CloudProvider, prop_region)
+from cfme.cloud.provider import (discover, wait_for_a_provider, CloudProvider)
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider, RHOSEndpoint
-from cfme.common.provider_views import CloudProviderAddView
+from cfme.common.provider_views import (CloudProviderAddView,
+                                        CloudProvidersView,
+                                        CloudProvidersDiscoverView)
 from cfme import test_requirements
-from cfme.web_ui import fill, flash
+
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
@@ -27,23 +29,20 @@ pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_empty_discovery_form_validation():
+def test_empty_discovery_form_validation(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None, d_type="Amazon")
-    ident = version.pick({version.LOWEST: 'User ID',
-                          '5.4': 'Username'})
-    flash.assert_message_match('{} is required'.format(ident))
+    view = appliance.browser.create_view(CloudProvidersDiscoverView)
+    view.flash.assert_message('Username is required')
 
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_discovery_cancelled_validation():
+def test_discovery_cancelled_validation(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True, d_type="Amazon")
-    msg = version.pick(
-        {version.LOWEST: 'Amazon Cloud Providers Discovery was cancelled by the user',
-         '5.5': 'Cloud Providers Discovery was cancelled by the user'})
-    flash.assert_message_match(msg)
+    view = appliance.browser.create_view(CloudProvidersView)
+    view.flash.assert_success_message('Cloud Providers Discovery was cancelled by the user')
 
 
 @pytest.mark.tier(3)
@@ -53,32 +52,34 @@ def test_add_cancelled_validation(request):
     prov = EC2Provider()
     request.addfinalizer(prov.delete_if_exists)
     prov.create(cancel=True)
-    flash.assert_message_match({
-        version.LOWEST: 'Add of new Cloud Provider was cancelled by the user',
-        '5.5': 'Add of Cloud Provider was cancelled by the user'})
+    view = prov.browser.create_view(CloudProvidersView)
+    view.flash.assert_success_message('Add of Cloud Provider was cancelled by the user')
 
 
 @pytest.mark.tier(3)
-def test_password_mismatch_validation():
+def test_password_mismatch_validation(appliance):
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(7))
 
     discover(cred, d_type="Amazon")
-    flash.assert_message_match('Password/Verify Password do not match')
+    view = appliance.browser.create_view(CloudProvidersView)
+    view.flash.assert_message('Password/Verify Password do not match')
 
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollect()
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
-def test_providers_discovery_amazon():
+def test_providers_discovery_amazon(appliance):
     # This test was being uncollected anyway, and needs to be parametrized and not directory call
     # out to specific credential keys
     # amazon_creds = get_credentials_from_config('cloudqe_amazon')
     # discover(amazon_creds, d_type="Amazon")
-    flash.assert_message_match('Amazon Cloud Providers: Discovery successfully initiated')
+
+    view = appliance.browser.create_view(CloudProvidersView)
+    view.flash.assert_success_message('Amazon Cloud Providers: Discovery successfully initiated')
     wait_for_a_provider()
 
 
@@ -142,19 +143,13 @@ def test_provider_crud(provider):
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_type_required_validation(request, soft_assert):
+def test_type_required_validation(request):
     """Test to validate type while adding a provider"""
     prov = CloudProvider()
-
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected('Type is required'):
-            prov.create()
-    else:
-        navigate_to(prov, 'Add')
-        fill(prov.properties_form.name_text, "foo")
-        soft_assert("ng-invalid-required" in prov.properties_form.type_select.classes)
-        soft_assert(not prov.add_provider_button.can_be_clicked)
+    view = navigate_to(prov, 'Add')
+    view.fill({'name': 'foo'})
+    assert not view.add.active
 
 
 @pytest.mark.tier(3)
@@ -280,11 +275,9 @@ def test_api_port_max_character_validation():
 def test_openstack_provider_has_api_version():
     """Check whether the Keystone API version field is present for Openstack."""
     prov = CloudProvider()
-    navigate_to(prov, 'Add')
-    fill(prop_region.properties_form, {"type_select": "OpenStack"})
-    pytest.sel.wait_for_ajax()
-    assert pytest.sel.is_displayed(
-        prov.properties_form.api_version), "API version select is not visible"
+    view = navigate_to(prov, 'Add')
+    view.fill({"prov_type": "OpenStack"})
+    assert view.api_version.is_displayed, "API version select is not visible"
 
 
 class TestProvidersRESTAPI(object):
