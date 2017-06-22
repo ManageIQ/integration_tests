@@ -38,42 +38,6 @@ from widgetastic_manageiq import TimelinesView, PaginationPane, SummaryTable
 from cfme.common import PolicyProfileAssignable
 
 # Page specific locators
-details_page = Region(infoblock_type='detail')
-
-page_title_loc = '//div[@id="center_div" or @id="main-content"]//h1'
-
-properties_form = Form(
-    fields=[
-        ('name_text', Input("name")),
-        ('hostname_text', Input("hostname")),
-        ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('custom_ident_text', Input("custom")),
-        ('host_platform', {
-            version.LOWEST: Select('//select[@id="user_assigned_os"]'),
-            '5.5': AngularSelect('user_assigned_os')}),
-        ('ipmi_address_text', Input("ipmi_address")),
-        ('mac_address_text', Input("mac_address")),
-    ])
-
-credential_form = Form(
-    fields=[
-        ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', Input("default_userid")),
-        ('default_secret', Input("default_password")),
-        ('default_verify_secret', Input("default_verify")),
-        ('ipmi_button', "//div[@id='auth_tabs']/ul/li/a[@href='#ipmi']"),
-        ('ipmi_principal', Input("ipmi_userid")),
-        ('ipmi_secret', Input("ipmi_password")),
-        ('ipmi_verify_secret', Input("ipmi_verify")),
-        ('validate_btn', form_buttons.validate),
-        ('validate_multi_host', form_buttons.validate_multi_host),
-        ('save_btn', {version.LOWEST: form_buttons.save,
-            '5.5': form_buttons.angular_save}),
-        ('cancel_changes', {version.LOWEST: form_buttons.cancel_changes,
-            '5.5': form_buttons.cancel}),
-        ('validate_host', {version.LOWEST: Select('select#validate_id'),
-            '5.5': AngularSelect('validate_id')}),
-    ])
 
 manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
@@ -400,23 +364,20 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         flash.assert_success_message("Service Order was cancelled by the user")
 
     def power_on(self):
-        navigate_to(self, 'Details')
-        pow_btn('Power On', invokes_alert=True)
-        sel.handle_alert()
+        view = navigate_to(self, "Details")
+        view.toolbar.power.item_select("Power On", handle_alert=True)
 
     def power_off(self):
-        navigate_to(self, 'Details')
-        pow_btn('Power Off', invokes_alert=True)
-        sel.handle_alert()
+        view = navigate_to(self, "Details")
+        view.toolbar.power.item_select("Power Off", handle_alert=True)
 
     def get_power_state(self):
-        return self.get_detail('Properties', 'Power State')
-        # return str(find_quadicon(self.name, do_not_navigate=True).state)
-        # return state.split()[1]
+        return self.get_detail("Properties", "Power State")
 
     def refresh(self, cancel=False):
-        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+        view = navigate_to(self, "Details")
+        view.toolbar.configuration.item_select("Refresh Relationships and Power States",
+            handle_alert=cancel)
 
     def wait_for_host_state_change(self, desired_state, timeout=300):
         """Wait for Host to come to desired state.
@@ -435,8 +396,12 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         return wait_for(_looking_for_state_change, num_sec=timeout)
 
     def get_ipmi(self):
-        return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
-                    password=self.ipmi_credentials.secret, interface_type=self.interface_type)
+        return IPMI(
+            hostname=self.ipmi_address,
+            username=self.ipmi_credentials.principal,
+            password=self.ipmi_credentials.secret,
+            interface_type=self.interface_type
+        )
 
     def get_detail(self, title, field):
         """ Gets details from the details summary tables
