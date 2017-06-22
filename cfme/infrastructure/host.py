@@ -16,7 +16,6 @@ from cfme.base.credential import Credential as BaseCredential
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
-from utils import conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
@@ -28,7 +27,7 @@ from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import deferred_verpick, version
+from utils import deferred_verpick, version, conf
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
