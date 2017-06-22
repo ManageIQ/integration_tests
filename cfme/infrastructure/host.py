@@ -33,10 +33,7 @@ from utils import deferred_verpick, version, conf
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
-from widgetastic_manageiq import (ManageIQTree, ItemsToolBarViewSelector,
-                                  BaseEntitiesView, TimelinesView)
-from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
+from widgetastic_manageiq import TimelinesView, HostQuadIconItem, PaginationPane
 
 from cfme.common import PolicyProfileAssignable
 
@@ -158,6 +155,24 @@ class InfraHostTimelinesView(TimelinesView, BaseLoggedInPage):
             self.navigation.currently_selected == ['Compute', 'Infrastructure', '/host'] and
             super(TimelinesView, self).is_displayed
         )
+
+
+class InfraHostsAllView(BaseLoggedInPage):
+    title = Text(".//div[@id='main-content']//h1")
+    # Toolbar
+    configuration = Dropdown("Configuration")
+    policy = Dropdown("Policy")
+    lifecycle = Dropdown("Lifecycle")
+    power = Dropdown("Power")
+    grid_view_button = Button(title="Grid View")
+    tile_view_button = Button(title="Tile View")
+    list_view_button = Button(title="List View")
+
+    pagination_pane = PaginationPane()
+
+    @property
+    def is_displayed(self):
+        return self.title.text == "Hosts"
 
 
 class InfraHostDetailsView(BaseLoggedInPage):
@@ -569,8 +584,9 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         mixins.remove_tag(tag)
 
 
-@navigator.register(Host, 'All')
+@navigator.register(Host)
 class All(CFMENavigateStep):
+    VIEW = InfraHostsAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -580,9 +596,9 @@ class All(CFMENavigateStep):
             self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Nodes')
 
     def resetter(self):
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        self.view.grid_view_button.click()
+        self.view.pagination_pane.check_all()
+        self.view.pagination_pane.uncheck_all()
 
 
 @navigator.register(Host)
