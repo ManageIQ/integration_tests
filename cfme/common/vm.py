@@ -407,7 +407,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             return True
         return False
 
-    def refresh_relationships(self, from_details=False, cancel=False):
+    def refresh_relationships(self, from_details=False, cancel=False, from_any_provider=False):
         """Executes a refresh of relationships.
 
         Args:
@@ -417,7 +417,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         if from_details:
             self.load_details()
         else:
-            self.find_quadicon(mark=True)
+            self.find_quadicon(mark=True, from_any_provider=from_any_provider)
         cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
@@ -608,7 +608,8 @@ class VM(BaseVM):
             _looking_for_state_change,
             num_sec=timeout,
             delay=30,
-            fail_func=lambda: self.refresh_relationships(from_details=from_details) if
+            fail_func=lambda: self.refresh_relationships(from_details=from_details,
+                                                         from_any_provider=from_any_provider) if
             with_relationship_refresh else None)
 
     def is_pwr_option_available_in_cfme(self, option, from_details=False):
