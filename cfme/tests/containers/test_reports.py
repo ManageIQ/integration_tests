@@ -93,6 +93,7 @@ def test_container_reports_base_on_options(soft_assert):
 
 @pytest.mark.meta(blockers=[BZ(1435958, forced_streams=["5.8"])])
 @pytest.mark.polarion('CMP-9533')
+@pytest.mark.skip(reason="This test is currently skipped due to instability issues. ")
 def test_pods_per_ready_status(soft_assert, pods_per_ready_status):
     """Testing 'Pods per Ready Status' report, see polarion case for more info"""
     report = get_report('Pods per Ready Status')
