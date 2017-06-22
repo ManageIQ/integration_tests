@@ -36,11 +36,12 @@ class GCEProvider(CloudProvider):
     db_types = ["Google::CloudManager"]
     endpoints_form = GCEEndpointForm
 
-    def __init__(self, name=None, project=None, zone=None, region=None, endpoints=None, key=None,
-                 appliance=None):
+    def __init__(self, name=None, project=None, zone=None, region=None, region_name=None,
+                 endpoints=None, key=None, appliance=None):
         super(GCEProvider, self).__init__(name=name, zone=zone, key=key, endpoints=endpoints,
                                           appliance=appliance)
         self.region = region
+        self.region_name = region_name
         self.project = project
 
     @property
@@ -48,7 +49,7 @@ class GCEProvider(CloudProvider):
         return {
             'name': self.name,
             'prov_type': 'Google Compute Engine',
-            'region': self.region,
+            'region': self.region_name,
             'project_id': self.project
         }
 
@@ -59,6 +60,7 @@ class GCEProvider(CloudProvider):
                    project=prov_config['project'],
                    zone=prov_config['zone'],
                    region=prov_config['region'],
+                   region_name=prov_config['region_name'],
                    endpoints={endpoint.name: endpoint},
                    key=prov_key,
                    appliance=appliance)

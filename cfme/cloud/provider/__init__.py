@@ -220,7 +220,7 @@ def get_all_providers():
     return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
-def discover(credential, cancel=False, d_type="Amazon"):
+def discover(credential, cancel=False, d_type="Amazon EC2"):
     """
     Discover cloud providers. Note: only starts discovery, doesn't
     wait for it to finish.
@@ -231,10 +231,19 @@ def discover(credential, cancel=False, d_type="Amazon"):
       d_type: provider name which will be discovered
     """
     view = navigate_to(CloudProvider, 'Discover')
-    view.fill({'discover_type': d_type,
-               'username': credential.principal,
-               'password': credential.secret,
-               'password_verify': credential.verify_secret})
+    view.fill({'discover_type': d_type})
+    if d_type == 'Amazon EC2':
+        view.fields.fill({'username': getattr(credential, 'principal', None),
+                          'password': getattr(credential, 'secret', None),
+                          'password_verify': getattr(credential, 'verify_secret', None)})
+    elif d_type == 'Azure':
+        view.fields.fill({'client_id': getattr(credential, 'principal', None),
+                          'client_key': getattr(credential, 'secret', None),
+                          'tenant_id': getattr(credential, 'tenant_id', None),
+                          'subscription': getattr(credential, 'subscription_id', None)})
+    else:
+        raise ValueError('Wrong provider type or credential')
+
     if cancel:
         view.cancel.click()
     else:
