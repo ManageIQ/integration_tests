@@ -385,9 +385,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
-        navigate_to(self, 'Details')
+        view = navigate_to(self, "Details")
         if refresh:
-            sel.refresh()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
 
     def execute_button(self, button_group, button, cancel=True):
         navigate_to(self, 'Details')
