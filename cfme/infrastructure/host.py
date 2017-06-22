@@ -370,19 +370,18 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     def delete(self, cancel=True):
         """
-        Deletes a host from CFME
+        Deletes a host from CFME.
 
         Args:
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        navigate_to(self, 'Details')
-        if self.appliance.version >= '5.7':
-            btn_name = "Remove item"
-        else:
-            btn_name = "Remove from the VMDB"
-        cfg_btn(btn_name, invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+        view = navigate_to(self, "Details")
+        view.configuration.item_select("Remove item", handle_alert=cancel)
+        if not cancel:
+            view = self.create_view(InfraHostsAllView)
+            assert view.is_displayed
+            view.flash.assert_success_message("The selected Hosts / Nodes was deleted")
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
