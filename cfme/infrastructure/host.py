@@ -183,7 +183,6 @@ class InfraHostDetailsView(BaseLoggedInPage):
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
     toolbar = CommonToolbar()
 
-    # Summary
     @View.nested
     class summary(View):  # noqa
         properties = SummaryTable(title="Properties")
@@ -484,23 +483,22 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             return self.db_id
 
     def run_smartstate_analysis(self):
-        """ Runs smartstate analysis on this host
+        """Runs smartstate analysis on this host.
 
         Note:
             The host must have valid credentials already set up for this to work.
         """
-        navigate_to(self, 'Details')
-        tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
+        view = navigate_to(self, "Details")
+        view.toolbar.configuration.item_select("Perform SmartState Analysis", handle_alert=True)
+        view.flash.assert_success_message('"{}": Analysis successfully initiated'.format(self.name))
 
     def check_compliance(self, timeout=240):
         """Initiates compliance check and waits for it to finish."""
-        navigate_to(self, 'Details')
+        view = navigate_to(self, "Details")
         original_state = self.compliance_status
-        tb.select('Policy', 'Check Compliance of Last Known Configuration', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
+        view.toolbar.policy.item_select("Check Compliance of Last Known Configuration",
+            handle_alert=True)
+        view.flash.assert_no_errors()
         wait_for(
             lambda: self.compliance_status != original_state,
             num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
@@ -508,18 +506,19 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     @property
     def compliance_status(self):
-        """Returns the title of the compliance infoblock. The title contains datetime so it can be
-        compared.
+        """Returns the title of the compliance SummaryTable. The title contains datetime so it can
+        be compared.
 
         Returns:
             :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
         """
-        sel.refresh()
-        return self.get_detail('Compliance', 'Status')
+        view = navigate_to(self, "Details")
+        view.browser.selenium.refresh()
+        return self.get_detail("Compliance", "Status")
 
     @property
     def is_compliant(self):
-        """Check if the Host is compliant
+        """Check if the Host is compliant.
 
         Returns:
             :py:class:`bool`
