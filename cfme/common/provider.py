@@ -110,30 +110,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def default_endpoint(self):
         return self.endpoints.get('default') if hasattr(self, 'endpoints') else None
 
-    @property
-    def hostname(self):
-        return getattr(self.default_endpoint, "hostname", None)
-
-    @hostname.setter
-    def hostname(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.hostname = value
-        else:
-            logger.warn("can't set hostname because default endpoint is absent")
-
-    @property
-    def ip_address(self):
-        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
-
-    @ip_address.setter
-    def ip_address(self, value):
-        if self.default_endpoint:
-            if value:
-                self.default_endpoint.ipaddress = value
-        else:
-            logger.warn("can't set ipaddress because default endpoint is absent")
-
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
         """
@@ -739,6 +715,30 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
     db_types = ["CloudManager", "InfraManager"]
+
+    @property
+    def hostname(self):
+        return getattr(self.default_endpoint, "hostname", None)
+
+    @hostname.setter
+    def hostname(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.hostname = value
+        else:
+            logger.warn("can't set hostname because default endpoint is absent")
+
+    @property
+    def ip_address(self):
+        return getattr(self.default_endpoint, "ipaddress", resolve_hostname(str(self.hostname)))
+
+    @ip_address.setter
+    def ip_address(self, value):
+        if self.default_endpoint:
+            if value:
+                self.default_endpoint.ipaddress = value
+        else:
+            logger.warn("can't set ipaddress because default endpoint is absent")
 
     def wait_for_creds_ok(self):
         """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
