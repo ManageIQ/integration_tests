@@ -15,16 +15,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential as BaseCredential
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.flash as flash
-import cfme.web_ui.toolbar as tb
 from cfme.exceptions import HostNotFound
-from cfme.web_ui import (
-    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location
-)
-from cfme.web_ui.form_buttons import FormButton, change_stored_password
-from cfme.web_ui import listaccordion as list_acc
 from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
@@ -51,15 +42,6 @@ host_add_btn = {
     "5.5": FormButton("Add")
 }
 default_host_filter_btn = FormButton('Set the current filter as my default')
-cfg_btn = partial(tb.select, 'Configuration')
-pol_btn = partial(tb.select, 'Policy')
-pow_btn = partial(tb.select, 'Power')
-lif_btn = partial(tb.select, 'Lifecycle')
-mon_btn = partial(tb.select, 'Monitoring')
-
-
-match_page = partial(match_location, controller='host',
-                     title='Hosts')
 
 
 class HostToolBar(View):
@@ -210,10 +192,15 @@ class InfraHostAddView(InfraHostFormView):
     add_button = Button("Add")
     cancel_button = Button("Cancel")
 
+    @property
+    def is_displayed(self):
+        return self.title.text == "Add New Host"
+
 
 class InfraHostEditView(InfraHostFormView):
     save_button = Button("Save")
     reset_button = Button("Reset")
+    change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
 
     @property
     def is_displayed(self):
@@ -244,13 +231,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     """
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
-    forced_saved = deferred_verpick({
-        version.LOWEST: form_buttons.FormButton(
-            "Save changes", dimmed_alt="Save changes", force_click=True),
-        '5.8': form_buttons.FormButton(
-            "Save", dimmed_alt="Save", force_click=True)
-    })
-
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
                  ipmi_credentials=None, interface_type='lan', provider=None, appliance=None):
@@ -269,17 +249,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         self.db_id = None
         self.provider = provider
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {
-            'name_text': kwargs.get('name'),
-            'hostname_text': kwargs.get('hostname'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'custom_ident_text': kwargs.get('custom_ident'),
-            'host_platform': kwargs.get('host_platform'),
-            'ipmi_address_text': kwargs.get('ipmi_address'),
-            'mac_address_text': kwargs.get('mac_address')
-        }
-
     class Credential(BaseCredential, Updateable):
         """Provider credentials
 
@@ -290,29 +259,49 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
 
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            sel.click(form_buttons.cancel)
-            # sel.wait_for_element(page.configuration_btn)
-        else:
-            sel.click(submit_button)
-            flash.assert_no_errors()
-
     def create(self, cancel=False, validate_credentials=False):
-        """
-        Creates a host in the UI
+        """Creates a host in the UI.
 
         Args:
-           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-               after all the information present in the Host has been filled in the UI.
+           cancel (boolean): Whether to cancel out of the creation. The cancel is done after all the
+               information present in the Host has been filled in the UI.
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
-        navigate_to(self, 'Add')
-        fill(properties_form, self._form_mapping(True, **self.__dict__))
-        fill(credential_form, self.credentials, validate=validate_credentials)
-        fill(credential_form, self.ipmi_credentials, validate=validate_credentials)
-        self._submit(cancel, host_add_btn)
+        view = navigate_to(self, "Add")
+        view.fill({
+            "name": self.name,
+            "hostname": self.hostname or self.ip_address,
+            "host_platform": self.host_platform,
+            "custom_ident": self.custom_ident,
+            "ipmi_address": self.ipmi_address,
+            "mac_address": self.mac_address
+        })
+        if self.credentials is not None:
+            view.default.fill({
+                "username": self.credentials.principal,
+                "password": self.credentials.secret,
+                "confirm_password": self.credentials.verify_secret,
+            })
+            if validate_credentials:
+                view.default.validate_button.click()
+        if self.ipmi_credentials is not None:
+            view.ipmi.fill({
+                "username": self.ipmi_credentials.principal,
+                "password": self.ipmi_credentials.secret,
+                "confirm_password": self.ipmi_credentials.verify_secret,
+            })
+            if validate_credentials:
+                view.ipmi.validate_button.click()
+        if not cancel:
+            view.add_button.click()
+            flash_message = 'Host / Node " {}" was added'.format(self.name)
+        else:
+            view.cancel_button.click()
+            flash_message = "Add of new Host / Node was cancelled by the user"
+        view = self.create_view(InfraHostsAllView)
+        assert view.is_displayed
+        view.flash.assert_success_message(flash_message)
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """
@@ -324,12 +313,42 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        navigate_to(self, 'Edit')
-        change_stored_password()
-        fill(credential_form, updates.get('credentials'), validate=validate_credentials)
-
-        logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
-        self._submit(cancel, self.forced_saved)
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        credentials = updates.get("credentials")
+        ipmi_credentials = updates.get("ipmi_credentials")
+        if credentials is not None:
+            if view.change_stored_password.is_displayed:
+                view.change_stored_password.click()
+            credentials_changed = view.default.fill({
+                "username": credentials.principal,
+                "password": credentials.secret,
+                "confirm_password": credentials.verify_secret,
+            })
+            if validate_credentials:
+                view.default.validate_button.click()
+        if ipmi_credentials is not None:
+            if view.change_stored_password.is_displayed:
+                view.change_stored_password.click()
+            ipmi_credentials_changed = view.ipmi.fill({
+                "username": ipmi_credentials.principal,
+                "password": ipmi_credentials.secret,
+                "confirm_password": ipmi_credentials.verify_secret,
+            })
+            if validate_credentials:
+                view.ipmi.validate_button.click()
+        changed = any([changed, credentials_changed, ipmi_credentials_changed])
+        if changed:
+            view.save_button.click()
+            logger.debug("Trying to save update for host with id: %s", str(self.get_db_id))
+            view = self.create_view(InfraHostDetailsView)
+            view.flash.assert_success_message(
+                'Host / Node "{}" was saved'.format(updates.get("name", self.name)))
+        else:
+            view.cancel_button.click()
+            view.flash.assert_success_message(
+                'Edit of Host / Node "{}" was cancelled by the user'.format(
+                    updates.get("name", self.name)))
 
     def delete(self, cancel=True):
         """
@@ -639,26 +658,6 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
-
-
-@fill.method((Form, Host.Credential))
-def _fill_credential(form, cred, validate=None):
-    """How to fill in a credential (either ipmi or default).  Validates the
-    credential if that option is passed in.
-    """
-    if cred.ipmi:
-        fill(credential_form, {'ipmi_button': True,
-                               'ipmi_principal': cred.principal,
-                               'ipmi_secret': cred.secret,
-                               'ipmi_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
-    else:
-        fill(credential_form, {'default_principal': cred.principal,
-                               'default_secret': cred.secret,
-                               'default_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
-    if validate:
-        flash.assert_no_errors()
 
 
 def get_credentials_from_config(credential_config_name):
