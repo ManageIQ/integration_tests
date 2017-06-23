@@ -272,15 +272,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 self.validate()
             return created
 
-    def update(self, updates, endpoints=None, cancel=False, validate_credentials=True):
+    def update(self, updates, cancel=False, validate_credentials=True):
         """
         Updates a provider in the UI.  Better to use utils.update.update context
         manager than call this directly.
 
         Args:
            updates (dict): fields that are changing.
-           endpoints (dict/list or single Endpoint): objects which hold information about
-           provider's endpoints.
            cancel (boolean): whether to cancel out of the update.
            validate_credentials (boolean): whether credentials have to be validated
         """
@@ -291,6 +289,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             # todo: to replace/merge this code with create
             # update values:
             # filling main part of dialog
+            endpoints = updates.pop('endpoints', None)
             if updates:
                 edit_view.fill(updates)
 
@@ -302,7 +301,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     # every endpoint class has name like 'default', 'events', etc.
                     # endpoints view can have multiple tabs, the code below tries
                     # to find right tab by passing endpoint name to endpoints view
-                    endp_view = getattr(self.endpoints_form(parent=edit_view), endpoint.name)
+                    try:
+                        endp_view = getattr(self.endpoints_form(parent=edit_view), endpoint.name)
+                    except AttributeError:
+                        # tabs are absent in UI when there is only single (default) endpoint
+                        endp_view = self.endpoints_form(parent=edit_view)
                     endp_view.fill(endpoint.view_value_mapping)
 
                     # filling credentials
@@ -323,7 +326,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
                             endp_view.fill(endpoint.credentials.view_value_mapping)
                             if validate_credentials:
-                                endpoint.view.validate.click()
+                                endp_view.validate.click()
 
             # cloud rhos provider always requires validation of all endpoints
             # there should be a bz about that
