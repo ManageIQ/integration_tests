@@ -12,6 +12,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
+from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import HostNotFound
 from utils.ipmi import IPMI
 from utils.log import logger
@@ -31,27 +32,9 @@ from cfme.common.host_views import (
     HostTimelinesView
 )
 
-from cfme.common import PolicyProfileAssignable
-
-# Page specific locators
-
-manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
-
-drift_table = CheckboxTable({
-    version.LOWEST: "//table[@class='style3']",
-    "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"
-})
-
-host_add_btn = {
-    version.LOWEST: FormButton('Add this Host'),
-    "5.5": FormButton("Add")
-}
-default_host_filter_btn = FormButton('Set the current filter as my default')
-
 
 class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
-    """
-    Model of an infrastructure host in cfme.
+    """Model of an infrastructure host in cfme.
 
     Args:
         name: Name of the host.
@@ -141,7 +124,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         else:
             view.cancel_button.click()
             flash_message = "Add of new Host / Node was cancelled by the user"
-        view = self.create_view(InfraHostsAllView)
+        view = self.create_view(HostsView)
         assert view.is_displayed
         view.flash.assert_success_message(flash_message)
 
@@ -183,7 +166,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         if changed:
             view.save_button.click()
             logger.debug("Trying to save update for host with id: %s", str(self.get_db_id))
-            view = self.create_view(InfraHostDetailsView)
+            view = self.create_view(HostDetailsView)
             view.flash.assert_success_message(
                 'Host / Node "{}" was saved'.format(updates.get("name", self.name)))
         else:
@@ -203,7 +186,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select("Remove item", handle_alert=cancel)
         if not cancel:
-            view = self.create_view(InfraHostsAllView)
+            view = self.create_view(HostsView)
             assert view.is_displayed
             view.flash.assert_success_message("The selected Hosts / Nodes was deleted")
 
@@ -280,7 +263,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     @property
     def exists(self):
-        navigate_to(self, 'All')
+        view = navigate_to(self, "All")
         for page in paginator.pages():
             if sel.is_displayed(Quadicon(self.name, 'host')):
                 return True
@@ -342,7 +325,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
         """
         view = navigate_to(self, "Details")
-        view.browser.selenium.refresh()
+        view.browser.refresh()
         return self.get_detail("Compliance", "Status")
 
     @property
@@ -439,7 +422,8 @@ class All(CFMENavigateStep):
             self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Nodes")
 
     def resetter(self):
-        self.view.toolbar.grid_view_button.click()
+        if self.view.toolbar.view_selector.selected != "Grid View":
+            self.view.toolbar.view_selector.select("Grid View")
         self.view.paginator.check_all()
         self.view.paginator.uncheck_all()
 
@@ -450,7 +434,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.items.get_item(self.obj.name).click()
 
 
 @navigator.register(Host)

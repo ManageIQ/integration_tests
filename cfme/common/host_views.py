@@ -1,33 +1,35 @@
 # -*- coding: utf-8 -*-
-from widgetastic.widget import View, Text
-from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
+from widgetastic.widget import ParametrizedView, Text, View
+from widgetastic_patternfly import BootstrapSelect, Dropdown, FlashMessages, Tab
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, ManyItemsFound
 from widgetastic_manageiq import (
+    BaseItem,
+    BaseListItem,
+    BaseQuadIconItem,
+    BaseTileIconItem,
+    BootstrapTreeview,
     BreadCrumb,
-    SummaryTable,
     Button,
-    TimelinesView,
-    DetailsToolBarViewSelector,
-    ItemsToolBarViewSelector,
     Checkbox,
     Input,
-    Table,
+    ItemsToolBarViewSelector,
     PaginationPane,
-    FileInput,
     Search,
-    BootstrapTreeview,
-    BaseItem,
-    BaseQuadIconItem
+    SummaryTable,
+    Table,
+    TimelinesView
 )
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):
     """Common parts for host views."""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
+    flash = FlashMessages(
+        './/div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+        'contains(@class, "flash_text_div")]'
+    )
 
     @property
     def in_compute_infrastructure_hosts(self):
@@ -63,7 +65,7 @@ class HostItem(BaseItem):
     tile_item = HostTileIconItem
 
 
-class HostDetailsToolBar(View):
+class HostDetailsToolbar(View):
     """Represents host toolbar and its controls."""
     monitoring = Dropdown(text="Monitoring")
     configuration = Dropdown(text="Configuration")
@@ -84,7 +86,7 @@ class HostDetailsSummaryView(View):
 class HostDetailsView(ComputeInfrastructureHostsView):
     """Main Host details page."""
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
-    toolbar = View.nested(HostDetailsToolBar)
+    toolbar = View.nested(HostDetailsToolbar)
     contents = View.nested(HostDetailsSummaryView)
 
     @property
@@ -147,7 +149,7 @@ class HostEditTagsView(BaseLoggedInPage):
         return False
 
 
-class HostsToolBar(View):
+class HostsToolbar(View):
     """Represents hosts toolbar and its controls."""
     configuration = Dropdown(text="Configuration")
     policy = Dropdown(text="Policy")
@@ -216,7 +218,7 @@ class HostItems(View):
         items = self.get_items(by_name=by_name, surf_pages=surf_pages)
         if not items:
             raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
-        else:
+        elif len(items) > 1:
             raise ManyItemsFound("Several items with {name} were found".format(name=by_name))
         return items[0]
 
@@ -227,7 +229,7 @@ class HostSideBar(View):
 
 
 class HostsView(ComputeInfrastructureHostsView):
-    toolbar = View.nested(HostToolBar)
+    toolbar = View.nested(HostsToolbar)
     sidebar = View.nested(HostSideBar)
     items = View.nested(HostItems)
     paginator = View.nested(PaginationPane)
