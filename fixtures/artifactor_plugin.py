@@ -136,7 +136,6 @@ def pytest_configure(config):
     from utils.log import artifactor_handler
     artifactor_handler.artifactor = art_client
     config._art_client = art_client
-    art_client.fire_hook('setup_merkyl', ip=urlparse(env['base_url']).netloc)
 
 
 def fire_art_hook(config, hook, **hook_args):
@@ -257,6 +256,8 @@ def pytest_runtest_logreport(report):
 @pytest.mark.hookwrapper
 def pytest_unconfigure(config):
     yield
+    if not store.slave_manager:
+        fire_art_hook(config, 'finish_session')
     shutdown(config)
 
 
@@ -266,14 +267,9 @@ lock = RLock()
 def shutdown(config):
     with lock:
         proc = config._art_proc
-        if proc:
+        if proc is not None and proc.returncode is None:
             if not store.slave_manager:
                 write_line('collecting artifacts')
-                fire_art_hook(config, 'finish_session')
-            fire_art_hook(config, 'teardown_merkyl',
-                          ip=urlparse(env['base_url']).netloc)
-            if not store.slave_manager:
                 config._art_client.terminate()
-                proc = config._art_proc
                 if proc:
                     proc.wait()

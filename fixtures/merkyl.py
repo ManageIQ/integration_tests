@@ -1,7 +1,7 @@
 import pytest
 
 from urlparse import urlparse
-from fixtures.artifactor_plugin import fire_art_test_hook
+from fixtures.artifactor_plugin import fire_art_test_hook, fire_art_hook
 
 from utils.conf import env
 
@@ -87,3 +87,10 @@ def merkyl_inspector(request):
                 print(merkyl_inspector.get_log('/path/to/log/file'))
     """
     return MerkylInspector(request)
+
+
+@pytest.yield_fixture(scope="session", autouse=True)
+def merkyl_setup(request):
+    fire_art_hook(request.config, 'setup_merkyl', ip=urlparse(env['base_url']).netloc)
+    yield
+    fire_art_hook(request.config, 'teardown_merkyl', ip=urlparse(env['base_url']).netloc)
