@@ -9,22 +9,27 @@
 
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import Dropdown, Tab, Button, BootstrapSelect
-from widgetastic.widget import Text, Input, View
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential as BaseCredential
 from cfme.exceptions import HostNotFound
 from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import deferred_verpick, version, conf
+from utils import version, conf
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
-from widgetastic_manageiq import TimelinesView, PaginationPane, SummaryTable
+from cfme.common.host_views import (
+    HostsView,
+    HostDetailsView,
+    HostEditView,
+    HostAddView,
+    HostDiscoverView,
+    HostManagePoliciesView,
+    HostTimelinesView
+)
 
 from cfme.common import PolicyProfileAssignable
 
@@ -42,169 +47,6 @@ host_add_btn = {
     "5.5": FormButton("Add")
 }
 default_host_filter_btn = FormButton('Set the current filter as my default')
-
-
-class HostToolBar(View):
-    """
-    represents host toolbar and its controls
-    """
-    configuration = Dropdown(text='Configuration')
-    policy = Dropdown(text='Policy')
-    download = Dropdown(text='Download')
-    lifecycle = Dropdown(text='Lifecycle')
-    power = Dropdown(text='Power Operations')
-
-    view_selector = View.nested(ItemsToolBarViewSelector)
-
-
-class HostSideBar(View):
-    """
-    represents left side bar. it usually contains navigation, filters, etc
-    """
-    @View.nested
-    class filters(Accordion):  # noqa
-        ACCORDION_NAME = "Filters"
-        tree = ManageIQTree()
-
-
-class HostEntities(BaseEntitiesView):
-    """
-    represents central view where all QuadIcons, etc are displayed
-    """
-    pass
-
-
-class HostsView(BaseLoggedInPage):
-    """
-    represents whole All Hosts page
-    """
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-    toolbar = View.nested(HostToolBar)
-    sidebar = View.nested(HostSideBar)
-    including_entities = View.include(HostEntities, use_parent=True)
-
-    @property
-    def is_displayed(self):
-        return (super(BaseLoggedInPage, self).is_displayed and
-                self.navigation.currently_selected == ['Compute', 'Infrastructure',
-                                                       'Hosts'] and
-                self.entities.title.text == 'Hosts')
-
-
-class InfraHostTimelinesView(TimelinesView, BaseLoggedInPage):
-
-    @property
-    def is_displayed(self):
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Infrastructure', '/host'] and
-            super(TimelinesView, self).is_displayed
-        )
-
-
-class CommonToolbar(View):
-    configuration = Dropdown("Configuration")
-    policy = Dropdown("Policy")
-    lifecycle = Dropdown("Lifecycle")
-    power = Dropdown("Power")
-
-
-class InfraHostsAllView(BaseLoggedInPage):
-    title = Text(".//div[@id='main-content']//h1")
-    pagination_pane = PaginationPane()
-
-    @View.nested
-    class toolbar(CommonToolbar):
-        grid_view_button = Button(title="Grid View")
-        tile_view_button = Button(title="Tile View")
-        list_view_button = Button(title="List View")
-
-    @property
-    def is_displayed(self):
-        return self.title.text == "Hosts"
-
-
-class InfraHostDetailsView(BaseLoggedInPage):
-    title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
-    toolbar = CommonToolbar()
-
-    @View.nested
-    class summary(View):  # noqa
-        properties = SummaryTable(title="Properties")
-        relationships = SummaryTable(title="Relationships")
-        compliance = SummaryTable(title="Compliance")
-        configuration = SummaryTable(title="Configuration")
-        smart_management = SummaryTable(title="Smart Management")
-        authentication_status = SummaryTable(title="Authentication Status")
-
-    @property
-    def is_displayed(self):
-        return self.title.text == "{} (Summary)".format(self.context["object"].name)
-
-
-class InfraHostFormView(BaseLoggedInPage):
-    # Info/Settings
-    title = Text(".//div[@id='main-content']//h1")
-    name = Input(name="name")
-    hostname = Input(name="hostname")
-    custom_ident = Input(name="custom_1")
-    ipmi_address = Input(name="ipmi_address")
-    mac_address = Input(name="mac_address")
-
-    # Endpoints
-    @View.nested
-    class default(Tab):  # noqa
-        username = Input(name="default_userid")
-        password = Input(name="default_password")
-        confirm_password = Input(name="default_verify")
-        validate_button = Button("Validate")
-
-    @View.nested
-    class remote_login(Tab):  # noqa
-        TAB_NAME = "Remote Login"
-        username = Input(name="remote_userid")
-        password = Input(name="remote_password")
-        confirm_password = Input(name="remote_verify")
-        validate_button = Button("Validate")
-
-    @View.nested
-    class web_services(Tab):  # noqa
-        TAB_NAME = "Web Services"
-        username = Input(name="ws_userid")
-        password = Input(name="ws_password")
-        confirm_password = Input(name="ws_verify")
-        validate_button = Button("Validate")
-
-    @View.nested
-    class ipmi(Tab):  # noqa
-        TAB_NAME = "IPMI"
-        username = Input(name="ipmi_userid")
-        password = Input(name="ipmi_password")
-        confirm_password = Input(name="ipmi_verify")
-        validate_button = Button("Validate")
-
-    cancel_button = Button("Cancel")
-
-
-class InfraHostAddView(InfraHostFormView):
-    host_platform = BootstrapSelect("user_assigned_os")
-    add_button = Button("Add")
-    cancel_button = Button("Cancel")
-
-    @property
-    def is_displayed(self):
-        return self.title.text == "Add New Host"
-
-
-class InfraHostEditView(InfraHostFormView):
-    save_button = Button("Save")
-    reset_button = Button("Reset")
-    change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
-
-    @property
-    def is_displayed(self):
-        return self.title.text == "Info/Settings"
 
 
 class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
@@ -405,14 +247,17 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             desired_state: 'on' or 'off'
             timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
         """
+        view = navigate_to(self, "All")
 
         def _looking_for_state_change():
-            tb.refresh()
-            return 'currentstate-' + desired_state in find_quadicon(self.name,
-                                                                    do_not_navigate=False).state
+            return "currentstate-{}".format(desired_state) in find_quadicon(self.name,
+                                                                    do_not_navigate=True).state
 
-        navigate_and_select_all_hosts(self.name, self.provider)
-        return wait_for(_looking_for_state_change, num_sec=timeout)
+        return wait_for(
+            _looking_for_state_change,
+            fail_func=view.browser.refresh,
+            num_sec=timeout
+        )
 
     def get_ipmi(self):
         return IPMI(
@@ -584,7 +429,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
 @navigator.register(Host)
 class All(CFMENavigateStep):
-    VIEW = InfraHostsAllView
+    VIEW = HostsView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
 
     def step(self):
@@ -595,13 +440,13 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         self.view.toolbar.grid_view_button.click()
-        self.view.pagination_pane.check_all()
-        self.view.pagination_pane.uncheck_all()
+        self.view.paginator.check_all()
+        self.view.paginator.uncheck_all()
 
 
 @navigator.register(Host)
 class Details(CFMENavigateStep):
-    VIEW = InfraHostDetailsView
+    VIEW = HostDetailsView
     prerequisite = NavigateToSibling("All")
 
     def step(self):
@@ -610,7 +455,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(Host)
 class Edit(CFMENavigateStep):
-    VIEW = InfraHostEditView
+    VIEW = HostEditView
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
@@ -619,7 +464,7 @@ class Edit(CFMENavigateStep):
 
 @navigator.register(Host)
 class Add(CFMENavigateStep):
-    VIEW = InfraHostAddView
+    VIEW = HostAddView
     prerequisite = NavigateToSibling("All")
 
     def step(self):
@@ -628,7 +473,7 @@ class Add(CFMENavigateStep):
 
 @navigator.register(Host)
 class Discover(CFMENavigateStep):
-    VIEW = InfraHostDiscoverView
+    VIEW = HostDiscoverView
     prerequisite = NavigateToSibling("All")
 
     def step(self):
@@ -637,6 +482,7 @@ class Discover(CFMENavigateStep):
 
 @navigator.register(Host)
 class PolicyAssignment(CFMENavigateStep):
+    VIEW = HostManagePoliciesView
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
@@ -653,7 +499,7 @@ class Provision(CFMENavigateStep):
 
 @navigator.register(Host)
 class Timelines(CFMENavigateStep):
-    VIEW = InfraHostTimelinesView
+    VIEW = HostTimelinesView
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
