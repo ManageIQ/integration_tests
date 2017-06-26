@@ -263,6 +263,17 @@ def test_server_info_href(appliance):
         assert 'id' in appliance.rest_api.get(appliance.rest_api.server_info[item])
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_default_region(appliance):
+    """Check that the default region is present.
+
+    Metadata:
+        test_flag: rest
+    """
+    reg = appliance.rest_api.collections.regions.get(region=0)
+    assert hasattr(reg, 'guid')
+
+
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_product_info(appliance):
     """Check that product info is present.
