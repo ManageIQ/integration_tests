@@ -91,7 +91,7 @@ class MiddlewareProvider(BaseProvider):
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
-    quad_name = None
+    quad_name = 'middleware'
     _properties_region = prop_region  # This will get resolved in common to a real form
     add_provider_button = form_buttons.FormButton("Add")
     save_button = form_buttons.FormButton("Save")
@@ -109,8 +109,9 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
 
 
 @navigator.register(MiddlewareProvider, 'Add')

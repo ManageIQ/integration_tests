@@ -31,7 +31,7 @@ class Topology(object):
 
     def refresh(self):
         ensure_browser_open()
-        sel.click("//*[contains(@class, 'container_topology')]//button[contains(., 'Refresh')]")
+        sel.click("//button[contains(., 'Refresh')]")
         self._reload()
 
     def _is_el_movement_stopped(self):
