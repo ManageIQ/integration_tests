@@ -46,7 +46,6 @@ import attr
 
 from threading import Thread
 from time import sleep, time
-from urlparse import urlparse
 
 import pytest
 import zmq
@@ -56,7 +55,7 @@ from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
 from utils import at_exit, conf
-from utils.appliance import IPAppliance
+from utils.appliance import IPAppliance, load_appliances_from_config
 from utils.log import create_sublogger
 from utils.path import conf_path
 
@@ -76,13 +75,35 @@ def pytest_addhooks(pluginmanager):
 
 @pytest.mark.trylast
 def pytest_configure(config):
-    # configures the parallel session, then fires pytest_parallel_configured
-    if len(config.option.appliances) > 1:
-        session = ParallelSession(config)
+    """Configures the parallel session, then fires pytest_parallel_configured."""
+    reporter = terminalreporter.reporter()
+    if not config.option.appliances:
+        appliances = load_appliances_from_config(conf.env)
+        reporter.write_line('Retrieved these appliances from the conf.env', red=True)
+    else:
+        appliance_config = {
+            'appliances': [{'base_url': base_url} for base_url in config.option.appliances]}
+        # Grab the possible globals from the conf.env
+        for key, value in (
+                (key, value)
+                for key, value in conf.env.items()
+                if key in IPAppliance.CONFIG_MAPPING and key not in IPAppliance.CONFIG_NONGLOBAL):
+            appliance_config[key] = value
+        appliances = load_appliances_from_config(appliance_config)
+        reporter.write_line('Retrieved these appliances from the --appliance parameters', red=True)
+    for appliance in appliances:
+        reporter.write_line('* {!r}'.format(appliance), cyan=True)
+    if len(appliances) > 1:
+        session = ParallelSession(config, appliances)
         config.pluginmanager.register(session, "parallel_session")
         store.parallelizer_role = 'master'
+        reporter.write_line(
+            'As a parallelizer master kicking off parallel session for these {} appliances'.format(
+                len(appliances)),
+            green=True)
         config.hook.pytest_parallel_configured(parallel_session=session)
     else:
+        reporter.write_line('No parallelization required', green=True)
         config.hook.pytest_parallel_configured(parallel_session=None)
 
 
@@ -100,7 +121,7 @@ class SlaveDetail(object):
 
     slaveid_generator = ('slave{:02d}'.format(i) for i in count())
 
-    url = attr.ib()
+    appliance = attr.ib()
     id = attr.ib(default=attr.Factory(
         lambda: next(SlaveDetail.slaveid_generator)))
     forbid_restart = attr.ib(default=False, init=False)
@@ -115,7 +136,7 @@ class SlaveDetail(object):
         devnull = open(os.devnull, 'w')
         # worker output redirected to null; useful info comes via messages and logs
         self.process = subprocess.Popen(
-            ['python', remote.__file__, self.id, self.url, conf.runtime['env']['ts']],
+            ['python', remote.__file__, self.id, self.appliance.as_json, conf.runtime['env']['ts']],
             stdout=devnull,
         )
         at_exit(self.process.kill)
@@ -126,7 +147,7 @@ class SlaveDetail(object):
 
 
 class ParallelSession(object):
-    def __init__(self, config):
+    def __init__(self, config, appliances):
         self.config = config
         self.session = None
         self.session_finished = False
@@ -149,7 +170,7 @@ class ParallelSession(object):
 
         self.failed_slave_test_groups = deque()
         self.slave_spawn_count = 0
-        self.appliances = self.config.option.appliances
+        self.appliances = appliances
 
         # set up the ipc socket
 
@@ -174,12 +195,12 @@ class ParallelSession(object):
         conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
         conf.save('slave_config')
 
-        for base_url in self.appliances:
-            slave_data = SlaveDetail(url=base_url)
+        for appliance in self.appliances:
+            slave_data = SlaveDetail(appliance=appliance)
             self.slaves[slave_data.id] = slave_data
 
         for slave in sorted(self.slaves):
-            self.print_message("using appliance {}".format(self.slaves[slave].url),
+            self.print_message("using appliance {}".format(self.slaves[slave].appliance.url),
                 slave, green=True)
 
     def _slave_audit(self):
@@ -562,9 +583,7 @@ class ParallelSession(object):
             if provs:
                 prov = provs[0]
                 # Already too many slaves with provider
-                app_url = slave.url
-                app_ip = urlparse(app_url).netloc
-                app = IPAppliance(app_ip)
+                app = slave.appliance
                 self.print_message(
                     'cleansing appliance', slave, purple=True)
                 try:

@@ -1,5 +1,4 @@
 import signal
-from urlparse import urlparse
 
 import zmq
 from py.path import local
@@ -177,9 +176,13 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('slaveid', help='The name of this slave')
-    parser.add_argument('base_url', help='The base URL for this slave to use')
+    parser.add_argument('appliance_json', help='The json data about the used appliance')
     parser.add_argument('ts', help='The timestap to use for collections')
     args = parser.parse_args()
+
+    from utils.appliance import IPAppliance, stack
+    appliance = IPAppliance.from_json(args.appliance_json)
+    stack.push(appliance)
 
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
@@ -191,20 +194,19 @@ if __name__ == '__main__':
     from utils import conf
 
     conf.runtime['env']['slaveid'] = args.slaveid
-    conf.runtime['env']['base_url'] = args.base_url
     conf.runtime['env']['ts'] = args.ts
     store.parallelizer_role = 'slave'
 
     slave_args = conf.slave_config.pop('args')
     slave_options = conf.slave_config.pop('options')
-    ip_address = urlparse(args.base_url).netloc
+    ip_address = appliance.address
     appliance_data = conf.slave_config.get("appliance_data", {})
     if ip_address in appliance_data:
         template_name, provider_name = appliance_data[ip_address]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
     config = _init_config(slave_options, slave_args)
-    slave_manager = SlaveManager(config, args.slaveid, args.base_url,
+    slave_manager = SlaveManager(config, args.slaveid, appliance.url,
         conf.slave_config['zmq_endpoint'])
     config.pluginmanager.register(slave_manager, 'slave_manager')
     config.hook.pytest_cmdline_main(config=config)

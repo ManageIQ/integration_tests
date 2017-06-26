@@ -16,16 +16,12 @@ from utils.wait import wait_for
 _appliance_help = '''specify appliance URLs to use for distributed testing.
 this option can be specified more than once, and must be specified at least two times'''
 
-# Todo: hack taken from parallelizer, restructure
-env_base_urls = conf.env.get('parallel_base_urls', [])
-if env_base_urls:
-    conf.runtime['env']['base_url'] = env_base_urls[0]
-
 
 def pytest_addoption(parser):
     group = parser.getgroup("cfme")
-    group._addoption('--appliance', dest='appliances', action='append',
-        default=env_base_urls, metavar='base_url', help=_appliance_help)
+    group._addoption(
+        '--appliance', dest='appliances', action='append', metavar='base_url', help=_appliance_help,
+        default=[])
     group._addoption('--use-sprout', dest='use_sprout', action='store_true',
         default=False, help="Use Sprout for provisioning appliances.")
     group._addoption('--sprout-appliances', dest='sprout_appliances', type=int,

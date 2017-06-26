@@ -5,15 +5,8 @@
 
 import argparse
 from urlparse import urlparse
-from utils.appliance import IPAppliance
-from utils.conf import cfme_data, env
-
-
-def parse_if_not_none(o):
-    if o is None:
-        return None
-    url = urlparse(o)
-    return url.netloc or url.path  # If you pass a plain IP, it will get in the .path
+from utils.appliance import IPAppliance, get_or_create_current_appliance
+from utils.conf import cfme_data
 
 
 def log(s):
@@ -26,7 +19,7 @@ def main():
     parser.add_argument(
         '--address',
         help='hostname or ip address of target appliance',
-        default=parse_if_not_none(env.get("base_url")))
+        default=None)
     parser.add_argument(
         '--sdk_url',
         help='url to download sdk pkg',
@@ -35,11 +28,14 @@ def main():
         '(required for proper operation)', action="store_true")
 
     args = parser.parse_args()
-    print('Address: {}'.format(args.address))
+    if not args.address:
+        appliance = get_or_create_current_appliance()
+    else:
+        appliance = IPAppliance(address=args.address)
+    print('Address: {}'.format(appliance.address))
     print('SDK URL: {}'.format(args.sdk_url))
     print('Restart: {}'.format(args.restart))
 
-    appliance = IPAppliance(address=args.address)
     appliance.install_netapp_sdk(sdk_url=args.sdk_url, reboot=args.restart, log_callback=log)
 
 

@@ -22,7 +22,6 @@ already been used, it will die
 """
 import atexit
 import os
-from urlparse import urlparse
 
 import diaper
 import pytest
@@ -31,6 +30,7 @@ from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
 from threading import RLock
+from utils.appliance import get_or_create_current_appliance
 from utils.blockers import BZ, Blocker
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
@@ -136,7 +136,7 @@ def pytest_configure(config):
     from utils.log import artifactor_handler
     artifactor_handler.artifactor = art_client
     config._art_client = art_client
-    art_client.fire_hook('setup_merkyl', ip=urlparse(env['base_url']).netloc)
+    art_client.fire_hook('setup_merkyl', ip=get_or_create_current_appliance().address)
 
 
 def fire_art_hook(config, hook, **hook_args):
@@ -185,7 +185,7 @@ def pytest_runtest_protocol(item):
         param_dict = {p: get_name(v) for p, v in params.iteritems()}
     except:
         param_dict = {}
-    ip = urlparse(env['base_url']).netloc
+    ip = get_or_create_current_appliance().address
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
@@ -212,7 +212,7 @@ def pytest_runtest_protocol(item):
 
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
-    ip = urlparse(env['base_url']).netloc
+    ip = get_or_create_current_appliance().address
     fire_art_test_hook(
         item, 'finish_test',
         slaveid=store.slaveid, ip=ip, wait_for_task=True)
@@ -271,7 +271,7 @@ def shutdown(config):
                 write_line('collecting artifacts')
                 fire_art_hook(config, 'finish_session')
             fire_art_hook(config, 'teardown_merkyl',
-                          ip=urlparse(env['base_url']).netloc)
+                          ip=get_or_create_current_appliance().address)
             if not store.slave_manager:
                 config._art_client.terminate()
                 proc = config._art_proc
