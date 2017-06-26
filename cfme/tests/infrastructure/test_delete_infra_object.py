@@ -82,10 +82,9 @@ def test_delete_resource_pool_appear_after_refresh(setup_provider, provider):
     """
     resourcepool_name = provider.data['remove_test']['resource_pool']
     test_resourcepool = resource_pool.ResourcePool(name=resourcepool_name)
-    test_resourcepool.delete(cancel=False)
-    test_resourcepool.wait_for_delete()
+    test_resourcepool.delete(cancel=False, wait=True)
     provider.refresh_provider_relationships()
-    test_resourcepool.wait_for_appear()
+    test_resourcepool.wait_for_exists()
 
 
 @pytest.mark.meta(blockers=[1236977, 1335961])
