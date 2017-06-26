@@ -8,12 +8,12 @@ from cfme.web_ui import toolbar, AngularSelect, form_buttons
 from cfme.configure.configuration import Tag
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.image import Image
-from cfme.containers.container import Container
 from cfme.containers.project import Project
 from cfme.containers.node import Node
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
+from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < "5.6"),
@@ -23,7 +23,10 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
+    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1467639
+    # from cfme.containers.container import Container (add to imports)
+    # pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(Image, 'CMP-9981')),
@@ -58,13 +61,19 @@ def set_random_tag(instance):
     return Tag(display_name=random_tag.text, category=random_cat.text)
 
 
-@pytest.mark.parametrize('test_item',
-                         TEST_ITEMS, ids=[item.args[1].pretty_id() for item in TEST_ITEMS])
+def wait_for_tag(obj_inst):
+    # Waiting for some tag to appear at "My Company Tags" and return pop'ed last tag
+    return wait_for(lambda: getattr(obj_inst.summary.smart_management,
+                                    'my_company_tags', []), fail_condition=[],
+                    num_sec=30, delay=5, fail_func=obj_inst.summary.reload).out.pop()
+
+
+@pytest.mark.parametrize('test_item', TEST_ITEMS,
+                         ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_smart_management_add_tag(provider, test_item):
 
     # validate no tag set to project
     if test_item.obj is ContainersProvider:
-        pytest.skip("This test is currently skipped due to instability issues. ")
         obj_inst = provider
     else:
         obj_inst = test_item.obj.get_random_instances(provider, count=1).pop()
@@ -75,7 +84,7 @@ def test_smart_management_add_tag(provider, test_item):
         obj_inst.remove_tags(obj_inst.get_tags())
     except RuntimeError:
         # Validate old tags formatting
-        assert re.match(regex, obj_inst.summary.smart_management.my_company_tags.text_value), \
+        assert re.match(regex, wait_for_tag(obj_inst).text_value), \
             "Tag formatting is invalid! "
 
     # Config random tag for object\
@@ -83,7 +92,7 @@ def test_smart_management_add_tag(provider, test_item):
 
     # validate new tag format
     obj_inst.summary.reload()
-    tag_display_text = obj_inst.summary.smart_management.my_company_tags.pop()
+    tag_display_text = wait_for_tag(obj_inst)
     tag_display_text = tag_display_text.text_value
 
     assert re.match(regex, tag_display_text), "Tag formatting is invalid! "
