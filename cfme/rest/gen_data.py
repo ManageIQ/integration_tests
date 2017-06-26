@@ -227,7 +227,7 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-def service_templates(request, rest_api, service_dialog=None, service_catalog=None, num=4):
+def service_templates_ui(request, rest_api, service_dialog=None, service_catalog=None, num=4):
     if not service_dialog:
         service_dialog = dialog()
     if not service_catalog:
@@ -263,10 +263,51 @@ def service_templates(request, rest_api, service_dialog=None, service_catalog=No
     def _finished():
         collection.reload()
         to_delete = [ent for ent in collection if ent.name in new_names]
-        if len(to_delete) != 0:
+        if to_delete:
             collection.action.delete(*to_delete)
 
     return s_tpls
+
+
+def service_templates_rest(request, rest_api, service_dialog=None, service_catalog=None, num=4):
+    if not service_dialog:
+        service_dialog = dialog()
+    if not service_catalog:
+        service_catalog = service_catalog_obj(request, rest_api)
+
+    catalog_id = rest_api.collections.service_catalogs.get(name=service_catalog.name).id
+    dialog_id = rest_api.collections.service_dialogs.get(label=service_dialog.label).id
+
+    data = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(5)
+        data.append({
+            "name": 'item_{}'.format(uniq),
+            "description": "my catalog {}".format(uniq),
+            "service_type": "atomic",
+            "prov_type": "generic",
+            "display": True,
+            "service_template_catalog_id": catalog_id,
+            "config_info": {
+                "provision": {
+                    "dialog_id": dialog_id,
+                    "fqname": "/Service/Provisioning/StateMachines/"
+                              "ServiceProvision_Template/CatalogItemInitialization"
+                },
+                "retirement": {
+                    "dialog_id": dialog_id,
+                    "fqname": "/Service/Retirement/StateMachines/ServiceRetirement/Default"
+                },
+            }
+        })
+
+    return _creating_skeleton(request, rest_api, "service_templates", data)
+
+
+def service_templates(request, rest_api, service_dialog=None, service_catalog=None, num=4):
+    tmplt = service_templates_ui if version.current_version() < '5.8' else service_templates_rest
+    return tmplt(
+        request, rest_api, service_dialog=service_dialog, service_catalog=service_catalog, num=num)
 
 
 def automation_requests_data(vm, requests_collection=False, approve=True, num=4):
@@ -396,7 +437,7 @@ def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create
         collection.reload()
         ids = [e.id for e in entities]
         delete_entities = [e for e in collection if e.id in ids]
-        if len(delete_entities) != 0:
+        if delete_entities:
             collection.action.delete(*delete_entities)
 
     # make sure action status code is preserved

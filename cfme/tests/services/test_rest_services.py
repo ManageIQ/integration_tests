@@ -99,7 +99,7 @@ def services(request, appliance, a_provider):
 @pytest.fixture(scope="function")
 def service_templates(request, appliance):
     response = _service_templates(request, appliance.rest_api)
-    assert appliance.rest_api.response.status_code == 200
+    assert appliance.rest_api.response
     return response
 
 
@@ -466,6 +466,17 @@ class TestServiceDialogsRESTAPI(object):
 
 
 class TestServiceTemplateRESTAPI(object):
+    def test_create_service_templates(self, appliance, service_templates):
+        """Tests creation of service_templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        for service_template in service_templates:
+            record = appliance.rest_api.collections.service_templates.get(id=service_template.id)
+            assert record.name == service_template.name
+            assert record.description == service_template.description
+
     def test_edit_service_template(self, appliance, service_templates):
         """Tests editing a service template.
         Prerequisities:
