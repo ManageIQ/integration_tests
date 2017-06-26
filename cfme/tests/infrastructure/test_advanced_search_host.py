@@ -76,7 +76,7 @@ def test_filter_without_user_input(hosts, hosts_with_vm_count, host_with_median_
     # Set up the filter
     search.fill_and_apply_filter(get_expression(False).format(median_vm_count))
     assert_no_cfme_exception()
-    assert len(more_than_median_hosts) == len(host.get_all_hosts(do_not_navigate=True))
+    assert len(more_than_median_hosts) == len(host.get_all_hosts())
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
@@ -90,7 +90,7 @@ def test_filter_with_user_input(hosts, hosts_with_vm_count, host_with_median_vm)
     # Set up the filter
     search.fill_and_apply_filter(get_expression(True), {"COUNT": median_vm_count})
     assert_no_cfme_exception()
-    assert len(more_than_median_hosts) == len(host.get_all_hosts(do_not_navigate=True))
+    assert len(more_than_median_hosts) == len(host.get_all_hosts())
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
@@ -136,7 +136,7 @@ def test_filter_save_and_load(request, hosts, hosts_with_vm_count, host_with_med
     search.load_and_apply_filter(filter_name, fill_callback={"COUNT": median_vm_count})
     assert_no_cfme_exception()
     request.addfinalizer(search.delete_filter)
-    assert len(more_than_median_hosts) == len(host.get_all_hosts(do_not_navigate=True))
+    assert len(more_than_median_hosts) == len(host.get_all_hosts())
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
@@ -198,7 +198,7 @@ def test_quick_search_without_filter(request, hosts, hosts_with_vm_count, host_w
     search.normal_search(median_host)
     assert_no_cfme_exception()
     # Check it is there
-    all_hosts_visible = host.get_all_hosts(do_not_navigate=True)
+    all_hosts_visible = host.get_all_hosts()
     assert len(all_hosts_visible) == 1 and median_host in all_hosts_visible
 
 
@@ -213,7 +213,7 @@ def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with
     search.normal_search(median_host)
     assert_no_cfme_exception()
     # Check it is there
-    all_hosts_visible = host.get_all_hosts(do_not_navigate=True)
+    all_hosts_visible = host.get_all_hosts()
     assert len(all_hosts_visible) == 1 and median_host in all_hosts_visible
 
 

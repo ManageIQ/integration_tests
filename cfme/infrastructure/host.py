@@ -8,14 +8,14 @@ from selenium.common.exceptions import NoSuchElementException
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import HostNotFound
+from utils import version, conf
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.ipmi import IPMI
 from utils.log import logger
+from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import version, conf
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.appliance import Navigatable
 from cfme.common.host_views import (
     HostsView,
     HostDetailsView,
@@ -361,7 +361,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             There have to be at least 2 drift results available for this to work.
 
         Returns:
-            ``True`` if equal, ``False`` otherwise.
+            :py:class:`bool`
         """
         # mark by indexes or mark all
         navigate_to(self, 'Details')
@@ -497,13 +497,11 @@ class Timelines(CFMENavigateStep):
 
 def get_credentials_from_config(credential_config_name):
     creds = conf.credentials[credential_config_name]
-    return Host.Credential(principal=creds['username'],
-                           secret=creds['password'])
+    return Host.Credential(principal=creds["username"], secret=creds["password"])
 
 
 def get_from_config(provider_config_name):
-    """
-    Creates a Host object given a yaml entry in cfme_data.
+    """Creates a Host object given a yaml entry in cfme_data.
 
     Usage:
         get_from_config('esx')
@@ -515,47 +513,73 @@ def get_from_config(provider_config_name):
     credentials = get_credentials_from_config(prov_config['credentials'])
     ipmi_credentials = get_credentials_from_config(prov_config['ipmi_credentials'])
     ipmi_credentials.ipmi = True
-
-    return Host(name=prov_config['name'],
-                hostname=prov_config['hostname'],
-                ip_address=prov_config['ipaddress'],
-                custom_ident=prov_config.get('custom_ident'),
-                host_platform=prov_config.get('host_platform'),
-                ipmi_address=prov_config['ipmi_address'],
-                mac_address=prov_config['mac_address'],
-                interface_type=prov_config.get('interface_type', 'lan'),
-                credentials=credentials,
-                ipmi_credentials=ipmi_credentials)
+    return Host(
+        name=prov_config['name'],
+        hostname=prov_config['hostname'],
+        ip_address=prov_config['ipaddress'],
+        custom_ident=prov_config.get('custom_ident'),
+        host_platform=prov_config.get('host_platform'),
+        ipmi_address=prov_config['ipmi_address'],
+        mac_address=prov_config['mac_address'],
+        interface_type=prov_config.get('interface_type', 'lan'),
+        credentials=credentials,
+        ipmi_credentials=ipmi_credentials
+    )
 
 
 def wait_for_a_host():
-    navigate_to(Host, 'All')
-    logger.info('Waiting for a host to appear...')
-    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any host to appear",
-             num_sec=1000, fail_func=sel.refresh)
+    """Waits for any host to appear in the UI."""
+    view = navigate_to(Host, "All")
+    logger.info("Waiting for a host to appear...")
+    wait_for(
+        lambda: view.paginator.items_amount,
+        fail_condition="0",
+        message="Wait for any host to appear",
+        num_sec=1000,
+        fail_func=view.browser.refresh
+    )
 
 
 def wait_for_host_delete(host):
-    navigate_to(Host, 'All')
-    quad = Quadicon(host.name, 'host')
-    logger.info('Waiting for a host to delete...')
-    wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait host to disappear", num_sec=500, fail_func=sel.refresh)
+    """Waits for the host to remove from the UI.
+
+    Args:
+        host (Host): host object
+    """
+    view = navigate_to(Host, "All")
+    logger.info("Waiting for a host to delete...")
+    wait_for(
+        lambda: not host.exists,
+        message="Wait for the host to disappear",
+        num_sec=500,
+        fail_func=view.browser.refresh
+    )
 
 
 def wait_for_host_to_appear(host):
-    navigate_to(Host, 'All')
-    quad = Quadicon(host.name, 'host')
-    logger.info('Waiting for a host to appear...')
-    wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-             message="Wait host to appear", num_sec=1000, fail_func=sel.refresh)
+    """Waits for the host to appear in the UI.
+
+    Args:
+        host (Host): host object
+    """
+    view = navigate_to(Host, "All")
+    logger.info("Waiting for the host to appear...")
+    wait_for(
+        lambda: host.exists,
+        message="Wait for the host to appear",
+        num_sec=1000,
+        fail_func=view.browser.refresh
+    )
 
 
-def get_all_hosts(do_not_navigate=False):
-    """Returns list of all hosts"""
-    if not do_not_navigate:
-        navigate_to(Host, 'All')
-    return [q.name for q in Quadicon.all("host")]
+def get_all_hosts():
+    """Returns names list of all hosts.
+
+    Returns:
+        list: names list of all hosts
+    """
+    view = navigate_to(Host, "All")
+    return [item.name for item in view.items.get_all_items()]
 
 
 def find_quadicon(host, do_not_navigate=False):
@@ -573,21 +597,3 @@ def find_quadicon(host, do_not_navigate=False):
             return quadicon
     else:
         raise HostNotFound("Host '{}' not found in UI!".format(host))
-
-
-def navigate_and_select_all_hosts(host_names, provider=None):
-    """ Reduces some redundant code shared between methods """
-    if isinstance(host_names, basestring):
-        host_names = [host_names]
-
-    if provider:
-        navigate_to(provider, 'ProviderNodes')
-    else:
-        navigate_to(Host, 'All')
-
-    if paginator.page_controls_exist():
-        paginator.results_per_page(1000)
-        sel.click(paginator.check_all())
-    else:
-        for host_name in host_names:
-            sel.check(Quadicon(host_name, 'host').checkbox())
