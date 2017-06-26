@@ -570,7 +570,7 @@ class IPAppliance(object):
                 try:
                     prov_ip = getattr(provider, 'ip_address', None) \
                         or resolve_hostname(provider.hostname)
-                except AttributeError:
+                except (AttributeError, TypeError):
                     # Provider has no IP nor hostname; it should be looked up by credentials,
                     # not by IP address
                     return False
