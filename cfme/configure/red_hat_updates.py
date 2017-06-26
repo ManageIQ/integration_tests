@@ -2,7 +2,9 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, Form, Input, Region, Select, fill, flash, form_buttons
+from cfme.base.ui import RedHatUpdatesView
+from cfme.web_ui import (CheckboxTable, Form, Input, Region, AngularSelect, flash,
+    form_buttons)
 from utils import version
 from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigate_to
@@ -33,8 +35,8 @@ Usage:
     platform_updates_available('EVM_1', 'EVM_2')
 
 Note:
-    Argument `organization` can be only used with Satellite 5/6
-    (i.e. when service is either `sat5` or `sat6`).
+    Argument `organization` can be only used with Satellite 6
+    (i.e. when service is either `sat6`).
 """
 
 
@@ -56,7 +58,7 @@ update_buttons = Region(
 
 registration_form = Form(
     fields=[
-        ("service", Select("//select[@id='register_to']")),
+        ("service", AngularSelect('register_to')),
         ("url", Input('server_url')),
         ("repo_name", Input('repo_name')),
         ("use_proxy", Input('use_proxy')),
@@ -67,8 +69,6 @@ registration_form = Form(
         ("username", Input('customer_userid')),
         ("password", Input('customer_password')),
         ("password_verify", Input('customer_password2')),  # 5.4+
-        ("organization_sat5", Input('customer_org')),
-        ("organization_sat6", Select("//select[@id='customer_org']"))
     ]
 )
 
@@ -83,9 +83,8 @@ registration_buttons = Region(
 
 
 service_types = {
-    'rhsm': 'sm_hosted',
-    'sat5': 'rhn_satellite',
-    'sat6': 'rhn_satellite6'
+    'rhsm': 'Red Hat Subscription Management',
+    'sat6': 'Red Hat Satellite 6'
 }
 
 
@@ -119,7 +118,7 @@ def update_registration(service,
         password_verify: 2nd entry of password for verification.
                          Same as 'password' if None.
         repo_or_channel: Repository/channel to enable.
-        organization: Organization (sat5/sat6 only).
+        organization: Organization (sat6 only).
         use_proxy: `True` if proxy should be used, `False` otherwise
                    (default `False`).
         proxy_url: Address of the proxy server.
@@ -157,25 +156,15 @@ def update_registration(service,
         password_verify = None
         proxy_password_verify = None
 
-    # Sat6 organization can be selected only after successful validation
-    # while Sat5 organization is selected normally
-    if service == 'sat6':
-        organization_sat5 = None
-        organization_sat6 = organization
-    else:
-        organization_sat5 = organization
-        organization_sat6 = None
+    view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdatesEdit')
 
-    navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
-    sel.click(update_buttons.edit_registration)
     details = dict(
-        service=sel.ByValue(service_value),
+        register_to=service_value,
         url=url,
         username=username,
         password=password,
         password_verify=password_verify,
         repo_name=repo_name,
-        organization_sat5=organization_sat5,
         use_proxy=use_proxy,
         proxy_url=proxy_url,
         proxy_username=proxy_username,
@@ -183,28 +172,23 @@ def update_registration(service,
         proxy_password_verify=proxy_password_verify
     )
 
-    fill(registration_form, details)
+    view.fill(details)
 
     if set_default_rhsm_address:
-        sel.click(registration_buttons.url_default)
+        view.rhn_default_url.click()
 
     if set_default_repository:
-        sel.click(registration_buttons.repo_default)
+        view.repo_default_name.click()
 
-    if validate and service != 'sat5':
-        sel.click(form_buttons.validate_short)
-        flash.assert_no_errors()
-        flash.dismiss()
-
-    if organization_sat6:
-        sel.select(registration_form.locators['organization_sat6'], organization_sat6)
+    view.validate.click()
 
     if cancel:
         form_buttons.cancel()
     else:
         form_buttons.save()
-        flash.assert_message_match("Customer Information successfully saved")
-        flash.dismiss()
+        main_view = current_appliance.server.create_view(RedHatUpdatesView)
+        success_text = 'Customer Information successfully saved'
+        main_view.flash.assert_message(success_text)
 
 
 def refresh():
@@ -249,19 +233,33 @@ def check_updates(*appliance_names):
     flash.dismiss()
 
 
-def are_registered(*appliance_names):
-    """ Check if appliances are registered
+def is_registering(*appliance_names):
+    """ Check if at least one appliance is registering """
+    view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
+    for appliance_name in appliance_names:
+        row = view.updates_table.row(appliance=appliance_name)
+        if row.last_message.text.lower() == 'registering':
+            return True
+        else:
+            return False
+
+
+def is_registered(*appliance_names):
+    """ Check if each appliance is registered
 
     Args:
         appliance_names: Names of appliances to check; will check all if empty
     """
-    for row in get_appliance_rows(*appliance_names):
-        if row.update_status.text.lower() == 'not registered':
+    view = navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
+    for appliance_name in appliance_names:
+        row = view.updates_table.row(appliance=appliance_name)
+        if row.last_message.text.lower() == 'registered':
+            return True
+        else:
             return False
-    return True
 
 
-def are_subscribed(*appliance_names):
+def is_subscribed(*appliance_names):
     """ Check if appliances are subscribed
 
     Args:
