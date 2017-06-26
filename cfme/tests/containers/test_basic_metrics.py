@@ -2,8 +2,6 @@ import pytest
 import re
 from cfme.containers.provider import ContainersProvider
 from utils import testgen
-from utils import conf
-from utils.ssh import SSHClient
 from utils.version import current_version
 
 
@@ -20,11 +18,11 @@ def test_basic_metrics(provider):
         This test checks that the Metrics service is up
         Curls the hawkular status page and checks if it's up
         """
-    username, password = provider.credentials['token'].principal,\
-        provider.credentials['token'].secret
-    hostname = conf.cfme_data.get('management_systems', {})[provider.key]\
-        .get('hostname', [])
-    host_url = 'https://' + hostname + '/hawkular/metrics/'
+    routes = provider.mgmt.o_api.get('route')[1]['items']
+    metrics_hostname = [route for route in routes
+                        if route['metadata']['name'] == 'hawkular-metrics']
+    assert metrics_hostname, 'Could not find route for hawkular-metrics'
+    metrics_hostname = metrics_hostname.pop()['spec']['host']
+    host_url = 'https://' + metrics_hostname + '/hawkular/metrics/'
     command = 'curl -X GET ' + host_url + ' --insecure'
-    with SSHClient(hostname=hostname, username=username, password=password) as ssh_client:
-        assert re.search("Hawkular[ -]Metrics", str(ssh_client.run_command(command)))
+    assert re.search("Hawkular[ -]Metrics", str(provider.cli.run_command(command)))

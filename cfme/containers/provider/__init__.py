@@ -3,7 +3,6 @@ from random import sample
 import re
 import json
 
-import fauxfactory
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.provider import BaseProvider
@@ -485,20 +484,14 @@ class Labelable(object):
                 return False
             else:
                 raise exceptions.LabelNotFoundException(failure_signature)
-        del json_content['metadata']['labels'][name]
-        temp_filename = fauxfactory.gen_alpha()
         self.provider.cli.run_command(
-            'echo \'{}\' > {}'.format(
-                json.dumps(json_content), temp_filename))
-        self.provider.cli.run_command(
-            'oc edit {} {} -f \'{}\''.format(
+            'oc label {} {} {}-'.format(
                 self._cli_resource_type,
-                ('sha256:{}'.format(self.sha256) if
-                 (self.__class__.__name__ == 'Image') else self.name),
-                temp_filename
+                ('sha256:{}'.format(self.sha256)
+                 if (self.__class__.__name__ == 'Image') else self.name),
+                name
             )
         )
-        self.provider.cli.run_command('rm {}'.format(temp_filename))
         return True
 
 

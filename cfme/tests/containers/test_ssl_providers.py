@@ -16,9 +16,11 @@ alphanumeric_name = gen_alphanumeric(10)
 long_alphanumeric_name = gen_alphanumeric(100)
 integer_name = str(gen_integer(0, 100000000))
 provider_names = alphanumeric_name, integer_name, long_alphanumeric_name
-DEFAULT_SEC_PROTOCOLS = (pytest.mark.polarion('CMP-10598')('SSL trusting custom CA'),
-                  pytest.mark.polarion('CMP-10597')('SSL without validation'),
-                  pytest.mark.polarion('CMP-10599')('SSL'))
+DEFAULT_SEC_PROTOCOLS = (
+    pytest.mark.polarion('CMP-10598')('SSL trusting custom CA'),
+    pytest.mark.polarion('CMP-10597')('SSL without validation'),
+    pytest.mark.polarion('CMP-10599')('SSL')
+)
 
 checked_item = namedtuple('TestItem', ['default_sec_protocol', 'hawkular_sec_protocol'])
 TEST_ITEMS = (
@@ -43,6 +45,7 @@ TEST_ITEMS = (
 )
 
 
+@pytest.mark.polarion('CMP-9836')
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_add_provider_naming_conventions(provider, soft_assert):
     """" This test is checking ability to add Providers with different names:
@@ -64,7 +67,7 @@ def test_add_provider_naming_conventions(provider, soft_assert):
             credentials=provider.credentials
         )
         try:
-            prov.create()
+            prov.setup()
             flash.assert_message_contain('Containers Providers "' + provider_name + '" was saved')
         except FlashMessageException:
             soft_assert(False, provider_name + ' wasn\'t added successfully')
@@ -93,7 +96,7 @@ def test_add_provider_ssl(provider, default_sec_protocols, soft_assert):
         credentials=provider.credentials
     )
     try:
-        prov.create()
+        prov.setup()
         flash.assert_message_contain('Containers Providers "' + provider.name + '" was saved')
     except FlashMessageException:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
@@ -128,7 +131,7 @@ def test_add_hawkular_provider_ssl(provider, test_item, soft_assert):
         credentials=provider.credentials
     )
     try:
-        prov.create()
+        prov.setup()
         flash.assert_message_contain('Containers Providers "' + provider.name + '" was saved')
     except FlashMessageException:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
