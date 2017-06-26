@@ -1,11 +1,5 @@
-""" A model of an Infrastructure Host in CFME
-
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Providers pages.
-:var properties_form: A :py:class:`cfme.web_ui.Form` object describing the main add form.
-:var credentials_form: A :py:class:`cfme.web_ui.Form` object describing the credentials form.
-"""
+# -*- coding: utf-8 -*-
+"""A model of an Infrastructure Host in CFME."""
 
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -103,21 +97,21 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             "mac_address": self.mac_address
         })
         if self.credentials is not None:
-            view.default.fill({
+            view.endpoints.default.fill({
                 "username": self.credentials.principal,
                 "password": self.credentials.secret,
                 "confirm_password": self.credentials.verify_secret,
             })
             if validate_credentials:
-                view.default.validate_button.click()
+                view.endpoints.default.validate_button.click()
         if self.ipmi_credentials is not None:
-            view.ipmi.fill({
+            view.endpoints.fill({
                 "username": self.ipmi_credentials.principal,
                 "password": self.ipmi_credentials.secret,
                 "confirm_password": self.ipmi_credentials.verify_secret,
             })
             if validate_credentials:
-                view.ipmi.validate_button.click()
+                view.endpoints.ipmi.validate_button.click()
         if not cancel:
             view.add_button.click()
             flash_message = 'Host / Node " {}" was added'.format(self.name)
@@ -145,23 +139,23 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         if credentials is not None:
             if view.change_stored_password.is_displayed:
                 view.change_stored_password.click()
-            credentials_changed = view.default.fill({
+            credentials_changed = view.endpoints.default.fill({
                 "username": credentials.principal,
                 "password": credentials.secret,
                 "confirm_password": credentials.verify_secret,
             })
             if validate_credentials:
-                view.default.validate_button.click()
+                view.endpoints.default.validate_button.click()
         if ipmi_credentials is not None:
             if view.change_stored_password.is_displayed:
                 view.change_stored_password.click()
-            ipmi_credentials_changed = view.ipmi.fill({
+            ipmi_credentials_changed = view.endpoints.ipmi.fill({
                 "username": ipmi_credentials.principal,
                 "password": ipmi_credentials.secret,
                 "confirm_password": ipmi_credentials.verify_secret,
             })
             if validate_credentials:
-                view.ipmi.validate_button.click()
+                view.endpoints.ipmi.validate_button.click()
         changed = any([changed, credentials_changed, ipmi_credentials_changed])
         if changed:
             view.save_button.click()
@@ -194,7 +188,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
         view = navigate_to(self, "Details")
         if refresh:
-            view.browser.selenium.refresh()
+            view.browser.refresh()
             view.flush_widget_cache()
 
     def execute_button(self, button_group, button, cancel=True):
@@ -263,27 +257,38 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     @property
     def exists(self):
+        """Checks if the host exists in the UI.
+
+        Returns: :py:class:`bool`
+        """
         view = navigate_to(self, "All")
-        for page in paginator.pages():
-            if sel.is_displayed(Quadicon(self.name, 'host')):
+        for page in view.paginator.pages():
+            if self.name in [item.name for item in view.items.get_all_items()]:
                 return True
         else:
             return False
 
     @property
     def has_valid_credentials(self):
-        """ Check if host has valid credentials saved
+        """Checks if host has valid credentials save.
 
         Returns: ``True`` if credentials are saved and valid; ``False`` otherwise
         """
-        navigate_to(self, 'All')
-        quad = Quadicon(self.name, 'host')
-        return 'checkmark' in quad.creds
+        view = navigate_to(self, "All")
+        item = view.items.get_item(by_name=self.name)
+        return item.data["creds"].strip().lower() == "checkmark"
 
     def get_datastores(self):
-        """ Gets list of all datastores used by this host"""
-        navigate_to(self, 'Details')
-        list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
+        """Gets list of all datastores used by this host."""
+        # TODO Refactor this when Datastores will be converted to widgetastic:
+        # host_details_view = navigate_to(self, "Details")
+        # host_details_view.contents.relationships.click_at("Datastores")
+        # datastores_view = self.create_view(DatastoresAllView)
+        # assert datastores_view.is_displayed
+        # return item.name for item in datastores_view.items.get_all_items()
+        from cfme.web_ui import listaccordion, Quadicon
+        navigate_to(self, "Details")
+        listaccordion.select('Relationships', 'Datastores', by_title=False, partial=True)
         return [q.name for q in Quadicon.all("datastore")]
 
     @property
@@ -434,7 +439,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self):
-        self.prerequisite_view.items.get_item(self.obj.name).click()
+        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
 
 
 @navigator.register(Host)

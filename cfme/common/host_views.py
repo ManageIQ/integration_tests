@@ -46,8 +46,8 @@ class HostQuadIconItem(BaseQuadIconItem):
         return {
             "vms_number": br.text(self.QUADRANT.format(pos="a")),
             "status": br.get_attribute("style", self.QUADRANT.format(pos="b")),
-            "vendor": br.get_attribute("src", self.QUADRANT.format(pos="c")),
-            "creds": br.get_attribute("src", self.QUADRANT.format(pos="d")),
+            "vendor": br.get_attribute("alt", self.QUADRANT.format(pos="c")),
+            "creds": br.get_attribute("alt", self.QUADRANT.format(pos="d"))
         }
 
 
