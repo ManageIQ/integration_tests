@@ -90,7 +90,21 @@ We also do a few things that aren't explicitly called out in PEP 8:
     import (module1, module2, module3, module4,
         module5)
 
-    # for long strings
+        or
+
+    import (
+        module1, module2, module3,
+        module4)
+
+        or
+
+    import (
+        module1,
+        module2,
+        module3
+    )
+
+    # in long strings without multiple lines
     very_long_string = (
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt "
         "ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation "
@@ -99,6 +113,12 @@ We also do a few things that aren't explicitly called out in PEP 8:
         "sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id "
         "est laborum."
     )
+
+* Docstrings can be used in strings with multiple lines::
+
+    string_with_multiple_lines = """Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+    eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis 
+    nostrud exercitation"""
 
 
 * When wrapping blocks of long lines, indent the trailing lines once, instead of
