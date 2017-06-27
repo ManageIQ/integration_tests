@@ -595,6 +595,7 @@ class IPAppliance(object):
          automation issues.
         """
         from utils.providers import list_providers
+        from cfme.base.credential import ServiceAccountCredential
 
         def _recognized_by_ip(provider, ems):
             if any(p_type in ems.type for p_type in RECOGNIZED_BY_IP):
@@ -616,6 +617,10 @@ class IPAppliance(object):
                     # TODO: fix this when all providers are moved to endpoints
                     if hasattr(provider, 'default_endpoint'):
                         default_creds = provider.default_endpoint.credentials
+                        if isinstance(default_creds, ServiceAccountCredential):
+                            # TODO: ask providers about gce private key format in authentications
+                            # table and add gce support
+                            return False
                     else:
                         default_creds = provider.credentials['default']
                 except KeyError:
