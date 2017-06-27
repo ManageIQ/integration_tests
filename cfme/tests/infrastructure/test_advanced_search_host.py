@@ -25,7 +25,7 @@ def hosts_with_vm_count(hosts):
     """Returns a list of tuples (hostname, vm_count)"""
     hosts_with_vm_count = []
     for host_name in hosts:
-        hosts_with_vm_count.append((host_name, int(host.find_quadicon(host_name, True).no_vm)))
+        hosts_with_vm_count.append((host_name, int(host.find_quadicon(host_name).no_vm)))
     return sorted(hosts_with_vm_count, key=lambda tup: tup[1])
 
 

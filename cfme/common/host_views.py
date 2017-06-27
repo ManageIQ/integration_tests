@@ -47,15 +47,22 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
 
 
 class HostQuadIconItem(BaseQuadIconItem):
+
     @property
-    def data(self):
-        br = self.browser
-        return {
-            "vms_number": br.text(self.QUADRANT.format(pos="a")),
-            "status": br.get_attribute("style", self.QUADRANT.format(pos="b")),
-            "vendor": br.get_attribute("alt", self.QUADRANT.format(pos="c")),
-            "creds": br.get_attribute("alt", self.QUADRANT.format(pos="d"))
-        }
+    def no_vm(self):
+        return self.browser.text(self.QUADRANT.format(pos="a"))
+
+    @property
+    def status(self):
+        return self.browser.get_attribute("style", self.QUADRANT.format(pos="b"))
+
+    @property
+    def vendor(self):
+        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="c"))
+
+    @property
+    def creds(self):
+        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
 
 
 class HostTileIconItem(BaseTileIconItem):

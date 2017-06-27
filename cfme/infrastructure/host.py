@@ -7,7 +7,8 @@ from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable
-from cfme.exceptions import HostNotFound
+from cfme.exceptions import HostNotFound, ItemNotFound, ManyItemsFound
+from cfme.exceptions import 
 from utils import conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -238,7 +239,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
         def _looking_for_state_change():
             item = view.items.get_item(by_name=self.name)
-            return "currentstate-{}".format(desired_state) in item.data["status"]
+            return "currentstate-{}".format(desired_state) in item.status
 
         return wait_for(
             _looking_for_state_change,
@@ -286,7 +287,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
         view = navigate_to(self, "All")
         item = view.items.get_item(by_name=self.name)
-        return item.data["creds"].strip().lower() == "checkmark"
+        return item.creds.strip().lower() == "checkmark"
 
     def get_datastores(self):
         """Gets list of all datastores used by this host."""
@@ -579,18 +580,19 @@ def get_all_hosts():
     return [item.name for item in view.items.get_all_items()]
 
 
-def find_quadicon(host, do_not_navigate=False):
+def find_quadicon(host_name):
     """Find and return a quadicon belonging to a specific host
 
     Args:
-        host: Host name as displayed at the quadicon
-    Returns: :py:class:`cfme.web_ui.Quadicon` instance
+        host_name (str): A host name as displayed at the quadicon
+
+    Returns: :py:class:`cfme.common.host_views.HostQuadIconItem` instance
     """
-    if not do_not_navigate:
-        navigate_to(Host, 'All')
-    for page in paginator.pages():
-        quadicon = Quadicon(host, "host")
-        if sel.is_displayed(quadicon):
-            return quadicon
+    view = navigate_to(Host, "All")
+    for page in view.paginator.pages():
+        try:
+            view.items.get_item(by_name=host_name)
+        except ItemNotFound:
+            pass
     else:
-        raise HostNotFound("Host '{}' not found in UI!".format(host))
+        raise HostNotFound("Host '{}' not found in UI!".format(host_name))
