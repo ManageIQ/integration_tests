@@ -3,6 +3,7 @@ import re
 from cached_property import cached_property
 from collections import namedtuple
 from datetime import date, datetime
+from six import string_types
 
 import multimethods as mm
 
@@ -43,6 +44,8 @@ def get_version(obj=None):
     """
     if isinstance(obj, Version):
         return obj
+    if not isinstance(obj, string_types):
+        obj = str(obj)
     if obj.startswith('master'):
         return Version.latest()
     return Version(obj)
