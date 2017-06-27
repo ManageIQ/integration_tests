@@ -599,8 +599,10 @@ def find_quadicon(host_name):
     view = navigate_to(Host, "All")
     for page in view.paginator.pages():
         try:
-            view.items.get_item(by_name=host_name)
+            quad_icon = view.items.get_item(by_name=host_name)
         except ItemNotFound:
             pass
+        else:
+            return quad_icon
     else:
         raise HostNotFound("Host '{}' not found in UI!".format(host_name))
