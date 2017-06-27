@@ -8,7 +8,7 @@ from selenium.common.exceptions import NoSuchElementException
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import HostNotFound
-from utils import version, conf
+from utils import conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.ipmi import IPMI
@@ -19,6 +19,8 @@ from utils.wait import wait_for
 from cfme.common.host_views import (
     HostsView,
     HostDetailsView,
+    HostDriftAnalysis,
+    HostDriftHistory,
     HostEditView,
     HostAddView,
     HostDiscoverView,
@@ -82,9 +84,9 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """Creates a host in the UI.
 
         Args:
-           cancel (boolean): Whether to cancel out of the creation. The cancel is done after all the
+           cancel (bool): Whether to cancel out of the creation. The cancel is done after all the
                information present in the Host has been filled in the UI.
-           validate_credentials (boolean): Whether to validate credentials - if True and the
+           validate_credentials (bool): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
         view = navigate_to(self, "Add")
@@ -123,16 +125,15 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         view.flash.assert_success_message(flash_message)
 
     def update(self, updates, cancel=False, validate_credentials=False):
-        """
-        Updates a host in the UI.  Better to use utils.update.update context
-        manager than call this directly.
+        """Updates a host in the UI. Better to use utils.update.update context manager than call
+        this directly.
 
         Args:
            updates (dict): fields that are changing.
-           cancel (boolean): whether to cancel out of the update.
+           cancel (bool): whether to cancel out of the update.
         """
 
-        view = navigate_to(self, 'Edit')
+        view = navigate_to(self, "Edit")
         changed = view.fill(updates)
         credentials = updates.get("credentials")
         ipmi_credentials = updates.get("ipmi_credentials")
@@ -170,11 +171,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
                     updates.get("name", self.name)))
 
     def delete(self, cancel=True):
-        """
-        Deletes a host from CFME.
+        """Deletes this host from CFME.
 
         Args:
-            cancel: Whether to cancel the deletion, defaults to True
+            cancel (bool): Whether to cancel the deletion, defaults to True
         """
 
         view = navigate_to(self, "Details")
@@ -185,7 +185,11 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             view.flash.assert_success_message("The selected Hosts / Nodes was deleted")
 
     def load_details(self, refresh=False):
-        """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
+        """To be compatible with the Taggable and PolicyProfileAssignable mixins.
+
+        Args:
+            refresh (bool): Whether to perform the page refresh, defaults to False
+        """
         view = navigate_to(self, "Details")
         if refresh:
             view.browser.refresh()
@@ -213,22 +217,28 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         return self.get_detail("Properties", "Power State")
 
     def refresh(self, cancel=False):
+        """Perform 'Refresh Relationships and Power States' for the host.
+
+        Args:
+            cancel (bool): Whether the action should be cancelled, default to False
+        """
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select("Refresh Relationships and Power States",
             handle_alert=cancel)
 
     def wait_for_host_state_change(self, desired_state, timeout=300):
-        """Wait for Host to come to desired state.
-        This function waits just the needed amount of time thanks to wait_for.
+        """Wait for Host to come to desired state. This function waits just the needed amount of
+        time thanks to wait_for.
+
         Args:
-            desired_state: 'on' or 'off'
-            timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
+            desired_state (str): 'on' or 'off'
+            timeout (int): Specify amount of time (in seconds) to wait until TimedOutError is raised
         """
         view = navigate_to(self, "All")
 
         def _looking_for_state_change():
-            return "currentstate-{}".format(desired_state) in find_quadicon(self.name,
-                                                                    do_not_navigate=True).state
+            item = view.items.get_item(by_name=self.name)
+            return "currentstate-{}".format(desired_state) in item.data["status"]
 
         return wait_for(
             _looking_for_state_change,
@@ -272,7 +282,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     def has_valid_credentials(self):
         """Checks if host has valid credentials save.
 
-        Returns: ``True`` if credentials are saved and valid; ``False`` otherwise
+        Returns: :py:class:`bool`
         """
         view = navigate_to(self, "All")
         item = view.items.get_item(by_name=self.name)
@@ -348,14 +358,14 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         else:
             raise ValueError("{} is not a known state for compliance".format(text))
 
-    def equal_drift_results(self, row_text, section, *indexes):
-        """ Compares drift analysis results of a row specified by it's title text
+    def equal_drift_results(self, drift_section, section, *indexes):
+        """Compares drift analysis results of a row specified by it's title text.
 
         Args:
-            row_text: Title text of the row to compare
-            section: Accordion section where the change happened; this section must be activated
+            drift_section (str): Title text of the row to compare
+            section (str): Accordion section where the change happened
             indexes: Indexes of results to compare starting with 0 for first row (latest result).
-                     Compares all available drifts, if left empty (default).
+                     Compares all available drifts, if left empty (default)
 
         Note:
             There have to be at least 2 drift results available for this to work.
@@ -363,46 +373,33 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         Returns:
             :py:class:`bool`
         """
+
+        def _select_rows(indexes):
+            for i in indexes:
+                drift_history_view.history_table[i][0].click()
+
         # mark by indexes or mark all
-        navigate_to(self, 'Details')
-        list_acc.select('Relationships',
-            version.pick({
-                version.LOWEST: 'Show host drift history',
-                '5.4': 'Show Host drift history'}))
+        details_view = navigate_to(self, "Details")
+        details_view.contents.relationships.click_at("Drift History")
+        drift_history_view = self.create_view(HostDriftHistory)
+        assert drift_history_view.is_displayed
         if indexes:
-            drift_table.select_rows_by_indexes(*indexes)
+            _select_rows(indexes)
         else:
             # We can't compare more than 10 drift results at once
             # so when selecting all, we have to limit it to the latest 10
-            if len(list(drift_table.rows())) > 10:
-                drift_table.select_rows_by_indexes(*range(0, 10))
+            rows_number = len(list(drift_history_view.history_table.rows()))
+            if rows_number > 10:
+                _select_rows(range(10))
             else:
-                drift_table.select_all()
-        tb.select("Select up to 10 timestamps for Drift Analysis")
-
-        # Make sure the section we need is active/open
-        sec_loc_map = {
-            'Properties': 'Properties',
-            'Security': 'Security',
-            'Configuration': 'Configuration',
-            'My Company Tags': 'Categories'}
-        active_sec_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
-            "/span[contains(@class, 'dynatree-selected')]".format(sec_loc_map[section])
-        sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
-            "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
-        sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
-
-        # If the section is not active yet, activate it
-        if not sel.is_displayed(active_sec_loc):
-            sel.click(sec_checkbox_loc)
-            sel.click(sec_apply_btn)
-
-        if not tb.is_active("All attributes"):
-            tb.select("All attributes")
-        d_grid = DriftGrid()
-        if any(d_grid.cell_indicates_change(row_text, i) for i in range(0, len(indexes))):
-            return False
-        return True
+                _select_rows(range(rows_number))
+        drift_history_view.analyze_button.click()
+        drift_analysis_view = self.create_view(HostDriftAnalysis)
+        assert drift_analysis_view.is_displayed
+        drift_analysis_view.drift_sections.check(section)
+        if not drift_analysis_view.toolbar.all_attributes.active:
+            drift_analysis_view.toolbar.all_attributes.click()
+        return drift_analysis_view.drift_analysis(drift_section).is_changed
 
     def tag(self, tag, **kwargs):
         """Tags the system by given tag"""
@@ -532,8 +529,8 @@ def wait_for_a_host():
     view = navigate_to(Host, "All")
     logger.info("Waiting for a host to appear...")
     wait_for(
-        lambda: view.paginator.items_amount,
-        fail_condition="0",
+        lambda: int(view.paginator.items_amount),
+        fail_condition=0,
         message="Wait for any host to appear",
         num_sec=1000,
         fail_func=view.browser.refresh

@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import ParametrizedView, Text, View
-from widgetastic_patternfly import BootstrapSelect, Dropdown, FlashMessages, Tab
+from widgetastic_patternfly import (
+    BootstrapSelect,
+    CheckableBootstrapTreeview,
+    Dropdown,
+    FlashMessages,
+    Tab
+)
+from widgetastic.utils import ParametrizedLocator
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, ManyItemsFound
@@ -93,6 +100,53 @@ class HostDetailsView(ComputeInfrastructureHostsView):
     def is_displayed(self):
         title = "{name} (Summary)".format(name=self.context["object"].name)
         return self.in_compute_infrastructure_hosts and self.breadcrumb.active_location == title
+
+
+class HostDriftHistory(ComputeInfrastructureHostsView):
+    breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
+    history_table = Table(locator='.//div[@id="main_div"]/table')
+    analyze_button = Button(title="Select up to 10 timestamps for Drift Analysis")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_compute_infrastructure_hosts and
+            self.title.text == "Drift History" and
+            self.drift_history_table.is_displayed
+        )
+
+
+class HostDriftAnalysis(ComputeInfrastructureHostsView):
+    apply_button = Button("Apply")
+    drift_sections = CheckableBootstrapTreeview(tree_id="all_sectionsbox")
+
+    @ParametrizedView.nested
+    class drift_analysis(ParametrizedView):
+        PARAMETERS = ("drift_section", )
+        CELLS = "../td//i"
+        row = Text(ParametrizedLocator(".//div[@id='compare-grid']/"
+                                       "/th[normalize-space(.)={drift_section|quote}]"))
+
+        @property
+        def is_changed(self):
+            cells = self.browser.elements(self.CELLS, parent=self.row)
+            attrs = [self.browser.get_attribute("class", cell) for cell in cells]
+            return "drift-delta" in attrs
+
+    @View.nested
+    class toolbar(View):  # noqa
+        all_attributes = Button(title="All attributes")
+        different_values_attributes = Button(title="Attributes with different")
+        same_values_attributes = Button(title="Attributes with same values")
+        details_mode = Button(title="Details Mode")
+        exists_mode = Button(title="Exists Mode")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_compute_infrastructure_hosts and
+            self.title.text == "'{}' Drift Analysis".format(self.context["object"].name)
+        )
 
 
 class HostTimelinesView(TimelinesView, ComputeInfrastructureHostsView):
