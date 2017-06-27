@@ -270,8 +270,9 @@ def test_default_region(appliance):
     Metadata:
         test_flag: rest
     """
-    reg = appliance.rest_api.collections.regions.get(region=0)
+    reg = appliance.rest_api.collections.regions[0]
     assert hasattr(reg, 'guid')
+    assert hasattr(reg, 'region')
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
