@@ -7,8 +7,8 @@ from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable
-from cfme.exceptions import HostNotFound, ItemNotFound, ManyItemsFound
-from cfme.exceptions import 
+from cfme.exceptions import HostNotFound, ItemNotFound
+from cfme.web_ui import mixins 
 from utils import conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -197,6 +197,13 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             view.flush_widget_cache()
 
     def execute_button(self, button_group, button, cancel=True):
+        # TODO this method should be converted to widgetastic. A toolbar with parametrized view will
+        # be probably required.
+        from cfme.web_ui import form_buttons
+        import cfme.fixtures.pytest_selenium as sel
+        import cfme.web_ui.flash as flash
+        import cfme.web_ui.toolbar as tb
+
         navigate_to(self, 'Details')
         host_btn = partial(tb.select, button_group)
         host_btn(button, invokes_alert=True)
@@ -256,11 +263,12 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         )
 
     def get_detail(self, title, field):
-        """ Gets details from the details summary tables
+        """Gets details from the details summary tables.
 
         Args:
             title (str): Summary Table title
             field (str): Summary table field name
+
         Returns: A string representing the contents of the SummaryTable's value.
         """
         view = navigate_to(self, "Details")
@@ -581,7 +589,7 @@ def get_all_hosts():
 
 
 def find_quadicon(host_name):
-    """Find and return a quadicon belonging to a specific host
+    """Find and return a quadicon belonging to a specific host.
 
     Args:
         host_name (str): A host name as displayed at the quadicon
