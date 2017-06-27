@@ -349,7 +349,7 @@ class Container(SummaryMixin):
              "force_deployment": overwrite}
         )
         sel.click(import_form.cancel_button if cancel else import_form.deploy_button)
-        flash.assert_success_message('Deployment "{}" has been initiated on this server.'
+        flash.assert_success_message(self.deployment_message
                     .format(runtime_name if runtime_name else os.path.basename(filename)))
 
     def add_jdbc_driver(self, filename, driver_name, module_name, driver_class,
