@@ -128,7 +128,7 @@ class HostDriftAnalysis(ComputeInfrastructureHostsView):
     drift_sections = CheckableBootstrapTreeview(tree_id="all_sectionsbox")
 
     @ParametrizedView.nested
-    class drift_analysis(ParametrizedView):
+    class drift_analysis(ParametrizedView):  # noqa
         PARAMETERS = ("drift_section", )
         CELLS = "../td//i"
         row = Text(ParametrizedLocator(".//div[@id='compare-grid']/"
