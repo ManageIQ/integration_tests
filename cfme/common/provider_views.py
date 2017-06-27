@@ -103,7 +103,9 @@ class ProviderDetailsView(BaseLoggedInPage):
 
         title = '{name} ({subtitle})'.format(name=self.context['object'].name,
                                              subtitle=subtitle)
-        return self.logged_in_as_current_user and self.breadcrumb.active_location == title
+        return (self.logged_in_as_current_user and
+                self.breadcrumb.is_displayed and
+                self.breadcrumb.active_location == title)
 
 
 class InfraProviderDetailsView(ProviderDetailsView):

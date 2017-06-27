@@ -361,8 +361,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
 
-                if details_view.is_displayed:
-                    success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+                success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+                if main_view.is_displayed:
+                    # since 5.8.1 main view is displayed when edit starts from main view
+                    main_view.flash.assert_message(success_text)
+                elif details_view.is_displayed:
+                    # details view is always displayed up to 5.8.1
                     details_view.flash.assert_message(success_text)
                 else:
                     edit_view.flash.assert_no_error()
