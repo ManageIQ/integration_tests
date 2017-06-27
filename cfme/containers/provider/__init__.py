@@ -6,22 +6,27 @@ from random import sample
 
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_patternfly import SelectorDropdown, Button, Dropdown
-from widgetastic.widget import Text
+from widgetastic_patternfly import (SelectorDropdown, Dropdown, BootstrapSelect,
+                                    Input, Button, Tab)
+from widgetastic.widget import Text, View, TextInput
 from wrapanapi.utils import eval_strings
 from widgetastic_manageiq import Table
 from widgetastic.xpath import quote
 
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm
+
 from cfme import exceptions
 from cfme.fixtures import pytest_selenium as sel
+from cfme.common.provider_views import BeforeFillMixin,\
+    ContainersProviderAddView, ContainersProvidersView,\
+    ContainersProviderEditView
+from cfme.base.credential import TokenCredential
 from cfme.web_ui import (
-    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
+    Quadicon, toolbar as tb,
     InfoBlock, Region, paginator, match_location, PagedTable, CheckboxTable)
-from cfme.web_ui.tabstrip import TabStripForm
-from utils import deferred_verpick, version
+from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.browser import ensure_browser_open
@@ -40,64 +45,51 @@ pol_btn = partial(tb.select, 'Policy')
 details_page = Region(infoblock_type='detail')
 
 
-properties_form = Form(
-    fields=[
-        ('type_select', AngularSelect('server_emstype')),
-        ('name_text', Input('name')),
-        ('hostname_text', Input('hostname')),
-        ('port_text', Input('port'))
-    ])
-
-properties_form_56 = TabStripForm(
-    fields=[
-        ('type_select', AngularSelect('ems_type')),
-        ('name_text', Input('name'))
-    ],
-    tab_fields={
-        "Default": [
-            ('hostname_text', Input("default_hostname")),
-            ('port_text', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
-        ],
-        "Hawkular": [
-            ('hawkular_hostname', Input("hawkular_hostname")),
-            ('hawkular_api_port', Input("hawkular_api_port"))
-        ],
-    })
-
-properties_form_58 = TabStripForm(
-    fields=[
-        ('type_select', AngularSelect('ems_type')),
-        ('name_text', Input('name'))
-    ],
-    tab_fields={
-        "Default": [
-            ('hostname_text', Input("default_hostname")),
-            ('port_text', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
-            ('trusted_ca_certificates', Input("default_tls_ca_certs"))
-        ],
-        "Hawkular": [
-            ('hawkular_hostname', Input("hawkular_hostname")),
-            ('hawkular_api_port', Input("hawkular_api_port")),
-            ('hawkular_sec_protocol', AngularSelect("hawkular_security_protocol", exact=True)),
-            ('hawkular_ca_certificates', Input("hawkular_tls_ca_certs"))
-        ],
-    })
-
-
-prop_region = Region(
-    locators={
-        'properties_form': {
-            version.LOWEST: properties_form,
-            '5.6': properties_form_56,
-            '5.8': properties_form_58
-        }
-    }
-)
-
 match_page = partial(match_location, controller='ems_container',
                      title='Containers Providers')
+
+
+class ContainersProviderDefaultEndpoint(DefaultEndpoint):
+    """Represents Containers Provider default endpoint"""
+    credential_class = TokenCredential
+
+    @property
+    def view_value_mapping(self):
+        out = {
+            'hostname': self.hostname,
+            'password': self.token,
+            'confirm_password': self.token,
+            'api_port': self.api_port
+        }
+        if version.current_version() >= '5.8':
+            out['sec_protocol'] = self.sec_protocol
+            if self.sec_protocol.lower() == 'ssl trusting custom ca' and \
+                    hasattr(self, 'get_ca_cert'):
+                out['trusted_ca_certificates'] = self.get_ca_cert()
+        return out
+
+
+class ContainersProviderEndpointsForm(View):
+    """
+     represents default Containers Provider endpoint form in UI (Add/Edit dialogs)
+    """
+    @View.nested
+    class default(Tab, DefaultEndpointForm, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Default'
+        sec_protocol = BootstrapSelect('default_security_protocol')
+        # trusted_ca_certificates appears only in 5.8
+        trusted_ca_certificates = TextInput('default_tls_ca_certs')
+        api_port = Input('default_api_port')
+
+    @View.nested
+    class hawkular(Tab, BeforeFillMixin):  # NOQA
+        TAB_NAME = 'Hawkular'
+        sec_protocol = BootstrapSelect(id='hawkular_security_protocol')
+        # trusted_ca_certificates appears only in 5.8
+        trusted_ca_certificates = TextInput('hawkular_tls_ca_certs')
+        hostname = Input('hawkular_hostname')
+        api_port = Input('hawkular_api_port')
+        validate = Button('Validate')
 
 
 class ContainersProvider(BaseProvider, Pretty):
@@ -119,47 +111,32 @@ class ContainersProvider(BaseProvider, Pretty):
     page_name = "containers"
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
-    refresh_text = "Refresh items and relationships"
     quad_name = None
     db_types = ["ContainerManager"]
-    _properties_region = prop_region  # This will get resolved in common to a real form
-    add_provider_button = deferred_verpick(
-        {version.LOWEST: form_buttons.FormButton("Add this Containers Provider"),
-         '5.6': form_buttons.add})
-    save_button = deferred_verpick(
-        {version.LOWEST: form_buttons.save,
-         '5.6': form_buttons.angular_save})
+    endpoints_form = ContainersProviderEndpointsForm
 
     def __init__(
             self,
             name=None,
-            credentials=None,
             key=None,
             zone=None,
-            hawkular=None,
-            hostname=None,
-            api_port=None,
-            sec_protocol=None,
-            hawkular_sec_protocol=None,
-            hawkular_hostname=None,
-            hawkular_api_port=None,
+            endpoints=None,
             provider_data=None,
             appliance=None):
         Navigatable.__init__(self, appliance=appliance)
-        if not credentials:
-            credentials = {}
         self.name = name
-        self.credentials = credentials
         self.key = key
         self.zone = zone
-        self.hawkular = hawkular
-        self.hostname = hostname
-        self.api_port = api_port
-        self.sec_protocol = sec_protocol
-        self.hawkular_sec_protocol = hawkular_sec_protocol
-        self.hawkular_hostname = hawkular_hostname
-        self.hawkular_api_port = hawkular_api_port
+        self.endpoints = endpoints
         self.provider_data = provider_data
+
+    @property
+    def view_value_mapping(self):
+        return {
+            'name': self.name,
+            'prov_type': self.type,
+            'zone': self.zone,
+        }
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
@@ -285,18 +262,9 @@ class ContainersProvider(BaseProvider, Pretty):
         return out
 
 
-class ContainersProviderAllView(BaseLoggedInPage):
-
-    table = Table(locator="//div[@id='list_grid']//table")
-
-    @property
-    def is_displayed(self):
-        return match_page(summary='Containers Providers')
-
-
 @navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
-    VIEW = ContainersProviderAllView
+    VIEW = ContainersProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -311,6 +279,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(ContainersProvider, 'Add')
 class Add(CFMENavigateStep):
+    VIEW = ContainersProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -342,6 +311,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = ContainersProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
