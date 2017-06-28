@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import cfme.fixtures.pytest_selenium as sel
-import cfme.intelligence.chargeback as cb
+import cfme.intelligence.chargeback.assignments as cb
 import cfme.web_ui.flash as flash
 import pytest
 import random

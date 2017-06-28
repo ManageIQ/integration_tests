@@ -8,7 +8,8 @@ import math
 import pytest
 
 import cfme.configure.access_control as ac
-import cfme.intelligence.chargeback as cb
+import cfme.intelligence.chargeback.rates as rates
+import cfme.intelligence.chargeback.assignments as cb
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
@@ -269,7 +270,7 @@ def resource_cost(appliance, provider, metric, usage, description, rate_type):
     # Query the DB for Chargeback rates
     tiers = appliance.db.client['chargeback_tiers']
     details = appliance.db.client['chargeback_rate_details']
-    rates = appliance.db.client['chargeback_rates']
+    cb_rates = appliance.db.client['chargeback_rates']
     list_of_rates = []
 
     def add_rate(tiered_rate):
@@ -279,10 +280,10 @@ def resource_cost(appliance, provider, metric, usage, description, rate_type):
         result = (
             appliance.db.client.session.query(tiers).
             join(details, tiers.chargeback_rate_detail_id == details.id).
-            join(rates, details.chargeback_rate_id == rates.id).
+            join(cb_rates, details.chargeback_rate_id == cb_rates.id).
             filter(details.metric == metric).
-            filter(rates.rate_type == rate_type).
-            filter(rates.description == description).all()
+            filter(cb_rates.rate_type == rate_type).
+            filter(cb_rates.description == description).all()
         )
     for row in result:
         tiered_rate = {var: getattr(row, var) for var in ['variable_rate', 'fixed_rate', 'start',
@@ -416,7 +417,7 @@ def new_compute_rate():
     # Create a new Compute Chargeback rate
     try:
         desc = 'custom_' + fauxfactory.gen_alphanumeric()
-        compute = cb.ComputeRate(description=desc,
+        compute = rates.ComputeRate(description=desc,
                     fields={'Used CPU':
                             {'per_time': 'Hourly', 'variable_rate': '3'},
                             'Used Disk I/O':
@@ -424,7 +425,7 @@ def new_compute_rate():
                             'Used Memory':
                             {'per_time': 'Hourly', 'variable_rate': '2'}})
         compute.create()
-        storage = cb.StorageRate(description=desc,
+        storage = rates.StorageRate(description=desc,
                     fields={'Used Disk Storage':
                             {'per_time': 'Hourly', 'variable_rate': '3'}})
         storage.create()
