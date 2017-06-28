@@ -119,7 +119,7 @@ class HostDriftHistory(ComputeInfrastructureHostsView):
         return (
             self.in_compute_infrastructure_hosts and
             self.title.text == "Drift History" and
-            self.drift_history_table.is_displayed
+            self.history_table.is_displayed
         )
 
 
