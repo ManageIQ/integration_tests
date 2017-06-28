@@ -87,7 +87,7 @@ class HostDetailsToolbar(View):
     power = Dropdown(text="Power")
 
 
-class HostDetailsSummaryView(View):
+class HostDetailsEntities(View):
     """Represents Details page."""
     properties = SummaryTable(title="Properties")
     relationships = SummaryTable(title="Relationships")
@@ -101,7 +101,7 @@ class HostDetailsView(ComputeInfrastructureHostsView):
     """Main Host details page."""
     breadcrumb = BreadCrumb(locator='.//ol[@class="breadcrumb"]')
     toolbar = View.nested(HostDetailsToolbar)
-    contents = View.nested(HostDetailsSummaryView)
+    entities = View.nested(HostDetailsEntities)
 
     @property
     def is_displayed(self):

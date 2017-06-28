@@ -269,10 +269,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             title (str): Summary Table title
             field (str): Summary table field name
 
-        Returns: A string representing the contents of the SummaryTable's value.
+        Returns: A string representing the entities of the SummaryTable's value.
         """
         view = navigate_to(self, "Details")
-        return getattr(view.contents, title.lower().replace(" ", "_")).get_text_of(field)
+        return getattr(view.entities, title.lower().replace(" ", "_")).get_text_of(field)
 
     @property
     def exists(self):
@@ -301,7 +301,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """Gets list of all datastores used by this host."""
         # TODO Refactor this when Datastores will be converted to widgetastic:
         # host_details_view = navigate_to(self, "Details")
-        # host_details_view.contents.relationships.click_at("Datastores")
+        # host_details_view.entities.relationships.click_at("Datastores")
         # datastores_view = self.create_view(DatastoresAllView)
         # assert datastores_view.is_displayed
         # return item.name for item in datastores_view.items.get_all_items()
@@ -389,7 +389,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
         # mark by indexes or mark all
         details_view = navigate_to(self, "Details")
-        details_view.contents.relationships.click_at("Drift History")
+        details_view.entities.relationships.click_at("Drift History")
         drift_history_view = self.create_view(HostDriftHistory)
         assert drift_history_view.is_displayed
         if indexes:
