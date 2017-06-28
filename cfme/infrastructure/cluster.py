@@ -135,10 +135,11 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
 class Cluster(Pretty, Navigatable):
     """ Model of an infrastructure cluster in cfme
 
-    :param name: Name of the cluster.
-    :param provider: provider this cluster is attached to.
+    Args:
+        name: Name of the cluster.
+        provider: provider this cluster is attached to.
 
-    .. _note:
+    Note:
         If given a provider_key, it will navigate through ``Infrastructure/Providers`` instead
         of the direct path through ``Infrastructure/Clusters``.
     """
@@ -162,8 +163,9 @@ class Cluster(Pretty, Navigatable):
         """
         Deletes a cluster from CFME
 
-        :param cancel: Whether to cancel the deletion, defaults to True
-        :param wait: Whether or not to wait for the delete to complete, defaults to False
+        Args:
+            cancel: Whether to cancel the deletion, defaults to True
+            wait: Whether or not to wait for the delete to complete, defaults to False
         """
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove item', handle_alert=not cancel)
@@ -210,8 +212,9 @@ class Cluster(Pretty, Navigatable):
 
         The function first ensures that we are on the detail page for the specific cluster.
 
-        :param *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        :returns: A string representing the contents of the InfoBlock's value.
+        Args:
+            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+            A string representing the contents of the InfoBlock's value.
         """
         view = navigate_to(self, 'Details')
         return getattr(view, ident[0].lower().replace(' ', '_')).get_text_of(ident[1])

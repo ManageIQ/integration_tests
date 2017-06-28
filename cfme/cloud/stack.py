@@ -1,34 +1,254 @@
-from functools import partial
-from xml.sax.saxutils import quoteattr
-
 from navmazing import NavigateToSibling, NavigateToAttribute
-from selenium.common.exceptions import NoSuchElementException
+from widgetastic.widget import View
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import Button, Dropdown, FlashMessages, BootstrapNav
+from widgetastic_manageiq import (
+    Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
+    SummaryTable, Table, Text)
 
-import cfme.fixtures.pytest_selenium as sel
-from cfme import web_ui as ui
+from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import DestinationNotFound, StackNotFound, CandidateNotFound
-from cfme.web_ui import Quadicon, flash, Form, fill, form_buttons, paginator, toolbar as tb, \
-    match_location, accordion
-from cfme.exceptions import CFMEException, FlashMessageException
+from cfme.web_ui import match_location
+from cfme.exceptions import CFMEException
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.wait import wait_for
-from utils.version import current_version
 
 
-cfg_btn = partial(tb.select, "Configuration")
-pol_btn = partial(tb.select, 'Policy')
-lifecycle_btn = partial(tb.select, 'Lifecycle')
+class StackToolbar(View):
+    """The toolbar on the stacks page"""
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
+    lifecycle = Dropdown('Lifecycle')
+    download = Dropdown('Download')
 
-edit_tags_form = Form(
-    fields=[
-        ("select_tag", ui.Select("select#tag_cat")),
-        ("select_value", ui.Select("select#tag_add"))
-    ])
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
-match_page = partial(match_location, controller='orchestration_stack',
-                     title='Stacks')
+
+class StackDetailsToolbar(View):
+    """The toolbar on the stacks detail page"""
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
+    lifecycle = Dropdown('Lifecycle')
+    download = Button('Download summary in PDF format')
+
+
+class StackSubpageToolbar(View):
+    """The toolbar on the sub pages, like resources and security groups"""
+    show_summary = Button('Show {} Summary')      # TODO How to get name in there?
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
+    lifecycle = Dropdown('Lifecycle')
+
+
+class StackDetailsAccordion(View):
+    """The accordion on the details page"""
+    @View.nested
+    class properties(Accordion):        # noqa
+        nav = BootstrapNav('//div[@id="stack_prop"]//ul')
+
+    @View.nested
+    class relationships(Accordion):     # noqa
+        nav = BootstrapNav('//div[@id="stack_rel"]//ul')
+
+
+class StackEntities(View):
+    """The entties on the main list page"""
+    title = Text('//div[@id="main-content"]//h1')
+    table = Table("//div[@id='list_grid']//table")
+    search = View.nested(Search)
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class StackDetailsEntities(View):
+    """The entties on the detail page"""
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    properties = SummaryTable(title='Properties')
+    lifecycle = SummaryTable(title='Lifecycle')
+    relationships = SummaryTable(title='Relationships')
+    smart_management = SummaryTable(title='Smart Management')
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class StackEditTagEntities(View):
+    """The entities on the edit tags page"""
+    breadcrumb = BreadCrumb()
+    title = Text('#explorer_title_text')
+
+
+class StackSecurityGroupsEntities(View):
+    """The entities of the resources page"""
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    security_groups = Table('//div[@id="list_grid"]//table')
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class StackParametersEntities(View):
+    """The entities of the resources page"""
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    parameters = Table('//div[@id="list_grid"]//table')
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class StackOutputsEntities(View):
+    """The entities of the resources page"""
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    outputs = Table('//div[@id="list_grid"]//table')
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class StackResourcesEntities(View):
+    """The entities of the resources page"""
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+    resources = Table('//div[@id="list_grid"]//table')
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class StackView(BaseLoggedInPage):
+    """The base view for header and nav checking"""
+    @property
+    def in_stacks(self):
+        """Determine if the Stacks page is currently open"""
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Stacks'] and
+            # TODO: Needs to be converted once there's a Widgetastic alternative
+            match_location(controller='orchestration_stack', title='Stacks'))
+
+
+class StackAllView(StackView):
+    """The main list page"""
+    toolbar = View.nested(StackToolbar)
+    entities = View.nested(StackEntities)
+    paginator = View.nested(PaginationPane)
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        return self.in_stacks and self.entities.title.text == 'Orchestration Stacks'
+
+
+class StackDetailsView(StackView):
+    """The detail page"""
+    toolbar = View.nested(StackDetailsToolbar)
+    sidebar = View.nested(StackDetailsAccordion)
+    entities = View.nested(StackDetailsEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        expected_title = '{} (Summary)'.format(self.context['object'].name)
+        return (
+            self.in_stacks and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+
+class StackEditTagsForm(View):
+    """The form on the edit tags page"""
+    select_tag = BootstrapSelect('tag_cat')
+    select_value = BootstrapSelect('tag_add')
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+    cancel = Button('Cancel')
+
+
+class StackEditTagsView(StackView):
+    """The edit tags page"""
+    entities = View.nested(StackEditTagEntities)
+    form = View.nested(StackEditTagsForm)
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        return (
+            self.in_stacks and
+            self.entities.breadcrumb.locations == [
+                'Orchestration Stacks', '{} (Summary)'.format(self.context['object'].name),
+                'Tag Assignment'] and
+            self.entities.breadcrumb.active_location == 'Tag Assignment')
+
+
+class StackSecurityGroupsView(StackView):
+    """The resources page"""
+    toolbar = View.nested(StackSubpageToolbar)
+    sidebar = View.nested(StackDetailsAccordion)
+    entities = View.nested(StackSecurityGroupsEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        expected_title = '{} (Security Groups)'.format(self.context['object'].name)
+        return (
+            self.in_stacks and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+
+class StackParametersView(StackView):
+    """The resources page"""
+    toolbar = View.nested(StackSubpageToolbar)
+    sidebar = View.nested(StackDetailsAccordion)
+    entities = View.nested(StackParametersEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        expected_title = '{} (Parameters)'.format(self.context['object'].name)
+        return (
+            self.in_stacks and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+
+class StackOutputsView(StackView):
+    """The resources page"""
+    toolbar = View.nested(StackSubpageToolbar)
+    sidebar = View.nested(StackDetailsAccordion)
+    entities = View.nested(StackOutputsEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        expected_title = '{} (Outputs)'.format(self.context['object'].name)
+        return (
+            self.in_stacks and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+
+class StackResourcesView(StackView):
+    """The resources page"""
+    toolbar = View.nested(StackSubpageToolbar)
+    sidebar = View.nested(StackDetailsAccordion)
+    entities = View.nested(StackResourcesEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this page currently being displayed"""
+        expected_title = '{} (Resources)'.format(self.context['object'].name)
+        return (
+            self.in_stacks and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
 
 
 class Stack(Pretty, Navigatable):
@@ -41,197 +261,192 @@ class Stack(Pretty, Navigatable):
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
 
-    def find_quadicon(self):
-        """Find and return the quadicon belonging to this stack
-
-    Args:
-    Returns: :py:class:`cfme.web_ui.Quadicon` instance
-    """
-        paginator.results_per_page(100)
-        for page in paginator.pages():
-            quadicon = Quadicon(self.name, self.quad_name)
-            if sel.is_displayed(quadicon):
-                return quadicon
-        else:
-            raise StackNotFound("Stack '{}' not found in UI!".format(self.name))
+    @property
+    def exists(self):
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+        try:
+            view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+            return True
+        except NoSuchElementException:
+            return False
 
     def delete(self, from_dest='All'):
-        """
-        Delete the stack, starting from the destination provided by from_dest
-        @param from_dest: where to delete from, a valid navigation destination for Stack
-        """
-
+        """Delete the stack, starting from the destination provided by from_dest"""
         # Navigate to the starting destination
         if from_dest in navigator.list_destinations(self):
-            navigate_to(self, from_dest)
+            view = navigate_to(self, from_dest)
         else:
             msg = 'cfme.cloud.stack does not have destination {}'.format(from_dest)
             raise DestinationNotFound(msg)
 
         # Delete using the method appropriate for the starting destination
         if from_dest == 'All':
-            sel.check(Quadicon(self.name, self.quad_name).checkbox())
-            cfg_btn("Remove Orchestration Stacks", invokes_alert=True)
+            view.toolbar.view_selector.select('List View')
+            try:
+                row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+                row[0].check()
+                view.toolbar.configuration.item_select('Remove Orchestration Stacks',
+                                                       handle_alert=True)
+            except NoSuchElementException:
+                raise StackNotFound('Stack {} not found'.format(self.name))
+            view.entities.flash.assert_no_error()
+            view.entities.flash.assert_success_message(
+                'Delete initiated for 1 Orchestration Stacks from the CFME Database')
         elif from_dest == 'Details':
-            cfg_btn("Remove this Orchestration Stack", invokes_alert=True)
+            view.toolbar.configuration.item_select('Remove this Orchestration Stack',
+                                                   handle_alert=True)
+            view.entities.flash.assert_no_error()
+            view.entities.flash.assert_success_message('Delete initiated for 1 Orchestration Stack')
 
-        sel.handle_alert()
-        # The delete initiated message may get missed if the delete is fast
-        try:
-            flash.assert_message_contain("Delete initiated for 1 Orchestration Stacks")
-        except FlashMessageException as ex:
-            if 'No flash message contains' in ex.message:
-                flash.assert_message_contain("The selected Orchestration Stacks was deleted")
+        def refresh():
+            """Refresh the view"""
+            if self.provider:
+                self.provider.refresh_provider_relationships()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
 
-        self.wait_for_delete()
+        wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, num_sec=15 * 60,
+                 delay=30, message='Wait for stack to be deleted')
 
     def edit_tags(self, tag, value):
-        navigate_to(self, 'EditTags')
-        fill(edit_tags_form, {'select_tag': tag,
-                              'select_value': value},
-             action=form_buttons.save)
-        flash.assert_success_message('Tag edits were successfully saved')
+        """Edit the tags of a particular stack"""
+        view = navigate_to(self, 'EditTags')
+        view.form.fill({'select_tag': tag, 'select_value': value})
+        view.form.save_button.click()
+        detail_view = self.create_view(StackDetailsView)
+        detail_view.entities.flash.assert_success_message('Tag edits were successfully saved')
         company_tag = self.get_tags()
         if company_tag != "{}: {}".format(tag.replace(" *", ""), value):
             raise CFMEException("{} ({}) tag is not assigned!".format(tag.replace(" *", ""), value))
 
     def get_tags(self):
-        navigate_to(self, 'Details')
-        row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
-                     "//td[img[contains(@src, 'smarttag')]]".format(
-            quoteattr("My Company Tags"))) if current_version() < '5.8' else "//td[i[contains(@class, 'fa-tag')]]"
-        company_tag = sel.text(row).strip()
+        view = navigate_to(self, 'Details')
+        company_tag = view.entities.smart_management.get_text_of('My Company Tags')
         return company_tag
 
-    def refresh_view_and_provider(self):
-        self.provider.refresh_provider_relationships()
-        tb.refresh()
+    def wait_for_exists(self):
+        """Wait for the row to show up"""
+        view = navigate_to(self, 'All')
 
-    def wait_for_delete(self):
-        def _wait_to_disappear():
-            try:
-                self.find_quadicon()
-            except StackNotFound:
-                return True
-            else:
-                return False
+        def refresh():
+            """Refresh the view"""
+            if self.provider:
+                self.provider.refresh_provider_relationships()
+            view.browser.refresh()
+            view.flush_widget_cache()
 
-        navigate_to(self, 'All')
-        wait_for(_wait_to_disappear, fail_condition=False, message="Wait stack to disappear",
-                 num_sec=15 * 60, fail_func=self.refresh_view_and_provider, delay=30)
-
-    def wait_for_appear(self):
-        def _wait_to_appear():
-            try:
-                self.find_quadicon()
-            except StackNotFound:
-                return False
-            else:
-                return True
-
-        navigate_to(self, 'All')
-        wait_for(_wait_to_appear, fail_condition=False, message="Wait stack to appear",
-                 num_sec=15 * 60, fail_func=self.refresh_view_and_provider, delay=30)
+        wait_for(lambda: self.exists, fail_condition=False, fail_func=refresh, num_sec=15 * 60,
+                 delay=30, message='Wait for stack to exist')
 
     def retire_stack(self, wait=True):
-        navigate_to(self, 'All')
-        sel.check(self.find_quadicon())
-        lifecycle_btn("Retire this Orchestration Stack", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Retirement initiated for 1 Orchestration'
-        ' Stack from the CFME Database')
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+        row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+        row[0].check()
+        view.toolbar.lifecycle.item_select('Retire selected Orchestration Stacks',
+                                           handle_alert=True)
+        view.entities.flash.assert_success_message('Retirement initiated for 1 Orchestration'
+                                                   ' Stack from the CFME Database')
         if wait:
-            self.wait_for_delete()
+            def refresh():
+                """Refresh the view"""
+                if self.provider:
+                    self.provider.refresh_provider_relationships()
+                view.browser.refresh()
+                view.flush_widget_cache()
+
+            wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, delay=30,
+                     num_sec=15 * 60, message='Wait for stack to be deleted')
 
 
 @navigator.register(Stack, 'All')
 class All(CFMENavigateStep):
+    VIEW = StackAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def am_i_here(self):
-        return match_page(summary='Orchestration Stacks')
-
-    def step(self):
+    def step(self, *args, **kwargs):
+        """Go to the all page"""
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Stacks')
 
     def resetter(self):
-        tb.select('Grid View')
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        """Reset the view"""
+        self.view.toolbar.view_selector.select('Grid View')
+        self.view.paginator.check_all()
+        self.view.paginator.uncheck_all()
 
 
 @navigator.register(Stack, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = StackDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Summary)'.format(self.obj.name))
-
-    def step(self):
-        sel.click(self.obj.find_quadicon())
+    def step(self, *args, **kwargs):
+        """Go to the details page"""
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        row = self.prerequisite_view.paginator.find_row_on_pages(
+            self.prerequisite_view.entities.table, name=self.obj.name)
+        row.click()
 
 
 @navigator.register(Stack, 'EditTags')
 class EditTags(CFMENavigateStep):
+    VIEW = StackEditTagsView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self):
-        pol_btn('Edit Tags')
+    def step(self, *args, **kwargs):
+        """Go to the edit tags screen"""
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(Stack, 'RelationshipSecurityGroups')
 class RelationshipsSecurityGroups(CFMENavigateStep):
+    VIEW = StackSecurityGroupsView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return match_page(summary='{} (All Security Groups)'.format(self.obj.name))
-
     def step(self):
-        accordion.click('Relationships')
-        # Click by anchor title since text contains a dynamic component
+        self.prerequisite_view.sidebar.relationships.open()
         try:
-            sel.click('//*[@id="stack_rel"]//a[@title="Show all Security Groups"]')
+            self.prerequisite_view.sidebar.relationships.nav.select(
+                title='Show all Security Groups')
         except NoSuchElementException:
             raise CandidateNotFound('No security groups for stack, cannot navigate')
 
 
 @navigator.register(Stack, 'RelationshipParameters')
 class RelationshipParameters(CFMENavigateStep):
+    VIEW = StackParametersView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Parameters)'.format(self.obj.name))
-
     def step(self):
-        accordion.click('Relationships')
-        # Click by anchor title since text contains a dynamic component
-        sel.click('//*[@id="stack_rel"]//a[@title="Show all Parameters"]')
+        self.prerequisite_view.sidebar.relationships.open()
+        try:
+            self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Parameters')
+        except NoSuchElementException:
+            raise CandidateNotFound('No parameters for stack, cannot navigate')
 
 
 @navigator.register(Stack, 'RelationshipOutputs')
 class RelationshipOutputs(CFMENavigateStep):
+    VIEW = StackOutputsView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Outputs)'.format(self.obj.name))
-
     def step(self):
-        accordion.click('Relationships')
-        # Click by anchor title since text contains a dynamic component
+        self.prerequisite_view.sidebar.relationships.open()
         try:
-            sel.click('//*[@id="stack_rel"]//a[@title="Show all Outputs"]')
+            self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Outputs')
         except NoSuchElementException:
-            raise CandidateNotFound('No Outputs for stack, cannot navigate')
+            raise CandidateNotFound('No outputs for stack, cannot navigate')
 
 
 @navigator.register(Stack, 'RelationshipResources')
 class RelationshipResources(CFMENavigateStep):
+    VIEW = StackResourcesView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        return match_page(summary='{} (Resources)'.format(self.obj.name))
-
     def step(self):
-        accordion.click('Relationships')
-        # Click by anchor title since text contains a dynamic component
-        sel.click('//*[@id="stack_rel"]//a[@title="Show all Resources"]')
+        self.prerequisite_view.sidebar.relationships.open()
+        try:
+            self.prerequisite_view.sidebar.relationships.nav.select(title='Show all Resources')
+        except NoSuchElementException:
+            raise CandidateNotFound('No resources for stack, cannot navigate')
