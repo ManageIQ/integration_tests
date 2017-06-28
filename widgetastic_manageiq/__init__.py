@@ -41,6 +41,11 @@ from widgetastic_patternfly import (
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
 
+class DynamicTableAddError(Exception):
+    """Raised when an attempt to add a row to a dynamictable fails"""
+    pass
+
+
 class DynaTree(Widget):
     """ A class directed at CFME Tree elements
 
@@ -1970,8 +1975,8 @@ class BaseTileIconEntity(ParametrizedView):
     @property
     def is_displayed(self):
         try:
-            return super(BaseTileIconEntity, self).is_displayed and \
-                   self.browser.is_displayed(self.LIST)
+            return (super(BaseTileIconEntity, self).is_displayed and
+                    self.browser.is_displayed(self.LIST))
         except NoSuchElementException:
             return False
 
@@ -2322,3 +2327,58 @@ class MenuShortcutsPicker(DashboardWidgetsPicker):
 
     def read(self):
         return self.all_shortcuts
+
+
+class DynamicTable(VanillaTable):
+    """Extend the widget.Table class to implement row_add for dynamic tables with an 'Actions'
+    column.
+    In these tables, the top or bottom row can be clicked to add a new row, and when it is
+    clicked the row is replaced (top or bottom) with a row containing fillable widgets.
+
+    When the row is saved, it is moved to the bottom of the table. This behavior is specifc to
+    some MIQ dynamic tables.
+
+    Args:
+        action_row: index of the action row, generally 0 or -1, defaults to 0
+
+        See Widgetastic.widget.Table for more arguments
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.action_row = kwargs.pop('action_row', 0)  # pull this off and pass the rest up
+        super(DynamicTable, self).__init__(*args, **kwargs)
+
+    def row_add(self):
+        """Use the action-cell column widget to add a row
+
+        Clicks on the row directly, not the action button
+
+        Returns:
+            int positive row index of the action row where the new widgets should be displayed
+        """
+        # convert action_row into a positive index
+        pos_action_index = (self.action_row
+                            if self.action_row >= 0
+                            else self._process_negative_index(nindex=self.action_row))
+        try:
+            self[pos_action_index].click()
+        except IndexError:  # self.action_row must have been None
+            raise DynamicTableAddError('DynamicTable action_row index "{}" not found in table'
+                                       .format(self.action_row))
+        return pos_action_index
+
+    def row_save(self, row=None):
+        """Save the row, assuming attributized columns includes 'actions'
+
+        Implements behavior of AnalysisProfile type tables, where the row is moved to the bottom
+        on save
+
+        Returns:
+            int row index of the last row in the table
+        """
+        try:
+            self[row or self.action_row].actions.click()
+        except IndexError:  # self.action_row must have been None
+            raise DynamicTableAddError('DynamicTable action_row index "{}" not found in table'
+                                       .format(self.action_row))
+        return self._process_negative_index(nindex=-1)  # use process_negative_index to get last row
