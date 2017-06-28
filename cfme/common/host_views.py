@@ -50,7 +50,7 @@ class HostQuadIconItem(BaseQuadIconItem):
 
     @property
     def no_vm(self):
-        return self.browser.text(self.QUADRANT.format(pos="a"))
+        return int(self.browser.text(self.QUADRANT.format(pos="a")))
 
     @property
     def status(self):
@@ -297,7 +297,7 @@ class HostsView(ComputeInfrastructureHostsView):
 
     @property
     def is_displayed(self):
-        return self.in_compute_infrastructure_hosts and self.items.title.text == "Hosts"
+        return self.in_compute_infrastructure_hosts and self.title.text == "Hosts"
 
 
 class HostFormView(ComputeInfrastructureHostsView):
