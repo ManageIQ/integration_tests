@@ -615,7 +615,7 @@ class IPAppliance(object):
                 creds_table = self.db.client["authentications"]
                 try:
                     # TODO: fix this when all providers are moved to endpoints
-                    if hasattr(provider, 'default_endpoint'):
+                    if getattr(provider, 'default_endpoint', None):
                         default_creds = provider.default_endpoint.credentials
                         if isinstance(default_creds, ServiceAccountCredential):
                             # TODO: ask providers about gce private key format in authentications
