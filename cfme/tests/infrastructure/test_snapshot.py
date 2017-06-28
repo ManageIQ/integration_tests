@@ -41,7 +41,7 @@ def domain(request):
 @pytest.fixture(scope="module")
 def test_vm(setup_provider_modscope, provider, vm_name, request):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = VM.factory(vm_name, provider, template_name=provider.data['small_template'])
+    vm = VM.factory(vm_name, provider, template_name=provider.data['full_template']['name'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -109,33 +109,45 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         'password': credentials[provider.data['full_template']['creds']]['password'],
         'hostname': ip
     }
-    with SSHClient(**ssh_kwargs) as ssh_client:
-        ssh_client.run_command('touch snapshot1.txt')
-        snapshot1.create()
-        ssh_client.run_command('touch snapshot2.txt')
-        snapshot2 = new_snapshot(test_vm)
-        snapshot2.create()
-        snapshot1.revert_to()
+    ssh_client = SSHClient(**ssh_kwargs)
+    # We need to wait for ssh to become available on the vm, it can take a while. Without
+    # this wait, the ssh command would fail with 'port 22 not available' error.
+    # Easiest way to solve this is just mask the exception with 'handle_exception = True'
+    # and wait for successful completition of the ssh command.
+    # The 'fail_func' ensures we close the connection that failed with exception.
+    # Without this, the connection would hang there and wait_for would fail with timeout.
+    wait_for(lambda: ssh_client.run_command('touch snapshot1.txt').rc == 0, num_sec=300,
+             delay=20, handle_exception=True, fail_func=ssh_client.close())
+    snapshot1.create()
+    register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+                   event_type='vm_snapshot_complete')
+    register_event(target_type='VmOrTemplate', target_name=test_vm.name,
+                   event_type='vm_snapshot')
+    ssh_client.run_command('touch snapshot2.txt')
+    snapshot2 = new_snapshot(test_vm)
+    snapshot2.create()
+    snapshot1.revert_to()
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
     wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
-    register_event(target_type='VmOrTemplate', target_name=test_vm.name,
-                   event_type='request_vm_start')
-    register_event(target_type='VmOrTemplate', target_name=test_vm.name, event_type='vm_start')
     test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
     navigate_to(test_vm.provider, 'Details')
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)
-    soft_assert(test_vm.find_quadicon().state == 'currentstate-on')
-    soft_assert(
-        test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
-    with SSHClient(**ssh_kwargs) as ssh_client:
-        try:
-            wait_for(lambda: ssh_client.run_command('test -e snapshot2.txt')[1] == 0,
-                     fail_condition=False)
-            logger.info('Revert to snapshot %s successful', snapshot1.name)
-        except:
-            logger.info('Revert to snapshot %s Failed', snapshot1.name)
+    current_state = test_vm.find_quadicon().state
+    soft_assert(current_state.startswith('currentstate-on'),
+                "Quadicon state is {}".format(current_state))
+    soft_assert(test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
+    wait_for(lambda: ssh_client.run_command('test -e snapshot1.txt').rc == 0,
+             num_sec=400, delay=20, handle_exception=True, fail_func=ssh_client.close())
+    try:
+        result = ssh_client.run_command('test -e snapshot1.txt')
+        assert not result.rc
+        result = ssh_client.run_command('test -e snapshot2.txt')
+        assert result.rc
+        logger.info('Revert to snapshot %s successful', snapshot1.name)
+    except:
+        logger.exception('Revert to snapshot %s Failed', snapshot1.name)
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
