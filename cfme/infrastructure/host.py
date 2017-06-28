@@ -585,7 +585,7 @@ def get_all_hosts():
         list: names list of all hosts
     """
     view = navigate_to(Host, "All")
-    return [item.name for item in view.items.get_items()]
+    return [item.name for item in view.items.get_all()]
 
 
 def find_quadicon(host_name):
