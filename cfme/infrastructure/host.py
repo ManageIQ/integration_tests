@@ -272,7 +272,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         Returns: A string representing the contents of the SummaryTable's value.
         """
         view = navigate_to(self, "Details")
-        return getattr(view.summary, title.lower().replace(" ", "_")).read()[field]
+        return getattr(view.contents, title.lower().replace(" ", "_")).get_text_of(field)
 
     @property
     def exists(self):
