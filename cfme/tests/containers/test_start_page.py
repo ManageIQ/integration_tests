@@ -8,7 +8,6 @@ from cfme.containers.overview import match_page as match_page_containersoverview
 from cfme.containers.node import match_page as match_page_node
 from cfme.containers.pod import match_page as match_page_pod
 from cfme.containers.service import match_page as match_page_service
-from cfme.containers.container import match_page as match_page_container
 from cfme.containers.provider import ContainersProvider, \
     match_page as match_page_containersprovider
 from cfme.web_ui import browser_title
@@ -31,7 +30,10 @@ data_sets = (
     DataSet(match_page_node, 'Containers / Nodes'),
     DataSet(match_page_pod, 'Containers / Pods'),
     DataSet(match_page_service, 'Containers / Services'),
-    DataSet(match_page_container, 'Containers / Explorer')
+    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1466350
+    # from cfme.containers.container import match_page as match_page_container (add above)
+    # DataSet(match_page_container, 'Containers / Explorer')
 )
 
 
