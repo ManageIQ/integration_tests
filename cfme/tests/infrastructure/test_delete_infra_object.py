@@ -26,10 +26,9 @@ def test_delete_cluster_appear_after_refresh(setup_provider, provider):
     """
     cluster_name = provider.data['remove_test']['cluster']
     test_cluster = cluster.Cluster(name=cluster_name, provider=provider)
-    test_cluster.delete(cancel=False)
-    test_cluster.wait_for_delete()
+    test_cluster.delete(cancel=False, wait=True)
     provider.refresh_provider_relationships()
-    test_cluster.wait_for_appear()
+    test_cluster.wait_for_exists()
 
 
 def test_delete_host_appear_after_refresh(setup_provider, provider):

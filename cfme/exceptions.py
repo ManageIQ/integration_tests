@@ -264,6 +264,11 @@ class TemplateNotFound(CFMEException):
     pass
 
 
+class ClusterNotFound(CFMEException):
+    """Raised if a cluster is not found"""
+    pass
+
+
 class HostNotFound(CFMEException):
     """Raised if a specific host cannot be found in UI."""
     pass
