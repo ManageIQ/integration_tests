@@ -126,23 +126,23 @@ def get_host_name(provider):
     return cfme_host.name
 
 
-def query_metric_db(appliance_db, provider, metric, vm_name=None, host_name=None):
-    metrics_tbl = appliance_db['metrics']
-    ems = appliance_db['ext_management_systems']
+def query_metric_db(appliance, provider, metric, vm_name=None, host_name=None):
+    metrics_tbl = appliance.db.client['metrics']
+    ems = appliance.db.client['ext_management_systems']
     if vm_name is None:
         if host_name is not None:
             object_name = host_name
     elif vm_name is not None:
         object_name = vm_name
 
-    with appliance_db.client.transaction:
+    with appliance.db.client.transaction:
         provs = (
-            appliance_db.session.query(metrics_tbl.id)
+            appliance.db.client.session.query(metrics_tbl.id)
             .join(ems, metrics_tbl.parent_ems_id == ems.id)
             .filter(metrics_tbl.resource_name == object_name,
             ems.name == provider.name)
         )
-    return appliance_db.session.query(metrics_tbl).filter(
+    return appliance.db.client.session.query(metrics_tbl).filter(
         metrics_tbl.id.in_(provs.subquery()))
 
 
@@ -152,13 +152,13 @@ def query_metric_db(appliance_db, provider, metric, vm_name=None, host_name=None
 def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
     if provider.category == "infra":
-        query = query_metric_db(appliance.db.client, provider, 'cpu_usagemhz_rate_average',
+        query = query_metric_db(appliance, provider, 'cpu_usagemhz_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usagemhz_rate_average')
     elif provider.category == "cloud":
-        query = query_metric_db(appliance.db.client, provider, 'cpu_usage_rate_average',
+        query = query_metric_db(appliance, provider, 'cpu_usage_rate_average',
             vm_name)
-        average_rate = attrgetter('cpu_usagemhz_rate_average')
+        average_rate = attrgetter('cpu_usage_rate_average')
 
     for record in query:
         if average_rate(record) is not None:
@@ -172,11 +172,11 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
 
     if provider.type == 'azure':
-        query = query_metric_db(appliance.db.client, provider, 'mem_usage_absolute_average',
+        query = query_metric_db(appliance, provider, 'mem_usage_absolute_average',
             vm_name)
         average_rate = attrgetter('mem_usage_absolute_average')
     else:
-        query = query_metric_db(appliance.db.client, provider, 'derived_memory_used',
+        query = query_metric_db(appliance, provider, 'derived_memory_used',
             vm_name)
         average_rate = attrgetter('derived_memory_used')
 
@@ -189,12 +189,12 @@ def test_raw_metric_vm_memory(metrics_collection, appliance, provider):
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.7" and provider.type == 'gce')
 @pytest.mark.meta(
-    blockers=[BZ(1408963, forced_streams=["5.6", "5.7"],
+    blockers=[BZ(1408963, forced_streams=["5.7", "5.8", "upstream"],
         unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_raw_metric_vm_network(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
-    query = query_metric_db(appliance.db.client, provider, 'net_usage_rate_average',
+    query = query_metric_db(appliance, provider, 'net_usage_rate_average',
         vm_name)
 
     for record in query:
@@ -204,14 +204,14 @@ def test_raw_metric_vm_network(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.7" and provider.type == 'gce')
+    lambda provider: provider.type == 'ec2')
 @pytest.mark.meta(
     blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
         unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     vm_name = provider.data['cap_and_util']['capandu_vm']
-    query = query_metric_db(appliance.db.client, provider, 'disk_usage_rate_average',
+    query = query_metric_db(appliance, provider, 'disk_usage_rate_average',
         vm_name)
 
     for record in query:
@@ -224,7 +224,7 @@ def test_raw_metric_vm_disk(metrics_collection, appliance, provider):
     lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db.client, provider, 'cpu_usagemhz_rate_average',
+    query = query_metric_db(appliance, provider, 'cpu_usagemhz_rate_average',
         host_name)
 
     for record in query:
@@ -237,7 +237,7 @@ def test_raw_metric_host_cpu(metrics_collection, appliance, provider):
     lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db.client, provider, 'derived_memory_used',
+    query = query_metric_db(appliance, provider, 'derived_memory_used',
         host_name)
 
     for record in query:
@@ -250,7 +250,7 @@ def test_raw_metric_host_memory(metrics_collection, appliance, provider):
     lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_network(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db.client, provider, 'net_usage_rate_average',
+    query = query_metric_db(appliance, provider, 'net_usage_rate_average',
         host_name)
 
     for record in query:
@@ -267,7 +267,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 )
 def test_raw_metric_host_disk(metrics_collection, appliance, provider):
     host_name = get_host_name(provider)
-    query = query_metric_db(appliance.db.client, provider, 'disk_usage_rate_average',
+    query = query_metric_db(appliance, provider, 'disk_usage_rate_average',
         host_name)
 
     for record in query:
