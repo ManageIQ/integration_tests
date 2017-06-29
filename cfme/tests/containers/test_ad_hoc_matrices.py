@@ -3,8 +3,8 @@ from utils import testgen
 from utils.log import logger
 from cfme.containers.provider import ContainersProvider
 from utils.version import current_version
-from cfme.web_ui import toolbar
 from utils.appliance.implementations.ui import navigate_to
+
 
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
@@ -27,14 +27,14 @@ def metrics_up_and_running(provider):
 
 
 def is_ad_hoc_greyed(provider_object):
-    navigate_to(provider_object, 'Details')
-    return toolbar.is_greyed('Monitoring', 'Ad hoc Metrics')
+    view = navigate_to(provider_object, 'Details')
+    return view.monitor.item_enabled('Ad hoc Metrics')
 
 
 @pytest.mark.polarion('CMP-10643')
 def test_ad_hoc_metrics_overview(provider, metrics_up_and_running):
 
-    assert not is_ad_hoc_greyed(provider), (
+    assert is_ad_hoc_greyed(provider), (
         "Monitoring --> Ad hoc Metrics not activated despite provider was set")
 
 

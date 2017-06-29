@@ -6,7 +6,7 @@ import json
 import fauxfactory
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.base.login import BaseLoggedInPage
-from widgetastic_patternfly import SelectorDropdown, Button
+from widgetastic_patternfly import SelectorDropdown, Button, Dropdown
 from widgetastic.widget import Text
 import random
 from utils.wait import wait_for
@@ -297,12 +297,18 @@ class Add(CFMENavigateStep):
         }))
 
 
+class ProviderDetailsView(BaseLoggedInPage):
+    monitor = Dropdown('Monitoring')
+    @property
+    
+    def is_displayed(self):
+        return match_page(summary="{} (Summary)".format(self.obj.name))
+
+
 @navigator.register(ContainersProvider, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
-
-    def am_i_here(self):
-        return match_page(summary="{} (Summary)".format(self.obj.name))
+    VIEW = ProviderDetailsView
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
@@ -399,7 +405,7 @@ class AdHocMain(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Ad hoc Metrics')
+        self.prerequisite_view.monitor.item_select('Ad hoc Metrics')
 
 
 # Common methods:
