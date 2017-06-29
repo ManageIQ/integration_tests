@@ -14,7 +14,7 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 @pytest.fixture
-def matrics_up_and_running(provider):
+def metrics_up_and_running(provider):
     import requests
 
     router = [router for router in provider.mgmt.o_api.get('route')[1]['items'] if
@@ -32,16 +32,14 @@ def is_ad_hoc_greyed(provider_object):
 
 
 @pytest.mark.polarion('CMP-10643')
-def test_ad_hoc_metrics_overview(provider,
-                                 matrics_up_and_running):
+def test_ad_hoc_metrics_overview(provider, metrics_up_and_running):
 
-    assert not is_ad_hoc_greyed(provider), \
-        "Monitoring --> Ad hoc Metrics not activated despite provider was set"
+    assert not is_ad_hoc_greyed(provider), (
+        "Monitoring --> Ad hoc Metrics not activated despite provider was set")
 
 
 @pytest.mark.polarion('CMP-10645')
-def test_ad_hoc_metrics_select_filter(provider,
-                                      matrics_up_and_running):
+def test_ad_hoc_metrics_select_filter(provider, metrics_up_and_running):
 
     view = navigate_to(provider, 'AdHoc')
     view.wait_for_filter_option_to_load()
@@ -49,5 +47,5 @@ def test_ad_hoc_metrics_select_filter(provider,
     view.apply_filter()
     view.wait_for_results_to_load()
 
-    assert view.get_total_results_count() != 0,\
-        "No results found for {filter}".format(filter=view.selected_filter)
+    assert view.get_total_results_count() != 0, (
+        "No results found for {filter}".format(filter=view.selected_filter))
