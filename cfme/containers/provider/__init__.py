@@ -363,6 +363,7 @@ class TopologyFromDetails(CFMENavigateStep):
 
 class AdHocMetricsView(BaseLoggedInPage):
     filter_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
+    filter_result_header = Text('h5.ng-binding')
     apply_btn = form_buttons.apply_filters
     selected_filter = None
 
@@ -374,7 +375,7 @@ class AdHocMetricsView(BaseLoggedInPage):
         wait_for(lambda: bool(self.filter_dropdown.items), delay=5, num_sec=60)
 
     def wait_for_results_to_load(self):
-        wait_for(lambda: bool(int(Text(self, 'h5.ng-binding').text.split()[0])),
+        wait_for(lambda: bool(int(self.filter_result_header.text.split()[0])),
                  delay=5, num_sec=60)
 
     def apply_filter(self):
@@ -388,7 +389,7 @@ class AdHocMetricsView(BaseLoggedInPage):
         return str(random.choice(self.filter_dropdown.items))
 
     def get_total_results_count(self):
-        return int(Text(self, 'h5.ng-binding').text.split()[0])
+        return int(self.filter_result_header.text.split()[0])
 
 
 @navigator.register(ContainersProvider, 'AdHoc')
