@@ -178,7 +178,8 @@ class Cluster(Pretty, Navigatable):
         # flash message only displayed if it was deleted
         if not cancel:
             view.entities.flash.assert_no_error()
-            view.entities.flash.assert_success_message('Delete initiated for 1 Cluster')
+            msg = 'The selected Clusters / Deployment Roles was deleted'
+            view.entities.flash.assert_success_message(msg)
 
         if wait:
             def refresh():
