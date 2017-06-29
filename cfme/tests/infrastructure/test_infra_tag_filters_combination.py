@@ -46,7 +46,7 @@ def template(a_provider):
 @pytest.yield_fixture(scope='function')
 def restricted_user(group, new_credential):
     user = User(
-        name='user' + fauxfactory.gen_alphanumeric(),
+        name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
         email='xyz@redhat.com',
         group=group)
