@@ -6,7 +6,7 @@ import json
 import fauxfactory
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.base.login import BaseLoggedInPage
-from widgetastic_patternfly import SelectorDropdown
+from widgetastic_patternfly import SelectorDropdown, Button
 from widgetastic.widget import Text
 import random
 from utils.wait import wait_for
@@ -364,7 +364,8 @@ class TopologyFromDetails(CFMENavigateStep):
 class AdHocMetricsView(BaseLoggedInPage):
     filter_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
     filter_result_header = Text('h5.ng-binding')
-    apply_btn = form_buttons.apply_filters
+    apply_btn = Button("Apply Filters")
+
     selected_filter = None
 
     @property
@@ -379,7 +380,7 @@ class AdHocMetricsView(BaseLoggedInPage):
                  delay=5, num_sec=60)
 
     def apply_filter(self):
-        form_buttons._fill_fb_bool(self.apply_btn, True)
+        self.apply_btn.click()
 
     def set_filter(self, desired_filter):
         self.selected_filter = desired_filter
