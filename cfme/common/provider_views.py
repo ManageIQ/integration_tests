@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import View, Text
+from widgetastic.widget import View, Text, ConditionalSwitchableView
 from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
@@ -103,7 +103,9 @@ class ProviderDetailsView(BaseLoggedInPage):
 
         title = '{name} ({subtitle})'.format(name=self.context['object'].name,
                                              subtitle=subtitle)
-        return self.logged_in_as_current_user and self.breadcrumb.active_location == title
+        return (self.logged_in_as_current_user and
+                self.breadcrumb.is_displayed and
+                self.breadcrumb.active_location == title)
 
 
 class InfraProviderDetailsView(ProviderDetailsView):
@@ -137,7 +139,7 @@ class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
                 TimelinesView.is_displayed)
 
 
-class ProvidersDiscoverView(BaseLoggedInPage):
+class InfraProvidersDiscoverView(BaseLoggedInPage):
     """
      Discover View from Infrastructure Providers page
     """
@@ -161,6 +163,39 @@ class ProvidersDiscoverView(BaseLoggedInPage):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
                 self.title.text == 'Infrastructure Providers Discovery')
+
+
+class CloudProvidersDiscoverView(BaseLoggedInPage):
+    """
+     Discover View from Infrastructure Providers page
+    """
+    title = Text('//div[@id="main-content"]//h1')
+
+    discover_type = BootstrapSelect('discover_type_selected')
+
+    fields = ConditionalSwitchableView(reference='discover_type')
+
+    @fields.register('Amazon EC2', default=True)
+    class Amazon(View):
+        username = Input(name='userid')
+        password = Input(name='password')
+        confirm_password = Input(name='verify')
+
+    @fields.register('Azure')
+    class Azure(View):
+        client_id = Input(name='client_id')
+        client_key = Input(name='client_key')
+        tenant_id = Input(name='azure_tenant_id')
+        subscription = Input(name='subscription')
+
+    start = Button('Start')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
+                self.title.text == 'Cloud Providers Discovery')
 
 
 class ProvidersManagePoliciesView(BaseLoggedInPage):
@@ -376,7 +411,6 @@ class ProviderAddView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
     name = Input('name')
     prov_type = BootstrapSelect(id='emstype')
-    api_version = BootstrapSelect(id='api_version')  # only for OpenStack
     keystone_v3_domain_id = Input('keystone_v3_domain_id')  # OpenStack only
     zone = Input('zone')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
@@ -398,6 +432,8 @@ class ProviderAddView(BaseLoggedInPage):
 
 
 class InfraProviderAddView(ProviderAddView):
+    api_version = BootstrapSelect(id='api_version')  # only for OpenStack
+
     @property
     def is_displayed(self):
         return (super(InfraProviderAddView, self).is_displayed and
@@ -415,6 +451,8 @@ class CloudProviderAddView(ProviderAddView):
     tenant_id = Input('azure_tenant_id')  # only for Azure
     subscription = Input('subscription')  # only for Azure
     project_id = Input('project')  # only for Azure
+    # bug in cfme this field has different ids for cloud and infra add views
+    api_version = BootstrapSelect(id='ems_api_version')  # only for OpenStack
     infra_provider = BootstrapSelect(id='ems_infra_provider_id')  # OpenStack only
     tenant_mapping = Checkbox(name='tenant_mapping_enabled')  # OpenStack only
 

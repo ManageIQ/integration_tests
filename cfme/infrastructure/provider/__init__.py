@@ -12,7 +12,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProviderEditView,
                                         InfraProviderDetailsView,
                                         ProviderTimelinesView,
-                                        ProvidersDiscoverView,
+                                        InfraProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
                                         ProvidersEditTagsView,
                                         InfraProvidersView)
@@ -53,14 +53,12 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     """
     provider_types = {}
-    in_version = (version.LOWEST, version.LATEST)
     category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     page_name = "infrastructure"
     templates_destination_name = "Templates"
-    quad_name = "infra_prov"
     db_types = ["InfraManager"]
 
     def __init__(
@@ -249,7 +247,7 @@ class Add(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Discover')
 class Discover(CFMENavigateStep):
-    VIEW = ProvidersDiscoverView
+    VIEW = InfraProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -403,4 +401,5 @@ def wait_for_a_provider():
     view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
     wait_for(lambda: int(view.paginator.items_amount), fail_condition=0,
-             message="Wait for any provider to appear", num_sec=1000, fail_func=sel.refresh)
+             message="Wait for any provider to appear", num_sec=1000,
+             fail_func=view.browser.refresh)

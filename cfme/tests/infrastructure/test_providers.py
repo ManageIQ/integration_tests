@@ -5,10 +5,11 @@ import fauxfactory
 import pytest
 
 
-import cfme.web_ui.flash as flash
 from utils import error
 from cfme.base.credential import Credential
-from cfme.common.provider_views import ProviderAddView
+from cfme.common.provider_views import (InfraProviderAddView,
+                                        InfraProvidersView,
+                                        InfraProvidersDiscoverView)
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
@@ -23,33 +24,33 @@ pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @test_requirements.discovery
-def test_empty_discovery_form_validation():
+def test_empty_discovery_form_validation(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None)
-    flash.assert_message_match('At least 1 item must be selected for discovery')
+    view = appliance.browser.create_view(InfraProvidersDiscoverView)
+    view.flash.assert_message('At least 1 item must be selected for discovery')
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @test_requirements.provider_discovery
-def test_discovery_cancelled_validation():
+def test_discovery_cancelled_validation(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True)
-    flash.assert_message_match('Infrastructure Providers Discovery was cancelled by the user')
+    view = appliance.browser.create_view(InfraProvidersView)
+    view.flash.assert_success_message('Infrastructure Providers '
+                                      'Discovery was cancelled by the user')
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @test_requirements.provider_discovery
-def test_add_cancelled_validation():
+def test_add_cancelled_validation(appliance):
     """Tests that the flash message is correct when add is cancelled."""
     prov = VMwareProvider()
     prov.create(cancel=True)
-    if version.current_version() >= 5.6:
-        msg = 'Add of Infrastructure Provider was cancelled by the user'
-    else:
-        msg = 'Add of new Infrastructure Provider was cancelled by the user'
-    flash.assert_message_match(msg)
+    view = appliance.browser.create_view(InfraProvidersView)
+    view.flash.assert_success_message('Add of Infrastructure Provider was cancelled by the user')
 
 
 @pytest.mark.tier(3)
@@ -61,7 +62,7 @@ def test_type_required_validation():
     with pytest.raises(AssertionError):
         prov.create()
 
-    view = prov.create_view(ProviderAddView)
+    view = prov.create_view(InfraProviderAddView)
     assert not view.add.active
 
 
@@ -77,7 +78,7 @@ def test_name_required_validation():
     with pytest.raises(AssertionError):
         prov.create()
 
-    view = prov.create_view(ProviderAddView)
+    view = prov.create_view(InfraProviderAddView)
     assert view.name.help_block == "Required"
     assert not view.add.active
 
@@ -96,7 +97,7 @@ def test_host_name_required_validation():
 
     view = prov.create_view(prov.endpoints_form)
     assert view.hostname.help_block == "Required"
-    view = prov.create_view(ProviderAddView)
+    view = prov.create_view(InfraProviderAddView)
     assert not view.add.active
 
 
@@ -165,7 +166,9 @@ def test_providers_discovery(request, provider):
         test_flag: crud
     """
     provider.discover()
-    flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
+    view = provider.create_view(InfraProvidersView)
+    view.flash.assert_success_message('Infrastructure Providers: Discovery successfully initiated')
+
     request.addfinalizer(InfraProvider.clear_providers)
     wait_for_a_provider()
 
