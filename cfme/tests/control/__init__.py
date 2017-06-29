@@ -1,7 +1,7 @@
-from utils import conf, version
-from utils.wait import wait_for
-from utils.log import logger
 from cfme.web_ui import flash, toolbar
+from utils import conf, version
+from utils.log import logger
+from utils.wait import wait_for
 
 vddk_url_map = {
     "5.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v5_5"),
