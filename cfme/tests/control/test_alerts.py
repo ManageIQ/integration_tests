@@ -139,7 +139,7 @@ def vm_name():
 
 
 @pytest.yield_fixture(scope="function")
-def vm(vm_name, full_template, provider, setup_one_provider_modscope):
+def vm(vm_name, full_template, provider, setup_provider):
     vm_obj = VM.factory(vm_name, provider, template_name=full_template["name"])
     vm_obj.create_on_provider(allow_skip="default")
     provider.mgmt.start_vm(vm_obj.name)
