@@ -29,6 +29,7 @@ class EC2Provider(CloudProvider):
     mgmt_class = EC2System
     db_types = ["Amazon::CloudManager"]
     endpoints_form = EC2EndpointForm
+    discover_name = "Amazon EC2"
 
     def __init__(
             self, name=None, endpoints=None, zone=None, key=None, region=None, region_name=None,
@@ -40,6 +41,7 @@ class EC2Provider(CloudProvider):
 
     @property
     def view_value_mapping(self):
+        """Maps values to view attrs"""
         return {
             'name': self.name,
             'prov_type': 'Amazon EC2',
@@ -48,6 +50,7 @@ class EC2Provider(CloudProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):
+        """Returns the EC" object from configuration"""
         endpoint = EC2Endpoint(**prov_config['endpoints']['default'])
         return cls(name=prov_config['name'],
                    region=prov_config['region'],
@@ -56,3 +59,12 @@ class EC2Provider(CloudProvider):
                    zone=prov_config['server_zone'],
                    key=prov_key,
                    appliance=appliance)
+
+    @staticmethod
+    def discover_dict(credential):
+        """Returns the discovery credentials dictionary"""
+        return {
+            'username': getattr(credential, 'principal', None),
+            'password': getattr(credential, 'secret', None),
+            'password_verify': getattr(credential, 'verify_secret', None)
+        }

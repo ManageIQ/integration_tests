@@ -31,7 +31,7 @@ pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
 @test_requirements.discovery
 def test_empty_discovery_form_validation(appliance):
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None, d_type="Amazon EC2")
+    discover(None, EC2Provider)
     view = appliance.browser.create_view(CloudProvidersDiscoverView)
     view.flash.assert_message('Username is required')
 
@@ -40,7 +40,7 @@ def test_empty_discovery_form_validation(appliance):
 @test_requirements.discovery
 def test_discovery_cancelled_validation(appliance):
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, cancel=True, d_type="Amazon EC2")
+    discover(None, EC2Provider, cancel=True)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Cloud Providers Discovery was cancelled by the user')
 
@@ -63,7 +63,7 @@ def test_password_mismatch_validation(appliance):
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(7))
 
-    discover(cred, d_type="Amazon EC2")
+    discover(cred, EC2Provider)
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_message('Password/Verify Password do not match')
 
@@ -76,7 +76,7 @@ def test_providers_discovery_amazon(appliance):
     # This test was being uncollected anyway, and needs to be parametrized and not directory call
     # out to specific credential keys
     # amazon_creds = get_credentials_from_config('cloudqe_amazon')
-    # discover(amazon_creds, d_type="Amazon EC2")
+    # discover(amazon_creds, EC2Provider)
 
     view = appliance.browser.create_view(CloudProvidersView)
     view.flash.assert_success_message('Amazon Cloud Providers: Discovery successfully initiated')
@@ -217,7 +217,7 @@ def test_api_port_blank_validation(request):
 @pytest.mark.tier(3)
 def test_user_id_max_character_validation():
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51), secret='')
-    discover(cred, d_type="Amazon EC2")
+    discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
@@ -227,7 +227,7 @@ def test_password_max_character_validation():
         principal=fauxfactory.gen_alphanumeric(5),
         secret=password,
         verify_secret=password)
-    discover(cred, d_type="Amazon EC2")
+    discover(cred, EC2Provider)
 
 
 @pytest.mark.tier(3)
