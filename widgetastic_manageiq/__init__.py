@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 import atexit
-import re
 import os
+import re
 from collections import namedtuple
 from datetime import date
-from jsmin import jsmin
-from selenium.common.exceptions import WebDriverException
-from lxml.html import document_fromstring
 from math import ceil
 from tempfile import NamedTemporaryFile
-from wait_for import wait_for
 
+from cached_property import cached_property
+from jsmin import jsmin
+from lxml.html import document_fromstring
+from selenium.common.exceptions import WebDriverException
+from wait_for import wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
+from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -29,12 +31,12 @@ from widgetastic.widget import (
     FileInput as BaseFileInput,
     ClickableMixin,
     do_not_read_this_widget)
-from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
-    ViewChangeButton, CheckableBootstrapTreeview)
-from cached_property import cached_property
+    ViewChangeButton, CheckableBootstrapTreeview, FlashMessages)
+
+from cfme.exceptions import ItemNotFound, ManyItemsFound
 
 
 class DynaTree(Widget):
@@ -1825,17 +1827,6 @@ class BaseQuadIconItem(ParametrizedView, ClickableMixin):
         return not list_exists and super(BaseQuadIconItem, self).is_displayed
 
 
-class ProviderQuadIconItem(BaseQuadIconItem):
-    @property
-    def data(self):
-        br = self.browser
-        return {
-            "no_host": br.text(self.QUADRANT.format(pos='a')),
-            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
-            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
-        }
-
-
 class BaseTileIconItem(ParametrizedView):
     PARAMETERS = ('name',)
     ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/a[contains(@title, '
@@ -1883,11 +1874,6 @@ class BaseTileIconItem(ParametrizedView):
             return False
 
 
-class ProviderTileIconItem(BaseTileIconItem):
-    quad_icon = ParametrizedView.nested(ProviderQuadIconItem)
-    pass
-
-
 class BaseListItem(ParametrizedView, ClickableMixin):
     PARAMETERS = ('name',)
     TABLE_LOCATOR = ParametrizedLocator('.//table[.//td[normalize-space(.)={name|quote}]]')
@@ -1924,14 +1910,10 @@ class BaseListItem(ParametrizedView, ClickableMixin):
         return self.check(values)
 
 
-class ProviderListItem(BaseListItem):
-    pass
-
-
-class ProviderItem(View):
-    quad_item = ProviderQuadIconItem
-    list_item = ProviderListItem
-    tile_item = ProviderTileIconItem
+class BaseItem(View):
+    quad_item = BaseQuadIconItem
+    list_item = BaseListItem
+    tile_item = BaseTileIconItem
 
     def __init__(self, parent, name, logger=None):
         View.__init__(self, parent, logger=logger)
@@ -1957,3 +1939,73 @@ class ProviderItem(View):
 
     def __repr__(self):
         return repr(self._get_existing_item())
+
+
+class BaseItemsView(View):
+    """
+    should represent the view with different items like providers
+    """
+    title = Text('//div[@id="main-content"]//h1')
+    search = View.nested(Search)
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    _quadicons = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
+    _listitems = Table(locator='//div[@id="list_grid"]/table')
+
+    def _get_item_names(self):
+        if self.parent.toolbar.view_selector.selected == 'List View':
+            return [row.name.text for row in self._listitems.rows()]
+        else:
+            br = self.browser
+            return [br.get_attribute('title', el) for el in br.elements(self._quadicons)]
+
+    def get_all(self, surf_pages=False):
+        """
+        obtains all items like QuadIcon displayed by view
+        Args:
+            surf_pages (bool): current page items if False, all items otherwise
+
+        Returns: all items (QuadIcon/etc.) displayed by view
+        """
+        if not surf_pages:
+            return [BaseItem(parent=self, name=name) for name in self._get_item_names()]
+        else:
+            items = []
+            for _ in self.parent.paginator.pages():
+                items.extend([BaseItem(parent=self, name=name)
+                              for name in self._get_item_names()])
+            return items
+
+    def get_items(self, by_name=None, surf_pages=False):
+        """
+        obtains all matched items like QuadIcon displayed by view
+        Args:
+            by_name (str): only items which match to by_name will be returned
+            surf_pages (bool): current page items if False, all items otherwise
+
+        Returns: all matched items (QuadIcon/etc.) displayed by view
+        """
+        items = self.get_all(surf_pages)
+        remaining_items = []
+        for item in items:
+            if by_name and by_name in item.name:
+                remaining_items.append(item)
+            # todo: by_type and by_regexp will be implemented later if needed
+        return remaining_items
+
+    def get_item(self, by_name=None, surf_pages=False):
+        """
+        obtains one item matched to by_name
+        raises exception if no items or several items were found
+        Args:
+            by_name (str): only item which match to by_name will be returned
+            surf_pages (bool): current page items if False, all items otherwise
+
+        Returns: matched item (QuadIcon/etc.)
+        """
+        items = self.get_items(by_name=by_name, surf_pages=surf_pages)
+        if len(items) == 0:
+            raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
+        elif len(items) > 1:
+            raise ManyItemsFound("Several items with {name} were found".format(name=by_name))
+        return items[0]

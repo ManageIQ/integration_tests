@@ -18,8 +18,8 @@ from widgetastic_manageiq import (BreadCrumb,
                                   FileInput,
                                   Search,
                                   DynaTree,
-                                  BootstrapTreeview,
-                                  ProviderItem)
+                                  BootstrapTreeview)
+from cfme.common.provider import ProviderItem
 
 
 class ProviderDetailsToolBar(View):
