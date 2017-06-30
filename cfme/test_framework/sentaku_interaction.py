@@ -1,4 +1,4 @@
-"""only_use_context(*contexts): wrap the test into appliance.contet.use(*contexts)
+"""use_context(*contexts, **kw): wrap the test into appliance.contet.use(*contexts)
 """
 import pytest
 
@@ -9,7 +9,7 @@ def pytest_configure(config):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
-    marker = item.get_marker("only_use_context")
+    marker = item.get_marker("use_context")
     appliance = item.funcargs.get('appliance')
     if marker is None:
         yield
@@ -17,5 +17,5 @@ def pytest_runtest_call(item):
         yield
         # warn
     else:
-        with appliance.context.use(*marker.args):
+        with appliance.context.use(*marker.args, **marker.kwargs):
             yield
