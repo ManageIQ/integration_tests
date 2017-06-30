@@ -253,9 +253,9 @@
         - { name: 'user.name', value: "{{ git_full_name }}" }
         - { name: 'user.signingkey', value: "{{ gpg_public_key }}" }
         - { name: 'push.default', value: 'simple' }
-        - { name: 'remote.upstream.url', value: 'git://github.com/ManageIQ/integration_tests.git' }
+        - { name: 'remote.upstream.url', value: 'git://github.com:ManageIQ/integration_tests.git' }
         - { name: 'remote.upstream.fetch', value: '+refs/heads/*:refs/remotes/upstream/*' }
-        - { name: 'remote.origin.url', value: 'git@github.com/{{ git_account_username }}/cfme_tests.git' }
+        - { name: 'remote.origin.url', value: 'git@github.com:{{ git_account_username }}/cfme_tests.git' }
         - { name: 'remote.origin.fetch', value: '+refs/heads/*:refs/remotes/origin/*' }
       become_user: "{{ username }}"
       when: pull_requests == "y"
@@ -305,7 +305,7 @@
 #        - { name: 'user.name', value: "{{ git_full_name }}" }
 #        - { name: 'user.signingkey', value: "{{ gpg_public_key }}" }
 #        - { name: 'push.default', value: 'simple' }
-#        - { name: 'remote.upstream.url', value: 'git://github.com/ManageIQ/integration_tests.git' }
+#        - { name: 'remote.upstream.url', value: 'git://github.com:ManageIQ/integration_tests.git' }
 #        - { name: 'remote.upstream.fetch', value: '+refs/heads/*:refs/remotes/upstream/*' }
         - { name: 'remote.origin.url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', '\\1//\\2:{{ yaml_remote_repo_username }}/\\4') }}" }
         - { name: 'remote.origin.fetch', value: '+refs/heads/*:refs/remotes/origin/*' }
