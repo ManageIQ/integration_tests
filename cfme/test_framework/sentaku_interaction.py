@@ -25,5 +25,5 @@ def pytest_runtest_call(item):
             else:
                 collected_contexts.extend(item)
 
-        with appliance.context.use(collected_contexts, **marker.kwargs):
+        with appliance.context.use(*collected_contexts, **marker.kwargs):
             yield
