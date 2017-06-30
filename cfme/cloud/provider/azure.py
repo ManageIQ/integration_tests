@@ -30,6 +30,7 @@ class AzureProvider(CloudProvider):
     mgmt_class = AzureSystem
     db_types = ["Azure::CloudManager"]
     endpoints_form = AzureEndpointForm
+    discover_name = "Azure"
 
     def __init__(self, name=None, endpoints=None, zone=None, key=None, region=None,
                  tenant_id=None, subscription_id=None, appliance=None):
@@ -41,6 +42,7 @@ class AzureProvider(CloudProvider):
 
     @property
     def view_value_mapping(self):
+        """Maps values to view attrs"""
         region = pick(self.region) if isinstance(self.region, dict) else self.region
         return {
             'name': self.name,
@@ -67,3 +69,13 @@ class AzureProvider(CloudProvider):
             endpoints={endpoint.name: endpoint},
             key=prov_key,
             appliance=appliance)
+
+    @staticmethod
+    def discover_dict(credential):
+        """Returns the discovery credentials dictionary"""
+        return {
+            'client_id': getattr(credential, 'principal', None),
+            'client_key': getattr(credential, 'secret', None),
+            'tenant_id': getattr(credential, 'tenant_id', None),
+            'subscription': getattr(credential, 'subscription_id', None)
+        }

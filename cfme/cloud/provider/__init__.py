@@ -77,7 +77,13 @@ class CloudProvider(Pretty, CloudInfraProvider):
 
     @property
     def view_value_mapping(self):
+        """Maps values to view attrs"""
         return {'name': self.name}
+
+    @staticmethod
+    def discover_dict(credential):
+        """Returns the discovery credentials dictionary, needs overiding"""
+        raise NotImplementedError("This provider doesn't support discovery")
 
 
 @navigator.register(CloudProvider, 'All')
@@ -220,29 +226,19 @@ def get_all_providers():
     return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
-def discover(credential, cancel=False, d_type="Amazon EC2"):
+def discover(credential, discover_cls, cancel=False):
     """
     Discover cloud providers. Note: only starts discovery, doesn't
     wait for it to finish.
 
     Args:
-      credential (cfme.base.credential.Credential):  Amazon discovery credentials.
+      credential (cfme.base.credential.Credential):  Discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
-      d_type: provider name which will be discovered
+      discover_cls: class of the discovery item
     """
     view = navigate_to(CloudProvider, 'Discover')
-    view.fill({'discover_type': d_type})
-    if d_type == 'Amazon EC2':
-        view.fields.fill({'username': getattr(credential, 'principal', None),
-                          'password': getattr(credential, 'secret', None),
-                          'password_verify': getattr(credential, 'verify_secret', None)})
-    elif d_type == 'Azure':
-        view.fields.fill({'client_id': getattr(credential, 'principal', None),
-                          'client_key': getattr(credential, 'secret', None),
-                          'tenant_id': getattr(credential, 'tenant_id', None),
-                          'subscription': getattr(credential, 'subscription_id', None)})
-    else:
-        raise ValueError('Wrong provider type or credential')
+    view.fill({'discover_type': discover_cls.discover_name})
+    view.fields.fill(discover_cls.discover_dict(credential))
 
     if cancel:
         view.cancel.click()
