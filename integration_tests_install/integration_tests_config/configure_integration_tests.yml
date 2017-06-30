@@ -319,14 +319,14 @@
     - debug: msg="{{item | basename }}"
       with_fileglob: 
         - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
-      when: item | basename != 'env.yaml'
+      # when: item | basename != 'env.yaml'
       
     - name: Create symlinks for (remote) YAML repo
       file: src="../../{{ yaml_remote_repo_basename }}/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob: 
         - "{{ cfme_vol }}/{{ yaml_remote_repo_basename }}/complete/*.*yaml"
       #when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
-      when: yaml_remote_repo_yn_p.key == "y" and (item | basename != 'env.yaml')
+      when: yaml_remote_repo_yn_p.key == "y"
     
     - name: Create symlinks for (local) YAML repo (symlinks to remote repo will be overwritten if name is the same)
       file: src="../../{{ yaml_local_repo }}/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
@@ -334,8 +334,8 @@
         - /projects/cfme_env/cfme_vol/{{ yaml_local_repo }}/*.*yaml 
       when: yaml_local_repo_yn_p.key == "y"
 
-    - name: Update env.yaml
-      template: src=templates/env.yaml.j2 dest="{{ cfme_vol }}/integration_tests/conf/env.yaml"
+    - name: Update env.local.yaml
+      template: src=templates/env.local.yaml.j2 dest="{{ cfme_vol }}/integration_tests/conf/env.local.yaml"
 
     - name: change permissions recursively
       file: path="{{ cfme_vol }}/integration_tests" state=directory owner="{{ username }}" group="{{ groupname }}" recurse=yes
