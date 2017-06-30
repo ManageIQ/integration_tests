@@ -35,7 +35,7 @@ from widgetastic.widget import (
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
-    ViewChangeButton, CheckableBootstrapTreeview, FlashMessages)
+    CheckableBootstrapTreeview, FlashMessages)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
@@ -1015,6 +1015,11 @@ class PaginationPane(View):
     sort_by = BootstrapSelect(id='sort_choice')
     items_on_page = BootstrapSelect(id='ppsetting')
     paginator = Paginator()
+
+    @property
+    def is_displayed(self):
+        # there are cases when paging_div is shown but it is empty
+        return self.check_all_items.is_displayed
 
     @property
     def exists(self):

@@ -1,41 +1,96 @@
 """ A model of an Infrastructure Datastore in CFME
-
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Datastores pages.
 """
-from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import View, Text
+from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 
-from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import (
-    Quadicon, Region, listaccordion as list_acc, toolbar as tb,
-    flash, InfoBlock, match_location, fill, paginator, accordion
-)
-from cfme.web_ui.form_buttons import FormButton
+from cfme.base.login import BaseLoggedInPage
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
-from utils.providers import get_crud
 from utils.wait import wait_for
+from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
+                                  BaseEntitiesView)
 
 
-details_page = Region(infoblock_type='detail')
+class DatastoreToolBar(View):
+    """
+     represents provider toolbar and its controls
+    """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    download = Dropdown(text='Download')
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
-page_title_loc = '//div[@id="center_div" or @id="main-content"]//h1'
 
-default_datastore_filter_btn = FormButton('Set the current filter as my default')
+class DatastoreSideBar(View):
+    """
+    represents left side bar. it usually contains navigation, filters, etc
+    """
+    @View.nested
+    class datastores(Accordion):  # noqa
+        ACCORDION_NAME = "Datastores"
+        tree = ManageIQTree()
 
-cfg_btn = partial(tb.select, 'Configuration')
-pol_btn = partial(tb.select, 'Policy')
+    @View.nested
+    class clusters(Accordion):  # noqa
+        ACCORDION_NAME = "Datastore Clusters"
+        tree = ManageIQTree()
 
-match_page = partial(match_location, controller='storage',
-                     title='Datastores')
 
-# todo: to make provider a mandatory param.
-# maybe it might be better of getting this param from db or appliance w/o making it mandatory.
+class DatastoreEntities(BaseEntitiesView):
+    """
+    represents central view where all QuadIcons, etc are displayed
+
+    """
+    pass
+
+
+class DatastoresView(BaseLoggedInPage):
+    """
+    represents whole All Datastores page
+    """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(DatastoreToolBar)
+    sidebar = View.nested(DatastoreSideBar)
+    including_entities = View.include(DatastoreEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure',
+                                                       'Datastores'] and
+                self.entities.title.text == 'All Datastores')
+
+
+class DatastoreDetailsView(BaseLoggedInPage):
+    """
+    represents Datastore Details page
+    """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(DatastoreToolBar)
+    sidebar = View.nested(DatastoreSideBar)
+
+    @View.nested
+    class contents(View):  # noqa
+        """
+        represents Details page when it is switched to Summary aka Tables view
+        """
+        properties = SummaryTable(title="Properties")
+        registered_vms = SummaryTable(title="Information for Registered VMs")
+        relationships = SummaryTable(title="Relationships")
+        content = SummaryTable(title="Content")
+        smart_management = SummaryTable(title="Smart Management")
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure',
+                                                       'Datastores'] and
+                self.title.text == 'Datastore "{name}"'.format(name=self.context['object'].name))
 
 
 class Datastore(Pretty, Navigatable):
@@ -43,23 +98,15 @@ class Datastore(Pretty, Navigatable):
 
     Args:
         name: Name of the datastore.
-        provider_key: Name of the provider this datastore is attached to.
-
-    Note:
-        If given a provider_key, it will navigate through ``Infrastructure/Providers`` instead
-        of the direct path through ``Infrastructure/Datastores``.
+        provider: provider this datastore is attached to.
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name=None, provider_key=None, type=None, appliance=None):
+    def __init__(self, name, provider, type=None, appliance=None):
         Navigatable.__init__(self, appliance)
         self.name = name
         self.type = type
-        self.quad_name = 'datastore'
-        if provider_key:
-            self.provider = get_crud(provider_key, appliance=appliance)
-        else:
-            self.provider = None
+        self.provider = provider
 
     def delete(self, cancel=True):
         """
@@ -71,89 +118,64 @@ class Datastore(Pretty, Navigatable):
         Note:
             Datastore must have 0 hosts and 0 VMs for this to work.
         """
-        self.load_details()
         # BZ 1467989 - this button is never getting enabled
-        cfg_btn('Remove Datastore', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-
-    def wait_for_delete(self):
-        wait_for(lambda: not self.exists, fail_condition=False,
-             message="Wait datastore to disappear", num_sec=500, fail_func=sel.refresh)
-
-    def wait_for_appear(self):
-        wait_for(lambda: self.exists, fail_condition=False,
-             message="Wait datastore to appear", num_sec=1000, fail_func=sel.refresh)
-
-    def load_details(self):
-        # todo: to remove this context related functionality
-        navigate_to(self, 'Details')
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific datastore.
-
-        Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
-        """
-        self.load_details()
-        return details_page.infoblock.text(*ident)
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove Datastore', handle_alert=not cancel)
+        view.flash.assert_success_message('Delete initiated for Datastore from the CFME Database')
 
     def get_hosts(self):
         """ Returns names of hosts (from quadicons) that use this datastore
 
         Returns: List of strings with names or `[]` if no hosts found.
         """
-        self.load_details()
-        sel.click(InfoBlock('Relationships', 'Hosts'))
-        return [q.name for q in Quadicon.all("host")]
+        view = navigate_to(self, 'Details')
+        view.contents.relationships.click_at('Hosts')
+        # todo: to replace with correct view
+        hosts_view = view.browser.create_view(BaseEntitiesView)
+        return [h.name for h in hosts_view.entities.get_all()]
 
     def get_vms(self):
         """ Returns names of VMs (from quadicons) that use this datastore
 
         Returns: List of strings with names or `[]` if no vms found.
         """
-        self.load_details()
-        try:
-            list_acc.select('Relationships', "VMs", by_title=False, partial=True)
-        except (sel.NoSuchElementException, ListAccordionLinkNotFound):
-            sel.click(InfoBlock('Relationships', 'Managed VMs'))
-        return [q.name for q in Quadicon.all("vm")]
+        view = navigate_to(self, 'Details')
+        if 'VMs' in view.contents.relationships.fields:
+            view.contents.relationships.click_at('VMs')
+        else:
+            view.contents.relationships.click_at('Managed VMs')
+        # todo: to replace with correct view
+        vms_view = view.browser.create_view(BaseEntitiesView)
+        return [vm.name for vm in vms_view.entities.get_all()]
 
     def delete_all_attached_vms(self):
-        self.load_details()
-        sel.click(details_page.infoblock.element("Relationships", "Managed VMs"))
-        for q in Quadicon.all('vm'):
-            fill(q.checkbox(), True)
-        cfg_btn("Remove selected items", invokes_alert=True)
-        sel.handle_alert(cancel=False)
+        view = navigate_to(self, 'Details')
+        view.contents.relationships.click_at('Managed VMs')
+        # todo: to replace with correct view
+        vms_view = view.browser.create_view(BaseEntitiesView)
+        for entity in vms_view.entities.get_all():
+            entity.check()
+        view.toolbar.configuration.item_select("Remove selected items", handle_alert=True)
+        wait_for(bool(len(vms_view.entities.get_all())), fail_condition=True,
+                 message="Wait datastore hosts to disappear", num_sec=500,
+                 fail_func=self.browser.refresh)
 
     def delete_all_attached_hosts(self):
-        self.load_details()
-        sel.click(details_page.infoblock.element("Relationships", "Hosts"))
-        for q in Quadicon.all('host'):
-            fill(q.checkbox(), True)
-        cfg_btn("Remove items", invokes_alert=True)
-        sel.handle_alert(cancel=False)
-
-    def wait_for_delete_all(self):
-        try:
-            sel.refresh()
-            if sel.is_displayed_text("No Records Found"):
-                return True
-        except CandidateNotFound:
-                return False
+        view = navigate_to(self, 'Details')
+        view.contents.relationships.click_at('Hosts')
+        # todo: to replace with correct view
+        hosts_view = view.browser.create_view(BaseEntitiesView)
+        for entity in hosts_view.entities.get_all():
+            entity.check()
+        view.toolbar.configuration.item_select("Remove items", handle_alert=True)
+        wait_for(bool(len(hosts_view.entities.get_all())), fail_condition=True,
+                 message="Wait datastore hosts to disappear", num_sec=500,
+                 fail_func=self.browser.refresh)
 
     @property
     def exists(self):
-        try:
-            self.load_details()
-            quad = Quadicon(self.name, 'datastore')
-            if sel.is_displayed(quad):
-                return True
-        except sel.NoSuchElementException:
-            return False
+        view = navigate_to(self, 'Details')
+        return view.is_displayed
 
     def run_smartstate_analysis(self):
         """ Runs smartstate analysis on this host
@@ -161,60 +183,54 @@ class Datastore(Pretty, Navigatable):
         Note:
             The host must have valid credentials already set up for this to work.
         """
-        self.load_details()
-        tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_message_contain('"{}": scan successfully initiated'.format(self.name))
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        view.entities.flash.assert_success_message(('"{}": scan successfully '
+                                                    'initiated'.format(self.name)))
 
 
 @navigator.register(Datastore, 'All')
 class All(CFMENavigateStep):
+    VIEW = DatastoresView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Datastores')
 
     def resetter(self):
+        """
+        resets page to default state when user navigates to All Datastores destination
+        """
         # Reset view and selection
-        if self.obj.appliance.version >= '5.7':
-            accordion.tree('Datastores', 'All Datastores')
-        else:
-            # todo: there is unsupported accordion in 5.6.3.3. currently it isn't necessary
-            # for existing tests
-            pass
-        if self.obj.appliance.version < '5.8':
-            tb.select("Grid View")
-        if paginator.page_controls_exist():
-            sel.check(paginator.check_all())
-            sel.uncheck(paginator.check_all())
+        self.view.sidebar.datastores.tree.click_path('All Datastores')
+        tb = self.view.toolbar
+        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
+            tb.view_selector.select("Grid View")
+        paginator = self.view.entities.paginator
+        if paginator.exists:
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(Datastore, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = DatastoreDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
-
-    def am_i_here(self):
-        return match_page(summary='{} "{}"'.format("Datastore", self.obj.name))
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
 
 
 @navigator.register(Datastore, 'DetailsFromProvider')
 class DetailsFromProvider(CFMENavigateStep):
-    def prerequisite(self, *args, **kwargs):
-        navigate_to(self.obj.provider, 'Details')
+    VIEW = DatastoreDetailsView
 
     def step(self):
-        list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
-
-    def am_i_here(self):
-        return match_page(summary='{} "{}"'.format("Datastore", self.obj.name))
+        prov_view = navigate_to(self.obj.provider, 'Details')
+        prov_view.contents.relationships.click_at('Datastores')
 
 
-def get_all_datastores(do_not_navigate=False):
+def get_all_datastores():
     """Returns names (from quadicons) of all datastores"""
-    if not do_not_navigate:
-        navigate_to(Datastore, 'All')
-    return [q.name for q in Quadicon.all("datastore")]
+    view = navigate_to(Datastore, 'All')
+    return [ds.name for ds in view.entities.get_all()]
