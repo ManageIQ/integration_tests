@@ -11,11 +11,19 @@ def pytest_configure(config):
 def pytest_runtest_call(item):
     marker = item.get_marker("use_context")
     appliance = item.funcargs.get('appliance')
+
     if marker is None:
         yield
     elif appliance is None:
         yield
         # warn
     else:
-        with appliance.context.use(*marker.args, **marker.kwargs):
+        collected_contexts = []
+        for item in marker.args:
+            if isinstance(type, item):
+                collected_contexts.append(item)
+            else:
+                collected_contexts.extend(item)
+
+        with appliance.context.use(collected_contexts, **marker.kwargs):
             yield
