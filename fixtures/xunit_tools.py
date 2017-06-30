@@ -31,7 +31,7 @@ compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
 
 
 def pytest_addoption(parser):
-    # Create the cfme option group for use in other plugins
+    """Adds command line options."""
     parser.getgroup('cfme')
     parser.addoption("--generate-xmls", action="store_true", default=False,
         help="generate the xml files for import")
@@ -47,6 +47,7 @@ def pytest_addoption(parser):
 
 def testcase_gen(
         test_name, description=None, parameters=None, custom_fields=None, linked_items=None):
+    """Generates single testcase entry."""
     linked_items = linked_items or []
     custom_fields_update = custom_fields or {}
     custom_fields = default_custom_fields.copy()
@@ -85,6 +86,7 @@ def testcase_gen(
 
 
 def testresult_gen(test_name, parameters=None, result=None):
+    """Generates single test result entry."""
     testcase = etree.Element('testcase', name=test_name)
     parameters = parameters or {}
     extra = None
@@ -109,6 +111,7 @@ def testresult_gen(test_name, parameters=None, result=None):
 
 
 def testrun_gen(tests, filename, config, collectonly=True):
+    """Generates content of the XML file used for test run import."""
     prop_dict = {
         'testrun-template-id': xunit.get('testrun_template_id'),
         'testrun-title': config.getoption('xmls_testrun_title') or xunit.get('testrun_title'),
@@ -160,7 +163,7 @@ def testrun_gen(tests, filename, config, collectonly=True):
     xml.write(filename, pretty_print=True)
 
 
-def get_name(obj):
+def _get_name(obj):
     if hasattr(obj, '_param_name'):
         return getattr(obj, '_param_name')
     elif hasattr(obj, 'name'):
@@ -179,6 +182,7 @@ caselevels = {
 
 @pytest.mark.trylast
 def pytest_collection_modifyitems(session, config, items):
+    """Generates the XML files using collected items."""
     if not config.getoption('generate_xmls') and not config.getoption('generate_legacy_xmls'):
         return
     # all "legacy" conditions can be removed once parametrization is finished
@@ -284,7 +288,7 @@ def pytest_collection_modifyitems(session, config, items):
             name = re.sub(r'\[.*\]', '', item.name)
             try:
                 params = item.callspec.params
-                param_dict = {p: get_name(v) for p, v in params.iteritems()}
+                param_dict = {p: _get_name(v) for p, v in params.iteritems()}
             except Exception:
                 param_dict = {}
         tests.append({'name': name, 'params': param_dict, 'result': None})
