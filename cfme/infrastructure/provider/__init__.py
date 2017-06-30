@@ -162,14 +162,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         Usage:
             discover_from_config(utils.providers.get_crud('rhevm'))
         """
-        from virtualcenter import VMwareProvider
-        from rhevm import RHEVMProvider
-        from scvmm import SCVMMProvider
-        vmware = isinstance(self, VMwareProvider)
-        rhevm = isinstance(self, RHEVMProvider)
-        scvmm = isinstance(self, SCVMMProvider)
-        discover(rhevm, vmware, scvmm, cancel=False, start_ip=self.start_ip,
-                 end_ip=self.end_ip)
+        discover(self, cancel=False, start_ip=self.start_ip, end_ip=self.end_ip)
 
     @property
     def id(self):
@@ -213,6 +206,11 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     @property
     def view_value_mapping(self):
         return {'name': self.name}
+
+    @staticmethod
+    def discover_dict():
+        """Returns the discovery dict, should be overidden"""
+        raise NotImplementedError("This provider does not support discovery")
 
 
 @navigator.register(Server, 'InfraProviders')
@@ -360,7 +358,7 @@ def get_all_providers():
     return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
-def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None, end_ip=None):
+def discover(discover_cls, cancel=False, start_ip=None, end_ip=None):
     """
     Discover infrastructure providers. Note: only starts discovery, doesn't
     wait for it to finish.
@@ -374,12 +372,7 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
         end_ip: String end of the IP range for discovery
     """
     form_data = {}
-    if rhevm:
-        form_data.update({'rhevm': True})
-    if vmware:
-        form_data.update({'vmware': True})
-    if scvmm:
-        form_data.update({'scvmm': True})
+    form_data.update(discover_cls.discover_dict())
 
     if start_ip:
         for idx, octet in enumerate(start_ip.split('.'), start=1):

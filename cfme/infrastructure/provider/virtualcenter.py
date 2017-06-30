@@ -61,3 +61,8 @@ class VMwareProvider(InfraProvider):
         return {'name': self.name,
                 'prov_type': 'VMware vCenter'
                 }
+
+    @staticmethod
+    def discover_dict():
+        """Returns the discovery dict"""
+        return {"vmware": True}

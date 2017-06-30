@@ -96,3 +96,8 @@ class RHEVMProvider(InfraProvider):
                    start_ip=start_ip,
                    end_ip=end_ip,
                    appliance=appliance)
+
+    @staticmethod
+    def discover_dict():
+        """Returns the discovery dict"""
+        return {"rhevm": True}
