@@ -146,6 +146,20 @@ class InfraVmReconfigureView(BaseLoggedInPage):
     is_displayed = False
 
 
+class EditServerRelationShipView(BaseLoggedInPage):
+    title = Text('//div[@id="main-content"]//h1')
+    server = Dropdown('server_id')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        title_name = 'Edit CFME Server Relationship for Virtual Machine "{vm}"'
+        return title_name in self.title.text
+
+
 class VMDisk(
         namedtuple('VMDisk', ['filename', 'size', 'size_unit', 'type', 'mode'])):
     """Represents a single VM disk
@@ -1170,3 +1184,12 @@ class VmReconfigure(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Reconfigure this VM')
+
+
+@navigator.register(Vm, 'EditManagementEngineRelationship')
+class VmEngineRelationship(CFMENavigateStep):
+    VIEW = EditServerRelationShipView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select('Edit Management Engine Relationship')
