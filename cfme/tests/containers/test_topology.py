@@ -42,7 +42,7 @@ def test_topology_display_names():
                 assert is_displayed_text(elem.name) == bool_
 
 
-@pytest.mark.meta(blockers=[BZ(1415472, forced_streams=['5.6', '5.7'])])
+@pytest.mark.meta(blockers=[BZ(1467064, forced_streams=['5.8'])])
 @pytest.mark.polarion('CMP-9998')
 def test_topology_search():
     """Testing search functionality in Topology view.
