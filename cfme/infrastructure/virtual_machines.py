@@ -148,7 +148,7 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
 class EditServerRelationShipView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
-    server = Dropdown('server_id')
+    server = BootstrapSelect(id='server_id')
 
     save = Button('Save')
     reset = Button('Reset')
@@ -156,7 +156,7 @@ class EditServerRelationShipView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        title_name = 'Edit CFME Server Relationship for Virtual Machine "{vm}"'
+        title_name = 'Edit CFME Server Relationship for Virtual Machine'
         return title_name in self.title.text
 
 
