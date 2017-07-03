@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 from navmazing import NavigateToAttribute
-
-from widgetastic.widget import Text, Checkbox, TextInput
-from widgetastic_manageiq import SummaryFormItem, CheckboxSelect, MultiBoxSelect
 from widgetastic_patternfly import Button, Input
-from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
+from widgetastic.utils import Version, VersionPick
+from widgetastic.widget import Text, Checkbox, TextInput
 
 from . import ControlExplorerView
 from actions import Action
+from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 from utils import ParamClassName
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.update import Updateable
+from widgetastic_manageiq import (BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect,
+    SummaryFormItem)
 
 
 class PoliciesAllView(ControlExplorerView):
@@ -33,7 +34,10 @@ class PoliciesAllView(ControlExplorerView):
 class EditPolicyEventAssignments(ControlExplorerView):
     title = Text("#explorer_title_text")
 
-    events = CheckboxSelect("policy_info_div")
+    events = VersionPick({
+        Version.lowest: CheckboxSelect("policy_info_div"),
+        "5.8.1": BootstrapSwitchSelect("policy_info_div")
+    })
 
     cancel_button = Button("Cancel")
     save_button = Button("Save")

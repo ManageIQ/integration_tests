@@ -34,10 +34,8 @@ from widgetastic.widget import (
     do_not_read_this_widget)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
-    CheckableBootstrapTreeview, FlashMessages)
-
-from cfme.exceptions import ItemNotFound, ManyEntitiesFound
+    Accordion as PFAccordion, CandidateNotFound, BootstrapSwitch, BootstrapTreeview, Button, Input,
+    BootstrapSelect, ViewChangeButton, CheckableBootstrapTreeview)
 
 
 class DynaTree(Widget):
@@ -599,6 +597,40 @@ class CheckboxSelect(Widget):
     def read(self):
         """Only selected checkboxes."""
         return [cb for cb in self.checkboxes if cb.selected]
+
+
+class BootstrapSwitchSelect(CheckboxSelect):
+    """This view is very similar to parent CheckboxSelect view. BootstrapSwitches used instead of
+    usual Checkboxes. It can be found in the same policy's events assignment screen since
+    CFME 5.8.1.
+    """
+    @property
+    def checkboxes(self):
+        """All bootstrap switches."""
+        return {BootstrapSwitch(self, id=el.get_attribute("id")) for el in self.browser.elements(
+            ".//input[@type='checkbox']", parent=self)}
+
+    def checkbox_by_id(self, id):
+        """Finds bootstrap switch by id."""
+        return BootstrapSwitch(self, id=id)
+
+    @property
+    def selected_text(self):
+        """Only selected bootstrap switches' text descriptions."""
+        return {bs.text for bs in self.selected_checkboxes}
+
+    def checkbox_by_text(self, text):
+        """Returns bootstrap switch searched by its text."""
+        if self._access_func is not None:
+            for cb in self.checkboxes:
+                txt = self._access_func(cb)
+                if txt == text:
+                    return cb
+            else:
+                raise NameError("Bootstrap switch with text {} not found!".format(text))
+        else:
+            # Has to be only single
+            return BootstrapSwitch(self, label=text)
 
 
 # ManageIQ table objects definition
