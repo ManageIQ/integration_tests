@@ -2,6 +2,7 @@
 import pytest
 from time import sleep
 
+from cfme.base.ui import Server
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider.azure import AzureProvider
@@ -57,6 +58,8 @@ def gen_events(new_instance):
 
 def count_events(target, vm):
     timelines_view = navigate_to(target, 'Timelines')
+    if isinstance(target, Server):
+        timelines_view = timelines_view.timelines
     timelines_view.filter.time_position.select_by_visible_text('centered')
     timelines_view.filter.apply.click()
     found_events = []

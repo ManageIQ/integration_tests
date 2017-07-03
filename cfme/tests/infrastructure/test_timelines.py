@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-
+from cfme.base.ui import Server
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -62,6 +62,8 @@ def gen_events(new_vm):
 
 def count_events(target, vm):
     timelines_view = navigate_to(target, 'Timelines')
+    if isinstance(target, Server):
+        timelines_view = timelines_view.timelines
     timelines_view.filter.time_position.select_by_visible_text('centered')
     timelines_view.filter.apply.click()
     found_events = []
