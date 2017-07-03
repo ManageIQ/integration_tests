@@ -73,6 +73,20 @@ def count_events(target, vm):
     return len(found_events)
 
 
+@pytest.yield_fixture(scope="module")
+def mark_vm_as_appliance(new_instance, appliance):
+    # set diagnostics vm
+    relations_view = navigate_to(new_instance, 'EditManagementEngineRelationship')
+    server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
+    relations_view.server.select_by_visible_text(server_name)
+    relations_view.save.click()
+    yield
+    # unset diagnostics vm
+    relations_view = navigate_to(new_instance, 'EditManagementEngineRelationship')
+    relations_view.server.select_by_visible_text('<Not a Server>')
+    relations_view.save.click()
+
+
 def test_cloud_provider_event(gen_events, new_instance):
     """ Tests provider events on timelines
 
@@ -107,6 +121,17 @@ def test_cloud_instance_event(gen_events, new_instance):
     """
     wait_for(count_events, [new_instance, new_instance], timeout='5m', fail_condition=0,
              message="events to appear")
+
+
+def test_cloud_diagnostic_timelines(gen_events, new_instance, mark_vm_as_appliance, appliance):
+    """Tests timelines on settings->diagnostics page
+
+    Metadata:
+        test_flag: timelines, provision
+    """
+    # go diagnostic timelines
+    wait_for(count_events, [appliance.server, new_instance], timeout='5m',
+             fail_condition=0, message="events to appear")
 
 
 @pytest.mark.manual

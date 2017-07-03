@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.base import Server
 from cfme.common.vm import VM
 
 from cfme.infrastructure.host import Host
@@ -40,15 +39,16 @@ def new_vm(request, provider):
 
 
 @pytest.yield_fixture(scope="module")
-def mark_vm_as_appliance(new_vm):
+def mark_vm_as_appliance(new_vm, appliance):
     # set diagnostics vm
     relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
-    relations_view.server.item_select()
+    server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
+    relations_view.server.select_by_visible_text(server_name)
     relations_view.save.click()
     yield
     # unset diagnostics vm
     relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
-    relations_view.server.item_select()
+    relations_view.server.select_by_visible_text('<Not a Server>')
     relations_view.save.click()
 
 
@@ -124,14 +124,14 @@ def test_infra_cluster_event(gen_events, new_vm):
              fail_condition=0, message="events to appear")
 
 
-def test_infra_vm_diagnostic_timelines(gen_events, new_vm, mark_vm_as_appliance):
-    """Tests timelines on diagnostics page
+def test_infra_vm_diagnostic_timelines(gen_events, new_vm, mark_vm_as_appliance, appliance):
+    """Tests timelines on settings->diagnostics page
 
     Metadata:
-        test_flag: timelines, provision, diagnostics
+        test_flag: timelines, provision
     """
     # go diagnostic timelines
-    wait_for(count_events, [Server, new_vm], timeout='5m',
+    wait_for(count_events, [appliance.server, new_vm], timeout='5m',
              fail_condition=0, message="events to appear")
 
 

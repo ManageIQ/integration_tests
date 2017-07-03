@@ -12,7 +12,7 @@ from selenium.common.exceptions import NoSuchElementException
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
+from cfme.common.vm import VM as BaseVM, Template as BaseTemplate, EditServerRelationShipView
 from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
@@ -144,20 +144,6 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
     # The page doesn't contain enough info to ensure that it's the right VM -> always navigate
     is_displayed = False
-
-
-class EditServerRelationShipView(BaseLoggedInPage):
-    title = Text('//div[@id="main-content"]//h1')
-    server = BootstrapSelect(id='server_id')
-
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        title_name = 'Edit CFME Server Relationship for Virtual Machine'
-        return title_name in self.title.text
 
 
 class VMDisk(
