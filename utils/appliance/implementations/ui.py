@@ -6,7 +6,6 @@ from inspect import isclass
 
 from utils.log import logger, create_sublogger
 from cfme import exceptions
-from cfme.fixtures.pytest_selenium import get_rails_error
 from time import sleep
 
 from navmazing import Navigate, NavigateStep
@@ -20,6 +19,7 @@ from fixtures.pytest_store import store
 
 from cached_property import cached_property
 from widgetastic.browser import Browser, DefaultPlugin
+from widgetastic.widget import Text, View
 from widgetastic.utils import VersionPick
 from utils.version import Version
 from utils.wait import wait_for
@@ -27,6 +27,31 @@ from utils.wait import wait_for
 from . import Implementation
 
 VersionPick.VERSION_CLASS = Version
+
+
+class ErrorView(View):
+    title = Text("//body/h1")
+    body = Text("//body/p")
+
+    error_text = Text(
+        "//h1[normalize-space(.)='Unexpected error encountered']"
+        "/following-sibling::h3[not(fieldset)]"
+    )
+
+    def get_rails_error(self):
+        """Gets the displayed error messages"""
+        if self.browser.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
+            try:
+                return "{}: {}".format(self.title.text, self.body.text)
+            except NoSuchElementException:
+                return None
+        elif self.browser.is_displayed(
+                "//h1[normalize-space(.)='Unexpected error encountered']"):
+            try:
+                return self.error_text.text
+            except NoSuchElementException:  # Just in case something goes really wrong
+                return None
+        return None
 
 
 class MiqBrowserPlugin(DefaultPlugin):
@@ -221,7 +246,9 @@ class CFMENavigateStep(NavigateStep):
             self.go(_tries, *args, **go_kwargs)
 
         # Same with rails errors
-        rails_e = get_rails_error()
+        view = br.widgetastic.create_view(ErrorView)
+        rails_e = view.get_rails_error()
+
         if rails_e is not None:
             logger.warning("Page was blocked by rails error, renavigating.")
             logger.error(rails_e)
