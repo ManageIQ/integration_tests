@@ -1,4 +1,5 @@
 import pytest
+import requests
 from utils import testgen
 from utils.log import logger
 from cfme.containers.provider import ContainersProvider
@@ -13,9 +14,8 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def metrics_up_and_running(provider):
-    import requests
 
     router = [router for router in provider.mgmt.o_api.get('route')[1]['items'] if
               router["metadata"]["name"] == "hawkular-metrics"].pop()

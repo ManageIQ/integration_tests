@@ -1,14 +1,15 @@
-from functools import partial
-from random import sample
+import random
 import re
 import json
+from functools import partial
+from random import sample
+
 
 import fauxfactory
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.base.login import BaseLoggedInPage
 from widgetastic_patternfly import SelectorDropdown, Button, Dropdown
 from widgetastic.widget import Text
-import random
 from utils.wait import wait_for
 
 
@@ -299,8 +300,8 @@ class Add(CFMENavigateStep):
 
 class ProviderDetailsView(BaseLoggedInPage):
     monitor = Dropdown('Monitoring')
+
     @property
-    
     def is_displayed(self):
         return match_page(summary="{} (Summary)".format(self.obj.name))
 
