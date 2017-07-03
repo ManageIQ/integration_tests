@@ -30,6 +30,7 @@ from widgetastic.widget import (
     WidgetDescriptor,
     FileInput as BaseFileInput,
     ClickableMixin,
+    ConditionalSwitchableView,
     do_not_read_this_widget)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
@@ -1941,23 +1942,13 @@ class BaseItem(View):
         return repr(self._get_existing_item())
 
 
-class BaseItemsView(View):
-    """
-    should represent the view with different items like providers
-    """
-    title = Text('//div[@id="main-content"]//h1')
-    search = View.nested(Search)
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-    _quadicons = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
-    _listitems = Table(locator='//div[@id="list_grid"]/table')
+class ItemsConditionalView(View):
+    elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
 
-    def _get_item_names(self):
-        if self.parent.toolbar.view_selector.selected == 'List View':
-            return [row.name.text for row in self._listitems.rows()]
-        else:
-            br = self.browser
-            return [br.get_attribute('title', el) for el in br.elements(self._quadicons)]
+    @property
+    def item_names(self):
+        br = self.browser
+        return [br.get_attribute('title', el) for el in br.elements(self.elements)]
 
     def get_all(self, surf_pages=False):
         """
@@ -1968,12 +1959,12 @@ class BaseItemsView(View):
         Returns: all items (QuadIcon/etc.) displayed by view
         """
         if not surf_pages:
-            return [BaseItem(parent=self, name=name) for name in self._get_item_names()]
+            return [BaseItem(parent=self, name=name) for name in self.item_names]
         else:
             items = []
             for _ in self.parent.paginator.pages():
                 items.extend([BaseItem(parent=self, name=name)
-                              for name in self._get_item_names()])
+                              for name in self.item_names])
             return items
 
     def get_items(self, by_name=None, surf_pages=False):
@@ -2009,3 +2000,45 @@ class BaseItemsView(View):
         elif len(items) > 1:
             raise ManyItemsFound("Several items with {name} were found".format(name=by_name))
         return items[0]
+
+    def get_first_item(self, by_name=None):
+        """
+        obtains one item matched to by_name and stops on that page
+        raises exception if no items or several items were found
+        Args:
+            by_name (str): only item which match to by_name will be returned
+
+        Returns: matched item (QuadIcon/etc.)
+        """
+        for _ in self.parent.paginator.pages():
+            found_items = [BaseItem(parent=self, name=name) for name in self.item_names
+                           if by_name == name]
+            if found_items:
+                return found_items[-1]
+
+        raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
+
+
+class BaseItemsView(View):
+    """
+    should represent the view with different items like providers
+    """
+    title = Text('//div[@id="main-content"]//h1')
+    search = View.nested(Search)
+    paginator = View.nested(PaginationPane)
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+
+    items = ConditionalSwitchableView(reference='parent.toolbar.view_selector')
+
+    @items.register('Grid View', default=True)
+    class GridView(ItemsConditionalView):
+        pass
+
+    @items.register('List View')
+    class ListView(ItemsConditionalView):
+        elements = Table(locator='//div[@id="list_grid"]/table')
+
+    @items.register('Tile View')
+    class TileView(ItemsConditionalView):
+        pass
