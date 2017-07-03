@@ -12,8 +12,8 @@ gpgcheck=0\n\n"""
 @click.option('--output', default="update.repo", help="output filename")
 def main(filename, output):
     """Assist in generating update repo file"""
-    print filename
-    print
+    print(filename)
+    print("")
     with open(filename) as f:
         lines = f.readlines()
     c = 0
@@ -21,7 +21,7 @@ def main(filename, output):
         for line in lines:
             if line.strip():
                 url = line[line.find("http"):].strip()
-                print template.format(c, url)
+                print(template.format(c, url))
                 f.write(template.format(c, url))
                 c += 1
 
