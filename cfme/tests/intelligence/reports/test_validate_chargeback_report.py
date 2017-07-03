@@ -26,8 +26,8 @@ from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.tier(2),
-    pytest.mark.meta(blockers=[BZ(1433984, forced_streams=["5.7", "5.8", "upstream"])]),
-    pytest.mark.meta(blockers=[BZ(1465387, forced_streams=["5.8"])]),
+    pytest.mark.meta(blockers=[BZ(1433984, forced_streams=["5.7", "5.8", "upstream"]),
+                               BZ(1465387, forced_streams=["5.8"])]),
     test_requirements.chargeback
 ]
 
