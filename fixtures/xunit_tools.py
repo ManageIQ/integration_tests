@@ -1,9 +1,14 @@
-import pytest
+# pylint: disable=broad-except
+
+import re
 
 from collections import defaultdict
 from lxml import etree
-import re
-from utils.conf import xunit
+
+import pytest
+
+# pylint: disable=no-name-in-module
+from utils.conf import xunit, cfme_data
 from utils.pytest_shortcuts import extract_fixtures_values
 
 
@@ -18,11 +23,18 @@ default_custom_fields = {
 }
 
 
+caselevels = {
+    '0': 'component',
+    '1': 'integration',
+    '2': 'system',
+    '3': 'acceptance'
+}
+
+
 blacklist = [
     'cfme/tests/containers/',
     'cfme/tests/middleware/',
     'cfme/tests/openstack/',
-    'utils/',
     'rhos',
     'rhev',
     'hawkular',
@@ -41,11 +53,11 @@ def pytest_addoption(parser):
         help="testrun id")
     parser.addoption("--xmls-testrun-title",
         help="testrun title")
-    parser.addoption("--xmls-apply-blacklist", action="store_true", default=False,
-        help="filter testcases using the built-in blacklist")
+    parser.addoption("--xmls-no-blacklist", action="store_true", default=False,
+        help="don't filter testcases using the built-in blacklist")
 
 
-def testcase_gen(
+def testcase_record(
         test_name, description=None, parameters=None, custom_fields=None, linked_items=None):
     """Generates single testcase entry."""
     linked_items = linked_items or []
@@ -85,7 +97,60 @@ def testcase_gen(
     return testcase
 
 
-def testresult_gen(test_name, parameters=None, result=None):
+def get_testcase_data(tests, test_names, item, legacy=False):
+    """Gets data for single testcase entry."""
+    name = re.sub(r'\[.*\]', '', item.name) if not legacy else item.name
+    if name in test_names:
+        return
+
+    work_items = []
+    custom_fields = {}
+    try:
+        description = item.function.func_doc
+    except Exception:
+        description = ""
+    try:
+        requirement = item.get_marker('requirement').args[0]
+        requirement_id = cfme_data['requirements'][requirement]
+        work_items.append({'id': requirement_id, 'role': 'verifies'})
+    except Exception:
+        pass
+    try:
+        tier = item.get_marker('tier').args[0]
+        tier_id = caselevels[str(tier)]
+        custom_fields['caselevel'] = tier_id
+    except Exception:
+        pass
+
+    param_list = extract_fixtures_values(item).keys() if not legacy else None
+
+    manual = item.get_marker('manual')
+    if not manual:
+        # The master here should probably link the latest "commit" eventually
+        automation_script = 'http://github.com/{0}/{1}/blob/master/{2}#L{3}'.format(
+            xunit['gh_owner'],
+            xunit['gh_repo'],
+            item.location[0],
+            item.function.func_code.co_firstlineno
+        )
+        custom_fields['caseautomation'] = "automated"
+        custom_fields['automation_script'] = automation_script
+        description = '{0}<br/><br/><a href="{1}">Test Source</a>'.format(
+            description, automation_script)
+    else:
+        custom_fields['caseautomation'] = "manualonly"
+        description = '{}'.format(description)
+
+    test_names.append(name)
+    tests.append(dict(
+        test_name=name,
+        description=description,
+        parameters=param_list,
+        linked_items=work_items,
+        custom_fields=custom_fields))
+
+
+def testresult_record(test_name, parameters=None, result=None):
     """Generates single test result entry."""
     testcase = etree.Element('testcase', name=test_name)
     parameters = parameters or {}
@@ -108,6 +173,24 @@ def testresult_gen(test_name, parameters=None, result=None):
         properties.append(param_el)
     testcase.append(properties)
     return testcase
+
+
+def get_testresult_data(tests, test_names, item, legacy=False):
+    """Gets data for single test result entry."""
+    if legacy:
+        if item.name in test_names:
+            return
+        name = item.name
+        param_dict = None
+        test_names.append(name)
+    else:
+        name = re.sub(r'\[.*\]', '', item.name)
+        try:
+            params = item.callspec.params
+            param_dict = {p: _get_name(v) for p, v in params.iteritems()}
+        except Exception:
+            param_dict = {}
+    tests.append({'name': name, 'params': param_dict, 'result': None})
 
 
 def testrun_gen(tests, filename, config, collectonly=True):
@@ -148,10 +231,10 @@ def testrun_gen(tests, filename, config, collectonly=True):
     for data in tests:
         no_tests += 1
         if collectonly:
-            testsuite.append(testresult_gen(data['name'], data.get('params')))
+            testsuite.append(testresult_record(data['name'], data.get('params')))
             results_count['skipped'] += 1
         else:
-            testsuite.append(testresult_gen(
+            testsuite.append(testresult_record(
                 data['name'], data.get('params'), result=data.get('result')))
             results_count[data['result']] += 1
     testsuite.attrib['tests'] = str(no_tests)
@@ -163,43 +246,8 @@ def testrun_gen(tests, filename, config, collectonly=True):
     xml.write(filename, pretty_print=True)
 
 
-def _get_name(obj):
-    if hasattr(obj, '_param_name'):
-        return getattr(obj, '_param_name')
-    elif hasattr(obj, 'name'):
-        return obj.name
-    else:
-        return str(obj)
-
-
-caselevels = {
-    '0': 'component',
-    '1': 'integration',
-    '2': 'system',
-    '3': 'acceptance'
-}
-
-
-@pytest.mark.trylast
-def pytest_collection_modifyitems(session, config, items):
-    """Generates the XML files using collected items."""
-    if not config.getoption('generate_xmls') and not config.getoption('generate_legacy_xmls'):
-        return
-    # all "legacy" conditions can be removed once parametrization is finished
-    legacy = True if config.getoption('generate_legacy_xmls') else False
-    a = defaultdict(dict)
-    ntr = []
-    for item in items:
-        a[item.location[0]][re.sub('\[.*\]', '', item.location[2])] = a[item.location[0]].get(
-            re.sub('\[.*\]', '', item.location[2]), 0) + 1
-    with open('duplicates.log', 'w') as f:
-        for module, tests in a.iteritems():
-            for test in tests:
-                if test not in ntr:
-                    ntr.append(test)
-                else:
-                    f.write("{}\n".format(test))
-
+def testcases_gen(tests, filename):
+    """Generates content of the XML file used for test cases import."""
     testcases = etree.Element("testcases")
     testcases.attrib['project-id'] = xunit['project_id']
     response_properties = etree.Element("response-properties")
@@ -214,82 +262,61 @@ def pytest_collection_modifyitems(session, config, items):
     testcases.append(response_properties)
     testcases.append(properties)
 
-    apply_blacklist = config.getoption('xmls_apply_blacklist')
-
-    test_name = []
-    for item in items:
-        if apply_blacklist and compiled_blacklist.search(item.nodeid):
-            continue
-        work_items = []
-        custom_fields = {}
-        try:
-            description = item.function.func_doc
-        except:
-            description = ""
-        try:
-            requirement = item.get_marker('requirement').args[0]
-            from utils.conf import cfme_data
-            requirement_id = cfme_data['requirements'][requirement]
-            work_items.append({'id': requirement_id, 'role': 'verifies'})
-        except:
-            pass
-        try:
-            tier = item.get_marker('tier').args[0]
-            tier_id = caselevels[str(tier)]
-            custom_fields['caselevel'] = tier_id
-        except:
-            pass
-
-        param_list = extract_fixtures_values(item).keys() if not legacy else None
-
-        manual = item.get_marker('manual')
-        if not manual:
-            # The master here should probably link the latest "commit" eventually
-            automation_script = 'http://github.com/{}/{}/blob/master/{}#L{}'.format(
-                xunit['gh_owner'],
-                xunit['gh_repo'],
-                item.location[0],
-                item.function.func_code.co_firstlineno
-            )
-            custom_fields['caseautomation'] = "automated"
-            custom_fields['automation_script'] = automation_script
-            description = '{}<br/><br/><a href="{}">Test Source</a>'.format(
-                description, automation_script)
-        else:
-            custom_fields['caseautomation'] = "manualonly"
-            description = '{}'.format(description)
-
-        name = re.sub('\[.*\]', '', item.name) if not legacy else item.name
-        if name not in test_name:
-            test_name.append(name)
-            testcases.append(
-                testcase_gen(
-                    name,
-                    description=description,
-                    parameters=param_list,
-                    linked_items=work_items,
-                    custom_fields=custom_fields))
-
+    for data in tests:
+        testcases.append(testcase_record(**data))
     xml = etree.ElementTree(testcases)
-    xml.write('test_case_import.xml', pretty_print=True)
+    xml.write(filename, pretty_print=True)
 
-    test_name = []
-    tests = []
+
+def _get_name(obj):
+    if hasattr(obj, '_param_name'):
+        return getattr(obj, '_param_name')
+    elif hasattr(obj, 'name'):
+        return obj.name
+    return str(obj)
+
+
+def gen_duplicates_log(items):
+    """Generates log file containing non-unique test cases names."""
+    a = defaultdict(dict)
+    ntr = []
     for item in items:
-        if apply_blacklist and compiled_blacklist.search(item.nodeid):
+        a[item.location[0]][re.sub(r'\[.*\]', '', item.location[2])] = a[item.location[0]].get(
+            re.sub(r'\[.*\]', '', item.location[2]), 0) + 1
+    with open('duplicates.log', 'w') as f:
+        for tests in a.itervalues():
+            for test in tests:
+                if test not in ntr:
+                    ntr.append(test)
+                else:
+                    f.write("{}\n".format(test))
+
+
+@pytest.mark.trylast
+def pytest_collection_modifyitems(config, items):
+    """Generates the XML files using collected items."""
+    if not (config.getoption('generate_xmls') or config.getoption('generate_legacy_xmls')):
+        return
+
+    gen_duplicates_log(items)
+
+    no_blacklist = config.getoption('xmls_no_blacklist')
+    collectonly = config.getoption('--collect-only')
+    # all "legacy" conditions can be removed once parametrization is finished
+    legacy = config.getoption('generate_legacy_xmls')
+
+    tc_names = []
+    tc_data = []
+    tr_names = []
+    tr_data = []
+
+    for item in items:
+        if 'cfme/tests' not in item.nodeid:
             continue
-        if legacy:
-            if item.name in test_name:
-                continue
-            name = item.name
-            param_dict = None
-            test_name.append(name)
-        else:
-            name = re.sub(r'\[.*\]', '', item.name)
-            try:
-                params = item.callspec.params
-                param_dict = {p: _get_name(v) for p, v in params.iteritems()}
-            except Exception:
-                param_dict = {}
-        tests.append({'name': name, 'params': param_dict, 'result': None})
-    testrun_gen(tests, 'test_run_import.xml', config, collectonly=True)
+        if not no_blacklist and compiled_blacklist.search(item.nodeid):
+            continue
+        get_testcase_data(tc_data, tc_names, item, legacy)
+        get_testresult_data(tr_data, tr_names, item, legacy)
+
+    testcases_gen(tc_data, 'test_case_import.xml')
+    testrun_gen(tr_data, 'test_run_import.xml', config, collectonly=collectonly)
