@@ -273,8 +273,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             if from_any_provider:
                 # TODO implement as navigate_to when cfme.infra.virtual_machines has destination
                 navigate_to(self, 'All')
-            elif self.is_vm:
-                navigate_to(self, 'AllForProvider', use_resetter=False)
             else:
                 navigate_to(self, 'AllForProvider', use_resetter=False)
             toolbar.select('Grid View')
@@ -294,8 +292,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             try:
                 if not search.has_quick_search_box():
                     # TODO rework search for archived/orphaned VMs
-                    if self.is_vm:
-                        navigate_to(self, 'AllForProvider', use_resetter=False)
+                    if from_any_provider:
+                        navigate_to(self, 'All')
                     else:
                         navigate_to(self, 'AllForProvider', use_resetter=False)
                 search.normal_search(self.name)
@@ -562,7 +560,7 @@ class VM(BaseVM):
             fail_func=lambda: toolbar.refresh())
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
-                                 with_relationship_refresh=True):
+                                 with_relationship_refresh=True, from_any_provider=False):
         """Wait for M to come to desired state.
 
         This function waits just the needed amount of time thanks to wait_for.
@@ -571,6 +569,7 @@ class VM(BaseVM):
             desired_state: on, off, suspended... for available states, see
                            :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
             timeout: Specify amount of time (in seconds) to wait
+            from_any_provider: Archived/Orphaned vms need this
         Raises:
             TimedOutError:
                 When instance does not come up to desired state in specified period of time.
@@ -584,7 +583,8 @@ class VM(BaseVM):
                 self.load_details(refresh=True)
                 return self.get_detail(properties=detail_t) == desired_state
             else:
-                return 'currentstate-' + desired_state in self.find_quadicon().state
+                return 'currentstate-' + desired_state in self.find_quadicon(
+                    from_any_provider=from_any_provider).state
 
         return wait_for(
             _looking_for_state_change,
