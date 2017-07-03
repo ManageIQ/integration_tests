@@ -9,7 +9,7 @@ gpgcheck=0\n\n"""
 
 @click.command(help="Assist in generating update repo file")
 @click.argument('filename')
-@click.option('--output', default="yum.repo", help="output filename")
+@click.option('--output', default="update.repo", help="output filename")
 def main(filename, output):
     """Assist in generating update repo file"""
     print filename
