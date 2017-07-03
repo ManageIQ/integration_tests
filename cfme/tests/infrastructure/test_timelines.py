@@ -12,6 +12,7 @@ from cfme.rest.gen_data import vm as _vm
 from cfme.web_ui import InfoBlock
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.providers import ProviderFilter
@@ -126,6 +127,7 @@ def test_infra_cluster_event(gen_events, new_vm):
              fail_condition=0, message="events to appear")
 
 
+@pytest.mark.meta(blockers=[BZ(1429962, forced_streams=["5.7"])])
 def test_infra_vm_diagnostic_timelines(gen_events, new_vm, mark_vm_as_appliance, appliance):
     """Tests timelines on settings->diagnostics page
 

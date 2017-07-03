@@ -10,6 +10,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.wait import wait_for
@@ -126,6 +127,7 @@ def test_cloud_instance_event(gen_events, new_instance):
              message="events to appear")
 
 
+@pytest.mark.meta(blockers=[BZ(1429962, forced_streams=["5.7"])])
 def test_cloud_diagnostic_timelines(gen_events, new_instance, mark_vm_as_appliance, appliance):
     """Tests timelines on settings->diagnostics page
 
