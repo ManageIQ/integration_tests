@@ -21,6 +21,8 @@ match_page = partial(match_location, controller='container_routes', title='Route
 
 class Route(Taggable, Labelable, SummaryMixin, Navigatable):
 
+    PLURAL = 'Routes'
+
     def __init__(self, name, project_name, provider, appliance=None):
         self.name = name
         self.project_name = project_name

@@ -22,6 +22,8 @@ match_page = partial(match_location, controller='container_image_registry',
 
 class ImageRegistry(Taggable, SummaryMixin, Navigatable):
 
+    PLURAL = 'Image Registries'
+
     def __init__(self, host, provider, appliance=None):
         self.host = host
         self.provider = provider
