@@ -65,6 +65,10 @@ def get_eap_server(provider):
     return _get_server_by_name(provider, EAP_PRODUCT_NAME, 'EAP7|Local')
 
 
+def get_eap_container_server(provider):
+    return _get_server_by_name(provider, EAP_PRODUCT_NAME, 'Local DMR|Local', True)
+
+
 def get_hawkular_server(provider):
     return _get_server_by_name(provider, HAWKULAR_PRODUCT_NAME)
 
@@ -73,7 +77,11 @@ def get_domain_server(provider):
     return _get_server_by_name(provider=provider, name='EAP7-server-one|server-one')
 
 
-def _get_server_by_name(provider, product=None, name=None):
+def get_domain_container_server(provider):
+    return _get_server_by_name(provider=provider, name='EAP7-server-one|server-one', container=True)
+
+
+def _get_server_by_name(provider, product=None, name=None, container=False):
     """
     Return server by given provider, product and server name.
 
@@ -92,11 +100,31 @@ def _get_server_by_name(provider, product=None, name=None):
     if len(servers) > 0:
         if name:
             for server in servers:
-                if re.match("^({})$".format(name), server.name):
+                if (re.match("^({})$".format(name), server.name) and
+                _is_hostname_expected_container(server.hostname, container)):
                     return server
         else:
             return servers[0]
     raise ValueError('{} server was not found in servers list'.format(product))
+
+
+def _is_hostname_expected_container(hostname, container_expected):
+    """
+    Checks whether provided hostname is in container format when it is expected.
+    If it is not expected, check if hostname is not in container format.
+
+    Args:
+        hostname: server host name
+        container_expected: is hostname expected to be in container format or not
+    """
+    return _is_container(hostname) if container_expected else not _is_container(hostname)
+
+
+def _is_container(hostname):
+    """
+    Return True is provided hostname matches defined regexp.
+    """
+    return re.match("[a-z0-9]{8}", hostname) or 'openshift-eap' in hostname
 
 
 def refresh(provider):

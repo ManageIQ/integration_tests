@@ -79,10 +79,11 @@ def download_jdbc_driver(database_name):
 
 
 def deploy_jdbc_driver(provider, server, file_path, driver_name, module_name,
-                       driver_class, major_version=None, minor_version=None):
+                       driver_class, xa_class=None,
+                       major_version=None, minor_version=None):
     """Deploys JDBC driver file into provided server.
     Refreshes the provider relationships via REST call.
     """
     server.add_jdbc_driver(file_path, driver_name, module_name, driver_class,
-                           major_version, minor_version)
+                           xa_class, major_version, minor_version)
     provider.refresh_provider_relationships()

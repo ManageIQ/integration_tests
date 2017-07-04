@@ -1,6 +1,7 @@
 import re
 from cfme.common import Taggable, UtilizationMixin
-from cfme.exceptions import MiddlewareServerNotFound
+from cfme.exceptions import MiddlewareServerNotFound,\
+    MiddlewareServerGroupNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties, Container
 from cfme.middleware.provider.hawkular import HawkularProvider
@@ -17,6 +18,9 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
+from cfme.middleware.server_group import MiddlewareServerGroup
+from cfme.middleware.domain import MiddlewareDomain
+from selenium.common.exceptions import NoSuchElementException
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -43,6 +47,7 @@ def _db_select_query(name=None, feed=None, provider=None, server_group=None,
         query = query.filter(t_ems.name == provider.name)
     if server_group:
         query = query.filter(t_msgr.name == server_group.name)
+        query = query.filter(t_msgr.feed == server_group.feed)
     if product:
         query = query.filter(t_ms.product == product)
     return query
@@ -235,6 +240,17 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         raise NotImplementedError('This feature not implemented yet')
 
     @variable(alias='ui')
+    def server_group(self):
+        self.load_details()
+        navigate_to(self, 'ServerGroup')
+        return MiddlewareServerGroup(
+            provider=self.provider,
+            name=self.get_detail("Properties", "Name"),
+            domain=MiddlewareDomain(
+                provider=self.provider,
+                name=self.get_detail("Relationships", "Middleware Domain")))
+
+    @variable(alias='ui')
     def is_reload_required(self):
         self.load_details(refresh=True)
         return self.get_detail("Properties", "Server State") == 'Reload-required'
@@ -376,3 +392,14 @@ class ServerMessagings(CFMENavigateStep):
 
     def step(self):
         sel.click(InfoBlock.element('Relationships', 'Middleware Messagings'))
+
+
+@navigator.register(MiddlewareServer, 'ServerGroup')
+class ServerGroup(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        try:
+            sel.click(InfoBlock.element('Relationships', 'Middleware Server Group'))
+        except NoSuchElementException:
+            raise MiddlewareServerGroupNotFound('Server does not belong to Server Group')

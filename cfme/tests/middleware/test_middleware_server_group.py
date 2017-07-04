@@ -18,6 +18,7 @@ from deployment_methods import deploy
 from deployment_methods import RESOURCE_JAR_NAME, RESOURCE_WAR_NAME
 from deployment_methods import WAR_EXT, RESOURCE_WAR_NAME_NEW
 from deployment_methods import RESOURCE_WAR_CONTENT, RESOURCE_WAR_CONTENT_NEW
+from server_methods import get_domain_container_server
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -237,6 +238,22 @@ def test_redeploy_overwrite(provider, main_server_group):
     check_group_deployment_enabled(provider, main_server_group, runtime_name)
     check_group_deployment_content(provider, main_server_group, runtime_name.replace(WAR_EXT, ''),
                              RESOURCE_WAR_CONTENT_NEW)
+
+
+@pytest.mark.uncollect
+def test_container_server_group_immutability(provider):
+    """Tests container based EAP server group immutability on UI
+
+    Steps:
+        * Select container based EAP domain server details in UI
+        * Click on Relationships Middleware Server Group
+        * Verify that all menu items are disabled and server group is immutable
+    """
+    server = get_domain_container_server(provider)
+    srv_ui = server.server(method='ui')
+    assert srv_ui, "Server was not found in UI"
+    srv_group_ui = srv_ui.server_group(method='ui')
+    assert srv_group_ui.is_immutable(), "Server Group in container should be immutable"
 
 
 def get_server_group_set(server_groups):

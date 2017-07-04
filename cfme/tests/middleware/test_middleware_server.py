@@ -2,13 +2,13 @@ import pytest
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import flash
-from utils import conf
 from utils import testgen
 from utils.version import current_version
 from server_methods import verify_server_running, verify_server_stopped
 from server_methods import get_servers_set, verify_server_suspended
 from server_methods import get_eap_server, get_hawkular_server
 from server_methods import verify_server_starting, verify_server_stopping
+from server_methods import get_eap_container_server
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -83,6 +83,8 @@ def test_server_details(provider):
     srv_mgmt.validate_properties()
 
 
+@pytest.mark.smoke
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 def test_container_server_immutability(provider):
     """Tests container based EAP server immutability on UI
 
@@ -91,10 +93,7 @@ def test_container_server_immutability(provider):
         * Compare selected server UI details with CFME database and MGMT system
         * Verify that all menu items are disabled and server is immutable
     """
-    if 'eap7_template' not in conf.cfme_data.get('management_systems', {})[provider.key]:
-        pytest.skip("Skipping test, environment is not in OSCP")
-
-    server = get_eap_server(provider)
+    server = get_eap_container_server(provider)
     srv_ui = server.server(method='ui')
     srv_db = server.server(method='db')
     srv_mgmt = srv_ui.server(method='mgmt')
@@ -106,41 +105,18 @@ def test_container_server_immutability(provider):
          .format(srv_ui.name, srv_db.name, srv_mgmt.name))
     srv_db.validate_properties()
     srv_mgmt.validate_properties()
-    assert conf.cfme_data.get('management_systems', {})[provider.key][
-        'eap7_template'] in srv_ui.hostname
-    assert srv_ui.is_immutable()
+    assert srv_ui.is_immutable(), "Server in container should be immutable"
 
 
-# disabled as Hawkular server does not have 'Power' toolbar operation
-@pytest.mark.uncollect
-def test_hawkular_fail(provider):
+def test_hawkular_immutability(provider):
     """Tests Hawkular server itself reload operation message on UI
 
     Steps:
         * Chooses Hawkular server.
-        * Invokes all 'Power' toolbar operation
-        * Checks that notification message is shown
-        * Checks that server status is running in UI, in DB and in MGMT.
+        * Checks that server is immutable, i.e. toolbar is hidden.
     """
     server = get_hawkular_server(provider)
-    server.reload_server()
-    flash.assert_success_message('Not reloading the provider')
-    verify_server_running(provider, server)
-    server.stop_server()
-    flash.assert_success_message('Not stopping the provider')
-    verify_server_running(provider, server)
-    server.shutdown_server()
-    flash.assert_success_message('Not shutting down the provider')
-    verify_server_running(provider, server)
-    server.restart_server()
-    flash.assert_success_message('Not restarting the provider')
-    verify_server_running(provider, server)
-    server.suspend_server()
-    flash.assert_success_message('Not suspending the provider')
-    verify_server_running(provider, server)
-    server.resume_server()
-    flash.assert_success_message('Not resuming the provider')
-    verify_server_running(provider, server)
+    assert server.is_immutable()
 
 
 def test_server_reload(provider, server):

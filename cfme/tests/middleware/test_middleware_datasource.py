@@ -5,7 +5,6 @@ from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from utils import testgen
 from utils.version import current_version
-from utils.blockers import BZ
 from server_methods import get_eap_server, get_hawkular_server, verify_server_running
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
 from datasource_methods import (
@@ -13,7 +12,7 @@ from datasource_methods import (
     ORACLE_12C_DS, DB2_105_DS, MSSQL_2014_DS, MYSQL_57_DS,
     POSTGRESPLUS_94_DS, POSTGRESQL_94_DS, SYBASE_157_DS,
     ORACLE_12C_RAC_DS,
-    get_datasource_from_list, verify_datasource_not_listed,
+    get_datasource_from_list,
     verify_datasource_listed
 )
 
@@ -132,7 +131,6 @@ def test_datasource_details(provider):
         ds_mgmt.validate_properties()
 
 
-@pytest.mark.meta(blockers=[BZ(1427141, forced_streams=["5.8", "upstream"])])
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize("datasource", DATASOURCES)
 def test_create_datasource_select_driver(provider, datasource):
@@ -165,6 +163,7 @@ def test_create_datasource_select_driver(provider, datasource):
                        driver_name=datasource.driver.driver_name,
                        module_name=datasource.driver.module_name,
                        driver_class=datasource.driver.driver_class,
+                       xa_class=datasource.driver.xa_class,
                        major_version=datasource.driver.major_version,
                        minor_version=datasource.driver.minor_version)
     verify_server_running(provider, server)
@@ -180,10 +179,8 @@ def test_create_datasource_select_driver(provider, datasource):
 
 
 @pytest.mark.smoke
-@pytest.mark.parametrize("datasource", DATASOURCES)
-def test_create_delete_datasource(provider, datasource):
+def test_create_delete_datasource(provider):
     """Tests datasource creation and deletion on EAP server
-    Method is executed for all database types
 
     Steps:
         * Get servers list from UI
@@ -210,11 +207,13 @@ def test_create_delete_datasource(provider, datasource):
         * Checks whether resource is deleted.
     """
     server = get_eap_server(provider)
+    datasource = ORACLE_12C_DS
     file_path = download_jdbc_driver(datasource.driver.database_name)
     deploy_jdbc_driver(provider, server, file_path,
                        driver_name=datasource.driver.driver_name,
                        module_name=datasource.driver.module_name,
                        driver_class=datasource.driver.driver_class,
+                       xa_class=datasource.driver.xa_class,
                        major_version=datasource.driver.major_version,
                        minor_version=datasource.driver.minor_version)
     server.add_datasource(ds_type=datasource.database_type,
@@ -228,13 +227,63 @@ def test_create_delete_datasource(provider, datasource):
                           password=datasource.password)
     datasource_name = "Datasource [{}]".format(datasource.datasource_name)
     verify_datasource_listed(provider, datasource_name, server)
+    """ @TODO enable when BZ#1460296 is fixed
     delete_datasource(provider, server, datasource_name)
-    verify_datasource_not_listed(provider, datasource_name)
+    verify_datasource_not_listed(provider, datasource_name)"""
+
+
+@pytest.mark.parametrize("datasource", DATASOURCES)
+def test_create_datasource(provider, datasource):
+    """Tests datasource creation and deletion on EAP server
+    Method is executed for all database types
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Invokes 'Add JDBC Driver' toolbar operation
+        * Fills all necessary fields and saves
+        * Invokes 'Add Datasource' toolbar operation
+        * Selects Datasource type.
+        * Click Next.
+        * Input Datasource Name.
+        * Input Datasource JNDI Name.
+        * Click Next.
+        * Input Driver Name.
+        * Input Module Name.
+        * Input Driver Name.
+        * Input Driver Class.
+        * Click Next.
+        * Input Database Connection URL.
+        * Input Database username.
+        * Input Database password.
+        * Submits the form.
+        * Checks if newly created datasource is listed
+    """
+    server = get_eap_server(provider)
+    file_path = download_jdbc_driver(datasource.driver.database_name)
+    deploy_jdbc_driver(provider, server, file_path,
+                       driver_name=datasource.driver.driver_name,
+                       module_name=datasource.driver.module_name,
+                       driver_class=datasource.driver.driver_class,
+                       xa_class=datasource.driver.xa_class,
+                       major_version=datasource.driver.major_version,
+                       minor_version=datasource.driver.minor_version)
+    server.add_datasource(ds_type=datasource.database_type,
+                          ds_name=datasource.datasource_name,
+                          jndi_name=datasource.jndi_name,
+                          driver_name=datasource.driver.driver_name,
+                          driver_module_name=datasource.driver.module_name,
+                          driver_class=datasource.driver.driver_class,
+                          ds_url=datasource.connection_url.replace("\\", ""),
+                          username=datasource.username,
+                          password=datasource.password)
+    datasource_name = "Datasource [{}]".format(datasource.datasource_name)
+    verify_datasource_listed(provider, datasource_name, server)
 
 
 @pytest.mark.parametrize("datasource", DATASOURCES)
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
-def test_create_delete_xa_datasource(provider, datasource):
+def test_create_xa_datasource(provider, datasource):
     """Tests XA datasource creation and deletion on EAP server
     Method is executed for all database types
 
@@ -259,9 +308,7 @@ def test_create_delete_xa_datasource(provider, datasource):
         * Input Database username.
         * Input Database password.
         * Submits the form.
-        * Checks if newly created datasource is listed. Selects it.
-        * Deletes that Datasource via UI operation.
-        * Checks whether resource is deleted.
+        * Checks if newly created datasource is listed.
     """
     server = get_eap_server(provider)
     file_path = download_jdbc_driver(datasource.driver.database_name)
@@ -269,6 +316,7 @@ def test_create_delete_xa_datasource(provider, datasource):
                        driver_name=datasource.driver.driver_name,
                        module_name=datasource.driver.module_name,
                        driver_class=datasource.driver.driver_class,
+                       xa_class=datasource.driver.xa_class,
                        major_version=datasource.driver.major_version,
                        minor_version=datasource.driver.minor_version)
     server.add_datasource(ds_type='{} XA'.format(datasource.database_type),
@@ -283,8 +331,6 @@ def test_create_delete_xa_datasource(provider, datasource):
                           password=datasource.password)
     datasource_name = "XA Datasource [{}XA]".format(datasource.datasource_name)
     verify_datasource_listed(provider, datasource_name, server)
-    delete_datasource(provider, server, datasource_name)
-    verify_datasource_not_listed(provider, datasource_name)
 
 
 def delete_datasource(provider, server, datasource_name):

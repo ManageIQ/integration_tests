@@ -238,6 +238,12 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
         )
         sel.click(timeout_form.cancel_button if cancel else timeout_form.stop_button)
 
+    def is_immutable(self):
+        return not (tb.exists("Power") or
+                    tb.exists("Deployments") or
+                    tb.exists("JDBC Drivers") or
+                    tb.exists("Datasources"))
+
 
 @navigator.register(MiddlewareServerGroup, 'Details')
 class Details(CFMENavigateStep):

@@ -267,6 +267,7 @@ jdbc_driver_form = Form(
         ("jdbc_driver_name", Input("jdbc_driver_name_input")),
         ("jdbc_module_name", Input("jdbc_module_name_input")),
         ("jdbc_driver_class", Input("jdbc_driver_class_input")),
+        ("driver_xa_datasource_class", Input("driver_xa_datasource_class_name_input")),
         ("major_version", Input("major_version_input")),
         ("minor_version", Input("minor_version_input")),
         ('deploy_button', form_buttons.FormButton("Deploy", ng_click="addJdbcDriver()")),
@@ -364,7 +365,7 @@ class Container(SummaryMixin):
         flash.assert_success_message(self.deployment_message
                     .format(runtime_name if runtime_name else os.path.basename(filename)))
 
-    def add_jdbc_driver(self, filename, driver_name, module_name, driver_class,
+    def add_jdbc_driver(self, filename, driver_name, module_name, driver_class, xa_class=None,
                         major_version=None, minor_version=None, cancel=False):
         """Clicks to "Add JDBC Driver" button, in opened window fills fields by provided parameters,
         and deploys.
@@ -386,6 +387,7 @@ class Container(SummaryMixin):
                 "jdbc_driver_name": driver_name,
                 "jdbc_module_name": module_name,
                 "jdbc_driver_class": driver_class,
+                "driver_xa_datasource_class": xa_class,
                 "major_version": major_version,
                 "minor_version": minor_version
             })

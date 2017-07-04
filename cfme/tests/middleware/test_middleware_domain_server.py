@@ -9,7 +9,7 @@ from utils import testgen
 from utils.version import current_version
 from server_methods import verify_server_running, verify_server_stopped
 from server_methods import get_servers_set, verify_server_suspended
-from server_methods import get_domain_server
+from server_methods import get_domain_server, get_domain_container_server
 from server_methods import verify_server_starting, verify_server_stopping
 
 pytestmark = [
@@ -137,3 +137,27 @@ def test_domain_server_kill(provider, domain_server):
     flash.assert_success_message('Kill initiated for selected server(s)')
     verify_server_stopping(provider, domain_server)
     verify_server_stopped(provider, domain_server)
+
+
+@pytest.mark.uncollect
+def test_container_domain_server_immutability(provider):
+    """Tests container based EAP domain server immutability on UI
+
+    Steps:
+        * Select container based EAP domain server details in UI
+        * Compare selected server UI details with CFME database and MGMT system
+        * Verify that all menu items are disabled and server is immutable
+    """
+    server = get_domain_container_server(provider)
+    srv_ui = server.server(method='ui')
+    srv_db = server.server(method='db')
+    srv_mgmt = srv_ui.server(method='mgmt')
+    assert srv_ui, "Server was not found in UI"
+    assert srv_db, "Server was not found in DB"
+    assert srv_mgmt, "Server was not found in MGMT system"
+    assert srv_ui.name == srv_db.name == srv_mgmt.name, \
+        ("server name does not match between UI:{}, DB:{}, MGMT:{}"
+         .format(srv_ui.name, srv_db.name, srv_mgmt.name))
+    srv_db.validate_properties()
+    srv_mgmt.validate_properties()
+    assert srv_ui.is_immutable(), "Server in container should be immutable"
