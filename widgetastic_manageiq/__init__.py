@@ -35,7 +35,7 @@ from widgetastic.widget import (
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapSwitch, BootstrapTreeview, Button, Input,
-    BootstrapSelect, ViewChangeButton, CheckableBootstrapTreeview)
+    BootstrapSelect, CheckableBootstrapTreeview)
 
 
 class DynaTree(Widget):
@@ -604,6 +604,20 @@ class BootstrapSwitchSelect(CheckboxSelect):
     usual Checkboxes. It can be found in the same policy's events assignment screen since
     CFME 5.8.1.
     """
+    BS_TEXT = '/../../following-sibling::text()[1]'
+
+    def _get_bs_description(self, bs):
+        """Returns text description of the BootstrapSwitch widget. We have to use such hack with
+        the script execution, because Selenium cannot return text of a text node itself.
+
+        Returns: str
+        """
+        return bs._label or self.browser.execute_script(
+            "{script} return xpath(null, {arg}).textContent;".format(
+                script=DynaTree.XPATH,
+                arg=quote(bs.ROOT.locator + self.BS_TEXT)
+            )).strip()
+
     @property
     def checkboxes(self):
         """All bootstrap switches."""
@@ -617,7 +631,7 @@ class BootstrapSwitchSelect(CheckboxSelect):
     @property
     def selected_text(self):
         """Only selected bootstrap switches' text descriptions."""
-        return {bs.text for bs in self.selected_checkboxes}
+        return {self._get_bs_description(bs) for bs in self.selected_checkboxes}
 
     def checkbox_by_text(self, text):
         """Returns bootstrap switch searched by its text."""
