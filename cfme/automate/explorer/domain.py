@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
-
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox
@@ -82,10 +80,13 @@ class DomainCollection(Navigatable):
     """Collection object for the :py:class:`Domain`."""
     tree_path = ['Datastore']
 
-    def instantiate(self, name, description=None, enabled=None):
+    def instantiate(
+            self, name, description=None, enabled=None, git_repository=None, git_checkout_type=None,
+            git_checkout_value=None, db_id=None):
         return Domain(
             name=name, description=description, enabled=enabled, locked=None,
-            appliance=self.appliance)
+            git_repository=git_repository, git_checkout_type=git_checkout_type,
+            git_checkout_value=git_checkout_value, db_id=db_id, appliance=self.appliance)
 
     def create(self, name=None, description=None, enabled=None, cancel=False):
         add_page = navigate_to(self, 'Add')
@@ -113,17 +114,40 @@ class DomainCollection(Navigatable):
     def all(self):
         table = self.appliance.db.client['miq_ae_namespaces']
         query = self.appliance.db.client.session.query(
-            table.name, table.description, table.enabled, table.source)
+            table.name, table.description, table.enabled, table.source, table.ref, table.ref_type,
+            table.git_repository_id)
         query = query.filter(table.name != '$', table.parent_id == None)  # noqa
         result = []
-        for name, description, enabled, source in query:
-            result.append(
-                Domain(
-                    name=name,
-                    description=description or '',
-                    enabled=enabled,
-                    locked=source in {'user_locked', 'system'},
-                    appliance=self.appliance))
+        for name, description, enabled, source, ref, ref_type, git_repository_id in query:
+            if source != 'remote':
+                result.append(
+                    Domain(
+                        name=name,
+                        description=description or '',
+                        enabled=enabled,
+                        locked=source in {'user_locked', 'system'},
+                        appliance=self.appliance))
+            else:
+                repo_table = self.appliance.db.client['git_repositories']
+                repo = self.appliance.db.client.session\
+                    .query(repo_table)\
+                    .filter(repo_table.id == git_repository_id)\
+                    .first()
+                from cfme.automate.import_export import AutomateGitRepository
+                agr = AutomateGitRepository(
+                    url=repo.url,
+                    verify_ssl=repo.verify_ssl,
+                    appliance=self.appliance)
+                result.append(
+                    Domain(
+                        name=name,
+                        description=description,
+                        enabled=enabled,
+                        locked=True,
+                        git_repository=agr,
+                        git_checkout_type=ref_type,
+                        git_checkout_value=ref,
+                        appliance=self.appliance))
         return result
 
     def delete(self, *domains):
@@ -134,9 +158,8 @@ class DomainCollection(Navigatable):
         if not all_page.domains.is_displayed:
             raise ValueError('No domain found!')
         for row in all_page.domains:
-            name = re.sub(r' \((?:Locked|Disabled|Locked & Disabled)\)$', '', row.name.text)
             for domain in domains:
-                if domain.name == name:
+                if domain.table_display_name == row.name.text:
                     checked_domains.append(domain)
                     row[0].check()
                     break
@@ -211,22 +234,30 @@ class DomainDetailsView(AutomateExplorerView):
     def is_displayed(self):
         return (
             self.in_explorer and
-            re.match(
-                r'^Automate Domain "{}(?: \((?:Disabled|Locked|Locked & Disabled)\))?"$'.format(
-                    re.escape(self.context['object'].name)),
-                self.title.text) is not None)
+            self.title.text == 'Automate Domain "{}"'.format(
+                self.context['object'].table_display_name))
 
 
 class Domain(Navigatable, Fillable):
     """A class representing one Domain in the UI."""
     def __init__(
-            self, name, description, enabled=None, locked=None, collection=None, appliance=None):
+            self, name, description, enabled=None, locked=None, collection=None,
+            git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None,
+            appliance=None):
+        if db_id is not None:
+            self.db_id = db_id
         if collection is None:
             collection = DomainCollection(appliance=appliance)
         self.collection = collection
         Navigatable.__init__(self, appliance=collection.appliance)
         self.name = name
         self.description = description
+        if git_repository is not None:
+            self.git_repository = git_repository
+        if git_checkout_type is not None:
+            self.git_checkout_type = git_checkout_type
+        if git_checkout_value is not None:
+            self.git_checkout_value = git_checkout_value
         if enabled is not None:
             self.enabled = enabled
         if locked is not None:
@@ -245,6 +276,23 @@ class Domain(Navigatable, Fillable):
         except IndexError:
             raise ItemNotFound('Domain named {} not found in the database'.format(self.name))
 
+    @cached_property
+    def git_repository(self):
+        """Returns an associated git repository object. None if no git repo associated."""
+        dbo = self.db_object
+        if dbo.git_repository_id is None:
+            return None
+        from cfme.automate.import_export import AutomateGitRepository
+        return AutomateGitRepository.from_db(dbo.git_repository_id, appliance=self.appliance)
+
+    @cached_property
+    def git_checkout_type(self):
+        return self.db_object.ref_type
+
+    @cached_property
+    def git_checkout_value(self):
+        return self.db_object.ref
+
     @property
     def db_object(self):
         if self.db_id is None:
@@ -261,7 +309,7 @@ class Domain(Navigatable, Fillable):
         if self.browser.product_version < '5.7':
             return self.db_object.system
         else:
-            return self.db_object.source in {'user_locked', 'system'}
+            return self.db_object.source in {'user_locked', 'system', 'remote'}
 
     @property
     def parent(self):
@@ -277,17 +325,40 @@ class Domain(Navigatable, Fillable):
         return NamespaceCollection(self)
 
     @property
-    def tree_path(self):
-        if self.locked and not self.enabled:
-            result = '{} (Locked & Disabled)'.format(self.name)
-        elif self.locked and self.enabled:
-            result = '{} (Locked)'.format(self.name)
-        elif not self.locked and not self.enabled:
-            result = '{} (Disabled)'.format(self.name)
+    def tree_display_name(self):
+        if self.git_repository:
+            name = '{name} ({ref}) ({name})'.format(name=self.name, ref=self.git_checkout_value)
         else:
-            result = self.name
+            name = self.name
 
-        return self.collection.tree_path + [result]
+        if self.locked and not self.enabled:
+            return '{} (Locked & Disabled)'.format(name)
+        elif self.locked and self.enabled:
+            return '{} (Locked)'.format(name)
+        elif not self.locked and not self.enabled:
+            return '{} (Disabled)'.format(name)
+        else:
+            return name
+
+    @property
+    def table_display_name(self):
+        if self.git_repository:
+            name = '{name} ({ref})'.format(name=self.name, ref=self.git_checkout_value)
+        else:
+            name = self.name
+
+        if self.locked and not self.enabled:
+            return '{} (Locked & Disabled)'.format(name)
+        elif self.locked and self.enabled:
+            return '{} (Locked)'.format(name)
+        elif not self.locked and not self.enabled:
+            return '{} (Disabled)'.format(name)
+        else:
+            return name
+
+    @property
+    def tree_path(self):
+        return self.collection.tree_path + [self.tree_display_name]
 
     def delete(self, cancel=False):
         # Ensure this has correct data

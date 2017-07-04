@@ -2,11 +2,16 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
+from cfme.automate.import_export import AutomateGitRepository
 
 from utils import error
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
+
+
+pytestmark = [test_requirements.automate]
 
 
 @pytest.mark.tier(1)
@@ -154,3 +159,19 @@ def test_domain_lock_unlock(request):
     with update(meth):
         meth.name = 'UpdatedMethod'
     assert meth.exists
+
+
+@pytest.mark.parametrize(
+    ('url', 'param_type', 'param_value', 'verify_ssl'),
+    [
+        ('https://github.com/ramrexx/CloudForms_Essentials.git', 'branch', 'origin/cf4.1', True),
+        ('https://github.com/RedHatQE/ManageIQ-automate-git.git', 'tag', '0.1', False)
+    ])
+@pytest.mark.meta(server_roles=['+git_owner'])
+def test_domain_import_git(request, appliance, url, param_type, param_value, verify_ssl):
+    """Verifies that a domain can be imported from git."""
+    repo = AutomateGitRepository(url=url, verify_ssl=verify_ssl, appliance=appliance)
+    domain = repo.import_domain_from(**{param_type: param_value})
+    request.addfinalizer(domain.delete_if_exists)
+    assert domain.exists
+    domain.delete()
