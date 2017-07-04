@@ -183,19 +183,19 @@ def test_provision_from_template_using_rest(
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
-        test_flag: provision
+        test_flag: provision, rest
     """
     if 'flavors' not in rest_api.collections.all_names:
         pytest.skip("This appliance does not have `flavors` collection.")
     image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
-    if ':' in provisioning['instance_type'] and provider.type in ['ec2', 'gce']:
-        instance_type = provisioning['instance_type'].split(":")[0].strip()
+    if ':' in provisioning['instance_type'] and provider.one_of(EC2Provider, GCEProvider):
+        instance_type = provisioning['instance_type'].split(':')[0].strip()
     elif provider.type == 'azure':
         instance_type = provisioning['instance_type'].lower()
     else:
         instance_type = provisioning['instance_type']
     flavors = rest_api.collections.flavors.find_by(name=instance_type)
-    assert len(flavors) > 0
+    assert flavors
     # TODO: Multi search when it works
     for flavor in flavors:
         if flavor.ems.name == provider.name:
@@ -259,27 +259,30 @@ def test_provision_from_template_using_rest(
             pytest.fail("Error when provisioning: `{}`".format(request.message))
         return request.request_state.lower() in {"finished", "provisioned"}
 
-    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=3000, delay=10, message="REST provisioning finishes")
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
-        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
+        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider))
-def test_ec2_manual_placement_using_rest(
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider, OpenStackProvider))
+def test_manual_placement_using_rest(
         request, setup_provider, provider, vm_name, rest_api, provisioning):
-    """ Tests provisioning ec2 instance with manual placement using the REST API.
+    """ Tests provisioning cloud instance with manual placement using the REST API.
 
     Metadata:
-        test_flag: provision
+        test_flag: provision, rest
     """
     image_guid = rest_api.collections.templates.get(name=provisioning['image']['name']).guid
     provider_rest = rest_api.collections.providers.get(name=provider.name)
     security_group_name = provisioning['security_group'].split(':')[0].strip()
-    instance_type = provisioning['instance_type'].split(':')[0].strip()
+    if ':' in provisioning['instance_type'] and provider.one_of(EC2Provider):
+        instance_type = provisioning['instance_type'].split(':')[0].strip()
+    else:
+        instance_type = provisioning['instance_type']
 
     flavors = rest_api.collections.flavors.find_by(name=instance_type)
-    assert len(flavors) > 0
+    assert flavors
     flavor = None
     for flavor in flavors:
         if flavor.ems_id == provider_rest.id:
@@ -288,31 +291,43 @@ def test_ec2_manual_placement_using_rest(
         pytest.fail("Cannot find flavour.")
 
     provider_data = rest_api.get(provider_rest._href +
-        '?attributes=cloud_networks,cloud_subnets,security_groups')
+        '?attributes=cloud_networks,cloud_subnets,security_groups,cloud_tenants')
 
-    assert len(provider_data['cloud_networks']) > 0
+    # find out cloud network
+    assert provider_data['cloud_networks']
+    cloud_network_name = provisioning.get('cloud_network')
     cloud_network = None
     for cloud_network in provider_data['cloud_networks']:
+        # If name of cloud network is available, find match.
+        # Otherwise just "enabled" is enough.
+        if cloud_network_name and cloud_network_name != cloud_network['name']:
+            continue
         if cloud_network['enabled']:
             break
     else:
         pytest.fail("Cannot find cloud network.")
 
-    assert len(provider_data['security_groups']) > 0
+    # find out security group
+    assert provider_data['security_groups']
     security_group = None
-    for security_group in provider_data['security_groups']:
-        if ('cloud_network_id' in security_group and
-                security_group['cloud_network_id'] == cloud_network['id'] and
-                security_group['name'] == security_group_name):
+    for group in provider_data['security_groups']:
+        if (group.get('cloud_network_id') == cloud_network['id'] and
+                group['name'] == security_group_name):
+            security_group = group
             break
-    else:
+        # OpenStack doesn't seem to have the "cloud_network_id" attribute.
+        # At least try to find the group where the group name matches.
+        elif not security_group and group['name'] == security_group_name:
+            security_group = group
+    if not security_group:
         pytest.fail("Cannot find security group.")
 
-    assert len(provider_data['cloud_subnets']) > 0
+    # find out cloud subnet
+    assert provider_data['cloud_subnets']
     cloud_subnet = None
     for cloud_subnet in provider_data['cloud_subnets']:
-        if (cloud_subnet['cloud_network_id'] == cloud_network['id'] and
-                cloud_subnet['status'] == 'available'):
+        if (cloud_subnet.get('cloud_network_id') == cloud_network['id'] and
+                cloud_subnet['status'] in ('available', 'active')):
             break
     else:
         pytest.fail("Cannot find cloud subnet.")
@@ -324,11 +339,28 @@ def test_ec2_manual_placement_using_rest(
                 return subnet['availability_zone_id']
         return False
 
-    if 'availability_zone_id' in cloud_subnet:
+    # find out availability zone
+    availability_zone_id = None
+    if provisioning.get('availability_zone'):
+        availability_zone_entities = rest_api.collections.availability_zones.find_by(
+            name=provisioning['availability_zone'])
+        if availability_zone_entities and availability_zone_entities[0].ems_id == flavor.ems_id:
+            availability_zone_id = availability_zone_entities[0].id
+    if not availability_zone_id and 'availability_zone_id' in cloud_subnet:
         availability_zone_id = cloud_subnet['availability_zone_id']
-    else:
+    if not availability_zone_id:
         availability_zone_id, _ = wait_for(
             _find_availability_zone_id, num_sec=100, delay=5, message="availability_zone present")
+
+    # find out cloud tenant
+    cloud_tenant_id = None
+    tenant_name = provisioning.get('cloud_tenant')
+    if tenant_name:
+        for tenant in provider_data.get('cloud_tenants', []):
+            if (tenant['name'] == tenant_name and
+                    tenant['enabled'] and
+                    tenant['ems_id'] == flavor.ems_id):
+                cloud_tenant_id = tenant['id']
 
     provision_data = {
         "version": "1.1",
@@ -362,6 +394,8 @@ def test_ec2_manual_placement_using_rest(
         "miq_custom_attributes": {
         }
     }
+    if cloud_tenant_id:
+        provision_data['vm_fields']['cloud_tenant'] = cloud_tenant_id
 
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
@@ -375,10 +409,10 @@ def test_ec2_manual_placement_using_rest(
             pytest.fail("Error when provisioning: `{}`".format(request.message))
         return request.request_state.lower() in ('finished', 'provisioned')
 
-    wait_for(_finished, num_sec=1000, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=3000, delay=10, message="REST provisioning finishes")
     wait_for(
         lambda: provider.mgmt.does_vm_exist(vm_name),
-        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
+        num_sec=1000, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
 VOLUME_METHOD = ("""
