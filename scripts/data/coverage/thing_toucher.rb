@@ -5,6 +5,7 @@
 INCLUDE_GLOBS = [
   'lib/**/*.rb',
   'app/**/*.rb',
+  '/opt/rh/cfme-gemset/bundler/gems/manageiq-*/app/**/*.rb',
 ]
 
 # EXCLUDE_GLOBS comes from the test_coverage script. Additionally, it filters
@@ -20,6 +21,8 @@ EXCLUDE_GLOBS = [
   'lib/tasks/**',
   'lib/workers/**',
   'app/models/**',
+  # no gem models
+  '/opt/rh/cfme-gemset/bundler/gems/manageiq-*/app/models/**',
 ]
 
 # Touch ALL THE THINGS
