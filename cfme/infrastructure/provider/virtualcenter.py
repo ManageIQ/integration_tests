@@ -16,6 +16,7 @@ class VMwareProvider(InfraProvider):
     mgmt_class = VMWareSystem
     db_types = ["Vmware::InfraManager"]
     endpoints_form = VirtualCenterEndpointForm
+    discover_dict = {"vmware": True}
 
     def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
@@ -61,8 +62,3 @@ class VMwareProvider(InfraProvider):
         return {'name': self.name,
                 'prov_type': 'VMware vCenter'
                 }
-
-    @staticmethod
-    def discover_dict():
-        """Returns the discovery dict"""
-        return {"vmware": True}

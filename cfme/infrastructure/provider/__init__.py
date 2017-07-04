@@ -207,11 +207,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     def view_value_mapping(self):
         return {'name': self.name}
 
-    @staticmethod
-    def discover_dict():
-        """Returns the discovery dict, should be overidden"""
-        raise NotImplementedError("This provider does not support discovery")
-
 
 @navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
@@ -372,7 +367,7 @@ def discover(discover_cls, cancel=False, start_ip=None, end_ip=None):
         end_ip: String end of the IP range for discovery
     """
     form_data = {}
-    form_data.update(discover_cls.discover_dict())
+    form_data.update(discover_cls.discover_dict)
 
     if start_ip:
         for idx, octet in enumerate(start_ip.split('.'), start=1):
