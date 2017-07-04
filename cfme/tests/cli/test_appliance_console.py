@@ -46,6 +46,18 @@ def test_black_console_set_hostname(appliance):
     assert return_code == 0
 
 
+@pytest.mark.parametrize('timezone', [('3', 'Antarctica/Casey'), ('4', 'Arctic/Longyearbyen'),
+    ('6', 'Atlantic/Azores'), ('7', 'Australia/Adelaide'), ('9', 'Indian/Antananarivo')])
+def test_black_console_set_timezone(request, timezone, temp_appliance_preconfig_modscope):
+    """'ap' launch appliance_console, '' clear info screen, '2/5' set timezone, 'opt' select
+    region, 'timezone' selects zone, '1' selects local area, 'y' confirm slection, '' finish."""
+    opt = '2' if temp_appliance_preconfig_modscope.version >= "5.8" else '5'
+    command_set = ('ap', '', opt, timezone[0], '1', 'y', '')
+    temp_appliance_preconfig_modscope.appliance_console.run_commands(command_set)
+
+    temp_appliance_preconfig_modscope.appliance_console.timezone_check(timezone)
+
+
 def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'n' don't create dedicated db, '0'
