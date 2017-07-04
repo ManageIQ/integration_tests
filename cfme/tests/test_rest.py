@@ -12,6 +12,7 @@ from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
 from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
 from fixtures.provider import setup_one_or_skip
+from utils.rest import assert_response
 from utils.providers import ProviderFilter
 from utils.version import current_version
 from utils.wait import wait_for, wait_for_decorator
@@ -53,7 +54,7 @@ def test_vm_scan(appliance, vm, from_detail):
         response = rest_vm.action.scan()
     else:
         response, = appliance.rest_api.collections.vms.action.scan(rest_vm)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
     @wait_for_decorator(timeout="5m", delay=5, message="REST running scanning vm finishes")
     def _finished():
@@ -116,7 +117,7 @@ def test_query_simple_collections(appliance, collection_name):
         test_flag: rest
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     collection.reload()
     list(collection)
 
@@ -143,7 +144,7 @@ def test_select_attributes(appliance, collection_name):
     collection = getattr(appliance.rest_api.collections, collection_name)
     response = appliance.rest_api.get(
         '{}{}'.format(collection._href, '?expand=resources&attributes=id'))
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     for resource in response['resources']:
         assert 'id' in resource
         expected_len = 2 if 'href' in resource else 1
@@ -163,7 +164,7 @@ def test_add_picture(appliance):
         "extension": "png",
         "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
                    "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     collection.reload()
     assert collection.count == count + 1
 
@@ -182,7 +183,7 @@ def test_add_picture_invalid_extension(appliance):
             "extension": "xcf",
             "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
             "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
-    assert appliance.rest_api.response.status_code == 400
+    assert_response(appliance, http_status=400)
     collection.reload()
     assert collection.count == count
 
@@ -200,7 +201,7 @@ def test_add_picture_invalid_data(appliance):
         collection.action.create({
             "extension": "png",
             "content": "invalid"})
-    assert appliance.rest_api.response.status_code == 400
+    assert_response(appliance, http_status=400)
     collection.reload()
     assert collection.count == count
 
@@ -213,7 +214,7 @@ def test_http_options(appliance):
         test_flag: rest
     """
     assert 'boot_time' in appliance.rest_api.collections.vms.options()['attributes']
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
@@ -226,7 +227,7 @@ def test_http_options_node_types(appliance, collection_name):
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
     assert 'node_types' in collection.options()['data']
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
@@ -237,7 +238,7 @@ def test_http_options_subcollections(appliance):
         test_flag: rest
     """
     assert 'tags' in appliance.rest_api.collections.vms.options()['subcollections']
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
@@ -384,11 +385,11 @@ def test_resources_hiding(appliance):
     """
     roles = appliance.rest_api.collections.roles
     resources_visible = appliance.rest_api.get(roles._href + '?filter[]=read_only=true')
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     assert 'resources' in resources_visible
     resources_hidden = appliance.rest_api.get(
         roles._href + '?filter[]=read_only=true&hide=resources')
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     assert 'resources' not in resources_hidden
     assert resources_hidden['subcount'] == resources_visible['subcount']
 
@@ -404,10 +405,10 @@ def test_sorting_by_attributes(appliance):
         appliance.rest_api.collections.groups._href,
         '?expand=resources&attributes=id&sort_by=id&sort_order={}')
     response_asc = appliance.rest_api.get(url_string.format('asc'))
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     assert 'resources' in response_asc
     response_desc = appliance.rest_api.get(url_string.format('desc'))
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     assert 'resources' in response_desc
     assert response_asc['subcount'] == response_desc['subcount']
 
@@ -433,7 +434,7 @@ class TestBulkQueryRESTAPI(object):
         data0, data1, data2 = collection[0]._data, collection[1]._data, collection[2]._data
         response = appliance.rest_api.collections.events.action.query(
             {'id': data0['id']}, {'href': data1['href']}, {'guid': data2['guid']})
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == 3
         assert (data0 == response[0]._data and
                 data1 == response[1]._data and
@@ -449,7 +450,7 @@ class TestBulkQueryRESTAPI(object):
         data = appliance.rest_api.collections.users[0]._data
         response = appliance.rest_api.collections.users.action.query(
             {'name': data['name']}, {'userid': data['userid']})
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == 2
         assert data['id'] == response[0]._data['id'] == response[1]._data['id']
 
@@ -464,7 +465,7 @@ class TestBulkQueryRESTAPI(object):
         data0, data1 = collection[0]._data, collection[1]._data
         response = appliance.rest_api.collections.roles.action.query(
             {'name': data0['name']}, {'name': data1['name']})
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == 2
         assert data0 == response[0]._data and data1 == response[1]._data
 
@@ -479,7 +480,7 @@ class TestBulkQueryRESTAPI(object):
         data0, data1 = collection[0]._data, collection[1]._data
         response = appliance.rest_api.collections.groups.action.query(
             {'description': data0['description']}, {'description': data1['description']})
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == 2
         assert data0 == response[0]._data and data1 == response[1]._data
 
@@ -489,7 +490,7 @@ class TestArbitrationSettingsRESTAPI(object):
     def arbitration_settings(self, request, appliance):
         num_settings = 2
         response = _arbitration_settings(request, appliance.rest_api, num=num_settings)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num_settings
         return response
 
@@ -512,13 +513,12 @@ class TestArbitrationSettingsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == 'delete' else 200
         for setting in arbitration_settings:
             setting.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            assert_response(appliance)
             with error.expected('ActiveRecord::RecordNotFound'):
                 setting.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_delete_arbitration_settings_from_collection(self, appliance, arbitration_settings):
@@ -529,10 +529,10 @@ class TestArbitrationSettingsRESTAPI(object):
         """
         collection = appliance.rest_api.collections.arbitration_settings
         collection.action.delete(*arbitration_settings)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_settings)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize(
@@ -552,12 +552,12 @@ class TestArbitrationSettingsRESTAPI(object):
             edited = []
             for i in range(num_settings):
                 edited.append(arbitration_settings[i].action.edit(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             for i in range(num_settings):
                 new[i].update(arbitration_settings[i]._ref_repr())
             edited = appliance.rest_api.collections.arbitration_settings.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         assert len(edited) == num_settings
         for i in range(num_settings):
             assert (edited[i].name == new[i]['name'] and
@@ -569,7 +569,7 @@ class TestArbitrationRulesRESTAPI(object):
     def arbitration_rules(self, request, appliance):
         num_rules = 2
         response = _arbitration_rules(request, appliance.rest_api, num=num_rules)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num_rules
         return response
 
@@ -594,10 +594,10 @@ class TestArbitrationRulesRESTAPI(object):
         """
         for entity in arbitration_rules:
             entity.action.delete.POST()
-            assert appliance.rest_api.response
+            assert_response(appliance)
             with error.expected('ActiveRecord::RecordNotFound'):
                 entity.action.delete.POST()
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
     def test_delete_arbitration_rules_from_collection(self, arbitration_rules, appliance):
@@ -608,10 +608,10 @@ class TestArbitrationRulesRESTAPI(object):
         """
         collection = appliance.rest_api.collections.arbitration_rules
         collection.action.delete(*arbitration_rules)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_rules)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
     @pytest.mark.parametrize(
@@ -630,12 +630,12 @@ class TestArbitrationRulesRESTAPI(object):
             edited = []
             for i in range(num_rules):
                 edited.append(arbitration_rules[i].action.edit(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             for i in range(num_rules):
                 new[i].update(arbitration_rules[i]._ref_repr())
             edited = appliance.rest_api.collections.arbitration_rules.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         assert len(edited) == num_rules
         for i in range(num_rules):
             assert edited[i].description == new[i]['description']
@@ -666,10 +666,10 @@ class TestNotificationsRESTAPI(object):
         if from_detail:
             for ent in notifications:
                 ent.action.mark_as_seen()
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             appliance.rest_api.collections.notifications.action.mark_as_seen(*notifications)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
 
         for ent in notifications:
             ent.reload()
@@ -688,14 +688,13 @@ class TestNotificationsRESTAPI(object):
         collection = appliance.rest_api.collections.notifications
         collection.reload()
         notifications = [collection[-i] for i in range(1, 3)]
-        status = 204 if method == 'delete' else 200
 
         for entity in notifications:
             entity.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            assert_response(appliance)
             with error.expected('ActiveRecord::RecordNotFound'):
                 entity.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_delete_notifications_from_collection(self, appliance, generate_notifications):
@@ -709,7 +708,7 @@ class TestNotificationsRESTAPI(object):
         notifications = [collection[-i] for i in range(1, 3)]
 
         collection.action.delete(*notifications)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
             collection.action.delete(*notifications)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
