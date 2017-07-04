@@ -37,7 +37,7 @@ from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
     ViewChangeButton, CheckableBootstrapTreeview, FlashMessages)
 
-from cfme.exceptions import ItemNotFound, ManyItemsFound
+from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
 
 class DynaTree(Widget):
@@ -1786,7 +1786,7 @@ class FileInput(BaseFileInput):
         return super(FileInput, self).fill(value)
 
 
-class BaseQuadIconItem(ParametrizedView, ClickableMixin):
+class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     PARAMETERS = ('name',)
     ROOT = ParametrizedLocator('.//table[./tbody/tr/td/a[contains(@title, {name|quote})]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
@@ -1825,15 +1825,15 @@ class BaseQuadIconItem(ParametrizedView, ClickableMixin):
             list_exists = self.browser.element(self.LIST).is_displayed()
         except NoSuchElementException:
             list_exists = False
-        return not list_exists and super(BaseQuadIconItem, self).is_displayed
+        return not list_exists and super(BaseQuadIconEntity, self).is_displayed
 
 
-class BaseTileIconItem(ParametrizedView):
+class BaseTileIconEntity(ParametrizedView):
     PARAMETERS = ('name',)
     ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/a[contains(@title, '
                                '{name|quote})]]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
-    quad_icon = ParametrizedView.nested(BaseQuadIconItem)
+    quad_icon = ParametrizedView.nested(BaseQuadIconEntity)
 
     @property
     def is_checked(self):
@@ -1869,13 +1869,13 @@ class BaseTileIconItem(ParametrizedView):
     @property
     def is_displayed(self):
         try:
-            return super(BaseTileIconItem, self).is_displayed and \
-                self.browser.is_displayed(self.LIST)
+            return super(BaseTileIconEntity, self).is_displayed and \
+                   self.browser.is_displayed(self.LIST)
         except NoSuchElementException:
             return False
 
 
-class BaseListItem(ParametrizedView, ClickableMixin):
+class BaseListEntity(ParametrizedView, ClickableMixin):
     PARAMETERS = ('name',)
     TABLE_LOCATOR = ParametrizedLocator('.//table[.//td[normalize-space(.)={name|quote}]]')
     ROOT = ParametrizedLocator('.//tr[./td[normalize-space(.)={name|quote}]]')
@@ -1911,17 +1911,17 @@ class BaseListItem(ParametrizedView, ClickableMixin):
         return self.check(values)
 
 
-class BaseItem(View):
-    quad_item = BaseQuadIconItem
-    list_item = BaseListItem
-    tile_item = BaseTileIconItem
+class BaseEntity(View):
+    quad_entity = BaseQuadIconEntity
+    list_entity = BaseListEntity
+    tile_entity = BaseTileIconEntity
 
     def __init__(self, parent, name, logger=None):
         View.__init__(self, parent, logger=logger)
         self.name = name
 
-    def _get_existing_item(self):
-        for item in (self.quad_item, self.tile_item, self.list_item):
+    def _get_existing_entity(self):
+        for item in (self.quad_entity, self.tile_entity, self.list_entity):
             if item(name=self.name).is_displayed:
                 return item(name=self.name)
         else:
@@ -1931,50 +1931,51 @@ class BaseItem(View):
         if name.startswith('__'):
             return self.__dict__[name]
 
-        item = self._get_existing_item()
+        item = self._get_existing_entity()
         if hasattr(item, name):  # needed for is displayed
             return getattr(item, name)
 
     def __str__(self):
-        return str(self._get_existing_item())
+        return str(self._get_existing_entity())
 
     def __repr__(self):
-        return repr(self._get_existing_item())
+        return repr(self._get_existing_entity())
 
 
-class ItemsConditionalView(View):
+class EntitiesConditionalView(View):
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
 
     @property
-    def item_names(self):
+    def entity_names(self):
         br = self.browser
         return [br.get_attribute('title', el) for el in br.elements(self.elements)]
 
     def get_all(self, surf_pages=False):
         """
-        obtains all items like QuadIcon displayed by view
+        obtains all entities like QuadIcon displayed by view
         Args:
-            surf_pages (bool): current page items if False, all items otherwise
+            surf_pages (bool): current page entities if False, all entities otherwise
 
-        Returns: all items (QuadIcon/etc.) displayed by view
+        Returns: all entities (QuadIcon/etc.) displayed by view
         """
+        item = self.parent.item_class
         if not surf_pages:
-            return [BaseItem(parent=self, name=name) for name in self.item_names]
+            return [item(parent=self, name=name) for name in self.entity_names]
         else:
             items = []
             for _ in self.parent.paginator.pages():
-                items.extend([BaseItem(parent=self, name=name)
-                              for name in self.item_names])
+                items.extend([item(parent=self, name=name)
+                              for name in self.entity_names])
             return items
 
-    def get_items(self, by_name=None, surf_pages=False):
+    def get_entities(self, by_name=None, surf_pages=False):
         """
-        obtains all matched items like QuadIcon displayed by view
+        obtains all matched entities like QuadIcon displayed by view
         Args:
-            by_name (str): only items which match to by_name will be returned
-            surf_pages (bool): current page items if False, all items otherwise
+            by_name (str): only entities which match to by_name will be returned
+            surf_pages (bool): current page entities if False, all entities otherwise
 
-        Returns: all matched items (QuadIcon/etc.) displayed by view
+        Returns: all matched entities (QuadIcon/etc.) displayed by view
         """
         items = self.get_all(surf_pages)
         remaining_items = []
@@ -1984,61 +1985,89 @@ class ItemsConditionalView(View):
             # todo: by_type and by_regexp will be implemented later if needed
         return remaining_items
 
-    def get_item(self, by_name=None, surf_pages=False):
+    def get_entity(self, by_name=None, surf_pages=False):
         """
-        obtains one item matched to by_name
-        raises exception if no items or several items were found
+        obtains one entity matched to by_name
+        raises exception if no entities or several entities were found
         Args:
-            by_name (str): only item which match to by_name will be returned
-            surf_pages (bool): current page items if False, all items otherwise
+            by_name (str): only entity which match to by_name will be returned
+            surf_pages (bool): current page entity if False, all entities otherwise
 
-        Returns: matched item (QuadIcon/etc.)
+        Returns: matched entities (QuadIcon/etc.)
         """
-        items = self.get_items(by_name=by_name, surf_pages=surf_pages)
+        items = self.get_entities(by_name=by_name, surf_pages=surf_pages)
         if len(items) == 0:
             raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
         elif len(items) > 1:
-            raise ManyItemsFound("Several items with {name} were found".format(name=by_name))
+            raise ManyEntitiesFound("Several entities with {name} were found".format(name=by_name))
         return items[0]
 
-    def get_first_item(self, by_name=None):
+    def get_first_entity(self, by_name=None):
         """
-        obtains one item matched to by_name and stops on that page
-        raises exception if no items or several items were found
+        obtains one entity matched to by_name and stops on that page
+        raises exception if no entity or several entities were found
         Args:
-            by_name (str): only item which match to by_name will be returned
+            by_name (str): only entity which match to by_name will be returned
 
-        Returns: matched item (QuadIcon/etc.)
+        Returns: matched entity (QuadIcon/etc.)
         """
+        item = self.parent.item_class
         for _ in self.parent.paginator.pages():
-            found_items = [BaseItem(parent=self, name=name) for name in self.item_names
+            found_items = [item(parent=self, name=name) for name in self.entity_names
                            if by_name == name]
             if found_items:
                 return found_items[-1]
 
-        raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
+        raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
 
 
-class BaseItemsView(View):
+class BaseEntitiesView(View):
     """
-    should represent the view with different items like providers
+    should represent the view with different entities like providers
     """
+    entity_class = BaseEntity
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
     paginator = View.nested(PaginationPane)
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
 
-    items = ConditionalSwitchableView(reference='parent.toolbar.view_selector')
+    entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector')
 
-    @items.register('Grid View', default=True)
-    class GridView(ItemsConditionalView):
+    @entities.register('Grid View', default=True)
+    class GridView(EntitiesConditionalView):
         pass
 
-    @items.register('List View')
-    class ListView(ItemsConditionalView):
+    @entities.register('List View')
+    class ListView(EntitiesConditionalView):
         elements = Table(locator='//div[@id="list_grid"]/table')
 
-    @items.register('Tile View')
-    class TileView(ItemsConditionalView):
+    @entities.register('Tile View')
+    class TileView(EntitiesConditionalView):
         pass
+
+
+class ProviderQuadIconEntity(BaseQuadIconEntity):
+    @property
+    def data(self):
+        br = self.browser
+        return {
+            "no_host": br.text(self.QUADRANT.format(pos='a')),
+            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
+            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
+        }
+
+
+class ProviderTileIconEntity(BaseTileIconEntity):
+    quad_icon = ParametrizedView.nested(ProviderQuadIconEntity)
+    pass
+
+
+class ProviderListEntity(BaseListEntity):
+    pass
+
+
+class ProviderItem(BaseEntity):
+    quad_entity = ProviderQuadIconEntity
+    list_entity = ProviderListEntity
+    tile_entity = ProviderTileIconEntity

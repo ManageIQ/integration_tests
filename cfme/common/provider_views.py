@@ -15,9 +15,10 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Table,
                                   PaginationPane,
                                   FileInput,
-                                  BaseItemsView,
+                                  BaseEntitiesView,
                                   DynaTree,
-                                  BootstrapTreeview)
+                                  BootstrapTreeview,
+                                  ProviderItem)
 
 
 class ProviderDetailsToolBar(View):
@@ -258,8 +259,7 @@ class ProviderNodesView(BaseLoggedInPage):
     """
     title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(NodesToolBar)
-    contents = View.nested(View)  # left it for future
-    paginator = View.nested(PaginationPane)
+    entities = View.nested(View)  # left it for future
 
     @property
     def is_displayed(self):
@@ -287,6 +287,10 @@ class ProviderSideBar(View):
     pass
 
 
+class ProviderItemsView(BaseEntitiesView):
+    entity_class = ProviderItem
+
+
 class ProvidersView(BaseLoggedInPage):
     """
      represents Main view displaying all providers
@@ -297,7 +301,7 @@ class ProvidersView(BaseLoggedInPage):
 
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
-    items = View.nested(BaseItemsView)
+    items = View.nested(ProviderItemsView)
 
 
 class InfraProvidersView(ProvidersView):

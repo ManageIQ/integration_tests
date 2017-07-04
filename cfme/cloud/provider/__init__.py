@@ -96,7 +96,7 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         tb = self.view.toolbar
-        paginator = self.view.paginator
+        paginator = self.view.entities.paginator
         if 'Grid View' not in tb.view_selector.selected:
             tb.view_selector.select('Grid View')
         if paginator.exists:
@@ -128,7 +128,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
+        self.prerequisite_view.items.get_entity(by_name=self.obj.name).click()
 
 
 @navigator.register(CloudProvider, 'Edit')
@@ -137,7 +137,7 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.items.get_entity(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Cloud Provider')
 
 
@@ -156,7 +156,7 @@ class ManagePolicies(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.items.get_entity(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
@@ -175,7 +175,7 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.items.get_entity(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -249,6 +249,6 @@ def discover(credential, discover_cls, cancel=False):
 def wait_for_a_provider():
     view = navigate_to(CloudProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    wait_for(lambda: int(view.paginator.items_amount), fail_condition=0,
+    wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
              message="Wait for any provider to appear", num_sec=1000,
              fail_func=view.browser.refresh)

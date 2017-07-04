@@ -3,9 +3,10 @@ from collections import Iterable
 from functools import partial
 
 from manageiq_client.api import APIException
-from widgetastic.widget import View, Text, ParametrizedView
+from widgetastic.widget import View, Text
 from widgetastic_patternfly import Input, Button
 
+import cfme.fixtures.pytest_selenium as sel
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential, AzureCredential,
     ServiceAccountCredential)
@@ -13,7 +14,6 @@ from cfme.common.provider_views import (InfraProvidersView,
                                         CloudProvidersView,
                                         InfraProviderDetailsView,
                                         CloudProviderDetailsView)
-import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
 from cfme.web_ui import (
@@ -30,7 +30,6 @@ from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
 from utils.wait import wait_for, RefreshTimer
-from widgetastic_manageiq import BaseQuadIconItem, BaseTileIconItem, BaseListItem, BaseItem
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -1000,29 +999,3 @@ class DefaultEndpointForm(View):
     change_password = Text(locator='.//a[normalize-space(.)="Change stored password"]')
 
     validate = Button('Validate')
-
-
-class ProviderQuadIconItem(BaseQuadIconItem):
-    @property
-    def data(self):
-        br = self.browser
-        return {
-            "no_host": br.text(self.QUADRANT.format(pos='a')),
-            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
-            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
-        }
-
-
-class ProviderTileIconItem(BaseTileIconItem):
-    quad_icon = ParametrizedView.nested(ProviderQuadIconItem)
-    pass
-
-
-class ProviderListItem(BaseListItem):
-    pass
-
-
-class ProviderItem(BaseItem):
-    quad_item = ProviderQuadIconItem
-    list_item = ProviderListItem
-    tile_item = ProviderTileIconItem
