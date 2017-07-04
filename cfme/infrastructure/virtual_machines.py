@@ -12,7 +12,7 @@ from selenium.common.exceptions import NoSuchElementException
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
+from cfme.common.vm import VM as BaseVM, Template as BaseTemplate, EditServerRelationShipView
 from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
@@ -1170,3 +1170,12 @@ class VmReconfigure(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Reconfigure this VM')
+
+
+@navigator.register(Vm, 'EditManagementEngineRelationship')
+class VmEngineRelationship(CFMENavigateStep):
+    VIEW = EditServerRelationShipView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select('Edit Management Engine Relationship')

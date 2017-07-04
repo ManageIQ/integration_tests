@@ -10,7 +10,7 @@ from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Search)
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM
+from cfme.common.vm import VM, EditServerRelationShipView
 from cfme.exceptions import InstanceNotFound, DestinationNotFound, TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import ProvisioningForm
@@ -549,3 +549,12 @@ class Timelines(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
+
+
+@navigator.register(Instance, 'EditManagementEngineRelationship')
+class VmEngineRelationship(CFMENavigateStep):
+    VIEW = EditServerRelationShipView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select('Edit Management Engine Relationship')

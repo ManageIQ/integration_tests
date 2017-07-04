@@ -3,15 +3,16 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-
+from cfme.base.ui import Server
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.web_ui import InfoBlock
-from utils import version, testgen
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.providers import ProviderFilter
@@ -38,6 +39,20 @@ def new_vm(request, provider):
     return vm
 
 
+@pytest.yield_fixture(scope="module")
+def mark_vm_as_appliance(new_vm, appliance):
+    # set diagnostics vm
+    relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
+    server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
+    relations_view.server.select_by_visible_text(server_name)
+    relations_view.save.click()
+    yield
+    # unset diagnostics vm
+    relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
+    relations_view.server.select_by_visible_text('<Not a Server>')
+    relations_view.save.click()
+
+
 @pytest.fixture(scope="module")
 def gen_events(new_vm):
     logger.debug('Starting, stopping VM')
@@ -48,6 +63,8 @@ def gen_events(new_vm):
 
 def count_events(target, vm):
     timelines_view = navigate_to(target, 'Timelines')
+    if isinstance(target, Server):
+        timelines_view = timelines_view.timelines
     timelines_view.filter.time_position.select_by_visible_text('centered')
     timelines_view.filter.apply.click()
     found_events = []
@@ -63,7 +80,6 @@ def count_events(target, vm):
     return len(found_events)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_infra_provider_event(gen_events, new_vm):
     """Tests provider event on timelines
 
@@ -75,7 +91,6 @@ def test_infra_provider_event(gen_events, new_vm):
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_infra_host_event(gen_events, new_vm):
     """Tests host event on timelines
 
@@ -89,7 +104,6 @@ def test_infra_host_event(gen_events, new_vm):
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_infra_vm_event(gen_events, new_vm):
     """Tests vm event on timelines
 
@@ -101,7 +115,6 @@ def test_infra_vm_event(gen_events, new_vm):
              message="events to appear")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_infra_cluster_event(gen_events, new_vm):
     """Tests cluster event on timelines
 
@@ -111,6 +124,18 @@ def test_infra_cluster_event(gen_events, new_vm):
     all_clusters = new_vm.provider.get_clusters()
     cluster = next(cl for cl in all_clusters if cl.id == new_vm.cluster_id)
     wait_for(count_events, [cluster, new_vm], timeout='5m',
+             fail_condition=0, message="events to appear")
+
+
+@pytest.mark.meta(blockers=[BZ(1429962, forced_streams=["5.7"])])
+def test_infra_vm_diagnostic_timelines(gen_events, new_vm, mark_vm_as_appliance, appliance):
+    """Tests timelines on settings->diagnostics page
+
+    Metadata:
+        test_flag: timelines, provision
+    """
+    # go diagnostic timelines
+    wait_for(count_events, [appliance.server, new_vm], timeout='5m',
              fail_condition=0, message="events to appear")
 
 

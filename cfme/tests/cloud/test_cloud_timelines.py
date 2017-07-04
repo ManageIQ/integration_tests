@@ -2,6 +2,7 @@
 import pytest
 from time import sleep
 
+from cfme.base.ui import Server
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider.azure import AzureProvider
@@ -9,6 +10,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.wait import wait_for
@@ -57,6 +59,8 @@ def gen_events(new_instance):
 
 def count_events(target, vm):
     timelines_view = navigate_to(target, 'Timelines')
+    if isinstance(target, Server):
+        timelines_view = timelines_view.timelines
     timelines_view.filter.time_position.select_by_visible_text('centered')
     timelines_view.filter.apply.click()
     found_events = []
@@ -71,6 +75,20 @@ def count_events(target, vm):
 
     logger.info("found events: {evt}".format(evt="\n".join([repr(e) for e in found_events])))
     return len(found_events)
+
+
+@pytest.yield_fixture(scope="module")
+def mark_vm_as_appliance(new_instance, appliance):
+    # set diagnostics vm
+    relations_view = navigate_to(new_instance, 'EditManagementEngineRelationship')
+    server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
+    relations_view.server.select_by_visible_text(server_name)
+    relations_view.save.click()
+    yield
+    # unset diagnostics vm
+    relations_view = navigate_to(new_instance, 'EditManagementEngineRelationship')
+    relations_view.server.select_by_visible_text('<Not a Server>')
+    relations_view.save.click()
 
 
 def test_cloud_provider_event(gen_events, new_instance):
@@ -107,6 +125,18 @@ def test_cloud_instance_event(gen_events, new_instance):
     """
     wait_for(count_events, [new_instance, new_instance], timeout='5m', fail_condition=0,
              message="events to appear")
+
+
+@pytest.mark.meta(blockers=[BZ(1429962, forced_streams=["5.7"])])
+def test_cloud_diagnostic_timelines(gen_events, new_instance, mark_vm_as_appliance, appliance):
+    """Tests timelines on settings->diagnostics page
+
+    Metadata:
+        test_flag: timelines, provision
+    """
+    # go diagnostic timelines
+    wait_for(count_events, [appliance.server, new_instance], timeout='5m',
+             fail_condition=0, message="events to appear")
 
 
 @pytest.mark.manual
