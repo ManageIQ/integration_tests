@@ -14,6 +14,7 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.wait import wait_for
+from utils.version import current_version
 
 
 cfg_btn = partial(tb.select, "Configuration")
@@ -97,7 +98,8 @@ class Stack(Pretty, Navigatable):
     def get_tags(self):
         navigate_to(self, 'Details')
         row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
-                     "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
+                     "//td[img[contains(@src, 'smarttag')]]".format(
+            quoteattr("My Company Tags"))) if current_version() < '5.8' else "//td[i[contains(@class, 'fa-tag')]]"
         company_tag = sel.text(row).strip()
         return company_tag
 
