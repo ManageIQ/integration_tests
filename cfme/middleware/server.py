@@ -1,28 +1,28 @@
 import re
-from cfme.common import Taggable, UtilizationMixin
-from cfme.exceptions import MiddlewareServerNotFound,\
-    MiddlewareServerGroupNotFound
-from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware.provider import parse_properties, Container
-from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.web_ui import (
-    CheckboxTable, Form, Input, fill, InfoBlock
-)
-from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui import toolbar as tb
-from wrapanapi.hawkular import CanonicalPath
+
 from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
+from wrapanapi.hawkular import CanonicalPath
+
+from cfme.common import Taggable, UtilizationMixin
+from cfme.exceptions import MiddlewareServerNotFound, \
+    MiddlewareServerGroupNotFound
+from cfme.middleware.domain import MiddlewareDomain
+from cfme.middleware.provider import (
+    MiddlewareBase, download
+)
+from cfme.middleware.provider import (parse_properties, Container)
+from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.middleware.provider.middleware_views import (ServerAllView,
+    ServerDetailsView, ServerDatasourceAllView, ServerDeploymentAllView,
+    ServerMessagingAllView, ServerGroupDetailsView, AddDatasourceView,
+    AddJDBCDriverView, AddDeploymentView)
+from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.utils import attributize_string
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.providers import get_crud_by_name, list_providers_by_class
 from cfme.utils.varmeth import variable
-from cfme.middleware.provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
-from cfme.middleware.server_group import MiddlewareServerGroup
-from cfme.middleware.domain import MiddlewareDomain
-from selenium.common.exceptions import NoSuchElementException
-
-list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, feed=None, provider=None, server_group=None,
@@ -55,22 +55,12 @@ def _db_select_query(name=None, feed=None, provider=None, server_group=None,
 
 def _get_servers_page(provider=None, server_group=None):
     if provider:  # if provider instance is provided navigate through provider's servers page
-        navigate_to(provider, 'ProviderServers')
+        return navigate_to(provider, 'ProviderServers')
     elif server_group:
         # if server group instance is provided navigate through it's servers page
-        navigate_to(server_group, 'ServerGroupServers')
+        return navigate_to(server_group, 'ServerGroupServers')
     else:  # if None(provider) given navigate through all middleware servers page
-        navigate_to(MiddlewareServer, 'All')
-
-
-timeout_form = Form(
-    fields=[
-        ("timeout", Input("timeout", use_id=True)),
-        ('suspend_button', FormButton("Suspend")),
-        ('shutdown_button', FormButton("Shutdown")),
-        ('cancel_button', FormButton("Cancel"))
-    ]
-)
+        return navigate_to(MiddlewareServer, 'All')
 
 
 class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, UtilizationMixin):
@@ -110,36 +100,34 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         self.feed = kwargs['feed'] if 'feed' in kwargs else None
         self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
         if 'properties' in kwargs:
-            for property in kwargs['properties']:
+            for prop in kwargs['properties']:
                 # check the properties first, so it will not overwrite core attributes
-                if getattr(self, attributize_string(property), None) is None:
-                    setattr(self, attributize_string(property), kwargs['properties'][property])
+                if getattr(self, attributize_string(prop), None) is None:
+                    setattr(self, attributize_string(prop), kwargs['properties'][prop])
 
     @classmethod
     def servers(cls, provider=None, server_group=None, strict=True):
         servers = []
-        _get_servers_page(provider=provider, server_group=server_group)
-        if sel.is_displayed(list_tbl):
-            _provider = provider
-            from cfme.web_ui import paginator
-            for _ in paginator.pages():
-                for row in list_tbl.rows():
-                    if strict:
-                        _provider = get_crud_by_name(row.provider.text)
-                    servers.append(MiddlewareServer(
-                        name=row.server_name.text,
-                        feed=row.feed.text,
-                        hostname=row.host_name.text,
-                        product=row.product.text
-                        if row.product.text else None,
-                        provider=_provider))
+        view = _get_servers_page(provider=provider, server_group=server_group)
+        _provider = provider  # In deployment UI, we cannot get provider name on list all page
+        for _ in view.entities.paginator.pages():
+            for row in view.entities.elements:
+                if strict:
+                    _provider = get_crud_by_name(row.provider.text)
+                servers.append(MiddlewareServer(
+                    name=row.server_name.text,
+                    feed=row.feed.text,
+                    hostname=row.host_name.text,
+                    product=row.product.text
+                    if row.product.text else None,
+                    provider=_provider))
         return servers
 
     @classmethod
     def headers(cls):
-        navigate_to(MiddlewareServer, 'All')
-        headers = [sel.text(hdr).encode("utf-8")
-                   for hdr in sel.elements("//thead/tr/th") if hdr.text]
+        view = navigate_to(MiddlewareServer, 'All')
+        headers = [hdr.encode("utf-8")
+                   for hdr in view.entities.elements.headers if hdr]
         return headers
 
     @classmethod
@@ -197,12 +185,14 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         return getattr(server_mgmt, attributize_string('Server Group'), None) == server_group.name
 
     def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_ser = self.server(method='db')
             self.db_id = tmp_ser.db_id
         if refresh:
-            tb.refresh()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
+        return view
 
     @variable(alias='ui')
     def server(self):
@@ -243,7 +233,6 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
     @variable(alias='ui')
     def server_group(self):
         self.load_details()
-        navigate_to(self, 'ServerGroup')
         return MiddlewareServerGroup(
             provider=self.provider,
             name=self.get_detail("Properties", "Name"),
@@ -285,122 +274,150 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         return self.get_detail("Properties", "Server State") == 'Stopped'
 
     def shutdown_server(self, timeout=10, cancel=False):
-        self.load_details(refresh=True)
-        pwr_btn("Gracefully shutdown Server", invokes_alert=True)
-        fill(
-            timeout_form,
-            {"timeout": timeout},
-        )
-        sel.click(timeout_form.cancel_button if cancel else timeout_form.shutdown_button)
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Gracefully shutdown Server')
+        view.power_operation_form.fill({
+            "timeout": timeout,
+        })
+        view.power_operation_form.cancel_button.click() \
+            if cancel else view.power_operation_form.shutdown_button.click()
+        view.flash.assert_no_error()
 
     def restart_server(self):
-        self.load_details(refresh=True)
-        pwr_btn("Restart Server", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Restart Server', handle_alert=True)
 
     def start_server(self):
-        self.load_details(refresh=True)
-        pwr_btn("Start Server", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Start Server', handle_alert=True)
 
     def suspend_server(self, timeout=10, cancel=False):
-        self.load_details(refresh=True)
-        pwr_btn("Suspend Server", invokes_alert=True)
-        fill(
-            timeout_form,
-            {"timeout": timeout},
-        )
-        sel.click(timeout_form.cancel_button if cancel else timeout_form.suspend_button)
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Suspend Server')
+        view.power_operation_form.fill({
+            "timeout": timeout,
+        })
+        view.power_operation_form.cancel_button.click() \
+            if cancel else view.power_operation_form.suspend_button.click()
+        view.flash.assert_no_error()
 
     def resume_server(self):
-        self.load_details(refresh=True)
-        pwr_btn("Resume Server", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Resume Server', handle_alert=True)
 
     def reload_server(self):
-        self.load_details(refresh=True)
-        pwr_btn("Reload Server", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Reload Server', handle_alert=True)
 
     def stop_server(self):
-        self.load_details(refresh=True)
-        pwr_btn("Stop Server", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Stop Server', handle_alert=True)
 
     def kill_server(self):
-        self.load_details(refresh=True)
-        pwr_btn("Kill Server", invokes_alert=True)
-        sel.handle_alert()
-
-    def is_immutable(self):
-        return not (tb.exists("Power") or
-                    tb.exists("Deployments") or
-                    tb.exists("JDBC Drivers") or
-                    tb.exists("Datasources"))
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Kill Server', handle_alert=True)
 
     @classmethod
     def download(cls, extension, provider=None, server_group=None):
-        _get_servers_page(provider, server_group)
-        download(extension)
+        view = _get_servers_page(provider, server_group)
+        download(view, extension)
 
 
 @navigator.register(MiddlewareServer, 'All')
 class All(CFMENavigateStep):
+    VIEW = ServerAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Middleware', 'Servers')
 
-    def resetter(self):
-        # Reset view and selection
-        tb.select("List View")
-
 
 @navigator.register(MiddlewareServer, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = ServerDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
-        if self.obj.feed:
-            list_tbl.click_row_by_cells({'Server Name': self.obj.name,
-                                         'Feed': self.obj.feed})
-        elif self.obj.hostname:
-            list_tbl.click_row_by_cells({'Server Name': self.obj.name,
-                                         'Host Name': self.obj.hostname})
-        else:
-            list_tbl.click_row_by_cells({'Server Name': self.obj.name})
+    def step(self, *args, **kwargs):
+        try:
+            if self.obj.feed:
+                # TODO find_row_on_pages change to entities.get_entity()
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    server_name=self.obj.name, feed=self.obj.feed)
+            elif self.obj.hostname:
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    server_name=self.obj.name, host_name=self.obj.hostname)
+            else:
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements, server_name=self.obj.name)
+        except NoSuchElementException:
+            raise MiddlewareServerNotFound(
+                "Server '{}' not found in table".format(self.name))
+        row.click()
 
 
 @navigator.register(MiddlewareServer, 'ServerDatasources')
 class ServerDatasources(CFMENavigateStep):
+    VIEW = ServerDatasourceAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Datasources'))
+        self.prerequisite_view.entities.relationships.click_at('Middleware Datasources')
 
 
 @navigator.register(MiddlewareServer, 'ServerDeployments')
 class ServerDeployments(CFMENavigateStep):
+    VIEW = ServerDeploymentAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Deployments'))
+        self.prerequisite_view.entities.relationships.click_at('Middleware Deployments')
 
 
 @navigator.register(MiddlewareServer, 'ServerMessagings')
 class ServerMessagings(CFMENavigateStep):
+    VIEW = ServerMessagingAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Messagings'))
+        self.prerequisite_view.entities.relationships.click_at('Middleware Messagings')
 
 
 @navigator.register(MiddlewareServer, 'ServerGroup')
 class ServerGroup(CFMENavigateStep):
+    VIEW = ServerGroupDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
         try:
-            sel.click(InfoBlock.element('Relationships', 'Middleware Server Group'))
+            self.prerequisite_view.entities.relationships.click_at('Middleware Server Group')
         except NoSuchElementException:
             raise MiddlewareServerGroupNotFound('Server does not belong to Server Group')
+
+
+@navigator.register(MiddlewareServer, 'AddDatasource')
+class AddDatasource(CFMENavigateStep):
+    VIEW = AddDatasourceView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.datasources.item_select('Add Datasource')
+
+
+@navigator.register(MiddlewareServer, 'AddJDBCDriver')
+class AddJDBCDriver(CFMENavigateStep):
+    VIEW = AddJDBCDriverView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.drivers.item_select('Add JDBC Driver')
+
+
+@navigator.register(MiddlewareServer, 'AddDeployment')
+class AddDeployment(CFMENavigateStep):
+    VIEW = AddDeploymentView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.deployments.item_select('Add Deployment')

@@ -377,6 +377,13 @@ class PaginatorException(CFMEException):
     pass
 
 
+class MiddlewareProviderNotFound(CFMEException):
+    """
+    Raised if a specific Middleware Provider cannot be found.
+    """
+    pass
+
+
 class MiddlewareServerNotFound(CFMEException):
     """
     Raised if a specific Middleware Server cannot be found.
@@ -394,6 +401,27 @@ class MiddlewareServerGroupNotFound(CFMEException):
 class MiddlewareDomainNotFound(CFMEException):
     """
     Raised if a specific Middleware Domain cannot be found.
+    """
+    pass
+
+
+class MiddlewareDatasourceNotFound(CFMEException):
+    """
+    Raised if a specific Middleware Datasource cannot be found.
+    """
+    pass
+
+
+class MiddlewareDeploymentNotFound(CFMEException):
+    """
+    Raised if a specific Middleware Deployment cannot be found.
+    """
+    pass
+
+
+class MiddlewareMessagingNotFound(CFMEException):
+    """
+    Raised if a specific Middleware Messaging cannot be found.
     """
     pass
 

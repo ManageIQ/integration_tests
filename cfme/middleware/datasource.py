@@ -1,21 +1,22 @@
+
+from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.exceptions import NoSuchElementException
+from wrapanapi.hawkular import CanonicalPath
+
 from cfme.common import Taggable, UtilizationMixin
-from cfme.fixtures import pytest_selenium as sel
+from cfme.exceptions import MiddlewareDatasourceNotFound
+from cfme.middleware.provider import (
+    MiddlewareBase, download, get_server_name)
 from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.middleware.provider.middleware_views import (DatasourceDetailsView,
+                                                       DatasourceAllView)
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, flash, toolbar as tb
-from wrapanapi.hawkular import CanonicalPath
-from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.utils import attributize_string
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.providers import get_crud_by_name, list_providers_by_class
 from cfme.utils.varmeth import variable
-from cfme.middleware.provider import (
-    LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name, operations_btn)
-
-
-list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, nativeid=None, server=None, provider=None):
@@ -50,11 +51,11 @@ def _db_select_query(name=None, nativeid=None, server=None, provider=None):
 
 def _get_datasources_page(provider=None, server=None):
     if server:  # if server instance is provided navigate through server page
-        navigate_to(server, 'ServerDatasources')
+        return navigate_to(server, 'ServerDatasources')
     elif provider:  # if provider instance is provided navigate through provider page
-        navigate_to(provider, 'ProviderDatasources')
+        return navigate_to(provider, 'ProviderDatasources')
     else:  # if None(provider and server) given navigate through all middleware datasources page
-        navigate_to(MiddlewareDatasource, 'All')
+        return navigate_to(MiddlewareDatasource, 'All')
 
 
 class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMixin):
@@ -104,19 +105,15 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
     @classmethod
     def datasources(cls, provider=None, server=None):
         datasources = []
-        _get_datasources_page(provider=provider, server=server)
-        if sel.is_displayed(list_tbl):
-            from cfme.web_ui import paginator
-            for _ in paginator.pages():
-                for row in list_tbl.rows():
-                    _server = MiddlewareServer(provider=provider,
-                                               name=row.server.text,
-                                               hostname=row.host_name.text)
-                    datasources.append(MiddlewareDatasource(
-                        provider=provider,
-                        server=_server,
-                        name=row.datasource_name.text,
-                        hostname=row.host_name.text))
+        view = _get_datasources_page(provider=provider, server=server)
+        for _ in view.entities.paginator.pages():
+            for row in view.entities.elements:
+                _server = MiddlewareServer(provider=provider, name=row.server.text)
+                datasources.append(MiddlewareDatasource(
+                    provider=provider,
+                    server=_server,
+                    name=row.datasource_name.text,
+                    hostname=row.host_name.text))
         return datasources
 
     @classmethod
@@ -174,26 +171,20 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
 
     @classmethod
     def remove_from_list(cls, datasource):
-        _get_datasources_page(server=datasource.server)
-        from cfme.web_ui import paginator
-        if paginator.page_controls_exist():
-            paginator.results_per_page(1000)
-        list_tbl.select_row_by_cells({
-            'Datasource Name': datasource.name,
-            'Server': datasource.server.name,
-            'Host Name': datasource.hostname
-        })
-        operations_btn("Remove", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('The selected datasources were removed')
+        view = _get_datasources_page(server=datasource.server)
+        view.entities.get_item(by_name=datasource.name).check()
+        view.toolbar.configuration.item_select('Remove', handle_alert=True)
+        view.flash.assert_success_message('The selected datasources were removed')
 
     def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_dsource = self.datasource(method='db')
             self.db_id = tmp_dsource.db_id
         if refresh:
-            tb.refresh()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
+        return view
 
     @variable(alias='ui')
     def datasource(self):
@@ -245,41 +236,55 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
 
     @classmethod
     def download(cls, extension, provider=None, server=None):
-        _get_datasources_page(provider, server)
-        download(extension)
+        view = _get_datasources_page(provider, server)
+        download(view, extension)
 
-    def remove(self):
+    def delete(self, cancel=False):
         """
-        Clicks on "Remove" button of "Operations" menu item and verifies message shown
+        Deletes a datasource from CFME
+
+        :param cancel: Whether to cancel the deletion, defaults to False
         """
-        self.load_details()
-        operations_btn("Remove", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('The selected datasources were removed')
+        view = self.load_details()
+        view.toolbar.configuration.item_select('Remove', handle_alert=not cancel)
+
+        # flash message only displayed if it was deleted
+        if not cancel:
+            view.flash.assert_success_message('The selected datasources were removed')
 
 
 @navigator.register(MiddlewareDatasource, 'All')
 class All(CFMENavigateStep):
+    VIEW = DatasourceAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Middleware', 'Datasources')
 
     def resetter(self):
-        # Reset view and selection
-        tb.select("List View")
+        """Reset view and selection"""
+        self.view.entities.paginator.check_all()
+        self.view.entities.paginator.uncheck_all()
 
 
 @navigator.register(MiddlewareDatasource, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = DatasourceDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self):
-        from cfme.web_ui import paginator
-        if paginator.page_controls_exist():
-            paginator.results_per_page(1000)
-        list_tbl.click_row_by_cells({
-            'Datasource Name': self.obj.name,
-            'Server': self.obj.server.name,
-            'Host Name': self.obj.hostname
-        })
+    def step(self, *args, **kwargs):
+        try:
+            if self.obj.server:
+                # TODO find_row_on_pages change to entities.get_entity()
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    datasource_name=self.obj.name,
+                    server=self.obj.server.name)
+            else:
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    datasource_name=self.obj.name)
+        except NoSuchElementException:
+            raise MiddlewareDatasourceNotFound(
+                "Datasource '{}' not found in table".format(self.name))
+        row.click()

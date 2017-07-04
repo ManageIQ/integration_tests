@@ -1,19 +1,20 @@
-import fauxfactory
+
 import uuid
-
+import fauxfactory
 import pytest
+from copy import copy, deepcopy
 
-from cfme.utils import error
 from cfme.base.credential import Credential
+from cfme.common.provider_views import (MiddlewareProviderAddView,
+                                    MiddlewareProvidersView,
+                                    MiddlewareProviderDetailsView)
+from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.web_ui import fill, flash, form_buttons
-from cfme.fixtures import pytest_selenium as sel
-from cfme.exceptions import FlashMessageException
+from cfme.utils import error
 from cfme.utils import testgen
 from cfme.utils.update import update
 from cfme.utils.version import current_version
-from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -25,56 +26,66 @@ pytest_generate_tests = testgen.generate([MiddlewareProvider], scope='function')
 @pytest.mark.usefixtures('has_no_middleware_providers')
 def test_provider_add_with_bad_credentials(provider):
     """ Tests provider add with bad credentials"""
-    provider.credentials['default'] = Credential(
+    provider.endpoints['default'].credentials = Credential(
         principal='bad',
         secret='reallybad'
     )
     with error.expected('Credential validation was not successful: Invalid credentials'):
         provider.create(validate_credentials=True)
-    assert (not provider.add_provider_button.can_be_clicked)
+    view = provider.create_view(MiddlewareProviderAddView)
+    assert not view.add.active
 
 
 def test_add_cancelled_validation():
     """Tests that the flash message is correct when add is cancelled."""
     prov = HawkularProvider()
     prov.create(cancel=True)
-    flash.assert_message_match('Add of Middleware Provider was cancelled by the user')
+    view = prov.browser.create_view(MiddlewareProvidersView)
+    view.flash.assert_success_message('Add of Middleware Provider was cancelled by the user')
 
 
-def test_password_mismatch_validation(soft_assert):
+def test_password_mismatch_validation(provider, soft_assert):
     """ Tests password mismatch check """
-    prov = HawkularProvider()
-    cred = Credential(
+    prov = copy(provider)
+    endpoints = deepcopy(prov.endpoints)
+    endpoints['default'].credentials = Credential(
         principal='bad',
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(6)
     )
-    navigate_to(prov, 'Add')
-    fill(prov.properties_form, {"type_select": "Hawkular", "hostname_text": "test",
-                                "name_text": "test", "port_text": "8080"})
-    fill(cred.form, cred)
-    sel.wait_for_ajax()
-    soft_assert(not form_buttons.validate.can_be_clicked)
-    soft_assert(not prov.add_provider_button.can_be_clicked)
-    soft_assert(cred.form.default_verify_secret.angular_help_block == "Passwords do not match")
+    prov.endpoints = endpoints
+    with error.expected('Credential validation was successful'):
+        prov.create()
+    add_view = provider.create_view(MiddlewareProviderAddView)
+    endp_view = prov.endpoints_form(parent=add_view)
+    soft_assert(not endp_view.validate.active)
+    soft_assert(not add_view.add.active)
+    # TODO enable once confirm_password.help_block returns correct text
+    # soft_assert(endp_view.confirm_password.help_block == "Passwords do not match")
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:8241'])
 @pytest.mark.usefixtures('has_no_middleware_providers')
 def test_provider_add_with_invalid_port(provider, soft_assert):
     """ Tests provider add with bad port (non-numeric)"""
-    provider.port = fauxfactory.gen_alpha(6)
-    with error.expected(FlashMessageException):
-            provider.create(validate_credentials=False)
-    soft_assert(not provider.add_provider_button.can_be_clicked)
-    soft_assert(provider.properties_form.port_text.angular_help_block ==
+    prov = copy(provider)
+    endpoints = deepcopy(prov.endpoints)
+    endpoints['default'].api_port = fauxfactory.gen_alpha(6)
+    prov.endpoints = endpoints
+    with error.expected('Credential validation was successful'):
+        prov.create()
+    add_view = provider.create_view(MiddlewareProviderAddView)
+    endp_view = provider.endpoints_form(parent=add_view)
+    soft_assert(not add_view.add.active)
+    soft_assert(not endp_view.validate.active)
+    soft_assert(endp_view.api_port.help_block ==
                 "Must be a number (greater than 0)")
 
 
 @pytest.mark.usefixtures('has_no_middleware_providers')
 def test_provider_add_with_bad_port(provider):
     """ Tests provider add with bad port (incorrect)"""
-    provider.port = 8888
+    provider.endpoints['default'].api_port = 8888
     with error.expected('Credential validation was not successful: Unable to connect to {}:8888'
                         .format(provider.hostname)):
         with sel.ajax_timeout(120):
@@ -83,7 +94,7 @@ def test_provider_add_with_bad_port(provider):
 
 def test_provider_add_with_bad_hostname(provider):
     """ Tests provider add with bad hostname (incorrect)"""
-    provider.hostname = 'incorrect'
+    provider.endpoints['default'].hostname = 'incorrect'
     with error.expected(
             'Credential validation was not successful: Unable to connect to incorrect:{}'
             .format(provider.port)):
@@ -94,17 +105,26 @@ def test_provider_add_with_bad_hostname(provider):
 @pytest.mark.usefixtures('has_no_middleware_providers')
 def test_required_fields_validation(provider, soft_assert):
     """Test to validate all required fields while adding a provider"""
-    navigate_to(provider, 'Add')
-    cred = Credential('', '')
-    fill(provider.properties_form, {"type_select": "Hawkular"})
-    soft_assert(not provider.add_provider_button.can_be_clicked)
-    soft_assert(not form_buttons.validate.can_be_clicked)
-    soft_assert(provider.properties_form.name_text.angular_help_block == "Required")
-    soft_assert(provider.properties_form.hostname_text.angular_help_block == "Required")
-    soft_assert(provider.properties_form.port_text.angular_help_block == "Required")
-    soft_assert(cred.form.default_principal.angular_help_block == "Required")
-    soft_assert(cred.form.default_secret.angular_help_block == "Required")
-    soft_assert(cred.form.default_verify_secret.angular_help_block == "Required")
+    prov = copy(provider)
+    prov.name = ''
+    endpoints = deepcopy(prov.endpoints)
+    endpoints['default'].credentials = Credential('', '')
+    endpoints['default'].hostname = ''
+    prov.endpoints = endpoints
+    with error.expected('Credential validation was successful'):
+        prov.create()
+    add_view = provider.create_view(MiddlewareProviderAddView)
+    endp_view = provider.endpoints_form(parent=add_view)
+    soft_assert(not add_view.add.active)
+    soft_assert(not endp_view.validate.active)
+    soft_assert(add_view.name.help_block == "Required")
+    soft_assert(endp_view.hostname.help_block == "Required")
+    # TODO activate when api_port.help_block return value
+    # soft_assert(endp_view.api_port.help_block == "Required")
+    soft_assert(endp_view.username.help_block == "Required")
+    soft_assert(endp_view.password.help_block == "Required")
+    # TODO activate when confirm_password.help_block return value
+    # soft_assert(endp_view.confirm_password.help_block == "Required")
 
 
 @pytest.mark.usefixtures('setup_provider')
@@ -112,7 +132,7 @@ def test_duplicite_provider_creation(provider):
     """Tests that creation of already existing provider fails."""
     message = 'Name has already been taken, Host Name has already been taken'
     if current_version() >= '5.8':
-        message = 'Name has already been taken, Host Name has to be unique per provider type'
+        message = 'Name has already been taken'
     with error.expected(message):
         provider.create(cancel=False, validate_credentials=True)
 # TODO - this checks only hostname err msgs, we need two providers to check name err msg as well
@@ -153,5 +173,6 @@ def test_authentication(provider):
     Verifies that success message is shown.
     """
     provider.recheck_auth_status()
-    flash.assert_success_message('Authentication status will be saved'
+    view = provider.create_view(MiddlewareProviderDetailsView)
+    view.flash.assert_success_message('Authentication status will be saved'
         ' and workers will be restarted for the selected Middleware Provider')

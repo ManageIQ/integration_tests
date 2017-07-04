@@ -1,19 +1,21 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
 
 import re
+
+from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
+
 from cfme.common import Taggable
-from cfme.fixtures import pytest_selenium as sel
+from cfme.exceptions import MiddlewareDeploymentNotFound
 from cfme.middleware.provider import Deployable
+from cfme.middleware.provider import MiddlewareBase, download, get_server_name
 from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.middleware.provider.middleware_views import (DeploymentAllView,
+                                                       DeploymentDetailsView)
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, toolbar as tb
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.providers import get_crud_by_name, list_providers_by_class
 from cfme.utils.varmeth import variable
-from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
-
-list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, server=None, provider=None):
@@ -45,11 +47,11 @@ def _db_select_query(name=None, server=None, provider=None):
 
 def _get_deployments_page(provider, server):
     if server:  # if server instance is provided navigate through server page
-        navigate_to(server, 'ServerDeployments')
+        return navigate_to(server, 'ServerDeployments')
     elif provider:  # if provider instance is provided navigate through provider page
-        navigate_to(provider, 'ProviderDeployments')
+        return navigate_to(provider, 'ProviderDeployments')
     else:  # if None(provider and server) given navigate through all middleware deployments page
-        navigate_to(MiddlewareDeployment, 'All')
+        return navigate_to(MiddlewareDeployment, 'All')
 
 
 class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
@@ -95,22 +97,20 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
     @classmethod
     def deployments(cls, provider=None, server=None):
         deployments = []
-        _get_deployments_page(provider=provider, server=server)
-        if sel.is_displayed(list_tbl):
-            from cfme.web_ui import paginator
-            _provider = provider  # In deployment UI, we cannot get provider name on list all page
-            for _ in paginator.pages():
-                for row in list_tbl.rows():
-                    _server = MiddlewareServer(
-                        provider=provider,
-                        name=row.server.text,
-                        hostname=row.host_name.text)
-                    deployments.append(MiddlewareDeployment(
-                        provider=_provider,
-                        server=_server,
-                        name=row.deployment_name.text,
-                        hostname=row.host_name.text,
-                        status=row.status.text))
+        view = _get_deployments_page(provider=provider, server=server)
+        _provider = provider  # In deployment UI, we cannot get provider name on list all page
+        for _ in view.entities.paginator.pages():
+            for row in view.entities.elements:
+                _server = MiddlewareServer(
+                    provider=provider,
+                    name=row.server.text,
+                    hostname=row.host_name.text)
+                deployments.append(MiddlewareDeployment(
+                    provider=_provider,
+                    server=_server,
+                    name=row.deployment_name.text,
+                    hostname=row.host_name.text,
+                    status=row.status.text))
         return deployments
 
     @classmethod
@@ -169,12 +169,14 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
             return cls._deployments_in_mgmt(provider, server)
 
     def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_dep = self.deployment(method='db')
             self.db_id = tmp_dep.db_id
         if refresh:
-            tb.refresh()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
+        return view
 
     @variable(alias='ui')
     def deployment(self):
@@ -213,12 +215,13 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
 
     @classmethod
     def download(cls, extension, provider=None, server=None):
-        _get_deployments_page(provider, server)
-        download(extension)
+        view = _get_deployments_page(provider, server)
+        download(view, extension)
 
 
 @navigator.register(MiddlewareDeployment, 'All')
 class All(CFMENavigateStep):
+    VIEW = DeploymentAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -226,16 +229,28 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("List View")
+        self.view.entities.paginator.check_all()
+        self.view.entities.paginator.uncheck_all()
 
 
 @navigator.register(MiddlewareDeployment, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = DeploymentDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        from cfme.web_ui import paginator
-        if paginator.page_controls_exist():
-            paginator.results_per_page(1000)
-        list_tbl.click_row_by_cells({'Deployment Name': self.obj.name,
-                                     'Server': self.obj.server.name})
+        try:
+            if self.obj.server:
+                # TODO find_row_on_pages change to entities.get_entity()
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    deployment_name=self.obj.name,
+                    server=self.obj.server.name)
+            else:
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    deployment_name=self.obj.name)
+        except NoSuchElementException:
+            raise MiddlewareDeploymentNotFound(
+                "Deployment '{}' not found in table".format(self.name))
+        row.click()

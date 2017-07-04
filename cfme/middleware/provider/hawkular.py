@@ -1,13 +1,31 @@
 import re
 
-from cfme.common import TopologyMixin, TimelinesMixin
-from . import MiddlewareProvider
-from cfme.utils.appliance import Navigatable
-from cfme.utils.varmeth import variable
-from . import _get_providers_page, _db_select_query
-from . import download, MiddlewareBase, auth_btn, mon_btn
-from cfme.utils.appliance.implementations.ui import navigate_to
+from widgetastic_patternfly import Input, BootstrapSelect
 from wrapanapi.hawkular import Hawkular
+
+from cfme.common import TopologyMixin, TimelinesMixin
+from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.varmeth import variable
+
+from . import MiddlewareProvider
+from . import _get_providers_page, _db_select_query
+from . import download, MiddlewareBase
+
+
+class HawkularEndpoint(DefaultEndpoint):
+    @property
+    def view_value_mapping(self):
+        return {'security_protocol': self.security_protocol,
+                'hostname': self.hostname,
+                'api_port': self.api_port,
+                }
+
+
+class HawkularEndpointForm(DefaultEndpointForm):
+    security_protocol = BootstrapSelect('default_security_protocol')
+    api_port = Input('default_api_port')
 
 
 class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, MiddlewareProvider):
@@ -16,6 +34,9 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     Args:
         name: Name of the provider
+        endpoints: one or several provider endpoints like DefaultEndpoint. it should be either dict
+        in format dict{endpoint.name, endpoint, endpoint_n.name, endpoint_n}, list of endpoints or
+        mere one endpoint
         hostname: Hostname/IP of the provider
         port: http/https port of hawkular provider
         credentials: see Credential inner class.
@@ -25,6 +46,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     Usage:
 
         myprov = HawkularProvider(name='foo',
+                            endpoints=endpoint,
                             hostname='localhost',
                             port=8080,
                             credentials=Provider.Credential(principal='admin', secret='foobar')))
@@ -38,9 +60,11 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     type_name = "hawkular"
     mgmt_class = Hawkular
     db_types = ["Hawkular::MiddlewareManager"]
+    endpoints_form = HawkularEndpointForm
 
-    def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None,
-            appliance=None, sec_protocol=None, **kwargs):
+    def __init__(self, name=None, endpoints=None, hostname=None, port=None,
+                 credentials=None, key=None,
+                 appliance=None, sec_protocol=None, **kwargs):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.hostname = hostname
@@ -52,13 +76,15 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         self.key = key
         self.sec_protocol = sec_protocol if sec_protocol else 'Non-SSL'
         self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
+        self.endpoints = self._prepare_endpoints(endpoints)
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Hawkular',
-                'sec_protocol': kwargs.get('sec_protocol'),
-                'hostname_text': kwargs.get('hostname'),
-                'port_text': kwargs.get('port')}
+    @property
+    def view_value_mapping(self):
+        """Maps values to view attrs"""
+        return {
+            'name': self.name,
+            'prov_type': 'Hawkular'
+        }
 
     @variable(alias='db')
     def num_deployment(self):
@@ -132,34 +158,42 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @classmethod
     def download(cls, extension):
-        _get_providers_page()
-        download(extension)
+        view = _get_providers_page()
+        download(view, extension)
 
     def load_details(self, refresh=False):
-        """Call super class `load_details` and load `db_id` if not set"""
-        MiddlewareProvider.load_details(self, refresh=refresh)
+        """Navigate to Details and load `db_id` if not set"""
+        view = navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_provider = _db_select_query(
                 name=self.name, type='ManageIQ::Providers::Hawkular::MiddlewareManager').first()
             self.db_id = tmp_provider.id
+        if refresh:
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
+        return view
 
     def load_topology_page(self):
-        navigate_to(self, 'TopologyFromDetails')
+        return navigate_to(self, 'TopologyFromDetails')
 
     def recheck_auth_status(self):
-        self.load_details(refresh=True)
-        auth_btn("Re-check Authentication Status")
+        view = self.load_details(refresh=True)
+        view.toolbar.authentication.item_select("Re-check Authentication Status")
 
     def load_timelines_page(self):
-        self.load_details()
-        mon_btn("Timelines")
+        view = self.load_details()
+        view.toolbar.monitoring.item_select("Timelines")
 
     @staticmethod
     def from_config(prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = HawkularProvider.process_credential_yaml_key(credentials_key)
+        endpoints = {}
+        endpoints[HawkularEndpoint.name] = HawkularEndpoint(
+            **prov_config['endpoints'][HawkularEndpoint.name])
         return HawkularProvider(
             name=prov_config['name'],
+            endpoints=endpoints,
             key=prov_key,
             hostname=prov_config['hostname'],
             sec_protocol=prov_config.get('sec_protocol'),

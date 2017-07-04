@@ -14,7 +14,9 @@ from cfme.common.provider_views import (InfraProvidersView,
                                         CloudProvidersView,
                                         InfraProviderDetailsView,
                                         CloudProviderDetailsView,
-                                        ContainersProvidersView)
+                                        ContainersProvidersView,
+                                        MiddlewareProvidersView,
+                                        MiddlewareProviderDetailsView)
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
 from cfme.web_ui import (
@@ -165,7 +167,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         from cfme.infrastructure.provider import InfraProvider
         from cfme.cloud.provider import CloudProvider
         from cfme.containers.provider import ContainersProvider
-        if self.one_of(CloudProvider, InfraProvider, ContainersProvider):
+        from cfme.middleware.provider import MiddlewareProvider
+        if self.one_of(CloudProvider, InfraProvider, ContainersProvider, MiddlewareProvider):
             if check_existing and self.exists:
                 created = False
             else:
@@ -216,6 +219,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     main_view_obj = CloudProvidersView
                 elif self.one_of(ContainersProvider):
                     main_view_obj = ContainersProvidersView
+                elif self.one_of(MiddlewareProvider):
+                    main_view_obj = MiddlewareProvidersView
                 main_view = self.create_view(main_view_obj)
                 if cancel:
                     created = False
@@ -290,7 +295,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         from cfme.infrastructure.provider import InfraProvider
         from cfme.cloud.provider import CloudProvider
         from cfme.containers.provider import ContainersProvider
-        if self.one_of(CloudProvider, InfraProvider, ContainersProvider):
+        from cfme.middleware.provider import MiddlewareProvider
+        if self.one_of(CloudProvider, InfraProvider, ContainersProvider, MiddlewareProvider):
             edit_view = navigate_to(self, 'Edit')
             # todo: to replace/merge this code with create
             # update values:
@@ -352,6 +358,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             elif self.one_of(CloudProvider):
                 details_view_obj = CloudProviderDetailsView
                 main_view_obj = CloudProvidersView
+            elif self.one_of(MiddlewareProvider):
+                details_view_obj = MiddlewareProviderDetailsView
+                main_view_obj = MiddlewareProvidersView
             details_view = self.create_view(details_view_obj)
             main_view = self.create_view(main_view_obj)
 
@@ -558,7 +567,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         host_stats = client.stats(*stats_to_match)
         method = None
         if ui:
-            sel.refresh()
+            self.browser.selenium.refresh()
             method = 'ui'
 
         if refresh_timer:

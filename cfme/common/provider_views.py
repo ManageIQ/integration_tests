@@ -101,6 +101,16 @@ class CloudProviderDetailsView(ProviderDetailsView):
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'])
 
 
+class MiddlewareProviderDetailsView(ProviderDetailsView):
+    """
+     Middleware Details page
+    """
+    @property
+    def is_displayed(self):
+        return (super(MiddlewareProviderDetailsView, self).is_displayed and
+                self.navigation.currently_selected == ['Middleware', 'Providers'])
+
+
 class ProviderTimelinesView(TimelinesView, BaseLoggedInPage):
     """
      represents Timelines page
@@ -318,6 +328,17 @@ class CloudProvidersView(ProvidersView):
                 self.entities.title.text == 'Cloud Providers')
 
 
+class MiddlewareProvidersView(ProvidersView):
+    """
+     represents Main view displaying all Middleware providers
+    """
+    @property
+    def is_displayed(self):
+        return (super(MiddlewareProvidersView, self).is_displayed and
+                self.navigation.currently_selected == ['Middleware', 'Providers'] and
+                self.entities.title.text == 'Middleware Providers')
+
+
 class BeforeFillMixin(object):
     """
      this mixin is used to activate appropriate tab before filling this tab
@@ -399,6 +420,18 @@ class ContainersProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Containers Provider')
 
 
+class MiddlewareProviderAddView(ProviderAddView):
+    """
+     represents Middleware Provider Add View
+    """
+
+    @property
+    def is_displayed(self):
+        return (super(MiddlewareProviderAddView, self).is_displayed and
+                self.navigation.currently_selected == ['Middleware', 'Providers'] and
+                self.title.text == 'Add New Middleware Provider')
+
+
 class ProviderEditView(ProviderAddView):
     """
      represents Provider Edit View
@@ -451,3 +484,16 @@ class ContainersProviderEditView(ProviderEditView):
         return (super(ProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
                 self.title.text == 'Edit Containers Provider')
+
+
+class MiddlewareProviderEditView(ProviderEditView):
+    """
+     represents Middleware Provider Edit View
+    """
+    @property
+    def is_displayed(self):
+        expected_title = ("Edit Middleware Providers '{name}'"
+            .format(name=self.context['object'].name))
+        return (super(MiddlewareProviderEditView, self).is_displayed and
+                self.navigation.currently_selected == ['Middleware', 'Providers'] and
+                self.title.text == expected_title)

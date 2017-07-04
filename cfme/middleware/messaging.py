@@ -1,19 +1,21 @@
 import re
+
+from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
+
 from cfme.common import Taggable, UtilizationMixin
-from cfme.fixtures import pytest_selenium as sel
+from cfme.exceptions import MiddlewareMessagingNotFound
+from cfme.middleware.provider import MiddlewareBase, download, get_server_name
 from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.middleware.provider.middleware_views import (ProviderMessagingAllView,
+                                                       MessagingDetailsView)
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, toolbar as tb
-from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.utils import attributize_string
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.providers import get_crud_by_name, list_providers_by_class
 from cfme.utils.varmeth import variable
-from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
-
-list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, nativeid=None, server=None, provider=None):
@@ -48,11 +50,11 @@ def _db_select_query(name=None, nativeid=None, server=None, provider=None):
 
 def _get_messagings_page(provider=None, server=None):
     if server:  # if server instance is provided navigate through server page
-        navigate_to(server, 'ServerMessagings')
+        return navigate_to(server, 'ServerMessagings')
     elif provider:  # if provider instance is provided navigate through provider page
-        navigate_to(provider, 'ProviderMessagings')
+        return navigate_to(provider, 'ProviderMessagings')
     else:  # if None(provider and server) given navigate through all middleware messagings page
-        navigate_to(MiddlewareMessaging, 'All')
+        return navigate_to(MiddlewareMessaging, 'All')
 
 
 class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixin):
@@ -103,24 +105,22 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
     @classmethod
     def messagings(cls, provider=None, server=None):
         messagings = []
-        _get_messagings_page(provider=provider, server=server)
-        if sel.is_displayed(list_tbl):
-            from cfme.web_ui import paginator
-            for _ in paginator.pages():
-                for row in list_tbl.rows():
-                    _server = MiddlewareServer(provider=provider, name=row.server.text)
-                    messagings.append(MiddlewareMessaging(
-                        provider=provider,
-                        server=_server,
-                        name=row.messaging_name.text,
-                        messaging_type=row.messaging_type.text))
+        view = _get_messagings_page(provider=provider, server=server)
+        for _ in view.entities.paginator.pages():
+            for row in view.entities.elements:
+                _server = MiddlewareServer(provider=provider, name=row.server.text)
+                messagings.append(MiddlewareMessaging(
+                    provider=provider,
+                    server=_server,
+                    name=row.messaging_name.text,
+                    messaging_type=row.messaging_type.text))
         return messagings
 
     @classmethod
     def headers(cls):
-        navigate_to(MiddlewareMessaging, 'All')
-        headers = [sel.text(hdr).encode("utf-8")
-                   for hdr in sel.elements("//thead/tr/th") if hdr.text]
+        view = navigate_to(MiddlewareMessaging, 'All')
+        headers = [hdr.encode("utf-8")
+                   for hdr in view.entities.elements.headers if hdr]
         return headers
 
     @classmethod
@@ -178,12 +178,14 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
             return cls._messagings_in_mgmt(provider, server)
 
     def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_msg = self.messaging(method='db')
             self.db_id = tmp_msg.db_id
         if refresh:
-            tb.refresh()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
+        return view
 
     @variable(alias='ui')
     def messaging(self):
@@ -220,12 +222,13 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
 
     @classmethod
     def download(cls, extension, provider=None, server=None):
-        _get_messagings_page(provider, server)
-        download(extension)
+        view = _get_messagings_page(provider, server)
+        download(view, extension)
 
 
 @navigator.register(MiddlewareMessaging, 'All')
 class All(CFMENavigateStep):
+    VIEW = ProviderMessagingAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -233,14 +236,28 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("List View")
+        self.view.entities.paginator.check_all()
+        self.view.entities.paginator.uncheck_all()
 
 
 @navigator.register(MiddlewareMessaging, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = MessagingDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        list_tbl.click_row_by_cells({'Messaging Name': self.obj.name,
-                                     'Messaging Type': self.obj.messaging_type,
-                                     'Server': self.obj.server.name})
+        try:
+            if self.obj.server:
+                # TODO find_row_on_pages change to entities.get_entity()
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    messaging_name=self.obj.name,
+                    server=self.obj.server.name)
+            else:
+                row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                    self.prerequisite_view.entities.elements,
+                    messaging_name=self.obj.name)
+        except NoSuchElementException:
+            raise MiddlewareMessagingNotFound(
+                "Messaging '{}' not found in table".format(self.name))
+        row.click()
