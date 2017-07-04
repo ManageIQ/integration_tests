@@ -25,6 +25,7 @@ class SCVMMProvider(InfraProvider):
     mgmt_class = SCVMMSystem
     db_types = ["Microsoft::InfraManager"]
     endpoints_form = SCVMMEndpointForm
+    discover_dict = {"scvmm": True}
 
     def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):

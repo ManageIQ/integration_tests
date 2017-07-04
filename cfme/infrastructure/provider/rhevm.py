@@ -47,6 +47,7 @@ class RHEVMProvider(InfraProvider):
     mgmt_class = RHEVMSystem
     db_types = ["Redhat::InfraManager"]
     endpoints_form = RHEVMEndpointForm
+    discover_dict = {"rhevm": True}
 
     def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
