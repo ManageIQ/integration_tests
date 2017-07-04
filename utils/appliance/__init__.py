@@ -82,7 +82,7 @@ class ApplianceConsole(object):
         try:
             while True:
                 result += channel.recv(1)
-                if ("{}".format(timezone[1])) in result:
+                if ("{}".format(timezone[0])) in result:
                     break
         except socket.timeout:
             pass
