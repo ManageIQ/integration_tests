@@ -1,9 +1,16 @@
-from functools import partial
-from random import sample
+import random
 import re
 import json
+from functools import partial
+from random import sample
+
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from cfme.base.login import BaseLoggedInPage
+from widgetastic_patternfly import SelectorDropdown, Button, Dropdown
+from widgetastic.widget import Text
+from utils.wait import wait_for
+
 
 from cfme.common.provider import BaseProvider
 from cfme import exceptions
@@ -291,12 +298,18 @@ class Add(CFMENavigateStep):
         }))
 
 
+class ProviderDetailsView(BaseLoggedInPage):
+    monitor = Dropdown('Monitoring')
+
+    @property
+    def is_displayed(self):
+        return match_page(summary="{} (Summary)".format(self.obj.name))
+
+
 @navigator.register(ContainersProvider, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
-
-    def am_i_here(self):
-        return match_page(summary="{} (Summary)".format(self.obj.name))
+    VIEW = ProviderDetailsView
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
@@ -353,6 +366,47 @@ class TopologyFromDetails(CFMENavigateStep):
 
     def step(self):
         sel.click(InfoBlock('Overview', 'Topology'))
+
+
+class AdHocMetricsView(BaseLoggedInPage):
+    filter_dropdown = SelectorDropdown('uib-tooltip', 'Filter by')
+    filter_result_header = Text('h5.ng-binding')
+    apply_btn = Button("Apply Filters")
+
+    selected_filter = None
+
+    @property
+    def is_displayed(self):
+        return False
+
+    def wait_for_filter_option_to_load(self):
+        wait_for(lambda: bool(self.filter_dropdown.items), delay=5, num_sec=60)
+
+    def wait_for_results_to_load(self):
+        wait_for(lambda: bool(int(self.filter_result_header.text.split()[0])),
+                 delay=5, num_sec=60)
+
+    def apply_filter(self):
+        self.apply_btn.click()
+
+    def set_filter(self, desired_filter):
+        self.selected_filter = desired_filter
+        self.filter_dropdown.fill_with(desired_filter)
+
+    def get_random_filter(self):
+        return str(random.choice(self.filter_dropdown.items))
+
+    def get_total_results_count(self):
+        return int(self.filter_result_header.text.split()[0])
+
+
+@navigator.register(ContainersProvider, 'AdHoc')
+class AdHocMain(CFMENavigateStep):
+    VIEW = AdHocMetricsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.monitor.item_select('Ad hoc Metrics')
 
 
 # Common methods:

@@ -159,7 +159,6 @@ host_provision_submit = FormButton("Submit this provisioning request")
 host_provision_cancel = FormButton("Cancel this provisioning request")
 retrieve = FormButton("LDAP Group Lookup")
 
-
 _stored_pw_script = '//a[contains(@id, "change_stored_password")]'
 _stored_pw_angular = "//a[contains(@ng-hide, 'bChangeStoredPassword')]"
 
