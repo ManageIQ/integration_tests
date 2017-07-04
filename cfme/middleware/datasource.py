@@ -108,7 +108,9 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
         if sel.is_displayed(list_tbl):
             for _ in paginator.pages():
                 for row in list_tbl.rows():
-                    _server = MiddlewareServer(provider=provider, name=row.server.text)
+                    _server = MiddlewareServer(provider=provider,
+                                               name=row.server.text,
+                                               hostname=row.host_name.text)
                     datasources.append(MiddlewareDatasource(
                         provider=provider,
                         server=_server,
@@ -168,6 +170,20 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
             return datasources
         else:
             return cls._datasources_in_mgmt(provider, server)
+
+    @classmethod
+    def remove_from_list(cls, datasource):
+        _get_datasources_page(server=datasource.server)
+        if paginator.page_controls_exist():
+            paginator.results_per_page(1000)
+        list_tbl.select_row_by_cells({
+            'Datasource Name': datasource.name,
+            'Server': datasource.server.name,
+            'Host Name': datasource.hostname
+        })
+        operations_btn("Remove", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message('The selected datasources were removed')
 
     def load_details(self, refresh=False):
         navigate_to(self, 'Details')

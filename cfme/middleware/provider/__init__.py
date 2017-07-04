@@ -5,6 +5,7 @@ from random import sample
 import os
 import re
 
+from cfme.base.login import BaseLoggedInPage
 from cfme.common import Validatable, SummaryMixin
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
@@ -16,6 +17,7 @@ from cfme.web_ui import (
 from utils import version
 from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from widgetastic_manageiq import TimelinesView
 
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -30,7 +32,7 @@ auth_btn = partial(tb.select, 'Authentication')
 jdbc_btn = partial(tb.select, 'JDBC Drivers')
 datasources_btn = partial(tb.select, 'Datasources')
 
-LIST_TABLE_LOCATOR = "//div[@id='list_grid']/table"
+LIST_TABLE_LOCATOR = "//div[@id='gtl_div']//table"
 
 
 details_page = Region(infoblock_type='detail')
@@ -78,6 +80,14 @@ prop_region = Region(
         }
     }
 )
+
+
+class MiddlewareProviderTimelinesView(TimelinesView, BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user and \
+            self.navigation.currently_selected == ['Middleware', 'Providers'] and \
+            self.breadcrumb.active_location == 'Timelines'
 
 
 class MiddlewareProvider(BaseProvider):
@@ -164,8 +174,9 @@ class EditTagsFromDetails(CFMENavigateStep):
         pol_btn('Edit Tags')
 
 
-@navigator.register(MiddlewareProvider, 'TimelinesFromDetails')
-class TimelinesFromDetails(CFMENavigateStep):
+@navigator.register(MiddlewareProvider, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = MiddlewareProviderTimelinesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

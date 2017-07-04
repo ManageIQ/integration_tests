@@ -6,16 +6,15 @@ from utils import testgen
 from utils.version import current_version
 from deployment_methods import get_resource_path
 from deployment_methods import RESOURCE_WAR_NAME
+from deployment_methods import RESOURCE_EAR_NAME
 from deployment_methods import deploy_archive, generate_runtime_name, undeploy
 from deployment_methods import check_deployment_appears
 from deployment_methods import check_deployment_not_listed
 from datasource_methods import ORACLE_12C_DS
-from datasource_methods import get_datasource_from_list
-from datasource_methods import generate_ds_name
+from datasource_methods import generate_ds_name, delete_datasource_from_list
+from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
 from server_methods import get_eap_server
 from utils.wait import wait_for
-from utils.blockers import BZ
-from utils import error
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -25,13 +24,11 @@ pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 DEPLOYMENT_OK_EVENT = 'hawkular_deployment.ok'
 UNDEPLOYMENT_OK_EVENT = 'hawkular_deployment_remove.ok'
-DEPLOYMENT_FAIL_EVENT = 'hawkular_deployment.fail'
+DEPLOYMENT_FAIL_EVENT = 'hawkular_deployment.error'
 DS_CREATION_OK_EVENT = 'hawkular_datasource.ok'
 DS_DELETION_OK_EVENT = 'hawkular_datasource_remove.ok'
 
 
-# enable when solution to read new timelines will be implemented
-@pytest.mark.uncollect
 def test_load_deployment_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
@@ -43,8 +40,6 @@ def test_load_deployment_timelines(provider):
     check_not_contains_event(timelines, before_test_date, DEPLOYMENT_OK_EVENT)
 
 
-# enable when solution to read new timelines will be implemented
-@pytest.mark.uncollect
 def test_undeployment_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
@@ -56,9 +51,6 @@ def test_undeployment_timelines(provider):
     check_not_contains_event(timelines, before_test_date, UNDEPLOYMENT_OK_EVENT)
 
 
-# enable when solution to read new timelines will be implemented
-@pytest.mark.uncollect
-@pytest.mark.meta(blockers=[BZ(1377603, forced_streams=["5.7", "upstream"])])
 def test_deployment_failure_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
@@ -70,9 +62,6 @@ def test_deployment_failure_timelines(provider):
     check_contains_event(timelines, before_test_date, DEPLOYMENT_FAIL_EVENT)
 
 
-# enable when solution to read new timelines will be implemented
-@pytest.mark.uncollect
-@pytest.mark.meta(blockers=[BZ(1383414, forced_streams=["5.7", "upstream"])])
 def test_create_datasource_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
@@ -84,9 +73,6 @@ def test_create_datasource_timelines(provider):
     check_not_contains_event(timelines, before_test_date, DS_CREATION_OK_EVENT)
 
 
-# enable when solution to read new timelines will be implemented
-@pytest.mark.uncollect
-@pytest.mark.meta(blockers=[BZ(1390756, forced_streams=["5.7", "upstream"])])
 def test_delete_dataource_timelines(provider):
     # events are shown in UTC timezone
     before_test_date = datetime.utcnow()
@@ -99,15 +85,13 @@ def test_delete_dataource_timelines(provider):
 
 
 def load_event_details(timelines):
-    timelines.change_interval('Hourly')
-    timelines.change_event_groups('Application')
-    timelines.change_level('Detail')
+    timelines.change_interval('Days')
+    timelines.select_event_category('Application')
+    timelines.check_detailed_events(True)
 
 
 def load_event_summary(timelines):
-    timelines.change_interval('Hourly')
-    timelines.change_event_groups('Application')
-    timelines.change_level('Summary')
+    timelines.check_detailed_events(False)
 
 
 def check_contains_event(timelines, before_test_date, event):
@@ -141,24 +125,35 @@ def gen_undeploy_events(provider):
 
 def gen_deploy_fail_events(provider):
     server = get_eap_server(provider)
-    file_path = get_resource_path(RESOURCE_WAR_NAME)
+    file_path = get_resource_path(RESOURCE_EAR_NAME)
     runtime_name = generate_runtime_name(file_path)
     deploy_archive(provider, server, file_path, runtime_name)
-    check_deployment_appears(provider, server, runtime_name)
-    with error.expected('Deployment "{}" already exists on this server.'
-                     .format(runtime_name)):
-            deploy_archive(provider, server, file_path, runtime_name)
-    check_deployment_appears(provider, server, runtime_name)
+    runtime_name2 = generate_runtime_name(file_path)
+    deploy_archive(provider, server, file_path, runtime_name2, overwrite=True)
     return runtime_name
 
 
-def gen_ds_creation_events(provider, datasource_params):
+def gen_ds_creation_events(provider, datasource):
     server = get_eap_server(provider)
-    ds_name = generate_ds_name(datasource_params[1])
-    jndi_name = generate_ds_name(datasource_params[2])
-    server.add_datasource(datasource_params[0], ds_name, jndi_name,
-                          datasource_params[3], datasource_params[4], datasource_params[5],
-                          datasource_params[6], datasource_params[7], datasource_params[8])
+    ds_name = generate_ds_name(datasource.datasource_name)
+    jndi_name = generate_ds_name(datasource.jndi_name)
+    file_path = download_jdbc_driver(datasource.driver.database_name)
+    deploy_jdbc_driver(provider, server, file_path,
+                       driver_name=datasource.driver.driver_name,
+                       module_name=datasource.driver.module_name,
+                       driver_class=datasource.driver.driver_class,
+                       major_version=datasource.driver.major_version,
+                       minor_version=datasource.driver.minor_version)
+    server.add_datasource(ds_type=datasource.database_type,
+                          ds_name=ds_name,
+                          jndi_name=jndi_name,
+                          driver_name=datasource.driver.driver_name,
+                          driver_module_name=datasource.driver.module_name,
+                          driver_class=datasource.driver.driver_class,
+                          ds_url=datasource.connection_url.replace("\\", ""),
+                          username=datasource.username,
+                          password=datasource.password)
+    ds_name = "Datasource [{}]".format(ds_name)
     return ds_name
 
 
@@ -169,5 +164,4 @@ def gen_ds_deletion_events(provider, datasource_params):
 
 
 def delete_datasource(provider, datasource_name):
-    ds = get_datasource_from_list(provider, datasource_name)
-    ds.delete()
+    delete_datasource_from_list(provider, datasource_name)

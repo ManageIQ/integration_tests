@@ -120,3 +120,8 @@ def get_datasource_from_list(provider, name, server=None):
             return datasource
     raise ValueError('Recently created datasource {} was not found in datasource list'
                      .format(name))
+
+
+def delete_datasource_from_list(provider, name):
+    ds = get_datasource_from_list(provider, name)
+    MiddlewareDatasource.remove_from_list(ds)
