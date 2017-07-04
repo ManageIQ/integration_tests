@@ -8,10 +8,10 @@ from selenium.common.exceptions import NoSuchElementException
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable
 from cfme.exceptions import HostNotFound, ItemNotFound
-from cfme.web_ui import mixins 
+from cfme.web_ui import mixins
 from utils import conf
 from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from utils.ipmi import IPMI
 from utils.log import logger
 from utils.pretty import Pretty
@@ -108,7 +108,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             if validate_credentials:
                 view.endpoints.default.validate_button.click()
         if self.ipmi_credentials is not None:
-            view.endpoints.fill({
+            view.endpoints.ipmi.fill({
                 "username": self.ipmi_credentials.principal,
                 "password": self.ipmi_credentials.secret,
                 "confirm_password": self.ipmi_credentials.verify_secret,
@@ -136,8 +136,8 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
         view = navigate_to(self, "Edit")
         changed = view.fill(updates)
-        credentials = updates.get("credentials")
-        ipmi_credentials = updates.get("ipmi_credentials")
+        credentials = updates.pop("credentials")
+        ipmi_credentials = updates.pop("ipmi_credentials")
         if credentials is not None:
             if view.change_stored_password.is_displayed:
                 view.change_stored_password.click()
@@ -281,11 +281,12 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         Returns: :py:class:`bool`
         """
         view = navigate_to(self, "All")
-        for page in view.paginator.pages():
-            if self.name in [item.name for item in view.items.get_all_items()]:
-                return True
-        else:
+        try:
+            view.items.get_item(by_name=self.name, surf_pages=True)
+        except ItemNotFound:
             return False
+        else:
+            return True
 
     @property
     def has_valid_credentials(self):
@@ -585,7 +586,7 @@ def get_all_hosts():
         list: names list of all hosts
     """
     view = navigate_to(Host, "All")
-    return [item.name for item in view.items.get_all()]
+    return [item.name for item in view.items.get_all(surf_pages=True)]
 
 
 def find_quadicon(host_name):
@@ -597,12 +598,9 @@ def find_quadicon(host_name):
     Returns: :py:class:`cfme.common.host_views.HostQuadIconItem` instance
     """
     view = navigate_to(Host, "All")
-    for page in view.paginator.pages():
-        try:
-            quad_icon = view.items.get_item(by_name=host_name)
-        except ItemNotFound:
-            pass
-        else:
-            return quad_icon
-    else:
+    try:
+        quad_icon = view.items.get_item(by_name=host_name, surf_pages=True)
+    except ItemNotFound:
         raise HostNotFound("Host '{}' not found in UI!".format(host_name))
+    else:
+        return quad_icon
