@@ -8,18 +8,17 @@ This script is designed to run either as a standalone ec2 template uploader, or 
 together with template_upload_all script. This is why all the function calls, which would
 normally be placed in main function, are located in function run(**kwargs).
 """
-
 import argparse
-import re
 import sys
 import os
 import urllib2
 from threading import Lock
 
-from wrapanapi import EC2System
+from wrapanapi.exceptions import ImageNotFoundError, MultipleImagesError
+
+from utils import trackerbot
 from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.providers import list_provider_keys
+from utils.providers import get_mgmt
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -28,6 +27,9 @@ lock = Lock()
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
+    parser.add_argument('--stream', dest='stream',
+                        help='stream name: downstream-##z, upstream, upstream_stable, etc',
+                        default=None)
     parser.add_argument("--image_url", dest="image_url",
                         help="URL of vhd image to upload to ec2", default=None)
     parser.add_argument("--template_name", dest="template_name",
@@ -68,6 +70,21 @@ def make_kwargs(args, **kwargs):
     return kwargs
 
 
+def check_for_ami(ec2, ami_name):
+    """
+    Check if the AMI exists in the given region
+    :param ec2: mgmtsystem:EC2System object
+    :param ami_name: string ami name to look for
+    :return: string id value for ami
+    """
+    try:
+        id = ec2._get_ami_id_by_name(ami_name)
+    except ImageNotFoundError:
+        return None
+
+    return id
+
+
 def make_ssh_client(rhevip, sshname, sshpass):
     connect_kwargs = {
         'username': sshname,
@@ -77,14 +94,11 @@ def make_ssh_client(rhevip, sshname, sshpass):
     return SSHClient(**connect_kwargs)
 
 
-def download_image_file(image_url, destination=None):
-    """Downloads the image on local machine.
-
-        Args:
-            image_url: image_url to download the image.
-        Returns:
-            file_name: downloaded filename.
-            file_path: absolute path of the downloaded file.
+def download_image_file(image_url):
+    """
+    Download the image to the local working directory
+    :param image_url: URL of the file to download
+    :return: tuple, file name and file path strings
     """
     file_name = image_url.split('/')[-1]
     u = urllib2.urlopen(image_url)
@@ -96,143 +110,157 @@ def download_image_file(image_url, destination=None):
             return file_name, file_path
         os.remove(file_name)
     print("Downloading: {} Bytes: {}".format(file_name, file_size))
-    f = open(file_name, 'wb')
-    os.system('cls')
-    file_size_dl = 0
-    block_sz = 8192
-    while True:
-        buffer_f = u.read(block_sz)
-        if not buffer_f:
-            break
+    with open(file_name, 'wb') as image_file:
+        # os.system('cls')
+        file_size_dl = 0
+        block_sz = 8192
+        while True:
+            buffer_f = u.read(block_sz)
+            if not buffer_f:
+                break
 
-        file_size_dl += len(buffer_f)
-        f.write(buffer_f)
-    f.close()
+            file_size_dl += len(buffer_f)
+            image_file.write(buffer_f)
     return file_name, file_path
 
 
-def create_image(template_name, image_description, bucket_name, key_name):
-    """Imports the Image file uploaded to bucket inside amazon s3, checks the image status.
-       Waits for import_image task to complete. creates name tag and assigns template_name to
-       imported image.
-
-        Args:
-            template_name: Name of the template, this will be assigned to Name tag of the
-            imported image.
-            image_description: description to be set to imported image.
-            bucket_name: bucket_name from where image file is imported. This is created in Amazon S3
-            service.
-            key_name: Keyname inside the create bucket.
+def create_image(ec2, ami_name, bucket_name):
     """
-    ssh_args = [
-        cfme_data['template_upload']['template_upload_ec2']['aws_cli_tool_client'],
-        credentials['host_default']['username'],
-        credentials['host_default']['password']
-    ]
-    with make_ssh_client(*ssh_args) as ssh_client:
+    Create the image from a given bucket+file defined by the ami_name
+    :param ec2: mgmtsystem:EC2System object
+    :param ami_name: name of the file in the bucket, will be used for AMI name too
+    :param bucket_name: name of the s3 bucket where the image is
+    :return: none
+    """
+    print('EC2:{}: Adding image {} from bucket {}...'
+          .format(ec2.api.region, ami_name, bucket_name))
+    import_task_id = ec2.import_image(
+        s3bucket=bucket_name, s3key=ami_name, description=ami_name)
 
-        print("AMAZON EC2: Creating JSON file beofre importing the image ...")
-        # TODO do this with the json module so it doesn't look so awful
-        upload_json = """[
-      {{
-        "Description": "{description}",
-        "Format": "vhd",
-        "UserBucket": {{
-            "S3Bucket": "{bucket_name}",
-            "S3Key": "{key_name}"
-        }}
-    }}]""".format(description=image_description, bucket_name=bucket_name,
-                  key_name=key_name)
-        command = '''cat <<EOT > import_image.json
-        {}
-        '''.format(upload_json)
-        ssh_client.run_command(command)
+    print('EC2:{}: Monitoring image task id {}...'.format(ec2.api.region, import_task_id))
+    wait_for(ec2.get_image_id_if_import_completed,
+             func_args=[import_task_id],
+             fail_condition=False,
+             delay=5,
+             timeout='30m',
+             message='Importing image to EC2')
 
-        print("AMAZON EC2: Running import-image command and grep ImportTaskId ...")
-        command = "aws ec2 import-image --description 'test_cfme_ami_image_upload' " \
-                  "--disk-containers file://import_image.json | grep ImportTaskId"
-        output = ssh_client.run_command(command)
-        importtask_id = re.findall(r'import-ami-[a-zA-Z0-9_]*', str(output))[0]
+    ami_id = ec2.get_image_id_if_import_completed(import_task_id)
 
-        def check_import_task_status():
-            import_status_output = ssh_client.run_command("aws ec2 describe-import-image-tasks "
-                                                          "--import-task-ids {} |grep -w Status"
-                                                          .format(importtask_id))
-            return True if 'completed' in import_status_output else False
+    print("EC2:{}: Copying image to set 'name' attribute {}...".format(ec2.api.region, ami_name))
+    ec2.copy_image(source_region=ec2.api.region.name, source_image=ami_id, image_id=ami_name)
 
-        print("AMAZON EC2: Waiting for import-image task to complete, this may take a while ...")
-        wait_for(check_import_task_status, fail_condition=False, delay=5, timeout='1h')
-
-        print("AMAZON EC2: Retrieve AMI ImageId from describe-import-image-tasks...")
-        command = "aws ec2 describe-import-image-tasks --import-task-ids {} | grep ImageId".format(
-            importtask_id)
-        output = ssh_client.run_command(command)
-        ami_image_id = re.findall(r'ami-[a-zA-Z0-9_]*', str(output))[0]
-
-        print("AMAZON EC2: Creating Tag for imported image ...")
-        command = "aws ec2 create-tags --resources {} --tags Key='Name'," \
-                  "Value='{}'".format(ami_image_id, template_name)
-        ssh_client.run_command(command)
+    print("EC2:{}: Removing original un-named imported image {}...".format(ec2.api.region, ami_id))
+    ec2.deregister_image(image_id=ami_id)
 
 
-def upload_template(provider, username, password, upload_bucket_name,
-                    image_url, template_name):
-    """Downloads the image file from image_url. Creats the bucket in amazon s3 and uploads
-       downloaded image file to it. Invokes the create_image method to complete the AMI image import
-       process.
-       Waits for import_image task to complete. creates name tag and assigns template_name to
-         Args:
-             provider: provider_key under execution.
-             username: Amazon console username(Access_Id).
-             password: Amazon console password(Access_key).
-             upload_bucket_name: bucket_name to upload the image. bucket is created in Amazon S3
-             service.
-             image_url: Image_url to download the image file.
-             template_name: name of the template to assign to the imported image.
-     """
-    try:
-        print("AMAZON EC2:{} Starting image download {} ...".format(provider, image_url))
-        file_name, file_path = download_image_file(image_url)
-        print("AMAZON EC2:{} Image downloaded {} ...".format(provider, file_path))
-        kwargs = {
-            'username': username,
-            'password': password
-        }
-        ec2 = EC2System(**kwargs)
-        print("AMAZON EC2:{} Creating bucket {}...".format(provider, upload_bucket_name))
-        ec2.create_s3_bucket(upload_bucket_name)
-        print("AMAZON EC2:{} uploading file to bucket {}...".format(provider, upload_bucket_name))
-        ec2.upload_file_to_s3_bucket(upload_bucket_name, file_path=file_path,
-                                     key_name=template_name)
-        print("AMAZON EC2:{} File uploading done ...".format(provider))
+def upload_to_s3(ec2, bucket_name, ami_name, file_path):
+    """
+    Create a bucket and upload the given file to the bucket
+    :param ec2: mgmtsystem:EC2System object
+    :param bucket_name: string name of bucket to create/upload to
+    :param ami_name: string name of the file in the bucket
+    :param file_path: string path to the local file to upload
+    :return: none
+    """
+    print("EC2:{}: Creating bucket {}...".format(ec2.api.region, bucket_name))
+    ec2.create_s3_bucket(bucket_name)  # Will return false if the bucket exists
 
-        print("AMAZON EC2:{} Creating ami template/image {}...".format(provider, template_name))
-        create_image(template_name, image_description=template_name, bucket_name=upload_bucket_name,
-                     key_name=template_name)
-        print("AMAZON EC2:{} Successfully uploaded the template.".format(provider))
-    except Exception as e:
-        print(e)
-        print("AMAZON EC2:{} Error occurred in upload_template".format(provider))
-        return False
-    finally:
-        print("AMAZON EC2:{} End template {} upload...".format(provider, template_name))
+    if ec2.object_exists_in_bucket(bucket_name=bucket_name, object_key=ami_name):
+        print('EC2:{}: Image {} in bucket {} already'
+              .format(ec2.api.region, ami_name, bucket_name))
+        return
+
+    print('EC2:{}: uploading file {} to bucket {}...'
+          .format(ec2.api.region, file_path, bucket_name))
+    ec2.upload_file_to_s3_bucket(bucket_name, file_path=file_path, file_name=ami_name)
+    print('EC2:{}: File uploading done ...'.format(ec2.api.region.name))
 
 
-def run(**kwargs):
-    """Calls all the functions needed to import new template to EC2.
-        This is called either by template_upload_all script, or by main function.
+def cleanup_s3(ec2, bucket_name, ami_name):
+    """Cleanup the bucket we used for upload
+    :param ec2: mgmtsystem:EC2System object
+    :param bucket_name: string name of bucket to create/upload to
+    :param ami_name: string name of the file in the bucket
+    """
+    print('EC2:{}: Removing object "{}" from bucket "{}"'
+          .format(ec2.api.region.name, ami_name, bucket_name))
+    ec2.delete_objects_from_s3_bucket(bucket_name=bucket_name, object_keys=[ami_name])
 
-     Args:
-         **kwargs: Kwargs are passed by template_upload_all.
-     """
+
+def run(template_name, image_url, stream, **kwargs):
+    """
+    Download file from image_url, upload it to an S3 bucket and import into ec2
+
+    Should handle all ec2 regions and minimize uploading by copying images
+    :param template_name: string name of the template
+    :param image_url: string url to download template image
+    :param stream: string stream name
+    :param kwargs: other kwargs
+    :return: none
+    """
     mgmt_sys = cfme_data['management_systems']
-    for provider in list_provider_keys('ec2'):
-        ssh_rhevm_creds = mgmt_sys[provider]['credentials']
-        username = credentials[ssh_rhevm_creds]['username']
-        password = credentials[ssh_rhevm_creds]['password']
-        upload_bucket_name = mgmt_sys[provider]['upload_bucket_name']
-        upload_template(provider, username, password, upload_bucket_name, kwargs.get(
-            'image_url'), kwargs.get('template_name'))
+    ami_name = template_name
+    prov_to_upload = []
+    valid_providers = [
+        prov_key
+        for prov_key in mgmt_sys
+        if (mgmt_sys[prov_key]['type'] == 'ec2') and ('disabled' not in mgmt_sys[prov_key]['tags'])
+    ]
+
+    if valid_providers:
+        print("Uploading to following enabled ec2 providers/regions: {}".format(valid_providers))
+    else:
+        print('ERROR: No providers found with ec2 type and no disabled tag')
+        return
+
+    # Look for template name on all ec2 regions, in case we can just copy it
+    # Also ec2 lets you upload duplicate names, so we'll skip upload if its already there
+    for prov_key in valid_providers:
+        ec2 = get_mgmt(provider_key=prov_key)
+        try:
+            ami_id = check_for_ami(ec2, ami_name)
+        except MultipleImagesError:
+            print('ERROR: Already multiple images with name "{}"'.format(ami_name))
+            return
+
+        if ami_id:
+            # TODO roll this into a flag that copies it to regions without it
+            print('EC2 {}: AMI already exists with name "{}"'.format(prov_key, ami_name))
+            continue
+        else:
+            # Need to upload on this region
+            prov_to_upload.append(prov_key)
+
+    # See if we actually need to upload
+    if not prov_to_upload:
+        print('DONE: No templates to upload, all regions have the ami: "{}"'.format(ami_name))
+        return
+
+    # download image
+    print("INFO: Starting image download {} ...".format(kwargs.get('image_url')))
+    file_name, file_path = download_image_file(image_url)
+    print("INFO: Image downloaded {} ...".format(file_path))
+
+    # TODO: thread + copy within amazon for when we have multiple regions enabled
+    # create ami's in the regions
+    for prov_key in prov_to_upload:
+        region = mgmt_sys[prov_key].get('region', prov_key)
+        bucket_name = mgmt_sys[prov_key].get('upload_bucket_name', 'cfme-template-upload')
+
+        print('EC2:{}:{} Starting S3 upload of {}'.format(prov_key, region, file_path))
+        ec2 = get_mgmt(provider_key=prov_key)
+        upload_to_s3(ec2=ec2, bucket_name=bucket_name, ami_name=ami_name, file_path=file_path)
+
+        create_image(ec2=ec2, ami_name=ami_name, bucket_name=bucket_name)
+
+        cleanup_s3(ec2=ec2, bucket_name=bucket_name, ami_name=ami_name)
+
+        # Track it
+        print("EC2:{}:{} Adding template {} to trackerbot for stream "
+              .format(prov_key, region, ami_name, stream))
+        trackerbot.trackerbot_add_provider_template(stream, prov_key, ami_name)
+        print('EC2:{}:{} Template {} creation complete'.format(prov_key, region, ami_name))
 
 
 if __name__ == '__main__':
