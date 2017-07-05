@@ -11,6 +11,7 @@ import textwrap
 import click
 
 from utils.conf import docker
+from functools import reduce
 
 
 def clean_commit(commit_msg):

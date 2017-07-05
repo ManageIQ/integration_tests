@@ -77,6 +77,7 @@ from utils import attributize_string, castmap, normalize_space, version
 from utils.log import logger
 from utils.pretty import Pretty
 from wait_for import TimedOutError, wait_for
+from functools import reduce
 
 
 class Selector(object):

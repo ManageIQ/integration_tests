@@ -46,6 +46,7 @@ from utils.pretty import Pretty
 from utils.deprecation import removed_in_fw30
 
 from threading import local
+from functools import reduce
 _thread_local = local()
 _thread_local.ajax_timeout = 30
 
