@@ -19,14 +19,10 @@ def dedicated_db_appliance(app_creds, appliance):
     if appliance.version > '5.7':
         with temp_appliances(count=1, preconfigured=False) as apps:
             pwd = app_creds['password']
-            if apps[0].version >= "5.8":
-                command_set = (
-                    'ap', '', '5', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
-            else:
-                command_set = (
-                    'ap', '', '8', '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+            opt = '5' if apps[0].version >= "5.8" else '8'
+            command_set = ('ap', '', opt, '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
             apps[0].appliance_console.run_commands(command_set)
-            wait_for(apps[0].db.is_dedicated_active)
+            wait_for(lambda: apps[0].db.is_dedicated_active)
             yield apps[0]
     else:
         raise Exception("Can't setup dedicated db on appliance below 5.7 builds")
