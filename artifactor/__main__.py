@@ -59,7 +59,7 @@ def main(run_id, port):
         import sys
         with open("{}/{}".format(log_path.strpath, 'artifactor_crash.log'), 'w') as f:
             f.write(str(e))
-            for line in traceback.format_tb(sys.exc_traceback):
+            for line in traceback.format_tb(sys.exc_info()[2]):
                 f.write(line)
 
 
