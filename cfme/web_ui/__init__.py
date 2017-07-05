@@ -766,7 +766,7 @@ class CAndUGroupTable(Table):
         state = self.States.NORMAL_ROWS
         while True:
             try:
-                row = rows.next()
+                row = next(rows)
             except StopIteration:
                 if state == self.States.GROUP_SUMMARY:
                     row = None
