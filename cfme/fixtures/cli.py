@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from utils.version import get_stream
 from collections import namedtuple
 from cfme.test_framework.sprout.client import SproutClient

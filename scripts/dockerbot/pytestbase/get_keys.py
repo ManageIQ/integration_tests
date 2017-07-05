@@ -1,4 +1,5 @@
 #!/cfme_pristine_venv/bin/python2
+from __future__ import absolute_import
 try:
     from cfme.utils import conf
 except ImportError:

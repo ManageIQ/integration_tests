@@ -11,6 +11,7 @@ Yaml example:
                quality: 10
 """
 
+from __future__ import absolute_import
 import os
 import os.path
 import pytest

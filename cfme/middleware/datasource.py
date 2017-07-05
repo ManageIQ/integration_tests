@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties

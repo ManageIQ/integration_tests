@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that exercise control of evmserverd service."""
+from __future__ import absolute_import
 import pytest
 import re
 from utils import version

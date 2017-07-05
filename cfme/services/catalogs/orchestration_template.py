@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic_manageiq import ScriptBox, Table

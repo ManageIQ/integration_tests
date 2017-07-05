@@ -1,4 +1,5 @@
 """datafile functions, to help reliably datafiles from the data directory."""
+from __future__ import absolute_import
 import os
 from string import Template
 from tempfile import NamedTemporaryFile

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests around the appliance"""
 
+from __future__ import absolute_import
 import os
 import pytest
 from fixtures.pytest_store import store

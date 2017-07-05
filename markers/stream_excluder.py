@@ -8,6 +8,7 @@ is enough.
 
 It also provides a facility to check the appliance's version/stream for smoke testing.
 """
+from __future__ import absolute_import
 import pytest
 
 

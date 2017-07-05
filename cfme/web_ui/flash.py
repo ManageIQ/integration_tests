@@ -3,6 +3,7 @@
 
 :var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
 """
+from __future__ import absolute_import
 from functools import wraps
 
 import cfme.fixtures.pytest_selenium as sel

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from navmazing import NavigateToSibling
 from widgetastic.widget import Select
 from widgetastic_patternfly import Button

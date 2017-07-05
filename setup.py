@@ -1,4 +1,5 @@
 # dummy for editable installs
+from __future__ import absolute_import
 import sys
 import os
 from setuptools import setup, find_packages

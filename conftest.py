@@ -5,6 +5,7 @@ Top-level conftest.py does a couple of things:
 2) Load a number of plugins and fixtures automatically
 """
 
+from __future__ import absolute_import
 import pytest
 
 

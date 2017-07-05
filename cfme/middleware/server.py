@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from cfme.common import Taggable, UtilizationMixin
 from cfme.exceptions import MiddlewareServerNotFound,\

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill, Form, AngularSelect, Table, toolbar, form_buttons, flash
 from xml.sax.saxutils import quoteattr

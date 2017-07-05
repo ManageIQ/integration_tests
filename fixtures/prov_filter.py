@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from utils.log import logger
 from utils.providers import global_filters, list_providers, ProviderFilter
 

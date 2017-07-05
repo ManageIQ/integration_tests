@@ -7,6 +7,7 @@ eg, clone_domain.py xx.xx.xx.xx ManageIQ Default
 This can take several minutes to run.
 
 """
+from __future__ import absolute_import
 import argparse
 import sys
 

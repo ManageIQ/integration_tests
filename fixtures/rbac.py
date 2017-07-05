@@ -90,6 +90,7 @@ called *rhos* and one called *ec2* we could not change the expected exception to
 depending on if the test was run against *rhos* or *ec2*.
 
 """
+from __future__ import absolute_import
 from utils.log import logger
 from cfme.configure.access_control import User
 from fixtures.pytest_store import store

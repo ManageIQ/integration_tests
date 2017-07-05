@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+from __future__ import absolute_import
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, Checkbox, TextInput
@@ -8,7 +9,7 @@ from widgetastic_patternfly import Button, Input
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 from . import ControlExplorerView
-from actions import Action
+from .actions import Action
 from utils import ParamClassName
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep

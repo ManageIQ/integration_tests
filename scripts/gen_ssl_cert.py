@@ -4,6 +4,7 @@
 # This is based off of the code in this article:
 #
 #          https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/
+from __future__ import absolute_import
 import argparse
 import os
 from OpenSSL import crypto

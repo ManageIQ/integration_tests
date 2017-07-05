@@ -1,5 +1,6 @@
 """ A page functions for Availability Zone
 """
+from __future__ import absolute_import
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException

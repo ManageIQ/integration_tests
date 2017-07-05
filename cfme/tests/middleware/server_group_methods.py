@@ -1,4 +1,5 @@
 
+from __future__ import absolute_import
 from cfme.middleware.server import MiddlewareServer
 from server_methods import (
     verify_server_running, verify_server_stopped, verify_server_starting,

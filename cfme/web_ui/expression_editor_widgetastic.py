@@ -2,6 +2,7 @@
 """ The expression editor present in some locations of CFME.
 
 """
+from __future__ import absolute_import
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.wait import wait_for, TimedOutError

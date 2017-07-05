@@ -20,6 +20,7 @@ already been used, it will die
 
 
 """
+from __future__ import absolute_import
 import atexit
 import os
 

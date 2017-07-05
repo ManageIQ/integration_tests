@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 
 from utils.path import log_path

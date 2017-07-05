@@ -8,6 +8,7 @@ dict and will provide you with whatever you ask for with no limitations.
 
 The main clue to know what is limited by the filters and what isn't is the 'filters' parameter.
 """
+from __future__ import absolute_import
 import operator
 import six
 from collections import Mapping, OrderedDict

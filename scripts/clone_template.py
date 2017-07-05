@@ -2,6 +2,7 @@
 """Clone a template on a given provider to a VM instance
 
 Where possible, defaults will come from cfme_data"""
+from __future__ import absolute_import
 import argparse
 import sys
 

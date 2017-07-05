@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import re
 import pytest
 
-from ssh import SSHTail
+from .ssh import SSHTail
 from utils.log import logger
 
 

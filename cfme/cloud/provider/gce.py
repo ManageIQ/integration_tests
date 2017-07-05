@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from wrapanapi.google import GoogleCloudSystem
 from widgetastic.widget import View
 from widgetastic_patternfly import Button, Input

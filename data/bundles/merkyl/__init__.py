@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from bottle import request, route, run, template
 import os
 import subprocess

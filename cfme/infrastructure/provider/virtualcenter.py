@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from . import InfraProvider
 from wrapanapi.virtualcenter import VMWareSystem

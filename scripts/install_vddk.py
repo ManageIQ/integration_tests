@@ -3,6 +3,7 @@
 """SSH into a running appliance and install VMware VDDK.
 """
 
+from __future__ import absolute_import
 import argparse
 import sys
 from urlparse import urlparse

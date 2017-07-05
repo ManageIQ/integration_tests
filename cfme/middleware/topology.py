@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cfme.common import TopologyMixin
 from navmazing import NavigateToAttribute
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to

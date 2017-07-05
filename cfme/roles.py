@@ -1,4 +1,5 @@
-from utils.log import logger
+from __future__ import absolute_import
+from .utils.log import logger
 
 
 def _remove_page(roles, group, pages):

@@ -4,6 +4,7 @@
 :var list_page: A :py:class:`cfme.web_ui.Region` object describing elements on the list page.
 :var details_page: A :py:class:`cfme.web_ui.Region` object describing elements on the detail page.
 """
+from __future__ import absolute_import
 from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute

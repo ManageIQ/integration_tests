@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from utils.wait import wait_for
 from cfme.middleware.server import MiddlewareServer

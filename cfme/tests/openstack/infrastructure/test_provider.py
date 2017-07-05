@@ -1,5 +1,6 @@
 """Common tests for infrastructure provider"""
 
+from __future__ import absolute_import
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider

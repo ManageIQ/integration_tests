@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from string import digits, ascii_letters
 from random import choice
 from os import path

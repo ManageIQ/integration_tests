@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fauxfactory
 from utils.wait import wait_for
 from jdbc_driver_methods import DB2_105_JDBC, MSSQL_2014_JDBC, MYSQL_57_JDBC

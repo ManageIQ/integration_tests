@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text, ConditionalSwitchableView
 from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages

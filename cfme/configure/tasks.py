@@ -2,6 +2,7 @@
 
 """ Module dealing with Configure/Tasks section.
 """
+from __future__ import absolute_import
 from functools import partial
 
 from navmazing import NavigateToAttribute

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
+from __future__ import absolute_import
 import uuid
 import fauxfactory
 

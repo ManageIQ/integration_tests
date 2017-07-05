@@ -2,6 +2,7 @@
 """
 
 
+from __future__ import absolute_import
 import pytest
 from utils.log import logger
 from utils.wait import wait_for

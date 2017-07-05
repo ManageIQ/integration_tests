@@ -9,6 +9,7 @@ Usage:
     print(get_selected_tab())
 
 """
+from __future__ import absolute_import
 from collections import Mapping, OrderedDict
 
 import cfme.fixtures.pytest_selenium as sel

@@ -30,6 +30,7 @@ The Workflow
   shut down
 
 """
+from __future__ import absolute_import
 from itertools import groupby
 
 
@@ -69,7 +70,7 @@ if not conf.runtime['env'].get('ts'):
 
 
 def pytest_addhooks(pluginmanager):
-    import hooks
+    from . import hooks
     pluginmanager.add_hookspecs(hooks)
 
 

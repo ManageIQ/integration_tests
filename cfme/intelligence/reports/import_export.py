@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from . import Report
 from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel

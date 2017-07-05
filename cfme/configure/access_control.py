@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import UpDownSelect, SummaryFormItem
 from widgetastic_patternfly import (

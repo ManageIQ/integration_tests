@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import absolute_import
 import os
 import os.path
 import sys

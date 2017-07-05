@@ -43,6 +43,7 @@ certain object's id.
 Default match algorithm is ==. Event also accepts match function in order to change default
 match type.
 """
+from __future__ import absolute_import
 import logging
 import pytest
 

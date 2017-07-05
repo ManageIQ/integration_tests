@@ -2,15 +2,16 @@
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """
+from __future__ import absolute_import
 import re
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.base import Server
 from cfme.web_ui import Region, Table, tabstrip, toolbar
-from utils.timeutil import parsetime
-from utils.pretty import Pretty
-from utils.wait import wait_for
-from utils.appliance.implementations.ui import navigate_to
+from .utils.timeutil import parsetime
+from .utils.pretty import Pretty
+from .utils.wait import wait_for
+from .utils.appliance.implementations.ui import navigate_to
 
 from .base.login import BaseLoggedInPage
 

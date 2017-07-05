@@ -2,6 +2,7 @@
 """Functions for performance analysis/charting of the backend messages and top_output from an
 appliance.
 """
+from __future__ import absolute_import
 from utils.log import logger
 from utils.path import log_path
 from utils.perf import convert_top_mem_to_mib

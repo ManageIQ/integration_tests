@@ -11,6 +11,7 @@ artifactor:
             plugin: logger
             level: DEBUG
 """
+from __future__ import absolute_import
 import os
 from logging import makeLogRecord
 from artifactor import ArtifactorBasePlugin

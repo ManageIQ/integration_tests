@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import fauxfactory
 from cfme.configure.configuration import Category
 from cfme.rest.gen_data import categories as _categories

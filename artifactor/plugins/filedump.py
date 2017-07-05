@@ -11,6 +11,7 @@ artifactor:
             plugin: filedump
 """
 
+from __future__ import absolute_import
 from artifactor import ArtifactorBasePlugin
 import base64
 import os

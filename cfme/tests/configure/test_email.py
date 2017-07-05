@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cfme.configure import configuration
 from utils.wait import wait_for
 

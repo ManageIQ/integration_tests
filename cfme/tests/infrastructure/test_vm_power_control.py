@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import cfme.web_ui.flash as flash
 import pytest
 import random

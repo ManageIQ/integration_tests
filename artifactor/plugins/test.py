@@ -1,5 +1,6 @@
 """ Test plugin for Artifactor """
 
+from __future__ import absolute_import
 from artifactor import ArtifactorBasePlugin
 import time
 

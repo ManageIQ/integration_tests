@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from cfme import test_requirements
 from cfme.configure.tasks import is_datastore_analysis_finished
 from cfme.fixtures import pytest_selenium as sel

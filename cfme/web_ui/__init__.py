@@ -51,6 +51,7 @@
 
 """
 
+from __future__ import absolute_import
 import atexit
 import os
 import re

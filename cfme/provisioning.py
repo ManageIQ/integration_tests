@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from collections import OrderedDict
 
 from widgetastic.widget import View, Checkbox
@@ -11,11 +12,11 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services import requests
 from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip
-from utils import version
-from utils import normalize_text
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from utils.wait import wait_for
+from .utils import version
+from .utils import normalize_text
+from .utils.appliance.implementations.ui import navigate_to
+from .utils.log import logger
+from .utils.wait import wait_for
 
 submit_button = form_buttons.FormButton("Submit")
 

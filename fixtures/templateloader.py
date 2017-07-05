@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Preloads all templates on all providers that were selected for testing. Useful for test collect.
 """
+from __future__ import absolute_import
 import pytest
 from fixtures.pytest_store import store
 from utils import trackerbot

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from widgetastic.widget import Table as VanillaTable
 from widgetastic.xpath import quote
 from widgetastic_patternfly import BootstrapSelect, BootstrapSwitch, Button, Input

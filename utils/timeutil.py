@@ -4,6 +4,7 @@
 
 """
 
+from __future__ import absolute_import
 from datetime import datetime as _datetime
 import time
 import tzlocal

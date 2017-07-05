@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from navmazing import Navigate, NavigateStep
 from selenium.common.exceptions import NoSuchElementException
 from widgetastic.browser import Browser, DefaultPlugin

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from . import Server
 from utils.appliance import ViaSSUI
 from utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to

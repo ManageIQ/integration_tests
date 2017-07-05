@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from utils.browser import manager
 from utils.log import logger
 

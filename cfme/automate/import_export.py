@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from cfme.base.ui import AutomateImportExportBaseView, AutomateImportExportView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to

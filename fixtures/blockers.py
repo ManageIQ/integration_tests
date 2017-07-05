@@ -10,6 +10,7 @@ The :py:func:`blockers` retrieves list of all blockers
 as specified in the meta marker.
 All of them are converted to the :py:class:`utils.blockers.Blocker` instances
 """
+from __future__ import absolute_import
 import pytest
 
 from fixtures.pytest_store import store

@@ -12,6 +12,7 @@ artifactor:
             plugin: reporter
             only_failed: False #Only show faled tests in the report
 """
+from __future__ import absolute_import
 import csv
 import datetime
 import difflib

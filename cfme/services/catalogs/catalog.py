@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button, Input
 from navmazing import NavigateToAttribute, NavigateToSibling

@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 """SSH into a running appliance and loosen postgres connections"""
+from __future__ import absolute_import
 import argparse
 import sys
 

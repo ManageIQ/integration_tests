@@ -11,6 +11,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var ajax_wait_js: A Javascript function for ajax wait checking
 :var class_selector: Regular expression to detect simple CSS locators
 """
+from __future__ import absolute_import
 from HTMLParser import HTMLParser
 from time import sleep
 from xml.sax.saxutils import quoteattr, unescape

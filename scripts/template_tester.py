@@ -11,6 +11,7 @@ mark:
     Mark a template as tested and, if it passes, usable.
 
 """
+from __future__ import absolute_import
 import os
 import sys
 

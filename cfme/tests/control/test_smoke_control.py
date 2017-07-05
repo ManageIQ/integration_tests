@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This test contains necessary smoke tests for the Control."""
+from __future__ import absolute_import
 import pytest
 
 from cfme.base import Server

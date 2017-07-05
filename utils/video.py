@@ -12,6 +12,7 @@ Configuration for this module + fixture:
 
 """
 
+from __future__ import absolute_import
 import os
 import subprocess
 

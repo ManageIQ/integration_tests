@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from widgetastic.widget import View
 from widgetastic_patternfly import AboutModal
 

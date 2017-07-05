@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from widgetastic_patternfly import BootstrapSelect, Input
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm

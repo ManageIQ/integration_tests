@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 
 from cfme.configure import red_hat_updates

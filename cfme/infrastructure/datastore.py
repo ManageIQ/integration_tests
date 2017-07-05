@@ -4,6 +4,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Datastores pages.
 """
+from __future__ import absolute_import
 from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute

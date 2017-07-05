@@ -6,6 +6,7 @@ Can be also used as a unit-test for page model coverage.
 
 TODO: * Multiple expression types entering. (extend the update tests)
 """
+from __future__ import absolute_import
 from collections import namedtuple
 import fauxfactory
 import pytest

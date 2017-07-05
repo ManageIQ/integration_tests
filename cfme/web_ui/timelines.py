@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from utils.appliance.implementations.ui import navigate_to
 

@@ -3,6 +3,7 @@
 """SSH into a running appliance and compile ui assets.
 """
 
+from __future__ import absolute_import
 import argparse
 import sys
 

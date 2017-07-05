@@ -13,6 +13,7 @@ Usage:
 Note:
     Inactive links are not available in any way.
 """
+from __future__ import absolute_import
 from xml.sax.saxutils import quoteattr
 
 
