@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from cfme.fixtures import pytest_selenium as sel
 from selenium.common.exceptions import ElementNotVisibleException, StaleElementReferenceException

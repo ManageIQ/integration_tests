@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import absolute_import
 import click
 import subprocess
 import socket
@@ -6,7 +7,7 @@ import sys
 
 from wait_for import wait_for, TimedOutError
 
-from dockerbot import SeleniumDocker
+from .dockerbot import SeleniumDocker
 from utils.net import random_port
 from utils.conf import docker as docker_conf
 

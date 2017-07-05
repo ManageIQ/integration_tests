@@ -4,6 +4,7 @@ This doesn't provide any special markers, but it does add behavor to marks defin
 :py:attr:`skip_marks`.
 
 """
+from __future__ import absolute_import
 import pytest
 
 

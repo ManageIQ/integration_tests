@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from utils.conf import credentials
 from utils.log import logger
 from utils.ssh import SSHClient

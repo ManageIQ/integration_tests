@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from random import choice
 from selenium.common.exceptions import NoSuchElementException

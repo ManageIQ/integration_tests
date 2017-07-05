@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from utils.log_validator import LogValidator
 from utils import version
 import pytest

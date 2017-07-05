@@ -1,4 +1,5 @@
 #! /usr/bin/env python2
+from __future__ import absolute_import
 from collections import defaultdict
 from utils.providers import get_mgmt
 from utils.conf import cfme_data, jenkins

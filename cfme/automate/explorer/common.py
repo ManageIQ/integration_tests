@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from widgetastic.widget import Text, Checkbox, View
 from widgetastic.utils import Fillable
 from widgetastic_manageiq import Input

@@ -10,6 +10,7 @@ Required YAML keys:
         nothing terrible happens, but provisioning can be then assigned to a datastore that does not
         work (iso datastore or whatever), therefore failing the provision.
 """
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from __future__ import print_function
 
+from __future__ import absolute_import
 from collections import defaultdict
 import datetime
 import re
@@ -59,7 +60,7 @@ def main(tag, old_tag, report_type, line_limit):
     print('')
     print('Includes: {} -> {}'.format(old_tag, tag))
 
-    max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
+    max_len_labels = max(map(len, valid_labels))
 
     now = datetime.date.today()
     start_of_week = now - datetime.timedelta(days=30)

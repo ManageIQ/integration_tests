@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import re
 from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence

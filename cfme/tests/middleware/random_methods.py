@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cfme.middleware.provider import get_random_list
 from cfme.middleware.datasource import MiddlewareDatasource
 from cfme.middleware.server import MiddlewareServer

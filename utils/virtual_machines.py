@@ -1,5 +1,6 @@
 """Helper functions related to the creation and destruction of virtual machines and instances
 """
+from __future__ import absolute_import
 import pytest
 
 from utils.providers import get_crud

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # from cfme.configure.tasks import is_cluster_analysis_finished
+from __future__ import absolute_import
 from cfme import test_requirements
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.provider import InfraProvider

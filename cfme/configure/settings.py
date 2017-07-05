@@ -2,6 +2,7 @@
 
 """ Module dealing with Configure/My Setting section."""
 
+from __future__ import absolute_import
 from functools import partial
 import re
 

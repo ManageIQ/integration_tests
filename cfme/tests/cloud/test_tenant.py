@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider

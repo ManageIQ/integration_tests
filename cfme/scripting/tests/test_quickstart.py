@@ -1,5 +1,6 @@
 # using subprocess because its a better docker api
 # than the docker-py 1.10 we hard depend on
+from __future__ import absolute_import
 import subprocess
 from utils import path
 import pytest

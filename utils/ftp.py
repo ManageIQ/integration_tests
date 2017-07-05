@@ -3,6 +3,7 @@
 
 @author: Milan Falešník <mfalesni@redhat.com>
 """
+from __future__ import absolute_import
 import fauxfactory
 import ftplib
 import re

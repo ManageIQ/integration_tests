@@ -51,6 +51,7 @@
 
 """
 
+from __future__ import absolute_import
 import atexit
 import os
 import re
@@ -77,6 +78,7 @@ from utils import attributize_string, castmap, normalize_space, version
 from utils.log import logger
 from utils.pretty import Pretty
 from wait_for import TimedOutError, wait_for
+from functools import reduce
 
 
 class Selector(object):
@@ -764,7 +766,7 @@ class CAndUGroupTable(Table):
         state = self.States.NORMAL_ROWS
         while True:
             try:
-                row = rows.next()
+                row = next(rows)
             except StopIteration:
                 if state == self.States.GROUP_SUMMARY:
                     row = None

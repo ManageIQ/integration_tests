@@ -1,5 +1,6 @@
 # pylint: disable=broad-except
 
+from __future__ import absolute_import
 import re
 
 from collections import defaultdict
@@ -106,7 +107,7 @@ def get_testcase_data(tests, test_names, item, legacy=False):
     work_items = []
     custom_fields = {}
     try:
-        description = item.function.func_doc
+        description = item.function.__doc__
     except Exception:
         description = ""
     try:
@@ -131,7 +132,7 @@ def get_testcase_data(tests, test_names, item, legacy=False):
             xunit['gh_owner'],
             xunit['gh_repo'],
             item.location[0],
-            item.function.func_code.co_firstlineno
+            item.function.__code__.co_firstlineno
         )
         custom_fields['caseautomation'] = "automated"
         custom_fields['automation_script'] = automation_script

@@ -21,6 +21,7 @@ Usage:
 
 """
 
+from __future__ import absolute_import
 from contextlib import contextmanager
 import re
 from multimethods import singledispatch

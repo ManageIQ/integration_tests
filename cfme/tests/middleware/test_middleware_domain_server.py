@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.provider import get_random_list

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 from cfme.configure.configuration import Category, Tag

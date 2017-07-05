@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from types import NoneType
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox

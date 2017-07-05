@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module handling Dashboards accordion.
 """
+from __future__ import absolute_import
 from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base import Server

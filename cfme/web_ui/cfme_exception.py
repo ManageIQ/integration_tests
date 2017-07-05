@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module handling the Rails exceptions from CFME"""
 
+from __future__ import absolute_import
 from cfme.exceptions import CFMEExceptionOccured
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Region

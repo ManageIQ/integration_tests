@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import absolute_import
 import argparse
 import datetime
 import pytz
@@ -19,6 +20,7 @@ from utils.conf import cfme_data, credentials
 from utils.path import log_path
 from utils.ssh import SSHClient
 from utils.providers import list_provider_keys, get_mgmt
+from six.moves import input
 
 lock = Lock()
 # Hold all the deleted vm's as a list, add in from all the threads with lock
@@ -251,7 +253,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         thread.join()
 
     if vms_to_delete and prompt:
-        yesno = raw_input('Delete these VMs? [y/N]: ')
+        yesno = input('Delete these VMs? [y/N]: ')
         if str(yesno).lower() != 'y':
             print('Exiting.')
             return 0

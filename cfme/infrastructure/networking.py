@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from utils.appliance import Navigatable
 from navmazing import NavigateToAttribute
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep

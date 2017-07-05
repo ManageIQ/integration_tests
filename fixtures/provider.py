@@ -37,6 +37,7 @@ as a result. If this counter reaches a predefined number of failures (see ``SETU
 the failing provider will be added to the list of problematic providers and no further attempts
 to set it up will be made.
 """
+from __future__ import absolute_import
 import pytest
 import random
 import six

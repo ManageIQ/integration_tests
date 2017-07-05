@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import json
 import time
 from jsmin import jsmin
@@ -276,7 +277,7 @@ class CFMENavigateStep(NavigateStep):
 
         try:
             self.log_message(
-                "Invoking {}, with {} and {}".format(fn.func_name, args, kwargs), level="debug")
+                "Invoking {}, with {} and {}".format(fn.__name__, args, kwargs), level="debug")
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating

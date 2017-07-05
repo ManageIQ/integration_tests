@@ -10,6 +10,7 @@ artifactor:
             enabled: True
             plugin: post_result
 """
+from __future__ import absolute_import
 from collections import defaultdict
 
 from artifactor import ArtifactorBasePlugin

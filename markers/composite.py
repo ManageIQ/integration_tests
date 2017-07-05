@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 def pytest_addoption(parser):
     """Adds options for the composite uncollection system"""
     parser.addoption("--composite-uncollect", action="store_true", default=False,

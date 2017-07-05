@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer

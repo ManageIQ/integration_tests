@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import argparse
 import diaper
 
 from cfme.test_framework.sprout.client import SproutClient
 from utils.appliance import IPAppliance
 
-from coverage_report_jenkins import main as coverage_report_jenkins
+from .coverage_report_jenkins import main as coverage_report_jenkins
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from xml.sax.saxutils import quoteattr, unescape
 

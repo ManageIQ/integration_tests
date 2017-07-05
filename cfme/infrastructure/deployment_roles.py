@@ -1,5 +1,6 @@
 """ A model of an Infrastructure Deployment roles in CFME"""
 
+from __future__ import absolute_import
 from functools import partial
 from navmazing import NavigateToAttribute, NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException

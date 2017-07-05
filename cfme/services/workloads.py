@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """ A model of Workloads page in CFME
 """
+from __future__ import absolute_import
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_manageiq import Accordion, ManageIQTree, Search

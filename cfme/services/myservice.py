@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from widgetastic.widget import Text, View
 from widgetastic_manageiq import Accordion, ManageIQTree, Calendar, SummaryTable
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound

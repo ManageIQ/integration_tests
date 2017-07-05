@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import argparse
 from tabulate import tabulate
 from multiprocessing import Process, Queue

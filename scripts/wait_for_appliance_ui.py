@@ -7,6 +7,7 @@ Specifically, it will block until the specified URL returns status code 200.
 It will use base_url from conf.env by default.
 
 """
+from __future__ import absolute_import
 import argparse
 import sys
 

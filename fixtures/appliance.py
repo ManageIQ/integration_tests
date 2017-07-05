@@ -10,6 +10,7 @@ example, you will want to use the :py:func:`temp_appliance_preconfig` fixture.
 For tests that require multiple unconfigured appliances (e.g. replication testing), there is
 :py:func:`temp_appliances_unconfig`.
 """
+from __future__ import absolute_import
 from contextlib import contextmanager
 
 import pytest

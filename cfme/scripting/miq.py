@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import click
 from artifactor.__main__ import main as art_main
 from cfme.scripting.appliance import main as app_main

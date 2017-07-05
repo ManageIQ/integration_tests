@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import pytest
 from utils.generators import random_vm_name
 from utils.log import logger

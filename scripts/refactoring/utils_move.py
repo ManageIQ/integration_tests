@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from rope.base.project import Project
 from rope.refactor.move import MoveModule
 

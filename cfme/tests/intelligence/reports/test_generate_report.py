@@ -4,6 +4,7 @@
 
 """
 
+from __future__ import absolute_import
 import pytest
 
 # from selenium.common.exceptions import NoSuchElementException

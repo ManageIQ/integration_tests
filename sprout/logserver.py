@@ -1,14 +1,15 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 # Based on: https://docs.python.org/2.4/lib/network-logging.html
+from __future__ import absolute_import
 import atexit
 try:
-    import cPickle as pickle
+    import six.moves.cPickle as pickle
 except ImportError:
     import pickle
 import logging
 import logging.handlers
-import SocketServer
+import six.moves.socketserver
 import signal
 import struct
 from threading import Lock
@@ -51,7 +52,7 @@ def close_logs():
         logger_cache = {}
 
 
-class LogRecordStreamHandler(SocketServer.StreamRequestHandler):
+class LogRecordStreamHandler(six.moves.socketserver.StreamRequestHandler):
     """Handler for a streaming logging request.
 
     This basically logs the record using whatever logging policy is
@@ -111,13 +112,13 @@ class LogRecordStreamHandler(SocketServer.StreamRequestHandler):
                 logger.handle(record)
 
 
-class LogRecordSocketReceiver(SocketServer.ThreadingTCPServer):
+class LogRecordSocketReceiver(six.moves.socketserver.ThreadingTCPServer):
     allow_reuse_address = 1
 
     def __init__(self, host='localhost',
                  port=logging.handlers.DEFAULT_TCP_LOGGING_PORT,
                  handler=LogRecordStreamHandler):
-        SocketServer.ThreadingTCPServer.__init__(self, (host, port), handler)
+        six.moves.socketserver.ThreadingTCPServer.__init__(self, (host, port), handler)
         self.abort = 0
         self.timeout = 1
         self.logname = None

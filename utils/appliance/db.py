@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import attr
 from cached_property import cached_property
 import fauxfactory

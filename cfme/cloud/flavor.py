@@ -1,5 +1,6 @@
 """ Page functions for Flavor pages
 """
+from __future__ import absolute_import
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button, View

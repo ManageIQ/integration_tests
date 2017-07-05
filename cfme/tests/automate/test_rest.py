@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """REST API specific automate tests."""
+from __future__ import absolute_import
 import pytest
 
 from cfme import test_requirements

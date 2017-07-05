@@ -6,6 +6,7 @@
 ######################################################################
 # PEP8 applied and some things tweaked by Milan Falesnik
 
+from __future__ import absolute_import
 import re
 
 __all__ = ('quote',)

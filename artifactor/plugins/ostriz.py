@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from artifactor import ArtifactorBasePlugin
 import requests
 import json

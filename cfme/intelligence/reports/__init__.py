@@ -8,6 +8,7 @@
   * :py:mod:`cfme.intelligence.reports.widgets`
   * :py:mod:`cfme.intelligence.reports.dashboards`
 """
+from __future__ import absolute_import
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.web_ui import accordion

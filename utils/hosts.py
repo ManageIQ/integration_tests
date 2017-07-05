@@ -3,6 +3,7 @@ utils.hosts
 --------------
 
 """
+from __future__ import absolute_import
 from cfme.infrastructure import host
 from utils.wait import wait_for
 from utils import conf

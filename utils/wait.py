@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from wait_for import wait_for as wait_for_mod, wait_for_decorator as wait_for_decorator_mod
 from wait_for import RefreshTimer, TimedOutError  # NOQA
 from utils.log import logger

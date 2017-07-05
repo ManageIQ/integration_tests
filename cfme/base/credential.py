@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from cfme.web_ui import FileInput, Input, Radio, form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf

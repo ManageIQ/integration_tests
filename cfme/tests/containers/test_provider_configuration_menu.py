@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen

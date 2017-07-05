@@ -1,4 +1,5 @@
 """Functions that performance tests use."""
+from __future__ import absolute_import
 from fixtures.pytest_store import store
 from utils.ssh import SSHClient, SSHTail
 from utils.log import logger

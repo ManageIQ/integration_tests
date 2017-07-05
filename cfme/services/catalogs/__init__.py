@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_manageiq import Accordion, ManageIQTree

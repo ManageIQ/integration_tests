@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from functools import partial
 
 from cached_property import cached_property
@@ -19,6 +20,7 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
+from functools import reduce
 
 properties_form = Form(
     fields=[

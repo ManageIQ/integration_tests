@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import Mapping
 from contextlib import contextmanager
 from itertools import izip
@@ -26,7 +27,7 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
     cursor = dbapi_connection.cursor()
     try:
         cursor.execute("SELECT 1")
-    except StandardError:
+    except Exception:
         raise DisconnectionError
     cursor.close()
 

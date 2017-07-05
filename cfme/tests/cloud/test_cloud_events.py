@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module tests only cloud specific events"""
+from __future__ import absolute_import
 import pytest
 import yaml
 

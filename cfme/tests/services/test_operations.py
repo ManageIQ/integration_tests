@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests checking for link access from outside."""
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 

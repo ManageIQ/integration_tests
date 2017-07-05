@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
+from __future__ import absolute_import
 from functools import partial
 import random
 import itertools

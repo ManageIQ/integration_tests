@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 import re
 from cfme.containers.provider import ContainersProvider

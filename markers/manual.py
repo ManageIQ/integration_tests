@@ -1,5 +1,6 @@
 """manual: Marker for marking tests asmanual tests."""
 
+from __future__ import absolute_import
 from fixtures.pytest_store import store
 
 

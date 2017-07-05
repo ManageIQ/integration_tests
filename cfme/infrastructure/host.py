@@ -7,6 +7,7 @@
 :var credentials_form: A :py:class:`cfme.web_ui.Form` object describing the credentials form.
 """
 
+from __future__ import absolute_import
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException

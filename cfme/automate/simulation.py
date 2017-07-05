@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from utils.appliance import get_or_create_current_appliance
 from utils.appliance.implementations.ui import navigate_to
 

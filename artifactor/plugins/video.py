@@ -13,6 +13,7 @@ artifactor:
             display: ":99"
 """
 
+from __future__ import absolute_import
 from artifactor import ArtifactorBasePlugin
 import os
 from utils.video import Recorder

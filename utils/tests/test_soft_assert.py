@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from fixtures import artifactor_plugin
 from fixtures.soft_assert import SoftAssertionError, _soft_assert_cm

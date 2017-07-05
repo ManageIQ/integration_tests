@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 
 from utils.conf import cfme_data, credentials

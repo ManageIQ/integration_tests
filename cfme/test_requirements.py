@@ -16,6 +16,7 @@ Please import the module instead of elements:
 
 """
 
+from __future__ import absolute_import
 import pytest
 
 ansible = pytest.mark.requirement("ansible")

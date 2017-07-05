@@ -2,6 +2,7 @@
 """Module handling Dashboard Widgets accordion.
 
 """
+from __future__ import absolute_import
 from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import ExternalRSSFeed, MenuShortcuts, Timer

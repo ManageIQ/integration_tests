@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cached_property import cached_property
 
 from . import ContainersProvider

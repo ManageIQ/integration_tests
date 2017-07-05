@@ -3,6 +3,7 @@
 You probably want to pipe this to a pager.
 
 """
+from __future__ import absolute_import
 import os
 import sys
 

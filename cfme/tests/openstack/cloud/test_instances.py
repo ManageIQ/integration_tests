@@ -1,5 +1,6 @@
 """Tests for Openstack cloud instances"""
 
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 from selenium.common.exceptions import TimeoutException

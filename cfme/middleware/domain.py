@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common import Taggable

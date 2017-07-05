@@ -2,6 +2,7 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+from __future__ import absolute_import
 from copy import copy
 from collections import namedtuple
 import fauxfactory

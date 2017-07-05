@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from cfme.exceptions import OptionNotAvailable
 from utils import version, deferred_verpick
 from . import Instance

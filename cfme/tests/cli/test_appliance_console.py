@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytest
 from collections import namedtuple
 from wait_for import wait_for

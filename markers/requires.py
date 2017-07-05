@@ -10,6 +10,7 @@ test item.
 
 """
 
+from __future__ import absolute_import
 import pytest
 
 _no_mark_arg_err = '{} mark required test name or nodeid as first argument'

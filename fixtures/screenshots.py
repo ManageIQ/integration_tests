@@ -11,6 +11,7 @@ If you want to take a screenshot inside your test, just do it like this:
         # do something else
 
 """
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 from fixtures.pytest_store import store

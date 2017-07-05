@@ -3,6 +3,7 @@ This test can run only after overcloud cloud provider created and linked to
 undercloud infra provider, need to compare the cloud providers with the
 results of the relationships
 """
+from __future__ import absolute_import
 import pytest
 
 import cfme.fixtures.pytest_selenium as sel

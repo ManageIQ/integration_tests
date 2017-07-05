@@ -8,6 +8,7 @@ from utils.tracer import trace::
       print("something")
 
 """
+from __future__ import absolute_import
 import sys
 from utils.log import logger
 from functools32 import wraps

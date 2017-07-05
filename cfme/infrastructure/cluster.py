@@ -4,6 +4,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Cluster pages.
 """
+from __future__ import absolute_import
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View

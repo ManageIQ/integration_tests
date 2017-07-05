@@ -1,5 +1,6 @@
 # Imports for backward compatility and convenience
 # NOQA all the things because
+from __future__ import absolute_import
 import time
 from wrapanapi.base import VMInfo, WrapanapiAPIBase, ContainerWrapanapiAPIBase, Logger  # NOQA
 from wrapanapi import exceptions  # NOQA

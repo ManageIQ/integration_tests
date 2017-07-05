@@ -4,6 +4,7 @@
 :var HISTORY_ITEMS: Locator that finds all the history items from dropdown
 :var SINGLE_HISTORY_BUTTON: Locator that finds the history button if it is without the dropdown.
 """
+from __future__ import absolute_import
 from cfme.fixtures import pytest_selenium as sel
 from . import toolbar
 

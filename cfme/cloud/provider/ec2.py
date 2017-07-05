@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from wrapanapi.ec2 import EC2System
 
 from . import CloudProvider

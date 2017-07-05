@@ -121,6 +121,7 @@ This is how the artifact_path is returned. This hook can be removed, by running 
 ``unregister_hook_callback`` with the name of the hook callback.
 
 """
+from __future__ import absolute_import
 import logging
 import os
 import re

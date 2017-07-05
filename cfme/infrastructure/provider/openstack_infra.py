@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSelect, Button

@@ -7,6 +7,7 @@ Usage:
    scripts/encrypt_conf.py confname1 confname2 ... confnameN
    scripts/encrypt_conf.py credentials
 """
+from __future__ import absolute_import
 import StringIO
 
 import click

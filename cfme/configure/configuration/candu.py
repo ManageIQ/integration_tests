@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cfme import web_ui as ui
 from cfme.web_ui import form_buttons, CFMECheckbox
 from utils.appliance import current_appliance

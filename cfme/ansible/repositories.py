@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Ansible/Repositories"""
+from __future__ import absolute_import
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox
 

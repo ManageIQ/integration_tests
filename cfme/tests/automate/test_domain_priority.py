@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that check priority of domains."""
+from __future__ import absolute_import
 import fauxfactory
 import pytest
 
