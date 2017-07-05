@@ -412,16 +412,28 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         tb.select("Select up to 10 timestamps for Drift Analysis")
 
         # Make sure the section we need is active/open
-        sec_loc_map = {
-            'Properties': 'Properties',
-            'Security': 'Security',
-            'Configuration': 'Configuration',
-            'My Company Tags': 'Categories'}
-        active_sec_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
-            "/span[contains(@class, 'dynatree-selected')]".format(sec_loc_map[section])
-        sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
-            "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
-        sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
+        if version.current_version() >= '5.7':
+            sec_loc_map = {
+                'Properties': 'Properties',
+                'Security': 'Security',
+                'Configuration': 'Configuration',
+                'My Company Tags': 'Categories'}
+            active_sec_loc = "//div[@id='all_sectionsbox']//li[@title='{}']"\
+                "/span[contains(@class, 'fa-check-square-o')]".format(sec_loc_map[section])
+            sec_checkbox_loc = "//div[@id='all_sectionsbox']//li[@title='{}']"\
+                "//span[contains(@class, 'check-icon')]".format(sec_loc_map[section])
+            sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
+        else:
+            sec_loc_map = {
+                'Properties': 'Properties',
+                'Security': 'Security',
+                'Configuration': 'Configuration',
+                'My Company Tags': 'Categories'}
+            active_sec_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
+                "/span[contains(@class, 'dynatree-selected')]".format(sec_loc_map[section])
+            sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
+                "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
+            sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
 
         # If the section is not active yet, activate it
         if not sel.is_displayed(active_sec_loc):
