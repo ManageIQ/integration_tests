@@ -12,7 +12,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var class_selector: Regular expression to detect simple CSS locators
 """
 from __future__ import absolute_import
-from HTMLParser import HTMLParser
+from six.moves.html_parser import HTMLParser
 from time import sleep
 from xml.sax.saxutils import quoteattr, unescape
 from collections import Iterable, namedtuple
