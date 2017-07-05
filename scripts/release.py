@@ -11,7 +11,6 @@ import textwrap
 import click
 
 from utils.conf import docker
-from functools import reduce
 
 
 def clean_commit(commit_msg):
@@ -60,7 +59,7 @@ def main(tag, old_tag, report_type, line_limit):
     print('')
     print('Includes: {} -> {}'.format(old_tag, tag))
 
-    max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
+    max_len_labels = max(map(len, valid_labels))
 
     now = datetime.date.today()
     start_of_week = now - datetime.timedelta(days=30)
