@@ -35,9 +35,9 @@ class AutomateGitRepository(Navigatable):
 
     @classmethod
     def from_db(cls, db_id, appliance=None):
-        git_repositories = appliance.db['git_repositories']
+        git_repositories = appliance.db.client['git_repositories']
         try:
-            url, verify_ssl = appliance.db.session\
+            url, verify_ssl = appliance.db.client.session\
                 .query(git_repositories.url, git_repositories.verify_ssl)\
                 .filter(git_repositories.id == db_id)\
                 .first()
@@ -91,10 +91,10 @@ class AutomateGitRepository(Navigatable):
         assert imex_page.is_displayed
         imex_page.flash.assert_no_error()
         # Now find the domain in database
-        namespaces = self.appliance.db['miq_ae_namespaces']
-        git_repositories = self.appliance.db['git_repositories']
+        namespaces = self.appliance.db.client['miq_ae_namespaces']
+        git_repositories = self.appliance.db.client['git_repositories']
         none = None
-        query = self.appliance.db.session\
+        query = self.appliance.db.client.session\
             .query(
                 namespaces.id, namespaces.name, namespaces.description, git_repositories.url,
                 namespaces.ref_type, namespaces.ref)\
