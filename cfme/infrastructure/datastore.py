@@ -15,7 +15,6 @@ from cfme.web_ui import (
     flash, InfoBlock, match_location, fill, paginator, accordion
 )
 from cfme.web_ui.form_buttons import FormButton
-from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
@@ -73,7 +72,8 @@ class Datastore(Pretty, Navigatable):
             Datastore must have 0 hosts and 0 VMs for this to work.
         """
         self.load_details()
-        cfg_btn('Remove from the VMDB', invokes_alert=True)
+        # BZ 1467989 - this button is never getting enabled
+        cfg_btn('Remove Datastore', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
     def wait_for_delete(self):
@@ -126,7 +126,7 @@ class Datastore(Pretty, Navigatable):
         sel.click(details_page.infoblock.element("Relationships", "Managed VMs"))
         for q in Quadicon.all('vm'):
             fill(q.checkbox(), True)
-        cfg_btn("Remove selected items from the VMDB", invokes_alert=True)
+        cfg_btn("Remove selected items", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
     def delete_all_attached_hosts(self):
@@ -134,11 +134,7 @@ class Datastore(Pretty, Navigatable):
         sel.click(details_page.infoblock.element("Relationships", "Hosts"))
         for q in Quadicon.all('host'):
             fill(q.checkbox(), True)
-        # TODO: This should really be an attr on the datastore called DELETE_BTN or something
-        path = version.pick({
-            version.LOWEST: "Remove Hosts from the VMDB",
-            "5.4": "Remove items from the VMDB"})
-        cfg_btn(path, invokes_alert=True)
+        cfg_btn("Remove items", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
     def wait_for_delete_all(self):

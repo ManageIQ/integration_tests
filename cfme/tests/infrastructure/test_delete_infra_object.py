@@ -86,7 +86,7 @@ def test_delete_resource_pool_appear_after_refresh(setup_provider, provider):
     test_resourcepool.wait_for_exists()
 
 
-@pytest.mark.meta(blockers=[1236977, 1335961])
+@pytest.mark.meta(blockers=[1335961, 1467989])
 @pytest.mark.ignore_stream("upstream")
 def test_delete_datastore_appear_after_refresh(setup_provider, provider):
     """ Tests delete datastore
