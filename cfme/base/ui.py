@@ -1222,7 +1222,6 @@ class ZoneCANDUGapCollection(CFMENavigateStep):
 
 
 @Zone.exists.external_getter_implemented_for(ViaUI)
-@property
 def exists(self):
     try:
         navigate_to(self, 'Details')
