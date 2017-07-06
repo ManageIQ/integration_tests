@@ -1,7 +1,7 @@
 import pytest
 from collections import namedtuple
 from wait_for import wait_for
-from utils import version, os
+from utils import os
 from utils.log_validator import LogValidator
 from utils.log import logger
 from utils.conf import hidden
@@ -58,7 +58,6 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
     confirm db reset, '1' db region number + wait 360 secs, '' continue, '' clear info screen,
@@ -73,7 +72,6 @@ def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_fun
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' Creates v2_key,
     '1' selects internal db, 'y' continue, '1' use partition, 'y' create dedicated db, 'pwd'
@@ -95,15 +93,14 @@ def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds,
     ip = appliance.address
     pwd = app_creds['password']
     opt = '5' if temp_appliance_unconfig_funcscope.version >= "5.8" else '8'
-    port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else ip
-    command_set = ('ap', '', opt, '2', ip, '', pwd, '', '3', port, '', '',
+    port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else (ip,)
+    command_set = ('ap', '', opt, '2', ip, '', pwd, '', '3') + port + ('', '',
         pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
         temp_appliance_unconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' create v2_key,
@@ -114,15 +111,14 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
     ip = dedicated_db_appliance.address
     pwd = app_creds['password']
     opt = '5' if temp_appliance_unconfig_funcscope.version >= "5.8" else '8'
-    port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else ip
-    command_set = ('ap', '', opt, '1', '2', '0', 'y', port, '', '', pwd,
+    port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else (ip,)
+    command_set = ('ap', '', opt, '1', '2', '0', 'y') + port + ('', '', pwd,
         TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_extend_storage(fqdn_appliance):
     """'ap' launches appliance_console, '' clears info screen, '10/13' extend storage, '1' select
     disk, 'y' confirm configuration and '' complete."""
@@ -136,7 +132,6 @@ def test_black_console_extend_storage(fqdn_appliance):
     wait_for(is_storage_extended, func_args=[fqdn_appliance])
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_ipa(ipa_creds, fqdn_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
     + wait 40 secs and '' finish."""
@@ -154,7 +149,6 @@ def test_black_console_ipa(ipa_creds, fqdn_appliance):
     assert return_code == 0
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 @pytest.mark.parametrize('auth_type', [
     LoginOption('sso', 'sso_enabled', '1'),
     LoginOption('saml', 'saml_enabled', '2'),
@@ -188,7 +182,6 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_black_console_external_auth_all(app_creds, ipa_crud):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
