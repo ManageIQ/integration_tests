@@ -2,7 +2,6 @@ import pytest
 from utils import testgen
 from cfme.containers.provider import ContainersProvider
 from utils.version import current_version
-from cfme.web_ui import toolbar
 from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
@@ -12,6 +11,7 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
+@pytest.fixture(scope="function")
 def validate_logging_up_and_running(provider):
     routers = [router for router in provider.mgmt.o_api.get('route')[1]['items']
                if "logging" in router["metadata"]["name"]]
@@ -22,17 +22,11 @@ def validate_logging_up_and_running(provider):
     assert all_routers_up, "some logging route is off"
 
 
-def is_external_logging_greyed(provider):
-    navigate_to(provider, 'Details')
-    return toolbar.is_greyed('Monitoring', 'External Logging')
-
-
 @pytest.mark.polarion('CMP-10643')
-def test_external_logging_activated(provider):
-    validate_logging_up_and_running(provider)
-    is_external_logging_greyed(provider)
+def test_external_logging_activated(provider, validate_logging_up_and_running):
+    view = navigate_to(provider, 'Details')
 
-    assert not is_external_logging_greyed(provider), \
-        "Monitoring --> External Logging not activated"
+    assert not view.monitor.item_enabled('External Logging'), (
+        "Monitoring --> External Logging not activated")
 
-    toolbar.select('Monitoring', 'External Logging')
+    view.monitor.item_select('External Logging')
