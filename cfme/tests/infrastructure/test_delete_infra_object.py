@@ -5,13 +5,10 @@ from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.infrastructure.provider import InfraProvider
-from cfme.web_ui import Region
 from utils import testgen
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.general_ui]
-
-details_page = Region(infoblock_type='detail')
 
 
 pytest_generate_tests = testgen.generate(

@@ -144,7 +144,8 @@ class ResourcePool(Pretty, Navigatable):
         :param wait: Whether or not to wait for the delete, defaults to False
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove from the VMDB', handle_alert=not cancel)
+        item_name = 'Remove Resource Pool'
+        view.toolbar.configuration.item_select(item_name, handle_alert=not cancel)
 
         # cancel doesn't redirect, confirmation does
         view.flush_widget_cache()
@@ -156,8 +157,8 @@ class ResourcePool(Pretty, Navigatable):
 
         # flash message only displayed if it was deleted
         if not cancel:
-            view.entities.flash.assert_no_error()
-            view.entities.flash.assert_success_message('Delete initiated for 1 Resource Pool')
+            msg = 'The selected Resource Pools was deleted'
+            view.entities.flash.assert_success_message(msg)
 
         if wait:
             def refresh():
@@ -206,6 +207,7 @@ class ResourcePool(Pretty, Navigatable):
     def exists(self):
         view = navigate_to(self, 'All')
         try:
+            view.toolbar.view_selector.select('List View')
             view.paginator.find_row_on_pages(view.entities.table, name=self.name)
             return True
         except NoSuchElementException:

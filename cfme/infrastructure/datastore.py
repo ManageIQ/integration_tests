@@ -182,7 +182,8 @@ class All(CFMENavigateStep):
             # todo: there is unsupported accordion in 5.6.3.3. currently it isn't necessary
             # for existing tests
             pass
-        tb.select("Grid View")
+        if self.obj.appliance.version < '5.8':
+            tb.select("Grid View")
         if paginator.page_controls_exist():
             sel.check(paginator.check_all())
             sel.uncheck(paginator.check_all())
