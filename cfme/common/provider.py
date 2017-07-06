@@ -210,14 +210,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     cancel_text = ('Add of {} Provider was '
                                    'cancelled by the user'.format(self.string_name))
 
-                    main_view.items.flash.assert_message(cancel_text)
-                    main_view.items.flash.assert_no_error()
+                    main_view.entities.flash.assert_message(cancel_text)
+                    main_view.entities.flash.assert_no_error()
                 else:
                     add_view.add.click()
                     if main_view.is_displayed:
                         success_text = '{} Providers "{}" was saved'.format(self.string_name,
                                                                             self.name)
-                        main_view.items.flash.assert_message(success_text)
+                        main_view.entities.flash.assert_message(success_text)
                     else:
                         add_view.flash.assert_no_error()
                         raise AssertionError("Provider wasn't added. It seems form isn't accurately"
@@ -326,8 +326,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 cancel_text = 'Edit of {type} Provider "{name}" ' \
                               'was cancelled by the user'.format(type=self.string_name,
                                                                  name=self.name)
-                main_view.items.flash.assert_message(cancel_text)
-                main_view.items.flash.assert_no_error()
+                main_view.entities.flash.assert_message(cancel_text)
+                main_view.entities.flash.assert_no_error()
             else:
                 edit_view.save.click()
                 if endpoints:

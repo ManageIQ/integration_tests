@@ -1989,7 +1989,7 @@ class EntitiesConditionalView(View):
 
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
-        item = self.parent.item_class
+        item = self.parent.entity_class
         if not surf_pages:
             return [item(parent=self, name=name) for name in self.entity_names]
         else:
@@ -2039,7 +2039,7 @@ class EntitiesConditionalView(View):
 
         Returns: matched entity (QuadIcon/etc.)
         """
-        item = self.parent.item_class
+        item = self.parent.entity_class
         for _ in self.parent.paginator.pages():
             found_items = [item(parent=self, name=name) for name in self.entity_names
                            if by_name == name]
@@ -2060,7 +2060,7 @@ class BaseEntitiesView(View):
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
 
-    entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
+    entities = ConditionalSwitchableView(reference='self.parent.toolbar.view_selector',
                                          ignore_bad_reference=True)
 
     @entities.register('Grid View', default=True)
