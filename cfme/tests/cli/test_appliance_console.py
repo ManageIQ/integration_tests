@@ -89,14 +89,14 @@ def test_black_console_dedicated_db(temp_appliance_unconfig_funcscope, app_creds
 def test_black_console_external_db(temp_appliance_unconfig_funcscope, app_creds, appliance):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '2' fetch v2_key,
     'ip' address to fetch from, '' default username, 'pwd' db password, '' default v2_key location,
-    '3' join external region, 'ip' address of joining region, '' default port number, '' use defult
-    db name, '' default username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and
-    '' finish."""
+    '3' join external region, 'port' ip and port of joining region, '' use defult db name, ''
+    default username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
     ip = appliance.address
     pwd = app_creds['password']
     opt = '5' if temp_appliance_unconfig_funcscope.version >= "5.8" else '8'
-    command_set = ('ap', '', opt, '2', ip, '', pwd, '', '3', ip, '', '', '',
+    port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else ip
+    command_set = ('ap', '', opt, '2', ip, '', pwd, '', '3', port, '', '',
         pwd, TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
@@ -108,13 +108,14 @@ def test_black_console_external_db_create(app_creds, dedicated_db_appliance,
         temp_appliance_unconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '1' create v2_key,
     '2' create region in external db, '0' db region number, 'y' confirm create region in external db
-    'ip' address of dedicated db, '' default port number, '' use defult db name, '' default
-    username, 'pwd' db password, 'pwd' confirm db password + wait 360 secs and '' finish."""
+    'port' ip and port for dedicated db, '' use defult db name, '' default username, 'pwd' db
+    password, 'pwd' confirm db password + wait 360 secs and '' finish."""
 
     ip = dedicated_db_appliance.address
     pwd = app_creds['password']
     opt = '5' if temp_appliance_unconfig_funcscope.version >= "5.8" else '8'
-    command_set = ('ap', '', opt, '1', '2', '0', 'y', ip, '', '', '', pwd,
+    port = (ip, '') if temp_appliance_unconfig_funcscope.version >= "5.8" else ip
+    command_set = ('ap', '', opt, '1', '2', '0', 'y', port, '', '', pwd,
         TimedCommand(pwd, 360), '')
     temp_appliance_unconfig_funcscope.appliance_console.run_commands(command_set)
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
