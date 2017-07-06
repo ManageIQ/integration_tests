@@ -1317,6 +1317,9 @@ class ItemsToolBarViewSelector(View):
     def selected(self):
         return next(btn.title for btn in self._view_buttons if btn.active)
 
+    def read(self):
+        return self.selected
+
 
 class DetailsToolBarViewSelector(View):
     """ represents toolbar's view selector control
@@ -1972,6 +1975,12 @@ class EntitiesConditionalView(View):
 
     """
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
+    entity_class = BaseEntity
+    title = Text('//div[@id="main-content"]//h1')
+    search = View.nested(Search)
+    paginator = View.nested(PaginationPane)
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
 
     @property
     def entity_names(self):
@@ -1989,9 +1998,8 @@ class EntitiesConditionalView(View):
 
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
-        item = self.parent.entity_class
         if not surf_pages:
-            return [item(parent=self, name=name) for name in self.entity_names]
+            return [self.entity_class(parent=self, name=name) for name in self.entity_names]
         else:
             items = []
             for _ in self.parent.paginator.pages():
@@ -2026,7 +2034,7 @@ class EntitiesConditionalView(View):
         """
         items = self.get_entities(by_name=by_name, surf_pages=surf_pages)
         if len(items) == 0:
-            raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
+            raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
         elif len(items) > 1:
             raise ManyEntitiesFound("Several entities with {name} were found".format(name=by_name))
         return items[0]
@@ -2039,12 +2047,11 @@ class EntitiesConditionalView(View):
 
         Returns: matched entity (QuadIcon/etc.)
         """
-        item = self.parent.entity_class
         for _ in self.parent.paginator.pages():
-            found_items = [item(parent=self, name=name) for name in self.entity_names
+            found_items = [self.entity_class(parent=self, name=name) for name in self.entity_names
                            if by_name == name]
             if found_items:
-                return found_items[-1]
+                return found_items[0]
 
         raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
 
@@ -2053,14 +2060,8 @@ class BaseEntitiesView(View):
     """
     should represent the view with different entities like providers
     """
-    entity_class = BaseEntity
-    title = Text('//div[@id="main-content"]//h1')
-    search = View.nested(Search)
-    paginator = View.nested(PaginationPane)
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-
-    entities = ConditionalSwitchableView(reference='self.parent.toolbar.view_selector',
+    some_text = Text(locator='blabla')
+    entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
                                          ignore_bad_reference=True)
 
     @entities.register('Grid View', default=True)
