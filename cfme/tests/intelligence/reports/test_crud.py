@@ -23,7 +23,7 @@ schedules_crud_dir = data_path.join("schedules_crud")
 
 def crud_files_reports():
     result = []
-    if not report_crud_dir.exists():
+    if not report_crud_dir.exists:
         report_crud_dir.mkdir()
     for file_name in report_crud_dir.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):
@@ -33,7 +33,7 @@ def crud_files_reports():
 
 def crud_files_schedules():
     result = []
-    if not schedules_crud_dir.exists():
+    if not schedules_crud_dir.exists:
         schedules_crud_dir.mkdir()
     for file_name in schedules_crud_dir.listdir():
         if file_name.isfile() and file_name.basename.endswith(".yaml"):

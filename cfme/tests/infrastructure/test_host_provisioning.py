@@ -72,11 +72,11 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning):
-    if not pxe_server.exists():
+    if not pxe_server.exists:
         pxe_server.create()
         pxe_server.set_pxe_image_type(host_provisioning['pxe_image'],
                                       host_provisioning['pxe_image_type'])
-    if not pxe_cust_template.exists():
+    if not pxe_cust_template.exists:
         pxe_cust_template.create()
 
 

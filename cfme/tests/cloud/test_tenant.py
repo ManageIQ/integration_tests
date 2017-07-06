@@ -18,7 +18,7 @@ def tenant(provider, setup_provider):
     yield tenant
 
     try:
-        if tenant.exists():
+        if tenant.exists:
             tenant.delete()
 
     except Exception:
@@ -38,23 +38,23 @@ def test_tenant_crud(tenant):
     """
 
     tenant.create(cancel=True)
-    assert not tenant.exists()
+    assert not tenant.exists
 
     tenant.create()
 
     tenant.wait_for_appear()
-    assert tenant.exists()
+    assert tenant.exists
 
     with update(tenant):
         tenant.name = fauxfactory.gen_alphanumeric(8)
     tenant.wait_for_appear()
-    assert tenant.exists()
+    assert tenant.exists
 
     tenant.delete(from_details=False, cancel=True)
-    assert tenant.exists()
+    assert tenant.exists
 
     tenant.delete(from_details=True, cancel=False)
     # BZ#1411112 Delete/update cloud tenant
     #  not reflected in UI in cloud tenant list
     tenant.provider.refresh_provider_relationships()
-    assert not tenant.exists()
+    assert not tenant.exists

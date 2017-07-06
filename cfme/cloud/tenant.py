@@ -63,7 +63,7 @@ class Tenant(Navigatable):
 
     def wait_for_disappear(self, timeout=300):
         try:
-            return wait_for(self.exists,
+            return wait_for(lambda: self.exists,
                             fail_condition=True,
                             timeout=timeout,
                             message='Wait for cloud tenant to disappear',
@@ -73,8 +73,8 @@ class Tenant(Navigatable):
             logger.error('Timed out waiting for tenant to disappear, continuing')
 
     def wait_for_appear(self, timeout=600):
-        return wait_for(self.exists, timeout=timeout, message='Wait for cloud tenant to appear',
-                        delay=10)
+        return wait_for(lambda: self.exists, timeout=timeout, delay=10,
+                        message='Wait for cloud tenant to appear')
 
     def update(self, updates, wait=True):
         navigate_to(self, 'Edit')
@@ -82,7 +82,7 @@ class Tenant(Navigatable):
         create_tenant_form.fill({'name': updated_name})
         sel.click(create_tenant_form.save_button)
         self.provider.refresh_provider_relationships()
-        return wait_for(self.exists, fail_condition=False, timeout=600,
+        return wait_for(lambda: self.exists, fail_condition=False, timeout=600,
                         message="Wait for cloud tenant to appear", delay=10,
                         fail_func=sel.refresh)
 
@@ -122,7 +122,7 @@ class Tenant(Navigatable):
             sel.handle_alert(cancel=cancel)
 
         if cancel:
-            return self.exists()
+            return self.exists
         else:
             # Flash message is the same whether deleted from details or by selection
             result = flash.assert_success_message('Delete initiated for 1 Cloud Tenant.')
@@ -131,6 +131,7 @@ class Tenant(Navigatable):
                 result = self.wait_for_disappear(600)
                 return result
 
+    @property
     def exists(self):
         try:
             navigate_to(self, 'Details')
