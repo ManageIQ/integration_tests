@@ -1787,6 +1787,10 @@ class FileInput(BaseFileInput):
 
 
 class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
+    """ represents QuadIcon entity. one of states entity can be in
+    It is expected that some properties like "data" will be overridden in its children
+
+    """
     PARAMETERS = ('name',)
     ROOT = ParametrizedLocator('.//table[./tbody/tr/td/a[contains(@title, {name|quote})]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
@@ -1810,7 +1814,11 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
 
     @property
     def data(self):
-        # to override this property in concrete classes
+        """ every entity like QuadIcon/ListEntity etc displays some data,
+        which is different for each entity type.
+        This is property which should hold such data.
+        To override this property in concrete classes.
+        """
         return {}
 
     def read(self):
@@ -1829,6 +1837,9 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
 
 
 class BaseTileIconEntity(ParametrizedView):
+    """ represents Tile Icon entity. one of states entity can be in
+
+    """
     PARAMETERS = ('name',)
     ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/a[contains(@title, '
                                '{name|quote})]]]')
@@ -1851,6 +1862,10 @@ class BaseTileIconEntity(ParametrizedView):
 
     @property
     def data(self):
+        """ every entity like QuadIcon/ListEntity etc displays some data,
+        which is different for each entity type.
+        This is property which should hold such data.
+        """
         quad_data = self.quad_icon(self.context['name']).data
         br = self.browser
         # it seems we don't have list widget in other places.
@@ -1876,6 +1891,9 @@ class BaseTileIconEntity(ParametrizedView):
 
 
 class BaseListEntity(ParametrizedView, ClickableMixin):
+    """ represents List entity. one of states entity can be in
+
+    """
     PARAMETERS = ('name',)
     TABLE_LOCATOR = ParametrizedLocator('.//table[.//td[normalize-space(.)={name|quote}]]')
     ROOT = ParametrizedLocator('.//tr[./td[normalize-space(.)={name|quote}]]')
@@ -1898,6 +1916,10 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
 
     @property
     def data(self):
+        """ every entity like QuadIcon/ListEntity etc displays some data,
+        which is different for each entity type.
+        This is property which should hold such data.
+        """
         row = next(row for row in self.parent_table.rows() if row.name.text == self.context['name'])
         item_data = {}
         for col_name in (h for h in self.parent_table.headers if h is not None):
@@ -1912,6 +1934,9 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
 
 
 class BaseEntity(View):
+    """ represents Proxy class which represents Entity despite of state it is in.
+        it passes calls to concrete entity taking into account which entity type is displayed atm
+    """
     quad_entity = BaseQuadIconEntity
     list_entity = BaseListEntity
     tile_entity = BaseTileIconEntity
@@ -1943,16 +1968,22 @@ class BaseEntity(View):
 
 
 class EntitiesConditionalView(View):
+    """ represents Entities view with regard to view selector state
+
+    """
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
 
     @property
     def entity_names(self):
+        """ looks for entities and extracts their names
+
+        Returns: all current page entities
+        """
         br = self.browser
         return [br.get_attribute('title', el) for el in br.elements(self.elements)]
 
     def get_all(self, surf_pages=False):
-        """
-        obtains all entities like QuadIcon displayed by view
+        """ obtains all entities like QuadIcon displayed by view
         Args:
             surf_pages (bool): current page entities if False, all entities otherwise
 
@@ -1969,8 +2000,7 @@ class EntitiesConditionalView(View):
             return items
 
     def get_entities(self, by_name=None, surf_pages=False):
-        """
-        obtains all matched entities like QuadIcon displayed by view
+        """ obtains all matched entities like QuadIcon displayed by view
         Args:
             by_name (str): only entities which match to by_name will be returned
             surf_pages (bool): current page entities if False, all entities otherwise
@@ -1986,8 +2016,7 @@ class EntitiesConditionalView(View):
         return remaining_items
 
     def get_entity(self, by_name=None, surf_pages=False):
-        """
-        obtains one entity matched to by_name
+        """ obtains one entity matched to by_name
         raises exception if no entities or several entities were found
         Args:
             by_name (str): only entity which match to by_name will be returned
@@ -2003,8 +2032,7 @@ class EntitiesConditionalView(View):
         return items[0]
 
     def get_first_entity(self, by_name=None):
-        """
-        obtains one entity matched to by_name and stops on that page
+        """ obtains one entity matched to by_name and stops on that page
         raises exception if no entity or several entities were found
         Args:
             by_name (str): only entity which match to by_name will be returned
@@ -2032,7 +2060,8 @@ class BaseEntitiesView(View):
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
 
-    entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector')
+    entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
+                                         ignore_bad_reference=True)
 
     @entities.register('Grid View', default=True)
     class GridView(EntitiesConditionalView):
@@ -2048,6 +2077,9 @@ class BaseEntitiesView(View):
 
 
 class ProviderQuadIconEntity(BaseQuadIconEntity):
+    """ Provider child of Quad Icon entity
+
+    """
     @property
     def data(self):
         br = self.browser
@@ -2059,15 +2091,23 @@ class ProviderQuadIconEntity(BaseQuadIconEntity):
 
 
 class ProviderTileIconEntity(BaseTileIconEntity):
+    """ Provider child of Tile Icon entity
+
+    """
     quad_icon = ParametrizedView.nested(ProviderQuadIconEntity)
-    pass
 
 
 class ProviderListEntity(BaseListEntity):
+    """ Provider child of List entity
+
+    """
     pass
 
 
-class ProviderItem(BaseEntity):
+class ProviderEntity(BaseEntity):
+    """ Provider child of Proxy entity
+
+    """
     quad_entity = ProviderQuadIconEntity
     list_entity = ProviderListEntity
     tile_entity = ProviderTileIconEntity

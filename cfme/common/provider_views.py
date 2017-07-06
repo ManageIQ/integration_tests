@@ -13,12 +13,11 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Checkbox,
                                   Input,
                                   Table,
-                                  PaginationPane,
                                   FileInput,
                                   BaseEntitiesView,
                                   DynaTree,
                                   BootstrapTreeview,
-                                  ProviderItem)
+                                  ProviderEntity)
 
 
 class ProviderDetailsToolBar(View):
@@ -287,8 +286,11 @@ class ProviderSideBar(View):
     pass
 
 
-class ProviderItemsView(BaseEntitiesView):
-    entity_class = ProviderItem
+class ProviderEntitiesView(BaseEntitiesView):
+    """
+     represents child class of Entities view for Provider entities
+    """
+    entity_class = ProviderEntity
 
 
 class ProvidersView(BaseLoggedInPage):
@@ -301,7 +303,7 @@ class ProvidersView(BaseLoggedInPage):
 
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
-    items = View.nested(ProviderItemsView)
+    entities = View.nested(ProviderEntitiesView)
 
 
 class InfraProvidersView(ProvidersView):
@@ -312,7 +314,7 @@ class InfraProvidersView(ProvidersView):
     def is_displayed(self):
         return (super(InfraProvidersView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
-                self.items.title.text == 'Infrastructure Providers')
+                self.entities.title.text == 'Infrastructure Providers')
 
 
 class CloudProvidersView(ProvidersView):
@@ -323,7 +325,7 @@ class CloudProvidersView(ProvidersView):
     def is_displayed(self):
         return (super(CloudProvidersView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-                self.items.title.text == 'Cloud Providers')
+                self.entities.title.text == 'Cloud Providers')
 
 
 class BeforeFillMixin(object):
