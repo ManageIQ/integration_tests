@@ -1975,7 +1975,6 @@ class EntitiesConditionalView(View):
 
     """
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
-    entity_class = BaseEntity
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
     paginator = View.nested(PaginationPane)
@@ -1999,11 +1998,11 @@ class EntitiesConditionalView(View):
         Returns: all entities (QuadIcon/etc.) displayed by view
         """
         if not surf_pages:
-            return [self.entity_class(parent=self, name=name) for name in self.entity_names]
+            return [self.parent.entity_class(parent=self, name=name) for name in self.entity_names]
         else:
             items = []
             for _ in self.parent.paginator.pages():
-                items.extend([item(parent=self, name=name)
+                items.extend([self.parent.entity_class(parent=self, name=name)
                               for name in self.entity_names])
             return items
 
@@ -2048,8 +2047,8 @@ class EntitiesConditionalView(View):
         Returns: matched entity (QuadIcon/etc.)
         """
         for _ in self.parent.paginator.pages():
-            found_items = [self.entity_class(parent=self, name=name) for name in self.entity_names
-                           if by_name == name]
+            found_items = [self.parent.entity_class(parent=self, name=name)
+                           for name in self.entity_names if by_name == name]
             if found_items:
                 return found_items[0]
 
@@ -2060,7 +2059,7 @@ class BaseEntitiesView(View):
     """
     should represent the view with different entities like providers
     """
-    some_text = Text(locator='blabla')
+    entity_class = BaseEntity
     entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
                                          ignore_bad_reference=True)
 
