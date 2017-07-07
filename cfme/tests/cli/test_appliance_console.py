@@ -27,13 +27,13 @@ def test_black_console(appliance):
 
 
 def test_black_console_set_hostname(appliance):
-    """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '4' gives
+    """'ap' launch appliance_console, '' clear info screen, '1' loads network settings, '4/5' gives
     access to set hostname, 'hostname' sets new hostname."""
 
     hostname = 'test.example.com'
-    opt = ('1, 5') if appliance.version >= "5.8" else '4'
+    opt = ('1', '5') if appliance.version >= "5.8" else ('4',)
 
-    command_set = ('ap', '', opt, hostname)
+    command_set = ('ap', '',) + opt + (hostname,)
     appliance.appliance_console.run_commands(command_set)
 
     def is_hostname_set(appliance):
