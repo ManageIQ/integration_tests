@@ -67,6 +67,7 @@ def test_add_new_storage_chargeback(chargeback_storage_rate):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1468561, forced_streams=["5.8"])])
 def test_edit_compute_chargeback(chargeback_compute_rate):
     chargeback_compute_rate.create()
     with update(chargeback_compute_rate):
@@ -78,6 +79,7 @@ def test_edit_compute_chargeback(chargeback_compute_rate):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1468561, forced_streams=["5.8"])])
 def test_edit_storage_chargeback(chargeback_storage_rate):
     chargeback_storage_rate.create()
     with update(chargeback_storage_rate):
