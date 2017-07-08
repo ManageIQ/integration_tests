@@ -2059,7 +2059,10 @@ class BaseEntitiesView(View):
     """
     should represent the view with different entities like providers
     """
-    entity_class = BaseEntity
+    @property
+    def entity_class(self):
+        return BaseEntity
+
     entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
                                          ignore_bad_reference=True)
 

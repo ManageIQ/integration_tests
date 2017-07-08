@@ -290,7 +290,9 @@ class ProviderEntitiesView(BaseEntitiesView):
     """
      represents child class of Entities view for Provider entities
     """
-    entity_class = ProviderEntity
+    @property
+    def entity_class(self):
+        return ProviderEntity
 
 
 class ProvidersView(BaseLoggedInPage):
