@@ -12,6 +12,7 @@ from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import vm as _vm
 from utils.update import update
 from utils.wait import wait_for
+from utils.rest import assert_response
 from utils.version import current_version
 from utils.blockers import BZ
 from utils import error
@@ -85,7 +86,7 @@ class TestTagsViaREST(object):
         bodies = [self.service_body() for _ in range(3)]
         collection = appliance.rest_api.collections.services
         new_services = collection.action.create(*bodies)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
 
         @request.addfinalizer
         def _finished():
@@ -121,8 +122,7 @@ class TestTagsViaREST(object):
                 "name": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower()),
             })
         edited = collection.action.edit(*tags_data_edited)
-        assert appliance.rest_api.response.status_code == 200
-        assert len(edited) == tags_len
+        assert_response(appliance, results_num=tags_len)
         for index in range(tags_len):
             record, _ = wait_for(lambda:
                 collection.find_by(name="%/{}".format(tags_data_edited[index]["name"])) or False,
@@ -144,7 +144,7 @@ class TestTagsViaREST(object):
             new_name = 'test_tag_{}'.format(fauxfactory.gen_alphanumeric())
             new_names.append(new_name)
             edited.append(tag.action.edit(name=new_name))
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         for index, name in enumerate(new_names):
             record, _ = wait_for(lambda:
                 appliance.rest_api.collections.tags.find_by(name="%/{}".format(name)) or False,
@@ -161,13 +161,12 @@ class TestTagsViaREST(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == "delete" else 200
         for tag in tags:
             tag.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
                 tag.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     def test_delete_tags_from_collection(self, appliance, tags):
@@ -177,10 +176,10 @@ class TestTagsViaREST(object):
             test_flag: rest
         """
         appliance.rest_api.collections.tags.action.delete(*tags)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
             appliance.rest_api.collections.tags.action.delete(*tags)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     def test_create_tag_with_wrong_arguments(self, appliance):
@@ -195,7 +194,7 @@ class TestTagsViaREST(object):
         }
         with error.expected("BadRequestError: Category id, href or name needs to be specified"):
             appliance.rest_api.collections.tags.action.create(data)
-        assert appliance.rest_api.response.status_code == 400
+        assert_response(appliance, http_status=400)
 
     @pytest.mark.tier(3)
     @pytest.mark.meta(blockers=[BZ(1451025, forced_streams=['5.7'])])
@@ -216,11 +215,11 @@ class TestTagsViaREST(object):
         entity = collection[-1]
         tag = tags_mod[0]
         entity.tags.action.assign(tag)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         entity.reload()
         assert tag.id in [t.id for t in entity.tags.all]
         entity.tags.action.unassign(tag)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         entity.reload()
         assert tag.id not in [t.id for t in entity.tags.all]
 
@@ -257,24 +256,15 @@ class TestTagsViaREST(object):
             appliance.rest_api.collections.tags.get(name='/managed/department/presales').id)
         tags_count = len(new_tags) * len(entities)
 
-        def _verify_action_result():
-            assert appliance.rest_api.response.status_code == 200
-            response = appliance.rest_api.response.json()
-            assert len(response['results']) == tags_count
-            num_success = 0
-            for result in response['results']:
-                if result['success']:
-                    num_success += 1
-            assert num_success == tags_count
-
-        collection.action.assign_tags(*entities, tags=new_tags)
-        _verify_action_result()
-        for entity in entities:
+        response = collection.action.assign_tags(*entities, tags=new_tags)
+        assert_response(appliance, results_num=tags_count)
+        for index, entity in enumerate(entities):
             entity.tags.reload()
-            assert len(tags_ids - {t.id for t in entity.tags.all}) == 0
+            response[index].id = entity.id
+            assert tags_ids.issubset({t.id for t in entity.tags.all})
 
         collection.action.unassign_tags(*entities, tags=new_tags)
-        _verify_action_result()
+        assert_response(appliance, results_num=tags_count)
         for entity in entities:
             entity.tags.reload()
             assert len({t.id for t in entity.tags.all} - tags_ids) == entity.tags.subcount
@@ -304,25 +294,15 @@ class TestTagsViaREST(object):
             entity.tags.reload()
             tags_per_entities_count.append(entity.tags.subcount)
 
-        def _verify_action_result():
-            assert appliance.rest_api.response.status_code == 200
-            response = appliance.rest_api.response.json()
-            assert len(response['results']) == tags_count
-            num_fail = 0
-            for result in response['results']:
-                if not result['success']:
-                    num_fail += 1
-            assert num_fail == tags_count
-
         def _check_tags_counts():
             for index, entity in enumerate(entities):
                 entity.tags.reload()
                 assert entity.tags.subcount == tags_per_entities_count[index]
 
         collection.action.assign_tags(*entities, tags=new_tags)
-        _verify_action_result()
+        assert_response(appliance, success=False, results_num=tags_count)
         _check_tags_counts()
 
         collection.action.unassign_tags(*entities, tags=new_tags)
-        _verify_action_result()
+        assert_response(appliance, success=False, results_num=tags_count)
         _check_tags_counts()
