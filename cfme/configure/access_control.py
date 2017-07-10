@@ -3,12 +3,11 @@ from widgetastic_manageiq import UpDownSelect, SummaryFormItem
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
-from widgetastic.widget import Checkbox, View, Table
+from widgetastic.widget import Checkbox, View, Table, Text
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
 from cfme.exceptions import OptionNotAvailable
-from cfme.web_ui.form_buttons import change_stored_password
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
@@ -72,6 +71,8 @@ class EditUserView(UserForm):
     """ User Edit View."""
     save_button = Button('Save')
     reset_button = Button('Reset')
+    change_stored_password = Text('#change_stored_password')
+    cancel_password_change = Text('#cancel_password_change')
 
     @property
     def is_displayed(self):
@@ -170,7 +171,7 @@ class User(Updateable, Pretty, Navigatable):
         as 'Save' button will not be active
         """
         view = navigate_to(self, 'Edit')
-        change_stored_password()
+        self.change_stored_password()
         new_updates = {}
         if 'credential' in updates:
             new_updates.update({
@@ -212,7 +213,6 @@ class User(Updateable, Pretty, Navigatable):
         view = self.create_view(AddUserView)
         new_user = User(name="{}copy".format(self.name),
                         credential=Credential(principal='redhat', secret='redhat'))
-        change_stored_password()
         view.fill({
             'name_txt': new_user.name,
             'userid_txt': new_user.credential.principal,
@@ -267,6 +267,25 @@ class User(Updateable, Pretty, Navigatable):
         view = self.create_view(DetailsUserView)
         view.flash.assert_success_message('Tag edits were successfully saved')
         assert view.is_displayed
+
+# TODO update elements, after 1469035 fix
+    def change_stored_password(self, changes=None, cancel=False):
+        """ Changes user password
+         Args:
+             changes: dict with fields to be changes,
+                      if None, passwords fields only be anabled
+             cancel: True, if you want to disable password change
+        """
+        view = navigate_to(self, 'Edit')
+        self.browser.execute_script(
+            self.browser.get_attribute(
+                'onClick', self.browser.element(view.change_stored_password)))
+        if changes:
+            view.fill(changes)
+        if cancel:
+            self.browser.execute_script(
+                self.browser.get_attribute(
+                    'onClick', self.browser.element(view.cancel_password_change)))
 
     @property
     def exists(self):
