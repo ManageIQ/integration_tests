@@ -98,6 +98,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         # Azure uses different provisioning keys for some reason
         recursive_update(inst_args, {
             'environment': {
+                'automatic_placement': auto,
                 'cloud_network': None if auto else provisioning['virtual_net'],
                 'cloud_subnet': None if auto else provisioning['subnet_range'],
                 'security_groups': None if auto else [provisioning['network_nsg']],
