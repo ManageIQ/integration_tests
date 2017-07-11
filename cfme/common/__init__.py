@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+import re
 from urlparse import urlparse
 
 from cached_property import cached_property
+from cfme.base.login import BaseLoggedInPage
 from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, BootstrapTreeview, flash, form_buttons, mixins, toolbar
@@ -10,10 +12,14 @@ from cfme.web_ui.timelines import Timelines
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
+from utils.appliance.implementations.ui import navigate_to
 from utils import attributize_string, version, deferred_verpick
 from utils.units import Unit
 from utils.varmeth import variable
 from utils.log import logger
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import BootstrapSelect, Button
+from widgetastic.widget import Table, Text
 
 pol_btn = partial(toolbar.select, "Policy")
 
@@ -153,6 +159,128 @@ class Taggable(object):
                                               single_value=tag.single_value),
                             display_name=tag.tag_name))
         return tags
+
+class TagPageView(BaseLoggedInPage):
+    """Class represents common tag page in CFME UI"""
+    title = Text('#explorer_title_text')
+    table_title = Text('//div[@id="tab_div"]/h3')
+    tag_table = Table("//div[@id='assignments_div']//table")
+    tag_category = BootstrapSelect(id='tag_cat')
+    tag_name = BootstrapSelect(id='tag_add')
+
+    save_button = Button('Save')
+    cancel_button = Button('Cancel')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.table_title.text == 'Tag Assignment' and
+            self.tag_table.is_displayed
+        )
+
+
+class WidgetasticTaggable(object):
+    """
+        This class can be inherited by any class that honors tagging.
+        Class should have 'EditTags' navigate step registered.
+        This class should be used for already converted to widgetastic classes
+
+        It provides functionality to assign and unassigned tags.
+    """
+
+    def edit_tag(self, tag, cancel=False, reset=False):
+        """ Add tag to tested item
+            Args:
+                tag: list, tuple with tag category and tag name or Tag object
+                cancel: set True to cancel tag assigment
+                reset: set True to reset already set up tag
+        """
+        view = navigate_to(self, 'EditTags')
+        if isinstance(tag, (list, tuple)):
+            category = tag[0]
+            tag = tag[1]
+        else:
+            category = tag.category.display_name
+            tag = tag.display_name
+        try:
+            view.fill({
+                "tag_category": '{} *'.format(category),
+                "tag_name": tag
+            })
+        except NoSuchElementException:
+            view.fill({
+                "tag_category": category,
+                "tag_name": tag
+            })
+        self._tags_action(view, cancel, reset)
+
+    def edit_tags(self, tags):
+        """Add list of tags
+            Args:
+                tags: List of `Tag`
+        """
+        for tag in tags:
+            self.edit_tag(tag=tag)
+
+    def remove_tag(self, tag, cancel=False, reset=False):
+        """ Remove tag of tested item
+               Args:
+                   tag: list, tuple with tag category and tag name or Tag object
+                   cancel: set True to cancel tag deletion
+                   reset: set True to reset tag changes
+               """
+        view = navigate_to(self, 'EditTags')
+        if isinstance(tag, (list, tuple)):
+            tag_category = tag[0]
+            tag_name = tag[1]
+        else:
+            tag_category = tag.category.display_name
+            tag_name = tag.display_name
+        try:
+            row = view.tag_table.row(category="{} *".format(tag_category), assigned_value=tag_name)
+        except Exception:
+            row = view.tag_table.row(category=tag_category, assigned_value=tag_name)
+        row[0].click()
+        self._tags_action(view, cancel, reset)
+
+    def remove_tags(self, tags):
+        """Remove list of tags
+            Args:
+                tags: List of `Tag`
+        """
+        for tag in tags:
+            self.remove_tag(tag=tag)
+
+    def get_tags(self, tenant="My Company Tags"):
+        """ Get list of tags assigned to item
+            Args:
+                tenant: string, tags tenant, default is "My Company Tags"
+            Returns:
+                List of tags in format "Tag_category: Tag_name"
+        """
+        view = navigate_to(self, 'Details')
+        tags = view.tag.read()
+        if tags == 'No {} have been assigned'.format(tenant):
+            return []
+        return filter(None, re.split(r'(.*?):\s*\S+\s?', tags))
+
+    def _tags_action(self, view, cancel, reset):
+        """ Actions on edit tags page
+            Args:
+                view: View to use these actions(tag view)
+                cancel: Set True to cancel all changes, will redirect to details page
+                reset: Set True to reset all changes, edit tag page should be opened
+        """
+        if reset:
+            view.reset_button.click()
+            view.flash.assert_message('All changes have been reset')
+        elif cancel:
+            view.cancel_button.click()
+            view.flash.assert_success_message('Tag Edit was cancelled by the user')
+        else:
+            view.save_button.click()
+            view.flash.assert_success_message('Tag edits were successfully saved')
 
 
 class SummaryMixin(object):
