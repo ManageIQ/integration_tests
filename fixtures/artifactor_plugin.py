@@ -33,6 +33,7 @@ from threading import RLock
 from utils.appliance import get_or_create_current_appliance
 from utils.blockers import BZ, Blocker
 from utils.conf import env, credentials
+from utils.log import logger
 from utils.net import random_port, net_check
 from utils.wait import wait_for
 from utils import version
@@ -212,7 +213,8 @@ def pytest_runtest_protocol(item):
 
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
-    ip = get_or_create_current_appliance().address
+    app = get_or_create_current_appliance()
+    ip = app.address
     fire_art_test_hook(
         item, 'finish_test',
         slaveid=store.slaveid, ip=ip, wait_for_task=True)
@@ -223,8 +225,19 @@ def pytest_runtest_teardown(item, nextitem):
         'git_commit': os.environ.get('GIT_COMMIT'),
         'job_name': os.environ.get('JOB_NAME')
     }
+    try:
+        caps = app.browser.widgetastic.selenium.capabilities
+        param_dict = {
+            'browserName': caps['browserName'],
+            'browserPlatform': caps['platform'],
+            'browserVersion': caps['version']
+        }
+    except Exception as e:
+        logger.error(e)
+        param_dict = None
+
     fire_art_test_hook(
-        item, 'ostriz_send',
+        item, 'ostriz_send', env_params=param_dict,
         slaveid=store.slaveid, polarion_ids=extract_polarion_ids(item), jenkins=jenkins_data)
 
 

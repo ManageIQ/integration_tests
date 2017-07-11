@@ -31,7 +31,8 @@ class Ostriz(ArtifactorBasePlugin):
     @ArtifactorBasePlugin.check_configured
     def ostriz_send(
             self, artifacts, test_location, test_name, slaveid, polarion_ids, run_id,
-            version, build, stream, jenkins=None):
+            version, build, stream, jenkins=None, env_params=None):
+        env_params = env_params or {}
         test_ident = "{}/{}".format(test_location, test_name)
         json_data = artifacts[test_ident]
         json_data['name'] = test_ident
@@ -45,5 +46,8 @@ class Ostriz(ArtifactorBasePlugin):
         json_data['jenkins'] = jenkins or None
         # Either None or a list of Polarion Test Case IDs
         json_data['polarion'] = polarion_ids
+        if not json_data['params']:
+            json_data['params'] = {}
+        json_data['params'].update(env_params)
         requests.post(self.url, data=json.dumps(json_data))
         return None, None
