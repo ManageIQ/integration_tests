@@ -305,7 +305,7 @@ class ProvidersView(BaseLoggedInPage):
 
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
-    including_entities = View.include(ProviderEntitiesView)
+    including_entities = View.include(ProviderEntitiesView, use_parent=True)
 
 
 class InfraProvidersView(ProvidersView):
