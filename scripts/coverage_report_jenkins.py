@@ -97,7 +97,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
     # Stop the evm service, not needed at all
     print('Stopping evmserverd')
-    appliance.stop_evm_service()
+    appliance.evmserverd.stop()
     # Install the coverage tools on the appliance
     print('Installing simplecov')
     appliance.coverage._install_simplecov()

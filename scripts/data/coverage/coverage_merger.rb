@@ -8,6 +8,7 @@ require 'json'
 require 'simplecov'
 require 'simplecov/result'
 
+rails_root = '/var/www/miq/vmdb'
 results = Hash.new
 coverage_root = "/var/www/miq/vmdb/coverage"
 puts "Scanning for results in #{coverage_root}"
@@ -38,6 +39,8 @@ File.open(File.join(merged_dir, '.resultset.json'), "w") do |f|
 end
 
 # Set up simplecov to use the merged results, then fire off the formatters
+SimpleCov.project_name 'CFME'
+SimpleCov.root '/'
 SimpleCov.coverage_dir merged_dir
 SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
 SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter
@@ -46,11 +49,9 @@ SimpleCov.merge_timeout 2 << 28
 # Remove the original filters
 SimpleCov.filters.clear
 SimpleCov.add_filter do |src|
-  # This is a modified version of the original block filter
-  include_file = src.filename =~ /\A#{Regexp.escape(SimpleCov.root)}/io
+  include_file = src.filename =~ /^#{rails_root}/
   unless include_file
-    # A gem maybe?
-    include_file = src.filename =~ /\A\/opt\/rh\/cfme-gemset\/gems\/manageiq-/io
+    include_file = src.filename =~ /manageiq-/
   end
   ! include_file
 end
