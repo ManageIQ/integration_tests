@@ -135,7 +135,7 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
-def test_inplace_upgrade(appliance_preupdate, appliance):
+def test_upgrade_single_inplace(appliance_preupdate, appliance):
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
         rc, out = ssh.run_command('yum update -y', timeout=3600)
