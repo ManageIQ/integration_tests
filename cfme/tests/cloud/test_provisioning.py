@@ -123,7 +123,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
 @pytest.fixture(scope="function")
 def provision_check(request, provider):
 
-    def _provisioner_check(instance, inst_args, image):
+    def _provision_check(instance, inst_args, image):
         instance.create(**inst_args)
         logger.info('Waiting for cfme provision request for vm %s', instance.name)
         row_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
@@ -134,7 +134,8 @@ def provision_check(request, provider):
         except Exception as e:
             requests.debug_requests()
             raise e
-        assert normalize_text(row.status.text) == 'ok' and normalize_text(
+        assert normalize_text(row.status.text) == 'ok'
+        assert normalize_text(
             row.request_state.text) == 'finished', "Provisioning failed with the message {}".format(
             row.last_message.text)
         instance.wait_to_appear(timeout=800)
@@ -149,7 +150,7 @@ def provision_check(request, provider):
                  handle_exception=True)
         return instance
 
-    return _provisioner_check
+    return _provision_check
 
 
 @pytest.fixture(scope="function")
