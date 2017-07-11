@@ -367,7 +367,8 @@ def discover(discover_cls, cancel=False, start_ip=None, end_ip=None):
         end_ip: String end of the IP range for discovery
     """
     form_data = {}
-    form_data.update(discover_cls.discover_dict)
+    if discover_cls:
+        form_data.update(discover_cls.discover_dict)
 
     if start_ip:
         for idx, octet in enumerate(start_ip.split('.'), start=1):
