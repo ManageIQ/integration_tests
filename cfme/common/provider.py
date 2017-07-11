@@ -728,6 +728,215 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def get_console_ctrl_alt_del_btn(self):
         raise NotImplementedError("This method is not implemented for given provider")
 
+    cfme_appliance = conf.cfme_performance['appliance']
+    cfme_providers = conf.cfme_performance['providers']
+
+    def get_all_vm_endpoints(self, pattern='*', provider='perf-rhevm'):
+        """
+        Takes in a pattern and returns all VM ip addresses and names.
+
+        @pattern: Appliance(VM) Name pattern.
+                Example: 'Infra*'
+        @provider: Provider Name as per 'providers:' in cfme_performance[local].yml
+                Default is 'perf-rhevm'.
+        """
+        provider = conf.cfme_performance.providers[provider]
+        ip_address = provider.ip_address
+        username = provider.credentials.username
+        password = provider.credentials.password
+
+        api = API(
+            url='https://%s' % ip_address,
+            username=username,
+            password=password,
+            insecure=True
+        )
+        vmlist = api.vms.list(name=pattern)
+
+        results = {}
+        for vm in vmlist:
+            addresses = []
+            if vm.guest_info is not None:
+                ips = vm.guest_info.get_ips()
+                for ip in ips.get_ip():
+                    addresses.append(ip.get_address())
+            results[vm.name] = addresses
+
+        api.disconnect()
+
+        return results
+
+    def get_all_provider_ids(self):
+        """
+        Returns an integer list of provider ID's via the REST API
+        """
+        logger.debug('Retrieving the list of provider ids')
+
+        provider_ids = []
+        for prov in self.appliance.rest_api.collections.providers.all:
+            try:
+                provider_ids.append(prov.id)
+            except APIException as ex:
+                return None
+
+        return provider_ids
+
+    def get_all_vm_ids(self):
+        """
+        Returns an integer list of vm ID's via the REST API
+        """
+        logger.debug('Retrieving the list of vm ids')
+
+        vm_ids = []
+        for vm in self.appliance.rest_api.collections.vms.all:
+            try:
+                vm_ids.append(vm.id)
+            except APIException as ex:
+                return None
+
+        return vm_ids
+
+    def get_all_host_ids(self):
+        """
+        Returns an integer list of host ID's via the Rest API
+        """
+        logger.debug('Retrieving the list of host ids')
+
+        host_ids = []
+        for host in self.appliance.rest_api.collections.hosts.all:
+            try:
+                host_ids.append(host.id)
+            except APIException as ex:
+                return None
+        return host_ids
+
+    def get_all_template_ids(self):
+        """Returns an integer list of template ID's via the Rest API"""
+        logger.debug('Retrieving the list of template ids')
+
+        template_ids = []
+        for template in self.appliance.rest_api.collections.templates.all:
+            try:
+                template_ids.append(template.id)
+            except APIException as ex:
+                return None
+        return template_ids
+
+    def get_provider_details(self, provider_id):
+        """Returns the name, and type associated with the provider_id"""
+        logger.debug('Retrieving the provider details for ID: {}'.format(provider_id))
+
+        details = {}
+        try:
+            prov = self.appliance.rest_api.collections.providers.get(id=provider_id)
+        except APIException as ex:
+            return None
+        details['id'] = prov.id
+        details['name'] = prov.name
+        details['type'] = prov.type
+
+        return details
+
+    def get_vm_details(self, vm_id):
+        """
+        Returns the name, type, vendor, host_id, and power_state associated with
+        the vm_id.
+        """
+        logger.debug('Retrieving the VM details for ID: {}'.format(vm_id))
+
+        details = {}
+        try:
+            vm = self.appliance.rest_api.collections.vms.get(id=vm_id)
+        except APIException as ex:
+            return None
+
+        details['id'] = vm.id
+        details['ems_id'] = vm.ems_id
+        details['name'] = vm.name
+        details['type'] = vm.type
+        details['vendor'] = vm.vendore
+        details['host_id'] = vm.host_id
+        details['power_state'] = vm.power_state
+        return details
+
+    def get_template_details(self, template_id):
+        """
+        Returns the name, type, and guid associated with the template_id
+        """
+        logger.debug('Retrieving the template details for ID: {}'
+                     .format(template_id))
+
+        template_details = {}
+        try:
+            template = self.appliance.rest_api.collections.templates.get(id=template_id)
+        except APIException as ex:
+            return None
+
+        template_details['id'] = template.id
+        template_details['name'] = template.name
+        template_details['type'] = template.type
+        template_details['guid'] = template.guid
+        return template_details
+
+    def get_provider_id(self, provider_name):
+        """"
+        Return the ID associated with the specified provider name
+        """
+        logger.debug('Retrieving the ID for provider: {}'.format(provider_name))
+        for provider_id in self.get_all_provider_ids():
+            details = self.get_provider_details(provider_id)
+            if details['name'] == provider_name:
+                return provider_id
+        return
+
+    def get_vm_id(self, vm_name):
+        """
+        Return the ID associated with the specified VM name
+        """
+        logger.debug('Retrieving the ID for VM: {}'.format(vm_name))
+        for vm_id in self.get_all_vm_ids():
+            details = self.get_vm_details(vm_id)
+            if details['name'] == vm_name:
+                return vm_id
+        return
+
+    def get_vm_ids(self, vm_names):
+        """
+        Returns a dictionary mapping each VM name to it's id
+        """
+        name_list = vm_names[:]
+        logger.debug('Retrieving the IDs for {} VM(s)'.format(len(name_list)))
+        id_map = {}
+        for vm_id in self.get_all_vm_ids():
+            if len(name_list) == 0:
+                break
+            vm_name = self.get_vm_details(vm_id)['name']
+            if vm_name in name_list:
+                id_map[vm_name] = vm_id
+                name_list.remove(vm_name)
+        return id_map
+
+    def get_template_guids(self, template_dict):
+        """
+        Returns a list of tuples. The inner tuples are formated so that each guid
+        is in index 0, and its provider's name is in index 1. Expects a dictionary
+        mapping a provider to its templates
+        """
+        result_list = []
+        all_template_details = self.get_all_template_details()
+        for provider in template_dict:
+            provider_type = cfme_providers[provider]['type']
+            for template_name in template_dict[provider]:
+                inner_tuple = ()
+                for id in all_template_details:
+                    _tmp = provider_type + '::Template'
+                    if ((all_template_details[id]['name'] == template_name) and
+                            (all_template_details[id]['type'] == _tmp)):
+                        inner_tuple += (all_template_details[id]['guid'],)
+                        inner_tuple += (cfme_providers[provider]['name'],)
+                        result_list.append(inner_tuple)
+        return result_list
+
 
 class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     vm_name = ""

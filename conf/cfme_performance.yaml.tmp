@@ -1,0 +1,418 @@
+# Template File (Examples), copy and edit to your own specification
+# Appliance Under Test
+appliance:
+  appliance_name: CFME-R0001-DB-5721
+  ip_address:  10.12.23.82
+  web_ui:
+    username: admin
+    password: smartvm
+  rest_api:
+    username: admin
+    password: smartvm
+  ssh:
+    username: root
+    password: smartvm
+# Appliance to replicate to for replication workloads (C&U w/ Rep)
+replication_master:
+  appliance_name: CF-R0099-DB-Workload-ReplicationMaster-5612
+  ip_address: 10.20.30.41
+  ssh:
+    username: root
+    password: smartvm
+# Performance Tools/Framework Configuration
+tools:
+  grafana:
+    enabled: true
+    default_dashboard: cfme-general-system-performance
+    ip_address: perf-carbon.perf.lab.eng.rdu.redhat.com
+    port: 9001
+  rpms:
+    epel6_rpm: https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+    epel7_rpm: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+# Resources for appliance for tests (vddk url)
+resources:
+  vddk5_5: http://download.example.com/vddks/VMware-vix-disklib-5.5.5-2962804.x86_64.rpm
+  vddk6_0: http://download.example.com/vddks/VMware-vix-disklib-6.0.2-3566099.x86_64.rpm
+# logging options
+logging:
+  level: DEBUG
+# Providers for Testing
+providers:
+  vmware-infrastructure:
+    name: vmware-infrastructure
+    type: ManageIQ::Providers::Vmware::InfraManager
+    ip_address: 10.20.30.40
+    vlan_network: VM Network
+    credentials:
+      username: administrator@vsphere.local
+      password: password
+    host_credentials:
+      username: administrator@vsphere.local
+      password: password
+  rhevm-infrastructure:
+    name: rhevm-infrastructure
+    type: ManageIQ::Providers::Redhat::InfraManager
+    ip_address: 10.20.30.40
+    vlan_network: rhevm
+    credentials:
+      username: admin@internal
+      password: password
+    metrics_credentials:
+      username: cloudforms
+      password: password
+  amazon-cloud:
+    name: amazon-cloud
+    type: ManageIQ::Providers::Amazon::CloudManager
+    provider_region: us-east-1
+    credentials:
+      username: Access-Key
+      password: Secret-Key
+  openstack-cloud:
+    name: openstack-cloud
+    type: ManageIQ::Providers::Openstack::CloudManager
+    ip_address: 10.20.30.40
+    credentials:
+      username: admin
+      password: password
+      security_protocol: non-ssl
+      port: 5000
+    amqp_credentials:
+      username: administrator
+      password: password
+      ip_address: 10.8.58.70  # Optional
+      security_protocol: ssl
+      port: 5672
+  scvmm-infrastructure:
+    name: scvmm-infrastructure
+    type: ManageIQ::Providers::Microsoft::InfraManager
+    ip_address: 10.20.30.40
+    security_protocol: ssl
+    credentials:
+      username: domain\Admin
+      password: password
+    host_credentials:
+      username: administrator
+      password: password
+
+# Workloads/Tests
+tests:
+  # Frontend (UI) focused workloads:
+  ui_workloads:
+    # Typically these tests are run against an appliance with a populated database
+    test_ui_single_page:
+      scenarios:
+        - name: explorer
+          requests: 10
+          pages:
+            - catalog/explorer
+            - chargeback/explorer
+            - container/explorer
+            - miq_ae_class/explorer
+            - miq_ae_customization/explorer
+            - miq_policy/explorer
+            - ops/explorer
+            - provider_foreman/explorer
+            - pxe/explorer
+            - report/explorer
+            - service/explorer
+            - storage/explorer
+            - vm_cloud/explorer
+            - vm_infra/explorer
+            - vm_or_template/explorer
+          grafana_dashboard: cfme-ui-system-performance
+        - name: show_list
+          requests: 10
+          pages:
+            - alert/show_list
+            - auth_key_pair_cloud/show_list
+            - availability_zone/show_list
+            - configuration_job/show_list
+            - cloud_object_store_container/show_list
+            - cloud_tenant/show_list
+            - cloud_object_store_object/show_list
+            - cloud_volume/show_list
+            - cloud_volume_snapshot/show_list
+            - container/show_list
+            - container_group/show_list
+            - container_node/show_list
+            - container_replicator/show_list
+            - container_image/show_list
+            - container_image_registry/show_list
+            - container_service/show_list
+            - container_project/show_list
+            - container_route/show_list
+            - persistent_volume/show_list
+            - container_build/show_list
+            - ems_cloud/show_list
+            - ems_cluster/show_list
+            - ems_infra/show_list
+            - ems_container/show_list
+            - ems_middleware/show_list
+            - middleware_server/show_list
+            - middleware_deployment/show_list
+            - ems_network/show_list
+            - security_group/show_list
+            - floating_ip/show_list
+            - cloud_subnet/show_list
+            - cloud_network/show_list
+            - network_port/show_list
+            - network_router/show_list
+            - flavor/show_list
+            - host/show_list
+            - miq_request/show_list
+            - ontap_file_share/show_list
+            - ontap_logical_disk/show_list
+            - ontap_storage_system/show_list
+            - orchestration_stack/show_list
+            - provider_foreman/show_list
+            - resource_pool/show_list
+            - storage/show_list
+            - storage_manager/show_list
+            - vm/show_list
+          grafana_dashboard: cfme-ui-system-performance
+
+  # Backend focused workloads:
+  workloads:
+    test_idle:
+      scenarios:
+        - name: all
+          total_time: 36000
+          roles: ['automate', 'database_operations', 'database_synchronization', 'ems_inventory',
+              'ems_metrics_collector', 'ems_metrics_coordinator', 'ems_metrics_processor',
+              'ems_operations', 'event', 'git_owner', 'notifier', 'reporting', 'rhn_mirror',
+              'scheduler', 'smartproxy', 'smartstate', 'user_interface', 'web_services',
+              'websocket']
+          grafana_dashboard: cfme-general-system-performance
+
+    test_refresh_providers:
+      scenarios:
+        - name: 30m-vmware-infrastructure
+          providers:
+            - vmware-infrastructure
+          time_between_refresh: 60
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-system-performance
+        - name: 30m-2x-vmware-rhevm
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          time_between_refresh: 60
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-redhat-system-performance
+
+    test_refresh_vms:
+      scenarios:
+        - name: 30m-vmware-infrastructure
+          providers:
+            - vmware-infrastructure
+          refresh_sleep_time: 600
+          refresh_size: 5
+          full_refresh_threshold: 100
+          time_between_refresh: 10
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-system-performance
+        - name: 30m-2x-vmware-rhevm
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          refresh_size: 5
+          full_refresh_threshold: 100
+          time_between_refresh: 10
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-redhat-system-performance
+
+    test_cap_and_util:
+      scenarios:
+        - name: 30m-vmware-infrastructure
+          providers:
+            - vmware-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-system-performance
+        - name: 30m-rhevm-infrastructure
+          providers:
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-redhat-system-performance
+        - name: 30m-2x-vmware-rhevm
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-redhat-system-performance
+
+        - name: 4hr-vmware-infrastructure
+          providers:
+            - vmware-infrastructure
+          refresh_sleep_time: 600
+          total_time: 14400
+          grafana_dashboard: cfme-vmware-system-performance
+        - name: 4hr-rhevm-infrastructure
+          providers:
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 14400
+          grafana_dashboard: cfme-redhat-system-performance
+        - name: 4hr-2x-vmware-rhevm
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 14400
+          grafana_dashboard: cfme-vmware-redhat-system-performance
+
+    test_cap_and_util_rep:
+      scenarios:
+        - name: 30m-vmware-infrastructure-pglogical
+          providers:
+            - vmware-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-system-performance
+          replication: pglogical
+          replication_master:
+            appliance_name: CF-R0099-DB-Workload-ReplicationMaster-56013-1
+            ip_address: 10.20.30.41
+        - name: 30m-rhevm-infrastructure-pglogical
+          providers:
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-redhat-system-performance
+          replication: pglogical
+          replication_master:
+            appliance_name: CF-R0099-DB-Workload-ReplicationMaster-56013-1
+            ip_address: 10.20.30.41
+        - name: 30m-2x-vmware-rhevm-pglogical
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-redhat-system-performance
+          replication: pglogical
+          replication_master:
+            appliance_name: CF-R0099-DB-Workload-ReplicationMaster-56013-1
+            ip_address: 10.20.30.41
+
+        # rubyrep scenarios are likely not even worth running as rubyrep costs far more memory
+        - name: 30m-vmware-infrastructure-rubyrep
+          providers:
+            - vmware-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-system-performance
+          replication: rubyrep
+          replication_master:
+            appliance_name: CF-R0099-DB-Workload-ReplicationMaster-56013-1
+            ip_address: 10.20.30.41
+        - name: 30m-rhevm-infrastructure-rubyrep
+          providers:
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-redhat-system-performance
+          replication: rubyrep
+          replication_master:
+            appliance_name: CF-R0099-DB-Workload-ReplicationMaster-56013-1
+            ip_address: 10.20.30.41
+        - name: 30m-2x-vmware-rhevm-rubyrep
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-redhat-system-performance
+          replication: rubyrep
+          replication_master:
+            appliance_name: CF-R0099-DB-Workload-ReplicationMaster-56013-1
+            ip_address: 10.20.30.41
+
+    test_smartstate:
+      scenarios:
+        - name: 30m-vmware-infrastructure
+          providers:
+            - vmware-infrastructure
+          refresh_sleep_time: 600
+          vms_to_scan:
+            vmware-infrastructure:
+              - perf-smartstate-rhel6
+              - perf-smartstate-rhel7
+              - perf-smartstate-windows2012
+          time_between_analyses: 45
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-system-performance
+        - name: 30m-rhevm-infrastructure
+          providers:
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          vms_to_scan:
+            rhevm-infrastructure:
+              - perf-smartstate-rhel6
+              - perf-smartstate-rhel7
+              - perf-smartstate-windows2012
+          time_between_analyses: 45
+          total_time: 1800
+          grafana_dashboard: cfme-redhat-system-performance
+        - name: 30m-2x-vmware-rhevm
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          refresh_sleep_time: 600
+          vms_to_scan:
+            vmware-infrastructure:
+              - perf-smartstate-rhel6
+              - perf-smartstate-rhel7
+              - perf-smartstate-windows2012
+            rhevm-infrastructure:
+              - perf-smartstate-rhel6
+              - perf-smartstate-rhel7
+              - perf-smartstate-windows2012
+          time_between_analyses: 45
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-redhat-system-performance
+
+    test_provisioning:
+      scenarios:
+        - name: 30m-vmware-infrastructure
+          providers:
+            - vmware-infrastructure
+          templates:
+            vmware-infrastructure:
+              - perf-provision-rhel7
+          number_of_vms: 1
+          refresh_sleep_time: 600
+          time_between_provision: 60
+          cleanup_size: 4
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-system-performance
+        - name: 30m-rhevm-infrastructure
+          providers:
+            - rhevm-infrastructure
+          templates:
+            rhevm-infrastructure:
+              - perf-provision-rhel7
+          number_of_vms: 50
+          refresh_sleep_time: 600
+          time_between_provision: 60
+          cleanup_size: 4
+          total_time: 1800
+          grafana_dashboard: cfme-redhat-system-performance
+        - name: 30m-2x-vmware-rhevm
+          providers:
+            - vmware-infrastructure
+            - rhevm-infrastructure
+          templates:
+            vmware-infrastructure:
+              - perf-provision-rhel7
+            rhevm-infrastructure:
+              - perf-provision-rhel7
+          number_of_vms: 5
+          refresh_sleep_time: 600
+          time_between_provision: 90
+          cleanup_size: 4
+          total_time: 1800
+          grafana_dashboard: cfme-vmware-redhat-system-performance

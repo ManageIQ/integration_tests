@@ -7,7 +7,7 @@ import traceback
 import warnings
 from copy import copy
 from tempfile import NamedTemporaryFile
-from time import sleep
+from time import sleep, time
 from urlparse import ParseResult, urlparse
 
 import dateutil.parser
@@ -28,6 +28,7 @@ from utils.events import EventListener
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path, conf_path
+from utils.ssh import SSHTail
 from utils.version import Version, get_stream, pick
 from utils.wait import wait_for
 
@@ -1892,6 +1893,119 @@ class IPAppliance(object):
     def reset_automate_model(self):
         with self.ssh_client as ssh_client:
             ssh_client.run_rake_command("evm:automate:reset")
+
+    def clean_appliance(self):
+        starttime = time()
+        self.ssh_client.run_command('service evmserverd stop')
+        self.ssh_client.run_command('sync; sync; echo 3 > /proc/sys/vm/drop_caches')
+        self.ssh_client.run_command('service collectd stop')
+        self.ssh_client.run_command('service rh-postgresql95-postgresql restart')
+        self.ssh_client.run_command(
+            'cd /var/www/miq/vmdb;DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bin/rake evm:db:reset')
+        self.ssh_client.run_rake_command('db:seed')
+        self.ssh_client.run_command('service collectd start')
+        # Work around for https://bugzilla.redhat.com/show_bug.cgi?id=1337525
+        self.ssh_client.run_command('service httpd stop')
+        self.ssh_client.run_command('rm -rf /run/httpd/*')
+        self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/*.log*')
+        self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/apache/*.log*')
+        self.ssh_client.run_command('service evmserverd start')
+        logger.debug('Cleaned appliance in: {}'.format(round(time() - starttime, 2)))
+
+    def set_full_refresh_threshold(self, threshold=100):
+        yaml = self.get_yaml_config()
+        yaml['ems_refresh']['full_refresh_threshold'] = threshold
+        self.set_yaml_config(yaml)
+
+    def set_cap_and_util_all_via_rails(self):
+        """Turns on Collect for All Clusters and Collect for all Datastores without using Web UI."""
+        command = (
+            'Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
+        self.ssh_client.run_rails_console(command, timeout=None, log_less=True)
+
+    def set_cfme_server_relationship(self, vm_name, server_id=1):
+        """Set MiqServer record to the id of a VM by name, effectively setting the CFME Server
+        Relationship without using the Web UI."""
+        command = ('miq_server = MiqServer.find_by(id: {});'
+                   'miq_server.vm_id = Vm.find_by(name: \'{}\').id;'
+                   'miq_server.save'.format(server_id, vm_name))
+        self.ssh_client.run_rails_console(command, timeout=None, log_less=False)
+
+    def set_pglogical_replication(self, replication_type=':none'):
+        """Set pglogical replication type (:none, :remote, :global) without using the Web UI."""
+        command = ('MiqRegion.replication_type = {}'.format(replication_type))
+        self.ssh_client.run_rails_console(command, timeout=None, log_less=False)
+
+    def add_pglogical_replication_subscription(self, host):
+        """Add a pglogical replication subscription without using the Web UI."""
+        user = conf.credentials['ssh']['username']
+        password = conf.credentials['ssh']['password']
+        dbname = 'vmdb_production'
+        port = 5432
+        command = ('sub = PglogicalSubscription.new;'
+                   'sub.dbname = \'{}\';'
+                   'sub.host = \'{}\';'
+                   'sub.user = \'{}\';'
+                   'sub.password = \'{}\';'
+                   'sub.port = {};'
+                   'sub.save'.format(dbname, host, user, password, port))
+        self.ssh_client.run_rails_console(command, timeout=None, log_less=True)
+
+    def set_rubyrep_replication(self, host, port=5432, database='vmdb_production',
+                                username='root', password='v2:{I2SQ5PdmGPwN7t5goRiyaQ==}'):
+        """Sets up rubyrep replication via advanced configuration settings yaml."""
+        yaml = self.get_yaml_config()
+        if 'replication_worker' in yaml['workers']['worker_base']:
+            dest = yaml['workers']['worker_base']['replication_worker']['replication'][
+                'destination']
+            dest['database'] = database
+            dest['username'] = username
+            dest['password'] = password
+            dest['port'] = port
+            dest['host'] = host
+        else:  # 5.5 configuration:
+            dest = yaml['workers']['worker_base'][':replication_worker'][':replication'][
+                ':destination']
+            dest[':database'] = database
+            dest[':username'] = username
+            dest[':password'] = password
+            dest[':port'] = port
+            dest[':host'] = host
+            logger.debug('Dest: {}'.format(dest))
+        self.set_yaml_config(yaml)
+
+    def set_cap_and_util_all_via_rails(self):
+        """Turns on Collect for All Clusters and Collect for all Datastores without using the Web UI."""
+        command = (
+        'Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
+        self.ssh_client.run_rails_console(command, timeout=None, log_less=True)
+
+    def wait_for_miq_server_workers_started(self, evm_tail=None, poll_interval=5):
+        """Waits for the CFME's workers to be started by tailing evm.log for:
+        'INFO -- : MIQ(MiqServer#wait_for_started_workers) All workers have been started'
+        """
+        if evm_tail is None:
+            logger.info('Opening /var/www/miq/vmdb/log/evm.log for tail')
+            evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
+            evm_tail.set_initial_file_end()
+
+        attempts = 0
+        detected = False
+        max_attempts = 60
+        while (not detected and attempts < max_attempts):
+            logger.debug('Attempting to detect MIQ Server workers started: {}'.format(attempts))
+            for line in evm_tail:
+                if 'MiqServer#wait_for_started_workers' in line:
+                    if ('All workers have been started' in line):
+                        logger.info('Detected MIQ Server is ready.')
+                        detected = True
+                        break
+            sleep(poll_interval)  # Allow more log lines to accumulate
+            attempts += 1
+        if not (attempts < max_attempts):
+            logger.error('Could not detect MIQ Server workers started in {}s.'.format(
+                poll_interval * max_attempts))
+        evm_tail.close()
 
     def server_details_changed(self):
         clear_property_cache(self, 'configuration_details', 'zone_description')
