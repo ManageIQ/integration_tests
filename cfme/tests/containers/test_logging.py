@@ -26,7 +26,7 @@ def validate_logging_up_and_running(provider):
 def test_external_logging_activated(provider, validate_logging_up_and_running):
     view = navigate_to(provider, 'Details')
 
-    assert not view.monitor.item_enabled('External Logging'), (
+    assert view.monitor.item_enabled('External Logging'), (
         "Monitoring --> External Logging not activated")
 
     view.monitor.item_select('External Logging')
