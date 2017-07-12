@@ -17,6 +17,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services import requests
 from utils import normalize_text, testgen
+from utils.rest import assert_response
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.update import update
@@ -180,22 +181,23 @@ def test_gce_preemtible_provision(provider, testing_instance, soft_assert):
 
 
 def test_provision_from_template_using_rest(
-        request, setup_provider, provider, vm_name, rest_api, provisioning):
+        appliance, request, setup_provider, provider, vm_name, provisioning):
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
         test_flag: provision, rest
     """
-    if 'flavors' not in rest_api.collections.all_names:
+    if 'flavors' not in appliance.rest_api.collections.all_names:
         pytest.skip("This appliance does not have `flavors` collection.")
-    image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
+    image_guid = appliance.rest_api.collections.templates.find_by(
+        name=provisioning['image']['name'])[0].guid
     if ':' in provisioning['instance_type'] and provider.one_of(EC2Provider, GCEProvider):
         instance_type = provisioning['instance_type'].split(':')[0].strip()
     elif provider.type == 'azure':
         instance_type = provisioning['instance_type'].lower()
     else:
         instance_type = provisioning['instance_type']
-    flavors = rest_api.collections.flavors.find_by(name=instance_type)
+    flavors = appliance.rest_api.collections.flavors.find_by(name=instance_type)
     assert flavors
     # TODO: Multi search when it works
     for flavor in flavors:
@@ -251,8 +253,8 @@ def test_provision_from_template_using_rest(
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
 
-    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
-    assert rest_api.response.status_code == 200
+    request = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    assert_response(appliance)
 
     def _finished():
         request.reload()
@@ -268,21 +270,22 @@ def test_provision_from_template_using_rest(
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(EC2Provider, OpenStackProvider))
 def test_manual_placement_using_rest(
-        request, setup_provider, provider, vm_name, rest_api, provisioning):
+        appliance, request, setup_provider, provider, vm_name, provisioning):
     """ Tests provisioning cloud instance with manual placement using the REST API.
 
     Metadata:
         test_flag: provision, rest
     """
-    image_guid = rest_api.collections.templates.get(name=provisioning['image']['name']).guid
-    provider_rest = rest_api.collections.providers.get(name=provider.name)
+    image_guid = appliance.rest_api.collections.templates.get(
+        name=provisioning['image']['name']).guid
+    provider_rest = appliance.rest_api.collections.providers.get(name=provider.name)
     security_group_name = provisioning['security_group'].split(':')[0].strip()
     if ':' in provisioning['instance_type'] and provider.one_of(EC2Provider):
         instance_type = provisioning['instance_type'].split(':')[0].strip()
     else:
         instance_type = provisioning['instance_type']
 
-    flavors = rest_api.collections.flavors.find_by(name=instance_type)
+    flavors = appliance.rest_api.collections.flavors.find_by(name=instance_type)
     assert flavors
     flavor = None
     for flavor in flavors:
@@ -291,7 +294,7 @@ def test_manual_placement_using_rest(
     else:
         pytest.fail("Cannot find flavour.")
 
-    provider_data = rest_api.get(provider_rest._href +
+    provider_data = appliance.rest_api.get(provider_rest._href +
         '?attributes=cloud_networks,cloud_subnets,security_groups,cloud_tenants')
 
     # find out cloud network
@@ -334,7 +337,7 @@ def test_manual_placement_using_rest(
         pytest.fail("Cannot find cloud subnet.")
 
     def _find_availability_zone_id():
-        subnet_data = rest_api.get(provider_rest._href + '?attributes=cloud_subnets')
+        subnet_data = appliance.rest_api.get(provider_rest._href + '?attributes=cloud_subnets')
         for subnet in subnet_data['cloud_subnets']:
             if subnet['id'] == cloud_subnet['id'] and 'availability_zone_id' in subnet:
                 return subnet['availability_zone_id']
@@ -343,7 +346,7 @@ def test_manual_placement_using_rest(
     # find out availability zone
     availability_zone_id = None
     if provisioning.get('availability_zone'):
-        availability_zone_entities = rest_api.collections.availability_zones.find_by(
+        availability_zone_entities = appliance.rest_api.collections.availability_zones.find_by(
             name=provisioning['availability_zone'])
         if availability_zone_entities and availability_zone_entities[0].ems_id == flavor.ems_id:
             availability_zone_id = availability_zone_entities[0].id
@@ -401,8 +404,8 @@ def test_manual_placement_using_rest(
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
 
-    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
-    assert rest_api.response.status_code == 200
+    request = appliance.rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    assert_response(appliance)
 
     def _finished():
         request.reload()
