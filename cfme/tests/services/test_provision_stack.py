@@ -7,7 +7,7 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
@@ -151,11 +151,9 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=2500, delay=20)
-
-    assert 'Provisioned Successfully' in row.last_message.text
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=2500, delay=20)
+    assert request_row.if_succeeded()
 
 
 @pytest.mark.meta(blockers=[BZ(1442920, forced_streams=["5.7", "5.8", "upstream"])])
@@ -176,11 +174,10 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=2000, delay=20)
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=2000, delay=20)
 
-    assert 'Provisioned Successfully' in row.last_message.text
+    assert request_row.if_succeeded()
 
     myservice = MyService(catalog_item.name)
     myservice.reconfigure_service()
@@ -199,11 +196,10 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
     row_description = 'Provisioning Service [{}] from [{}]'.format(item_name, item_name)
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=1000, delay=20)
-    assert row.last_message.text == 'Service_Template_Provisioning failed' or\
-        row.status.text == "Error"
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=1000, delay=20)
+    assert request_row.row.last_message.text == 'Service_Template_Provisioning failed' or \
+        request_row.row.status.text == "Error"
 
 
 def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
@@ -220,11 +216,10 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=2500, delay=20)
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=2500, delay=20)
 
-    assert 'Provisioned Successfully' in row.last_message.text
+    assert request_row.if_succeeded()
 
     stack = Stack(stack_data['stack_name'], provider=provider)
     stack.wait_for_appear()
