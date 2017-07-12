@@ -1351,7 +1351,10 @@ class DetailsToolBarViewSelector(View):
 
     @property
     def selected(self):
-        return next(btn.title for btn in self._view_buttons if btn.is_displayed and btn.active)
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
 
     @property
     def is_displayed(self):
