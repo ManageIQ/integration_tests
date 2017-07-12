@@ -402,8 +402,8 @@ def ManageIQTree(tree_id=None):  # noqa
 class SummaryFormItem(Widget):
     """The UI item that shows the values for objects that are NOT VMs, Providers and such ones."""
     LOCATOR = (
-        './/h3[normalize-space(.)={}]/following-sibling::div[1]/div'
-        '/label[normalize-space(.)={}]/following-sibling::div')
+        './/h3[normalize-space(.)={}]/following-sibling::div/div'
+        '//label[normalize-space(.)={}]/following-sibling::div')
 
     def __init__(self, parent, group_title, item_name, text_filter=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
