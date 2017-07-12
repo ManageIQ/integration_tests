@@ -1290,15 +1290,9 @@ class ItemsToolBarViewSelector(View):
         view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    grid_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Grid View'),
-        '5.7.0': Button(title='Grid View')})
-    tile_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Tile View'),
-        '5.7.0': Button(title='Tile View')})
-    list_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='List View'),
-        '5.7.0': Button(title='List View')})
+    grid_button = Button(title='Grid View')
+    tile_button = Button(title='Tile View')
+    list_button = Button(title='List View')
 
     @property
     def _view_buttons(self):
@@ -1320,6 +1314,10 @@ class ItemsToolBarViewSelector(View):
     def read(self):
         return self.selected
 
+    @property
+    def is_displayed(self):
+        return self.grid_button.is_displayed
+
 
 class DetailsToolBarViewSelector(View):
     """ represents toolbar's view selector control
@@ -1333,12 +1331,8 @@ class DetailsToolBarViewSelector(View):
         view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    summary_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Summary View'),
-        '5.7.0': Button(title='Summary View')})
-    dashboard_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Dashboard View'),
-        '5.7.0': Button(title='Dashboard View')})
+    summary_button = Button(title='Summary View')
+    dashboard_button = Button(title='Dashboard View')
 
     @property
     def _view_buttons(self):
