@@ -6,7 +6,7 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import fill
 from utils import normalize_text, testgen
 from utils.blockers import BZ
@@ -160,20 +160,21 @@ def test_provision_approval(
         num_sec=90, delay=5)
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
-    wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
+    request_row = Request(cells=cells)
+    wait_for(request_row.load_details, num_sec=80, delay=5)
     if edit:
         # Automatic approval after editing the request to conform
-        with requests.edit_request(cells) as form:
+        with request_row.edit_request() as form:
             fill(form.num_vms, "1")
             new_vm_name = vm_name + "-xx"
             fill(form.vm_name, new_vm_name)
         vm_names = [new_vm_name]  # Will be just one now
-        cells = {'Description': 'Provision from [{}] to [{}]'.format(template, new_vm_name)}
+        request_row = Request(row_description=new_vm_name, partial_check=True)
         request.addfinalizer(
             lambda: cleanup_vm(new_vm_name, provider))
     else:
         # Manual approval
-        requests.approve_request(cells, "Approved")
+        request_row.approve_request("Approved")
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
             lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
@@ -191,10 +192,8 @@ def test_provision_approval(
         lambda: all(map(provider.mgmt.does_vm_exist, vm_names)),
         handle_exception=True, num_sec=600)
 
-    row, __ = wait_for(requests.wait_for_request, [cells],
-                       fail_func=requests.reload, num_sec=1500, delay=20)
-    assert normalize_text(row.status.text) == 'ok' \
-        and normalize_text(row.request_state.text) == 'finished'
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=1500, delay=20)
+    assert request_row.if_succeeded()
 
     # Wait for e-mails to appear
     def verify():

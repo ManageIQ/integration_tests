@@ -4,7 +4,7 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
 
@@ -51,6 +51,6 @@ def test_vm_migrate(new_vm, provider):
     flash.assert_no_errors()
     row_description = new_vm.name
     cells = {'Description': row_description, 'Request Type': 'Migrate'}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=600, delay=20)
-    assert row.request_state.text == 'Migrated'
+    request_row = Request(row_description, cells=cells, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=600, delay=20)
+    assert request_row.if_succeeded()

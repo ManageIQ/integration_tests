@@ -4,7 +4,7 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme import test_requirements
 from utils import testgen
 from utils.wait import wait_for
@@ -29,7 +29,6 @@ def test_copy_request(setup_provider, provider, catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1800, delay=20)
-    requests.go_to_request(cells)
+    request_row = Request(row_description, partial_check=True)
+    wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=1800, delay=20)
+    request_row.load_details()

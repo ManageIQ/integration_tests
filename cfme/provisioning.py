@@ -9,7 +9,7 @@ from cfme import web_ui as ui
 from cfme.base.login import BaseLoggedInPage
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip
 from utils import version
 from utils import normalize_text
@@ -313,17 +313,14 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     # Provision Re important in this test
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
     row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
+    request_row = Request(row_description)
     try:
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=num_sec, delay=20)
+        wait_for(request_row.is_finished, fail_func=request_row.reload, num_sec=num_sec, delay=20)
     except Exception as e:
-        requests.debug_requests()
+        request_row.debug_request()
         raise e
-    assert normalize_text(row.status.text) == 'ok' \
-                                              and normalize_text(
-        row.request_state.text) == 'finished', \
-        "Provisioning failed with the message {}".format(row.last_message.text)
+    assert request_row.if_succeeded(), \
+        "Provisioning failed with the message {}".format(request_row.row.last_message.text)
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
@@ -343,7 +340,8 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
 
 
 def copy_request(cells, modifications):
-    with requests.copy_request(cells):
+    request_row = Request(cells=cells)
+    with request_row.copy_request():
         fill(provisioning_form, modifications)
 
 
@@ -356,4 +354,5 @@ def copy_request_by_vm_and_template_name(vm_name, template_name, modifications, 
 def go_to_request_by_vm_and_template_name(vm_name, template_name, multi=False):
     multistr = "###" if multi else ""
     row_description = "Provision from [{}] to [{}{}]".format(template_name, vm_name, multistr)
-    return requests.go_to_request({'Description': row_description})
+    request_row = Request(row_description)
+    return request_row.load_details()
