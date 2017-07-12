@@ -10,6 +10,7 @@ gpgcheck=0\n\n"""
 
 
 def process_url(url):
+    '''Pulls urls from a network file'''
     repo = requests.get(url)
     urls = repo.text.split("\n")
     ret_urls = []
@@ -20,6 +21,7 @@ def process_url(url):
 
 
 def build_file(urls):
+    '''Builds a update.repo file based on the urls given'''
     file_string = ""
     c = 0
     for url in urls:

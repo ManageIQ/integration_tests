@@ -11,7 +11,7 @@ import tempfile
 
 
 def pytest_generate_tests(metafunc):
-    if metafunc.function in {test_inplace_upgrade}:
+    if metafunc.function in {test_upgrade_single_inplace}:
         return
     argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
     db_backups = cfme_data.get('db_backups', {})
@@ -34,6 +34,7 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
 
 @pytest.yield_fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade):
+    '''Reconfigures appliance partitions and adds repo file for upgrade'''
     temp_appliance_preconfig_funcscope_upgrade.db.extend_partition()
     urls = process_url(cfme_data['basic_info']['update_url'])
     output = build_file(urls)
@@ -136,6 +137,7 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
+    '''Tests appliance upgrade between streams'''
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
         rc, out = ssh.run_command('yum update -y', timeout=3600)
