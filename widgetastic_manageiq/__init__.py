@@ -1309,7 +1309,10 @@ class ItemsToolBarViewSelector(View):
 
     @property
     def selected(self):
-        return next(btn.title for btn in self._view_buttons if btn.active)
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
 
     def read(self):
         return self.selected
@@ -1348,7 +1351,7 @@ class DetailsToolBarViewSelector(View):
 
     @property
     def selected(self):
-        return next(btn.title for btn in self._view_buttons if btn.active)
+        return next(btn.title for btn in self._view_buttons if btn.is_displayed and btn.active)
 
     @property
     def is_displayed(self):
