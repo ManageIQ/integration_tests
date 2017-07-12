@@ -10,7 +10,6 @@ from cfme.containers.route import Route
 from cfme.containers.project import Project
 from cfme.containers.provider import ContainersProvider, navigate_and_get_rows
 from cfme.containers.replicator import Replicator
-from cfme.containers.container import Container
 from cfme.containers.service import Service
 from cfme.containers.pod import Pod
 
@@ -27,7 +26,10 @@ TEST_OBJECTS = [
     Service,
     ContainersProvider,
     Pod,
-    Container
+    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1467639
+    # from cfme.containers.container import Container (add to imports when fixed)
+    # Container
 ]
 
 

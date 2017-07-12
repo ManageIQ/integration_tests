@@ -6,7 +6,6 @@ from utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui import toolbar as tb
 from cfme.configure.settings import DefaultView
 
-from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import NodeCollection
@@ -35,8 +34,11 @@ objects_mapping = OrderedDict({  # <object> : <ui name>
     NodeCollection: 'Nodes',
     Pod: 'Pods',
     Service: 'Services',
-    Container: 'Containers',
     Replicator: 'Replicators'
+    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1467639
+    # from cfme.containers.container import Container (add to imports when fixed)
+    # Container: 'Containers',
 })
 
 
