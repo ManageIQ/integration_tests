@@ -12,7 +12,7 @@ class RHEVMEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
         return {'hostname': self.hostname,
-                'api_port': self.api_port,
+                'api_port': getattr(self, 'api_port', None),
                 'verify_tls': version.pick({version.LOWEST: None,
                                             '5.8': self.verify_tls}),
                 'ca_certs': version.pick({version.LOWEST: None,
