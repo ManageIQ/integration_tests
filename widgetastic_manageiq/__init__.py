@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 import atexit
-import re
 import os
+import re
 from collections import namedtuple
 from datetime import date
-from jsmin import jsmin
-from selenium.common.exceptions import WebDriverException
-from lxml.html import document_fromstring
 from math import ceil
 from tempfile import NamedTemporaryFile
-from wait_for import wait_for
 
+from cached_property import cached_property
+from jsmin import jsmin
+from lxml.html import document_fromstring
+from selenium.common.exceptions import WebDriverException
+from wait_for import wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
+from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -28,13 +30,14 @@ from widgetastic.widget import (
     WidgetDescriptor,
     FileInput as BaseFileInput,
     ClickableMixin,
+    ConditionalSwitchableView,
     do_not_read_this_widget)
-from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
-    ViewChangeButton, CheckableBootstrapTreeview)
-from cached_property import cached_property
+    ViewChangeButton, CheckableBootstrapTreeview, FlashMessages)
+
+from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
 
 class DynaTree(Widget):
@@ -1287,15 +1290,9 @@ class ItemsToolBarViewSelector(View):
         view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    grid_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Grid View'),
-        '5.7.0': Button(title='Grid View')})
-    tile_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Tile View'),
-        '5.7.0': Button(title='Tile View')})
-    list_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='List View'),
-        '5.7.0': Button(title='List View')})
+    grid_button = Button(title='Grid View')
+    tile_button = Button(title='Tile View')
+    list_button = Button(title='List View')
 
     @property
     def _view_buttons(self):
@@ -1312,7 +1309,17 @@ class ItemsToolBarViewSelector(View):
 
     @property
     def selected(self):
-        return next(btn.title for btn in self._view_buttons if btn.active)
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
+
+    def read(self):
+        return self.selected
+
+    @property
+    def is_displayed(self):
+        return self.grid_button.is_displayed
 
 
 class DetailsToolBarViewSelector(View):
@@ -1327,12 +1334,8 @@ class DetailsToolBarViewSelector(View):
         view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    summary_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Summary View'),
-        '5.7.0': Button(title='Summary View')})
-    dashboard_button = VersionPick({
-        Version.lowest(): ViewChangeButton(title='Dashboard View'),
-        '5.7.0': Button(title='Dashboard View')})
+    summary_button = Button(title='Summary View')
+    dashboard_button = Button(title='Dashboard View')
 
     @property
     def _view_buttons(self):
@@ -1348,7 +1351,10 @@ class DetailsToolBarViewSelector(View):
 
     @property
     def selected(self):
-        return next(btn.title for btn in self._view_buttons if btn.active)
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
 
     @property
     def is_displayed(self):
@@ -1783,7 +1789,11 @@ class FileInput(BaseFileInput):
         return super(FileInput, self).fill(value)
 
 
-class BaseQuadIconItem(ParametrizedView, ClickableMixin):
+class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
+    """ represents QuadIcon entity. one of states entity can be in
+    It is expected that some properties like "data" will be overridden in its children
+
+    """
     PARAMETERS = ('name',)
     ROOT = ParametrizedLocator('.//table[./tbody/tr/td/a[contains(@title, {name|quote})]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
@@ -1807,7 +1817,11 @@ class BaseQuadIconItem(ParametrizedView, ClickableMixin):
 
     @property
     def data(self):
-        # to override this property in concrete classes
+        """ every entity like QuadIcon/ListEntity etc displays some data,
+        which is different for each entity type.
+        This is property which should hold such data.
+        To override this property in concrete classes.
+        """
         return {}
 
     def read(self):
@@ -1822,26 +1836,18 @@ class BaseQuadIconItem(ParametrizedView, ClickableMixin):
             list_exists = self.browser.element(self.LIST).is_displayed()
         except NoSuchElementException:
             list_exists = False
-        return not list_exists and super(BaseQuadIconItem, self).is_displayed
+        return not list_exists and super(BaseQuadIconEntity, self).is_displayed
 
 
-class ProviderQuadIconItem(BaseQuadIconItem):
-    @property
-    def data(self):
-        br = self.browser
-        return {
-            "no_host": br.text(self.QUADRANT.format(pos='a')),
-            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
-            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
-        }
+class BaseTileIconEntity(ParametrizedView):
+    """ represents Tile Icon entity. one of states entity can be in
 
-
-class BaseTileIconItem(ParametrizedView):
+    """
     PARAMETERS = ('name',)
     ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/a[contains(@title, '
                                '{name|quote})]]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
-    quad_icon = ParametrizedView.nested(BaseQuadIconItem)
+    quad_icon = ParametrizedView.nested(BaseQuadIconEntity)
 
     @property
     def is_checked(self):
@@ -1859,6 +1865,10 @@ class BaseTileIconItem(ParametrizedView):
 
     @property
     def data(self):
+        """ every entity like QuadIcon/ListEntity etc displays some data,
+        which is different for each entity type.
+        This is property which should hold such data.
+        """
         quad_data = self.quad_icon(self.context['name']).data
         br = self.browser
         # it seems we don't have list widget in other places.
@@ -1877,18 +1887,16 @@ class BaseTileIconItem(ParametrizedView):
     @property
     def is_displayed(self):
         try:
-            return super(BaseTileIconItem, self).is_displayed and \
-                self.browser.is_displayed(self.LIST)
+            return super(BaseTileIconEntity, self).is_displayed and \
+                   self.browser.is_displayed(self.LIST)
         except NoSuchElementException:
             return False
 
 
-class ProviderTileIconItem(BaseTileIconItem):
-    quad_icon = ParametrizedView.nested(ProviderQuadIconItem)
-    pass
+class BaseListEntity(ParametrizedView, ClickableMixin):
+    """ represents List entity. one of states entity can be in
 
-
-class BaseListItem(ParametrizedView, ClickableMixin):
+    """
     PARAMETERS = ('name',)
     TABLE_LOCATOR = ParametrizedLocator('.//table[.//td[normalize-space(.)={name|quote}]]')
     ROOT = ParametrizedLocator('.//tr[./td[normalize-space(.)={name|quote}]]')
@@ -1911,6 +1919,10 @@ class BaseListItem(ParametrizedView, ClickableMixin):
 
     @property
     def data(self):
+        """ every entity like QuadIcon/ListEntity etc displays some data,
+        which is different for each entity type.
+        This is property which should hold such data.
+        """
         row = next(row for row in self.parent_table.rows() if row.name.text == self.context['name'])
         item_data = {}
         for col_name in (h for h in self.parent_table.headers if h is not None):
@@ -1924,21 +1936,20 @@ class BaseListItem(ParametrizedView, ClickableMixin):
         return self.check(values)
 
 
-class ProviderListItem(BaseListItem):
-    pass
-
-
-class ProviderItem(View):
-    quad_item = ProviderQuadIconItem
-    list_item = ProviderListItem
-    tile_item = ProviderTileIconItem
+class BaseEntity(View):
+    """ represents Proxy class which represents Entity despite of state it is in.
+        it passes calls to concrete entity taking into account which entity type is displayed atm
+    """
+    quad_entity = BaseQuadIconEntity
+    list_entity = BaseListEntity
+    tile_entity = BaseTileIconEntity
 
     def __init__(self, parent, name, logger=None):
         View.__init__(self, parent, logger=logger)
         self.name = name
 
-    def _get_existing_item(self):
-        for item in (self.quad_item, self.tile_item, self.list_item):
+    def _get_existing_entity(self):
+        for item in (self.quad_entity, self.tile_entity, self.list_entity):
             if item(name=self.name).is_displayed:
                 return item(name=self.name)
         else:
@@ -1948,12 +1959,158 @@ class ProviderItem(View):
         if name.startswith('__'):
             return self.__dict__[name]
 
-        item = self._get_existing_item()
+        item = self._get_existing_entity()
         if hasattr(item, name):  # needed for is displayed
             return getattr(item, name)
 
     def __str__(self):
-        return str(self._get_existing_item())
+        return str(self._get_existing_entity())
 
     def __repr__(self):
-        return repr(self._get_existing_item())
+        return repr(self._get_existing_entity())
+
+
+class EntitiesConditionalView(View):
+    """ represents Entities view with regard to view selector state
+
+    """
+    elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
+    title = Text('//div[@id="main-content"]//h1')
+    search = View.nested(Search)
+    paginator = View.nested(PaginationPane)
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+
+    @property
+    def entity_names(self):
+        """ looks for entities and extracts their names
+
+        Returns: all current page entities
+        """
+        br = self.browser
+        return [br.get_attribute('title', el) for el in br.elements(self.elements)]
+
+    def get_all(self, surf_pages=False):
+        """ obtains all entities like QuadIcon displayed by view
+        Args:
+            surf_pages (bool): current page entities if False, all entities otherwise
+
+        Returns: all entities (QuadIcon/etc.) displayed by view
+        """
+        if not surf_pages:
+            return [self.parent.entity_class(parent=self, name=name) for name in self.entity_names]
+        else:
+            items = []
+            for _ in self.parent.paginator.pages():
+                items.extend([self.parent.entity_class(parent=self, name=name)
+                              for name in self.entity_names])
+            return items
+
+    def get_entities(self, by_name=None, surf_pages=False):
+        """ obtains all matched entities like QuadIcon displayed by view
+        Args:
+            by_name (str): only entities which match to by_name will be returned
+            surf_pages (bool): current page entities if False, all entities otherwise
+
+        Returns: all matched entities (QuadIcon/etc.) displayed by view
+        """
+        items = self.get_all(surf_pages)
+        remaining_items = []
+        for item in items:
+            if by_name and by_name in item.name:
+                remaining_items.append(item)
+            # todo: by_type and by_regexp will be implemented later if needed
+        return remaining_items
+
+    def get_entity(self, by_name=None, surf_pages=False):
+        """ obtains one entity matched to by_name
+        raises exception if no entities or several entities were found
+        Args:
+            by_name (str): only entity which match to by_name will be returned
+            surf_pages (bool): current page entity if False, all entities otherwise
+
+        Returns: matched entities (QuadIcon/etc.)
+        """
+        items = self.get_entities(by_name=by_name, surf_pages=surf_pages)
+        if len(items) == 0:
+            raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
+        elif len(items) > 1:
+            raise ManyEntitiesFound("Several entities with {name} were found".format(name=by_name))
+        return items[0]
+
+    def get_first_entity(self, by_name=None):
+        """ obtains one entity matched to by_name and stops on that page
+        raises exception if no entity or several entities were found
+        Args:
+            by_name (str): only entity which match to by_name will be returned
+
+        Returns: matched entity (QuadIcon/etc.)
+        """
+        for _ in self.parent.paginator.pages():
+            found_items = [self.parent.entity_class(parent=self, name=name)
+                           for name in self.entity_names if by_name == name]
+            if found_items:
+                return found_items[0]
+
+        raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
+
+
+class BaseEntitiesView(View):
+    """
+    should represent the view with different entities like providers
+    """
+    @property
+    def entity_class(self):
+        return BaseEntity
+
+    entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
+                                         ignore_bad_reference=True)
+
+    @entities.register('Grid View', default=True)
+    class GridView(EntitiesConditionalView):
+        pass
+
+    @entities.register('List View')
+    class ListView(EntitiesConditionalView):
+        elements = Table(locator='//div[@id="list_grid"]/table')
+
+    @entities.register('Tile View')
+    class TileView(EntitiesConditionalView):
+        pass
+
+
+class ProviderQuadIconEntity(BaseQuadIconEntity):
+    """ Provider child of Quad Icon entity
+
+    """
+    @property
+    def data(self):
+        br = self.browser
+        return {
+            "no_host": br.text(self.QUADRANT.format(pos='a')),
+            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
+            "creds": br.get_attribute('src', self.QUADRANT.format(pos='d')),
+        }
+
+
+class ProviderTileIconEntity(BaseTileIconEntity):
+    """ Provider child of Tile Icon entity
+
+    """
+    quad_icon = ParametrizedView.nested(ProviderQuadIconEntity)
+
+
+class ProviderListEntity(BaseListEntity):
+    """ Provider child of List entity
+
+    """
+    pass
+
+
+class ProviderEntity(BaseEntity):
+    """ Provider child of Proxy entity
+
+    """
+    quad_entity = ProviderQuadIconEntity
+    list_entity = ProviderListEntity
+    tile_entity = ProviderTileIconEntity

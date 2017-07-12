@@ -4,7 +4,6 @@ from widgetastic.widget import View, Text, ConditionalSwitchableView
 from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import ItemNotFound, ManyItemsFound
 from widgetastic_manageiq import (BreadCrumb,
                                   SummaryTable,
                                   Button,
@@ -14,12 +13,11 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Checkbox,
                                   Input,
                                   Table,
-                                  PaginationPane,
                                   FileInput,
-                                  Search,
+                                  BaseEntitiesView,
                                   DynaTree,
                                   BootstrapTreeview,
-                                  ProviderItem)
+                                  ProviderEntity)
 
 
 class ProviderDetailsToolBar(View):
@@ -260,8 +258,7 @@ class ProviderNodesView(BaseLoggedInPage):
     """
     title = Text('//div[@id="main-content"]//h1')
     toolbar = View.nested(NodesToolBar)
-    contents = View.nested(View)  # left it for future
-    paginator = View.nested(PaginationPane)
+    entities = View.nested(View)  # left it for future
 
     @property
     def is_displayed(self):
@@ -282,81 +279,20 @@ class ProviderToolBar(View):
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class ProviderItems(View):
-    """
-    should represent the view with different items like providers
-    """
-    title = Text('//div[@id="main-content"]//h1')
-    search = View.nested(Search)
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
-    _quadicons = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
-    _listitems = Table(locator='//div[@id="list_grid"]/table')
-
-    def _get_item_names(self):
-        if self.parent.toolbar.view_selector.selected == 'List View':
-            return [row.name.text for row in self._listitems.rows()]
-        else:
-            br = self.browser
-            return [br.get_attribute('title', el) for el in br.elements(self._quadicons)]
-
-    def get_all(self, surf_pages=False):
-        """
-        obtains all items like QuadIcon displayed by view
-        Args:
-            surf_pages (bool): current page items if False, all items otherwise
-
-        Returns: all items (QuadIcon/etc.) displayed by view
-        """
-        if not surf_pages:
-            return [ProviderItem(parent=self, name=name) for name in self._get_item_names()]
-        else:
-            items = []
-            for _ in self.parent.paginator.pages():
-                items.extend([ProviderItem(parent=self, name=name)
-                              for name in self._get_item_names()])
-            return items
-
-    def get_items(self, by_name=None, surf_pages=False):
-        """
-        obtains all matched items like QuadIcon displayed by view
-        Args:
-            by_name (str): only items which match to by_name will be returned
-            surf_pages (bool): current page items if False, all items otherwise
-
-        Returns: all matched items (QuadIcon/etc.) displayed by view
-        """
-        items = self.get_all(surf_pages)
-        remaining_items = []
-        for item in items:
-            if by_name and by_name in item.name:
-                remaining_items.append(item)
-            # todo: by_type and by_regexp will be implemented later if needed
-        return remaining_items
-
-    def get_item(self, by_name=None, surf_pages=False):
-        """
-        obtains one item matched to by_name
-        raises exception if no items or several items were found
-        Args:
-            by_name (str): only item which match to by_name will be returned
-            surf_pages (bool): current page items if False, all items otherwise
-
-        Returns: matched item (QuadIcon/etc.)
-        """
-        items = self.get_items(by_name=by_name, surf_pages=surf_pages)
-        if len(items) == 0:
-            raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
-        elif len(items) > 1:
-            raise ManyItemsFound("Several items with {name} were found".format(name=by_name))
-        return items[0]
-
-
 class ProviderSideBar(View):
     """
     represents left side bar. it usually contains navigation, filters, etc
     """
     pass
+
+
+class ProviderEntitiesView(BaseEntitiesView):
+    """
+     represents child class of Entities view for Provider entities
+    """
+    @property
+    def entity_class(self):
+        return ProviderEntity
 
 
 class ProvidersView(BaseLoggedInPage):
@@ -369,8 +305,7 @@ class ProvidersView(BaseLoggedInPage):
 
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
-    items = View.nested(ProviderItems)
-    paginator = View.nested(PaginationPane)
+    including_entities = View.include(ProviderEntitiesView, use_parent=True)
 
 
 class InfraProvidersView(ProvidersView):
@@ -381,7 +316,7 @@ class InfraProvidersView(ProvidersView):
     def is_displayed(self):
         return (super(InfraProvidersView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'] and
-                self.items.title.text == 'Infrastructure Providers')
+                self.entities.title.text == 'Infrastructure Providers')
 
 
 class CloudProvidersView(ProvidersView):
@@ -392,7 +327,7 @@ class CloudProvidersView(ProvidersView):
     def is_displayed(self):
         return (super(CloudProvidersView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-                self.items.title.text == 'Cloud Providers')
+                self.entities.title.text == 'Cloud Providers')
 
 
 class BeforeFillMixin(object):

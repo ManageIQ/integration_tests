@@ -220,7 +220,7 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb = self.view.toolbar
-        paginator = self.view.paginator
+        paginator = self.view.entities.paginator
         if 'Grid View' not in tb.view_selector.selected:
             tb.view_selector.select('Grid View')
         if paginator.exists:
@@ -254,7 +254,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
 
     def resetter(self):
         # Reset view and selection
@@ -270,7 +270,7 @@ class ManagePolicies(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
@@ -289,7 +289,7 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -308,7 +308,7 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).check()
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).check()
         self.prerequisite_view.toolbar.configuration.item_select('Edit Selected '
                                                                  'Infrastructure Providers')
 
@@ -350,7 +350,7 @@ class Templates(CFMENavigateStep):
 def get_all_providers():
     """Returns list of all providers"""
     view = navigate_to(InfraProvider, 'All')
-    return [item.name for item in view.items.get_all(surf_pages=True)]
+    return [item.name for item in view.entities.get_all(surf_pages=True)]
 
 
 def discover(discover_cls, cancel=False, start_ip=None, end_ip=None):
@@ -389,6 +389,6 @@ def discover(discover_cls, cancel=False, start_ip=None, end_ip=None):
 def wait_for_a_provider():
     view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    wait_for(lambda: int(view.paginator.items_amount), fail_condition=0,
+    wait_for(lambda: int(view.entities.paginator.items_amount), fail_condition=0,
              message="Wait for any provider to appear", num_sec=1000,
              fail_func=view.browser.refresh)
