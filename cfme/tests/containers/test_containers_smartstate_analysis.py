@@ -65,7 +65,6 @@ def test_check_compliance(random_image_instance):
 
 
 @pytest.mark.parametrize(('test_item'), TEST_ITEMS)
-@pytest.mark.skip(reason="This test is currently skipped due to instability issues. ")
 def test_containers_smartstate_analysis(provider, test_item, soft_assert,
                                         delete_all_container_tasks,
                                         random_image_instance):
