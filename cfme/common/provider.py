@@ -965,7 +965,7 @@ class CANDUEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
         return {'hostname': self.hostname,
-                'api_port': self.api_port,
+                'api_port': getattr(self, 'api_port', None),
                 'database_name': self.database}
 
 
