@@ -135,6 +135,8 @@ def pytest_configure(config):
         config._art_proc = None
     from utils.log import artifactor_handler
     artifactor_handler.artifactor = art_client
+    if store.slave_manager:
+        artifactor_handler.slaveid = store.slaveid
     config._art_client = art_client
     art_client.fire_hook('setup_merkyl', ip=get_or_create_current_appliance().address)
 

@@ -473,7 +473,7 @@ class ParallelSession(object):
                     self.kill(slave)
                 elif event_name == 'shutdown':
                     self.config.hook.pytest_miq_node_shutdown(
-                        config=self.config, nodeinfo=slave.url)
+                        config=self.config, nodeinfo=slave.appliance.url)
                     self.ack(slave, event_name)
                     del self.slaves[slave.id]
                     self.monitor_shutdown(slave)
