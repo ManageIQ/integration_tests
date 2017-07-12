@@ -74,6 +74,20 @@ class ApplianceConsole(object):
     def __init__(self, appliance):
         self.appliance = appliance
 
+    def timezone_check(self, timezone):
+        channel = self.appliance.ssh_client.invoke_shell()
+        channel.settimeout(20)
+        channel.send("ap")
+        result = ''
+        try:
+            while True:
+                result += channel.recv(1)
+                if ("{}".format(timezone[0])) in result:
+                    break
+        except socket.timeout:
+            pass
+        logger.debug(result)
+
     def run_commands(self, commands, autoreturn=True, timeout=20, channel=None):
         if not channel:
             channel = self.appliance.ssh_client.invoke_shell()
