@@ -3,6 +3,7 @@ import re
 from traceback import format_exc
 
 import pytest
+from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import CandidateNotFound
@@ -14,6 +15,7 @@ from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.meta(blockers=[BZ(1467059, forced_streams=["5.8"])]),
     pytest.mark.meta(
         server_roles='+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor'),
     pytest.mark.tier(1)]
@@ -35,22 +37,6 @@ def node_hardwares_db_data(appliance):
         out[node.name] = hardwares_table.__table__.select().where(
             hardwares_table.id == node.id
         ).execute().fetchone()
-
-    return out
-
-
-@pytest.fixture(scope='function')
-def pods_per_ready_status(provider):
-    """Grabing the pods and their ready status from API"""
-    #  TODO: Add later this logic to wrapanapi
-    entities_j = provider.mgmt.api.get('pod')[1]['items']
-    out = {}
-    for entity_j in entities_j:
-        out[entity_j['metadata']['name']] = next(
-            (True if condition['status'].lower() == 'true' else False)
-            for condition in entity_j['status']['conditions']
-            if condition['type'].lower() == 'ready'
-        )
 
     return out
 
@@ -91,22 +77,21 @@ def test_container_reports_base_on_options(soft_assert):
         soft_assert(option, 'Could not find option "{}" for base report on.'.format(base_on))
 
 
-@pytest.mark.meta(blockers=[BZ(1435958, forced_streams=["5.8"])])
 @pytest.mark.polarion('CMP-9533')
-@pytest.mark.skip(reason="This test is currently skipped due to instability issues. ")
-def test_pods_per_ready_status(soft_assert, pods_per_ready_status):
+def test_report_pods_per_ready_status(soft_assert, provider):
     """Testing 'Pods per Ready Status' report, see polarion case for more info"""
+    pods_per_ready_status = provider.pods_per_ready_status()
     report = get_report('Pods per Ready Status')
     for row in report.data.rows:
         name = row['# Pods per Ready Status']
-        readiness_ui = (True if row['Ready Condition Status'].lower() == 'true'
-                        else False)
+        readiness_ui = eval_strings([row['Ready Condition Status']]).pop()
         if soft_assert(name in pods_per_ready_status,  # this check based on BZ#1435958
                 'Could not find pod "{}" in openshift.'
                 .format(name)):
-            soft_assert(pods_per_ready_status[name] == readiness_ui,
-                        'For pod "{}" expected readiness is "{}" got "{}"'
-                        .format(name, pods_per_ready_status[name], readiness_ui))
+            expected_readiness = pods_per_ready_status.get(name, {}).get('Ready', False)
+            soft_assert(expected_readiness == readiness_ui,
+                        'For pod "{}" expected readiness is "{}" Found "{}"'
+                        .format(name, expected_readiness, readiness_ui))
 
 
 @pytest.mark.polarion('CMP-9536')
@@ -168,11 +153,10 @@ def test_report_nodes_by_memory_usage(appliance, soft_assert, vporizer):
                     .format(row['Name'], usage_db, usage_report))
 
 
-@pytest.mark.meta(blockers=[BZ(1436698, forced_streams=["5.6", "5.7"])])
 @pytest.mark.polarion('CMP-10669')
 def test_report_number_of_nodes_per_cpu_cores(soft_assert, node_hardwares_db_data):
     """Testing 'Number of Nodes per CPU Cores' report, see polarion case for more info"""
-    report = get_report('Number of Nodes per CPU Cores')
+    report = get_report('Nodes by Number of CPU Cores')
     for row in report.data.rows:
 
         hw = node_hardwares_db_data[row['Name']]
@@ -279,10 +263,11 @@ def test_report_pod_counts_for_container_images_by_project(provider, soft_assert
 
 @pytest.mark.long_running_env
 @pytest.mark.polarion('CMP-9532')
-def test_report_recently_discovered_pods(pods_per_ready_status, soft_assert):
+def test_report_recently_discovered_pods(provider, soft_assert):
     """Testing 'Recently Discovered Pods' report, see polarion case for more info"""
     report = get_report('Recently Discovered Pods')
     pods_in_report = [row['Name'] for row in report.data.rows]
+    pods_per_ready_status = provider.pods_per_ready_status()
     for pod in pods_per_ready_status.keys():
 
         soft_assert(pod in pods_in_report,

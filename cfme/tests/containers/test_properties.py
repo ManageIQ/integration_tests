@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
+from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider,\
     ContainersTestItem
 from cfme.containers.route import Route
 from cfme.containers.project import Project
 from cfme.containers.service import Service
-from cfme.containers.container import Container
 from cfme.containers.node import Node
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
@@ -17,7 +17,6 @@ from cfme.containers.volume import Volume
 from utils import testgen, version
 from utils.version import current_version
 from utils.soft_get import soft_get
-from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -32,16 +31,19 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-9945')(
-        ContainersTestItem(
-            Container,
-            'CMP-9945',
-            expected_fields=[
-                'name', 'state', 'last_state', 'restart_count',
-                'backing_ref_container_id', 'privileged'
-            ]
-        )
-    ),
+    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1467639
+    # from cfme.containers.container import Container
+    #     pytest.mark.polarion('CMP-9945')(
+    #         ContainersTestItem(
+    #             Container,
+    #             'CMP-9945',
+    #             expected_fields=[
+    #                 'name', 'state', 'last_state', 'restart_count',
+    #                 'backing_ref_container_id', 'privileged'
+    #             ]
+    #         )
+    #     ),
     pytest.mark.polarion('CMP-10430')(
         ContainersTestItem(
             Project,
@@ -133,7 +135,7 @@ TEST_ITEMS = [
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+                         ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_properties(provider, test_item, soft_assert):
 
     if current_version() < "5.7" and test_item.obj == Template:
@@ -143,7 +145,6 @@ def test_properties(provider, test_item, soft_assert):
 
     for instance in instances:
 
-        navigate_to(instance, 'Details')
         if isinstance(test_item.expected_fields, dict):
             expected_fields = version.pick(test_item.expected_fields)
         else:
@@ -156,27 +157,25 @@ def test_properties(provider, test_item, soft_assert):
                                    .format(test_item.obj.__name__, instance.name, field))
 
 
-@pytest.mark.skip(reason="This test is currently skipped due to instability issues. ")
 def test_pods_conditions(provider, appliance, soft_assert):
 
-    #  TODO: Add later this logic to mgmtsystem
     selected_pods_cfme = {pd.name: pd
                           for pd in Pod.get_random_instances(
                               provider, count=3, appliance=appliance)}
 
-    selected_pods_ose = {pod["metadata"]["name"]: pod for pod in
-                         provider.mgmt.api.get('pod')[1]['items'] if pod["metadata"]["name"] in
-                         selected_pods_cfme}
-
+    pods_per_ready_status = provider.pods_per_ready_status()
     for pod_name in selected_pods_cfme:
         cfme_pod = selected_pods_cfme[pod_name]
 
-        ose_pod = selected_pods_ose[pod_name]
+        ose_pod_condition = pods_per_ready_status[pod_name]
+        cfme_pod_condition = {_type:
+                              eval_strings(
+                                  [getattr(getattr(cfme_pod.summary.conditions, _type), "Status")]
+                              ).pop()
+                              for _type in ose_pod_condition}
 
-        ose_pod_condition = {cond["type"]: cond["status"] for cond in
-                             ose_pod['status']['conditions']}
-        cfme_pod_condition = {type: getattr(getattr(cfme_pod.summary.conditions, type), "Status")
-                              for type in ose_pod_condition}
-
-        for item in cfme_pod_condition:
-            soft_assert(ose_pod_condition[item], cfme_pod_condition[item])
+        for status in cfme_pod_condition:
+            soft_assert(ose_pod_condition[status] == cfme_pod_condition[status],
+                        'The Pod {} status mismatch: It is "{}" in openshift while cfme sees "{}".'
+                        .format(status, cfme_pod.name, ose_pod_condition[status],
+                                cfme_pod_condition[status]))

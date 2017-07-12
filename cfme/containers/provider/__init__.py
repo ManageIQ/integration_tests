@@ -6,12 +6,12 @@ from random import sample
 
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from cfme.base.login import BaseLoggedInPage
 from widgetastic_patternfly import SelectorDropdown, Button, Dropdown
 from widgetastic.widget import Text
-from utils.wait import wait_for
+from wrapanapi.utils import eval_strings
 
 
+from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider import BaseProvider
 from cfme import exceptions
 from cfme.fixtures import pytest_selenium as sel
@@ -26,6 +26,7 @@ from utils.browser import ensure_browser_open
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.log import logger
+from utils.wait import wait_for
 
 
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -269,6 +270,18 @@ class ContainersProvider(BaseProvider, Pretty):
     def num_image_registry_ui(self):
         return int(self.get_detail("Relationships", "Image Registries"))
 
+    def pods_per_ready_status(self):
+        """Grabing the Container Statuses Summary of the pods from API"""
+        #  TODO: Add later this logic to wrapanapi
+        entities = self.mgmt.api.get('pod')[1]['items']
+        out = {}
+        for entity_j in entities:
+            out[entity_j['metadata']['name']] = {
+                condition['type']: eval_strings([condition['status']]).pop()
+                for condition in entity_j['status'].get('conditions', [])
+            }
+        return out
+
 
 @navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
@@ -430,6 +443,25 @@ class ContainersTestItem(object):
         return '{} ({})'.format(
             getattr(self.obj, '__name__', str(self.obj)),
             self.polarion_id)
+
+    @classmethod
+    def get_pretty_id(cls, obj):
+        """Since sometimes the test object is wrapped within markers,
+        it's difficult to find get it inside the args tree.
+        hence we use this to get the object and all pretty_id function.
+
+        Args:
+            * obj: Either a ContainersTestItem or a marker that include it
+        returns:
+            str pretty id
+        """
+        if isinstance(obj, cls):
+            return obj.pretty_id()
+        elif hasattr(obj, 'args') and hasattr(obj, '__iter__'):
+            for arg in obj.args:
+                pretty_id = cls.get_pretty_id(arg)
+                if pretty_id:
+                    return pretty_id
 
 
 class Labelable(object):
