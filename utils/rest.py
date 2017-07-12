@@ -2,7 +2,7 @@
 """Helper functions for tests using REST API."""
 
 
-def assert_response(appliance, success=None, http_status=None):
+def assert_response(appliance, success=None, http_status=None, results_num=None):
     """Asserts that the response HTTP status code and content is as expected."""
 
     last_response = appliance.rest_api.response
@@ -32,6 +32,8 @@ def assert_response(appliance, success=None, http_status=None):
 
     if 'results' in content:
         results = content['results']
+        if results_num is not None:
+            assert len(results) == results_num
         for result in results:
             _check_result(result)
     else:
