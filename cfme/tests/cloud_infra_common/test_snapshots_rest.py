@@ -4,16 +4,16 @@ import pytest
 import fauxfactory
 
 from cfme import test_requirements
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
-from utils.rest import assert_response
 from utils.generators import random_vm_name
-from utils.wait import wait_for
 from utils.log import logger
+from utils.rest import assert_response
 from utils.version import current_version
+from utils.wait import wait_for
 
 
 pytestmark = [
@@ -57,7 +57,7 @@ def collection(appliance, provider):
     return appliance.rest_api.collections.instances
 
 
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def vm_snapshot(appliance, collection, vm_obj):
     """Creates VM/instance snapshot using REST API
 
