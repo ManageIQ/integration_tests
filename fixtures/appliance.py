@@ -18,7 +18,7 @@ from cfme.test_framework.sprout.client import SproutClient
 
 
 @contextmanager
-def temp_appliances(count=1, preconfigured=True, lease_time=180):
+def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None):
     """ Provisions one or more appliances for testing
 
     Args:
@@ -61,6 +61,13 @@ def temp_appliance_preconfig_clsscope():
 @pytest.yield_fixture(scope="function")
 def temp_appliance_preconfig_funcscope():
     with temp_appliances(preconfigured=True) as appliances:
+        yield appliances[0]
+
+
+@pytest.yield_fixture(scope="function")
+def temp_appliance_preconfig_funcscope_upgrade(appliance):
+    stream = 5.8 if appliance.version >= "5.9" else 5.7
+    with temp_appliances(preconfigured=True, stream=stream) as appliances:
         yield appliances[0]
 
 

@@ -1,14 +1,18 @@
 import pytest
 from os import path as os_path
 
-from utils import version
+from utils import version, os
 from utils.appliance import ApplianceException
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
+from scripts.repo_gen import process_url, build_file
+import tempfile
 
 
 def pytest_generate_tests(metafunc):
+    if metafunc.function in {test_upgrade_single_inplace}:
+        return
     argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
     db_backups = cfme_data.get('db_backups', {})
     if not db_backups:
@@ -26,6 +30,21 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
     app.db.extend_partition()
     app.start_evm_service()
     return app
+
+
+@pytest.yield_fixture(scope="function")
+def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade):
+    '''Reconfigures appliance partitions and adds repo file for upgrade'''
+    temp_appliance_preconfig_funcscope_upgrade.db.extend_partition()
+    urls = process_url(cfme_data['basic_info']['update_url'])
+    output = build_file(urls)
+    with tempfile.NamedTemporaryFile('w') as f:
+        f.write(output)
+        f.flush()
+        os.fsync(f.fileno())
+        temp_appliance_preconfig_funcscope_upgrade.ssh_client.put_file(
+            f.name, '/etc/yum.repos.d/update.repo')
+    return temp_appliance_preconfig_funcscope_upgrade
 
 
 @pytest.mark.ignore_stream('5.5', 'upstream')
@@ -114,3 +133,23 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
     assert rc == 0, "Failed to change UI password of {} to {}:" \
                     .format(app.user.credential.principal, app.user.credential.secret, out)
     app.server.login(app.user)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+def test_upgrade_single_inplace(appliance_preupdate, appliance):
+    '''Tests appliance upgrade between streams'''
+    appliance_preupdate.evmserverd.stop()
+    with appliance_preupdate.ssh_client as ssh:
+        rc, out = ssh.run_command('yum update -y', timeout=3600)
+        assert rc == 0, "update failed {}".format(out)
+        rc, out = ssh.run_command('systemctl restart $APPLIANCE_PG_SERVICE')
+        assert rc == 0, "Failed to restart PG: {}".format(out)
+        rc, out = ssh.run_rake_command("db:migrate", timeout=300)
+        assert rc == 0, "Failed to migrate new database: {}".format(out)
+        rc, out = ssh.run_rake_command(
+            'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
+        assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
+        rc, out = ssh.run_command('systemctl restart rh-postgresql95-postgresql')
+        assert rc == 0, "Failed to restart postgres: {}".format(out)
+    appliance_preupdate.start_evm_service()
+    assert appliance.version == appliance_preupdate.version
