@@ -351,12 +351,10 @@ class Vm(BaseVM):
                 sel.click(InfoBlock.element("Properties", "Snapshots"))
 
         def does_snapshot_exist(self):
+            name = self.name or self.description
             self._nav_to_snapshot_mgmt()
             try:
-                if self.name is not None:
-                    self.snapshot_tree.find_path_to(re.compile(self.name + r".*?"))
-                else:
-                    self.snapshot_tree.find_path_to(re.compile(self.description + r".*?"))
+                self.snapshot_tree.find_path_to(re.compile(name + r".*?"))
                 return True
             except CandidateNotFound:
                 return False
@@ -364,11 +362,12 @@ class Vm(BaseVM):
                 return False
 
         def wait_for_snapshot_active(self):
+            name = self.name or self.description
             self._nav_to_snapshot_mgmt()
             try:
                 self.snapshot_tree.click_path(
-                    *self.snapshot_tree.find_path_to(re.compile(self.name)))
-                if sel.is_displayed_text(self.name + " (Active)"):
+                    *self.snapshot_tree.find_path_to(re.compile(name)))
+                if sel.is_displayed_text(name + " (Active)"):
                     return True
             except CandidateNotFound:
                 return False
@@ -383,7 +382,8 @@ class Vm(BaseVM):
                                      },
                      action=snapshot_form.create_button)
             else:
-                fill(snapshot_form, {'description': self.description,
+                fill(snapshot_form, {'name': self.name,
+                                     'description': self.description,
                                      'snapshot_memory': self.memory
                                      },
                      action=snapshot_form.create_button)
@@ -407,8 +407,9 @@ class Vm(BaseVM):
                                            'Instance from the CFME Database')
 
         def revert_to(self, cancel=False):
+            name = self.name or self.description
             self._nav_to_snapshot_mgmt()
-            self.snapshot_tree.click_path(*self.snapshot_tree.find_path_to(re.compile(self.name)))
+            self.snapshot_tree.click_path(*self.snapshot_tree.find_path_to(re.compile(name)))
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             flash.assert_message_match('Revert To Snapshot initiated for 1 VM and Instance from '
