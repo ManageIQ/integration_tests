@@ -130,7 +130,7 @@ class FlavorDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_all_pages(
+            row = self.prerequisite_view.paginator.find_row_on_pages(
                 self.prerequisite_view.entities.table,
                 name=self.obj.name,
                 cloud_provider=self.obj.provider.name)
