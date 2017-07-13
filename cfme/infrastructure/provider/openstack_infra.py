@@ -16,7 +16,7 @@ class RHOSEndpoint(DefaultEndpoint):
     def view_value_mapping(self):
         return {'security_protocol': self.security_protocol,
                 'hostname': self.hostname,
-                'api_port': self.api_port,
+                'api_port': getattr(self, 'api_port', None)
                 }
 
 

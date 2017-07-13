@@ -9,8 +9,8 @@ class SCVMMEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
         return {'hostname': self.hostname,
-                'security_protocol': self.security_protocol,
-                'realm': self.security_realm
+                'security_protocol': getattr(self,'security_protocol', None),
+                'realm': getattr(self, 'security_realm', None)
                 }
 
 

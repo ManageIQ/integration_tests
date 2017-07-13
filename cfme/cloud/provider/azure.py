@@ -49,7 +49,7 @@ class AzureProvider(CloudProvider):
             'prov_type': 'Azure',
             'region': region,
             'tenant_id': self.tenant_id,
-            'subscription': self.subscription_id
+            'subscription': getattr(self, 'subscription_id', None)
         }
 
     def deployment_helper(self, deploy_args):

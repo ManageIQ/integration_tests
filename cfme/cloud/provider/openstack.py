@@ -53,7 +53,7 @@ class OpenStackProvider(CloudProvider):
             'prov_type': 'OpenStack',
             'region': None,
             'infra_provider': infra_provider_name,
-            'tenant_mapping': self.tenant_mapping,
+            'tenant_mapping': getattr(self, 'tenant_mapping', None),
         }
 
     def deployment_helper(self, deploy_args):
