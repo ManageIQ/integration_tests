@@ -81,7 +81,6 @@ pytest_plugins = (
     'cfme.fixtures.pytest_selenium',
     'cfme.fixtures.configure_auth_mode',
     'cfme.fixtures.rdb',
-    'cfme.fixtures.rest_api',
     'cfme.fixtures.service_fixtures',
     'cfme.fixtures.smtp',
     'cfme.fixtures.tag',
