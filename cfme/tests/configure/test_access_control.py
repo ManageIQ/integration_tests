@@ -90,10 +90,15 @@ def test_user_login():
 
 
 @pytest.mark.tier(3)
-def test_user_duplicate_name():
+def test_user_duplicate_name(appliance):
+    region = appliance.server_region
     nu = new_user()
     nu.create()
-    with error.expected("Userid has already been taken"):
+    msg = version.pick({
+        version.LOWEST: "Userid has already been taken",
+        '5.8': "Userid is not unique within region {}".format(region)
+    })
+    with error.expected(msg):
         nu.create()
 
 
@@ -241,10 +246,15 @@ def test_group_crud():
 
 
 @pytest.mark.tier(3)
-def test_group_duplicate_name():
+def test_group_duplicate_name(appliance):
+    region = appliance.server_region
     group = new_group()
     group.create()
-    with error.expected("Description has already been taken"):
+    msg = version.pick({
+        version.LOWEST: "Description has already been taken",
+        '5.8': "Description is not unique within region {}".format(region)
+    })
+    with error.expected(msg):
         group.create()
 
 
