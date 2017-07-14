@@ -32,7 +32,10 @@ from utils import deferred_verpick, version
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
-from widgetastic_manageiq import TimelinesView
+from widgetastic_manageiq import (ManageIQTree, ItemsToolBarViewSelector,
+                                  BaseEntitiesView, TimelinesView)
+from widgetastic.widget import View
+from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 
 from cfme.common import PolicyProfileAssignable
 
@@ -95,6 +98,55 @@ mon_btn = partial(tb.select, 'Monitoring')
 
 match_page = partial(match_location, controller='host',
                      title='Hosts')
+
+
+class HostToolBar(View):
+    """
+     represents host toolbar and its controls
+    """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    download = Dropdown(text='Download')
+    lifecycle = Dropdown(text='Lifecycle')
+    power = Dropdown(text='Power Operations')
+
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class HostSideBar(View):
+    """
+    represents left side bar. it usually contains navigation, filters, etc
+    """
+    @View.nested
+    class filters(Accordion):  # noqa
+        ACCORDION_NAME = "Filters"
+        tree = ManageIQTree()
+
+
+class HostEntities(BaseEntitiesView):
+    """
+    represents central view where all QuadIcons, etc are displayed
+
+    """
+    pass
+
+
+class HostsView(BaseLoggedInPage):
+    """
+    represents whole All Hosts page
+    """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(HostToolBar)
+    sidebar = View.nested(HostSideBar)
+    including_entities = View.include(HostEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Infrastructure',
+                                                       'Hosts'] and
+                self.entities.title.text == 'Hosts')
 
 
 class InfraHostTimelinesView(TimelinesView, BaseLoggedInPage):

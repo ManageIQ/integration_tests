@@ -5,6 +5,7 @@ from widgetastic.widget import View, Text
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.infrastructure.host import HostsView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
@@ -15,7 +16,7 @@ from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSe
 
 class DatastoreToolBar(View):
     """
-     represents provider toolbar and its controls
+     represents datastore toolbar and its controls
     """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
@@ -93,6 +94,16 @@ class DatastoreDetailsView(BaseLoggedInPage):
                 self.title.text == 'Datastore "{name}"'.format(name=self.context['object'].name))
 
 
+class RegisteredHostsView(HostsView):
+    """
+    represents Hosts related to some datastore
+    """
+    @property
+    def is_displayed(self):
+        # todo: to define correct check
+        return False
+
+
 class Datastore(Pretty, Navigatable):
     """ Model of an infrastructure datastore in cfme
 
@@ -130,8 +141,7 @@ class Datastore(Pretty, Navigatable):
         """
         view = navigate_to(self, 'Details')
         view.contents.relationships.click_at('Hosts')
-        # todo: to replace with correct view
-        hosts_view = view.browser.create_view(BaseEntitiesView)
+        hosts_view = view.browser.create_view(RegisteredHostsView)
         return [h.name for h in hosts_view.entities.get_all()]
 
     def get_vms(self):
@@ -152,7 +162,7 @@ class Datastore(Pretty, Navigatable):
         view = navigate_to(self, 'Details')
         view.contents.relationships.click_at('Managed VMs')
         # todo: to replace with correct view
-        vms_view = view.browser.create_view(BaseEntitiesView)
+        vms_view = view.browser.create_view(DatastoresView)
         for entity in vms_view.entities.get_all():
             entity.check()
         view.toolbar.configuration.item_select("Remove selected items", handle_alert=True)
@@ -163,8 +173,7 @@ class Datastore(Pretty, Navigatable):
     def delete_all_attached_hosts(self):
         view = navigate_to(self, 'Details')
         view.contents.relationships.click_at('Hosts')
-        # todo: to replace with correct view
-        hosts_view = view.browser.create_view(BaseEntitiesView)
+        hosts_view = view.browser.create_view(RegisteredHostsView)
         for entity in hosts_view.entities.get_all():
             entity.check()
         view.toolbar.configuration.item_select("Remove items", handle_alert=True)
