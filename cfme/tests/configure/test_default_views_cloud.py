@@ -49,17 +49,17 @@ def set_and_test_default_view(group_name, view, page):
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_tile_defaultview(request, key):
+def test_cloud_tile_defaultview(request, key):
     set_and_test_default_view(key, 'Tile View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_list_defaultview(request, key):
+def test_cloud_list_defaultview(request, key):
     set_and_test_default_view(key, 'List View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_grid_defaultview(request, key):
+def test_cloud_grid_defaultview(request, key):
     set_and_test_default_view(key, 'Grid View', gtl_params[key])
 
 
