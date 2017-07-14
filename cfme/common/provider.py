@@ -976,9 +976,9 @@ class EventsEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):
         return {'event_stream': self.event_stream,
-                'security_protocol': self.security_protocol,
+                'security_protocol': getattr(self, 'security_protocol', None),
                 'hostname': self.hostname,
-                'api_port': self.api_port,
+                'api_port': getattr(self, 'api_port', None),
                 }
 
 

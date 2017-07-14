@@ -14,9 +14,9 @@ class RHEVMEndpoint(DefaultEndpoint):
         return {'hostname': self.hostname,
                 'api_port': getattr(self, 'api_port', None),
                 'verify_tls': version.pick({version.LOWEST: None,
-                                            '5.8': self.verify_tls}),
+                                            '5.8': getattr(self, 'verify_tls', None)}),
                 'ca_certs': version.pick({version.LOWEST: None,
-                                          '5.8': self.ca_certs})
+                                          '5.8': getattr(self, 'ca_certs', None)})
                 }
 
 
