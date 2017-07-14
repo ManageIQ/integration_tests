@@ -18,6 +18,8 @@ RESOURCE_WAR_CONTENT_NEW = 'Original JSP 2'
 
 DEPLOYMENT_URL = 'http://{}:8180/{}'
 WAR_EXT = '.war'
+DELAY = 10
+NUM_SECS = 120
 
 
 def deploy(provider, server, archive_name, runtime_name=None, enabled=True,
@@ -79,7 +81,7 @@ def check_deployment_appears(provider, server, runtime_name):
     wait_for(lambda: runtime_name in
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider, server=server)),
-        delay=30, num_sec=1200,
+        delay=DELAY, num_sec=NUM_SECS,
         message='Deployment {} must be found for server {}'
         .format(runtime_name, server.name),
         fail_func=lambda: refresh(provider))
@@ -90,7 +92,7 @@ def check_deployment_not_listed(provider, server, runtime_name):
     wait_for(lambda: runtime_name not in
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider, server=server)),
-        delay=30, num_sec=1200,
+        delay=DELAY, num_sec=NUM_SECS,
         message='Deployment {} must not be found for server {}'
         .format(runtime_name, server.name),
         fail_func=lambda: refresh(provider))
@@ -103,7 +105,7 @@ def check_deployment_enabled(provider, server, runtime_name):
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider,
                 server=server))[runtime_name] == 'Enabled',
-        delay=120, num_sec=1800,
+        delay=DELAY, num_sec=NUM_SECS,
         message='Deployment {} must be Enabled for server {}'
         .format(runtime_name, server.name),
         fail_func=lambda: refresh(provider))
@@ -116,7 +118,7 @@ def check_deployment_disabled(provider, server, runtime_name):
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider,
                 server=server))[runtime_name] == 'Disabled',
-        delay=120, num_sec=1800,
+        delay=DELAY, num_sec=NUM_SECS,
         message='Deployment {} must be Disabled for server {}'
         .format(runtime_name, server.name),
         fail_func=lambda: refresh(provider))
