@@ -167,7 +167,6 @@ class PXEServer(Updateable, Pretty, Navigatable):
             flash.assert_message_match('Add of new PXE Server was cancelled by the user')
 
     @variable(alias="db")
-    @property
     def exists(self):
         """
         Checks if the PXE server already exists
@@ -177,7 +176,6 @@ class PXEServer(Updateable, Pretty, Navigatable):
         return self.name in [s.name for s in candidates]
 
     @exists.variant('ui')
-    @property
     def exists_ui(self):
         """
         Checks if the PXE server already exists
@@ -362,7 +360,6 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
                 'Add of new Customization Template was cancelled by the user')
 
     @variable(alias='db')
-    @property
     def exists(self):
         """
         Checks if the Customization template already exists
@@ -372,7 +369,6 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         return self.name in [s.name for s in candidates]
 
     @exists.variant('ui')
-    @property
     def exists_ui(self):
         """
         Checks if the Customization template already exists
@@ -612,7 +608,6 @@ class ISODatastore(Updateable, Pretty, Navigatable):
             self.refresh(timeout=refresh_timeout)
 
     @variable(alias='db')
-    @property
     def exists(self):
         """
         Checks if the ISO Datastore already exists via db
