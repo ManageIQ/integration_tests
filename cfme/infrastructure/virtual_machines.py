@@ -353,10 +353,8 @@ class Vm(BaseVM):
         def does_snapshot_exist(self):
             self._nav_to_snapshot_mgmt()
             try:
-                if self.name is not None:
-                    self.snapshot_tree.find_path_to(re.compile(r"{}.*?".format(self.name)))
-                else:
-                    self.snapshot_tree.find_path_to(re.compile(r"{}.*?".format(self.description)))
+                self.snapshot_tree.find_path_to(
+                    re.compile(r"{}.*?".format(self.name or self.description)))
                 return True
             except CandidateNotFound:
                 return False
@@ -364,8 +362,7 @@ class Vm(BaseVM):
                 return False
 
         def _snapshot_click_helper(self, prop):
-            """
-            Helper method to reduce code duplication.
+            """Helper method to reduce code duplication.
 
             Args:
                 prop (str): Property to check (name or description).
@@ -377,8 +374,7 @@ class Vm(BaseVM):
                 *self.snapshot_tree.find_path_to(re.compile(prop)))
 
         def _snapshot_is_active_helper(self, prop):
-            """
-            Helper for a wait_for_snapshot_active method to reduce code duplication.
+            """Helper for a wait_for_snapshot_active method to reduce code duplication.
 
             Args:
                 prop (str): Property to check (name or description).
@@ -433,10 +429,8 @@ class Vm(BaseVM):
 
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
-            if self.name is not None:
-                self._snapshot_click_helper(self.name)
-            else:
-                self._snapshot_click_helper(self.description)
+
+            self._snapshot_click_helper(self.name or self.description)
 
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)

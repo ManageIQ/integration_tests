@@ -65,9 +65,9 @@ def new_snapshot(test_vm, has_name=True):
     return new_snapshot
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.type != 'virtualcenter' and
-    provider.type != 'rhevm' or provider.type == 'rhevm' and provider.version < 4)
+@pytest.mark.uncollectif(lambda provider:
+    (provider.type != 'virtualcenter' and provider.type != 'rhevm') or
+    (provider.type == 'rhevm' and provider.version < 4))
 def test_snapshot_crud(test_vm, provider):
     """Tests snapshot crud
 
@@ -96,9 +96,9 @@ def test_delete_all_snapshots(test_vm, provider):
     snapshot2.delete_all()
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.type != 'virtualcenter' and
-    provider.type != 'rhevm' or provider.type == 'rhevm' and provider.version < 4)
+@pytest.mark.uncollectif(lambda provider:
+    (provider.type != 'virtualcenter' and provider.type != 'rhevm') or
+    (provider.type == 'rhevm' and provider.version < 4))
 def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
 
