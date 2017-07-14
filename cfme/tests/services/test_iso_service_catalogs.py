@@ -58,10 +58,10 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def setup_iso_datastore(setup_provider_modscope, iso_cust_template, iso_datastore, provisioning):
-    if not iso_datastore.exists():
+    if not iso_datastore.exists:
         iso_datastore.create()
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
-    if not iso_cust_template.exists():
+    if not iso_cust_template.exists:
         iso_cust_template.create()
 
 

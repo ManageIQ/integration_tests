@@ -198,6 +198,7 @@ class MyService(Updateable, Navigatable):
         view = self.create_view(MyServiceDetailView, override=updates)
         assert view.is_displayed
 
+    @property
     def exists(self):
         try:
             navigate_to(self, 'Details')
