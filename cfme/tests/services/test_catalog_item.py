@@ -83,6 +83,10 @@ def catalog_item(dialog, catalog):
 
 @pytest.yield_fixture(scope="function")
 def catalog_bundle(catalog_item):
+    """ Create catalog bundle
+        Args:
+            catalog_item: as resource for bundle creation
+    """
     catalog_item.create()
     bundle_name = "bundle" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -97,6 +101,24 @@ def catalog_bundle(catalog_item):
     except NoSuchElementException:
         logger.warning('test_catalog_item: catalog_item yield fixture cleanup, catalog item "{}" '
                        'not found'.format(catalog_bundle.name))
+
+
+@pytest.fixture(scope="function")
+def check_catalog_visibility(request, user_restricted, tag):
+    def _check_catalog_visibility(test_item_object):
+        """
+            Args:
+                test_item_object: object for visibility check
+        """
+        test_item_object.create()
+        category_name = ' '.join((tag.category.display_name, '*'))
+        test_item_object.edit_tags(category_name, tag.display_name)
+        with user_restricted:
+            assert test_item_object.exists
+        test_item_object.remove_tag(category_name, tag.display_name)
+        with user_restricted:
+            assert not test_item_object.exists
+    return _check_catalog_visibility
 
 
 def test_create_catalog_item(catalog_item):
@@ -139,7 +161,7 @@ def test_permissions_catalog_item_add(catalog_item):
                                     {'Add Catalog Item': catalog_item.create})
 
 
-def test_tagvis_catalog_item(catalog_item, user_restricted, tag):
+def test_tagvis_catalog_items(check_catalog_visibility, catalog_item):
     """ Checks catalog item tag visibility for restricted user
     Prerequisites:
         Catalog, tag, role, group and restricted user should be created
@@ -150,19 +172,11 @@ def test_tagvis_catalog_item(catalog_item, user_restricted, tag):
         3. As admin remove tag
         4. Login as restricted user, catalog item is not visible for user
     """
-    catalog_item.create()
-    category_name = ' '.join((tag.category.display_name, '*'))
-    catalog_item.edit_tags(category_name, tag.display_name)
-    with user_restricted:
-        assert catalog_item.exists
-
-    catalog_item.remove_tag(category_name, tag.display_name)
-    with user_restricted:
-        assert not catalog_item.exists
+    check_catalog_visibility(catalog_item)
 
 
-def test_tagvis_catalog_bundle(user_restricted, tag, catalog_bundle):
-    """ Checks catalog item tag visibility for restricted user
+def test_tagvis_catalog_bundle(check_catalog_visibility, catalog_bundle):
+    """ Checks catalog bundle tag visibility for restricted user
         Prerequisites:
             Catalog, tag, role, group, catalog item and restricted user should be created
 
@@ -172,12 +186,4 @@ def test_tagvis_catalog_bundle(user_restricted, tag, catalog_bundle):
             3. As admin remove tag
             4. Login as restricted user, catalog bundle is not visible for user
         """
-    catalog_bundle.create()
-    category_name = ' '.join((tag.category.display_name, '*'))
-    catalog_bundle.edit_tags(category_name, tag.display_name)
-    with user_restricted:
-        assert catalog_bundle.exists
-
-    catalog_bundle.remove_tag(category_name, tag.display_name)
-    with user_restricted:
-        assert not catalog_bundle.exists
+    check_catalog_visibility(catalog_bundle)
