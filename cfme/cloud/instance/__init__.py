@@ -557,4 +557,5 @@ class VmEngineRelationship(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit Management Engine Relationship')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit Management '
+                                                                 'Engine Relationship')
