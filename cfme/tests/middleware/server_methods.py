@@ -11,6 +11,7 @@ NUM_SEC = 700
 
 def verify_server_stopped(provider, server):
     refresh(provider)
+    server.reload_server()
     wait_for(lambda: server.is_stopped(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be stopped'.format(server.name),
@@ -19,17 +20,16 @@ def verify_server_stopped(provider, server):
 
 def verify_server_running(provider, server):
     refresh(provider)
-    # in some cases server requires reload
-    if server.is_reload_required():
-        server.reload_server()
+    server.reload_server()
     wait_for(lambda: server.is_running(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be running'.format(server.name),
-             fail_func=lambda: refresh(provider))
+             fail_func=lambda: refresh(provider, server))
 
 
 def verify_server_starting(provider, server):
     refresh(provider)
+    server.reload_server()
     wait_for(lambda: server.is_starting(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be starting'.format(server.name),
@@ -38,6 +38,7 @@ def verify_server_starting(provider, server):
 
 def verify_server_stopping(provider, server):
     refresh(provider)
+    server.reload_server()
     wait_for(lambda: server.is_stopping(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be stopping'.format(server.name),
@@ -46,6 +47,7 @@ def verify_server_stopping(provider, server):
 
 def verify_server_suspended(provider, server):
     refresh(provider)
+    server.reload_server()
     wait_for(lambda: server.is_suspended(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be suspended'.format(server.name),
@@ -127,5 +129,7 @@ def _is_container(hostname):
     return re.match("[a-z0-9]{8}", hostname) or 'openshift-eap' in hostname
 
 
-def refresh(provider):
+def refresh(provider, server=None):
     provider.refresh_provider_relationships(method='rest')
+    if server:
+        server.browser.refresh()
