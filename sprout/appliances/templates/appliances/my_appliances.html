@@ -140,7 +140,7 @@
                 <h4><a href="{% url 'user_appliances' pool.owner.username %}">{{ pool.owner|user_repr }}</a></h4>
             {% endif %}
         </div>
-        {% if pool.total_count > 0 %}
+        {% if pool.total_count > 0 and not pool.broken_with_no_appliances %}
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
@@ -291,6 +291,11 @@
                 {% endfor %}
             </tbody>
             </table>
+            {% elif pool.broken_with_no_appliances %}
+                <div class="container">
+                <h2>This pool appears to be broken.</h2>
+                <a href="{% url 'delete_pool' pool.id %}" class="btn btn-danger btn-lg" onclick="return confirm('Are you sure you want to delete the pool?')"><span class="glyphicon glyphicon-trash"></span> DESTROY!</a>
+                </div>
             {% else %}
                 <div class="container">
                 <h2>Clone this pool!</h2>
