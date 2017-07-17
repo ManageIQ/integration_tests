@@ -131,6 +131,8 @@ class Datastore(Pretty, Navigatable):
         """
         # BZ 1467989 - this button is never getting enabled
         view = navigate_to(self, 'Details')
+        wait_for(lambda: view.toolbar.configuration.item_enabled('Remove Datastore'),
+                 fail_condition=False, num_sec=10)
         view.toolbar.configuration.item_select('Remove Datastore', handle_alert=not cancel)
         view.flash.assert_success_message('Delete initiated for Datastore from the CFME Database')
 
@@ -155,7 +157,7 @@ class Datastore(Pretty, Navigatable):
         else:
             view.contents.relationships.click_at('Managed VMs')
         # todo: to replace with correct view
-        vms_view = view.browser.create_view(BaseEntitiesView)
+        vms_view = view.browser.create_view(DatastoresView)
         return [vm.name for vm in vms_view.entities.get_all()]
 
     def delete_all_attached_vms(self):
@@ -166,8 +168,8 @@ class Datastore(Pretty, Navigatable):
         for entity in vms_view.entities.get_all():
             entity.check()
         view.toolbar.configuration.item_select("Remove selected items", handle_alert=True)
-        wait_for(bool(len(vms_view.entities.get_all())), fail_condition=True,
-                 message="Wait datastore hosts to disappear", num_sec=500,
+        wait_for(lambda: bool(len(vms_view.entities.get_all())), fail_condition=True,
+                 message="Wait datastore vms to disappear", num_sec=1000,
                  fail_func=self.browser.refresh)
 
     def delete_all_attached_hosts(self):
@@ -177,8 +179,8 @@ class Datastore(Pretty, Navigatable):
         for entity in hosts_view.entities.get_all():
             entity.check()
         view.toolbar.configuration.item_select("Remove items", handle_alert=True)
-        wait_for(bool(len(hosts_view.entities.get_all())), fail_condition=True,
-                 message="Wait datastore hosts to disappear", num_sec=500,
+        wait_for(lambda: bool(len(hosts_view.entities.get_all())), fail_condition=True,
+                 message="Wait datastore hosts to disappear", num_sec=1000,
                  fail_func=self.browser.refresh)
 
     @property
@@ -193,8 +195,10 @@ class Datastore(Pretty, Navigatable):
             The host must have valid credentials already set up for this to work.
         """
         view = navigate_to(self, 'Details')
+        wait_for(lambda: view.toolbar.configuration.item_enabled('Perform SmartState Analysis'),
+                 fail_condition=False, num_sec=10)
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
-        view.entities.flash.assert_success_message(('"{}": scan successfully '
+        view.flash.assert_success_message(('"{}": scan successfully '
                                                     'initiated'.format(self.name)))
 
 
@@ -227,7 +231,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
+        self.prerequisite_view.entities.get_first_entity(by_name=self.obj.name).click()
 
 
 @navigator.register(Datastore, 'DetailsFromProvider')

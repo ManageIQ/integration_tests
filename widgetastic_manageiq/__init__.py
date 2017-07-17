@@ -2006,7 +2006,7 @@ class EntitiesConditionalView(View):
             return [self.parent.entity_class(parent=self, name=name) for name in self.entity_names]
         else:
             items = []
-            for _ in self.parent.paginator.pages():
+            for _ in self.paginator.pages():
                 items.extend([self.parent.entity_class(parent=self, name=name)
                               for name in self.entity_names])
             return items
@@ -2051,7 +2051,7 @@ class EntitiesConditionalView(View):
 
         Returns: matched entity (QuadIcon/etc.)
         """
-        for _ in self.parent.paginator.pages():
+        for _ in self.paginator.pages():
             found_items = [self.parent.entity_class(parent=self, name=name)
                            for name in self.entity_names if by_name == name]
             if found_items:
