@@ -59,6 +59,7 @@ def all_types():
 
 class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
+    vm_type = None
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
     string_name = ""
