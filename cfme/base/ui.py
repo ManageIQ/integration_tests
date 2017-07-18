@@ -296,13 +296,17 @@ class ConfigurationView(BaseLoggedInPage):
             tree = ManageIQTree()
 
     @property
-    def is_displayed(self):
-        # TODO: We will need a better ID of this location when we have user permissions in effect
+    def in_configuration(self):
         return (
             self.accordions.settings.is_displayed and
             self.accordions.accesscontrol.is_displayed and
             self.accordions.diagnostics.is_displayed and
             self.accordions.database.is_displayed)
+
+    @property
+    def is_displayed(self):
+        # TODO: We will need a better ID of this location when we have user permissions in effect
+        return self.in_configuration
 
 
 @navigator.register(Server)
@@ -313,6 +317,7 @@ class Configuration(CFMENavigateStep):
     def step(self):
         if self.obj.appliance.version > '5.7':
             self.prerequisite_view.settings.select_item('Configuration')
+            self.prerequisite_view.browser.handle_alert(wait=2, cancel=False, squash=True)
         else:
             self.prerequisite_view.navigation.select('Settings', 'Configuration')
 
@@ -412,6 +417,10 @@ class ServerView(ConfigurationView):
 
     @property
     def is_displayed(self):
+        if not self.in_configuration:
+            return False
+        if not self.view.accordions.settings.is_displayed:
+            return False
         return self.view.accordions.settings.tree.currently_selected == [
             self.context['object'].zone.region.settings_string,
             "Zones",
