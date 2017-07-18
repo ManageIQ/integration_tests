@@ -101,7 +101,7 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
 
 @pytest.mark.polarion('CMP-10562')
 def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attributes, provider):
-    """This test checks adding a Custom Attribute with a bad  user name
+    """This test checks adding a Custom Attribute with a bad user name
         using Ansible script via Manage IQ module
         Steps:
         1. 'add_custom_attributes_bad_user.yml script runs against the appliance
