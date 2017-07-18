@@ -2056,6 +2056,8 @@ class BootstrapTreeview(object):
                 target = re.compile(r".*?{}.*?".format(re.escape(str(target))))
 
         def _find_in_tree(t, p=None):
+            if t is None:
+                return
             if p is None:
                 p = []
             for item in t:
@@ -2070,7 +2072,7 @@ class BootstrapTreeview(object):
                     if target.match(item) is not None:
                         return p + [item]
             else:
-                return None
+                return
 
         result = _find_in_tree(self.read_contents())
         if result is None:
