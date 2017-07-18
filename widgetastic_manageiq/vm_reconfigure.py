@@ -13,7 +13,7 @@ class DisksButton(Button):
     def __locator__(self):
         # Don't EVER do this, unless you are 100% sure that you have to! This is an exception!
         btn_loc = super(DisksButton, self).__locator__()
-        loc = '{}/{}//{}'.format(self.parent.__locator__(), self.BTN_CONTAINER_LOC, btn_loc)
+        loc = '{}/{}//{}'.format(self.parent.locator, self.BTN_CONTAINER_LOC, btn_loc)
         return loc
 
 
