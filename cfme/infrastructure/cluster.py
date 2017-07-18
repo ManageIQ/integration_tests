@@ -19,6 +19,7 @@ from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavig
 from utils.pretty import Pretty
 from utils.wait import wait_for
 
+
 # TODO: since Cluster always requires provider, it will use only one way to get to Cluster Detail's
 # page. But we need to fix this in the future.
 
@@ -266,12 +267,14 @@ class Details(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
         self.prerequisite_view.toolbar.view_selector.select('List View')
+        version = self.obj.appliance.version
+        cluster_name = self.obj.short_name if version >= '5.8.1.2' else self.obj.name
         try:
             row = self.prerequisite_view.paginator.find_row_on_pages(
                 self.prerequisite_view.entities.table,
-                name=self.obj.name)
+                name=cluster_name)
         except NoSuchElementException:
-            raise ClusterNotFound('Cluster {} not found'.format(self.obj.name))
+            raise ClusterNotFound('Cluster {} not found'.format(cluster_name))
         row.click()
 
 
@@ -282,7 +285,7 @@ class Timelines(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
-        self.prerequisite_view.toolbar.monitoring('Timelines')
+        self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
 # TODO: This doesn't seem to be used, and needs to be migrated to Widgetastic
