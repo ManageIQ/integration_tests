@@ -1017,6 +1017,11 @@ class PaginationPane(View):
     paginator = Paginator()
 
     @property
+    def is_displayed(self):
+        # there are cases when paging_div is shown but it is empty
+        return self.check_all_items.is_displayed
+
+    @property
     def exists(self):
         return self.is_displayed
 

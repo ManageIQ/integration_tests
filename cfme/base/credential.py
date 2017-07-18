@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+from copy import deepcopy
+from utils import version
 from cfme.web_ui import FileInput, Input, Radio, form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf
-from copy import deepcopy
 from utils.pretty import Pretty
 from utils.update import Updateable
 
@@ -63,7 +64,8 @@ class Credential(Pretty, Updateable, FromConfigMixin):
         return {
             'username': self.principal,
             'password': self.secret,
-            'confirm_password': self.verify_secret
+            'confirm_password': version.pick({version.LOWEST: self.verify_secret,
+                                              version.UPSTREAM: None})
         }
 
     def __eq__(self, other):
@@ -142,7 +144,8 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
         """
         return {
             'token': self.token,
-            'verify_token': self.verify_token
+            'verify_token': version.pick({version.LOWEST: self.verify_token,
+                                          version.UPSTREAM: None})
         }
 
     @property
