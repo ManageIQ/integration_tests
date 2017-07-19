@@ -102,7 +102,7 @@ match_page = partial(match_location, controller='host',
 
 class HostToolBar(View):
     """
-     represents host toolbar and its controls
+    represents host toolbar and its controls
     """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
@@ -126,7 +126,6 @@ class HostSideBar(View):
 class HostEntities(BaseEntitiesView):
     """
     represents central view where all QuadIcons, etc are displayed
-
     """
     pass
 

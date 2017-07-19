@@ -2,6 +2,8 @@
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View, Text
+from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
+                                  BaseEntitiesView)
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
@@ -10,13 +12,11 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
 from utils.wait import wait_for
-from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView)
 
 
 class DatastoreToolBar(View):
     """
-     represents datastore toolbar and its controls
+    represents datastore toolbar and its controls
     """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
@@ -42,7 +42,6 @@ class DatastoreSideBar(View):
 class DatastoreEntities(BaseEntitiesView):
     """
     represents central view where all QuadIcons, etc are displayed
-
     """
     pass
 
@@ -199,7 +198,7 @@ class Datastore(Pretty, Navigatable):
                  fail_condition=False, num_sec=10)
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         view.flash.assert_success_message(('"{}": scan successfully '
-                                                    'initiated'.format(self.name)))
+                                           'initiated'.format(self.name)))
 
 
 @navigator.register(Datastore, 'All')

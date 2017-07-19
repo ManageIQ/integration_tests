@@ -57,7 +57,7 @@ def test_set_default_datastore_filter(request):
         pytest.sel.click(datastore.default_datastore_filter_btn)
     request.addfinalizer(unset_default_datastore_filter)
 
-    view = navigate_to(Datastore, 'All')
+    navigate_to(Datastore, 'All')
     list_acc.select('Filters', 'Store Type / NFS', by_title=False)
     pytest.sel.click(datastore.default_datastore_filter_btn)
     logout()
