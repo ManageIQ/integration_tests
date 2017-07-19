@@ -41,7 +41,7 @@ funcsigs==1.0.2
 functools32==3.2.3.post2
 future==0.16.0
 futures==3.0.5
-git==2.1.1
+git==2.1.5
 google-api-python-client==1.6.2
 gunicorn==19.7.1
 html5lib==0.999999999
