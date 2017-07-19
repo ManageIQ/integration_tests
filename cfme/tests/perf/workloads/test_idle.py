@@ -1,7 +1,4 @@
 """Runs Idle Workload by resetting appliance and enabling specific roles with no providers."""
-from utils.appliance import clean_appliance
-from utils.appliance import set_server_roles
-from utils.appliance import wait_for_miq_server_workers_started
 from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
@@ -20,14 +17,13 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.usefixtures('generate_version_files')
-def test_idle(request, scenario):
+def test_idle(appliance, request, scenario):
     """Runs an appliance at idle with specific roles turned on for specific amount of time. Memory
     Monitor creates graphs and summary at the end of the scenario."""
     from_ts = int(time.time() * 1000)
-    ssh_client = SSHClient()
     logger.debug('Scenario: {}'.format(scenario['name']))
 
-    clean_appliance(ssh_client)
+    appliance.clean_appliance()
 
     quantifiers = {}
     scenario_data = {'appliance_ip': cfme_performance['appliance']['ip_address'],
@@ -53,8 +49,8 @@ def test_idle(request, scenario):
 
     monitor_thread.start()
 
-    wait_for_miq_server_workers_started(poll_interval=2)
-    set_server_roles(ssh_client, scenario['roles'])
+    appliance.wait_for_miq_server_workers_started(poll_interval=2)
+    appliance.server_roles(scenario['roles'])
 
     s_time = scenario['total_time']
     logger.info('Idling appliance for {}s'.format(s_time))

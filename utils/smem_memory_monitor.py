@@ -3,7 +3,7 @@ from utils.conf import cfme_performance
 from utils.log import logger
 from utils.path import results_path
 from utils.version import get_version
-from utils.version import get_current_version_string
+from utils.version import current_version
 from collections import OrderedDict
 from cycler import cycler
 from datetime import datetime
@@ -380,7 +380,7 @@ def install_smem(ssh_client):
 
 def create_report(scenario_data, appliance_results, process_results, use_slab, grafana_urls):
     logger.info('Creating Memory Monitoring Report.')
-    ver = get_current_version_string()
+    ver = current_version()
 
     provider_names = 'No Providers'
     if 'providers' in scenario_data['scenario']:
@@ -951,7 +951,7 @@ def generate_workload_html(directory, ver, scenario_data, provider_names, grafan
 
 def add_workload_quantifiers(quantifiers, scenario_data):
     starttime = time.time()
-    ver = get_current_version_string()
+    ver = current_version()
     workload_path = results_path.join('{}-{}-{}'.format(test_ts, scenario_data['test_dir'], ver))
     directory = workload_path.join(scenario_data['scenario']['name'])
     file_name = str(directory.join('workload.html'))

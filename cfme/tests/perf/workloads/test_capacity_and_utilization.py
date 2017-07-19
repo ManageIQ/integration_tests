@@ -1,9 +1,5 @@
 """Runs Capacity and Utilization Workload."""
-#from utils.appliance import clean_appliance
-#from utils.appliance import get_server_roles_workload_cap_and_util
-#from utils.appliance import set_cap_and_util_all_via_rails
-#from utils.appliance import set_server_roles_workload_cap_and_util
-#from utils.appliance import wait_for_miq_server_workers_started
+
 from utils import conf
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
@@ -20,11 +16,6 @@ roles_cap_and_util = ['automate', 'database_operations', 'ems_inventory', 'ems_m
     'ems_metrics_coordinator', 'ems_metrics_processor', 'ems_operations', 'event', 'notifier',
     'reporting', 'scheduler', 'user_interface', 'web_services']
 
-
-def get_server_roles_workload_cap_and_util_rep(separator=','):
-    roles = ['database_synchronization']
-    roles.extend(roles_cap_and_util)
-    return separator.join(sorted(roles))
 
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_capacity_and_utilization_scenarios())
@@ -61,8 +52,8 @@ def test_workload_capacity_and_utilization(request, scenario, appliance):
     monitor_thread.start()
 
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
-    appliance.server_roles(get_server_roles_workload_cap_and_util())
-    add_providers(scenario['providers'])
+    appliance.server_roles(','.join(roles_cap_and_util))
+    #add_providers(scenario['providers'])
     logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))
     time.sleep(scenario['refresh_sleep_time'])
     appliance.set_cap_and_util_all_via_rails()

@@ -254,6 +254,16 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 self.validate()
             return created
 
+    def create_rest(self, credentials):
+        self.appliance.rest_api.collections.providers.create(
+            hostname=self.hostname,
+            ipaddress=self.ip_address,
+            name=self.name,
+            type=self.rest_type,
+            credentials=credentials
+        )
+
+
     def update(self, updates, cancel=False, validate_credentials=True):
         """
         Updates a provider in the UI.  Better to use utils.update.update context
