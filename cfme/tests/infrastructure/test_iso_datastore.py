@@ -15,7 +15,7 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=['iso_
 @pytest.fixture()
 def no_iso_dss(provider):
     template_crud = pxe.ISODatastore(provider.name)
-    if template_crud.exists:
+    if template_crud.exists():
         template_crud.delete(cancel=False)
 
 
