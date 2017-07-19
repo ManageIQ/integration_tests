@@ -1,0 +1,325 @@
+{
+  "metadata" : {
+    "properties" : {
+      "scenarios" : {
+        "properties" : {
+          "per_process_PSS" : {
+            "properties" : {
+              "end_of_test" : {
+                "type" : "float"
+              },
+              "start_of_test" : {
+                "type" : "float"
+              },
+              "PID" : {
+                "type" : "integer"
+              },
+              "process_worker_type" : {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "provider" : {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "per_process_USS" : {
+            "properties" : {
+              "start_of_test" : {
+                "type" : "float"
+              },
+              "end_of_test" : {
+                "type" : "float"
+              },
+              "PID" : {
+                "type" : "integer"
+              },
+              "process_worker_type" : {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "per_process_VSS" : {
+            "properties" : {
+              "process_worker_type" : {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "start_of_test" : {
+                "type" : "float"
+              },
+              "end_of_test" : {
+                "type" : "float"
+              },
+              "PID" : {
+                "type" : "integer"
+              }
+            }
+          },
+          "total_memory" : {
+            "properties" : {
+              "Measurement" : {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "end_of_test" : {
+                "type" : "float"
+              },
+              "start_of_test" : {
+                "type" : "float"
+              }
+            }
+          },
+          "scenario_name" : {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "per_process_SWAP" : {
+            "properties" : {
+              "end_of_test" : {
+                "type" : "float"
+              },
+              "start_of_test" : {
+                "type" : "float"
+              },
+              "PID" : {
+                "type" : "integer"
+              },
+              "process_worker_type" : {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              }
+            }
+          },
+          "per_process_RSS" : {
+            "properties" : {
+              "process_worker_type" : {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "PID" : {
+                "type" : "integer"
+              },
+              "end_of_test" : {
+                "type" : "float"
+              },
+              "start_of_test" : {
+                "type" : "float"
+              }
+            }
+          }
+        }
+      },
+      "generated-by-version" : {
+        "type" : "text",
+        "fields" : {
+          "keyword" : {
+            "ignore_above" : 256,
+            "type" : "keyword"
+          }
+        }
+      },
+      "version_info" : {
+        "properties" : {
+          "rpms" : {
+            "properties" : {
+              "version" : {
+                "type" : "text",
+                "fields" : {
+                  "keyword" : {
+                    "type" : "keyword",
+                    "ignore_above" : 256
+                  }
+                }
+              },
+              "package" : {
+                "type" : "text",
+                "fields" : {
+                  "keyword" : {
+                    "type" : "keyword",
+                    "ignore_above" : 256
+                  }
+                }
+              }
+            }
+          },
+          "system" : {
+            "properties" : {
+              "kernel_release" : {
+                "fields" : {
+                  "keyword" : {
+                    "type" : "keyword",
+                    "ignore_above" : 256
+                  }
+                },
+                "type" : "text"
+              },
+              "kernel_name" : {
+                "type" : "text",
+                "fields" : {
+                  "keyword" : {
+                    "type" : "keyword",
+                    "ignore_above" : 256
+                  }
+                }
+              },
+              "kernel_version" : {
+                "fields" : {
+                  "keyword" : {
+                    "type" : "keyword",
+                    "ignore_above" : 256
+                  }
+                },
+                "type" : "text"
+              },
+              "operating_system" : {
+                "type" : "text",
+                "fields" : {
+                  "keyword" : {
+                    "ignore_above" : 256,
+                    "type" : "keyword"
+                  }
+                }
+              }
+            }
+          },
+          "gems" : {
+            "properties" : {
+              "package" : {
+                "fields" : {
+                  "keyword" : {
+                    "ignore_above" : 256,
+                    "type" : "keyword"
+                  }
+                },
+                "type" : "text"
+              },
+              "version" : {
+                "type" : "text",
+                "fields" : {
+                  "keyword" : {
+                    "ignore_above" : 256,
+                    "type" : "keyword"
+                  }
+                }
+              }
+            }
+          },
+          "processes" : {
+            "properties" : {
+              "package" : {
+                "fields" : {
+                  "keyword" : {
+                    "type" : "keyword",
+                    "ignore_above" : 256
+                  }
+                },
+                "type" : "text"
+              },
+              "version" : {
+                "type" : "text",
+                "fields" : {
+                  "keyword" : {
+                    "ignore_above" : 256,
+                    "type" : "keyword"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "cfme_version" : {
+        "fields" : {
+          "keyword" : {
+            "ignore_above" : 256,
+            "type" : "keyword"
+          }
+        },
+        "type" : "text"
+      },
+      "TimeStamp" : {
+        "type" : "date",
+        "format" : "yyyy-MM-dd HH:mm:ss"
+      },
+      "run_dirname" : {
+        "fields" : {
+          "keyword" : {
+            "ignore_above" : 256,
+            "type" : "keyword"
+          }
+        },
+        "type" : "text"
+      },
+      "cfme_run_md5" : {
+        "fields" : {
+          "keyword" : {
+            "type" : "keyword",
+            "ignore_above" : 256
+          }
+        },
+        "type" : "text"
+      },
+      "generated-by" : {
+        "fields" : {
+          "keyword" : {
+            "type" : "keyword",
+            "ignore_above" : 256
+          }
+        },
+        "type" : "text"
+      },
+      "workload_type" : {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      }
+    }
+  }
+}

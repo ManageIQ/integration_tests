@@ -1,0 +1,148 @@
+{
+  "took" : 1,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 23802,
+    "max_score" : 0.0,
+    "hits" : [ ]
+  },
+  "aggregations" : {
+    "pid_by_RSS" : {
+      "doc_count_error_upper_bound" : 0,
+      "sum_other_doc_count" : 0,
+      "buckets" : [
+        {
+          "key" : "ManageIQ::Providers::Redhat::InfraManager::RefreshWorker",
+          "doc_count" : 420,
+          "with_RSS_avg" : {
+            "value" : 442.9137462797619
+          }
+        },
+        {
+          "key" : "MiqGenericWorker",
+          "doc_count" : 852,
+          "with_RSS_avg" : {
+            "value" : 311.19099820275824
+          }
+        },
+        {
+          "key" : "ManageIQ::Providers::Redhat::InfraManager::MetricsCollectorWorker",
+          "doc_count" : 836,
+          "with_RSS_avg" : {
+            "value" : 311.1651231683612
+          }
+        },
+        {
+          "key" : "ManageIQ::Providers::Redhat::InfraManager::EventCatcher",
+          "doc_count" : 420,
+          "with_RSS_avg" : {
+            "value" : 306.2585472470238
+          }
+        },
+        {
+          "key" : "MiqPriorityWorker",
+          "doc_count" : 852,
+          "with_RSS_avg" : {
+            "value" : 303.63657203638496
+          }
+        },
+        {
+          "key" : "MiqWebServiceWorker",
+          "doc_count" : 426,
+          "with_RSS_avg" : {
+            "value" : 295.747294967723
+          }
+        },
+        {
+          "key" : "MiqEmsMetricsProcessorWorker",
+          "doc_count" : 836,
+          "with_RSS_avg" : {
+            "value" : 288.9788613935407
+          }
+        },
+        {
+          "key" : "MIQ Server (evm_server.rb)",
+          "doc_count" : 428,
+          "with_RSS_avg" : {
+            "value" : 273.80252445969626
+          }
+        },
+        {
+          "key" : "MiqEventHandler",
+          "doc_count" : 426,
+          "with_RSS_avg" : {
+            "value" : 272.21952024647885
+          }
+        },
+        {
+          "key" : "MiqScheduleWorker",
+          "doc_count" : 426,
+          "with_RSS_avg" : {
+            "value" : 257.48103726525824
+          }
+        },
+        {
+          "key" : "MiqUiWorker",
+          "doc_count" : 426,
+          "with_RSS_avg" : {
+            "value" : 254.51057254988262
+          }
+        },
+        {
+          "key" : "MiqWebsocketWorker",
+          "doc_count" : 6,
+          "with_RSS_avg" : {
+            "value" : 254.431640625
+          }
+        },
+        {
+          "key" : "MiqReportingWorker",
+          "doc_count" : 852,
+          "with_RSS_avg" : {
+            "value" : 253.61832453051642
+          }
+        },
+        {
+          "key" : "evm_watchdog.rb",
+          "doc_count" : 428,
+          "with_RSS_avg" : {
+            "value" : 92.1796875
+          }
+        },
+        {
+          "key" : "postgres",
+          "doc_count" : 12340,
+          "with_RSS_avg" : {
+            "value" : 15.68314234704214
+          }
+        },
+        {
+          "key" : "collectd",
+          "doc_count" : 428,
+          "with_RSS_avg" : {
+            "value" : 12.857540522780374
+          }
+        },
+        {
+          "key" : "httpd",
+          "doc_count" : 2972,
+          "with_RSS_avg" : {
+            "value" : 6.5892444061238225
+          }
+        },
+        {
+          "key" : "memcached",
+          "doc_count" : 428,
+          "with_RSS_avg" : {
+            "value" : 3.377327321845794
+          }
+        }
+      ]
+    }
+  }
+}

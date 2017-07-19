@@ -1,0 +1,25 @@
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 0,
+  "aggs" : {
+     "pid_by_RSS" : {
+        "terms" : {
+          "field" : "name.keyword",
+          "size" : 25,
+          "order": {
+            "with_RSS_avg": "desc"
+          }
+        },
+        "aggs": {
+          "with_RSS_avg": {
+            "avg": {
+              "field": "RSS"
+            }
+          }
+        }
+      }
+  }
+}
+

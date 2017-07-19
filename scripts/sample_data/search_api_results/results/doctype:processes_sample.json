@@ -1,0 +1,33 @@
+{
+  "took" : 1,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 23802,
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "cfme-run.smem-2017.01.05",
+        "_type" : "processes",
+        "_id" : "bf2c006fe8db794ef96cdb959ced3711",
+        "_score" : 1.0,
+        "_source" : {
+          "TimeStamp" : "2017-01-05 16:19:32",
+          "PSS" : 1.63671875,
+          "cfme_run_md5" : "ce5b7fb7ad027d3f49ea2c876650cef9",
+          "RSS" : 7.71484375,
+          "name" : "postgres",
+          "USS" : 1.32421875,
+          "scenario" : "60m-rhevm-small",
+          "pid" : "40500",
+          "SWAP" : 0.0,
+          "VSS" : 392.07421875
+        }
+      }
+    ]
+  }
+}

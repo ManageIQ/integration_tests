@@ -1,0 +1,97 @@
+{
+  "took" : 2,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 23802,
+    "max_score" : 0.0,
+    "hits" : [ ]
+  },
+  "aggregations" : {
+    "unique_pids_count" : {
+      "value" : 18
+    },
+    "distinct_pid_names" : {
+      "doc_count_error_upper_bound" : 0,
+      "sum_other_doc_count" : 0,
+      "buckets" : [
+        {
+          "key" : "postgres",
+          "doc_count" : 12340
+        },
+        {
+          "key" : "httpd",
+          "doc_count" : 2972
+        },
+        {
+          "key" : "MiqGenericWorker",
+          "doc_count" : 852
+        },
+        {
+          "key" : "MiqPriorityWorker",
+          "doc_count" : 852
+        },
+        {
+          "key" : "MiqReportingWorker",
+          "doc_count" : 852
+        },
+        {
+          "key" : "ManageIQ::Providers::Redhat::InfraManager::MetricsCollectorWorker",
+          "doc_count" : 836
+        },
+        {
+          "key" : "MiqEmsMetricsProcessorWorker",
+          "doc_count" : 836
+        },
+        {
+          "key" : "MIQ Server (evm_server.rb)",
+          "doc_count" : 428
+        },
+        {
+          "key" : "collectd",
+          "doc_count" : 428
+        },
+        {
+          "key" : "evm_watchdog.rb",
+          "doc_count" : 428
+        },
+        {
+          "key" : "memcached",
+          "doc_count" : 428
+        },
+        {
+          "key" : "MiqEventHandler",
+          "doc_count" : 426
+        },
+        {
+          "key" : "MiqScheduleWorker",
+          "doc_count" : 426
+        },
+        {
+          "key" : "MiqUiWorker",
+          "doc_count" : 426
+        },
+        {
+          "key" : "MiqWebServiceWorker",
+          "doc_count" : 426
+        },
+        {
+          "key" : "ManageIQ::Providers::Redhat::InfraManager::EventCatcher",
+          "doc_count" : 420
+        },
+        {
+          "key" : "ManageIQ::Providers::Redhat::InfraManager::RefreshWorker",
+          "doc_count" : 420
+        },
+        {
+          "key" : "MiqWebsocketWorker",
+          "doc_count" : 6
+        }
+      ]
+    }
+  }
+}

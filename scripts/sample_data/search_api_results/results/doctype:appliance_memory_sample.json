@@ -1,0 +1,34 @@
+{
+  "took" : 1,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 428,
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "cfme-run.smem-2017.01.05",
+        "_type" : "appliance_memory",
+        "_id" : "3650d8056e23c63cc4d9584e1434fd4c",
+        "_score" : 1.0,
+        "_source" : {
+          "TimeStamp" : "2017-01-05 16:18:52",
+          "Cached" : 339.18359375,
+          "Free" : 13298.7734375,
+          "cfme_run_md5" : "ce5b7fb7ad027d3f49ea2c876650cef9",
+          "Slab" : 111.51953125,
+          "Buffers" : 0.0,
+          "Used" : 2129.90234375,
+          "scenario" : "60m-rhevm-small",
+          "Swap_Free" : 9531.9375,
+          "Swap_Total" : 9543.99609375,
+          "Total" : 15879.3789062
+        }
+      }
+    ]
+  }
+}

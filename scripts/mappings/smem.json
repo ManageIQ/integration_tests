@@ -1,0 +1,105 @@
+{
+  "processes" : {
+    "properties" : {
+      "VSS" : {
+        "type" : "float"
+      },
+      "name" : {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "PSS" : {
+        "type" : "float"
+      },
+      "SWAP" : {
+        "type" : "float"
+      },
+      "TimeStamp" : {
+        "type" : "date",
+        "format" : "yyyy-MM-dd HH:mm:ss"
+      },
+      "USS" : {
+        "type" : "float"
+      },
+      "cfme_run_md5" : {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "RSS" : {
+        "type" : "float"
+      },
+      "pid" : {
+        "type" : "integer"
+      },
+      "scenario" : {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      }
+    }
+  },
+  "appliance_memory" : {
+    "properties" : {
+      "scenario" : {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "Swap_Total" : {
+        "type" : "float"
+      },
+      "Cached" : {
+        "type" : "float"
+      },
+      "Used" : {
+        "type" : "float"
+      },
+      "Swap_Free" : {
+        "type" : "float"
+      },
+      "cfme_run_md5" : {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "Free" : {
+        "type" : "float"
+      },
+      "Buffers" : {
+        "type" : "float"
+      },
+      "TimeStamp" : {
+        "type" : "date",
+        "format" : "yyyy-MM-dd HH:mm:ss"
+      },
+      "Total" : {
+        "type" : "float"
+      },
+      "Slab" : {
+        "type" : "float"
+      }
+    }
+  }
+}

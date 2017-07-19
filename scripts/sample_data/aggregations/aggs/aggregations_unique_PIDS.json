@@ -1,0 +1,19 @@
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 0,
+  "aggs" : {
+     "distinct_pid_names" : {
+          "terms" : {
+            "field" : "name.keyword",
+            "size" : 25
+          }
+      },
+      "unique_pids_count" : {
+          "cardinality" : {
+            "field" : "name.keyword"
+          }
+      }
+  }
+}
