@@ -32,10 +32,11 @@ def test_catalog_duplicate_name():
 
 
 @pytest.mark.sauce
-def test_permissions_catalog_add():
+def test_permissions_catalog_add(appliance):
     """ Tests that a catalog can be added only with the right permissions"""
     cat = Catalog(name=fauxfactory.gen_alphanumeric(),
                   description="my catalog")
 
-    tac.single_task_permission_test([['Everything', 'Services', 'Catalogs Explorer', 'Catalogs']],
+    tac.single_task_permission_test(appliance,
+                                    [['Everything', 'Services', 'Catalogs Explorer', 'Catalogs']],
                                     {'Add Catalog': cat.create})
