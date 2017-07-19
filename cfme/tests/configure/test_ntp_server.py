@@ -66,7 +66,7 @@ def test_ntp_conf_file_update_check(request, appliance):
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
     for clock in cfme_data['clock_servers']:
-        status, wait_time = wait_for(lambda: check_ntp_grep(clock),
+        status, wait_time = wait_for(lambda: check_ntp_grep(appliance, clock),
             fail_condition=False, num_sec=60, delay=5)
         assert status is True, "Clock value {} not update in /etc/chrony.conf file".format(clock)
 
@@ -77,7 +77,7 @@ def test_ntp_conf_file_update_check(request, appliance):
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
     for clock in cfme_data['clock_servers']:
-        status, wait_time = wait_for(lambda: check_ntp_grep(clock),
+        status, wait_time = wait_for(lambda: check_ntp_grep(appliance, clock),
             fail_condition=True, num_sec=60, delay=5)
         assert status is False, "Found clock record '{}' in /etc/chrony.conf file".format(clock)
 
