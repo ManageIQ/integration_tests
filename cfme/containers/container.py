@@ -4,15 +4,20 @@ import random
 import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic_manageiq import Accordion, ManageIQTree, View, Table
+from widgetastic_patternfly import VerticalNavigation
 
+from cfme.base.login import BaseLoggedInPage
+from cfme.containers.provider import details_page, pol_btn, mon_btn
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location, accordion,\
-    PagedTable
-from utils import version
+from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location, PagedTable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.containers.provider import details_page, pol_btn, mon_btn
+from utils import version
+from widgetastic.widget import Text
+from widgetastic.xpath import quote
+from widgetastic.utils import Version, VersionPick
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -61,21 +66,45 @@ class Container(Taggable, SummaryMixin, Navigatable):
                 for obj in itertools.islice(containers_list, count)]
 
 
+class ContainerAllView(BaseLoggedInPage):
+    """Containers All view"""
+    summary = Text(VersionPick({
+        Version.lowest(): '//h3[normalize-space(.) = {}]'.format(quote('All Containers')),
+        '5.8': '//h1[normalize-space(.) = {}]'.format(quote('Containers'))
+    }))
+    containers = Table(locator="//div[@id='list_grid']//table")
+
+    @View.nested
+    class Filters(Accordion):  # noqa
+        ACCORDION_NAME = "Filters"
+
+        @View.nested
+        class Navigation(VerticalNavigation):
+            DIV_LINKS_MATCHING = './/div/ul/li/a[contains(text(), {txt})]'
+
+            def __init__(self, parent, logger=None):
+                VerticalNavigation.__init__(self, parent, '#Container_def_searches', logger=logger)
+
+        tree = ManageIQTree()
+
+    @property
+    def is_displayed(self):
+        return self.summary.is_displayed
+
+
 @navigator.register(Container, 'All')
 class ContainerAll(CFMENavigateStep):
+    VIEW = ContainerAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='All Containers')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Containers')
 
     def resetter(self):
-        accordion.tree('Containers', version.pick({
-            version.LOWEST: 'All Containers',
-            '5.7': 'All Containers (by Pods)',
-        }))
+        if version.current_version() < '5.8':
+            self.view.Filters.tree.click_path('All Containers')
+        else:
+            self.view.Filters.Navigation.select('ALL (Default)')
         tb.select('List View')
         if paginator.page_controls_exist():
             sel.check(paginator.check_all())
