@@ -263,6 +263,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             return False
 
     @property
+    def ip_address(self):
+        """Fetches IP Address of VM"""
+        return self.provider.mgmt.get_ip_address(self.name)
+
+    @property
     def is_retired(self):
         """"Check retirement status of vm"""
         self.summary.reload()
