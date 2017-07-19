@@ -6,6 +6,8 @@ from subprocess import check_output, CalledProcessError, STDOUT
 from fauxfactory import gen_alphanumeric
 from utils import conf
 from utils.providers import get_crud
+from utils.providers import providers_data
+
 
 from git import Repo
 from yaml import load, dump
@@ -13,8 +15,8 @@ from yaml import load, dump
 local_git_repo = "manageiq_ansible_module"
 yml_path = path.join(path.dirname(__file__), local_git_repo)
 yml_templates_path = path.join(path.dirname(__file__), 'ansible_conf')
-yml = ".yml"
 basic_script = "basic_script.yml"
+yml = ".yml"
 random_token = str(gen_alphanumeric(906))
 random_miq_user = str(gen_alphanumeric(8))
 pulled_repo_library_path = path.join(local_git_repo, 'library')
@@ -56,11 +58,11 @@ def get_values_for_providers_test(provider):
         'miq_url': config_formatter(),
         'miq_username': conf.credentials['default'].username,
         'miq_password': conf.credentials['default'].password,
-        'provider_api_hostname': conf.cfme_data.get('management_systems', {})
-        [provider.key].get('hostname', []),
-        'provider_api_auth_token': get_crud('cm-env1').credentials['token'].token,
-        'hawkular_hostname': conf.cfme_data.get('management_systems', {})
-        [provider.key].get('hostname', [])
+        'provider_api_hostname': providers_data[provider.name]['endpoints']['default'].hostname,
+        'provider_api_port': providers_data[provider.name]['endpoints']['default'].api_port,
+        'provider_api_auth_token': get_crud(provider.name).credentials['token'].token,
+        'monitoring_hostname': providers_data[provider.name]['endpoints']['hawkular'].hostname,
+        'monitoring_port': providers_data[provider.name]['endpoints']['hawkular'].api_port
     }
 
 
@@ -143,81 +145,68 @@ def setup_ansible_script(provider, script, script_type=None, values_to_update=No
     # This function prepares the ansible scripts to work with the correct
     # appliance configs that will be received from Jenkins
     setup_basic_script(provider, script_type)
+    doc = open_yml(script, script_type)
     if script == 'add_provider':
-        doc = open_yml(script, 'providers')
         write_yml(script, doc)
 
     elif script == 'update_provider':
-        doc = open_yml(script, 'providers')
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_provider'][key] = values_to_update[key]
             write_yml(script, doc)
 
     elif script == 'remove_provider':
-        doc = open_yml(script, 'providers')
         doc[0]['tasks'][0]['manageiq_provider']['state'] = 'absent'
         write_yml(script, doc)
 
     elif script == 'remove_non_existing_provider':
-        doc = open_yml(script, 'providers')
         doc[0]['tasks'][0]['manageiq_provider']['state'] = 'absent'
         doc[0]['tasks'][0]['manageiq_provider']['name'] = random_miq_user
         write_yml(script, doc)
 
     elif script == 'remove_provider_bad_user':
-        doc = open_yml(script, 'providers')
         doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
         write_yml(script, doc)
 
     elif script == 'add_provider_bad_token':
-        doc = open_yml(script, 'providers')
         doc[0]['tasks'][0]['manageiq_provider']['provider_api_auth_token'] = random_token
         write_yml(script, doc)
 
     elif script == 'add_provider_bad_user':
-        doc = open_yml(script, 'providers')
         doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
         write_yml(script, doc)
 
     elif script == 'update_non_existing_provider':
-        doc = open_yml(script, 'providers')
         doc[0]['tasks'][0]['manageiq_provider']['provider_api_hostname'] = random_miq_user
         write_yml(script, doc)
 
     elif script == 'update_provider_bad_user':
-        doc = open_yml(script, 'providers')
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_provider'][key] = values_to_update[key]
         doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
         write_yml(script, doc)
 
     elif script == 'create_user':
-        doc = open_yml(script, "users")
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_user'][key] = values_to_update[key]
             write_yml(script, doc)
 
     elif script == 'update_user':
-        doc = open_yml(script, "users")
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_user'][key] = values_to_update[key]
             write_yml(script, doc)
 
     elif script == 'create_user_bad_user_name':
-        doc = open_yml(script, "users")
         doc[0]['tasks'][0]['manageiq_user']['miq_username'] = random_miq_user
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_user'][key] = values_to_update[key]
         write_yml(script, doc)
 
     elif script == 'delete_user':
-        doc = open_yml(script, "users")
         doc[0]['tasks'][0]['manageiq_user']['name'] = values_to_update
         doc[0]['tasks'][0]['manageiq_user']['state'] = 'absent'
         write_yml(script, doc)
 
     elif script == 'add_custom_attributes':
-        doc = open_yml(script, "custom_attributes")
         count = 0
         while count < len(values_to_update):
             for key in values_to_update:
@@ -226,12 +215,10 @@ def setup_ansible_script(provider, script, script_type=None, values_to_update=No
                 write_yml(script, doc)
 
     elif script == 'add_custom_attributes_bad_user':
-        doc = open_yml(script, 'custom_attributes')
         doc[0]['tasks'][0]['manageiq_custom_attributes']['miq_username'] = str(random_miq_user)
         write_yml(script, doc)
 
     elif script == 'remove_custom_attributes':
-        doc = open_yml(script, "custom_attributes")
         count = 0
         doc[0]['tasks'][0]['manageiq_custom_attributes']['state'] = 'absent'
         while count < len(values_to_update):

@@ -28,8 +28,6 @@ custom_attributes_to_edit = {
     'value': 'fourth value'
 }
 
-provider_name = 'CI OSE'
-
 
 @pytest.yield_fixture(scope='function')
 def ansible_custom_attributes():
