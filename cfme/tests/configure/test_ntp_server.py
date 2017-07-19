@@ -85,12 +85,12 @@ def test_ntp_conf_file_update_check(request, appliance):
 @pytest.mark.tier(3)
 def test_ntp_server_check(request, appliance):
     request.addfinalizer(partial(clear_ntp_settings, appliance))
-    orig_date = appliance_date()
+    orig_date = appliance_date(appliance)
     past_date = orig_date - timedelta(days=10)
     logger.info("dates: orig_date - %s, past_date - %s", orig_date, past_date)
     status, result = appliance.ssh_client.run_command(
         "date +%Y%m%d -s \"{}\"".format(past_date.strftime('%Y%m%d')))
-    new_date = appliance_date()
+    new_date = appliance_date(appliance)
     if new_date != orig_date:
         logger.info("Successfully modified the date in the appliance")
         # Configuring the ntp server and restarting the appliance
@@ -110,7 +110,8 @@ def test_ntp_server_check(request, appliance):
         appliance.ssh_client.run_command("service chronyd restart")
         # Providing two hour runtime for the test run to avoid day changing problem
         # (in case if the is triggerred in the midnight)
-        wait_for(lambda: (orig_date - appliance_date()).total_seconds() <= 7200, num_sec=300)
+        wait_for(
+            lambda: (orig_date - appliance_date(appliance)).total_seconds() <= 7200, num_sec=300)
     else:
         raise Exception("Failed modifying the system date")
     # Calling the browser quit() method to compensate the session after the evm service restart
