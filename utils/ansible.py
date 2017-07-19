@@ -14,6 +14,7 @@ local_git_repo = "manageiq_ansible_module"
 yml_path = path.join(path.dirname(__file__), local_git_repo)
 yml_templates_path = path.join(path.dirname(__file__), 'ansible_conf')
 yml = ".yml"
+basic_script = "basic_script.yml"
 random_token = str(gen_alphanumeric(906))
 random_miq_user = str(gen_alphanumeric(8))
 pulled_repo_library_path = path.join(local_git_repo, 'library')
@@ -143,8 +144,8 @@ def setup_ansible_script(provider, script, script_type=None, values_to_update=No
     # appliance configs that will be received from Jenkins
     setup_basic_script(provider, script_type)
     if script == 'add_provider':
-        copyfile(path.join(basic_yml_path, providers_basic_script),
-                 path.join(basic_yml_path, script + yml))
+        doc = open_yml(script, 'providers')
+        write_yml(script, doc)
 
     elif script == 'update_provider':
         doc = open_yml(script, 'providers')
