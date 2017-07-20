@@ -138,6 +138,12 @@ class ApplianceDB(AppliancePlugin):
             # We only execute this on downstream appliances.
             # TODO: Handle external DB setup. Probably pop the db_address and decide on that one.
             self.enable_internal(**kwargs)
+        else:
+            # Ensure the evmserverd is on on the upstream appliance
+            if not self.appliance.evmserverd.running:
+                self.appliance.evmserverd.start()
+                self.appliance.evmserverd.enable()  # just to be sure here.
+                self.appliance.wait_for_web_ui()
 
         # Make sure the database is ready
         wait_for(func=lambda: self.is_ready,
