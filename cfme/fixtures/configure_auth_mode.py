@@ -80,14 +80,14 @@ def configure_auth(request, auth_mode):
         setup_external_auth_openldap(**data)
     elif auth_mode in ['miq_openldap', 'miq_ldap']:
         configuration.set_auth_mode(**data)
-        request.addfinalizer(current_appliance.server.login_admin())
+        request.addfinalizer(current_appliance.server.login_admin)
         request.addfinalizer(configuration.setup_authmode_database)
     elif auth_mode == 'miq_aws_iam':
         aws_iam_creds = credentials[data.pop('credentials')]
         data['access_key'] = aws_iam_creds['username']
         data['secret_key'] = aws_iam_creds['password']
         configuration.set_auth_mode(**data)
-        request.addfinalizer(current_appliance.server.login_admin())
+        request.addfinalizer(current_appliance.server.login_admin)
         request.addfinalizer(configuration.setup_authmode_database)
     else:
         pytest.skip("auth_mode specified is not a expected value for cfme_auth tests")
