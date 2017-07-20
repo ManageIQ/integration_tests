@@ -60,12 +60,6 @@ class OpenshiftProvider(ContainersProvider):
     db_types = ["Openshift::ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
 
-    def __init__(self, name=None, key=None, zone=None,
-                 provider_data=None, endpoints=None, appliance=None):
-        super(OpenshiftProvider, self).__init__(
-            name=name, key=key, zone=zone, provider_data=provider_data,
-            endpoints=endpoints, appliance=appliance)
-
     @cached_property
     def cli(self):
         return OcpCli(self)
