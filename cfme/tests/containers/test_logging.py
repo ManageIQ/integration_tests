@@ -1,8 +1,10 @@
 import pytest
+
 from utils import testgen
-from cfme.containers.provider import ContainersProvider
 from utils.version import current_version
 from utils.appliance.implementations.ui import navigate_to
+
+from cfme.containers.provider import ContainersProvider
 
 NUM_OF_DEFAULT_LOG_ROUTES = 2
 pytestmark = [
