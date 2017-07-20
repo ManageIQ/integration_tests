@@ -634,15 +634,15 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
         appliance.server.login_admin()
 
 
-def single_task_permission_test(product_features, actions):
+def single_task_permission_test(appliance, product_features, actions):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
-    test_permissions(_mk_role(name=fauxfactory.gen_alphanumeric(),
+    test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
                               product_features=[(['Everything'], False)] +
                               [(f, True) for f in product_features]),
                      actions,
                      {})
-    test_permissions(_mk_role(name=fauxfactory.gen_alphanumeric(),
+    test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
                               product_features=[(['Everything'], True)] +
                               [(f, False) for f in product_features]),
                      {},
@@ -651,14 +651,15 @@ def single_task_permission_test(product_features, actions):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1262764])
-def test_permissions_role_crud():
-    single_task_permission_test([['Everything', cat_name, 'Configuration'],
+def test_permissions_role_crud(appliance):
+    single_task_permission_test(appliance,
+                                [['Everything', cat_name, 'Configuration'],
                                  ['Everything', 'Services', 'Catalogs Explorer']],
                                 {'Role CRUD': test_role_crud})
 
 
 @pytest.mark.tier(3)
-def test_permissions_vm_provisioning():
+def test_permissions_vm_provisioning(appliance):
     features = version.pick({
         version.LOWEST: [
             ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
@@ -671,19 +672,21 @@ def test_permissions_vm_provisioning():
                 'Provision VMs']
         ]})
     single_task_permission_test(
+        appliance,
         features,
         {'Provision VM': _test_vm_provision}
     )
 
 
 # This test is disabled until it has been rewritten
-# def test_permissions_vm_power_on_access():
+# def test_permissions_vm_power_on_access(appliance):
 #    # Ensure VMs exist
 #    if not vms.get_number_of_vms():
 #        logger.debug("Setting up providers")
 #        infra_provider
 #        logger.debug("Providers setup")
 #    single_task_permission_test(
+#        appliance,
 #        [
 #            ['Infrastructure', 'Virtual Machines', 'Accordions'],
 #            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Operate', 'Power On']
@@ -693,13 +696,14 @@ def test_permissions_vm_provisioning():
 
 
 # This test is disabled until it has been rewritten
-# def test_permissions_vm_remove():
+# def test_permissions_vm_remove(appliance):
 #    # Ensure VMs exist
 #    if not vms.get_number_of_vms():
 #        logger.debug("Setting up providers")
 #        setup_infrastructure_providers()
 #        logger.debug("Providers setup")
 #    single_task_permission_test(
+#        appliance,
 #        [
 #            ['Infrastructure', 'Virtual Machines', 'Accordions'],
 #            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Remove']
