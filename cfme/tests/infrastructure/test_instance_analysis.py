@@ -349,7 +349,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
     # Set credentials to all hosts set for this datastore
     if provider.type in ['virtualcenter', 'rhevm']:
         datastore_name = vm_analysis_data['datastore']
-        test_datastore = datastore.Datastore(datastore_name, provider.key)
+        test_datastore = datastore.Datastore(name=datastore_name, provider=provider)
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
         host_names = test_datastore.get_hosts()
         for host_name in host_names:

@@ -8,6 +8,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb, Quadicon, InfoBlock
 from utils import conf, testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.wait import wait_for
 import pytest
@@ -141,8 +142,8 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore, so
     wait_for(lambda: is_datastore_analysis_finished(datastore.name),
              delay=15, timeout="15m", fail_func=lambda: tb.select('Reload the current display'))
 
-    ds_str = "Datastores Type"
-    c_datastore = datastore.get_detail('Properties', ds_str)
+    details_view = navigate_to(datastore, 'Details')
+    c_datastore = details_view.contents.properties.get_text_of("Datastores Type")
     # Check results of the analysis and the datastore type
     soft_assert(c_datastore == datastore.type.upper(),
                 'Datastore type does not match the type defined in yaml:' +

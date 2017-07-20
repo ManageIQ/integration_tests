@@ -6,6 +6,9 @@ from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.infrastructure.provider import InfraProvider
 from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
+from utils.wait import wait_for
+
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.general_ui]
@@ -92,16 +95,22 @@ def test_delete_datastore_appear_after_refresh(setup_provider, provider):
         test_flag: delete_object
     """
     data_store = provider.data['remove_test']['datastore']
-    test_datastore = datastore.Datastore(name=data_store)
-    host_count = test_datastore.get_detail('Relationships', 'Hosts')
-    vm_count = test_datastore.get_detail('Relationships', 'Managed VMs')
+    test_datastore = datastore.Datastore(name=data_store, provider=provider)
+    details_view = navigate_to(test_datastore, 'Details')
+
+    host_count = int(details_view.contents.relationships.get_text_of('Hosts'))
+    vm_count = int(details_view.contents.relationships.get_text_of('Managed VMs'))
     if host_count != "0":
         test_datastore.delete_all_attached_hosts()
-        test_datastore.wait_for_delete_all()
     if vm_count != "0":
         test_datastore.delete_all_attached_vms()
-        test_datastore.wait_for_delete_all()
+
     test_datastore.delete(cancel=False)
-    test_datastore.wait_for_delete()
+    wait_for(lambda: not test_datastore.exists, fail_condition=False,
+             message="Wait datastore to disappear", num_sec=500,
+             fail_func=test_datastore.browser.refresh)
+
     provider.refresh_provider_relationships()
-    test_datastore.wait_for_appear()
+    wait_for(lambda: test_datastore.exists, fail_condition=False,
+             message="Wait datastore to appear", num_sec=1000,
+             fail_func=test_datastore.browser.refresh)

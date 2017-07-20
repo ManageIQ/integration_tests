@@ -49,6 +49,7 @@ def test_clear_host_filter_results():
 def test_set_default_datastore_filter(request):
     """ Test for setting default filter for datastores."""
 
+    # I guess this test has to be redesigned
     # Add cleanup finalizer
     def unset_default_datastore_filter():
         navigate_to(Datastore, 'All')
@@ -68,17 +69,8 @@ def test_set_default_datastore_filter(request):
 
 def test_clear_datastore_filter_results():
     """ Test for clearing filter results for datastores."""
-
-    if version.current_version() >= 5.6:
-        expected_page_title = 'All Datastores'
-        datastore_select = partial(accordion.tree, 'Datastores', 'All Datastores', 'Global Filters',
-            'Store Type / VMFS')
-    else:
-        expected_page_title = 'Datastores'
-        datastore_select = partial(list_acc.select, 'Filters', 'Store Type / VMFS', by_title=False)
-
-    navigate_to(Datastore, 'All')
-    datastore_select()
-    pytest.sel.click(search_box.clear_advanced_search)
-    page_title = pytest.sel.text(datastore.page_title_loc)
-    assert page_title == expected_page_title, 'Clear filter results failed'
+    view = navigate_to(Datastore, 'All')
+    view.sidebar.datastores.tree.click_path('Datastores', 'All Datastores', 'Global Filters',
+                                            'Store Type / VMFS')
+    view.entities.search.clear_search()
+    assert view.entities.title.text == 'All Datastores', 'Clear filter results failed'
