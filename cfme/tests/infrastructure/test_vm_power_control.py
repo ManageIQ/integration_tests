@@ -6,6 +6,9 @@ import time
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
 from utils import testgen
@@ -46,10 +49,18 @@ def testing_vm(request, provider, vm_name):
 
 
 @pytest.fixture(scope="function")
-def archive_vm(provider, testing_vm):
+def archived_vm(provider, testing_vm):
     """Fixture to archive testing VM"""
     provider.mgmt.delete_vm(testing_vm.name)
     testing_vm.wait_for_vm_state_change(desired_state='archived', timeout=720,
+                                        from_details=False, from_any_provider=True)
+
+
+@pytest.fixture(scope="function")
+def orphaned_vm(provider, testing_vm):
+    """Fixture to orphane VM by removing provider from CFME"""
+    provider.delete_if_exists(cancel=False)
+    testing_vm.wait_for_vm_state_change(desired_state='orphaned', timeout=720,
                                         from_details=False, from_any_provider=True)
 
 
@@ -72,7 +83,7 @@ def testing_vm_tools(request, provider, vm_name, full_template):
 
 def if_scvmm_refresh_provider(provider):
     # No eventing from SCVMM so force a relationship refresh
-    if provider.type == "scvmm":
+    if provider.one_of(SCVMMProvider):
         provider.refresh_provider_relationships()
 
 
@@ -84,10 +95,10 @@ def check_power_options(provider, soft_assert, vm, power_state):
                            'off': [vm.POWER_OFF, vm.SUSPEND, vm.RESET]
                            }
     # VMware and RHEVM have extended power options
-    if provider.type != 'scvmm':
+    if not provider.one_of(SCVMMProvider):
         must_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
         mustnt_be_available['off'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
-    if provider.type == 'rhevm':
+    if provider.one_of(RHEVMProvider):
         must_be_available['on'].remove(vm.RESET)
         must_be_available['on'].remove(vm.GUEST_RESTART)
     vm.load_details()
@@ -103,7 +114,7 @@ def check_power_options(provider, soft_assert, vm, power_state):
             "'{}' must not be available in current power state - '{}' ".format(
                 pwr_option, power_state))
     # check if Guest OS power operations exist and greyed from "on"
-    if power_state == vm.STATE_ON and (provider.type != 'scvmm' and provider.type != 'rhevm'):
+    if power_state == vm.STATE_ON and (not provider.one_of(SCVMMProvider, RHEVMProvider)):
         for pwr_option in [vm.GUEST_RESTART, vm.GUEST_SHUTDOWN]:
             soft_assert(-
                 toolbar.is_greyed('Power', pwr_option),
@@ -208,7 +219,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(
             not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
-        if testing_vm.provider.type != "rhevm":
+        if not testing_vm.provider.one_of(RHEVMProvider):
             new_last_boot_time = testing_vm.get_detail(
                 properties=("Power Management", "Last Boot Time"))
             soft_assert(new_last_boot_time == last_boot_time,
@@ -248,7 +259,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             testing_vm.wait_for_vm_state_change(
                 desired_state=testing_vm.STATE_SUSPENDED, timeout=450, from_details=True)
         except TimedOutError as e:
-            if testing_vm.provider.type == "rhevm":
+            if testing_vm.provider.one_of(RHEVMProvider):
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
                 raise e
@@ -256,7 +267,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             testing_vm.provider.mgmt.is_vm_suspended(
                 testing_vm.name), "vm not suspended")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
-        if testing_vm.provider.type != "rhevm":
+        if not testing_vm.provider.one_of(RHEVMProvider):
             new_last_boot_time = testing_vm.get_detail(
                 properties=("Power Management", "Last Boot Time"))
             soft_assert(new_last_boot_time == last_boot_time,
@@ -274,7 +285,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             testing_vm.wait_for_vm_state_change(
                 desired_state=testing_vm.STATE_SUSPENDED, timeout=450, from_details=True)
         except TimedOutError:
-            if testing_vm.provider.type == "rhevm":
+            if testing_vm.provider.one_of(RHEVMProvider):
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
                 raise
@@ -322,7 +333,7 @@ def test_no_template_power_control(provider, soft_assert):
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
-def test_no_power_controls_on_archived_vm(testing_vm, archive_vm, soft_assert):
+def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
     """ Ensures that no power button is displayed from details view of archived vm
 
     Prerequisities:
@@ -332,10 +343,18 @@ def test_no_power_controls_on_archived_vm(testing_vm, archive_vm, soft_assert):
         * Verify the Power toolbar button is not visible
     """
     testing_vm.load_details()
-    assert not toolbar.exists("Power"), "Power displayed in template details!"
+    soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm')
+def test_archived_vm_status(testing_vm, archived_vm):
+    assert ('currentstate-archived' in testing_vm.find_quadicon(from_any_provider=True).state)
+
+
+def test_orphaned_vm_status(testing_vm, orphaned_vm):
+    assert ('currentstate-orphaned' in testing_vm.find_quadicon(from_any_provider=True).state)
+
+
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
 def test_power_options_from_on(provider, soft_assert, testing_vm, verify_vm_running):
     testing_vm.wait_for_vm_state_change(
         desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
@@ -348,7 +367,7 @@ def test_power_options_from_off(provider, soft_assert, testing_vm, verify_vm_sto
     check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_guest_os_reset(testing_vm_tools, verify_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
@@ -365,7 +384,7 @@ def test_guest_os_reset(testing_vm_tools, verify_vm_running, soft_assert):
         testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name), "vm not running")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_guest_os_shutdown(testing_vm_tools, verify_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
