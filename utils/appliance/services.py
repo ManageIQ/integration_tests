@@ -36,6 +36,9 @@ class SystemdService(AppliancePlugin):
     def restart(self):
         self._run_service_command('restart', expected_exit_code=0)
 
+    def enable(self):
+        self._run_service_command('enable', expected_exit_code=0)
+
     @property
     def running(self):
         return self._run_service_command("status") == 0
