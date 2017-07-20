@@ -1,7 +1,7 @@
 from types import NoneType
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox
-from widgetastic_patternfly import Button, Input, BootstrapSelect
+from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
 from widgetastic_manageiq import Table, ManageIQTree
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form as request_form
@@ -56,8 +56,9 @@ class ButtonForm(ServicesCatalogView):
 class EditTagsForm(ServicesCatalogView):
     title = Text('#explorer_title_text')
 
-    select_tag = BootstrapSelect('tag_cat')
-    select_value = BootstrapSelect('tag_add')
+    tag_table = Table("//div[@id='assignments_div']//table")
+    select_tag = BootstrapSelect(id='tag_cat')
+    select_value = BootstrapSelect(id='tag_add')
 
 
 class AllCatalogItemView(ServicesCatalogView):
@@ -212,13 +213,15 @@ class CatalogItem(Updateable, Pretty, Navigatable):
 
         if view.field_entry_point.value == "":
             view.fill({'field_entry_point': 'a'})
-            view.tree.click_path("Datastore", self.domain, "Service", "Provisioning",
-                    "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
+            view.tree.click_path(
+                "Datastore", self.domain, "Service", "Provisioning",
+                "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
             view.apply_button.click()
         if self.appliance.version >= "5.7" and self.item_type == "AnsibleTower":
             view.fill({'retirement_entry_point': 'b'})
-            view.tree.click_path("Datastore", self.domain, "Service", "Retirement",
-                    "StateMachines", "ServiceRetirement", "Generic")
+            view.tree.click_path(
+                "Datastore", self.domain, "Service", "Retirement",
+                "StateMachines", "ServiceRetirement", "Generic")
             view.apply_button.click()
 
         if self.catalog_name is not None \
@@ -294,17 +297,41 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         assert view.is_displayed
         view.flash.assert_success_message('Tag edits were successfully saved')
 
+    def remove_tag(self, tag_category, tag_name):
+        """ Remove tag from service catalog item
+            Args:
+                tag_category: Tag category
+                tag_name: Tag name
+        """
+        view = navigate_to(self, 'EditTags')
+        row = view.tag_table.row(category=tag_category, assigned_value=tag_name)
+        row[0].click()
+        view.save_button.click()
+        view = self.create_view(DetailsCatalogItemView)
+        view.flash.assert_success_message('Tag edits were successfully saved')
+        assert view.is_displayed
 
-class CatalogBundle(Updateable, Pretty, Navigatable):
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
+
+
+class CatalogBundle(CatalogItem, Navigatable):
 
     def __init__(self, name=None, description=None, display_in=None,
                  catalog=None, dialog=None, catalog_items=None, appliance=None):
-        self.name = name
-        self.description = description
-        self.display_in = display_in
-        self.catalog = catalog
-        self.dialog = dialog
         self.catalog_items = catalog_items
+        super(CatalogBundle, self).__init__(
+            name=name,
+            description=description,
+            display_in=display_in,
+            catalog=catalog,
+            dialog=dialog
+        )
         Navigatable.__init__(self, appliance=appliance)
 
     def create(self):
@@ -317,8 +344,9 @@ class CatalogBundle(Updateable, Pretty, Navigatable):
                    'select_dialog': self.dialog.label})
         if view.field_entry_point.value == "":
             view.fill({'field_entry_point': ''})
-            view.tree.click_path("Datastore", domain, "Service", "Provisioning",
-                        "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
+            view.tree.click_path(
+                "Datastore", domain, "Service", "Provisioning",
+                "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
             view.apply_button.click()
         tabstrip.select_tab("Resources")
         for cat_item in self.catalog_items:
@@ -368,7 +396,7 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.catalog_items.tree.click_path("All Catalog Items",
-                        self.obj.catalog.name, self.obj.name)
+                                                             self.obj.catalog.name, self.obj.name)
 
 
 @navigator.register(CatalogItem, 'Add')
@@ -440,7 +468,7 @@ class BundleDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.catalog_items.tree.click_path("All Catalog Items",
-                        self.obj.catalog.name, self.obj.name)
+                                                             self.obj.catalog.name, self.obj.name)
 
 
 @navigator.register(CatalogBundle, 'BundleAdd')
