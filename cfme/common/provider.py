@@ -945,8 +945,12 @@ class DefaultEndpoint(object):
 
     def __init__(self, **kwargs):
         for key, val in kwargs.items():
-            if key == 'credentials' and not isinstance(val, (Credential, TokenCredential)):
+            if key == 'credentials' and isinstance(val, str):
                 val = self.credential_class.from_config(val)
+            elif key == 'credentials' and isinstance(val, Iterable):
+                val = self.credential_class.from_plaintext(val)
+            elif key == 'credentials' and isinstance(val, (Credential, TokenCredential)):
+                pass
             setattr(self, key, val)
 
         if not hasattr(self, 'credentials'):

@@ -8,17 +8,47 @@ from utils.update import Updateable
 
 
 class FromConfigMixin(object):
-    @classmethod
-    def from_config(cls, key):
-        creds = deepcopy(conf.credentials[key])
+    @staticmethod
+    def rename_properties(creds):
+        """
+        helper function to make properties have same names in credential objects.
+        Args:
+            creds: dict
 
-        # todo: fix this along with other credential fixes. code or credentials conf ?
+        Returns: updated dict
+        """
+        creds = deepcopy(creds)
         to_rename = [('password', 'secret'), ('username', 'principal')]
         for key1, key2 in to_rename:
             if key1 in creds:
                 creds[key2] = creds[key1]
                 del creds[key1]
+        return creds
 
+    @classmethod
+    def from_config(cls, key):
+        """
+        helper function which allows to construct credential object from credentials.eyaml
+
+        Args:
+            key: credential key
+
+        Returns: credential object
+        """
+        creds = cls.rename_properties(conf.credentials[key])
+        return cls(**creds)
+
+    @classmethod
+    def from_plaintext(cls, creds):
+        """
+        helper function which allows to construct credential class from plaintext dict
+
+        Args:
+            creds: dict
+
+        Returns: credential object
+        """
+        creds = cls.rename_properties(creds)
         return cls(**creds)
 
 
@@ -115,7 +145,7 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
     """
     pretty_attrs = ['token']
 
-    def __init__(self, token, verify_token=None):
+    def __init__(self, token, verify_token=None, **kwargs):
         self.token = token
         self.verify_token = verify_token
 
