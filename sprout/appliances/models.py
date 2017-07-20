@@ -1301,6 +1301,10 @@ class AppliancePool(MetadataMixin):
             return False
 
     @property
+    def broken_with_no_appliances(self):
+        return (not self.finished) and self.age >= timedelta(days=1) and self.current_count == 0
+
+    @property
     def queued_provision_tasks(self):
         return DelayedProvisionTask.objects.filter(pool=self).order_by("id")
 

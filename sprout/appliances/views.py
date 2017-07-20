@@ -556,6 +556,25 @@ def kill_pool(request, pool_id):
     return go_back_or_home(request)
 
 
+@only_authenticated
+def delete_pool(request, pool_id):
+    try:
+        pool = AppliancePool.objects.get(id=pool_id)
+    except ObjectDoesNotExist:
+        messages.warning(request, 'Pool with ID {} does not exist!.'.format(pool_id))
+        return go_back_or_home(request)
+    if not can_operate_appliance_or_pool(pool, request.user):
+        messages.warning(request, 'This pool belongs either to some other user or nobody.')
+        return go_back_or_home(request)
+    try:
+        pool.delete()
+    except Exception as e:
+        messages.warning(request, "Exception {}: {}".format(type(e).__name__, str(e)))
+    else:
+        messages.success(request, 'Deleted.')
+    return go_back_or_home(request)
+
+
 def set_pool_description(request):
     if not request.user.is_authenticated():
         raise PermissionDenied()
