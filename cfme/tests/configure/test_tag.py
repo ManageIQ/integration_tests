@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.configure.configuration import Category, Tag
+from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import categories as _categories
 from cfme.rest.gen_data import services as _services

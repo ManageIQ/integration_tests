@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
-from cfme.configure.configuration import Category
+from cfme.configure.configuration.region_settings import Category
 from cfme.rest.gen_data import categories as _categories
 import pytest
 from utils.update import update

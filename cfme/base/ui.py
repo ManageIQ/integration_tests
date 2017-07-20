@@ -772,6 +772,14 @@ class RegionView(ConfigurationView):
         TAB_NAME = "C & U Collection"
 
     @View.nested
+    class companycategories(Tab):  # noqa
+        TAB_NAME = "My Company Categories"
+
+    @View.nested
+    class companytags(Tab):  # noqa
+        TAB_NAME = "My Company Tags"
+
+    @View.nested
     class redhatupdates(Tab):  # noqa
         TAB_NAME = "Red Hat Updates"
 
@@ -782,6 +790,10 @@ class RegionView(ConfigurationView):
     @View.nested
     class importtags(Tab):  # noqa
         TAB_NAME = "Import Tags"
+
+    @View.nested
+    class maptags(Tab):  # noqa
+        TAB_NAME = "Map Tags"
 
     @property
     def is_displayed(self):
