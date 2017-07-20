@@ -359,9 +359,7 @@ def discover(discover_cls, cancel=False, start_ip=None, end_ip=None):
     wait for it to finish.
 
     Args:
-        rhevm: Whether to scan for RHEVM providers
-        vmware: Whether to scan for VMware providers
-        scvmm: Whether to scan for SCVMM providers
+        discover_cls: Instance of provider class
         cancel:  Whether to cancel out of the discover UI.
         start_ip: String start of the IP range for discovery
         end_ip: String end of the IP range for discovery
