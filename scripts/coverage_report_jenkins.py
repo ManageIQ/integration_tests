@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import jenkins
+import re
 import requests
 import subprocess
 
@@ -104,6 +105,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
     # Upload the merger
     print('Installing coverage merger')
     appliance.coverage._upload_coverage_merger()
+    eligible_build_numbers = sorted(eligible_build_numbers)
     with appliance.ssh_client as ssh:
         if not ssh.run_command('mkdir -p /var/www/miq/vmdb/coverage'):
             print('Could not create /var/www/miq/vmdb/coverage on the appliance!')
@@ -132,13 +134,21 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
         # Now run the merger
         print('Running the merger')
-        cmd = ssh.run_command('cd /var/www/miq/vmdb; time bin/rails runner coverage_merger.rb')
+        cmd = ssh.run_command(
+            'cd /var/www/miq/vmdb; time bin/rails runner coverage_merger.rb',
+            timeout=60 * 60)
         if not cmd:
             print('Failure running the merger - {}'.format(str(cmd)))
             return 6
         else:
             print('Coverage report generation was successful')
             print(str(cmd))
+            percentage = re.search(r'LOC\s+\((\d+.\d+%)\)\s+covered\.', str(cmd))
+            if percentage:
+                print('COVERAGE={};'.format(percentage.groups()[0]))
+            else:
+                print('COVERAGE=unknown;')
+
         print('Packing the generated HTML')
         cmd = ssh.run_command('cd /var/www/miq/vmdb/coverage; tar cfz /tmp/merged.tgz merged')
         if not cmd:

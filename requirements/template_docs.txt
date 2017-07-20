@@ -45,6 +45,7 @@ PyGithub
 pytest==3.0.7
 python-bugzilla>=1.2.0
 python-dateutil
+python-jenkins
 pywinrm
 PyYAML
 requests
