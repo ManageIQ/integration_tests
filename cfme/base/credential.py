@@ -115,9 +115,11 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
     """
     pretty_attrs = ['token']
 
-    def __init__(self, token, verify_token=None):
+    def __init__(self, token, verify_token=None, **kwargs):
         self.token = token
         self.verify_token = verify_token
+        for name, value in kwargs.items():
+            setattr(self, name, value)
 
     def __getattribute__(self, attr):
         if attr == 'verify_token':

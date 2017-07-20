@@ -13,7 +13,8 @@ from cfme.base.credential import (
 from cfme.common.provider_views import (InfraProvidersView,
                                         CloudProvidersView,
                                         InfraProviderDetailsView,
-                                        CloudProviderDetailsView)
+                                        CloudProviderDetailsView,
+                                        ContainersProvidersView)
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
 from cfme.web_ui import (
@@ -163,7 +164,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         from cfme.infrastructure.provider import InfraProvider
         from cfme.cloud.provider import CloudProvider
-        if self.one_of(CloudProvider, InfraProvider):
+        from cfme.containers.provider import ContainersProvider
+        if self.one_of(CloudProvider, InfraProvider, ContainersProvider):
             if check_existing and self.exists:
                 created = False
             else:
@@ -194,15 +196,18 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                         # filling credentials
                         if hasattr(endpoint, 'credentials'):
                             endp_view.fill(endpoint.credentials.view_value_mapping)
-
-                            if validate_credentials and hasattr(endp_view, 'validate'):
-                                # there are some endpoints which don't demand validation like
-                                #  RSA key pair
-                                endp_view.validate.click()
+                        # sometimes we have cases that we need to validate even though
+                        # there is no credentials, such as Hawkular endpoint
+                        if validate_credentials and hasattr(endp_view, 'validate'):
+                            # there are some endpoints which don't demand validation like
+                            #  RSA key pair
+                            endp_view.validate.click()
                 if self.one_of(InfraProvider):
                     main_view_obj = InfraProvidersView
                 elif self.one_of(CloudProvider):
                     main_view_obj = CloudProvidersView
+                elif self.one_of(ContainersProvider):
+                    main_view_obj = ContainersProvidersView
                 main_view = self.create_view(main_view_obj)
                 if cancel:
                     created = False
@@ -260,7 +265,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         from cfme.infrastructure.provider import InfraProvider
         from cfme.cloud.provider import CloudProvider
-        if self.one_of(CloudProvider, InfraProvider):
+        from cfme.containers.provider import ContainersProvider
+        if self.one_of(CloudProvider, InfraProvider, ContainersProvider):
             edit_view = navigate_to(self, 'Edit')
             # todo: to replace/merge this code with create
             # update values:
@@ -301,8 +307,10 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                                     "Such endpoint doesn't have change password/key button")
 
                             endp_view.fill(endpoint.credentials.view_value_mapping)
-                            if validate_credentials:
-                                endp_view.validate.click()
+                    # sometimes we have cases that we need to validate even though
+                    # there is no credentials, such as Hawkular endpoint
+                    if validate_credentials and hasattr(endp_view, 'validate'):
+                        endp_view.validate.click()
 
             # cloud rhos provider always requires validation of all endpoints
             # there should be a bz about that

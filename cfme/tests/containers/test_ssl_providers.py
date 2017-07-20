@@ -1,12 +1,15 @@
 from collections import namedtuple
+from copy import copy
+
 from fauxfactory import gen_alphanumeric, gen_integer
 import pytest
+
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.exceptions import FlashMessageException
 from cfme.web_ui import flash
 from utils import testgen
 from utils.version import current_version
+
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < "5.8.0.3")]
@@ -60,23 +63,20 @@ def test_add_provider_naming_conventions(provider, soft_assert):
         * Assert that provider was added successfully with each of those
     """
     for provider_name in provider_names:
-        prov = OpenshiftProvider(
-            sec_protocol='SSL',
-            name=provider_name,
-            hostname=str(provider.hostname),
-            credentials=provider.credentials
-        )
+        new_provider = copy(provider)
+        new_provider.name = provider_name
+        new_provider.endpoints['default'].sec_protocol = 'SSL'
         try:
-            prov.setup()
+            new_provider.setup()
             flash.assert_message_contain('Containers Providers "' + provider_name + '" was saved')
         except FlashMessageException:
             soft_assert(False, provider_name + ' wasn\'t added successfully')
         ContainersProvider.clear_providers()
 
 
-@pytest.mark.parametrize('default_sec_protocols', DEFAULT_SEC_PROTOCOLS)
+@pytest.mark.parametrize('default_sec_protocol', DEFAULT_SEC_PROTOCOLS)
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_provider_ssl(provider, default_sec_protocols, soft_assert):
+def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
     """ This test checks adding container providers with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     Steps:
@@ -86,28 +86,21 @@ def test_add_provider_ssl(provider, default_sec_protocols, soft_assert):
             Default Endpoint = SSL trusting custom CA/SSL without validation/SSL
         * Assert that provider was added successfully
         """
-    prov = OpenshiftProvider(
-        sec_protocol=default_sec_protocols,
-        name=provider.name,
-        hostname=str(provider.hostname),
-        hawkular_hostname=str(provider.hawkular_hostname),
-        hawkular_api_port=str(provider.hawkular_api_port),
-        hawkular_sec_protocol=str(provider.hawkular_sec_protocol),
-        credentials=provider.credentials
-    )
+    new_provider = copy(provider)
+    new_provider.endpoints['default'].sec_protocol = default_sec_protocol
     try:
-        prov.setup()
+        new_provider.setup()
         flash.assert_message_contain('Containers Providers "' + provider.name + '" was saved')
     except FlashMessageException:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
-                    default_sec_protocols + ' security protocol')
+                    default_sec_protocol + ' security protocol')
     ContainersProvider.clear_providers()
 
 
-@pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=['{} / {}'.format(ti.args[1].default_sec_protocol,
-                                               ti.args[1].hawkular_sec_protocol)
-                              for ti in TEST_ITEMS])
+@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=[
+    'Default: {} /  Hawkular: {}'.format(
+        ti.args[1].default_sec_protocol, ti.args[1].hawkular_sec_protocol)
+    for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_add_hawkular_provider_ssl(provider, test_item, soft_assert):
     """This test checks adding container providers with 3 different security protocols:
@@ -121,17 +114,11 @@ def test_add_hawkular_provider_ssl(provider, test_item, soft_assert):
             Hawkular Endpoint = SSL trusting custom CA/SSL without validation/SSL
         * Assert that provider was added successfully
         """
-    prov = OpenshiftProvider(
-        hawkular=True,
-        sec_protocol=test_item.default_sec_protocol,
-        hawkular_sec_protocol=test_item.hawkular_sec_protocol,
-        name=provider.name,
-        hostname=str(provider.hostname),
-        hawkular_hostname=str(provider.hawkular_hostname),
-        credentials=provider.credentials
-    )
+    new_provider = copy(provider)
+    new_provider.endpoints['default'].sec_protocol = test_item.default_sec_protocol
+    new_provider.endpoints['hawkular'].sec_protocol = test_item.hawkular_sec_protocol
     try:
-        prov.setup()
+        new_provider.setup()
         flash.assert_message_contain('Containers Providers "' + provider.name + '" was saved')
     except FlashMessageException:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +

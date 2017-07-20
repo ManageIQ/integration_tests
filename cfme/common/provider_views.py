@@ -308,6 +308,19 @@ class ProvidersView(BaseLoggedInPage):
     including_entities = View.include(ProviderEntitiesView, use_parent=True)
 
 
+class ContainersProvidersView(ProvidersView):
+    """
+     represents Main view displaying all Containers providers
+    """
+    table = Table(locator="//div[@id='list_grid']//table")
+
+    @property
+    def is_displayed(self):
+        return (super(ContainersProvidersView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
+                self.entities.title.text == 'Containers Providers')
+
+
 class InfraProvidersView(ProvidersView):
     """
      represents Main view displaying all Infra providers
@@ -398,6 +411,19 @@ class CloudProviderAddView(ProviderAddView):
                 self.title.text == 'Add New Cloud Provider')
 
 
+class ContainersProviderAddView(ProviderAddView):
+    """
+     represents Containers Provider Add View
+    """
+    prov_type = BootstrapSelect(id='ems_type')
+
+    @property
+    def is_displayed(self):
+        return (super(ProviderAddView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
+                self.title.text == 'Add New Containers Provider')
+
+
 class ProviderEditView(ProviderAddView):
     """
      represents Provider Edit View
@@ -439,3 +465,14 @@ class CloudProviderEditView(ProviderEditView):
         return (super(CloudProviderEditView, self).is_displayed and
                 self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
                 self.title.text == 'Edit Cloud Provider')
+
+
+class ContainersProviderEditView(ProviderEditView):
+    """
+     represents Containers Provider Edit View
+    """
+    @property
+    def is_displayed(self):
+        return (super(ProviderEditView, self).is_displayed and
+                self.navigation.currently_selected == ['Compute', 'Containers', 'Providers'] and
+                self.title.text == 'Edit Containers Provider')
