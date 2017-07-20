@@ -5,9 +5,10 @@ import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-
+from widgetastic_patternfly import Dropdown
 from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
-from cfme.containers.provider import Labelable, navigate_and_get_rows
+from cfme.containers.provider import Labelable, navigate_and_get_rows,\
+    ContainerObjectAllBaseView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location, InfoBlock,\
     flash, PagedTable
@@ -123,12 +124,15 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
             raise ValueError("{} is not a known state for compliance".format(text))
 
 
+class ImageAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Container Images'
+    configuration = Dropdown('Configuration')
+
+
 @navigator.register(Image, 'All')
 class All(CFMENavigateStep):
+    VIEW = ImageAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Container Images')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Images')

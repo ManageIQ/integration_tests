@@ -9,6 +9,8 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import SelectorDropdown, Button, Dropdown
 from widgetastic.widget import Text
 from wrapanapi.utils import eval_strings
+from widgetastic_manageiq import Table
+from widgetastic.xpath import quote
 
 
 from cfme.base.login import BaseLoggedInPage
@@ -283,12 +285,19 @@ class ContainersProvider(BaseProvider, Pretty):
         return out
 
 
+class ContainersProviderAllView(BaseLoggedInPage):
+
+    table = Table(locator="//div[@id='list_grid']//table")
+
+    @property
+    def is_displayed(self):
+        return match_page(summary='Containers Providers')
+
+
 @navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
+    VIEW = ContainersProviderAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Pods')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Providers')
@@ -321,8 +330,8 @@ class ProviderDetailsView(BaseLoggedInPage):
 
 @navigator.register(ContainersProvider, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
     VIEW = ProviderDetailsView
+    prerequisite = NavigateToSibling('All')
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
@@ -420,6 +429,26 @@ class AdHocMain(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.monitor.item_select('Ad hoc Metrics')
+
+
+class ContainerObjectAllBaseView(BaseLoggedInPage):
+    """Base class for container object All view.
+    TITLE_TEXT should be defined in child."""
+
+    policy = Dropdown('Policy')
+    download = Dropdown('Download')
+
+    table = Table(locator="//div[@id='list_grid']//table")
+
+    def title(self):
+        if not hasattr(self, 'TITLE_TEXT'):
+            raise Exception('TITLE_TEXT is not defined for destination {} ("All").'
+                            .format(self.__class__.__name__))
+        return Text('//h1[normalize-space(.) = {}]'.format(quote(self.TITLE_TEXT)))
+
+    @property
+    def is_displayed(self):
+        return self.title.is_displayed
 
 
 # Common methods:

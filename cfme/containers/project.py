@@ -6,7 +6,8 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, paginator, match_location,\
     PagedTable, CheckboxTable
-from cfme.containers.provider import details_page, Labelable
+from cfme.containers.provider import details_page, Labelable,\
+    ContainerObjectAllBaseView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator,\
     navigate_to
@@ -55,9 +56,14 @@ class Project(Taggable, Labelable, SummaryMixin, Navigatable):
                 for obj in itertools.islice(project_list, count)]
 
 
+class ProjectAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Projects'
+
+
 @navigator.register(Project, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = ProjectAllView
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Projects')

@@ -4,14 +4,17 @@ import random
 import itertools
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic_manageiq import Table
 
+from cfme.base.ui import BaseLoggedInPage
 from cfme.common import SummaryMixin, Taggable
+from cfme.containers.provider import navigate_and_get_rows
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, paginator, match_location, InfoBlock,\
     PagedTable, CheckboxTable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
-from cfme.containers.provider import navigate_and_get_rows
+
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -55,9 +58,19 @@ class Volume(Taggable, SummaryMixin, Navigatable):
                 for row in itertools.islice(rows, count)]
 
 
+class VolumeAllView(BaseLoggedInPage):
+
+    table = Table(locator="//div[@id='list_grid']//table")
+
+    @property
+    def is_displayed(self):
+        return match_page(summary='Persistent Volumes')
+
+
 @navigator.register(Volume, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = VolumeAllView
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Volumes')

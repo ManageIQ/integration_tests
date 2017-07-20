@@ -5,7 +5,8 @@ import random
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import SummaryMixin, Taggable
-from cfme.containers.provider import pol_btn, navigate_and_get_rows
+from cfme.containers.provider import pol_btn, navigate_and_get_rows,\
+    ContainerObjectAllBaseView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location,\
     PagedTable
@@ -47,12 +48,14 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
                 for row in ir_rows_list]
 
 
+class ImageRegistryAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Image Registries'
+
+
 @navigator.register(ImageRegistry, 'All')
 class ImageRegistryAll(CFMENavigateStep):
+    VIEW = ImageRegistryAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Image Registries')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Image Registries')

@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 import random
 import itertools
+from functools import partial
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, paginator, match_location,\
     PagedTable, CheckboxTable
-from cfme.containers.provider import details_page, Labelable
+from cfme.containers.provider import details_page, Labelable,\
+    ContainerObjectAllBaseView
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
 from utils.appliance import Navigatable
-from functools import partial
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -56,9 +57,14 @@ class Route(Taggable, Labelable, SummaryMixin, Navigatable):
                 for obj in itertools.islice(route_list, count)]
 
 
+class RouteAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Routes'
+
+
 @navigator.register(Route, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = RouteAllView
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Routes')
