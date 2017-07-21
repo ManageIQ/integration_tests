@@ -8,7 +8,7 @@ from cfme.infrastructure.config_management import ConfigManager
 from cfme.infrastructure.datastore import Datastore
 from cfme.infrastructure.pxe import ISODatastore
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.intelligence.chargeback import ComputeRate
+from cfme.intelligence.chargeback.rates import ComputeRate
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.services.myservice import MyService
 from cfme.optimize.utilization import Utilization

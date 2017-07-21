@@ -4,7 +4,7 @@ import fauxfactory
 import pytest
 
 
-import cfme.intelligence.chargeback as cb
+import cfme.intelligence.chargeback.rates as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
 from utils import error
