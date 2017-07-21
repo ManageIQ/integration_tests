@@ -287,7 +287,7 @@ class TestGroupsViaREST(object):
         assert groups_len == len(edited)
         for index in range(groups_len):
             record, _ = wait_for(
-                lambda: collection.find_by(name=new[index]['description']) or False,
+                lambda: collection.find_by(description=new[index]['description']) or False,
                 num_sec=180,
                 delay=10,
             )
