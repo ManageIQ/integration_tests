@@ -3,13 +3,18 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.service_dialogs import ServiceDialog, common
-from cfme.web_ui import paginator
+from cfme.automate.service_dialogs import DialogCollection
+from cfme.web_ui import paginator, Table
 from utils.appliance.implementations.ui import navigate_to
 
 
+pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
+
+dialogs_table = Table(".//div[@id='list_grid']/table")
+
+
 @pytest.fixture(scope="module")
-def some_dialogs(request):
+def some_dialogs(appliance, request):
     to_delete = []
     request.addfinalizer(lambda: map(lambda obj: obj.delete(), to_delete))
     for i in range(6):
@@ -17,13 +22,15 @@ def some_dialogs(request):
         element_data = dict(ele_label='ele_label_{}'.format(random_str),
                             ele_name='ele_name_{}'.format(random_str),
                             choose_type='Check Box')
-        dialog = ServiceDialog(
-            label='test_paginator_{}'.format(random_str),
-            tab_label='tab_{}'.format(random_str),
-            box_label='box_{}'.format(random_str),
-            element_data=element_data)
-        dialog.create()
-        to_delete.append(dialog)
+        service_dialogs = DialogCollection(appliance)
+        sd = service_dialogs.create(label='test_paginator_{}'.format(random_str),
+                description="my dialog", submit=True, cancel=True,)
+        tab = sd.tabs.create(tab_label='tab_{}'.format(random_str),
+                tab_desc="my tab desc")
+        box = tab.boxes.create(box_label='box_{}'.format(random_str),
+                box_desc="my box desc")
+        box.elements.create(element_data=[element_data])
+        to_delete.append(sd)
     return to_delete
 
 
@@ -54,11 +61,11 @@ def test_paginator(some_dialogs, soft_assert):
         * During the cycling, assert the numbers displayed in the paginator make sense
         * During the cycling, assert the paginator does not get stuck.
     """
-    navigate_to(ServiceDialog, 'All')
+    navigate_to(DialogCollection, 'All')
     paginator.results_per_page(50)
     paginator.results_per_page(5)
     # Now we must have only 5
-    soft_assert(len(list(common.dialogs_table.rows())) == 5, "Changing number of rows failed!")
+    soft_assert(len(list(dialogs_table.rows())) == 5, "Changing number of rows failed!")
     # try to browse
     current_rec_offset = None
     dialogs_found = set()
@@ -68,7 +75,7 @@ def test_paginator(some_dialogs, soft_assert):
             break
         if current_rec_offset is None:
             current_rec_offset = paginator.rec_offset()
-        for text in get_relevant_rows(common.dialogs_table):
+        for text in get_relevant_rows(dialogs_table):
             dialogs_found.add(text)
 
         current_total = paginator.rec_total()

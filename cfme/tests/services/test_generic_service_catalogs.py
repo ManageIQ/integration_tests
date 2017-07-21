@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.automate.service_dialogs import ServiceDialog
+from cfme.automate.service_dialogs import DialogCollection
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -66,8 +66,7 @@ def test_service_circular_reference(catalog_item):
     sec_catalog_bundle.create()
     with error.expected("Error during 'Resource Add': Adding resource <{}> to Service <{}> "
                         "will create a circular reference".format(sec_bundle_name, bundle_name)):
-        catalog_bundle.update({'description': "edit_desc",
-                               'catalog_items': sec_catalog_bundle.name})
+        catalog_bundle.update({'catalog_items': sec_catalog_bundle.name})
 
 
 def test_service_generic_catalog_bundle(catalog_item):
@@ -122,11 +121,13 @@ def test_bundles_in_bundle(catalog_item):
         assert row.last_message.text == 'Request complete'
 
 
-def test_delete_dialog_before_parent_item(catalog_item):
-    service_dialog = ServiceDialog(label=catalog_item.dialog.label)
-    service_dialog.delete()
-    flash.assert_message_match(('Dialog \"{}\": Error during delete: Dialog cannot be'
-        ' deleted because it is connected to other components.').format(catalog_item.dialog.label))
+def test_delete_dialog_before_parent_item(appliance, catalog_item):
+    service_dialog = DialogCollection(appliance)
+    dialog = service_dialog.instantiate(label=catalog_item.dialog.label)
+    error_message = ('Dialog \"{}\": Error during delete: Dialog cannot be'
+        ' deleted because it is connected to other components.').format(catalog_item.dialog.label)
+    with error.expected(error_message):
+        dialog.delete()
 
 
 class TestServiceCatalogViaREST(object):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 
-from cfme.automate.service_dialogs import ServiceDialog
+from cfme.automate.service_dialogs import DialogCollection
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -78,6 +78,7 @@ def tags(request, rest_api, categories):
 
 
 def dialog():
+    service_dialogs = DialogCollection()
     dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
     element_data = dict(
         ele_label="ele_{}".format(fauxfactory.gen_alphanumeric()),
@@ -86,18 +87,13 @@ def dialog():
         choose_type="Text Box",
         default_text_box="default value"
     )
-    service_dialog = ServiceDialog(
-        label=dialog,
-        description="my dialog",
-        submit=True,
-        cancel=True,
-        element_data=element_data,
-        tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
-        tab_desc="my tab desc",
-        box_label="box_{}".format(fauxfactory.gen_alphanumeric()),
-        box_desc="my box desc"
-    )
-    service_dialog.create()
+    service_dialog = service_dialogs.create(label=dialog,
+        description="my dialog", submit=True, cancel=True,)
+    tab = service_dialog.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+        tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+        box_desc="my box desc")
+    box.elements.create(element_data=[element_data])
     return service_dialog
 
 

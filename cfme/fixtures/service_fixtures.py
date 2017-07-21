@@ -2,30 +2,31 @@
 import fauxfactory
 import pytest
 
-
-from cfme.automate.service_dialogs import ServiceDialog
+from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 
 
 @pytest.yield_fixture(scope="function")
-def dialog():
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    service_name = fauxfactory.gen_alphanumeric()
+def dialog(appliance):
+    service_dialogs = DialogCollection(appliance)
+    dialog = fauxfactory.gen_alphanumeric()
     element_data = dict(
         ele_label="ele_" + fauxfactory.gen_alphanumeric(),
         ele_name="service_name",
         ele_desc="my ele desc",
         choose_type="Text Box",
-        default_text_box=service_name
+        default_text_box=dialog
     )
-    service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True,
-                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
-                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc",
-                     element_data=element_data)
-    service_dialog.create()
-    yield service_dialog
+
+    sd = service_dialogs.create(label=dialog,
+        description="my dialog", submit=True, cancel=True,)
+    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+        tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+        box_desc="my box desc")
+    box.elements.create(element_data=[element_data])
+    yield sd
 
 
 @pytest.yield_fixture(scope="function")
@@ -41,7 +42,8 @@ def catalog():
 def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type, vlan = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
-    item_name = dialog.element_data.get("default_text_box")
+    # dialog, element = dialog
+    item_name = dialog.label
     provisioning_data = dict(
         vm_name=vm_name,
         host_name={'name': [host]},

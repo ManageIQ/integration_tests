@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.service_dialogs import ServiceDialog
+from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -18,6 +18,7 @@ from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.ignore_stream("upstream"),
     pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
     test_requirements.service,
     pytest.mark.long_running
@@ -32,7 +33,8 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.yield_fixture(scope="function")
-def tagcontrol_dialog():
+def tagcontrol_dialog(appliance):
+    service_dialogs = DialogCollection(appliance)
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = {
         'ele_label': "Service Level",
@@ -42,14 +44,14 @@ def tagcontrol_dialog():
         'field_category': "Service Level",
         'field_required': True
     }
-    servicedialog = ServiceDialog(label=dialog,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc", element_data=element_data)
-    servicedialog.create()
-    yield servicedialog
+    sd = service_dialogs.create(label=dialog,
+        description="my dialog", submit=True, cancel=True,)
+    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+        tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+        box_desc="my box desc")
+    box.elements.create(element_data=[element_data])
+    yield sd
 
 
 @pytest.yield_fixture(scope="function")

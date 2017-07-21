@@ -4,33 +4,15 @@ import pytest
 from cfme import test_requirements
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate.buttons import Button, ButtonGroup
-from cfme.automate.service_dialogs import ServiceDialog
 from cfme.infrastructure import host
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.update import update
 
-pytestmark = [test_requirements.automate, pytest.mark.usefixtures('uses_infra_providers')]
 
-
-@pytest.yield_fixture(scope="module")
-def dialog():
-    dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
-    )
-
-    service_dialog = ServiceDialog(label=dialog_name, description="my dialog", submit=True,
-                                   cancel=True, tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                                   tab_desc="my tab desc",
-                                   box_label="box_" + fauxfactory.gen_alphanumeric(),
-                                   box_desc="my box desc", element_data=element_data)
-    service_dialog.create()
-    yield service_dialog
-    service_dialog.delete()
+pytestmark = [test_requirements.automate,
+    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.ignore_stream("upstream")]
 
 
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.
@@ -151,11 +133,11 @@ def test_button_on_host(dialog, request):
     myhost.execute_button(buttongroup.hover, button.text)
 
 
-@pytest.mark.meta(blockers=[1229348], automates=[1229348])
+@pytest.mark.meta(blockers=[BZ(1460774, forced_streams=["5.8", "upstream"])])
 @pytest.mark.tier(2)
-def test_button_avp_displayed(request):
+def test_button_avp_displayed(dialog, request):
     """This test checks whether the Attribute/Values pairs are displayed in the dialog.
-
+       automates 1229348
     Steps:
         * Open a dialog to create a button.
         * Locate the section with attribute/value pairs.
