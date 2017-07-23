@@ -10,7 +10,6 @@ from widgetastic_patternfly import (SelectorDropdown, Dropdown, BootstrapSelect,
                                     Input, Button, Tab)
 from widgetastic.widget import Text, View, TextInput
 from wrapanapi.utils import eval_strings
-from widgetastic_manageiq import Table
 from widgetastic.xpath import quote
 
 
@@ -21,7 +20,7 @@ from cfme import exceptions
 from cfme.fixtures import pytest_selenium as sel
 from cfme.common.provider_views import BeforeFillMixin,\
     ContainersProviderAddView, ContainersProvidersView,\
-    ContainersProviderEditView
+    ContainersProviderEditView, ProvidersView
 from cfme.base.credential import TokenCredential
 from cfme.web_ui import (
     Quadicon, toolbar as tb,
@@ -401,14 +400,16 @@ class AdHocMain(CFMENavigateStep):
         self.prerequisite_view.monitor.item_select('Ad hoc Metrics')
 
 
-class ContainerObjectAllBaseView(BaseLoggedInPage):
+class ContainerObjectAllBaseView(ProvidersView):
     """Base class for container object All view.
     TITLE_TEXT should be defined in child."""
 
     policy = Dropdown('Policy')
     download = Dropdown('Download')
 
-    table = Table(locator="//div[@id='list_grid']//table")
+    @property
+    def table(self):
+        return self.entities.elements
 
     def title(self):
         if not hasattr(self, 'TITLE_TEXT'):
