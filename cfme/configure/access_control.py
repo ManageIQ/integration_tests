@@ -14,6 +14,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
+from utils.wait import wait_for
 
 
 def simple_user(userid, password):
@@ -1190,6 +1191,7 @@ class Tenant(Updateable, Pretty, Navigatable):
     def set_quota(self, **kwargs):
         """ Sets tenant quotas """
         view = navigate_to(self, 'ManageQuotas')
+        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=5, delay=5)
         view.fill({'cpu_cb': kwargs.get('cpu_cb'),
                    'cpu_txt': kwargs.get('cpu'),
                    'memory_cb': kwargs.get('memory_cb'),
