@@ -72,7 +72,7 @@ def remove_label(test_obj, name, value):
 
 
 def verify_ui(soft_assert, data_collection):
-    for instance, company_tag, set_value, results_status, results_message, label_name in data_collection:
+    for instance, company_tag, set_value, category, results_status, results_message, label_name in data_collection:
         if soft_assert(results_status, results_message):
             soft_assert(
                 wait_for(
@@ -88,31 +88,28 @@ def verify_ui(soft_assert, data_collection):
             )
 
 
-def add_1_label(provider, appliance, value, name=None, random_name=False):
+def add_1_label(provider, appliance, value, name=None):
     # Creating random instance for each object in TEST_OBJECTS and create a random label for it.
-    label_data = namedtuple('label_data', ['instance', 'company_tag', 'set_value', 'result_status',
+    label_data = namedtuple('label_data', ['instance', 'company_tag', 'set_value', 'category', 'result_status',
                                            'result_message', 'label_name'])
     data_collection = []
-    # if not name:
-    #     name = 'abc' + "_" + fauxfactory.gen_alpha(5)
     # Collected data in the form:
     #                <instance>, <company_tag>, <results_status>
     # Adding company tags to each object:
     for test_obj in TEST_OBJECTS:
-        if random_name:
-            name = name
-        if not random_name:
+        if not name:
             name = 'abc' + "_" + fauxfactory.gen_alpha(5)
         get_random_kwargs = {'count': 1, 'appliance': appliance}
         if test_obj is Image:
             get_random_kwargs['ocp_only'] = True
         instance = test_obj.get_random_instances(provider, **get_random_kwargs).pop()
         set_value = test_obj.__name__ + "_" + value
-        company_tag = 'category: ' + set_value
+        category = 'category' + "_" + fauxfactory.gen_alpha(5)
+        company_tag = category + ': ' + set_value
         print('the name is: ' + name + " and the value is: " + set_value + " the name is: " + instance.name)
         result_status, result_message = set_label(test_obj, instance, name, set_value)
         data_collection.append(
-            label_data(instance, company_tag, set_value, result_status, result_message, name)
+            label_data(instance, company_tag, set_value, category, result_status, result_message, name)
         )
     return data_collection
 
@@ -180,15 +177,20 @@ def test_autotagging_1_value(provider, soft_assert, appliance):
     values_bundle = generate_values()
     for value in values_bundle:
         data_collection = add_1_label(provider, appliance, value=value)
-        for instance, company_tag, set_value, results_status, results_message, label_name in data_collection:
+        for instance, company_tag, set_value, category, results_status, results_message, label_name in data_collection:
             print(instance)
-            mt = MapTags(entity=instance.__class__.__name__, label=label_name, category=set_value)
+            mt = MapTags(entity=instance.__class__.__name__, label=label_name, category=category)
             mt.create()
         provider.refresh_provider_relationships()
         verify_ui(soft_assert, data_collection)
         # Labels deletion
-        for instance, company_tag, results_status, results_message, label_name in data_collection:
+        for instance, company_tag, set_value, category, results_status, results_message, label_name in data_collection:
             remove_label(instance, instance.name, label_name)
+        # Tags removal
+        for instance, company_tag, set_value, category, results_status, results_message, label_name in data_collection:
+            print(instance)
+            mt = MapTags(entity=instance.__class__.__name__, label=label_name, category=category)
+            mt.delete()
 
 
 @pytest.mark.polarion('CMP-10680')

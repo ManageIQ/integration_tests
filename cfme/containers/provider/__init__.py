@@ -551,50 +551,20 @@ class Labelable(object):
                 .format(name, value, self.__class__.__name__, self.name, results))
         return results
 
-    # def remove_label(self, name, silent_failure=False):
-    #     """Remove label by name.
-    #     :var: name: name of label
-    #     :var: silent_failure: whether to raise an error or not in case of failure.
-    #
-    #     Returns:
-    #         :py:type:`bool` pass or fail
-    #     Raises:
-    #         :py:class:`LabelNotFoundException`.
-    #     """
-    #     json_content = self._get_json()
-    #     if name not in json_content['metadata'].get('labels', {}).keys():
-    #         failure_signature = 'Could not find label "{}", labels: {}' \
-    #             .format(name, json_content['metadata']['labels'])
-    #         if silent_failure:
-    #             logger.warning(failure_signature)
-    #             return False
-    #         else:
-    #             raise exceptions.LabelNotFoundException(failure_signature)
-    #     self.provider.cli.run_command(
-    #         'oc label {} {} {}-'.format(
-    #             self._cli_resource_type,
-    #             ('sha256:{}'.format(self.sha256)
-    #              if (self.__class__.__name__ == 'Image') else self.name),
-    #             name
-    #         )
-    #     )
-    #     return True
-
-
-def remove_label(self, object, name, value):
-    if hasattr(self, 'project_name'):
-        results = self.provider.cli.run_command('oc project {}'.format(self.project_name))
-        assert results.success, 'Could not set project {}. SSH Results: {}'.format(
-            self.project_name, results)
-    results = self.provider.cli.run_command(
-        'oc label {} {} {}- '.format(object, name,
-                                     value)
-    )
-    if results.failed:
-        raise exceptions.SetLabelException(
-            'Failed to delete label "{} = {}" to {}. SSH Results: {}'
-                .format(name, value, object, results))
-    return results
+    def remove_label(self, object, name, value):
+        if hasattr(self, 'project_name'):
+            results = self.provider.cli.run_command('oc project {}'.format(self.project_name))
+            assert results.success, 'Could not set project {}. SSH Results: {}'.format(
+                self.project_name, results)
+        results = self.provider.cli.run_command(
+            'oc label {} {} {}- '.format(object, name,
+                                         value)
+        )
+        if results.failed:
+            raise exceptions.SetLabelException(
+                'Failed to delete label "{} = {}" to {}. SSH Results: {}'
+                    .format(name, value, object, results))
+        return results
 
 
 def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
