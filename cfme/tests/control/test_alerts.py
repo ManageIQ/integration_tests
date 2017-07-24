@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 from datetime import datetime, timedelta
 
+from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
@@ -11,14 +12,13 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import ports, testgen
 from utils.conf import credentials
+from utils.generators import random_vm_name
 from utils.log import logger
 from utils.net import net_check
+from utils.providers import ProviderFilter
 from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
-from utils.providers import ProviderFilter
-from utils.generators import random_vm_name
-from cfme import test_requirements
 
 pytestmark = [
     pytest.mark.long_running,
