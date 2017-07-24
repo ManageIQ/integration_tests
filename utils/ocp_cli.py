@@ -3,6 +3,10 @@ from utils.log import logger
 from utils.ssh import SSHClient
 
 
+class SSHCommandFailure(Exception):
+    pass
+
+
 class OcpCli(object):
     """This class provides CLI functionality for Openshift provider.
     """
@@ -30,6 +34,7 @@ class OcpCli(object):
         self.log_line_limit = 500
 
     def run_command(self, *args, **kwargs):
+        raise_on_error = kwargs.pop('raise_on_error', False)
         logger.info('{} - Running SSH Command#{} : {}'
                     .format(self.hostname, self._command_counter, args[0]))
         results = self.ssh_client.run_command(*args, **kwargs)
@@ -38,8 +43,12 @@ class OcpCli(object):
             logger.info('{} - Command#{} - Succeed: {}'
                         .format(self.hostname, self._command_counter, results_short))
         else:
-            logger.warning('{} - Command#{} - Failed: {}'
-                           .format(self.hostname, self._command_counter, results_short))
+            error_message = '{} - Command#{} - Failed: {}'.format(
+                self.hostname, self._command_counter, results_short)
+            logger.warning(error_message)
+            if raise_on_error:
+                raise SSHCommandFailure(error_message)
+
         self._command_counter += 1
         return results
 
