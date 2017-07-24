@@ -8,7 +8,7 @@ import pytest
 from utils import testgen
 from utils.log import logger
 from cfme.containers.provider import ContainersProvider
-from cfme.intelligence import chargeback as cb
+from cfme.intelligence.chargeback import assignments, rates
 from cfme.intelligence.reports.reports import CustomReport
 
 
@@ -48,7 +48,7 @@ def new_chargeback_rate(appliance, include_variable_rates=True):
                              'fixed_rate': rand_float_str(),
                              'variable_rate': gen_var_rate()}
     }
-    ccb = cb.ComputeRate(description, fields=data, appliance=appliance)
+    ccb = rates.ComputeRate(description, fields=data, appliance=appliance)
     ccb.create()
     return ccb
 
@@ -64,7 +64,7 @@ def new_chargeback_fixed_rate(appliance):
 @pytest.yield_fixture(scope="module")
 def assign_compute_custom_rate(new_chargeback_fixed_rate, provider):
     # Assign custom Compute rate to the Selected Containers Provider
-    asignment = cb.Assign(
+    asignment = assignments.Assign(
         assign_to="Labeled Container Images",
         docker_labels="Architecture",
         selections={
@@ -75,7 +75,7 @@ def assign_compute_custom_rate(new_chargeback_fixed_rate, provider):
 
     yield new_chargeback_fixed_rate.description
 
-    asignment = cb.Assign(
+    asignment = assignments.Assign(
         assign_to="Selected Containers Providers",
         selections={
             provider.name: "Default"
