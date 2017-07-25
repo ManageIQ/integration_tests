@@ -197,7 +197,8 @@ def test_create_snapshot_via_ae(request, domain, test_vm):
         execute_methods=True,
         attributes_values={"snap_name": snap_name})
 
-    wait_for(snapshot.does_snapshot_exist, timeout="2m", delay=10)
+    wait_for(snapshot.does_snapshot_exist, timeout="2m", delay=10,
+             fail_func=sel.refresh, handle_exception=True)
 
     # Clean up if it appeared
     snapshot.delete()
