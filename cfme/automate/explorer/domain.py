@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.xpath import quote
 from widgetastic.widget import Text, Checkbox
 from widgetastic.utils import Fillable
 from widgetastic_manageiq import Table, UpDownSelect
@@ -14,12 +15,17 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from . import AutomateExplorerView
 
 
+def generate_updown(title):
+    return './/*[(self::a or self::button) and @title={}]/*[self::img or self::i]'.format(
+        quote(title))
+
+
 class DomainPriorityView(AutomateExplorerView):
     title = Text('#explorer_title_text')
     domains = UpDownSelect(
         '#seq_fields',
-        './/a[@title="Move selected fields up"]/img',
-        './/a[@title="Move selected fields down"]/img')
+        generate_updown('Move selected fields up'),
+        generate_updown('Move selected fields down'))
 
     save_button = Button('Save')
     reset_button = Button('Reset')
