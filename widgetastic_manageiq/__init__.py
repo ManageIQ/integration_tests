@@ -600,17 +600,24 @@ class CheckboxSelect(Widget):
 
 
 class BootstrapSwitchSelect(CheckboxSelect):
-    """This view is very similar to parent CheckboxSelect view. BootstrapSwitches used instead of
+    """BootstrapSwitchSelect view.
+
+    This view is very similar to parent CheckboxSelect view. BootstrapSwitches used instead of
     usual Checkboxes. It can be found in the same policy's events assignment screen since
     CFME 5.8.1.
+
     """
+
     BS_TEXT = '/../../following-sibling::text()[1]'
 
     def _get_bs_description(self, bs):
-        """Returns text description of the BootstrapSwitch widget. We have to use such hack with
-        the script execution, because Selenium cannot return text of a text node itself.
+        """Returns text description of the BootstrapSwitch widget.
+
+        We have to use such hack with the script execution, because Selenium cannot return text of a
+        text node itself.
 
         Returns: str
+
         """
         return bs._label or self.browser.execute_script(
             "{script} return xpath(null, {arg}).textContent;".format(
