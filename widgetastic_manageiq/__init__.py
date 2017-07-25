@@ -35,7 +35,9 @@ from widgetastic.widget import (
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapSwitch, BootstrapTreeview, Button, Input,
-    BootstrapSelect, CheckableBootstrapTreeview)
+    BootstrapSelect, CheckableBootstrapTreeview, FlashMessages)
+
+from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
 
 class DynaTree(Widget):
