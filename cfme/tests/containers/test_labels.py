@@ -86,7 +86,10 @@ def test_labels_create(provider, soft_assert, random_labels):
             )
 
 
-@pytest.mark.meta(blockers=[BZ(1451832, forced_streams=['5.7', '5.8', 'upstream'])])
+@pytest.mark.meta(blockers=[
+    BZ(1451832, forced_streams=['5.7', '5.8', 'upstream']),
+    BZ(1469666, forced_streams=['5.7', '5.8', 'upstream'])
+])
 @pytest.mark.polarion('CMP-10572')
 def test_labels_remove(provider, soft_assert, random_labels):
     # Removing the labels

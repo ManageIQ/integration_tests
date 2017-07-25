@@ -2,13 +2,8 @@ from random import shuffle
 
 import pytest
 
-from utils import testgen
-from utils.version import current_version
-from cfme.web_ui import paginator, summary_title
-
 from cfme.containers.pod import Pod
-from cfme.containers.provider import ContainersProvider,\
-    ContainersTestItem
+from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.service import Service
 from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
@@ -18,6 +13,11 @@ from cfme.containers.template import Template
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.volume import Volume
+from cfme.web_ui import paginator, summary_title
+
+from utils import testgen
+from utils.version import current_version
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -69,8 +69,10 @@ def check_relationships(instance):
         assert '(Summary)' in summary_title()
 
 
+@pytest.mark.meta(blockers=[BZ(1467639, forced_streams=["5.8"],
+                               unblock=lambda test_item: test_item.obj != Container)])
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+                         ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_relationships_tables(provider, test_item):
     """This test verifies the integrity of the Relationships table.
     clicking on each field in the Relationships table takes the user

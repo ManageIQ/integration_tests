@@ -8,7 +8,6 @@ from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
 from cfme.containers.image import Image
 from cfme.containers.project import Project
-from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.route import Route
 
@@ -39,11 +38,14 @@ TEST_ITEMS = [
             Route, 'CMP-10651', fields_to_verify=['provider', 'project_name']
         )
     ),
-    pytest.mark.polarion('CMP-9943')(
-        ContainersTestItem(
-            Container, 'CMP-9943', fields_to_verify=['pod_name', 'image', 'state']
-        )
-    ),
+    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1467639
+    # from cfme.containers.container import Container (add to imports when fixed)
+    # pytest.mark.polarion('CMP-9943')(
+    #     ContainersTestItem(
+    #         Container, 'CMP-9943', fields_to_verify=['pod_name', 'image', 'state']
+    #     )
+    # ),
     pytest.mark.polarion('CMP-9909')(
         ContainersTestItem(
             Pod, 'CMP-9909', fields_to_verify=[
@@ -96,7 +98,7 @@ TEST_ITEMS = [
 
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
+                         ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
 def test_tables_fields(provider, test_item, soft_assert):
 
     navigate_to(test_item.obj, 'All')
