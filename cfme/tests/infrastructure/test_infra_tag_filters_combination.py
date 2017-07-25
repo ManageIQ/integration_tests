@@ -53,7 +53,7 @@ def group_tag_datacenter_combination(group_with_tag, a_provider):
         group_with_tag.host_cluster = [a_provider.data['name'], a_provider.data['datacenters'][0]]
 
 
-@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])
+@pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'not_visible'])
 def test_tagvis_tag_datacenter_combination(testing_vis_object, group_tag_datacenter_combination,
                                 check_item_visibility, visibility):
     """ Tests template visibility with combination  of tag and selected
