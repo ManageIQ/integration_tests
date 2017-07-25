@@ -36,6 +36,7 @@ def test_tables_sort(test_item, soft_assert):
 
         if not header_text:
             continue
+        current_view.entities.paginator.set_items_per_page('1000 items')
         # Checking both orders
         current_view.table.click_sort(header_text)
         rows_ascending = [r[col].text for r in current_view.table.rows()]
