@@ -35,7 +35,7 @@ class EditPolicyEventAssignments(ControlExplorerView):
     title = Text("#explorer_title_text")
 
     events = VersionPick({
-        Version.lowest: CheckboxSelect("policy_info_div"),
+        Version.lowest(): CheckboxSelect("policy_info_div"),
         "5.8.1": BootstrapSwitchSelect("policy_info_div")
     })
 
