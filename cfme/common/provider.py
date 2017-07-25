@@ -198,7 +198,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                             endp_view.fill(endpoint.credentials.view_value_mapping)
                         # sometimes we have cases that we need to validate even though
                         # there is no credentials, such as Hawkular endpoint
-                        if validate_credentials and hasattr(endp_view, 'validate'):
+                        if (validate_credentials and hasattr(endp_view, 'validate') and
+                                endp_view.validate.is_displayed):
                             # there are some endpoints which don't demand validation like
                             #  RSA key pair
                             endp_view.validate.click()
@@ -309,7 +310,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                             endp_view.fill(endpoint.credentials.view_value_mapping)
                     # sometimes we have cases that we need to validate even though
                     # there is no credentials, such as Hawkular endpoint
-                    if validate_credentials and hasattr(endp_view, 'validate'):
+                    if (validate_credentials and hasattr(endp_view, 'validate') and
+                            endp_view.validate.is_displayed):
                         endp_view.validate.click()
 
             # cloud rhos provider always requires validation of all endpoints
@@ -318,7 +320,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             if self.one_of(OpenStackProvider):
                 for endp in self.endpoints.values():
                     endp_view = getattr(self.endpoints_form(parent=edit_view), endp.name)
-                    endp_view.validate.click()
+                    if hasattr(endp_view, 'validate') and endp_view.validate.is_displayed:
+                        endp_view.validate.click()
 
             if self.one_of(InfraProvider):
                 details_view_obj = InfraProviderDetailsView
