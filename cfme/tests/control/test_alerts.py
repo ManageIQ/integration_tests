@@ -123,14 +123,18 @@ def set_performance_capture_threshold(appliance):
     appliance.set_yaml_config(yaml)
 
 
-@pytest.yield_fixture(scope="function")
-def setup_candu(vm):
+@pytest.yield_fixture(scope="module")
+def setup_candu():
     candu.enable_all()
     with server_roles_enabled('ems_metrics_coordinator', 'ems_metrics_collector',
             'ems_metrics_processor'):
-        vm.wait_candu_data_available(timeout=20 * 60)
         yield
     candu.disable_all()
+
+
+@pytest.fixture(scope="function")
+def wait_candu(vm):
+    vm.wait_candu_data_available(timeout=20 * 60)
 
 
 @pytest.fixture(scope="module")
@@ -225,7 +229,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
-def test_alert_rtp(request, vm, smtp_test, provider, setup_candu):
+def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available.
 
@@ -259,7 +263,7 @@ def test_alert_rtp(request, vm, smtp_test, provider, setup_candu):
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
 def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, provider, ssh,
-        setup_candu):
+        setup_candu, wait_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
     a CPU spike in the machine to trigger the threshold. The alert is displayed in the timelines.
 
@@ -304,7 +308,7 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
-def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm):
+def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, wait_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
