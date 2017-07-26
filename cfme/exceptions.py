@@ -411,6 +411,11 @@ class SetLabelException(Exception):
     pass
 
 
+class RemoveLabelException(Exception):
+    "Raised when failed to remove label to an object via cli"
+    pass
+
+
 class LabelNotFoundException(Exception):
     "Raises when failed to remove label from object via cli"
     pass
