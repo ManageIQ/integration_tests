@@ -355,7 +355,7 @@ class MapTags(Navigatable, Pretty, Updateable):
             flash_message = 'Add of new Container Label Tag Mapping was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'Container Label Tag Mapping "{}" was saved'.format(self.label)
+            flash_message = 'Container Label Tag Mapping "{}" was added'.format(self.label)
 
         view = self.create_view(MapTagsAllView)
         view.flash.assert_success_message(flash_message)
@@ -368,11 +368,17 @@ class MapTags(Navigatable, Pretty, Updateable):
                         by defaul map will be updated
         """
         view = navigate_to(self, 'Edit')
-        view.fill(self._form_mapping(**updates))
+        # only category can be updated, as other fields disabled by default
+        view.fill({
+            'category': updates.get('category')
+        })
 
         if cancel:
             view.cancel_button.click()
-            flash_message = 'Edit of Container Label Tag Mapping "fff" was cancelled by the user'
+            flash_message = (
+                'Edit of Container Label Tag Mapping "{}" was cancelled by the user'.format(
+                    self.label)
+            )
         else:
             view.save_button.click()
             flash_message = 'Container Label Tag Mapping "{}" was saved'.format(self.label)
@@ -380,15 +386,14 @@ class MapTags(Navigatable, Pretty, Updateable):
         view = self.create_view(MapTagsAllView, override=updates)
         view.flash.assert_success_message(flash_message)
 
-    def delete(self, cancel=True):
+    def delete(self, cancel=False):
         """ Delete existing user
             Args:
-                cancel: Default value 'True', map will not be deleted
-                        'False' - map will be deleted
+                cancel: Default value 'False', map will be deleted
+                        'True' - map will not be deleted
         """
         view = navigate_to(self, 'All')
-        view.fill({'category': self.category.display_name})
-        row = view.table.row(name=self.name)
+        row = view.table.row(tag_category=self.category)
         row.actions.click()
         view.browser.handle_alert(cancel=cancel)
 
@@ -422,4 +427,4 @@ class MapTagsEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.table.row('name', self.obj.name).click()
+        self.prerequisite_view.table.row(tag_category=self.obj.category).click()
