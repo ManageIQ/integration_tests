@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
-
 from widgetastic.widget import Text, TextInput
 from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from utils.pretty import Pretty
 from utils.update import Updateable
 
 
@@ -17,12 +16,7 @@ class PolicyProfileFormCommon(ControlExplorerView):
 
     description = Input(name="description")
     notes = TextInput(name="notes")
-    policies = MultiBoxSelect(
-        "formtest",
-        move_into=".//a[@data-submit='choices_chosen_div']/img",
-        move_from=".//a[@data-submit='members_chosen_div']/img"
-    )
-
+    policies = MultiBoxSelect()
     cancel_button = Button("Cancel")
 
 

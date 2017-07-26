@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
-
 from widgetastic.widget import Text, TextInput
-from widgetastic_manageiq import MultiBoxSelect, CheckableManageIQTree
-from widgetastic_patternfly import Button, Input, BootstrapSelect
+from widgetastic_manageiq import CheckableManageIQTree, MultiBoxSelect
+from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
-from utils.appliance import Navigatable
-from utils.update import Updateable
 from utils import version, ParamClassName
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from utils.pretty import Pretty
+from utils.update import Updateable
 
 
 class AlertProfileFormCommon(ControlExplorerView):
@@ -18,11 +17,7 @@ class AlertProfileFormCommon(ControlExplorerView):
 
     description = Input(name="description")
     notes = TextInput(name="notes")
-    alerts = MultiBoxSelect(
-        "formtest",
-        move_into=".//a[@data-submit='choices_chosen_div']/img",
-        move_from=".//a[@data-submit='members_chosen_div']/img"
-    )
+    alerts = MultiBoxSelect()
 
     cancel_button = Button("Cancel")
 
