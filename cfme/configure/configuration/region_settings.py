@@ -355,10 +355,10 @@ class MapTags(Navigatable, Pretty, Updateable):
             flash_message = 'Add of new Container Label Tag Mapping was cancelled by the user'
         else:
             view.add_button.click()
-            flash_message = 'Container Label Tag Mapping "{}" was added'.format(self.label)
+            # flash_message = 'Container Label Tag Mapping "{}" was added'.format(self.label)
 
-        view = self.create_view(MapTagsAllView)
-        view.flash.assert_success_message(flash_message)
+        # view = self.create_view(MapTagsAllView)
+        # view.flash.assert_success_message(flash_message)
 
     def update(self, updates, cancel=False):
         """ Update tag map method
