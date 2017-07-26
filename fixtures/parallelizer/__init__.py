@@ -232,7 +232,7 @@ class ParallelSession(object):
             if slave.forbid_restart:
                 if slave.process is None:
                     self.config.hook.pytest_miq_node_shutdown(
-                        config=self.config, nodeinfo=slave.url)
+                        config=self.config, nodeinfo=slave.appliance.url)
                     del self.slaves[slave.id]
                 else:
                     # no hook call here, a future audit will handle the fallout
