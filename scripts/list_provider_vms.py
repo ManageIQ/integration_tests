@@ -137,9 +137,8 @@ if __name__ == "__main__":
     # Stacking the generator this way is equivalent to using list.extend instead of list.append
     # Need to check queue.empty since a call to get will raise an Empty exception
     output_data = []
-    for _ in proc_list:
-        while not queue.empty():
-            output_data.extend(queue.get())
+    while not queue.empty():
+        output_data.extend(queue.get())
 
     header = '''## VM/Instances on providers matching:
 ## providers: {}
