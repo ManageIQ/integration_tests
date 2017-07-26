@@ -5,7 +5,7 @@ import re
 import sys
 from collections import namedtuple
 from operator import attrgetter
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Manager, Pool
 
 import pytz
 from tabulate import tabulate
@@ -100,7 +100,7 @@ def scan_vm(provider_key, vm_name, delta, match_queue, non_match_queue, scan_fai
             for message in messages:
                 logger.exception(message)
                 print(message)
-            scan_failure_queue.put([VmReport(provider_key, vm_name, FAIL, status, NULL)])
+            scan_failure_queue.put(VmReport(provider_key, vm_name, FAIL, status, NULL))
             return
 
     # None of this should raise exceptions
@@ -110,7 +110,7 @@ def scan_vm(provider_key, vm_name, delta, match_queue, non_match_queue, scan_fai
 
     # test age to determine which queue it goes in
     queue = match_queue if delta < vm_delta else non_match_queue
-    queue.put([data])
+    queue.put(data)
 
 
 def scan_provider(provider_key, matchers, delta, match_queue, scan_failure_queue):
@@ -140,24 +140,19 @@ def scan_provider(provider_key, matchers, delta, match_queue, scan_failure_queue
 
         # MP for vm scanning, could be many VMs per provider
         # match_queue is passed through and processed by this method's caller
-        non_time_match_queue = Queue()
-        vm_proc_list = []
-        for vm_name in text_matched_vms:
-            vm_proc_list.append(
-                Process(target=scan_vm,
-                        args=(provider_key, vm_name, delta, match_queue,
-                              non_time_match_queue, scan_failure_queue)))
-
-        for proc in vm_proc_list:
-            proc.start()
-        for proc in vm_proc_list:
-            proc.join()
+        manager = Manager()
+        non_time_match_queue = manager.Queue()
+        vm_scan_pool = Pool(8)
+        vm_scan_args = [
+            (provider_key, vm_name, delta, match_queue, non_time_match_queue, scan_failure_queue)
+            for vm_name in text_matched_vms]
+        vm_scan_pool.map_async(scan_vm, vm_scan_args)
 
         # each item on scan_queue is a VmData tuple
         # process non_match_queue and log its contents now
         non_time_matching = []
         while not non_time_match_queue.empty():
-            non_time_matching.extend(non_time_match_queue.get())
+            non_time_matching.append(non_time_match_queue.get())
 
         print('{}: Finished scanning for matches'.format(provider_key))
         for non_match in non_time_matching:
@@ -209,7 +204,7 @@ def delete_provider_vm(provider_key, vm_name, age, queue):
         logger.exception(message)
     finally:
         print(message)
-        queue.put([VmReport(provider_key, vm_name, age, status, result)])
+        queue.put(VmReport(provider_key, vm_name, age, status, result))
 
 
 def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
@@ -249,26 +244,24 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         # passed the checks
         providers_to_scan.append(provider_key)
 
-    scan_queue = Queue()
-    scan_failure_queue = Queue()
-    scan_proc_list = []
+    manager = Manager()
+    scan_match_queue = manager.Queue()
+    scan_failure_queue = manager.Queue()
+    provider_scan_pool = Pool(8)
     for provider_key in providers_to_scan:
-        scan_proc_list.append(
-            Process(target=scan_provider,
-                    args=(provider_key, matchers, delta, scan_queue, scan_failure_queue)))
-
-    for proc in scan_proc_list:
-        proc.start()
-    for proc in scan_proc_list:
-        proc.join()
+        result = provider_scan_pool.apply_async(
+            scan_provider, (provider_key, matchers, delta, scan_match_queue, scan_failure_queue))
+        result.get()
+    provider_scan_pool.close()
+    provider_scan_pool.join()
 
     # each item on scan_queue is a VmData tuple
     vms_to_delete = []
-    while not scan_queue.empty():
-        vms_to_delete.extend(scan_queue.get())
+    while not scan_match_queue.empty():
+        vms_to_delete.append(scan_match_queue.get())
 
     if vms_to_delete and prompt:
-        yesno = raw_input('Delete the-se VMs? [y/N]: ')
+        yesno = raw_input('Delete these VMs? [y/N]: ')
         if str(yesno).lower() != 'y':
             print('Exiting.')
             return 0
@@ -276,7 +269,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     if not vms_to_delete:
         print('No VMs to delete.')
 
-    delete_queue = Queue()
+    delete_queue = manager.Queue()
     delete_proc_list = []
     for provider_key, vm_name, age in vms_to_delete:
         delete_proc_list.append(
@@ -290,11 +283,11 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
 
     deleted_vms_list = []
     while not delete_queue.empty():
-        deleted_vms_list.extend(delete_queue.get())  # Each item is a VmReport tuple
+        deleted_vms_list.append(delete_queue.get())  # Each item is a VmReport tuple
 
     # Add in any machines that failed to scan for reporting
     while not scan_failure_queue.empty():
-        deleted_vms_list.extend(scan_failure_queue.get())
+        deleted_vms_list.append(scan_failure_queue.get())
 
     with open(args.outfile, 'a') as report:
         report.write('## VM/Instances deleted via:\n'
