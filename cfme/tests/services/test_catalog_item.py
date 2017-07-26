@@ -2,67 +2,18 @@
 import fauxfactory
 import pytest
 
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
-from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog_item import CatalogItem, CatalogBundle
-from cfme.services.catalogs.catalog import Catalog
 from cfme.web_ui import flash
 from utils import error
 from utils.blockers import BZ
 from utils.log import logger
 from utils.update import update
 
-
-pytestmark = [test_requirements.service, pytest.mark.tier(3)]
-
-
-@pytest.yield_fixture(scope="module")
-def dialog():
-    dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
-    )
-
-    service_dialog = ServiceDialog(label=dialog_name, description="my dialog",
-                                   submit=True, cancel=True,
-                                   tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                                   tab_desc="my tab desc",
-                                   box_label="box_" + fauxfactory.gen_alphanumeric(),
-                                   box_desc="my box desc", element_data=element_data)
-    service_dialog.create()
-    flash.assert_success_message('Dialog "{}" was added'.format(dialog_name))
-    yield service_dialog
-
-    # fixture cleanup
-    try:
-        service_dialog.delete()
-    except NoSuchElementException or TimeoutException:
-        logger.warning('test_catalog_item: dialog yield fixture cleanup, dialog "{}" not '
-                       'found'.format(dialog_name))
-
-
-@pytest.yield_fixture(scope="module")
-def catalog():
-    catalog_name = "test_cat_" + fauxfactory.gen_alphanumeric()
-    cat = Catalog(name=catalog_name,
-                  description="my catalog")
-    cat.create()
-    yield cat
-
-    # fixture cleanup
-    try:
-        cat.delete()
-    except NoSuchElementException:
-        logger.warning('test_catalog_item: catalog yield fixture cleanup, catalog "{}" not '
-                       'found'.format(catalog_name))
+pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
 
 
 @pytest.yield_fixture(scope="function")
@@ -147,13 +98,14 @@ def test_edit_tags(catalog_item):
     catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.6", "5.7", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.7", "5.8", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):
         catalog_item.create()
 
 
+@pytest.mark.meta(blockers=[BZ(1460891, forced_streams=["5.7", "5.8", "upstream"])])
 def test_permissions_catalog_item_add(catalog_item):
     """Test that a catalog can be added only with the right permissions."""
     tac.single_task_permission_test([['Everything', 'Services', 'Catalogs Explorer',

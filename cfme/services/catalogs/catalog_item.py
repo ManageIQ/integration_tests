@@ -341,7 +341,7 @@ class CatalogBundle(CatalogItem, Navigatable):
                    'description': self.description,
                    'display': self.display_in,
                    'select_catalog': self.catalog.name,
-                   'select_dialog': self.dialog.label})
+                   'select_dialog': self.dialog})
         if view.field_entry_point.value == "":
             view.fill({'field_entry_point': ''})
             view.tree.click_path(
@@ -359,9 +359,8 @@ class CatalogBundle(CatalogItem, Navigatable):
 
     def update(self, updates):
         view = navigate_to(self, 'BundleEdit')
-        changed = view.fill(updates)
         tabstrip.select_tab("Resources")
-        view.fill({'select_resource': updates.get('catalog_items')},)
+        changed = view.fill({'select_resource': updates.get('catalog_items')})
         if changed:
             view.save_button.click()
         else:

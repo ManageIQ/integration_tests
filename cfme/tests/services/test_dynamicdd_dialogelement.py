@@ -4,7 +4,7 @@ import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.automate.service_dialogs import ServiceDialog
+from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
@@ -39,7 +39,8 @@ log(:info, "===========================================") if @debug
 
 
 @pytest.yield_fixture(scope="function")
-def dialog(copy_instance, create_method):
+def dialog(appliance, copy_instance, create_method):
+    service_dialogs = DialogCollection(appliance)
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
@@ -48,14 +49,14 @@ def dialog(copy_instance, create_method):
         'choose_type': "Drop Down List",
         'dynamic_chkbox': True
     }
-    dialog = ServiceDialog(label="dialog_" + fauxfactory.gen_alphanumeric(),
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc", element_data=element_data)
-    dialog.create()
-    yield dialog
+    sd = service_dialogs.create(label=dialog,
+        description="my dialog", submit=True, cancel=True,)
+    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+        tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+        box_desc="my box desc")
+    box.elements.create(element_data=[element_data])
+    yield sd
 
 
 @pytest.yield_fixture(scope="function")

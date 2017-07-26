@@ -1,242 +1,214 @@
-# -*- coding: utf-8 -*-
-import functools
-
-from navmazing import NavigateToSibling, NavigateToAttribute
-
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb
-from cfme.web_ui import AngularSelect, Form, Select, SplitTable, accordion,\
-    fill, flash, form_buttons, Table, Tree, Input, Region, BootstrapTreeview
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.update import Updateable
-
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.widget import Text, Checkbox
+from widgetastic_manageiq import ManageIQTree
 from widgetastic.utils import Fillable
+from widgetastic_patternfly import CandidateNotFound, Button, Input, Dropdown
+from cached_property import cached_property
+
+from cfme.exceptions import ItemNotFound
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+
+from . import AutomateCustomizationView
 
 
-accordion_tree = functools.partial(accordion.tree, "Service Dialogs")
-cfg_btn = functools.partial(tb.select, "Configuration")
-plus_btn = functools.partial(tb.select, "Add")
-entry_table = Table({'5.6': "//div[@id='field_values_div']/form/table",
-                     '5.5': "//div[@id='field_values_div']/form/fieldset/table"})
-text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
-text_area_table = Table({version.LOWEST: "//div[@id='dialog_field_div']/fieldset/table"
-                        "[@class='style1']",
-                    '5.5': "//div[@id='dialog_field_div']/div[@class='form-horizontal']"})
-dynamic_tree = Tree("//div[@class='modal-content']/div/div/ul[@class='dynatree-container']")
-bt_tree = BootstrapTreeview('automate_treebox')
+class DialogForm(AutomateCustomizationView):
+    title = Text('#explorer_title_text')
 
-label_form = Form(fields=[
-    ('label', Input("label")),
-    ('description_text', Input("description")),
-    ('submit_button', Input("chkbx_submit")),
-    ('cancel_button', Input("chkbx_cancel"))
-])
+    plus_btn = Dropdown('Add')
+    label = Input(name='label')
+    description = Input(name="description")
 
-tab_form = Form(fields=[
-    ('tab_label', Input("tab_label")),
-    ('tab_desc', Input("tab_description"))
-])
-
-box_form = Form(fields=[
-    ('box_label', Input("group_label")),
-    ('box_desc', Input("group_description"))
-])
-
-element_form = Form(fields=[
-    ('ele_label', Input("field_label")),
-    ('ele_name', Input("field_name")),
-    ('ele_desc', Input("field_description")),
-    ('choose_type', {
-        version.LOWEST: Select("//select[@id='field_typ']"),
-        "5.5": AngularSelect("field_typ")}),
-    ('default_text_box', Input("field_default_value")),
-    ('field_required', Input("field_required")),
-    ('field_past_dates', Input("field_past_dates")),
-    ('field_entry_point', Input("field_entry_point")),
-    ('field_show_refresh_button', Input("field_show_refresh_button")),
-    ('entry_value', Input("entry[value]")),
-    ('entry_description', Input("entry[description]")),
-    ('add_entry_button', Input("accept")),
-    # This one too? vvv I could not find it in the form
-    ('field_category', Select("//select[@id='field_category']")),
-    ('text_area', {
-        version.LOWEST: Input("field_default_value"),
-        "5.5": AngularSelect("field_default_value")}),
-    ('dynamic_chkbox', Input("field_dynamic")),
-    ('apply_btn', '//a[@title="Apply"]')
-])
-
-common = Region(locators={
-    "dialogs_table": {
-        version.LOWEST: SplitTable(
-            header_data=('//div[@class="xhdr"]/table/tbody', 1),
-            body_data=('//div[@class="objbox"]/table/tbody', 1)),
-        "5.5": Table("//div[@id='list_grid']/table")}})
+    submit_button = Checkbox(name='chkbx_submit')
+    cancel_button = Checkbox(name='chkbx_cancel')
 
 
-class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
-    pretty_attrs = ['label', 'description']
+class DialogsView(AutomateCustomizationView):
+    title = Text("#explorer_title_text")
 
-    def __init__(self, label=None, description=None,
-                 submit=False, cancel=False,
-                 tab_label=None, tab_desc=None,
-                 box_label=None, box_desc=None, element_data=None, appliance=None):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and
+            self.title.text == 'All Dialogs' and
+            self.service_dialogs.is_opened and
+            self.service_dialogs.tree.currently_selected == ["All Dialogs"])
+
+
+class AddDialogView(DialogForm):
+
+    add_button = Button("Add")
+    plus_btn = Dropdown('Add')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and self.service_dialogs.is_opened and
+            self.title.text == "Adding a new Dialog [Dialog Information]"
+        )
+
+
+class EditDialogView(DialogForm):
+    element_tree = ManageIQTree('dialog_edit_treebox')
+
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and self.service_dialogs.is_opened and
+            self.title.text == "Editing Dialog {}".format(self.label)
+        )
+
+
+class DetailsDialogView(AutomateCustomizationView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and self.service_dialogs.is_opened and
+            self.title.text == 'Dialog "{}"'.format(self.context['object'].label)
+        )
+
+
+class DialogCollection(Navigatable):
+    """Collection object for the :py:class:`Dialog`."""
+
+    def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
+
+    tree_path = ['All Dialogs']
+
+    def instantiate(self, label, description=None, submit=False, cancel=False):
+        return Dialog(
+            label=label, description=description, submit=submit, cancel=cancel)
+
+    def create(self, label=None, description=None, submit=False, cancel=False):
+        """ Create dialog label method """
+        view = navigate_to(self, 'Add')
+        fill_dict = {
+            k: v
+            for k, v in {'label': label, 'description': description,
+            'submit_button': submit, 'cancel_button': cancel}.items()
+            if v is not None}
+        view.fill(fill_dict)
+        return self.instantiate(
+            label=label, description=description, submit=submit, cancel=cancel)
+
+
+class Dialog(Navigatable, Fillable):
+    """A class representing one Domain in the UI."""
+    def __init__(
+            self, label, description=None, submit=False, cancel=False,
+            collection=None, appliance=None):
+        if collection is None:
+            collection = DialogCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
         self.label = label
         self.description = description
         self.submit = submit
         self.cancel = cancel
-        self.tab_label = tab_label
-        self.tab_desc = tab_desc
-        self.box_label = box_label
-        self.box_desc = box_desc
-        self.element_data = element_data
 
     def as_fill_value(self):
         return self.label
 
-    def add_element(self, *element_data):
-        for each_element in element_data:
-            plus_btn("Add a new Element to this Box")
-            sel.wait_for_element(element_form.ele_label)
-            # Workaround to refresh the fields, select other values (text area box and checkbox)and
-            # then select "text box"
-            fill(element_form, {'choose_type': "Text Area Box"})
-            fill(element_form, {'choose_type': "Check Box"})
-            fill(element_form, each_element)
-            self.element_type(each_element)
+    @property
+    def parent(self):
+        return self.collection
 
-    def create(self):
-        navigate_to(self, 'Add')
-        fill(label_form, {
-            'label': self.label,
-            'description_text': self.description,
-            'submit_button': self.submit,
-            'cancel_button': self.cancel
-        })
-        plus_btn("Add a new Tab to this Dialog")
-        sel.wait_for_element(tab_form.tab_label)
-        fill(tab_form, {'tab_label': self.tab_label,
-                        'tab_desc': self.tab_desc})
-        plus_btn("Add a new Box to this Tab")
-        sel.wait_for_element(box_form.box_label)
-        fill(box_form, {'box_label': self.box_label,
-                        'box_desc': self.box_desc})
-        if isinstance(self.element_data, (list, tuple)):
-            self.add_element(*self.element_data)
-        else:
-            self.add_element(self.element_data)
-        sel.click(form_buttons.add)
-        flash.assert_success_message('Dialog "{}" was added'.format(self.label))
+    @property
+    def dialog(self):
+        return self
+
+    @cached_property
+    def tabs(self, ):
+        from .dialog_tab import TabCollection
+        return TabCollection(self)
+
+    @property
+    def tree_path(self):
+        return self.collection.tree_path + [self.label]
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(label_form, {'name_text': updates.get('name'),
-                          'description_text': updates.get('description')})
-        sel.click(form_buttons.save)
-        flash.assert_no_errors()
-
-    def update_element(self, second_element, element_data):
-        navigate_to(self, 'Edit')
-        if self.appliance.version > "5.5":
-            tree = accordion.tree("Dialog")
+        """ Update dialog method"""
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
         else:
-            tree = Tree("dialog_edit_treebox")
-        tree.click_path(self.label, self.tab_label, self.box_label)
-        self.add_element(second_element)
-        list_ele = []
-        list_ele.append(element_data.get("ele_label"))
-        list_ele.append(second_element.get("ele_label"))
-        tree.click_path(self.label, self.tab_label, self.box_label)
-        ele_1 = self.element(list_ele[0])
-        ele_2 = self.element(list_ele[1])
-        sel.drag_and_drop(ele_1, ele_2)
-        sel.click(form_buttons.save)
-        flash.assert_no_errors()
+            view.cancel_button.click()
+        view = self.create_view(DetailsDialogView, override=updates)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message(
+                'Dialog "{}" was saved'.format(updates.get('name', self.label)))
+        else:
+            view.flash.assert_message(
+                'Edit of Dialog "{}" was cancelled by the user'.format(self.label))
 
-    def delete(self, cancel=False):
-        navigate_to(self, 'Details')
-        cfg_btn(version.pick({version.LOWEST: "Remove from the VMDB",
-                              '5.7': 'Remove Dialog'}),
-                invokes_alert=True)
-        sel.handle_alert(cancel)
+    def delete(self):
+        """ Delete dialog method"""
+        view = navigate_to(self, "Details")
+        view.configuration.item_select('Remove Dialog', handle_alert=True)
+        view = self.create_view(DialogsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        view.flash.assert_success_message(
+            'Dialog "{}": Delete successful'.format(self.label))
 
-    def element_type(self, each_element):
-        choose_type = each_element.get("choose_type")
-        dynamic_chkbox = each_element.get("dynamic_chkbox")
-        if choose_type == "Drop Down List" or choose_type == "Radio Button":
-            if not dynamic_chkbox:
-                entry_table.click_cell(header='value', value='<New Entry>')
-                fill(element_form, {'entry_value': "Yes",
-                                    'entry_description': "entry_desc"},
-                    action=element_form.add_entry_button)
-            else:
-                node1 = "InspectMe"
-                sel.click(element_form.field_entry_point)
-                if self.appliance.version < "5.7":
-                    dynamic_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
-                else:
-                    bt_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
-                sel.click(element_form.apply_btn)
-                fill(element_form, {'field_show_refresh_button': True})
-        if choose_type == "Text Area Box":
-            text_area_table.click_cell(1, value="Default text")
+    @property
+    def exists(self):
+        """ Returns True if dialog exists"""
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except (CandidateNotFound, ItemNotFound):
+            return False
 
-    def element(self, element_data):
-        return sel.element('//div[@class="panel-heading"]'
-            '[contains(normalize-space(.), "{}")]/..'.format(element_data))
-
-    def reorder_elements(self, tab, box, *element_data):
-        navigate_to(self, 'Edit')
-        tree = accordion.tree("Dialog")
-        tree.click_path(self.label, tab, box)
-        list_ele = []
-        for each_element in element_data:
-            list_ele.append(each_element.get("ele_label"))
-        ele_1 = self.element(list_ele[0])
-        ele_2 = self.element(list_ele[1])
-        sel.drag_and_drop(ele_1, ele_2)
-        sel.click(form_buttons.save)
-        flash.assert_no_errors()
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 
-@navigator.register(ServiceDialog, 'All')
-class ServiceDialogAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+@navigator.register(DialogCollection)
+class All(CFMENavigateStep):
+    VIEW = DialogsView
+
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        if self.obj.appliance.version < '5.8':
-            self.prerequisite_view.navigation.select('Automate', 'Customization')
-        else:
-            self.prerequisite_view.navigation.select('Automation', 'Automate', 'Customization')
-
-    def resetter(self):
-        accordion.tree("Service Dialogs", "All Dialogs")
+            self.view.service_dialogs.tree.click_path(*self.obj.tree_path)
 
 
-@navigator.register(ServiceDialog, 'Add')
-class ServiceDialogNew(CFMENavigateStep):
+@navigator.register(DialogCollection)
+class Add(CFMENavigateStep):
+    VIEW = AddDialogView
+
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a new Dialog')
-        sel.wait_for_element(label_form.label)
+        self.prerequisite_view.configuration.item_select('Add a new Dialog')
 
 
-@navigator.register(ServiceDialog, 'Details')
-class ServiceDialogDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+@navigator.register(Dialog)
+class Details(CFMENavigateStep):
+    VIEW = DetailsDialogView
+
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        accordion.tree('Service Dialogs', "All Dialogs", self.obj.label)
+        self.prerequisite_view.service_dialogs.tree.click_path(*self.obj.tree_path)
 
 
-@navigator.register(ServiceDialog, 'Edit')
-class ServiceDialogEdit(CFMENavigateStep):
+@navigator.register(Dialog)
+class Edit(CFMENavigateStep):
+    VIEW = EditDialogView
+
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn("Edit this Dialog")
+        self.prerequisite_view.configuration.item_select("Edit this Dialog")

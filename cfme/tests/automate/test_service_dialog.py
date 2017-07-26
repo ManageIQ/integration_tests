@@ -1,17 +1,34 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import pytest
+import fauxfactory
 
 from cfme import test_requirements
-from cfme.automate.service_dialogs import ServiceDialog
-from utils import error
+from cfme.automate.service_dialogs import DialogCollection
 from utils.update import update
+from utils import version, error
+
+pytestmark = [
+    pytest.mark.ignore_stream("upstream"),
+    test_requirements.automate,
+    pytest.mark.tier(3)
+]
 
 
-pytestmark = [test_requirements.automate, pytest.mark.tier(3)]
+def create_dialog(appliance, element_data, label=None):
+    service_dialog = DialogCollection(appliance)
+    if label is None:
+        label = 'label_' + fauxfactory.gen_alphanumeric()
+    sd = service_dialog.create(label=label,
+        description="my dialog", submit=True, cancel=True,)
+    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+        tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+        box_desc="my box desc")
+    box.elements.create(element_data=[element_data])
+    return sd
 
 
-def test_create_service_dialog():
+def test_crud_service_dialog(appliance):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
@@ -19,56 +36,14 @@ def test_create_service_dialog():
         'choose_type': "Text Box",
         'default_text_box': "Default text"
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
 
-
-def test_update_service_dialog():
-    element_data = {
-        'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
-        'ele_name': fauxfactory.gen_alphanumeric(),
-        'ele_desc': fauxfactory.gen_alphanumeric(),
-        'choose_type': "Text Box",
-        'default_text_box': "Default text"
-    }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
+    dialog = create_dialog(appliance, element_data)
     with update(dialog):
         dialog.description = "my edited description"
-
-
-def test_delete_service_dialog():
-    element_data = {
-        'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
-        'ele_name': fauxfactory.gen_alphanumeric(),
-        'ele_desc': fauxfactory.gen_alphanumeric(),
-        'choose_type': "Text Box",
-        'default_text_box': "Default text"
-    }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
     dialog.delete()
 
 
-def test_service_dialog_duplicate_name():
+def test_service_dialog_duplicate_name(appliance, request):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
@@ -76,38 +51,30 @@ def test_service_dialog_duplicate_name():
         'choose_type': "Text Box",
         'default_text_box': "Default text"
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
-    with error.expected("Label has already been taken"):
-        dialog.create()
+    label = 'duplicate_' + fauxfactory.gen_alphanumeric()
+    dialog = create_dialog(appliance, element_data, label=label)
+    request.addfinalizer(dialog.delete_if_exists)
+    error_message = version.pick({
+        '5.8': 'Validation failed: Label is not unique within region 0',
+        '5.7': 'Label has already been taken'})
+    with error.expected(error_message):
+        create_dialog(appliance, element_data, label=label)
 
 
-def test_checkbox_dialog_element():
+def test_checkbox_dialog_element(appliance, request):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
         'ele_desc': fauxfactory.gen_alphanumeric(),
         'choose_type': "Check Box",
-        'default_text_box': True,
+        'default_value': True,
         'field_required': True
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
+    dialog = create_dialog(appliance, element_data)
+    request.addfinalizer(dialog.delete_if_exists)
 
 
-def test_datecontrol_dialog_element():
+def test_datecontrol_dialog_element(appliance, request):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
@@ -115,51 +82,33 @@ def test_datecontrol_dialog_element():
         'choose_type': "Date Control",
         'field_past_dates': True
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
+    dialog = create_dialog(appliance, element_data)
+    request.addfinalizer(dialog.delete_if_exists)
 
 
-def test_dropdownlist_dialog_element():
+def test_dropdownlist_dialog_element(appliance, request):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
         'ele_desc': fauxfactory.gen_alphanumeric(),
         'choose_type': "Drop Down List"
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
+    dialog = create_dialog(appliance, element_data)
+    request.addfinalizer(dialog.delete_if_exists)
 
 
-def test_radiobutton_dialog_element():
+def test_radiobutton_dialog_element(appliance, request):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
         'ele_desc': fauxfactory.gen_alphanumeric(),
         'choose_type': "Radio Button"
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
+    dialog = create_dialog(appliance, element_data)
+    request.addfinalizer(dialog.delete_if_exists)
 
 
-def test_tagcontrol_dialog_element():
+def test_tagcontrol_dialog_element(appliance, request):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
@@ -168,17 +117,11 @@ def test_tagcontrol_dialog_element():
         'field_category': "Service Level",
         'field_required': True
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
+    dialog = create_dialog(appliance, element_data)
+    request.addfinalizer(dialog.delete_if_exists)
 
 
-def test_textareabox_dialog_element():
+def test_textareabox_dialog_element(appliance, request):
     element_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
@@ -186,17 +129,11 @@ def test_textareabox_dialog_element():
         'choose_type': "Text Area Box",
         'field_required': True
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
+    dialog = create_dialog(appliance, element_data)
+    request.addfinalizer(dialog.delete_if_exists)
 
 
-def test_reorder_elements():
+def test_reorder_elements(appliance, request):
     element_1_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
         'ele_name': fauxfactory.gen_alphanumeric(),
@@ -209,21 +146,22 @@ def test_reorder_elements():
         'ele_name': fauxfactory.gen_alphanumeric(),
         'ele_desc': fauxfactory.gen_alphanumeric(),
         'choose_type': "Check Box",
-        'default_text_box': True,
-        'field_required': True
+        'default_value': True,
+        'field_required': True,
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=(element_1_data, element_2_data),
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
-    dialog.reorder_elements(dialog.tab_label, dialog.box_label, element_1_data, element_2_data)
+    service_dialog = DialogCollection(appliance)
+    sd = service_dialog.create(label='label_' + fauxfactory.gen_alphanumeric(),
+        description="my dialog", submit=True, cancel=True,)
+    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+        tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+        box_desc="my box desc")
+    element = box.elements.create(element_data=[element_1_data, element_2_data])
+    request.addfinalizer(sd.delete_if_exists)
+    element.reorder_elements(False, element_2_data, element_1_data)
 
 
-def test_reorder_unsaved_elements():
+def test_reorder_unsaved_elements(appliance, request):
     # Automate BZ - https://bugzilla.redhat.com/show_bug.cgi?id=1238721
     element_1_data = {
         'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
@@ -237,15 +175,16 @@ def test_reorder_unsaved_elements():
         'ele_name': fauxfactory.gen_alphanumeric(),
         'ele_desc': fauxfactory.gen_alphanumeric(),
         'choose_type': "Check Box",
-        'default_text_box': True,
+        'default_value': True,
         'field_required': True
     }
-    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
-                           element_data=element_1_data,
-                           description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
-                           tab_desc="my tab desc",
-                           box_label="box_" + fauxfactory.gen_alphanumeric(),
-                           box_desc="my box desc")
-    dialog.create()
-    dialog.update_element(element_2_data, element_1_data)
+    service_dialog = DialogCollection(appliance)
+    sd = service_dialog.create(label='label_' + fauxfactory.gen_alphanumeric(),
+        description="my dialog", submit=True, cancel=True,)
+    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
+        tab_desc="my tab desc")
+    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
+        box_desc="my box desc")
+    element = box.elements.create(element_data=[element_1_data])
+    request.addfinalizer(sd.delete_if_exists)
+    element.reorder_elements(True, element_2_data, element_1_data)
