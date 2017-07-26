@@ -9,12 +9,12 @@ from utils.update import Updateable
 from utils.timeutil import parsetime
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from . import CloudIntelReportsView
+from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic_manageiq import MultiBoxSelect, Table, PaginationPane
+from widgetastic_manageiq import PaginationPane, Table
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
@@ -25,10 +25,9 @@ class CustomReportFormCommon(CloudIntelReportsView):
     menu_name = Input("name")
     title = Input("title")
     base_report_on = BootstrapSelect("chosen_model")
-    report_fields = MultiBoxSelect(
-        ".//div[@id='column_lists']/table",
-        move_into=Button(title="Move selected fields down"),
-        move_from=Button(title="Move selected fields up"),
+    report_fields = ReportsMultiBoxSelect(
+        move_into="Move selected fields down",
+        move_from="Move selected fields up",
         available_items="available_fields",
         chosen_items="selected_fields"
     )

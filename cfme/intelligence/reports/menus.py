@@ -4,11 +4,11 @@ from contextlib import contextmanager
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from widgetastic.widget import Text
-from widgetastic_manageiq import ManageIQTree, FolderManager, MultiBoxSelect
+from widgetastic_manageiq import ManageIQTree, FolderManager
 from widgetastic_patternfly import Button
 from navmazing import NavigateToAttribute
 
-from . import CloudIntelReportsView
+from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
 
 class EditReportMenusView(CloudIntelReportsView):
@@ -23,12 +23,11 @@ class EditReportMenusView(CloudIntelReportsView):
     discard_button = Button("Discard")
 
     manager = FolderManager(".//div[@id='folder_lists']/table")
-    report_select = MultiBoxSelect(
-        ".//div[@id='column_lists']",
-        Button(title="Move selected reports left"),
-        Button(title="Move selected reports right"),
-        "available_reports",
-        "selected_reports"
+    report_select = ReportsMultiBoxSelect(
+        move_into="Move selected reports right",
+        move_from="Move selected reports left",
+        available_items="available_reports",
+        chosen_items="selected_reports"
     )
 
     @property

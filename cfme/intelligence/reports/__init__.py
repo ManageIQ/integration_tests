@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
+from widgetastic.utils import Parameter
 from widgetastic.widget import View
-from widgetastic_manageiq import ManageIQTree
-from widgetastic_patternfly import Accordion, Dropdown, FlashMessages
+from widgetastic_manageiq import ManageIQTree, MultiBoxSelect
+from widgetastic_patternfly import Accordion, Button, Dropdown, FlashMessages
 
-from cfme.base.login import BaseLoggedInPage
 from cfme.base import Server
+from cfme.base.login import BaseLoggedInPage
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
@@ -68,3 +69,8 @@ class CloudIntelReports(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select("Cloud Intel", "Reports")
+
+
+class ReportsMultiBoxSelect(MultiBoxSelect):
+    move_into_button = Button(title=Parameter("@move_into"))
+    move_from_button = Button(title=Parameter("@move_from"))
