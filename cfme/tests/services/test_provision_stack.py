@@ -2,6 +2,7 @@ import pytest
 import fauxfactory
 
 from cfme.configure.settings import DefaultView
+from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
@@ -16,7 +17,6 @@ from utils.path import orchestration_path
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import BZ
 
 
 pytestmark = [
@@ -35,7 +35,7 @@ pytest_generate_tests = testgen.generate(
 
 
 @pytest.yield_fixture(scope="function")
-def template(provider, provisioning, dialog_name, setup_provider):
+def template(provider, provisioning, setup_provider):
     template_type = provisioning['stack_provisioning']['template_type']
     template_name = fauxfactory.gen_alphanumeric()
     template = OrchestrationTemplate(template_type=template_type,
@@ -49,19 +49,34 @@ def template(provider, provisioning, dialog_name, setup_provider):
         data_file = load_data_file(str(orchestration_path.join('azure_vm_template.json')))
 
     template.create(data_file.read().replace('CFMETemplateName', template_name))
-    if provider.type != "azure":
-        template.create_service_dialog_from_template(dialog_name, template.template_name)
-
-    yield template
-
-
-@pytest.yield_fixture(scope="function")
-def dialog_name(provider):
     if provider.type == "azure":
         dialog_name = "azure-single-vm-from-user-image"
     else:
         dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-    yield dialog_name
+    if provider.type != "azure":
+        template.create_service_dialog_from_template(dialog_name, template.template_name)
+
+    yield template, dialog_name
+
+
+@pytest.yield_fixture(scope="function")
+def dialog(appliance, provider, template):
+    template, dialog_name = template
+    service_name = fauxfactory.gen_alphanumeric()
+    element_data = dict(
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
+        ele_name="service_name",
+        ele_desc="my ele desc",
+        choose_type="Text Box",
+        default_text_box=service_name
+    )
+    dialog = DialogCollection(appliance)
+    sd = dialog.instantiate(label=dialog_name)
+    tab = sd.tabs.instantiate(tab_label="Basic Information")
+    box = tab.boxes.instantiate(box_label="Options")
+    element = box.elements.instantiate(element_data=element_data)
+    element.add_another_element(element_data)
+    yield template, sd, service_name
 
 
 @pytest.yield_fixture(scope="function")
@@ -73,20 +88,21 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(dialog_name, catalog, template, provider):
-    item_name = fauxfactory.gen_alphanumeric()
+def catalog_item(dialog, catalog, template, provider):
+    template, dialog, service_name = dialog
+    item_name = service_name
 
     catalog_item = CatalogItem(item_type="Orchestration",
                                name=item_name,
                                description="my catalog",
                                display_in=True,
                                catalog=catalog,
-                               dialog=dialog_name,
+                               dialog=dialog,
                                orch_template=template,
                                provider=provider)
     catalog_item.create()
 
-    yield catalog_item, item_name
+    yield catalog_item, template
 
 
 def random_desc():
@@ -96,6 +112,7 @@ def random_desc():
 def prepare_stack_data(provider, provisioning):
     stackname = "test" + fauxfactory.gen_alphanumeric()
     vm_name = "test" + fauxfactory.gen_alphanumeric()
+    stack_timeout = "20"
     if provider.type == "azure":
         vm_user, vm_password, vm_size, resource_group,\
             user_image, os_type, mode = map(provisioning.get,
@@ -126,6 +143,7 @@ def prepare_stack_data(provider, provisioning):
 
         stack_data = {
             'stack_name': stackname,
+            'stack_timeout': stack_timeout,
             'vm_name': vm_name,
             'key_name': stack_prov['key_name'],
             'select_instance_type': stack_prov['instance_type'],
@@ -140,7 +158,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     Metadata:
         test_flag: provision
     """
-    catalog_item, item_name = catalog_item
+    catalog_item, template = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
 
     @request.addfinalizer
@@ -149,8 +167,8 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
 
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
-    row_description = item_name
+    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
+    row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
@@ -158,14 +176,13 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert 'Provisioned Successfully' in row.last_message.text
 
 
-@pytest.mark.meta(blockers=[BZ(1442920, forced_streams=["5.7", "5.8", "upstream"])])
 def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    catalog_item, item_name = catalog_item
+    catalog_item, template = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
 
     @request.addfinalizer
@@ -174,8 +191,8 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
 
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
-    row_description = item_name
+    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
+    row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2000, delay=20)
@@ -186,19 +203,20 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     myservice.reconfigure_service()
 
 
-def test_remove_template_provisioning(provider, provisioning, catalog, catalog_item, template):
+def test_remove_template_provisioning(provider, provisioning, catalog, catalog_item):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    catalog_item, item_name = catalog_item
+    catalog_item, template = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
-    row_description = 'Provisioning Service [{}] from [{}]'.format(item_name, item_name)
+    row_description = 'Provisioning Service [{}] from [{}]'.format(catalog_item.name,
+        catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=1000, delay=20)
@@ -212,14 +230,14 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     Metadata:
         test_flag: provision
     """
-    catalog_item, item_name = catalog_item
+    catalog_item, template = catalog_item
     DefaultView.set_default_view("Stacks", "Grid View")
 
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
-    row_description = item_name
+    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
+    row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
