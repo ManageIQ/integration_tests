@@ -424,11 +424,16 @@ class IPAppliance(object):
         with self as ipapp:
             ipapp.wait_for_ssh()
 
-            # Debuuging - ifcfg-eth0 overwritten by unknown process
+            # Debugging - ifcfg-eth0 overwritten by unknown process
+            # Rules are permanent and will be reloade after machine reboot
             self.ssh_client.run_command(
                 "cp -pr /etc/sysconfig/network-scripts/ifcfg-eth0 /var/tmp", ensure_host=True)
             self.ssh_client.run_command(
-                "auditctl -w /etc/sysconfig/network-scripts/ifcfg-eth0 -p wa", ensure_host=True)
+                "echo '-w /etc/sysconfig/network-scripts/ifcfg-eth0 -p wa' >> "
+                "/etc/audit/rules.d/audit.rules", ensure_host=True)
+            self.ssh_client.run_command("systemctl daemon-reload", ensure_host=True)
+            self.ssh_client.run_command("service auditd restart", ensure_host=True)
+
             self.deploy_merkyl(start=True, log_callback=log_callback)
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
