@@ -292,6 +292,11 @@ def template(template_location, provider):
 
 def _get_template(provider, template_type_name):
     template = provider.data.get(template_type_name)
+    # if the template is None, try to get it from templates section on provider data
+    # because additional templates are present in this section which are not present
+    # under provider directly
+    if not template:
+        template = provider.data.templates.get(template_type_name)
     if isinstance(template, Mapping):
         template_name = template.get("name")
     else:
@@ -301,8 +306,12 @@ def _get_template(provider, template_type_name):
             # Same as couple of lines above
             return template
         templates = TEMPLATES.get(provider.key)
-        if templates and template_name in templates:
+        # If template is type string then return template else template_name
+        # since template could be AttrDict and returning it would fail provisioning
+        # _get_template should always return template name of type string
+        if templates and template_name in templates and isinstance(template, six.string_types):
             return template
+        return template_name
     else:
         pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
     logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
@@ -342,3 +351,13 @@ def big_template_modscope(provider):
 @pytest.fixture(scope="function")
 def provisioning(provider):
     return provider.data['provisioning']
+
+
+@pytest.fixture(scope="function")
+def console_template(provider):
+    return _get_template(provider, 'console_template')
+
+
+@pytest.fixture(scope="module")
+def console_template_modscope(provider):
+    return _get_template(provider, 'console_template')
