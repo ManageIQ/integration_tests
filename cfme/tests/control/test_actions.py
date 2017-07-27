@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ Tests used to check whether assigned actions really do what they're supposed to do. Events are
-note supported by ec2, gc and scvmm providers. Tests are uncollected for these
+not supported by gc and scvmm providers. Tests are uncollected for these
 providers. When the support will be implemented these tests can enabled for them.
 
 Required YAML keys:
@@ -29,11 +29,11 @@ from cfme import test_requirements
 from utils import testgen
 from utils.blockers import BZ
 from utils.generators import random_vm_name
-from utils.log import logger
 from utils.hosts import setup_host_creds
+from utils.log import logger
+from utils.pretty import Pretty
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
-from utils.pretty import Pretty
 from . import vddk_url_map, do_scan, wait_for_ssa_enabled
 
 
@@ -95,6 +95,11 @@ def get_vm_object(appliance, vm_name):
 
 @pytest.fixture(scope="module")
 def vm_name(provider):
+    return random_vm_name("action", max_length=16)
+
+
+@pytest.fixture(scope="module")
+def vm_name_big(provider):
     return random_vm_name("action", max_length=16)
 
 
@@ -172,13 +177,13 @@ def _get_vm(request, provider, template_name, vm_name):
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider, setup_one_provider_modscope, small_template_modscope, vm_name):
+def vm(request, provider, setup_provider_modscope, small_template_modscope, vm_name):
     return _get_vm(request, provider, small_template_modscope, vm_name)
 
 
 @pytest.fixture(scope="module")
-def vm_big(request, provider, setup_one_provider_modscope, big_template_modscope, vm_name):
-    return _get_vm(request, provider, big_template_modscope, vm_name)
+def vm_big(request, provider, setup_provider_modscope, big_template_modscope, vm_name_big):
+    return _get_vm(request, provider, big_template_modscope, vm_name_big)
 
 
 @pytest.fixture(scope="module")
@@ -244,6 +249,28 @@ def policy_for_testing(vm_name, policy_name, policy_profile_name, provider):
 def assign_policy_for_testing(policy_for_testing, provider, policy_profile_name):
     provider.assign_policy_profiles(policy_profile_name)
     yield policy_for_testing
+    provider.unassign_policy_profiles(policy_profile_name)
+
+
+@pytest.yield_fixture(scope="module")
+def policy_for_testing_big(vm_name_big, policy_name, policy_profile_name, provider):
+    """Takes care of setting the appliance up for testing."""
+    policy = policies.VMControlPolicy(
+        policy_name,
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name_big)
+    )
+    policy.create()
+    policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
+    policy_profile.create()
+    yield policy
+    policy_profile.delete()
+    policy.delete()
+
+
+@pytest.yield_fixture(scope="function")
+def assign_policy_for_testing_big(policy_for_testing_big, provider, policy_profile_name):
+    provider.assign_policy_profiles(policy_profile_name)
+    yield policy_for_testing_big
     provider.unassign_policy_profiles(policy_profile_name)
 
 
@@ -657,16 +684,16 @@ def test_action_untag(request, vm, vm_off, assign_policy_for_testing):
 
 @pytest.mark.meta(blockers=[1381255])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_action_cancel_clone(request, provider, vm_big, assign_policy_for_testing):
+def test_action_cancel_clone(request, provider, vm_big, assign_policy_for_testing_big):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
     """
-    assign_policy_for_testing.assign_events("VM Clone Start")
-    assign_policy_for_testing.assign_actions_to_event(
+    assign_policy_for_testing_big.assign_events("VM Clone Start")
+    assign_policy_for_testing_big.assign_actions_to_event(
         "VM Clone Start", ["Cancel vCenter Task"])
     clone_vm_name = "{}-clone".format(vm_big.name)
-    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
+    request.addfinalizer(lambda: assign_policy_for_testing_big.assign_events())
     request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     cells = {"Description": clone_vm_name}

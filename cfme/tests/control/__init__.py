@@ -1,5 +1,5 @@
 from cfme.web_ui import flash, toolbar
-from utils import conf, version
+from utils import conf
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -27,9 +27,7 @@ def do_scan(vm, additional_item_check=None):
     if additional_item_check is not None:
         original_item = vm.get_detail(properties=additional_item_check)
     vm.smartstate_scan(cancel=False, from_details=True)
-    flash.assert_message_contain(version.pick({
-        version.LOWEST: "Smart State Analysis initiated",
-        "5.5": "Analysis initiated for 1 VM and Instance from the CFME Database"}))
+    flash.assert_message_contain("Analysis initiated for 1 VM and Instance from the CFME Database")
     logger.info("Scan initiated")
     wait_for(
         lambda: _scan() != original,
