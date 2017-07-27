@@ -812,16 +812,16 @@ class RegionDetails(CFMENavigateStep):
         self.view.details.select()
 
 
-@navigator.register(Region)
-class CANDUCollection(CFMENavigateStep):
-    VIEW = RegionView
-    prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self):
-        return False
-
-    def step(self):
-        self.prerequisite_view.canducollection.select()
+# @navigator.register(Region)
+# class CANDUCollection(CFMENavigateStep):
+#     VIEW = RegionView
+#     prerequisite = NavigateToSibling('Details')
+#
+#     def am_i_here(self):
+#         return False
+#
+#     def step(self):
+#         self.prerequisite_view.canducollection.select()
 
 
 class RedHatUpdatesView(RegionView):
