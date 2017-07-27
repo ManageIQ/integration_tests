@@ -79,7 +79,7 @@ def pool_manager(func, arg_list):
 
     # TODO put this into some utility library and handle kwargs, take pool size arg
     Args:
-        function (method): A function to parallel process
+        func (method): A function to parallel process
         arg_list (list): a list of arg tuples
 
     Returns:
@@ -96,8 +96,8 @@ def pool_manager(func, arg_list):
     # Check for exceptions since they're captured
     # Don't care about non-exception results since all non-exception results are in the queues
     results = []
-    for apply_result in proc_results:
-        result = apply_result.get()
+    for proc_result in proc_results:
+        result = proc_result.get()
         if isinstance(result, Exception):
             logger.exception('Exception during function call %s', func.__name__)
         results.append(result)
@@ -118,12 +118,12 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
     Returns:
         None: Uses the Queues to 'return' data
     """
-    logger.info('%s: Scan for vms matching text: %s', provider_key, [m.pattern for m in matchers])
+    logger.info('%s: Start scan for vm text matches', provider_key)
     try:
         vm_list = get_mgmt(provider_key).list_vm()
     except Exception:  # noqa
         scan_failure_queue.put(VmReport(provider_key, NULL, NULL, NULL, NULL))
-        logger.exception('%s: Exception listing vms: %s', provider_key)
+        logger.exception('%s: Exception listing vms', provider_key)
         return
 
     text_matched_vms = [name for name in vm_list if match(matchers, name)]
@@ -180,7 +180,7 @@ def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
     if delta < vm_delta:
         match_queue.put(data)
     else:
-        logger.info('%s: VM did ')
+        logger.info('%s: VM {} did not match age requirement', provider_key, vm_name)
 
 
 def delete_vm(provider_key, vm_name, age, result_queue):
@@ -211,8 +211,13 @@ def delete_vm(provider_key, vm_name, age, result_queue):
         else:
             logger.error('%s: Delete failed: %s', provider_key, vm_name)
     except Exception:  # noqa
-        result = FAIL  # set this here to cover anywhere the exception could happen
-        logger.exception('%s: Exception during delete: %s', provider_key, vm_name)
+        # TODO vsphere delete failures, workaround for wrapanapi issue #154
+        if vm_name not in provider_mgmt.list_vm():
+            result = PASS
+        else:
+            result = FAIL  # set this here to cover anywhere the exception could happen
+        logger.exception('%s: Exception during delete: %s, double check result: %s',
+                         provider_key, vm_name, result)
     finally:
         result_queue.put(VmReport(provider_key, vm_name, age, status, result))
 
@@ -245,6 +250,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         if not cfme_data['management_systems'][provider_key].get('cleanup', False):
             logger.info('SKIPPING %s, cleanup set to false or missing in yaml', provider_key)
             continue
+        logger.info('SCANNING %s', provider_key)
         providers_to_scan.append(provider_key)
 
     # scan providers for vms with name matches
