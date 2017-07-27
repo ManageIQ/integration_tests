@@ -19,6 +19,7 @@ class OrderForm(ServicesCatalogView):
     db_root_password = Input(name='param_DBRootPassword__protected')
     select_instance_type = BootstrapSelect("param_InstanceType")
     stack_name = Input(name='stack_name')
+    stack_timeout = Input(name='stack_timeout')
     resource_group = BootstrapSelect("resource_group")
     mode = BootstrapSelect('deploy_mode')
     vm_name = Input(name="param_virtualMachineName")
