@@ -296,23 +296,26 @@ class ProviderDetailsView(BaseLoggedInPage):
         return match_page(summary="{} (Summary)".format(self.obj.name))
 
     def get_logging_url(self):
-        self.monitor.item_select('External Logging')
         browser_instance = browser()
-        all_windows = browser_instance.window_handles
-        current_window = browser_instance.current_window_handle
 
-        new_window = set(all_windows) - set([current_window])
+        all_windows_before = browser_instance.window_handles
+        appliance_window = browser_instance.current_window_handle
 
-        if len(new_window) == 0:
+        self.monitor.item_select('External Logging')
+
+        all_windows_after = browser_instance.window_handles
+
+        new_windows = set(all_windows_after) - set(all_windows_before)
+
+        if not new_windows:
             raise RuntimeError("No logging window was open!")
-        new_window = new_window.pop()
-        old_window = set(all_windows) - set([new_window])
-        browser_instance.switch_to_window(new_window)
+
+        logging_window = new_windows.pop()
+        browser_instance.switch_to_window(logging_window)
 
         logging_url = browser_instance.current_url
-        old_window = old_window.pop()
 
-        browser_instance.switch_to_window(old_window)
+        browser_instance.switch_to_window(appliance_window)
 
         return logging_url
 
