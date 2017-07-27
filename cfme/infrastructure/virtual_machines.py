@@ -391,10 +391,7 @@ class Vm(BaseVM):
 
         def wait_for_snapshot_active(self):
             self._nav_to_snapshot_mgmt()
-            if self.name is not None:
-                return self._snapshot_is_active_helper(self.name)
-            else:
-                return self._snapshot_is_active_helper(self.description)
+            return self._snapshot_is_active_helper(self.name or self.description)
 
         def create(self):
             snapshot_dict = {
