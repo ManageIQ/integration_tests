@@ -7,7 +7,19 @@ from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.common import PolicyProfileAssignable
+from cfme.common.host_views import (
+    HostAddView,
+    HostDetailsView,
+    HostDiscoverView,
+    HostDriftAnalysis,
+    HostDriftHistory,
+    HostEditView,
+    HostManagePoliciesView,
+    HostsView,
+    HostTimelinesView
+)
 from cfme.exceptions import HostNotFound, ItemNotFound
+from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.web_ui import mixins
 from utils import conf
 from utils.appliance import Navigatable
@@ -17,17 +29,6 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
-from cfme.common.host_views import (
-    HostsView,
-    HostDetailsView,
-    HostDriftAnalysis,
-    HostDriftHistory,
-    HostEditView,
-    HostAddView,
-    HostDiscoverView,
-    HostManagePoliciesView,
-    HostTimelinesView
-)
 
 
 class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
@@ -283,17 +284,15 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         return entity.creds.strip().lower() == "checkmark"
 
     def get_datastores(self):
-        """Gets list of all datastores used by this host."""
-        # TODO Refactor this when Datastores will be converted to widgetastic:
-        # host_details_view = navigate_to(self, "Details")
-        # host_details_view.entities.relationships.click_at("Datastores")
-        # datastores_view = self.create_view(DatastoresAllView)
-        # assert datastores_view.is_displayed
-        # return item.name for item in datastores_view.items.get_all_items()
-        from cfme.web_ui import listaccordion, Quadicon
-        navigate_to(self, "Details")
-        listaccordion.select('Relationships', 'Datastores', by_title=False, partial=True)
-        return [q.name for q in Quadicon.all("datastore")]
+        """Gets list of all datastores used by this host.
+
+        Returns: :py:class:`list` of datastores names
+        """
+        host_details_view = navigate_to(self, "Details")
+        host_details_view.entities.relationships.click_at("Datastores")
+        datastores_view = self.create_view(HostAllDatastoresView)
+        assert datastores_view.is_displayed
+        return [entity.name for entity in datastores_view.entites.get_all_()]
 
     @property
     def get_db_id(self):
