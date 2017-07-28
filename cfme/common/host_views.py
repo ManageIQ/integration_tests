@@ -47,6 +47,7 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
 
 class HostQuadIconEntity(BaseQuadIconEntity):
 
+    # TODO Move these properties to one 'data' property
     @property
     def no_vm(self):
         return int(self.browser.text(self.QUADRANT.format(pos="a")))
