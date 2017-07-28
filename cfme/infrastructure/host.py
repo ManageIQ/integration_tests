@@ -100,19 +100,11 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             "mac_address": self.mac_address
         })
         if self.credentials is not None:
-            view.endpoints.default.fill({
-                "username": self.credentials.principal,
-                "password": self.credentials.secret,
-                "confirm_password": self.credentials.verify_secret,
-            })
+            view.endpoints.default.fill(self.credentials.view_value_mapping)
             if validate_credentials:
                 view.endpoints.default.validate_button.click()
         if self.ipmi_credentials is not None:
-            view.endpoints.ipmi.fill({
-                "username": self.ipmi_credentials.principal,
-                "password": self.ipmi_credentials.secret,
-                "confirm_password": self.ipmi_credentials.verify_secret,
-            })
+            view.endpoints.ipmi.fill(self.ipmi_credentials.view_value_mapping)
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
         if not cancel:
@@ -141,21 +133,13 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         if credentials is not None:
             if view.change_stored_password.is_displayed:
                 view.change_stored_password.click()
-            credentials_changed = view.endpoints.default.fill({
-                "username": credentials.principal,
-                "password": credentials.secret,
-                "confirm_password": credentials.verify_secret,
-            })
+            credentials_changed = view.endpoints.default.fill(credentials.view_value_mapping)
             if validate_credentials:
                 view.endpoints.default.validate_button.click()
         if ipmi_credentials is not None:
             if view.change_stored_password.is_displayed:
                 view.change_stored_password.click()
-            ipmi_credentials_changed = view.endpoints.ipmi.fill({
-                "username": ipmi_credentials.principal,
-                "password": ipmi_credentials.secret,
-                "confirm_password": ipmi_credentials.verify_secret,
-            })
+            ipmi_credentials_changed = view.endpoints.ipmi.fill(ipmi_credentials.view_value_mapping)
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
         changed = any([changed, credentials_changed, ipmi_credentials_changed])
