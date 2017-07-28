@@ -328,8 +328,7 @@ class MySettings(CFMENavigateStep):
 
     def step(self):
         if self.obj.appliance.version > '5.7':
-            from cfme.dashboard import click_top_right
-            click_top_right('My Settings')
+            self.prerequisite_view.settings.select_item('My Settings')
         else:
             self.prerequisite_view.navigation.select('Settings', 'My Settings')
 
@@ -340,8 +339,7 @@ class About(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        from cfme.dashboard import click_help
-        click_help('About')
+        self.prerequisite_view.help.select_item('About')
 
 
 @navigator.register(Server)
@@ -359,8 +357,7 @@ class Documentation(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        from cfme.dashboard import click_help
-        click_help('Documentation')
+        self.prerequisite_view.help.select_item('Documentation')
 
 
 @navigator.register(Server)
@@ -370,8 +367,7 @@ class Tasks(CFMENavigateStep):
 
     def step(self):
         if self.obj.appliance.version > '5.7':
-            from cfme.dashboard import click_top_right
-            click_top_right('Tasks')
+            self.prerequisite_view.settings.select_item('Tasks')
         else:
             self.prerequisite_view.navigation.select('Settings', 'Tasks')
 

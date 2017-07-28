@@ -6,6 +6,7 @@ class BaseLoggedInPage(View):
     """This page should be subclassed by any page that models any other page that is available as
     logged in.
     """
+    CSRF_TOKEN = '//meta[@name="csrf-token"]'
     flash = FlashMessages('.//div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
     help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]')
     settings = NavDropdown('.//li[./a[@id="dropdownMenu2"]]')
@@ -48,3 +49,11 @@ class BaseLoggedInPage(View):
         self.settings.select_item('Logout')
         self.browser.handle_alert(wait=None)
         self.extra.appliance.user = None
+
+    @property
+    def csrf_token(self):
+        return self.browser.get_attribute('csrf-token', self.CSRF_TOKEN)
+
+    @csrf_token.setter
+    def csrf_token(self, value):
+        self.browser.set_attribute('csrf-token', value, self.CSRF_TOKEN)
