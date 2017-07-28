@@ -493,30 +493,30 @@ class RedHatUpdatesEditView(RegionView):
 class RedHatUpdates(Navigatable, Pretty):
     """ Class represents a Red Hat updates tab in CFME UI
 
-             Args:
-                 service: Service type (registration method).
-                 url: Service server URL address.
-                 username: Username to use for registration.
-                 password: Password to use for registration.
-                 password_verify: 2nd entry of password for verification. Same as 'password' if None.
-                 repo_name: Repository/channel to enable.
-                 organization: Organization (sat6 only).
-                 use_proxy: `True` if proxy should be used, `False` otherwise (default `False`).
-                 proxy_url: Address of the proxy server.
-                 proxy_username: Username for the proxy server.
-                 proxy_password: Password for the proxy server.
-                 proxy_password_verify: 2nd entry of proxy server password for verification.
-                    Same as 'proxy_password' if None.
-                 set_default_rhsm_address: Click the Default button connected to
-                    the RHSM (only) address if `True`
-                 set_default_repository: Click the Default button connected to the repo/channel if `True`
+    Args:
+        service: Service type (registration method).
+        url: Service server URL address.
+        username: Username to use for registration.
+        password: Password to use for registration.
+        password_verify: 2nd entry of password for verification. Same as 'password' if None.
+        repo_name: Repository/channel to enable.
+        organization: Organization (sat6 only).
+        use_proxy: `True` if proxy should be used, `False` otherwise (default `False`).
+        proxy_url: Address of the proxy server.
+        proxy_username: Username for the proxy server.
+        proxy_password: Password for the proxy server.
+        proxy_password_verify: 2nd entry of proxy server password for verification.
+            Same as 'proxy_password' if None.
+        set_default_rhsm_address: Click the Default button connected to
+            the RHSM (only) address if `True`
+        set_default_repository: Click the Default button connected to the repo/channel if `True`
 
-                Note:
-                    With satellite 6, it is necessary to validate credentials to obtain
-                    available organizations from the server.
-                    With satellite 5, 'validate' parameter is ignored because there is
-                    no validation button available.
-            """
+        Note:
+            With satellite 6, it is necessary to validate credentials to obtain
+            available organizations from the server.
+            With satellite 5, 'validate' parameter is ignored because there is
+            no validation button available.
+    """
 
     pretty_attrs = ['service', 'url', 'username', 'password']
     service_types = {
@@ -777,6 +777,7 @@ class Edit(CFMENavigateStep):
 
 
 # ====================C and U===================================
+
 
 class CANDUCollectionView(RegionView):
     """C and U View"""
