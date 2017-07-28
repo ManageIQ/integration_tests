@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 # Page model for Intel->Chargeback->Assignments.
 
-import cfme.fixtures.pytest_selenium as sel
 from . import ChargebackView
-from collections import Mapping
-from copy import copy
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import Text
-from cfme.web_ui import Form, fill, flash, form_buttons, Select as Select_old
+from widgetastic_manageiq import Table
+from widgetastic_manageiq.hacks import BootstrapSelectByLocator
+from widgetastic_patternfly import BootstrapSelect, Button
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.update import Updateable
-from utils.version import LOWEST, pick
 
 
 class AssignmentsAllView(ChargebackView):
@@ -29,6 +27,9 @@ class AssignmentsAllView(ChargebackView):
 class AssignmentsView(ChargebackView):
     title = Text("#explorer_title_text")
 
+    save_button = Button("Save")
+    reset_button = Button("Reset")
+
     @property
     def is_displayed(self):
         return (
@@ -42,64 +43,15 @@ class AssignmentsView(ChargebackView):
             ]
         )
 
+    assign_to = BootstrapSelect(id="cbshow_typ")
+    tag_category = BootstrapSelect(id='cbtag_cat')
+    docker_labels = BootstrapSelect(id='cblabel_key')
+    _table_locator = '//h3[contains(text(),"Selections")]/following-sibling::table'
+    _table_widget_locator = './/div[contains(@class, "bootstrap-select")]'
 
-class AssignFormTable(Pretty):
-    pretty_attrs = ["entry_loc"]
-
-    def __init__(self, entry_loc):
-        self.entry_loc = entry_loc
-
-    def locate(self):
-        return self.entry_loc
-
-    @property
-    def rows(self):
-        return sel.elements("./tbody/tr", root=self)
-
-    def row_by_name(self, name):
-        for row in self.rows:
-            row_name = sel.text_sane(sel.element("./td[1]", root=row))
-            if row_name == name:
-                return row
-        else:
-            raise NameError("Did not find row named {}!".format(name))
-
-    def select_from_row(self, row):
-        el = pick({"5.6": "./td/select",
-                   "5.7": "./td/div/select"})
-        return Select_old(sel.element(el, root=row))
-
-    def select_by_name(self, name):
-        return self.select_from_row(self.row_by_name(name))
-
-
-@fill.method((AssignFormTable, Mapping))
-def _fill_assignform_dict(form, d):
-    d = copy(d)  # Mutable
-    for name, value in d.iteritems():
-        if value is None:
-            value = "<Nothing>"
-        select = form.select_by_name(name)
-        sel.select(select, value)
-
-
-assign_form = Form(
-    fields=[
-        ("assign_to", Select_old("select#cbshow_typ")),
-        # Enterprise
-        ("enterprise", Select_old("select#enterprise__1")),  # Simple shotcut, might explode once
-        # Tagged DS
-        ("tag_category", Select_old("select#cbtag_cat")),
-        # Docker Labels
-        ("docker_labels", Select_old('select#cblabel_key')),
-        # Common - selection table
-        ("selections", AssignFormTable({
-            LOWEST: (
-                "//div[@id='cb_assignment_div']/fieldset/table[contains(@class, 'style1')]"
-                "/tbody/tr/td/table"),
-            "5.4": "//div[@id='cb_assignment_div']/table[contains(@class, 'table')]",
-        })),
-        ('save_button', form_buttons.save)])
+    selections = Table(locator=_table_locator,
+            column_widgets={'Rate': BootstrapSelectByLocator(locator=_table_widget_locator)},
+            assoc_column=1)
 
 
 class Assign(Updateable, Pretty, Navigatable):
@@ -136,16 +88,11 @@ class Assign(Updateable, Pretty, Navigatable):
         self.selections = selections
 
     def storageassign(self):
-        navigate_to(self, 'Storage')
-        fill(assign_form,
-            {'assign_to': self.assign_to,
-             'tag_category': self.tag_category,
-             'selections': self.selections},
-            action=assign_form.save_button)
-        flash.assert_no_errors()
-
-    def computeassign(self):
-        navigate_to(self, 'Compute')
+        view = navigate_to(self, 'Storage')
+        self._fill(view)
+        view.save_button.click()
+        view.flash.assert_no_error()
+        """
         fill(assign_form,
             {'assign_to': self.assign_to,
              'tag_category': self.tag_category,
@@ -153,6 +100,28 @@ class Assign(Updateable, Pretty, Navigatable):
              'selections': self.selections},
             action=assign_form.save_button)
         flash.assert_no_errors()
+
+
+    def computeassign(self):
+        view = navigate_to(self, 'Compute')
+        fill(assign_form,
+            {'assign_to': self.assign_to,
+             'tag_category': self.tag_category,
+             'docker_labels': self.docker_labels,
+             'selections': self.selections},
+            action=assign_form.save_button)
+        flash.assert_no_errors()
+"""
+
+    def _fill(self, view):
+        """This function prepares the values and fills the form."""
+        fill_details = dict(
+            assign_to=self.assign_to,
+            tag_category=self.tag_category,
+            docker_labels=self.docker_labels,
+            selections=self.selections,
+        )
+        return view.fill(fill_details)
 
 
 @navigator.register(Assign, 'All')
