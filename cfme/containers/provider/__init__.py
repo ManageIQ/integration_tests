@@ -28,7 +28,7 @@ from cfme.web_ui import (
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.browser import ensure_browser_open
+from utils.browser import ensure_browser_open, browser
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.log import logger
@@ -294,6 +294,30 @@ class ProviderDetailsView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return match_page(summary="{} (Summary)".format(self.obj.name))
+
+    def get_logging_url(self):
+        browser_instance = browser()
+
+        all_windows_before = browser_instance.window_handles
+        appliance_window = browser_instance.current_window_handle
+
+        self.monitor.item_select('External Logging')
+
+        all_windows_after = browser_instance.window_handles
+
+        new_windows = set(all_windows_after) - set(all_windows_before)
+
+        if not new_windows:
+            raise RuntimeError("No logging window was open!")
+
+        logging_window = new_windows.pop()
+        browser_instance.switch_to_window(logging_window)
+
+        logging_url = browser_instance.current_url
+
+        browser_instance.switch_to_window(appliance_window)
+
+        return logging_url
 
 
 @navigator.register(ContainersProvider, 'Details')
