@@ -1,26 +1,20 @@
-#!/cfme_pristine_venv/bin/python2
-from __future__ import print_function
+#!/usr/bin/env python2
+import os
 import sys
 
-try:
-    from cfme.utils import safe_string
-    from cfme.utils.trackerbot import post_task_result
-    from cfme.utils.path import log_path
-except ImportError:
-    from utils import safe_string
-    from utils.trackerbot import post_task_result
-    from utils.path import log_path
+from utils import safe_string
+from utils.trackerbot import post_task_result
 
-setup_data = log_path.join("setup.txt").read()
+with open("{}/setup.txt".format(os.environ['ARTIFACTOR_DIR'])) as f:
+    data = f.read()
 
 coverage = 0.0
 try:
+    with open("{}/coverage_result.txt".format(os.environ['CFME_REPO_DIR'])) as f:
+        data = f.read().strip("\n")
+    coverage = float(data)
+except:
+    pass
 
-    with log_path.join("coverage_result.txt").open() as f:
-        coverage_data = f.read().strip("\n")
-    coverage = float(coverage_data)
-except Exception as e:
-    print(e)
-
-print(sys.argv[1], sys.argv[2], coverage)
-post_task_result(sys.argv[1], sys.argv[2], safe_string(setup_data), coverage)
+print sys.argv[1], sys.argv[2], coverage
+post_task_result(sys.argv[1], sys.argv[2], safe_string(data), coverage)
