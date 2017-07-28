@@ -14,6 +14,7 @@ proc = subprocess.Popen(['git', 'verify-commit', commit], stdout=subprocess.PIPE
                         stderr=subprocess.PIPE)
 proc.wait()
 output = proc.stderr.read()
+print (output)
 if re.findall('^gpg: Good signature', output, re.M):
     gpg = re.findall('fingerprint: ([A-F0-9 ]+)', output)[0].replace(' ', '')
     if gpg in key_list:

@@ -12,12 +12,14 @@ log () {
 
 # Runs given command and appends the stdout and stderr output to setup.txt
 run_n_log () {
-    eval "$1"  2>&1 | tee -a $LOGFILE
+    log running "$1"
+    (set -o pipefail; eval "$1"  2>&1 | tee -a $LOGFILE)
+    return
 }
 # Shutdown and destroy everything
 on_exit () {
     log "Beginning shutdown proc...#~"
-    echo $RES > /log_depot/result.txt
+    echo $RES > /integration_tests/log/result.txt
     log "Checking out master branch..."
     git checkout origin/master
     
@@ -123,11 +125,13 @@ log "#*"
 # note that we DO NOT merge.
 if [ -n "$CFME_PR" ]; then
     log "Checking out PR $CFME_PR"
-    git fetch repo_under_test refs/pull/$CFME_PR/head:refs/remotes/repo_under_test/pr/$CFME_PR
-    run_n_log "/verify_commit.py origin/pr/$CFME_PR"
+    run_n_log "git fetch repo_under_test refs/pull/$CFME_PR/head:repo_under_test/pr/$CFME_PR"
+    run_n_log "/verify_commit.py repo_under_test/pr/$CFME_PR"
+    log "fetching base branch"
+    log_n_run "git fetch repo_under_test $BASE_BRANCH -v"
+    log "checking out base branch"
+    log_n_run "git checkout -b branch-under-test repo_under_test/$BASE_BRANCH"
     log "merging against $BASE_BRANCH"
-    git fetch repo_under_test $BASE_BRANCH
-    git checkout -b branch-under-test repo_under_test/$BASE_BRANCH
     run_n_log "git merge --no-ff --no-edit repo_under_test/pr/$CFME_PR"
 else
     log "Checking out branch $BRANCH"
@@ -135,7 +139,7 @@ else
 fi
 
 
-
+ 
 # If asked, provision the appliance, and update the APPLIANCE variable
 if [ -n "$PROVIDER" ]; then
     log "Provisioning appliance... #~"
@@ -189,10 +193,18 @@ log "Artifactor output #~"
 run_n_log "cat /integration_tests/conf/env.local.yaml"
 log "#*"
 
+
 # Remove .pyc files
 run_n_log "find /integration_tests/ -name \"*.pyc\" -exec rm -rf {} \;"
 
 set +e
+
+# needed until we switch to miq-runtest here
+log "quickstart reexecute #~"
+. /cfme_venv/bin/activate
+run_n_log "python -m cfme.scripting.quickstart"
+log "#*"
+
 
 # Finally, run the py.test
 log "$PYTEST"
