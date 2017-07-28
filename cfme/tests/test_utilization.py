@@ -6,7 +6,8 @@ import time
 from cfme import test_requirements
 from fixtures.pytest_store import store
 
-from cfme.configure.configuration import server_roles_enabled, candu
+from cfme.configure.configuration import server_roles_enabled
+from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.middleware.provider import MiddlewareProvider
@@ -34,6 +35,7 @@ pytestmark = [
 
 @pytest.yield_fixture(scope="module")
 def enable_candu():
+    candu = CANDUCollection()
     try:
         with server_roles_enabled(
                 'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor'):
