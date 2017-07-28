@@ -14,16 +14,11 @@ import fauxfactory
 import sys
 from threading import Lock, Thread
 
-# from psphere.client import Client
-from psphere.managedobjects import VirtualMachine, ClusterComputeResource, HostSystem, Datacenter
-
 from utils import net, trackerbot
-from utils.conf import cfme_data
-from utils.conf import credentials
+from utils.conf import cfme_data, credentials
 from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from wrapanapi import VMWareSystem
-from utils.wait import wait_for
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
 NUM_OF_TRIES_OVFTOOL = 5
@@ -112,110 +107,18 @@ def upload_ova(hostname, username, password, name, datastore,
 def add_disk(client, name, provider):
     print("VSPHERE:{} Beginning disk add...".format(provider))
 
-    backing = client.api.create("VirtualDiskFlatVer2BackingInfo")
-    backing.datastore = None
-    backing.diskMode = "persistent"
-    backing.thinProvisioned = True
+    # depends on wrapanapi #153
+    # adding disk #1 (base disk is 0)
+    rc, result = client.add_disk_to_vm(vm_name=name,
+                                       capacity_in_kb=8388608,
+                                       provision_type='thin')
 
-    disk = client.api.create("VirtualDisk")
-    disk.backing = backing
-    disk.controllerKey = 1000
-    disk.key = 3000
-    disk.unitNumber = 1
-    disk.capacityInKB = 8388608
-
-    disk_spec = client.api.create("VirtualDeviceConfigSpec")
-    disk_spec.device = disk
-    file_op = client.api.create("VirtualDeviceConfigSpecFileOperation")
-    disk_spec.fileOperation = file_op.create
-    operation = client.api.create("VirtualDeviceConfigSpecOperation")
-    disk_spec.operation = operation.add
-
-    devices = []
-    devices.append(disk_spec)
-
-    nc = client.api.create("VirtualMachineConfigSpec")
-    nc.deviceChange = devices
-
-    vm = VirtualMachine.get(client.api, name=name)
-    task = vm.ReconfigVM_Task(spec=nc)
-
-    def check_task(task):
-        task.update()
-        return task.info.state
-
-    wait_for(check_task, [task], fail_condition="running")
-
-    if task.info.state == "success":
-        print(" VSPHERE:{} Successfully added new disk".format(provider))
+    if rc:
+        print('VSPHERE:{} Added disk to vm {}'.format(provider, name))
     else:
-        client.api.logout()
-        print(" VSPHERE:{} Failed to add disk".format(provider))
-        return False
+        print(" VSPHERE:{} Failure adding disk, result: {}".format(provider, result))
 
-
-def make_template(client, name, provider):
-    print("VSPHERE:{} Marking as Template".format(provider))
-    vm = VirtualMachine.get(client.api, name=name)
-    try:
-        vm.MarkAsTemplate()
-        print(" VSPHERE:{} Successfully templatized machine".format(provider))
-    except:
-        print(" VSPHERE:{} Failed to templatize machine".format(provider))
-        sys.exit(127)
-
-
-def api_params_resolution(item_list, item_name, item_param):
-    if len(item_list) == 0:
-        print("VSPHERE: Cannot find {} ({}) automatically.".format(item_name, item_param))
-        print("Please specify it by cmd-line parameter '--{}' or in cfme_data.".format(item_param))
-        return None
-    elif len(item_list) > 0:
-        if len(item_list) > 1:
-            print("VSPHERE: Found multiple instances of {}.".format(item_name))
-        for item in item_list:
-            if hasattr(item, 'summary'):
-                if hasattr(item.summary, 'overallStatus'):
-                    if item.summary.overallStatus != 'red':
-                        print("Picking {} : '{}'.".format(item_name, item.name))
-                        return item
-                elif hasattr(item.summary, 'accessible'):
-                    if item.summary.accessible is True:
-                        print("Picking {} : '{}'.".format(item_name, item.name))
-                        return item
-            elif hasattr(item, 'overallStatus'):
-                if item.overallStatus != 'red':
-                    print("Picking {} : '{}'.".format(item_name, item.name))
-                    return item
-        print("VSPHERE: Found instances of {}, but all have status 'red'.".format(item_name))
-        print("Please specify {} manually.".format(item_name))
-        return None
-
-
-def get_cluster(client):
-    clusters = ClusterComputeResource.all(client.api)
-    return api_params_resolution(clusters, 'cluster', 'cluster')
-
-
-def get_host(client, name):
-    hosts = HostSystem.all(client.api)
-    if name is None:
-        return api_params_resolution(hosts, 'host', 'host')
-    else:
-        for host in hosts:
-            if host.name == name:
-                return host
-        print("VSPHERE: Could not find specified host '{}'".format(name))
-
-
-def get_datastore(client, host):
-    datastores = host.datastore
-    return api_params_resolution(datastores, 'datastore', 'datastore')
-
-
-def get_datacenter(client):
-    datacenters = Datacenter.all(client.api)
-    return api_params_resolution(datacenters, 'datacenter', 'datacenter')
+    return rc
 
 
 def check_kwargs(**kwargs):
@@ -225,24 +128,6 @@ def check_kwargs(**kwargs):
                 kwargs['provider'], key))
             return False
     return True
-
-
-def update_params_api(client, **kwargs):
-    if kwargs.get('cluster') is None:
-        cluster = get_cluster(client)
-        kwargs['cluster'] = cluster.name
-    if kwargs.get('host') is None:
-        host = get_host(client, None)
-        kwargs['host'] = host.name
-    if kwargs.get('datastore') is None:
-        if kwargs.get('host') is None:
-            host = get_host(client, kwargs.get('host'))
-        datastore = get_datastore(client, host)
-        kwargs['datastore'] = datastore.name
-    if kwargs.get('datacenter') is None:
-        datacenter = get_datacenter(client)
-        kwargs['datacenter'] = datacenter.name
-    return kwargs
 
 
 def make_kwargs(args, **kwargs):
@@ -351,8 +236,12 @@ def upload_template(client, hostname, username, password,
             if kwargs.get('disk'):
                 add_disk(client, name, provider)
             if kwargs.get('template'):
-                # make_template(client, name, hostname, username, password)
-                make_template(client, name, provider)
+                try:
+                    client.mark_as_template(vm_name=name)
+                    print(" VSPHERE:{} Successfully templatized machine".format(provider))
+                except Exception:
+                    print(" VSPHERE:{} Failed to templatize machine".format(provider))
+                    sys.exit(127)
             if not provider_data:
                 print("RHEVM:{} Adding template {} to trackerbot...".format(provider, name))
                 trackerbot.trackerbot_add_provider_template(stream, provider, name)
@@ -362,7 +251,6 @@ def upload_template(client, hostname, username, password,
             deploy_args = {'provider': provider, 'vm_name': vm_name,
                            'template': name, 'deploy': True}
             getattr(__import__('clone_template'), "main")(**deploy_args)
-        client.api.logout()
     except Exception as e:
         print(e)
         return False
