@@ -136,11 +136,14 @@ if __name__ == "__main__":
     # Now pull all the results off of the queue
     # Stacking the generator this way is equivalent to using list.extend instead of list.append
     # Need to check queue.empty since a call to get will raise an Empty exception
-    output_data = [data for _ in proc_list if not queue.empty() for data in queue.get()]
+    output_data = []
+    while not queue.empty():
+        output_data.extend(queue.get())
 
     header = '''## VM/Instances on providers matching:
 ## providers: {}
-## tags: {}'''.format(args.provider, args.tag)
+## tags: {}
+'''.format(args.provider, args.tag)  # don't forget trailing newline...
 
     with open(args.outfile, 'w') as output_file:
         # stdout and the outfile

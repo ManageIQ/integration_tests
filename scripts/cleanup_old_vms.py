@@ -1,37 +1,36 @@
 #!/usr/bin/env python2
-
 import argparse
 import datetime
-import pytz
+from datetime import timedelta
 import re
 import sys
-from os.path import join as pathjoin
-from collections import defaultdict, namedtuple
-from dateutil import parser
+import logging
+from collections import namedtuple
+from operator import attrgetter
+from multiprocessing import Manager, Pool
+
+import pytz
 from tabulate import tabulate
-from threading import Lock, Thread
-from tzlocal import get_localzone
-from wrapanapi.virtualcenter import VMWareSystem
 
-from utils import net
 from utils.log import logger
-from utils.conf import cfme_data, credentials
+from utils.conf import cfme_data
 from utils.path import log_path
-from utils.ssh import SSHClient
 from utils.providers import list_provider_keys, get_mgmt
-
-lock = Lock()
-# Hold all the deleted vm's as a list, add in from all the threads with lock
-# Each items is a list containing: ['Provider', 'Name', 'Age', 'Status From Provider', 'Delete RC']
-deleted_vms_list = []
 
 # Constant strings for the report
 PASS = 'PASS'
 FAIL = 'FAIL'
 NULL = '--'
 
-NameAge = namedtuple('NameAge', 'name, age')
-HostCreds = namedtuple('HostCreds', 'hostname, cred_key')
+VmProvider = namedtuple('VmProvider', 'provider_key, name')
+VmData = namedtuple('VmData', 'provider_key, name, age')
+VmReport = namedtuple('VmReport', 'provider_key, name, age, status, result')
+
+# log to stdout too
+logger.addHandler(logging.StreamHandler(sys.stdout))
+
+# manager for queues that can be shared
+manager = Manager()
 
 
 def parse_cmd_line():
@@ -44,23 +43,26 @@ def parse_cmd_line():
     parser.add_argument('--provider', dest='providers', action='append', default=None,
                         help='Provider(s) to inspect, can be used multiple times',
                         metavar='PROVIDER')
-    parser.add_argument('-l', '--list', default=False, action='store_true', dest='list_vms',
-                        help='list vms of the specified "provider_type"')
-    parser.add_argument('--provider-type', dest='provider_type', default='ec2, gce, azure',
-                        help='comma separated list of the provider type, useful in case of gce,'
-                             'azure, ec2 to get the insight into cost/vm listing')
     parser.add_argument('--outfile', dest='outfile',
                         default=log_path.join('cleanup_old_vms.log').strpath,
                         help='outfile to list ')
     parser.add_argument('text_to_match', nargs='*', default=['^test_', '^jenkins', '^i-'],
                         help='Regex in the name of vm to be affected, can be use multiple times'
-                             ' (Defaults to "^test_" and "^jenkins")')
+                             ' (Defaults to \'^test_\' and \'^jenkins\')')
 
     args = parser.parse_args()
     return args
 
 
 def match(matchers, vm_name):
+    """Check whether the given vm name matches any of the regex match objects
+
+    Args:
+        matchers (list): A list of regex objects with match() method
+        vm_name (string): The name of the VM to compare
+    Returns:
+        bool: whether or not the vm_name is matched by ANY of the regex in the list
+    """
     for matcher in matchers:
         if matcher.match(vm_name):
             return True
@@ -68,143 +70,156 @@ def match(matchers, vm_name):
         return False
 
 
-def get_vm_config_modified_time(host_name, vm_name, datastore_url, provider_key):
+def pool_manager(func, arg_list):
+    """Create a process pool and join the processes via apply_async
+
+    Notes:
+        Use Manager.Queue for any queues in the arg_list tuples.
+        BLOCKS by joining
+
+    # TODO put this into some utility library and handle kwargs, take pool size arg
+    Args:
+        func (method): A function to parallel process
+        arg_list (list): a list of arg tuples
+
+    Returns:
+        list of the return values from apply_async
     """
-    SSH to provider and find modified date for VMX file
-    :param host_name: string the host to connect to
-    :param vm_name: string name of the vm
-    :param datastore_url: string datastore url in format ds:
-    :param provider_key: string provider key
-    :return:
-    """
-    try:
-        providers_data = cfme_data.get("management_systems", {})
-        yaml_hosts = providers_data[provider_key]['hosts']
-        # pull host name and credentials from yaml, may be multiple hosts defined
-        hostname, host_cred_key = None, None  # Init in case not found in yaml
-        for host in yaml_hosts:
-            # Some of the vsphere environments are configured with IP as the host's name
-            if host_name in [host['name'], host.get('ipaddress')]:
-                hostname, host_cred_key = host['name'], host['credentials']
-                break
+    # TODO increase pool size
+    proc_pool = Pool(8)
+    proc_results = []
+    for arg_tuple in arg_list:
+        proc_results.append(proc_pool.apply_async(func, args=arg_tuple))
+    proc_pool.close()
+    proc_pool.join()
 
-        if not hostname or not host_cred_key:
-            raise KeyError('Could not find host {} and credentials for {} in yaml'
-                           .format(host_name, provider_key))
-        connect_kwargs = {
-            'username': credentials[host_cred_key]['username'],
-            'password': credentials[host_cred_key]['password'],
-            'hostname': hostname
-        }
-        datastore_path = re.findall(r'([^ds:`/*].*)', str(datastore_url))
-        command = 'find ~/{} -exec date -r {} \; -name {}.vmx | xargs  date -r'.format(
-            pathjoin(datastore_path[0], vm_name),
-            vm_name)
+    # Check for exceptions since they're captured
+    # Don't care about non-exception results since all non-exception results are in the queues
+    results = []
+    for proc_result in proc_results:
+        result = proc_result.get()
+        if isinstance(result, Exception):
+            logger.exception('Exception during function call %s', func.__name__)
+        results.append(result)
 
-        with SSHClient(**connect_kwargs) as ssh_client:
-            result = ssh_client.run_command(command)
-        parsed_time = parser.parse(str(result).rstrip())
-        return parsed_time.astimezone(pytz.timezone(str(get_localzone()))).replace(tzinfo=None)
-    except Exception as e:
-        logger.error(e)
-        return False
+    return results
 
 
-def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
+def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
     """
     Process the VMs on a given provider, comparing name and creation time.
     Append vms meeting criteria to vms_to_delete
 
-    :param provider_key: string provider key
-    :param matchers: matching strings
-    :param delta: time delta
-    :param vms_to_delete: the list of vms that should be deleted
-    :return: modifies vms_to_delete
+    Args:
+        provider_key (string): the provider key from yaml
+        matchers (list): A list of regex objects with match() method
+        match_queue (Queue.Queue): MP queue to hold VMs matching age requirement
+        scan_failure_queue (Queue.Queue): MP queue to hold vms that we could not compare age
+    Returns:
+        None: Uses the Queues to 'return' data
     """
-    with lock:
-        print('{} processing'.format(provider_key))
+    logger.info('%s: Start scan for vm text matches', provider_key)
     try:
-        now = datetime.datetime.now()
-        with lock:
-            # Known conf issue :)
-            provider = get_mgmt(provider_key)
-        vm_list = provider.list_vm()
+        vm_list = get_mgmt(provider_key).list_vm()
+    except Exception:  # noqa
+        scan_failure_queue.put(VmReport(provider_key, NULL, NULL, NULL, NULL))
+        logger.exception('%s: Exception listing vms', provider_key)
+        return
 
-        for vm_name in vm_list:
-            try:
-                if not match(matchers, vm_name):
-                    continue
+    text_matched_vms = [name for name in vm_list if match(matchers, name)]
+    for name in text_matched_vms:
+        match_queue.put(VmProvider(provider_key, name))
 
-                if (isinstance(provider, VMWareSystem) and
-                        provider.vm_status(vm_name) == 'poweredOff'):
-                    hostname = provider.get_vm_host_name(vm_name)
-                    vm_config_datastore = provider.get_vm_config_files_path(vm_name)
-                    datastore_url = provider.get_vm_datastore_path(vm_name, vm_config_datastore)
-                    vm_creation_time = get_vm_config_modified_time(hostname, vm_name,
-                                                                   datastore_url, provider_key)
-                else:
-                    vm_creation_time = provider.vm_creation_time(vm_name)
-
-                if vm_creation_time is False:
-                    # This VM must have some problem, include in report even though we can't delete
-                    status = provider.vm_status(vm_name)
-                    deleted_vms_list.append([provider_key,
-                                             vm_name,
-                                             NULL,  # can't know age, failed getting creation date
-                                             status,
-                                             FAIL])
-                    raise Exception  # the except block message is accurate in this case
-
-                if vm_creation_time + delta < now:
-                    vm_delta = now - vm_creation_time
-                    with lock:
-                        vms_to_delete[provider_key].add((vm_name, vm_delta))
-            except Exception as e:
-                logger.error(e)
-                logger.error('Failed to get creation/boot time for {} on {}'.format(
-                    vm_name, provider_key))
-                continue
-
-        with lock:
-            print('{} finished processing for matches'.format(provider_key))
-    except Exception as ex:
-        with lock:
-            # Print out the error message too because logs in the job get deleted
-            print('{} failed ({}: {})'.format(provider_key, type(ex).__name__, str(ex)))
-        logger.error('failed to process vms from provider {}'.format(provider_key))
-        logger.exception(ex)
+    non_text_matching = set(vm_list) - set(text_matched_vms)
+    logger.info('%s: NOT matching text filters: %s', provider_key, non_text_matching)
+    logger.info('%s: MATCHED text filters: %s', provider_key, text_matched_vms)
 
 
-def delete_provider_vms(provider_key, provider_mgmt, names_ages):
+def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
+    """Scan an individual VM for age
+
+    Args:
+        provider_key (string): the provider key from yaml
+        vm_name (string): name of the VM to scan
+        delta (datetime.timedelta) The timedelta to compare age against for matches
+        match_queue (Queue.Queue): MP queue to hold VMs matching age requirement
+        scan_failure_queue (Queue.Queue): MP queue to hold vms that we could not compare age
+
+    Returns:
+        None: Uses the Queues to 'return' data
     """
-    lock, lock, more locking. Need to convert caller to Process+Queue
-
-    :param provider_key: string provider name/key, for easy logging
-    :param provider_mgmt: provider mgmtsystem object
-    :param names_ages: list of NameAge namedtuples
-    :return: none
-    """
-    with lock:
-        print('Deleting VMs from {} ...'.format(provider_key))
-
-    for vm_name, age in names_ages:
-        with lock:
-            print("Deleting {} from {}".format(vm_name, provider_key))
+    provider_mgmt = get_mgmt(provider_key)
+    now = datetime.datetime.now(tz=pytz.UTC)
+    # Nested exceptions to try and be safe about the scanned values and to get complete results
+    failure = False
+    status = NULL
+    logger.info('%s: Scan VM %s...', provider_key, vm_name)
+    try:
+        # Localize to UTC
+        vm_creation_time = provider_mgmt.vm_creation_time(vm_name)
+    except Exception:  # noqa
+        failure = True
+        logger.exception('%s: Exception getting creation time for %s', provider_key, vm_name)
+        # This VM must have some problem, include in report even though we can't delete
         try:
-            provider_mgmt.delete_vm(vm_name)
-            status = NULL
-            result = PASS
-        except Exception as e:
             status = provider_mgmt.vm_status(vm_name)
-            result = FAIL
-            with lock:
-                print('Failed to delete {} on {}'.format(vm_name, provider_key))
-                logger.exception(e)
-        finally:
-            with lock:
-                deleted_vms_list.append([provider_key, vm_name, age, status, result])
-    with lock:
-        print("{} is done deleting vms".format(provider_key))
+        except Exception:  # noqa
+            failure = True
+            logger.exception('%s: Exception getting status for %s', provider_key, vm_name)
+            status = NULL
+    finally:
+        if failure:
+            scan_failure_queue.put(VmReport(provider_key, vm_name, FAIL, status, NULL))
+            return
+
+    vm_delta = now - vm_creation_time
+    logger.info('%s: VM %s age: %s', provider_key, vm_name, vm_delta)
+    data = VmData(provider_key, vm_name, str(vm_delta))
+
+    # test age to determine which queue it goes in
+    if delta < vm_delta:
+        match_queue.put(data)
+    else:
+        logger.info('%s: VM {} did not match age requirement', provider_key, vm_name)
+
+
+def delete_vm(provider_key, vm_name, age, result_queue):
+    """ Delete the given vm_name from the provider via REST interface
+
+    Args:
+        provider_key (string): name of the provider from yaml
+        vm_name (string): name of the vm to delete
+        age (string): age of the VM to delete
+        result_queue (Queue.Queue): MP Queue to store the VmReport tuple on delete result
+    Returns:
+        None: Uses the Queues to 'return' data
+    """
+    # diaper exceptions here to handle anything and continue.
+    provider_mgmt = get_mgmt(provider_key)
+    try:
+        status = provider_mgmt.vm_status(vm_name)
+    except Exception:  # noqa
+        status = FAIL
+        logger.exception('%s: Exception getting status for %s', provider_key, vm_name)
+
+    logger.info("%s: Deleting %s, age: %s, status: %s", provider_key, vm_name, age, status)
+    try:
+        # delete_vm returns boolean based on success
+        if provider_mgmt.delete_vm(vm_name):
+            result = PASS
+            logger.info('%s: Delete success: %s', provider_key, vm_name)
+        else:
+            logger.error('%s: Delete failed: %s', provider_key, vm_name)
+    except Exception:  # noqa
+        # TODO vsphere delete failures, workaround for wrapanapi issue #154
+        if vm_name not in provider_mgmt.list_vm():
+            result = PASS
+        else:
+            result = FAIL  # set this here to cover anywhere the exception could happen
+        logger.exception('%s: Exception during delete: %s, double check result: %s',
+                         provider_key, vm_name, result)
+    finally:
+        result_queue.put(VmReport(provider_key, vm_name, age, status, result))
 
 
 def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
@@ -217,80 +232,86 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     Prompts user to continue with delete
     Threads deleting of the vms
 
-    :param texts: list of strings to match against
-    :param max_hours: integer maximum number of hours that the VM can exist for
-    :param providers: list of provider keys
-    :param prompt: boolean, whether or not to prompt the user for each delete
-    :return: 0 if user declines delete when prompt is True
+    Args:
+        texts (list): List of regex strings to match with
+        max_hours (int): age limit for deletion
+        providers (list): List of provider keys to scan and cleanup
+        prompt (bool): Whether or not to prompt the user before deleting vms
+    Returns:
+        int: return code, 0 on success, otherwise raises exception
     """
-    providers = providers or list_provider_keys()
-    delta = datetime.timedelta(hours=int(max_hours))
-    vms_to_delete = defaultdict(set)
-    thread_queue = []
-    # precompile regexes
-    matchers = [re.compile(text, re.IGNORECASE) for text in texts]
-    print('Matching VM names against the following case-insensitive strings: {}'.format(texts))
+    logger.info('Matching VM names against the following case-insensitive strings: %s', texts)
+    # Compile regex, strip leading/trailing single quotes from cli arg
+    matchers = [re.compile(text.strip("'"), re.IGNORECASE) for text in texts]
 
-    for provider_key in providers:
+    providers_to_scan = []
+    for provider_key in providers or list_provider_keys():
         # check for cleanup boolean
         if not cfme_data['management_systems'][provider_key].get('cleanup', False):
-            print('Skipping {}, cleanup map set to false or missing in yaml'.format(provider_key))
+            logger.info('SKIPPING %s, cleanup set to false or missing in yaml', provider_key)
             continue
-        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress')
-        if ipaddress and not net.is_pingable(ipaddress):
-            continue
-        thread = Thread(target=process_provider_vms,
-                        args=(provider_key, matchers, delta, vms_to_delete))
-        # Mark as daemon thread for easy-mode KeyboardInterrupt handling
-        thread.daemon = True
-        thread_queue.append(thread)
-        thread.start()
+        logger.info('SCANNING %s', provider_key)
+        providers_to_scan.append(provider_key)
 
-    # Join the queued calls
-    for thread in thread_queue:
-        thread.join()
+    # scan providers for vms with name matches
+    # manager = Manager()
+    text_match_queue = manager.Queue()
+    scan_fail_queue = manager.Queue()
+    provider_scan_args = [
+        (provider_key, matchers, text_match_queue, scan_fail_queue)
+        for provider_key in providers_to_scan]
+    pool_manager(scan_provider, provider_scan_args)
+
+    text_matched = []
+    while not text_match_queue.empty():
+        text_matched.append(text_match_queue.get())
+
+    # scan vms for age matches
+    age_match_queue = manager.Queue()
+    vm_scan_args = [
+        (provider_key, vm_name, timedelta(hours=int(max_hours)), age_match_queue, scan_fail_queue)
+        for provider_key, vm_name in text_matched]
+    pool_manager(scan_vm, vm_scan_args)
+
+    vms_to_delete = []
+    while not age_match_queue.empty():
+        vms_to_delete.append(age_match_queue.get())
+
+    scan_fail_vms = []
+    # add the scan failures into deleted vms for reporting sake
+    while not scan_fail_queue.empty():
+        scan_fail_vms.append(scan_fail_queue.get())
 
     if vms_to_delete and prompt:
         yesno = raw_input('Delete these VMs? [y/N]: ')
         if str(yesno).lower() != 'y':
-            print('Exiting.')
+            logger.info('Exiting.')
             return 0
 
-    if not vms_to_delete:
-        print('No VMs to delete.')
+    # initialize this even if we don't have anything to delete, for report consistency
+    deleted_vms = []
+    if vms_to_delete:
+        delete_queue = manager.Queue()
+        delete_vm_args = [(provider_key, vm_name, age, delete_queue)
+                          for provider_key, vm_name, age in vms_to_delete]
+        pool_manager(delete_vm, delete_vm_args)
 
-    thread_queue = []
-    for provider_key, vm_set in vms_to_delete.items():
-        provider_mgmt = get_mgmt(provider_key)
+        while not delete_queue.empty():
+            deleted_vms.append(delete_queue.get())  # Each item is a VmReport tuple
 
-        names_ages = []
-        for vm_name, vm_delta in vm_set:
-            days, hours = vm_delta.days, vm_delta.seconds / 3600
-            age = '{} days, {} hours old'.format(days, hours)
-            names_ages.append(NameAge(vm_name, age))
-
-        thread = Thread(target=delete_provider_vms,
-                        args=(provider_key, provider_mgmt, names_ages))
-        # Mark as daemon thread for easy-mode KeyboardInterrupt handling
-        thread.daemon = True
-        thread_queue.append(thread)
-        thread.start()
-
-    for thread in thread_queue:
-        thread.join()
+    else:
+        logger.info('No VMs to delete.')
 
     with open(args.outfile, 'a') as report:
         report.write('## VM/Instances deleted via:\n'
                      '##   text matches: {}\n'
                      '##   age matches: {}\n'
                      .format(texts, max_hours))
-        message = tabulate(deleted_vms_list,
-                           headers=['Provider', 'Name', 'Age', 'Status', 'Delete RC'],
+        message = tabulate(sorted(scan_fail_vms + deleted_vms, key=attrgetter('result')),
+                           headers=['Provider', 'Name', 'Age', 'Status Before', 'Delete RC'],
                            tablefmt='orgtbl')
         report.write(message + '\n')
-    print(message)
-    print("Deleting finished")
-
+    logger.info(message)
     return 0
 
 
