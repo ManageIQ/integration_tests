@@ -45,7 +45,7 @@ def domain(request):
 @pytest.fixture(scope="module")
 def test_vm(setup_provider_modscope, provider, vm_name, request):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = VM.factory(vm_name, provider, template_name=provider.data['full_template']['name'])
+    vm = VM.factory(vm_name, provider, template_name=provider.data['provisioning']['template'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -112,11 +112,14 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     else:
         snapshot1 = new_snapshot(test_vm)
     ip = snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name)
-    ssh_kwargs = {
-        'username': credentials[provider.data['full_template']['creds']]['username'],
-        'password': credentials[provider.data['full_template']['creds']]['password'],
-        'hostname': ip
-    }
+    ssh_kwargs = {'hostname': ip}
+    if provider.one_of(RHEVMProvider):
+        ssh_kwargs['username'] = credentials[provider.data['ssh_creds']]['username']
+        ssh_kwargs['password'] = credentials[provider.data['ssh_creds']]['password']
+    else:
+        ssh_kwargs['username'] = credentials[provider.data['full_template']['creds']]['username']
+        ssh_kwargs['password'] = credentials[provider.data['full_template']['creds']]['password']
+
     ssh_client = SSHClient(**ssh_kwargs)
     # We need to wait for ssh to become available on the vm, it can take a while. Without
     # this wait, the ssh command would fail with 'port 22 not available' error.
