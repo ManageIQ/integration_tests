@@ -245,8 +245,8 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         view = navigate_to(self, "All")
 
         def _looking_for_state_change():
-            item = view.items.get_item(by_name=self.name)
-            return "currentstate-{}".format(desired_state) in item.status
+            entity = view.entities.get_entity(by_name=self.name)
+            return "currentstate-{}".format(desired_state) in entity.status
 
         return wait_for(
             _looking_for_state_change,
@@ -282,7 +282,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
         view = navigate_to(self, "All")
         try:
-            view.items.get_item(by_name=self.name, surf_pages=True)
+            view.entities.get_first_entity(by_name=self.name)
         except ItemNotFound:
             return False
         else:
@@ -295,8 +295,8 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         Returns: :py:class:`bool`
         """
         view = navigate_to(self, "All")
-        item = view.items.get_item(by_name=self.name)
-        return item.creds.strip().lower() == "checkmark"
+        entity = view.entities.get_first_entity(by_name=self.name)
+        return entity.creds.strip().lower() == "checkmark"
 
     def get_datastores(self):
         """Gets list of all datastores used by this host."""
@@ -433,12 +433,6 @@ class All(CFMENavigateStep):
         except NoSuchElementException:
             self.prerequisite_view.navigation.select("Compute", "Infrastructure", "Nodes")
 
-    def resetter(self):
-        if self.view.toolbar.view_selector.selected != "Grid View":
-            self.view.toolbar.view_selector.select("Grid View")
-        self.view.paginator.check_all()
-        self.view.paginator.uncheck_all()
-
 
 @navigator.register(Host)
 class Details(CFMENavigateStep):
@@ -446,7 +440,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self):
-        self.prerequisite_view.items.get_item(by_name=self.obj.name).click()
+        self.prerequisite_view.entities.get_first_entity(by_name=self.obj.name).click()
 
 
 @navigator.register(Host)
@@ -586,7 +580,7 @@ def get_all_hosts():
         list: names list of all hosts
     """
     view = navigate_to(Host, "All")
-    return [item.name for item in view.items.get_all(surf_pages=True)]
+    return [entity.name for entity in view.entitis.get_all(surf_pages=True)]
 
 
 def find_quadicon(host_name):
@@ -598,8 +592,10 @@ def find_quadicon(host_name):
     Returns: :py:class:`cfme.common.host_views.HostQuadIconItem` instance
     """
     view = navigate_to(Host, "All")
+    if view.toolbar.view_selector.selected != "Grid View":
+        view.toolbar.view_selector.select("Grid View")
     try:
-        quad_icon = view.items.get_item(by_name=host_name, surf_pages=True)
+        quad_icon = view.entities.get_first_entity(by_name=host_name)
     except ItemNotFound:
         raise HostNotFound("Host '{}' not found in UI!".format(host_name))
     else:

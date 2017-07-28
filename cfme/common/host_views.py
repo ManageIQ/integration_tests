@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
-from widgetastic.widget import ParametrizedView, Text, View
-from widgetastic_patternfly import (
-    BootstrapSelect,
-    CheckableBootstrapTreeview,
-    Dropdown,
-    FlashMessages,
-    Tab
-)
 from widgetastic.utils import ParametrizedLocator
-
-from cfme.base.login import BaseLoggedInPage
-from cfme.exceptions import ItemNotFound, ManyItemsFound
+from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_manageiq import (
-    BaseItem,
-    BaseListItem,
-    BaseQuadIconItem,
-    BaseTileIconItem,
+    BaseEntitiesView,
+    BaseEntity,
+    BaseListEntity,
+    BaseQuadIconEntity,
+    BaseTileIconEntity,
     BootstrapTreeview,
     BreadCrumb,
     Button,
@@ -23,11 +14,19 @@ from widgetastic_manageiq import (
     Input,
     ItemsToolBarViewSelector,
     PaginationPane,
-    Search,
     SummaryTable,
     Table,
     TimelinesView
 )
+from widgetastic_patternfly import (
+    BootstrapSelect,
+    CheckableBootstrapTreeview,
+    Dropdown,
+    FlashMessages,
+    Tab
+)
+
+from cfme.base.login import BaseLoggedInPage
 
 
 class ComputeInfrastructureHostsView(BaseLoggedInPage):
@@ -46,7 +45,7 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
         )
 
 
-class HostQuadIconItem(BaseQuadIconItem):
+class HostQuadIconEntity(BaseQuadIconEntity):
 
     @property
     def no_vm(self):
@@ -65,18 +64,18 @@ class HostQuadIconItem(BaseQuadIconItem):
         return self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
 
 
-class HostTileIconItem(BaseTileIconItem):
-    quad_icon = ParametrizedView.nested(HostQuadIconItem)
+class HostTileIconEntity(BaseTileIconEntity):
+    quad_icon = ParametrizedView.nested(HostQuadIconEntity)
 
 
-class HostListItem(BaseListItem):
+class HostListEntity(BaseListEntity):
     pass
 
 
-class HostItem(BaseItem):
-    quad_item = HostQuadIconItem
-    list_item = HostListItem
-    tile_item = HostTileIconItem
+class HostEntity(BaseEntity):
+    quad_entity = HostQuadIconEntity
+    list_entity = HostListEntity
+    tile_entity = HostTileIconEntity
 
 
 class HostDetailsToolbar(View):
@@ -175,8 +174,8 @@ class HostDiscoverView(ComputeInfrastructureHostsView):
     from_ip4 = Input(name="from_fourth")
     to_ip4 = Input(name="to_fourth")
 
-    start = Button("Start")
-    cancel = Button("Cancel")
+    start_button = Button("Start")
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -186,9 +185,9 @@ class HostDiscoverView(ComputeInfrastructureHostsView):
 class HostManagePoliciesView(BaseLoggedInPage):
     """Host's Manage Policies view."""
     policies = BootstrapTreeview("protectbox")
-    save = Button("Save")
-    reset = Button("Reset")
-    cancel = Button("Cancel")
+    save_button = Button("Save")
+    reset_button = Button("Reset")
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -201,9 +200,9 @@ class HostEditTagsView(BaseLoggedInPage):
     tag = BootstrapSelect("tag_add")
     chosen_tags = Table(locator='.//div[@id="assignments_div"]/table')
 
-    save = Button("Save")
-    reset = Button("Reset")
-    cancel = Button("Cancel")
+    save_button = Button("Save")
+    reset_button = Button("Reset")
+    cancel_button = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -220,80 +219,23 @@ class HostsToolbar(View):
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class HostItems(View):
-    """Represents the view with different items like hosts."""
-    search = View.nested(Search)
-    _quadicons = './/tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
-    _listitems = Table(locator='.//div[@id="list_grid"]/table')
-
-    def _get_item_names(self):
-        if self.parent.toolbar.view_selector.selected == "List View":
-            return [row.name.text for row in self._listitems.rows()]
-        else:
-            br = self.browser
-            return [br.get_attribute("title", el) for el in br.elements(self._quadicons)]
-
-    def get_all(self, surf_pages=False):
-        """Obtains all items like QuadIcon displayed by view.
-
-        Args:
-            surf_pages (bool): current page items if False, all items otherwise
-
-        Returns: all items (QuadIcon/etc.) displayed by view
-        """
-        if not surf_pages:
-            return [HostItem(parent=self, name=name) for name in self._get_item_names()]
-        else:
-            items = []
-            for _ in self.parent.paginator.pages():
-                items.extend([HostItem(parent=self, name=name) for name in self._get_item_names()])
-            return items
-
-    def get_items(self, by_name=None, surf_pages=False):
-        """Obtains all matched items like QuadIcon displayed by view.
-
-        Args:
-            by_name (str): only items which match to by_name will be returned
-            surf_pages (bool): current page items if False, all items otherwise
-
-        Returns: all matched items (QuadIcon/etc.) displayed by view
-        """
-        items = self.get_all(surf_pages)
-        remaining_items = []
-        for item in items:
-            if by_name and by_name in item.name:
-                remaining_items.append(item)
-            # todo: by_type and by_regexp will be implemented later if needed
-        return remaining_items
-
-    def get_item(self, by_name=None, surf_pages=False):
-        """Obtains one item matched to by_name. Raises exception if no items or several items were
-           found.
-
-        Args:
-            by_name (str): only item which match to by_name will be returned
-            surf_pages (bool): current page items if False, all items otherwise
-
-        Returns: matched item (QuadIcon/etc.)
-        """
-        items = self.get_items(by_name=by_name, surf_pages=surf_pages)
-        if not items:
-            raise ItemNotFound("Item {name} isn't found on this page".format(name=by_name))
-        elif len(items) > 1:
-            raise ManyItemsFound("Several items with {name} were found".format(name=by_name))
-        return items[0]
-
-
 class HostSideBar(View):
     """Represents left side bar. It usually contains navigation, filters, etc."""
     pass
 
 
+class HostEntitiesView(BaseEntitiesView):
+    """Represents the view with different items like hosts."""
+    @property
+    def entity_class(self):
+        return HostEntity
+
+
 class HostsView(ComputeInfrastructureHostsView):
     toolbar = View.nested(HostsToolbar)
     sidebar = View.nested(HostSideBar)
-    items = View.nested(HostItems)
     paginator = View.nested(PaginationPane)
+    including_entities = View.include(HostEntitiesView, use_parent=True)
 
     @property
     def is_displayed(self):
