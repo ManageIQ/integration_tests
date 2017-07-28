@@ -122,7 +122,7 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
     try:
         vm_list = get_mgmt(provider_key).list_vm()
     except Exception:  # noqa
-        scan_failure_queue.put(VmReport(provider_key, NULL, NULL, NULL, NULL))
+        scan_failure_queue.put(VmReport(provider_key, FAIL, NULL, NULL, NULL))
         logger.exception('%s: Exception listing vms', provider_key)
         return
 
@@ -180,7 +180,7 @@ def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
     if delta < vm_delta:
         match_queue.put(data)
     else:
-        logger.info('%s: VM {} did not match age requirement', provider_key, vm_name)
+        logger.info('%s: VM %s did not match age requirement', provider_key, vm_name)
 
 
 def delete_vm(provider_key, vm_name, age, result_queue):
