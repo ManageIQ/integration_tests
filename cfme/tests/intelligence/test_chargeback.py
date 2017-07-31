@@ -153,13 +153,13 @@ class TestRatesViaREST(object):
                 assert appliance.rest_api.response.status_code == 200
         assert len(edited) == len(rates)
         for index, rate in enumerate(rates):
-            rate.reload()
             record, _ = wait_for(
                 lambda: appliance.rest_api.collections.rates.find_by(
                     description=new_descriptions[index]) or False,
                 num_sec=180,
                 delay=10,
             )
+            rate.reload()
             assert rate.description == edited[index].description == record[0].description
 
     @pytest.mark.tier(3)
