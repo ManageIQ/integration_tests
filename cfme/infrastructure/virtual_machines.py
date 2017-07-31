@@ -31,7 +31,7 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.wait import wait_for
 from utils import version, deferred_verpick
-from widgetastic.widget import Text
+from widgetastic.widget import Text, View
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput
 )
@@ -103,9 +103,7 @@ def reset_page():
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
-class InfraVmDetailsView(BaseLoggedInPage):
-    # TODO this is only minimal implementation for toolbar access through widgetastic
-
+class InfraVmDetailsToolbar(View):
     configuration = Dropdown("Configuration")
     policy = Dropdown("Policy")
     lifecycle = Dropdown("Lifecycle")
@@ -113,6 +111,10 @@ class InfraVmDetailsView(BaseLoggedInPage):
     power = Dropdown("Power")
     access = Dropdown("Access")
 
+
+class InfraVmDetailsView(BaseLoggedInPage):
+    # TODO this is only minimal implementation for toolbar access through widgetastic
+    toolbar = View.nested(InfraVmDetailsToolbar)
 
 class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
