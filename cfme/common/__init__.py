@@ -160,6 +160,7 @@ class Taggable(object):
                             display_name=tag.tag_name))
         return tags
 
+
 class TagPageView(BaseLoggedInPage):
     """Class represents common tag page in CFME UI"""
     title = Text('#explorer_title_text')

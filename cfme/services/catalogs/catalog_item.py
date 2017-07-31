@@ -3,6 +3,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
 from widgetastic_manageiq import Table, ManageIQTree
+from cfme.common import WidgetasticTaggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form as request_form
 from cfme.web_ui import tabstrip
@@ -168,7 +169,7 @@ class EditCatalogBundleView(BasicInfoForm):
             self.title.text == 'Editing Catalog Bundle "{}"'.format(self.obj.name)
 
 
-class CatalogItem(Updateable, Pretty, Navigatable):
+class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
 
     def __init__(self, name=None, description=None, item_type=None,
                  vm_name=None, display_in=False, catalog=None, dialog=None,
@@ -288,28 +289,28 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         assert view.is_displayed
         view.flash.assert_success_message('Button "btn_descr" was added')
 
-    def edit_tags(self, tag, value):
-        view = navigate_to(self, 'EditTags')
-        view.fill({'select_tag': tag,
-                   'select_value': value})
-        view.save_button.click()
-        view = self.create_view(DetailsCatalogItemView)
-        assert view.is_displayed
-        view.flash.assert_success_message('Tag edits were successfully saved')
-
-    def remove_tag(self, tag_category, tag_name):
-        """ Remove tag from service catalog item
-            Args:
-                tag_category: Tag category
-                tag_name: Tag name
-        """
-        view = navigate_to(self, 'EditTags')
-        row = view.tag_table.row(category=tag_category, assigned_value=tag_name)
-        row[0].click()
-        view.save_button.click()
-        view = self.create_view(DetailsCatalogItemView)
-        view.flash.assert_success_message('Tag edits were successfully saved')
-        assert view.is_displayed
+    # def edit_tags(self, tag, value):
+    #     view = navigate_to(self, 'EditTags')
+    #     view.fill({'select_tag': tag,
+    #                'select_value': value})
+    #     view.save_button.click()
+    #     view = self.create_view(DetailsCatalogItemView)
+    #     assert view.is_displayed
+    #     view.flash.assert_success_message('Tag edits were successfully saved')
+    #
+    # def remove_tag(self, tag_category, tag_name):
+    #     """ Remove tag from service catalog item
+    #         Args:
+    #             tag_category: Tag category
+    #             tag_name: Tag name
+    #     """
+    #     view = navigate_to(self, 'EditTags')
+    #     row = view.tag_table.row(category=tag_category, assigned_value=tag_name)
+    #     row[0].click()
+    #     view.save_button.click()
+    #     view = self.create_view(DetailsCatalogItemView)
+    #     view.flash.assert_success_message('Tag edits were successfully saved')
+    #     assert view.is_displayed
 
     @property
     def exists(self):
