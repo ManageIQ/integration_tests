@@ -97,10 +97,14 @@ def pool_manager(func, arg_list):
     # Don't care about non-exception results since all non-exception results are in the queues
     results = []
     for proc_result in proc_results:
-        result = proc_result.get()
-        if isinstance(result, Exception):
-            logger.exception('Exception during function call %s', func.__name__)
-        results.append(result)
+        try:
+            result = proc_result.get()
+        except Exception as ex:
+            result = ex
+        finally:
+            if isinstance(result, Exception):
+                logger.exception('Exception during function call %s', func.__name__)
+            results.append(result)
 
     return results
 
@@ -209,10 +213,12 @@ def delete_vm(provider_key, vm_name, age, result_queue):
             result = PASS
             logger.info('%s: Delete success: %s', provider_key, vm_name)
         else:
+            result = FAIL
             logger.error('%s: Delete failed: %s', provider_key, vm_name)
     except Exception:  # noqa
         # TODO vsphere delete failures, workaround for wrapanapi issue #154
         if vm_name not in provider_mgmt.list_vm():
+            # The VM actually has been deleted
             result = PASS
         else:
             result = FAIL  # set this here to cover anywhere the exception could happen
