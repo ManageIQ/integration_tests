@@ -433,6 +433,7 @@ class MapTagsEdit(CFMENavigateStep):
 # ====================C and U===================================
 
 class CANDUCollectionView(RegionView):
+    """C and U View"""
     all_clusters_cb = BootstrapSwitch(id='all_clusters')
     all_datastores_cb = BootstrapSwitch(id='all_storages')
 
@@ -448,10 +449,17 @@ class CANDUCollectionView(RegionView):
 
 
 class CANDUCollection(Navigatable):
+    """ Class represents a C and U in CFME UI """
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
 
     def _enable_disable(self, anable=True, reset=False):
+        """ Enable/Disable C and U
+
+            Args:
+                anable: Switches states, 'True'- enable
+                reset: Reset changes, default is 'False' - changes will not be reset
+        """
         view = navigate_to(self, 'Details')
         view.fill({
             'all_clusters_cb': anable,
@@ -466,9 +474,19 @@ class CANDUCollection(Navigatable):
         view.flash.assert_success_message(flash_message)
 
     def enable_all(self, reset=False):
+        """ Enable C and U
+
+            Args:
+                reset: Reset changes, default is 'False' - changes will not be reset
+        """
         self._enable_disable(reset=reset)
 
     def disable_all(self, reset=False):
+        """ Disable C and U
+
+            Args:
+                reset: Reset changes, default is 'False' - changes will not be reset
+        """
         self._enable_disable(False, reset=reset)
 
 
