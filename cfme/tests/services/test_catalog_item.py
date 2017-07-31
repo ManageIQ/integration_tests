@@ -63,10 +63,10 @@ def check_catalog_visibility(request, user_restricted, tag):
         """
         test_item_object.create()
         category_name = ' '.join((tag.category.display_name, '*'))
-        test_item_object.edit_tags(category_name, tag.display_name)
+        test_item_object.edit_tag([category_name, tag.display_name])
         with user_restricted:
             assert test_item_object.exists
-        test_item_object.remove_tag(category_name, tag.display_name)
+        test_item_object.remove_tag([category_name, tag.display_name])
         with user_restricted:
             assert not test_item_object.exists
     return _check_catalog_visibility
@@ -95,7 +95,7 @@ def test_add_button(catalog_item):
 
 def test_edit_tags(catalog_item):
     catalog_item.create()
-    catalog_item.edit_tags("Cost Center *", "Cost Center 001")
+    catalog_item.edit_tag(["Cost Center *", "Cost Center 001"])
 
 
 @pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.7", "5.8", "upstream"])])
