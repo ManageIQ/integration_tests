@@ -56,6 +56,13 @@ management_systems:
             template: provisioning_template_name
             host: target provisioning host name (from hosts above)
             datastore: target provisioning datastore name (from datastores above)
+        templates:
+            console_template:
+                name: template1
+                creds: template1Creds
+            small_template:
+                name: template2
+                creds: template2Creds
     rhevm31:
         name: RHEV 3.1
         default_name: RHEV-M (10.0.0.3)
