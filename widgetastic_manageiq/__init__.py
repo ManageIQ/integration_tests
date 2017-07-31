@@ -2,6 +2,7 @@
 import atexit
 import os
 import re
+import six
 from collections import namedtuple
 from datetime import date
 from math import ceil
@@ -11,10 +12,10 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
-from wait_for import wait_for
+from wait_for import wait_for, TimedOutError
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
-from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
+from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -2174,3 +2175,239 @@ class ProviderEntity(BaseEntity):
     quad_entity = ProviderQuadIconEntity
     list_entity = ProviderListEntity
     tile_entity = ProviderTileIconEntity
+
+
+class DashboardWidgetsPicker(View):
+    """ Represents widgets picker in Dashboard editing screen (Cloud Intel/Reports/Dashobards).
+
+    """
+    ROOT = ParametrizedLocator(".//div[@id='{@id}']")
+    select = BootstrapSelect(Parameter("@select_id"))
+
+    def __init__(self, parent, id, names_locator=None, remove_locator=None,
+                 select_id=None, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+        self.id = id
+        self.names_locator = names_locator
+        self.remove_locator = remove_locator
+        self.select_id = select_id
+
+    def add_widget(self, widget):
+        self.select.fill(widget)
+
+    def remove_widget(self, widget):
+        self.browser.click(self.remove_locator.format(quote(widget)))
+
+    @property
+    def all_elements(self):
+        return self.browser.elements(self.names_locator)
+
+    @property
+    def all_widgets(self):
+        if self.all_elements:
+            return [widget.text for widget in self.all_elements]
+        else:
+            return []
+
+    def _values_to_remove(self, values):
+        return list(set(self.all_widgets) - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - set(self.all_widgets))
+
+    def fill(self, values):
+        if isinstance(values, six.string_types):
+            values = [values]
+        if set(values) == set(self.all_widgets):
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            if values_to_remove:
+                for value in values_to_remove:
+                    self.remove_widget(value)
+            if values_to_add:
+                for value in values_to_add:
+                    self.add_widget(value)
+            return True
+
+    def read(self):
+        return self.all_widgets
+
+
+class MenuShortcutsPicker(DashboardWidgetsPicker):
+    """ Represents shortcut picker in Menu Widget editing screen
+    (Cloud Intel/Reports/Dashboard Widgets/Menus).
+
+    """
+    @ParametrizedView.nested
+    class shortcut(ParametrizedView):  # noqa
+        PARAMETERS = ("number",)
+        alias = Input(name=ParametrizedString("shortcut_desc_{number}"))
+        remove_button = Text(ParametrizedLocator(".//a[@id=s_{@number|quote}_close]"))
+
+        def fill(self, alias):
+            self.alias.fill(alias)
+
+        def remove(self):
+            self.remove_button.click()
+
+    def add_shortcut(self, shortcut, alias):
+        # We need to get all options from the dropdown before picking
+        mapping = self.mapping
+        self.select.fill(shortcut)
+        if shortcut != alias:
+            self.shortcut(mapping[shortcut]).fill(alias)
+
+    @cached_property
+    def mapping(self):
+        return {option.text: option.value for option in self.select.all_options}
+
+    @property
+    def all_shortcuts(self):
+        if self.all_elements:
+            return [shortcut.get_attribute("value") for shortcut in self.all_elements]
+        else:
+            return []
+
+    def clear(self):
+        for el in self.browser.elements(".//a[@title='Remove this Shortcut']"):
+            self.browser.click(el)
+
+    def fill(self, values):
+        dict_values = None
+        if isinstance(values, six.string_types):
+            values = [values]
+        if isinstance(values, dict):
+            dict_values = values
+            values = values.values()
+        if set(values) == set(self.all_shortcuts):
+            return False
+        else:
+            self.clear()
+            if dict_values is not None:
+                dict_values_to_add = dict_values
+            else:
+                dict_values_to_add = {value: value for value in values}
+            for shortcut, alias in dict_values_to_add.iteritems():
+                self.add_shortcut(shortcut, alias)
+            return True
+
+    def read(self):
+        return self.all_shortcuts
+
+
+class FolderManager(Widget):
+    """ Represents the folder manager in Edit Report Menus screen
+    (Cloud Intel/Reports/Edit Report Menus).
+
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+
+    top_button = Button(title="Move selected folder top")
+    up_button = Button(title="Move selected folder up")
+    down_button = Button(title="Move selected folder down")
+    bottom_button = Button(title="Move selected folder to bottom")
+    delete_button = Button(title="Delete selected folder and its contents")
+    add_button = Button(title="Add subfolder to selected folder")
+
+    commit_button = Button("Commit")
+    discard_button = Button("Discard")
+
+    _fields = ".//div[@id='folder_grid']/div/div/div"
+    _field = ".//div[@id='folder_grid']/div/div/div[normalize-space(.)={folder}]"
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    class _BailOut(Exception):
+        pass
+
+    @classmethod
+    def bail_out(cls):
+        """If something gets wrong, you can use this method to cancel editing of the items in
+        the context manager.
+        Raises: :py:class:`FolderManager._BailOut` exception
+        """
+        raise cls._BailOut()
+
+    def commit(self):
+        self.commit_button.click()
+
+    def discard(self):
+        self.discard_button.click()
+
+    @property
+    def _all_fields(self):
+        return self.browser.elements(self._fields)
+
+    @property
+    def fields(self):
+        """Returns all fields' text values"""
+        return [el.text for el in self._all_fields]
+
+    @property
+    def selected_field_element(self):
+        """Return selected field's element.
+        Returns: :py:class:`WebElement` if field is selected, else `None`
+        """
+        selected_fields = [el for el in self._all_fields if "active" in el.get_attribute("class")]
+        if len(selected_fields) == 0:
+            return None
+        else:
+            return selected_fields[0]
+
+    @property
+    def selected_field(self):
+        """Return selected field's text.
+        Returns: :py:class:`str` if field is selected, else `None`
+        """
+        if self.selected_field_element is None:
+            return None
+        else:
+            return self.selected_field_element.text.encode("utf-8").strip()
+
+    def add(self, subfolder):
+        self.add_subfolder()
+        wait_for(lambda: self.selected_field_element is not None, num_sec=5, delay=0.1)
+        self.browser.double_click(self.selected_field_element, wait_ajax=False)
+        self.browser.handle_alert(prompt=subfolder)
+
+    def select_field(self, field):
+        """Select field by text.
+        Args:
+            field: Field text.
+        """
+        self.browser.click(self.browser.element(self._field.format(folder=quote(field))))
+        wait_for(lambda: self.selected_field is not None, num_sec=5, delay=0.1)
+
+    def has_field(self, field):
+        """Returns if the field is present.
+        Args:
+            field: Field to check.
+        """
+        try:
+            self.select_field(field)
+            return True
+        except (NoSuchElementException, TimedOutError):
+            return False
+
+    def delete_field(self, field):
+        self.select_field(field)
+        self.delete_button.click()
+
+    def move_first(self, field):
+        self.select_field(field)
+        self.top_button.click()
+
+    def move_last(self, field):
+        self.select_field(field)
+        self.bottom_button.click()
+
+    def clear(self):
+        for field in self.fields:
+            self.delete_field(field)
+
+    def read(self):
+        return self.fields
