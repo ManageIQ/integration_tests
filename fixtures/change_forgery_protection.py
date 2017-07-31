@@ -10,8 +10,9 @@ def change_forgery_protection():
     ssh_client = SSHClient()
     logger.info('Turning off "allow_forgery_protection"')
 
-    ssh_client.run_command("sed -i \'s/allow_forgery_protection = true/allow_forgery_protection = false/\' "
-               "/var/www/miq/vmdb/config/environments/production.rb")
+    ssh_client.run_command(
+        "sed -i \'s/allow_forgery_protection = true/allow_forgery_protection = false/\' "
+        "/var/www/miq/vmdb/config/environments/production.rb")
     ssh_client.run_command("service evmserverd restart")
 
     ssh_client.close()
@@ -24,8 +25,9 @@ def change_forgery_protection():
     ssh_client = SSHClient()
     logger.info('Turning on "allow_forgery_protection"')
 
-    ssh_client.run_command("sed -i \'s/allow_forgery_protection = false/allow_forgery_protection = true/\' "
-               "/var/www/miq/vmdb/config/environments/production.rb")
+    ssh_client.run_command(
+        "sed -i \'s/allow_forgery_protection = false/allow_forgery_protection = true/\' "
+        "/var/www/miq/vmdb/config/environments/production.rb")
     ssh_client.run_command("service evmserverd restart")
 
     ssh_client.close()

@@ -254,15 +254,21 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 self.validate()
             return created
 
-    def create_rest(self, credentials):
-        self.appliance.rest_api.collections.providers.create(
-            hostname=self.hostname,
-            ipaddress=self.ip_address,
-            name=self.name,
-            type=self.rest_type,
-            credentials=credentials
-        )
+    def create_rest(self):
 
+        logger.info('Setting up provider: %s via rest', self.key)
+        try:
+            self.appliance.rest_api.collections.providers.action.create(
+                hostname=self.hostname,
+                ipaddress=self.ip_address,
+                name=self.name,
+                type="ManageIQ::Providers::" + self.db_types[0],
+                credentials={'userid': self.endpoints['default'].credentials.principal,
+                             'password': self.endpoints['default'].credentials.secret})
+
+            return self.appliance.rest_api.response.status_code == 200
+        except APIException as ex:
+            return None
 
     def update(self, updates, cancel=False, validate_credentials=True):
         """
@@ -404,7 +410,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 'Delete initiated for 1 {} Provider from the {} Database'.format(
                     self.string_name, self.appliance.product_name))
 
-    def setup(self):
+    def setup(self, rest=False):
         """
         Sets up the provider robustly
         """
@@ -739,42 +745,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         raise NotImplementedError("This method is not implemented for given provider")
 
     cfme_appliance = conf.cfme_performance['appliance']
-    cfme_providers = conf.cfme_performance['providers']
-
-    def get_all_vm_endpoints(self, pattern='*', provider='perf-rhevm'):
-        """
-        Takes in a pattern and returns all VM ip addresses and names.
-
-        @pattern: Appliance(VM) Name pattern.
-                Example: 'Infra*'
-        @provider: Provider Name as per 'providers:' in cfme_performance[local].yml
-                Default is 'perf-rhevm'.
-        """
-        provider = conf.cfme_performance.providers[provider]
-        ip_address = provider.ip_address
-        username = provider.credentials.username
-        password = provider.credentials.password
-
-        api = API(
-            url='https://%s' % ip_address,
-            username=username,
-            password=password,
-            insecure=True
-        )
-        vmlist = api.vms.list(name=pattern)
-
-        results = {}
-        for vm in vmlist:
-            addresses = []
-            if vm.guest_info is not None:
-                ips = vm.guest_info.get_ips()
-                for ip in ips.get_ip():
-                    addresses.append(ip.get_address())
-            results[vm.name] = addresses
-
-        api.disconnect()
-
-        return results
 
     def get_all_provider_ids(self):
         """
@@ -882,11 +852,20 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         except APIException as ex:
             return None
 
-        template_details['id'] = template.id
         template_details['name'] = template.name
         template_details['type'] = template.type
         template_details['guid'] = template.guid
         return template_details
+
+    def get_all_template_details(self):
+        """
+        Returns a dictionary mapping template ids to their name, type, and guid
+        """
+        all_details = {}
+        for id in self.get_all_template_ids():
+            all_details[id] = {}
+            all_details[id] = self.get_template_details(id)
+        return all_details
 
     def get_provider_id(self, provider_name):
         """"
@@ -935,7 +914,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         result_list = []
         all_template_details = self.get_all_template_details()
         for provider in template_dict:
-            provider_type = cfme_providers[provider]['type']
+            provider_type = self.type
             for template_name in template_dict[provider]:
                 inner_tuple = ()
                 for id in all_template_details:
@@ -943,7 +922,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     if ((all_template_details[id]['name'] == template_name) and
                             (all_template_details[id]['type'] == _tmp)):
                         inner_tuple += (all_template_details[id]['guid'],)
-                        inner_tuple += (cfme_providers[provider]['name'],)
+                        inner_tuple += (provider.name,)
                         result_list.append(inner_tuple)
         return result_list
 

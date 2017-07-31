@@ -50,8 +50,7 @@ def test_idle(appliance, request, scenario):
     monitor_thread.start()
 
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
-    appliance.server_roles(scenario['roles'])
-
+    appliance.server_roles = {role: True for role in scenario['roles']}
     s_time = scenario['total_time']
     logger.info('Idling appliance for {}s'.format(s_time))
     time.sleep(s_time)

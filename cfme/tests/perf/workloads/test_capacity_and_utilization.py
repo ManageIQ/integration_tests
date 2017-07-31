@@ -3,7 +3,7 @@
 from utils import conf
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
-#from utils.providers import add_providers
+from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
 from utils.ssh import SSHClient
@@ -52,8 +52,9 @@ def test_workload_capacity_and_utilization(request, scenario, appliance):
     monitor_thread.start()
 
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
-    appliance.server_roles(','.join(roles_cap_and_util))
-    #add_providers(scenario['providers'])
+    appliance.server_roles = {role: True for role in roles_cap_and_util}
+    for provider in scenario['providers']:
+        get_crud(provider).create_rest()
     logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))
     time.sleep(scenario['refresh_sleep_time'])
     appliance.set_cap_and_util_all_via_rails()

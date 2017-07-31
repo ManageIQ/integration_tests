@@ -1974,12 +1974,6 @@ class IPAppliance(object):
             logger.debug('Dest: {}'.format(dest))
         self.set_yaml_config(yaml)
 
-    def set_cap_and_util_all_via_rails(self):
-        """Turns on Collect for All Clusters and Collect for all Datastores without using the Web UI."""
-        command = (
-        'Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
-        self.ssh_client.run_rails_console(command, timeout=None, log_less=True)
-
     def wait_for_miq_server_workers_started(self, evm_tail=None, poll_interval=5):
         """Waits for the CFME's workers to be started by tailing evm.log for:
         'INFO -- : MIQ(MiqServer#wait_for_started_workers) All workers have been started'

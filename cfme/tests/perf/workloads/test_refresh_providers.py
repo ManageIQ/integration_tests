@@ -1,35 +1,32 @@
 """Runs Refresh Workload by adding specified providers, refreshing the providers, waiting, then
 repeating for specified length of time."""
-from utils.appliance import clean_appliance
-from utils.appliance import get_server_roles_workload_refresh_providers
-from utils.appliance import set_server_roles_workload_refresh_providers
-from utils.appliance import wait_for_miq_server_workers_started
 from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
-from utils.providers import add_providers
-from utils.providers import get_all_provider_ids
-from utils.providers import refresh_providers_bulk
+from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
 from utils.ssh import SSHClient
 from utils.workloads import get_refresh_providers_scenarios
+
 import time
 import pytest
+
+roles_refresh_providers = ['automate', 'database_operations', 'ems_inventory', 'ems_operations',
+    'event', 'reporting', 'scheduler', 'smartstate', 'user_interface', 'web_services', 'websocket']
 
 
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_refresh_providers_scenarios())
-def test_refresh_providers(request, scenario):
+def test_refresh_providers(appliance, request, scenario):
     """
     Refreshes providers then waits for a specific amount of time.
     Memory Monitor creates graphs and summary at the end of the scenario.
     """
     from_ts = int(time.time() * 1000)
-    ssh_client = SSHClient()
     logger.debug('Scenario: {}'.format(scenario['name']))
 
-    clean_appliance(ssh_client)
+    appliance.clean_appliance()
 
     quantifiers = {}
     scenario_data = {
@@ -37,7 +34,7 @@ def test_refresh_providers(request, scenario):
         'appliance_name': cfme_performance['appliance']['appliance_name'],
         'test_dir': 'workload-refresh-providers',
         'test_name': 'Refresh Providers',
-        'appliance_roles': get_server_roles_workload_refresh_providers(separator=', '),
+        'appliance_roles': ', '.join(roles_refresh_providers),
         'scenario': scenario
     }
     monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
@@ -58,10 +55,10 @@ def test_refresh_providers(request, scenario):
                                                   quantifiers, scenario_data))
     monitor_thread.start()
 
-    wait_for_miq_server_workers_started(poll_interval=2)
-    set_server_roles_workload_refresh_providers(ssh_client)
-    add_providers(scenario['providers'])
-    id_list = get_all_provider_ids()
+    appliance.wait_for_miq_server_workers_started(poll_interval=2)
+    appliance.server_roles = {role: True for role in roles_refresh_providers}
+    for prov in scenario['providers']:
+        get_crud(prov).create_rest()
 
     # Variable amount of time for refresh workload
     total_time = scenario['total_time']
@@ -71,8 +68,10 @@ def test_refresh_providers(request, scenario):
 
     while ((time.time() - starttime) < total_time):
         start_refresh_time = time.time()
-        refresh_providers_bulk(id_list)
-        total_refreshed_providers += len(id_list)
+        appliance.rest_api.collections.providers.reload()
+        for prov in appliance.rest_api.collections.providers.all:
+            prov.action.reload()
+            total_refreshed_providers += 1
         iteration_time = time.time()
 
         refresh_time = round(iteration_time - start_refresh_time, 2)

@@ -28,6 +28,7 @@ def parse_cmd_line():
     args = parser.parse_args()
     return args
 
+
 args = parse_cmd_line()
 conf_name = args.file.strip()
 if args.encrypt:

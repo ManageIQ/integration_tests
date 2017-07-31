@@ -1,5 +1,4 @@
 """Workload to stress WebUI with python requests."""
-from utils.appliance import get_server_roles_ui_workload
 from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
@@ -15,6 +14,7 @@ import time
 
 roles_ui_workload = ['automate', 'reporting', 'scheduler', 'user_interface', 'web_services',
     'websocket']
+
 
 @pytest.mark.usefixtures('set_server_roles_ui_workload_session', 'generate_version_files')
 @pytest.mark.parametrize('scenario', get_ui_single_page_scenarios())
@@ -102,7 +102,8 @@ def test_ui_single_page(request, scenario):
                     logger.error('Status code 503 received, waiting 5s before next request')
                     time.sleep(5)
                 elif response.status_code != 200:
-                    logger.error('Non-200 HTTP status code: {} on {}'.format(response.status_code, page))
+                    logger.error('Non-200 HTTP status code: {} on {}'.format(response.status_code,
+                                                                             page))
             requests_time = round(time.time() - requests_start, 2)
             logger.info('Created {} Requests in {}s'.format(request_number, requests_time))
 

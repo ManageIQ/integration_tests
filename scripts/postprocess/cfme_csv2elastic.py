@@ -61,7 +61,7 @@ class ElasticIndexer(object):
         self.duplicates = 0
         self.errors = 0
         self.exceptions = 0
-        self.endpoint = [dict(host=host, port=port, timeout=timeoutobj),]
+        self.endpoint = [dict(host=host, port=port, timeout=timeoutobj), ]
         try:
             if creds:
                 self.ES = Elasticsearch(self.endpoint,
@@ -152,22 +152,24 @@ class ElasticIndexer(object):
                             print("\t\tWARNING (end ts: %s, duration: %.2fs):"
                                   " read timeout, delaying %d seconds before"
                                   " retrying (%d attempts remaining)..." %
-                                        (tstos(end), end - beg, delay, tries))
+                                  (tstos(end), end - beg, delay, tries))
                             time.sleep(delay)
                             delay *= 2
                             beg, end = time.time(), None
                             print("\t\tWARNING (beg ts: %s): retrying..." %
-                                    (tstos(beg)))
+                                  (tstos(beg)))
                             continue
                     if _DEBUG > 8:
-                        import pdb; pdb.set_trace()
+                        import pdb
+                        pdb.set_trace()
                     print("\tERROR (end ts: %s, duration: %.2fs): %s" %
-                                            (tstos(end), end - start, err))
+                          (tstos(end), end - start, err))
                     self.exceptions += 1
                 except helpers.BulkIndexError as err:
                     end = time.time()
                     if _DEBUG > 8:
-                        import pdb; pdb.set_trace()
+                        import pdb
+                        pdb.set_trace()
                     for error in err.errors:
                         sts = error[_op_type]['status']
                         if sts not in (200, 201):
@@ -178,9 +180,10 @@ class ElasticIndexer(object):
                 except Exception as err:
                     end = time.time()
                     if _DEBUG > 8:
-                        import pdb; pdb.set_trace()
+                        import pdb
+                        pdb.set_trace()
                     print("\tERROR (end ts: %s, duration: %.2fs): %s" %
-                                (tstos(end), end - start, err))
+                          (tstos(end), end - start, err))
                     self.exceptions += 1
                 else:
                     end = time.time()
@@ -197,7 +200,7 @@ class ElasticIndexer(object):
                                 lcl_duplicates += 1
                             else:
                                 print("\t\tERRORS (%d of %d): %r" %
-                                        (idx, len_res1, ires[_op_type]['error']))
+                                      (idx, len_res1, ires[_op_type]['error']))
                                 self.errors += 1
                                 lcl_errors += 1
                         else:
@@ -206,7 +209,7 @@ class ElasticIndexer(object):
                     if _DEBUG > 0 or lcl_errors > 0:
                         print("\tdone (end ts: %s, duration: %.2fs,"
                               " success: %d, duplicates: %d, errors: %d,  exceptions: %d)" %
-                                    (tstos(end), end - start, self.successes,
+                              (tstos(end), end - start, self.successes,
                                   self.duplicates, self.errors, self.exceptions))
                     good_results = 1
                 break
@@ -216,7 +219,7 @@ class ElasticIndexer(object):
                     end = time.time()
                     print("\tdone (end ts: %s, duration: %.2fs,"
                           " success: %d, duplicates: %d, errors: %d, exceptions: %d)" %
-                                (tstos(end), end - start, self.successes,
+                          (tstos(end), end - start, self.successes,
                               self.duplicates, self.errors, self.exceptions))
             del self.actions[0:len(self.actions)]
 
@@ -228,8 +231,8 @@ class ElasticIndexer(object):
         """
         # upload metadata first
         index_names = {
-            'summary': '%s.summary-%s'%(INDEX_PREFIX, docs['date']),
-            'smem': '%s.smem-%s'%(INDEX_PREFIX, docs['date'])
+            'summary': '%s.summary-%s' % (INDEX_PREFIX, docs['date']),
+            'smem': '%s.smem-%s' % (INDEX_PREFIX, docs['date'])
         }
 
         # helper statements
@@ -287,7 +290,8 @@ class ElasticIndexer(object):
                     )
                     self.actions.append(ib_data1)
 
-                    # for cfme docs, INDEXING_THRESHOLD=14 doesn't results in a 413 'Request Entity Too Large'
+                    # for cfme docs, INDEXING_THRESHOLD=14 doesn't results in a 413
+                    # 'Request Entity Too Large'
                     # we could change elasticsearch instance's default params, but to avoid that,
                     # we're batch processing actions here.
                     if len(self.actions) > INDEXING_THRESHOLD:
@@ -301,9 +305,11 @@ class ElasticIndexer(object):
                 for item in docs['smem_data'][scenario][csv_kind]:
                     # calculate per process '_id', to be used while indexing in ES
                     if csv_kind == 'processes':
-                        run_uid = docs['metadata']['cfme_run_md5'] + scenario + csv_kind + item['pid'] + item['TimeStamp']
+                        run_uid = (docs['metadata']['cfme_run_md5'] + scenario + csv_kind + item[
+                                   'pid'] + item['TimeStamp'])
                     elif csv_kind == 'appliance_memory':
-                        run_uid = docs['metadata']['cfme_run_md5'] + scenario + csv_kind + item['TimeStamp']
+                        run_uid = (docs['metadata']['cfme_run_md5'] + scenario + csv_kind + item[
+                            'TimeStamp'])
                     else:
                         run_uid = docs['metadata']['cfme_run_md5'] + scenario + csv_kind
                     md5 = hashlib.md5((run_uid).encode('utf-8')).hexdigest()
@@ -317,7 +323,8 @@ class ElasticIndexer(object):
                     )
                     self.actions.append(ib_data)
 
-                    # for cfme docs, INDEXING_THRESHOLD=14 doesn't results in a 413 'Request Entity Too Large'
+                    # for cfme docs, INDEXING_THRESHOLD=14 doesn't results in a 413
+                    # 'Request Entity Too Large'
                     # we could change elasticsearch instance's default params, but to avoid that,
                     # we're batch processing actions here.
                     if len(self.actions) > INDEXING_THRESHOLD:
@@ -352,7 +359,7 @@ class CfmeResultsParser(object):
         timestamp = re.search('^[0-9]+', dirname).group()
         timestamp = datetime.strptime(timestamp, "%Y%m%d%H%M%S")
         workload_name = re.search('(?i)[a-z-]+', dirname)
-        workload_name = workload_name.group().strip('-').replace('workload-','')
+        workload_name = workload_name.group().strip('-').replace('workload-', '')
         version = re.search('-[0-9\.]+', dirname).group().strip('-')
         return [timestamp, workload_name, version]
 
@@ -405,13 +412,13 @@ class CfmeResultsParser(object):
         """
         cleans up and processes *-summary.csv files in a scenario
         """
-        metadata_dict = { 'scenario_name': scenario }
+        metadata_dict = {'scenario_name': scenario}
         summary = open(csv_path).read()
         # cleanup summary (not a pure csv!)
         summary = re.sub('(-)+\n.*\n(-)+', '', summary)
-        summary = re.sub('(?i)Start of test','start_of_test', summary)
-        summary = re.sub('(?i)End of test','end_of_test', summary)
-        summary = re.sub('(?i)Process/Worker Type','process_worker_type', summary)
+        summary = re.sub('(?i)Start of test', 'start_of_test', summary)
+        summary = re.sub('(?i)End of test', 'end_of_test', summary)
+        summary = re.sub('(?i)Process/Worker Type', 'process_worker_type', summary)
         groups = re.split('\n\s*\n', summary)
         # groups[0] --> version/provider + total memory
         scenario_metadata = re.compile(r'(?i)^Version.*\n').search(groups[0]).group()
@@ -427,12 +434,12 @@ class CfmeResultsParser(object):
         final_result = []
         for item in metadata_dict['total_memory']:
             datum = dict(
-                scenario_name = scenario,
-                cfme_run_md5 = md5,
-                cfme_version = indexing_params[2],
-                workload_type = indexing_params[1],
-                provider = metadata_dict['provider'],
-                TimeStamp = indexing_params[0].strftime("%Y-%m-%d %H:%M:%S")
+                scenario_name=scenario,
+                cfme_run_md5=md5,
+                cfme_version=indexing_params[2],
+                workload_type=indexing_params[1],
+                provider=metadata_dict['provider'],
+                TimeStamp=indexing_params[0].strftime("%Y-%m-%d %H:%M:%S")
             )
             datum.update(item)
             final_result.append(datum)
@@ -444,7 +451,7 @@ class CfmeResultsParser(object):
             if count == 0:
                 dtype = "RSS"
             elif count == 1:
-                dtype  = "PSS"
+                dtype = "PSS"
             elif count == 2:
                 dtype = "USS"
             elif count == 3:
@@ -453,19 +460,19 @@ class CfmeResultsParser(object):
                 dtype = "SWAP"
             else:
                 break
-            count = count+1
+            count = count + 1
             sanitized_data = self.csv_sanitizer(
                 csv_contents=csv.DictReader(io.StringIO(group)),
                 type='summary')
             for item in sanitized_data:
                 datum = dict(
-                    scenario_name = scenario,
-                    memory_data_type = dtype,
-                    cfme_run_md5 = md5,
-                    cfme_version = indexing_params[2],
-                    workload_type = indexing_params[1],
-                    provider = metadata_dict['provider'],
-                    TimeStamp = indexing_params[0].strftime("%Y-%m-%d %H:%M:%S")
+                    scenario_name=scenario,
+                    memory_data_type=dtype,
+                    cfme_run_md5=md5,
+                    cfme_version=indexing_params[2],
+                    workload_type=indexing_params[1],
+                    provider=metadata_dict['provider'],
+                    TimeStamp=indexing_params[0].strftime("%Y-%m-%d %H:%M:%S")
                 )
                 datum.update(item)
                 final_result.append(datum)
@@ -485,7 +492,8 @@ class CfmeResultsParser(object):
         for current_csv in csv_bundle:
             csv_name = os.path.basename(current_csv)
             if re.match('.*-summary.csv', csv_name):
-                scenario_data['scenario_summary'] = self.process_summary_csv(current_csv, scenerio, md5, indexing_params)
+                scenario_data['scenario_summary'] = self.process_summary_csv(current_csv, scenerio,
+                                                                             md5, indexing_params)
                 continue
             elif re.match('appliance.csv', csv_name):
                 reader_obj = csv.DictReader(open(current_csv))
@@ -549,8 +557,8 @@ class CfmeResultsParser(object):
         return results_data
 
 
-if __name__=="__main__":
-    if len(sys.argv)>1:
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
         CRP = CfmeResultsParser(sys.argv[1])
         ESx = ElasticIndexer(host, port, auth)
         docs = CRP.process_results()

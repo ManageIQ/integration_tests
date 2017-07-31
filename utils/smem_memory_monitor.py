@@ -1,4 +1,11 @@
 """Monitor Memory on a CFME/Miq appliance and builds report&graphs displaying usage per process."""
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import os
+import time
+import traceback
+import yaml
+
 from utils.conf import cfme_performance
 from utils.log import logger
 from utils.path import results_path
@@ -12,12 +19,6 @@ from yaycl import AttrDict
 import json
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
-import os
-import time
-import traceback
-import yaml
 
 miq_workers = [
     'MiqGenericWorker',
@@ -194,11 +195,11 @@ class SmemMemoryMonitor(Thread):
             appliance_results[plottime]['free'] = float(meminfo['MemFree']) / 1024
             if 'MemAvailable' in meminfo:  # 5.5, RHEL 7/Centos 7
                 self.use_slab = True
-                mem_used = (float(meminfo['MemTotal']) - (float(meminfo['MemFree'])
-                    + float(meminfo['Slab']) + float(meminfo['Cached']))) / 1024
+                mem_used = (float(meminfo['MemTotal']) - (float(meminfo['MemFree']) + float(
+                    meminfo['Slab']) + float(meminfo['Cached']))) / 1024
             else:  # 5.4, RHEL 6/Centos 6
-                mem_used = (float(meminfo['MemTotal']) - (float(meminfo['MemFree'])
-                    + float(meminfo['Buffers']) + float(meminfo['Cached']))) / 1024
+                mem_used = (float(meminfo['MemTotal']) - (float(meminfo['MemFree']) + float(
+                    meminfo['Buffers']) + float(meminfo['Cached']))) / 1024
             appliance_results[plottime]['used'] = mem_used
             appliance_results[plottime]['buffers'] = float(meminfo['Buffers']) / 1024
             appliance_results[plottime]['cached'] = float(meminfo['Cached']) / 1024
@@ -210,7 +211,7 @@ class SmemMemoryMonitor(Thread):
         exit_status, worker_types = self.ssh_client.run_command(
             'psql -t -q -d vmdb_production -c '
             '\"select pid,type from miq_workers where miq_server_id = \'{}\'\"'.format(
-            self.miq_server_id))
+                self.miq_server_id))
         if worker_types.strip():
             workers = {}
             for worker in worker_types.strip().split('\n'):
@@ -1022,32 +1023,33 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
         Y = [used_memory_list, buffers_memory_list, cache_memory_list, free_memory_list]
     plt.stackplot(dates, *Y, baseline='zero')
     ax.annotate('%s' % round(total_memory_list[0], 2), xy=(dates[0], total_memory_list[0]),
-        xytext=(4, 4), textcoords='offset points')
+                xytext=(4, 4), textcoords='offset points')
     ax.annotate('%s' % round(total_memory_list[-1], 2), xy=(dates[-1], total_memory_list[-1]),
-        xytext=(4, -4), textcoords='offset points')
+                xytext=(4, -4), textcoords='offset points')
     if use_slab:
         ax.annotate('%s' % round(slab_memory_list[0], 2), xy=(dates[0], used_memory_list[0] +
-            slab_memory_list[0]), xytext=(4, 4), textcoords='offset points')
+                    slab_memory_list[0]), xytext=(4, 4), textcoords='offset points')
         ax.annotate('%s' % round(slab_memory_list[-1], 2), xy=(dates[-1], used_memory_list[-1] +
-            slab_memory_list[-1]), xytext=(4, -4), textcoords='offset points')
+                    slab_memory_list[-1]), xytext=(4, -4), textcoords='offset points')
         ax.annotate('%s' % round(cache_memory_list[0], 2), xy=(dates[0], used_memory_list[0] +
-            slab_memory_list[0] + cache_memory_list[0]), xytext=(4, 4),
-            textcoords='offset points')
-        ax.annotate('%s' % round(cache_memory_list[-1], 2), xy=(dates[-1], used_memory_list[-1]
-            + slab_memory_list[-1] + cache_memory_list[-1]), xytext=(4, -4),
-            textcoords='offset points')
+                    slab_memory_list[0] + cache_memory_list[0]), xytext=(4, 4),
+                    textcoords='offset points')
+        ax.annotate('%s' % round(cache_memory_list[-1], 2), xy=(
+            dates[-1], used_memory_list[-1] + slab_memory_list[-1] + cache_memory_list[-1]),
+            xytext=(4, -4), textcoords='offset points')
     else:
-        ax.annotate('%s' % round(buffers_memory_list[0], 2), xy=(dates[0], used_memory_list[0] +
-            buffers_memory_list[0]), xytext=(4, 4), textcoords='offset points')
+        ax.annotate('%s' % round(buffers_memory_list[0], 2), xy=(
+            dates[0], used_memory_list[0] + buffers_memory_list[0]), xytext=(4, 4),
+            textcoords='offset points')
         ax.annotate('%s' % round(buffers_memory_list[-1], 2), xy=(dates[-1],
-            used_memory_list[-1] + buffers_memory_list[-1]), xytext=(4, -4),
-            textcoords='offset points')
+                    used_memory_list[-1] + buffers_memory_list[-1]), xytext=(4, -4),
+                    textcoords='offset points')
         ax.annotate('%s' % round(cache_memory_list[0], 2), xy=(dates[0], used_memory_list[0] +
-            buffers_memory_list[0] + cache_memory_list[0]), xytext=(4, 4),
-            textcoords='offset points')
-        ax.annotate('%s' % round(cache_memory_list[-1], 2), xy=(dates[-1], used_memory_list[-1]
-            + buffers_memory_list[-1] + cache_memory_list[-1]), xytext=(4, -4),
-            textcoords='offset points')
+                    buffers_memory_list[0] + cache_memory_list[0]), xytext=(4, 4),
+                    textcoords='offset points')
+        ax.annotate('%s' % round(cache_memory_list[-1], 2), xy=(
+            dates[-1], used_memory_list[-1] + buffers_memory_list[-1] + cache_memory_list[-1]),
+            xytext=(4, -4), textcoords='offset points')
     ax.annotate('%s' % round(used_memory_list[0], 2), xy=(dates[0], used_memory_list[0]),
         xytext=(4, 4), textcoords='offset points')
     ax.annotate('%s' % round(used_memory_list[-1], 2), xy=(dates[-1], used_memory_list[-1]),

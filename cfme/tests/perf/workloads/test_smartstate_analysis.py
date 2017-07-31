@@ -1,43 +1,47 @@
 """Runs SmartState Analysis Workload."""
-from utils.appliance import clean_appliance
-from utils.appliance import get_server_roles_workload_smartstate
-from utils.appliance import install_vddk
-from utils.appliance import set_cfme_server_relationship
-from utils.appliance import set_server_roles_workload_smartstate
-from utils.appliance import wait_for_miq_server_workers_started
+from cfme.infrastructure import host
 from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
-from utils.providers import add_host_credentials
-from utils.providers import add_providers
-from utils.providers import map_vms_to_ids
-from utils.providers import scan_provider_vms_bulk
+from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
 from utils.ssh import SSHClient
 from utils.workloads import get_smartstate_analysis_scenarios
+from utils import conf
+
 import time
 import pytest
+
+roles_smartstate = ['automate', 'database_operations', 'ems_inventory', 'ems_operations', 'event',
+    'notifier', 'reporting', 'scheduler', 'smartproxy', 'smartstate', 'user_interface',
+    'web_services']
+
+
+def get_host_data_by_name(provider_key, host_name):
+    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
+        if host_name == host_obj['name']:
+            return host_obj
+    return None
 
 
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_smartstate_analysis_scenarios())
-def test_workload_smartstate_analysis(request, scenario):
+def test_workload_smartstate_analysis(appliance, request, scenario):
     """Runs through provider based scenarios initiating smart state analysis against VMs, Hosts,
     and Datastores"""
     from_ts = int(time.time() * 1000)
-    ssh_client = SSHClient()
     logger.debug('Scenario: {}'.format(scenario['name']))
-    install_vddk(ssh_client)
+    appliance.install_vddk()
 
-    clean_appliance(ssh_client)
+    appliance.clean_appliance()
 
     quantifiers = {}
     scenario_data = {'appliance_ip': cfme_performance['appliance']['ip_address'],
         'appliance_name': cfme_performance['appliance']['appliance_name'],
         'test_dir': 'workload-ssa',
         'test_name': 'SmartState Analysis',
-        'appliance_roles': get_server_roles_workload_smartstate(separator=', '),
+        'appliance_roles': ', '.join(roles_smartstate),
         'scenario': scenario}
     monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
 
@@ -56,22 +60,24 @@ def test_workload_smartstate_analysis(request, scenario):
 
     monitor_thread.start()
 
-    wait_for_miq_server_workers_started(poll_interval=2)
-    set_server_roles_workload_smartstate(ssh_client)
-    add_providers(scenario['providers'])
+    appliance.wait_for_miq_server_workers_started(poll_interval=2)
+    appliance.server_roles = {role: True for role in roles_smartstate}
+    for provider in scenario['providers']:
+        get_crud(provider).create_rest()
     logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))
     time.sleep(scenario['refresh_sleep_time'])
 
     # Add host credentials and set CFME relationship for RHEVM SSA
     for provider in scenario['providers']:
-        add_host_credentials(cfme_performance['providers'][provider], ssh_client)
+        for api_host in appliance.rest_api.collections.hosts.all:
+            test_host = host.Host(name=api_host.name, provider=provider)
+            host_data = get_host_data_by_name(get_crud(provider), api_host.name)
+            credentials = host.get_credentials_from_config(host_data['credentials'])
+            test_host.update_credentials_rest(credentials)
         if (cfme_performance['providers'][provider]['type'] ==
                 "ManageIQ::Providers::Redhat::InfraManager"):
-            set_cfme_server_relationship(ssh_client,
+            appliance.set_cfme_server_relationship(
                 cfme_performance['appliance']['appliance_name'])
-
-    # Get list of VM ids by mapping provider name + vm name to the vm id
-    vm_ids_to_scan = map_vms_to_ids(scenario['vms_to_scan'])
 
     # Variable amount of time for SmartState Analysis workload
     total_time = scenario['total_time']
@@ -81,8 +87,10 @@ def test_workload_smartstate_analysis(request, scenario):
 
     while ((time.time() - starttime) < total_time):
         start_ssa_time = time.time()
-        scan_provider_vms_bulk(vm_ids_to_scan)
-        total_scanned_VMs += len(vm_ids_to_scan)
+        for vm in scenario['vms_to_scan'].values():
+            vm_api = appliance.rest_api.collections.vms.get(name=vm.name)
+            vm_api.action.scan()
+            total_scanned_VMs += 1
         iteration_time = time.time()
 
         ssa_time = round(iteration_time - start_ssa_time, 2)

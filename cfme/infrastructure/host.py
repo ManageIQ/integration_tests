@@ -3,6 +3,7 @@
 
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
+from manageiq_client.api import APIException
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
@@ -290,6 +291,20 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         view = navigate_to(self, "All")
         entity = view.entities.get_first_entity(by_name=self.name)
         return entity.creds.strip().lower() == "checkmark"
+
+    def update_credentials_rest(self, credentials):
+        """ Updates host's credentials via rest api
+
+        Args:
+            credentials (dict) : credentials from yaml file
+        Returns: ``True`` if credentials are saved and valid; ``False`` otherwise
+        """
+        try:
+            host = self.appliance.rest_api.collections.hosts.get(name=self.name)
+            host.action.edit(credentials={"userid": credentials.principal,
+                                          "password": credentials.secret})
+        except APIException as ex:
+            return False
 
     def get_datastores(self):
         """Gets list of all datastores used by this host.

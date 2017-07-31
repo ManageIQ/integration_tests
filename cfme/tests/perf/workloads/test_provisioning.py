@@ -1,17 +1,11 @@
 """Runs Provisioning Workload."""
-from utils.appliance import clean_appliance
-from utils.appliance import get_server_roles_workload_provisioning
-from utils.appliance import set_server_roles_workload_provisioning
-from utils.appliance import set_server_roles_workload_provisioning_cleanup
-from utils.appliance import wait_for_miq_server_workers_started
+import fauxfactory
+
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
-from utils.providers import add_providers
-from utils.providers import delete_provisioned_vm
-from utils.providers import delete_provisioned_vms
-from utils.providers import provision_vm
-from utils.providers import get_template_guids
+from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
 from utils.smem_memory_monitor import test_ts
@@ -22,25 +16,78 @@ import time
 import pytest
 
 
+roles_provisioning = ['automate', 'database_operations', 'ems_inventory', 'ems_operations',
+    'event', 'notifier', 'reporting', 'scheduler', 'user_interface', 'web_services']
+
+roles_provisioning_cleanup = ['database_operations', 'ems_inventory', 'ems_operations',
+    'event', 'notifier', 'reporting', 'scheduler', 'user_interface', 'web_services']
+
+
+def get_provision_data(rest_api, provider, small_template, auto_approve=True):
+    templates = rest_api.collections.templates.find_by(name=small_template)
+    for template in templates:
+        try:
+            ems_id = template.ems_id
+        except AttributeError:
+            continue
+        if ems_id == provider.id:
+            guid = template.guid
+            break
+    else:
+        raise Exception("No such template {} on provider!".format(small_template))
+
+    result = {
+        "version": "1.1",
+        "template_fields": {
+            "guid": guid
+        },
+        "vm_fields": {
+            "number_of_cpus": 1,
+            "vm_name": "test_rest_prov_{}".format(fauxfactory.gen_alphanumeric()),
+            "vm_memory": "2048",
+            "vlan": provider.data["provisioning"]["vlan"],
+        },
+        "requester": {
+            "user_name": "admin",
+            "owner_first_name": "John",
+            "owner_last_name": "Doe",
+            "owner_email": "jdoe@sample.com",
+            "auto_approve": auto_approve
+        },
+        "tags": {
+            "network_location": "Internal",
+            "cc": "001"
+        },
+        "additional_values": {
+            "request_id": "1001"
+        },
+        "ems_custom_attributes": {},
+        "miq_custom_attributes": {}
+    }
+
+    if provider.one_of(RHEVMProvider):
+        result["vm_fields"]["provision_type"] = "native_clone"
+    return result
+
+
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_provisioning_scenarios())
-def test_provisioning(request, scenario):
+def test_provisioning(appliance, request, scenario):
     """Runs through provisioning scenarios using the REST API to
     continously provision a VM for a specified period of time.
     Memory Monitor creates graphs and summary at the end of each scenario."""
 
     from_ts = int(time.time() * 1000)
-    ssh_client = SSHClient()
     logger.debug('Scenario: {}'.format(scenario['name']))
 
-    clean_appliance(ssh_client)
+    appliance.clean_appliance()
 
     quantifiers = {}
-    scenario_data = {'appliance_ip': cfme_performance['appliance']['ip_address'],
+    scenario_data = {'appliance_ip': appliance.hostname,
         'appliance_name': cfme_performance['appliance']['appliance_name'],
         'test_dir': 'workload-provisioning',
         'test_name': 'Provisioning',
-        'appliance_roles': get_server_roles_workload_provisioning(separator=', '),
+        'appliance_roles': ', '.join(roles_provisioning),
         'scenario': scenario}
     monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
 
@@ -51,11 +98,11 @@ def test_provisioning(request, scenario):
         to_ts = int(starttime * 1000)
         g_urls = get_scenario_dashboard_urls(scenario, from_ts, to_ts)
         logger.debug('Started cleaning up monitoring thread.')
-        set_server_roles_workload_provisioning_cleanup(ssh_client)
+        appliance.server_roles = {role: True for role in roles_provisioning_cleanup}
         monitor_thread.grafana_urls = g_urls
         monitor_thread.signal = False
         final_vm_size = len(vms_to_cleanup)
-        delete_provisioned_vms(vms_to_cleanup)
+        appliance.rest_api.collections.vms.action.delete(vms_to_cleanup)
         monitor_thread.join()
         logger.info('{} VMs were left over, and {} VMs were deleted in the finalizer.'
             .format(final_vm_size, final_vm_size - len(vms_to_cleanup)))
@@ -68,18 +115,19 @@ def test_provisioning(request, scenario):
         timediff = time.time() - starttime
         logger.info('Finished cleaning up monitoring thread in {}'.format(timediff))
 
-    request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, provision_order, quantifiers,
+    request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, vm_name, quantifiers,
             scenario_data))
 
     monitor_thread.start()
 
-    wait_for_miq_server_workers_started(poll_interval=2)
-    set_server_roles_workload_provisioning(ssh_client)
-    add_providers(scenario['providers'])
+    appliance.wait_for_miq_server_workers_started(poll_interval=2)
+    appliance.server_roles = {role: True for role in roles_provisioning}
+    prov = get_crud(scenario['providers'][0])
+    prov.create_rest()
     logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))
     time.sleep(scenario['refresh_sleep_time'])
 
-    guid_list = get_template_guids(scenario['templates'])
+    guid_list = prov.get_template_guids(scenario['templates'])
     guid_cycle = cycle(guid_list)
     cleanup_size = scenario['cleanup_size']
     number_of_vms = scenario['number_of_vms']
@@ -99,12 +147,16 @@ def test_provisioning(request, scenario):
             vm_to_provision = '{}-provision-{}'.format(
                 test_ts, str(total_provisioned_vms).zfill(4))
             guid_to_provision, provider_name = next(guid_cycle)
-            provider_to_provision = cfme_performance['providers'][provider_name]
+            provider_to_provision = prov.name
             provision_order.append((vm_to_provision, provider_name))
             provision_list.append((vm_to_provision, guid_to_provision,
                 provider_to_provision['vlan_network']))
 
-        provision_vm(provision_list)
+        template = prov.data.get('small_template')
+        provision_data = get_provision_data(appliance.rest_api, prov, template)
+        vm_name = provision_data["vm_fields"]["vm_name"]
+        appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+        assert appliance.rest_api.response.status_code == 200
         creation_time = time.time()
         provision_time = round(creation_time - start_iteration_time, 2)
         logger.debug('Time to initiate provisioning: {}'.format(provision_time))
@@ -112,7 +164,7 @@ def test_provisioning(request, scenario):
 
         if provisioned_vms > cleanup_size * len(scenario['providers']):
             start_remove_time = time.time()
-            if delete_provisioned_vm(provision_order[0]):
+            if appliance.rest_api.collections.vms.action.delete(vm_name):
                 provision_order.pop(0)
                 provisioned_vms -= 1
                 total_deleted_vms += 1

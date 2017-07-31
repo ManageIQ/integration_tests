@@ -1,16 +1,9 @@
 """Runs Refresh Workload by adding specified providers, and refreshing a specified number of vms,
 waiting, then repeating for specified length of time."""
-from utils.appliance import clean_appliance
-from utils.appliance import get_server_roles_workload_refresh_vms
-from utils.appliance import set_server_roles_workload_refresh_vms
-from utils.appliance import wait_for_miq_server_workers_started
-from utils.appliance import set_full_refresh_threshold
 from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
-from utils.providers import add_providers
-from utils.providers import get_all_vm_ids
-from utils.providers import refresh_provider_vms_bulk
+from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
 from utils.ssh import SSHClient
@@ -21,24 +14,26 @@ import pytest
 
 FULL_REFRESH_THRESHOLD_DEFAULT = 100
 
+roles_refresh_vms = ['automate', 'database_operations', 'ems_inventory', 'ems_operations',
+    'event', 'reporting', 'scheduler', 'smartstate', 'user_interface', 'web_services', 'websocket']
+
 
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_refresh_vms_scenarios())
-def test_refresh_vms(request, scenario):
+def test_refresh_vms(appliance, request, scenario):
     """Refreshes all vm's then waits for a specific amount of time. Memory Monitor creates
     graphs and summary at the end of the scenario."""
     from_ts = int(time.time() * 1000)
-    ssh_client = SSHClient()
     logger.debug('Scenario: {}'.format(scenario['name']))
 
-    clean_appliance(ssh_client)
+    appliance.clean_appliance()
 
     quantifiers = {}
     scenario_data = {'appliance_ip': cfme_performance['appliance']['ip_address'],
         'appliance_name': cfme_performance['appliance']['appliance_name'],
         'test_dir': 'workload-refresh-vm',
         'test_name': 'Refresh VMs',
-        'appliance_roles': get_server_roles_workload_refresh_vms(separator=', '),
+        'appliance_roles': ', '.join(roles_refresh_vms),
         'scenario': scenario}
     monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
 
@@ -57,25 +52,27 @@ def test_refresh_vms(request, scenario):
 
     monitor_thread.start()
 
-    wait_for_miq_server_workers_started(poll_interval=2)
-    set_server_roles_workload_refresh_vms(ssh_client)
-    add_providers(scenario['providers'])
+    appliance.wait_for_miq_server_workers_started(poll_interval=2)
+    appliance.server_roles = {role: True for role in roles_refresh_vms}
+    for prov in scenario['providers']:
+        get_crud(prov).create_rest()
     logger.info('Sleeping for refresh: {}s'.format(scenario['refresh_sleep_time']))
     time.sleep(scenario['refresh_sleep_time'])
 
     full_refresh_threshold_set = False
     if 'full_refresh_threshold' in scenario:
         if scenario['full_refresh_threshold'] != FULL_REFRESH_THRESHOLD_DEFAULT:
-            set_full_refresh_threshold(ssh_client, scenario['full_refresh_threshold'])
+            appliance.set_full_refresh_threshold(scenario['full_refresh_threshold'])
             full_refresh_threshold_set = True
     if not full_refresh_threshold_set:
         logger.debug('Keeping full_refresh_threshold at default ({}).'.format(
             FULL_REFRESH_THRESHOLD_DEFAULT))
 
     refresh_size = scenario['refresh_size']
-    vm_ids = get_all_vm_ids()
-    vm_ids_iter = cycle(vm_ids)
-    logger.debug('Number of VM IDs: {}'.format(len(vm_ids)))
+
+    vms = appliance.rest_api.collections.vms.all
+    vms_iter = cycle(vms)
+    logger.debug('Number of VM IDs: {}'.format(len(vms)))
 
     # Variable amount of time for refresh workload
     total_time = scenario['total_time']
@@ -85,8 +82,9 @@ def test_refresh_vms(request, scenario):
 
     while ((time.time() - starttime) < total_time):
         start_refresh_time = time.time()
-        refresh_list = [next(vm_ids_iter) for x in range(refresh_size)]
-        refresh_provider_vms_bulk(refresh_list)
+        refresh_list = [next(vms_iter) for x in range(refresh_size)]
+        for vm in refresh_list:
+            vm.action.reload()
         total_refreshed_vms += len(refresh_list)
         iteration_time = time.time()
 

@@ -85,7 +85,8 @@ def get_rpm_versions(ssh_client):
     """get version information for rpms"""
     starttime = time.time()
 
-    rpm_list = str(ssh_client.run_command("rpm -qa --queryformat='%{N}, %{V}-%{R}\n' | sort")[1]).split('\n')
+    rpm_list = str(ssh_client.run_command(
+        "rpm -qa --queryformat='%{N}, %{V}-%{R}\n' | sort")[1]).split('\n')
 
     timediff = time.time() - starttime
     logger.info('Got version info in: {}'.format(timediff))

@@ -1,19 +1,9 @@
 """Runs Capacity and Utilization with Replication Workload."""
-#from utils.appliance import add_pglogical_replication_subscription
-#from utils.appliance import clean_appliance
-#from utils.appliance import get_server_roles_workload_cap_and_util
-#from utils.appliance import get_server_roles_workload_cap_and_util_rep
-#from utils.appliance import set_cap_and_util_all_via_rails
-#from utils.appliance import set_pglogical_replication
-#from utils.appliance import set_rubyrep_replication
-#from utils.appliance import set_server_roles_workload_cap_and_util
-#from utils.appliance import set_server_roles_workload_cap_and_util_rep
-#from utils.appliance import wait_for_miq_server_workers_started
 from utils.appliance import IPAppliance
 from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
-#from utils.providers import add_providers
+from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
 from utils.ssh import SSHClient
@@ -30,17 +20,16 @@ roles_cap_and_util_rep = ['automate', 'database_operations', 'database_synchroni
 
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_capacity_and_utilization_replication_scenarios())
-def test_workload_capacity_and_utilization_rep(appliance, request, scenario):
+def test_workload_capacity_and_utilization_rep(appliance, request, scenario, setup_perf_provider):
     """Runs through provider based scenarios enabling C&U and replication, run for a set period of
     time. Memory Monitor creates graphs and summary at the end of each scenario."""
     from_ts = int(time.time() * 1000)
     ssh_client = SSHClient()
 
     ssh_master_args = {
-            'hostname': scenario['replication_master']['ip_address'],
-            'username': scenario['replication_master']['ssh']['username'],
-            'password': scenario['replication_master']['ssh']['password']
-        }
+        'hostname': scenario['replication_master']['ip_address'],
+        'username': scenario['replication_master']['ssh']['username'],
+        'password': scenario['replication_master']['ssh']['password']}
     master_appliance = IPAppliance(address=scenario['replication_master']['ip_address'],
                                    openshift_creds=ssh_master_args)
 
@@ -93,8 +82,9 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario):
     monitor_thread.start()
 
     appliance.wait_for_miq_server_workers_started(evm_tail=sshtail_evm, poll_interval=2)
-    appliance.server_roles(','.join(roles_cap_and_util_rep))
-    add_providers(scenario['providers'])
+    appliance.server_roles = {role: True for role in roles_cap_and_util_rep}
+    for provider in scenario['providers']:
+        get_crud(provider).create_rest()
     logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))
     time.sleep(scenario['refresh_sleep_time'])
     appliance.set_cap_and_util_all_via_rails()
@@ -115,7 +105,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario):
         # ssh_client.run_rake_command('evm:dbsync:uninstall')
         # time.sleep(30)  # Wait to quiecse
         # Turn on DB Sync role
-        appliance.server_roles(','.join(roles_cap_and_util_rep))
+        appliance.server_roles = {role: True for role in roles_cap_and_util_rep}
 
     # Variable amount of time for C&U collections/processing
     total_time = scenario['total_time']
@@ -134,7 +124,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario):
     if is_pglogical:
         appliance.set_pglogical_replication(replication_type=':none')
     else:
-        appliance.server_roles(','.join(roles_cap_and_util_rep))
+        appliance.server_roles = {role: True for role in roles_cap_and_util_rep}
 
     quantifiers['Elapsed_Time'] = round(elapsed_time, 2)
     logger.info('Test Ending...')
