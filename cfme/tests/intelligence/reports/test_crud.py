@@ -3,17 +3,17 @@ import fauxfactory
 import pytest
 import yaml
 
-from cfme.fixtures import pytest_selenium as sel
+from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
-from cfme.intelligence.reports.schedules import Schedule
-from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWidget, RSSFeedWidget
+from cfme.intelligence.reports.schedules import ScheduleCollection
+from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
+from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
+from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
+from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
+from utils.blockers import BZ
 from utils.path import data_path
 from utils.update import update
-from utils.blockers import BZ
-from utils import version
-from cfme import test_requirements
-
 from utils.wait import wait_for_decorator
 
 
@@ -48,15 +48,9 @@ def custom_report(request):
 
 
 @pytest.fixture(params=crud_files_schedules())
-def schedule(request):
+def schedule_data(request):
     with schedules_crud_dir.join(request.param).open(mode="r") as rep_yaml:
-        data = yaml.load(rep_yaml)
-        name = data.pop("name")
-        description = data.pop("description")
-        yfilter = data.pop("filter")
-        if '5.6' <= version.current_version() < '5.7.1.1':
-            yfilter[2] += ' - Sample 1'
-        return Schedule(name, description, yfilter, **data)
+        return yaml.load(rep_yaml)
 
 
 @pytest.mark.tier(3)
@@ -74,11 +68,12 @@ def test_custom_report_crud(custom_report):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
-def test_schedule_crud(schedule):
-    schedule.create()
+def test_schedule_crud(schedule_data):
+    schedules = ScheduleCollection()
+    schedule = schedules.create(**schedule_data)
     with update(schedule):
         schedule.description = "badger badger badger"
-    schedule.queue(wait_for_finish=True)
+    schedule.queue()
     schedule.delete()
 
 
@@ -93,7 +88,7 @@ def test_menuwidget_crud():
             "Services / Catalogs": fauxfactory.gen_alphanumeric(),
             "Clouds / Providers": fauxfactory.gen_alphanumeric(),
         },
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     with update(w):
@@ -112,7 +107,7 @@ def test_reportwidget_crud():
         columns=["VM Name", "Message"],
         rows="10",
         timer={"run": "Hourly", "hours": "Hour"},
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     with update(w):
@@ -129,7 +124,7 @@ def test_chartwidget_crud():
         active=True,
         filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
         timer={"run": "Hourly", "hours": "Hour"},
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     with update(w):
@@ -147,7 +142,7 @@ def test_rssfeedwidget_crud():
         type="Internal",
         feed="Administrative Events",
         rows="8",
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     # Basic update

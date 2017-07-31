@@ -9,31 +9,10 @@ report_fields:
     - CPU - % Overallocated
     - Name
 cancel_after: 1 Hour
-group_records:
-    - Busy
-    - Archived
-calculations_grouped:
-    CPU - % Overallocated:
-        - Maximum
-        - Minimum
-        - Average
-page_size: A4 - 210mm x 297mm (default)
-headers:
-    Archived:
-        header: Test1
-        format: Boolean (T/F)
-    Busy:
-        header: Such busy
-        format: Boolean (Yes/No)
-column_styles:
-    Name:
-        -
-            - Blue Text
-            - "="
-            - asdf
-        -
-            - Yellow Background
-            - IS NULL
-        -
-            - Red Background
-            - IS NOT NULL
+consolidation:
+    group_records:
+        - Busy
+        - Archived
+    calculations_grouped: CPU - % Overallocated
+formatting:
+    page_size: A4 - 210mm x 297mm (default)

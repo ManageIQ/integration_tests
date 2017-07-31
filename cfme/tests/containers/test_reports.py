@@ -6,8 +6,7 @@ import pytest
 from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
-from cfme.exceptions import CandidateNotFound
-from cfme.intelligence.reports.reports import CannedSavedReport, CustomReport, select
+from cfme.intelligence.reports.reports import CannedSavedReport, CustomReport
 from utils import testgen
 from utils.blockers import BZ
 from utils.appliance.implementations.ui import navigate_to

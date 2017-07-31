@@ -2,12 +2,15 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.dashboard import Widget
-from cfme.intelligence.reports.widgets import MenuWidget, ReportWidget, RSSFeedWidget, ChartWidget
 from cfme.intelligence.reports.dashboards import DefaultDashboard
+from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
+from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
+from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
+from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
-from cfme import test_requirements
 
 
 @pytest.fixture(scope="module")
