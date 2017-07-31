@@ -20,7 +20,7 @@ def test_assign_compute_enterprise(virtualcenter_provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            "Enterprise": "Default"
+            'Enterprise': {'Rate': 'Default'}
         })
     enterprise.computeassign()
 
@@ -68,7 +68,7 @@ def test_assign_compute_taggedvm(virtualcenter_provider):
         assign_to="Tagged VMs and Instances",
         tag_category="Location",
         selections={
-            "Chicago": "Default"
+            'Chicago': {'Rate': 'Default'}
         })
     tagged_vm.computeassign()
 
@@ -83,7 +83,7 @@ def test_assign_storage_enterprise(virtualcenter_provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            "Enterprise": "Default"
+            'Enterprise': {'Rate': 'Default'}
         })
 
     enterprise.storageassign()
@@ -115,7 +115,7 @@ def test_assign_storage_tagged_datastores(virtualcenter_provider):
         assign_to="Tagged Datastores",
         tag_category="Location",
         selections={
-            "Chicago": "Default"
+            'Chicago': {'Rate': 'Default'}
         })
     tagged_datastore.storageassign()
 

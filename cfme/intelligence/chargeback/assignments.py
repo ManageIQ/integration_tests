@@ -47,11 +47,11 @@ class AssignmentsView(ChargebackView):
     tag_category = BootstrapSelect(id='cbtag_cat')
     docker_labels = BootstrapSelect(id='cblabel_key')
     _table_locator = '//h3[contains(text(),"Selections")]/following-sibling::table'
-    _table_widget_locator = './/div[contains(@class, "bootstrap-select")]'
+    _table_widget_locator = './/div[contains(@class, "bootstrap-select cbshow_typ")]'
 
     selections = Table(locator=_table_locator,
             column_widgets={'Rate': BootstrapSelectByLocator(locator=_table_widget_locator)},
-            assoc_column=1)
+            assoc_column=0)
 
 
 class Assign(Updateable, Pretty, Navigatable):
