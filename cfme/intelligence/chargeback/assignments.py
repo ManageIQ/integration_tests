@@ -47,7 +47,7 @@ class AssignmentsView(ChargebackView):
     tag_category = BootstrapSelect(id='cbtag_cat')
     docker_labels = BootstrapSelect(id='cblabel_key')
     _table_locator = '//h3[contains(text(),"Selections")]/following-sibling::table'
-    _table_widget_locator = './/div[contains(@class, "bootstrap-select cbshow_typ")]'
+    _table_widget_locator = './/div[contains(@class, "bootstrap-select")]'
 
     selections = Table(locator=_table_locator,
             column_widgets={'Rate': BootstrapSelectByLocator(locator=_table_widget_locator)},
@@ -67,13 +67,12 @@ class Assign(Updateable, Pretty, Navigatable):
             providers the rate is to be assigned.
 
     Usage:
-        tagged_datastore = Assign(
-            assign_to="Tagged Datastores",
-            tag_category="Location",
-            selections={
-                "Chicago": "Default"
+        enterprise = Assign(
+        assign_to="The Enterprise",
+        selections={
+            'Enterprise': {'Rate': 'Default'}
         })
-    tagged_datastore.storageassign()
+    enterprise.computeassign()
 
     """
     def __init__(self, assign_to=None,
@@ -89,29 +88,20 @@ class Assign(Updateable, Pretty, Navigatable):
 
     def storageassign(self):
         view = navigate_to(self, 'Storage')
+
+        print view.selections[0][1].widget.all_options
+
         self._fill(view)
         view.save_button.click()
         view.flash.assert_no_error()
-        """
-        fill(assign_form,
-            {'assign_to': self.assign_to,
-             'tag_category': self.tag_category,
-             'docker_labels': self.docker_labels,
-             'selections': self.selections},
-            action=assign_form.save_button)
-        flash.assert_no_errors()
-
+        view.flash.assert_message('Rate Assignments saved')
 
     def computeassign(self):
         view = navigate_to(self, 'Compute')
-        fill(assign_form,
-            {'assign_to': self.assign_to,
-             'tag_category': self.tag_category,
-             'docker_labels': self.docker_labels,
-             'selections': self.selections},
-            action=assign_form.save_button)
-        flash.assert_no_errors()
-"""
+        self._fill(view)
+        view.save_button.click()
+        view.flash.assert_no_error()
+        view.flash.assert_message('Rate Assignments saved')
 
     def _fill(self, view):
         """This function prepares the values and fills the form."""
