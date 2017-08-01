@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import click
 
 from artifactor import Artifactor, initialize
@@ -57,10 +58,12 @@ def main(run_id, port):
     except Exception as e:
         import traceback
         import sys
-        with open("{}/{}".format(log_path.strpath, 'artifactor_crash.log'), 'w') as f:
-            f.write(str(e))
-            for line in traceback.format_tb(sys.exc_traceback):
-                f.write(line)
+        with log_path.join('artifactor_crash.log').open('w') as f:
+            print(e, file=f)
+            print(e, file=sys.stderr)
+            tb = '\n'.join(traceback.format_tb(sys.exc_traceback))
+            print(tb, file=f)
+            print(tb, file=sys.stderr)
 
 
 if __name__ == '__main__':
