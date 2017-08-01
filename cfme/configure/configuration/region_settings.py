@@ -453,17 +453,17 @@ class CANDUCollection(Navigatable):
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
 
-    def _enable_disable(self, anable=True, reset=False):
+    def _enable_disable(self, enable=True, reset=False):
         """ Enable/Disable C and U
 
             Args:
-                anable: Switches states, 'True'- enable
+                enable: Switches states, 'True'- enable
                 reset: Reset changes, default is 'False' - changes will not be reset
         """
         view = navigate_to(self, 'Details')
         view.fill({
-            'all_clusters_cb': anable,
-            'all_datastores_cb': anable
+            'all_clusters_cb': enable,
+            'all_datastores_cb': enable
         })
         if reset:
             view.reset_button.click()
