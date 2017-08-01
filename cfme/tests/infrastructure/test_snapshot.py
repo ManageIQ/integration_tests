@@ -45,7 +45,7 @@ def domain(request):
 @pytest.fixture(scope="module")
 def test_vm(setup_provider_modscope, provider, vm_name, request):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = VM.factory(vm_name, provider, template_name=provider.data['provisioning']['template'])
+    vm = VM.factory(vm_name, provider, template_name=provider.data['full_template']['name'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -111,14 +111,12 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         snapshot1 = new_snapshot(test_vm, has_name=False)
     else:
         snapshot1 = new_snapshot(test_vm)
-    ip = snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name)
-    ssh_kwargs = {'hostname': ip}
-    if provider.one_of(RHEVMProvider):
-        ssh_kwargs['username'] = credentials[provider.data['ssh_creds']]['username']
-        ssh_kwargs['password'] = credentials[provider.data['ssh_creds']]['password']
-    else:
-        ssh_kwargs['username'] = credentials[provider.data['full_template']['creds']]['username']
-        ssh_kwargs['password'] = credentials[provider.data['full_template']['creds']]['password']
+
+    ssh_kwargs = {
+        'hostname': snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name),
+        'username': credentials[provider.data['full_template']['creds']]['username'],
+        'password': credentials[provider.data['full_template']['creds']]['password']
+    }
 
     ssh_client = SSHClient(**ssh_kwargs)
     # We need to wait for ssh to become available on the vm, it can take a while. Without
@@ -152,7 +150,7 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
 
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
-    wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=sel.refresh)
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
     test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
     navigate_to(test_vm.provider, 'Details')
@@ -220,7 +218,7 @@ def test_create_snapshot_via_ae(request, domain, test_vm):
         execute_methods=True,
         attributes_values={"snap_name": snap_name})
 
-    wait_for(snapshot.does_snapshot_exist, timeout="2m", delay=10,
+    wait_for(lambda: snapshot.exists, timeout="2m", delay=10,
              fail_func=sel.refresh, handle_exception=True)
 
     # Clean up if it appeared

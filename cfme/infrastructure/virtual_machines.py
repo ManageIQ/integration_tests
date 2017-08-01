@@ -350,7 +350,8 @@ class Vm(BaseVM):
                 self.vm.load_details()
                 sel.click(InfoBlock.element("Properties", "Snapshots"))
 
-        def does_snapshot_exist(self):
+        @property
+        def exists(self):
             self._nav_to_snapshot_mgmt()
             try:
                 self.snapshot_tree.find_path_to(
@@ -361,8 +362,8 @@ class Vm(BaseVM):
             except NoSuchElementException:
                 return False
 
-        def _snapshot_click_helper(self, prop):
-            """Helper method to reduce code duplication.
+        def _click_tree_path(self, prop):
+            """Find and click the given property in a snapshot tree path.
 
             Args:
                 prop (str): Property to check (name or description).
@@ -373,25 +374,20 @@ class Vm(BaseVM):
             self.snapshot_tree.click_path(
                 *self.snapshot_tree.find_path_to(re.compile(prop)))
 
-        def _snapshot_is_active_helper(self, prop):
-            """Helper for a wait_for_snapshot_active method to reduce code duplication.
-
-            Args:
-                prop (str): Property to check (name or description).
+        @property
+        def active(self):
+            """Check if the snapshot is active.
 
             Returns:
                 bool: True if snapshot is active, False otherwise.
             """
+            self._nav_to_snapshot_mgmt()
             try:
-                self._snapshot_click_helper(prop)
-                if sel.is_displayed_text("{} (Active)".format(prop)):
+                self._click_tree_path(self.name or self.description)
+                if sel.is_displayed_text("{} (Active)".format(self.name or self.description)):
                     return True
             except CandidateNotFound:
                 return False
-
-        def wait_for_snapshot_active(self):
-            self._nav_to_snapshot_mgmt()
-            return self._snapshot_is_active_helper(self.name or self.description)
 
         def create(self):
             snapshot_dict = {
@@ -405,7 +401,7 @@ class Vm(BaseVM):
                 snapshot_dict['name'] = self.name
 
             fill(snapshot_form, snapshot_dict, action=snapshot_form.create_button)
-            wait_for(self.does_snapshot_exist, num_sec=300, delay=20, fail_func=sel.refresh,
+            wait_for(lambda: self.exists, num_sec=300, delay=20, fail_func=sel.refresh,
                      handle_exception=True)
 
         def delete(self, cancel=False):
@@ -427,7 +423,7 @@ class Vm(BaseVM):
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
 
-            self._snapshot_click_helper(self.name or self.description)
+            self._click_tree_path(self.name or self.description)
 
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
