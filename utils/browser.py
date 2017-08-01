@@ -119,17 +119,9 @@ class Wharf(object):
         return self.docker_id is not None
 
 
-def web_driver_class_factory(base_class, lock):
-    def execute(self, *args, **kwargs):
-        with lock:
-            return base_class.execute(self, *args, **kwargs)
-    return type(base_class.__name__, (base_class,), {"execute": execute})
-
-
 class BrowserFactory(object):
     def __init__(self, webdriver_class, browser_kwargs):
-        self.lock = threading.RLock()
-        self.webdriver_class = web_driver_class_factory(webdriver_class, self.lock)
+        self.webdriver_class = webdriver_class
         self.browser_kwargs = browser_kwargs
 
         if webdriver_class is not webdriver.Remote:
@@ -229,40 +221,6 @@ class WharfFactory(BrowserFactory):
             self.wharf.checkin()
 
 
-class BrowserKeepAliveThread(threading.Thread):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the stopped() condition."""
-
-    def __init__(self, manager):
-        super(BrowserKeepAliveThread, self).__init__()
-        self._stop = threading.Event()
-        self.manager = manager
-
-    def run(self):
-        while not self.stopped():
-            time.sleep(THIRTY_SECONDS)
-            with self.manager.factory.lock:
-
-                # The double try is necessary as if the purpose of the function is to ensure that
-                # the connection doesn't die. If the connection does die due to lack of interaction
-                # then this double try will fail the first time and connect the second time.
-                # The break ensures we don't run the call more times than we need to.
-                for _ in range(2):
-                    try:
-                        log.debug('renew')
-                        self.manager.browser.current_url
-                        break
-                    except Exception as e:
-                        log.error('something bad happened')
-                        log.error(e)
-
-    def stop(self):
-        self._stop.set()
-
-    def stopped(self):
-        return self._stop.isSet()
-
-
 class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
@@ -285,12 +243,6 @@ class BrowserManager(object):
             return cls(WharfFactory(webdriver_class, browser_kwargs, wharf))
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
-
-    def _browser_start_renew_thread(self):
-        log.debug('starting repeater')
-        self._browser_renew_thread = BrowserKeepAliveThread(self)
-        self._browser_renew_thread.daemon = True
-        self._browser_renew_thread.start()
 
     def _is_alive(self):
         log.debug("alive check")
@@ -342,16 +294,12 @@ class BrowserManager(object):
             log.exception(e)
         finally:
             self.browser = None
-            if self._browser_renew_thread:
-                self._browser_renew_thread.stop()
-                self._browser_renew_thread = None
 
     def start(self, url_key=None):
         log.info('starting browser')
         url_key = self.coerce_url_key(url_key)
         if self.browser is not None:
             self.quit()
-        self._browser_start_renew_thread()
         return self.open_fresh(url_key=url_key)
 
     def open_fresh(self, url_key=None):
