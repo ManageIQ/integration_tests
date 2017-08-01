@@ -8,6 +8,7 @@ from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from utils.generators import random_vm_name
+from utils.log import logger
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
@@ -87,6 +88,10 @@ def test_vm_genealogy_detected(
             parent = pytest.sel.text(opt).strip()
         assert parent.startswith(small_template), "The parent template not detected!"
     else:
-        vm_crud_ancestors = vm_crud.genealogy.ancestors
+        try:
+            vm_crud_ancestors = vm_crud.genealogy.ancestors
+        except NameError:
+            logger.exception("The parent template not detected!")
+            raise pytest.fail("The parent template not detected!")
         assert small_template in vm_crud_ancestors, \
             "{} is not in {}'s ancestors".format(small_template, vm_crud.name)
