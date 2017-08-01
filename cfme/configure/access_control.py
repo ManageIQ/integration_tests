@@ -1190,7 +1190,7 @@ class Tenant(Updateable, Pretty, Navigatable):
     def set_quota(self, **kwargs):
         """ Sets tenant quotas """
         view = navigate_to(self, 'ManageQuotas')
-        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=5, delay=5)
+        wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=5, delay=0.5)
         # TODO : fill happens before the page is fully loaded,
         # resolve this so the wait_for is not needed
         view.fill({'cpu_cb': kwargs.get('cpu_cb'),
