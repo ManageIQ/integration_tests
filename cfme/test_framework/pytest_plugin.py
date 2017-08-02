@@ -1,8 +1,7 @@
 """
-Top-level conftest.py does a couple of things:
+cfme main plugin
 
-1) Add cfme_pages repo to the sys.path automatically
-2) Load a number of plugins and fixtures automatically
+this loads all of the elemental cfme plugins and prepares configuration
 """
 
 import pytest
