@@ -3,17 +3,18 @@ import fauxfactory
 import pytest
 import yaml
 
-from cfme.fixtures import pytest_selenium as sel
+from cfme import test_requirements
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import Schedule
-from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWidget, RSSFeedWidget
+from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
+from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
+from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
+from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
+from utils import version
+from utils.blockers import BZ
 from utils.path import data_path
 from utils.update import update
-from utils.blockers import BZ
-from utils import version
-from cfme import test_requirements
-
 from utils.wait import wait_for_decorator
 
 
@@ -93,7 +94,7 @@ def test_menuwidget_crud():
             "Services / Catalogs": fauxfactory.gen_alphanumeric(),
             "Clouds / Providers": fauxfactory.gen_alphanumeric(),
         },
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     with update(w):
@@ -112,7 +113,7 @@ def test_reportwidget_crud():
         columns=["VM Name", "Message"],
         rows="10",
         timer={"run": "Hourly", "hours": "Hour"},
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     with update(w):
@@ -129,7 +130,7 @@ def test_chartwidget_crud():
         active=True,
         filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
         timer={"run": "Hourly", "hours": "Hour"},
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     with update(w):
@@ -147,7 +148,7 @@ def test_rssfeedwidget_crud():
         type="Internal",
         feed="Administrative Events",
         rows="8",
-        visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
+        visibility="<To All Users>"
     )
     w.create()
     # Basic update
