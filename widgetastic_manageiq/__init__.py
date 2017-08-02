@@ -1422,6 +1422,9 @@ class DetailsToolBarViewSelector(View):
         # so, default is_displayed works wrong in such case
         return self.summary_button.is_displayed
 
+    def read(self):
+        return self.selected
+
 
 class Search(View):
     """ Represents search_text control
