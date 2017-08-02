@@ -8,6 +8,11 @@ active: True
 timer:
     run: Hourly
     hours: 2 Hours
-send_email:
+emails:
     - test1@example.test
     - test2@example.test
+email_options:
+  send_if_empty: True
+  txt: True
+  csv: True
+  pdf: True

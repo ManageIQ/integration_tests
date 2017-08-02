@@ -19,7 +19,8 @@ class CloudIntelReportsView(BaseLoggedInPage):
     def in_intel_reports(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ["Cloud Intel", "Reports"])
+            self.navigation.currently_selected == ["Cloud Intel", "Reports"]
+        )
 
     @property
     def is_displayed(self):
@@ -50,13 +51,11 @@ class CloudIntelReportsView(BaseLoggedInPage):
     @View.nested
     class edit_report_menus(Accordion):  # noqa
         ACCORDION_NAME = "Edit Report Menus"
-
         tree = ManageIQTree()
 
     @View.nested
     class import_export(Accordion):  # noqa
         ACCORDION_NAME = "Import/Export"
-
         tree = ManageIQTree()
 
     configuration = Dropdown("Configuration")
