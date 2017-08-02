@@ -6,12 +6,37 @@ import random
 
 from cfme import test_requirements
 from utils import version
-
+from utils.appliance.implementations.ui import navigate_to
+from random import choice
+from utils.log import logger
 
 pytestmark = [
     pytest.mark.tier(3),
     test_requirements.chargeback
 ]
+
+"""
+app = get_or_create_current_appliance()
+view = navigate_to(app.server, 'Dashboard')
+time.sleep(60)
+
+assignment_view = view.browser.create_view(AssignmentsView)
+
+for row in assignment_view.selections.rows():
+    print row.name.text
+    # option = choice(row.rate.widget.all_options)
+    # row.rate.widget.select_by_visible_text(option.text)
+
+
+selected_option = assignment_view.browser.text(
+    assignment_view.selections.row.name.text("Enterprise").first_selected_option)
+assert selected_option == "Default", 'Selection does not match'
+
+
+selected_option = sel.text(
+        cb.assign_form.selections.select_by_name("Enterprise").first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
+"""
 
 
 @pytest.mark.meta(blockers=[1273654])
@@ -82,6 +107,13 @@ def test_assign_storage_enterprise(virtualcenter_provider):
         })
 
     enterprise.storageassign()
+
+    view = navigate_to(enterprise, 'Storage')
+
+    for row in view.selections.rows():
+        logger.info('NAME TEXT IS {}'.format(row.name.text))
+        option = choice(row.rate.widget.all_options)
+        logger.info('OPTION TEXT IS {}'.format(row.rate.widget.select_by_visible_text(option.text)))
 
     selected_option = sel.text(
         cb.assign_form.selections.select_by_name("Enterprise").first_selected_option)
