@@ -7,12 +7,12 @@ from collections import namedtuple
 from datetime import date
 from math import ceil
 from tempfile import NamedTemporaryFile
+from wait_for import wait_for
 
 from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
-from wait_for import wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
@@ -708,7 +708,9 @@ class Table(VanillaTable):
     CHECKBOX_ALL = '|'.join([
         './thead/tr/th[1]/input[contains(@class, "checkall")]',
         './tr/th[1]/input[contains(@class, "checkall")]',
-        './/input[@id="masterToggle"]'])
+        './/input[@id="masterToggle"]',
+        './/th[1]/input[@id="check-all"]'
+    ])
     SORTED_BY_LOC = (
         './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]')
     SORT_LINK = './thead/tr/th[{}]/a'

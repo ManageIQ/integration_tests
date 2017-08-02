@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.base import Server
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
 from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
@@ -15,8 +16,8 @@ from cfme import test_requirements
 
 @pytest.fixture(scope="module")
 def default_widgets():
-    navigate_to(DefaultDashboard, 'Details')
-    return DefaultDashboard.form.widgets.selected_items
+    view = navigate_to(DefaultDashboard(), 'Details')
+    return view.selected_items
 
 
 @pytest.fixture(scope="module")
@@ -76,7 +77,8 @@ def test_widgets_on_dashboard(request, dashboard, default_widgets, custom_widget
         with update(dashboard):
             dashboard.widgets = default_widgets
     request.addfinalizer(_finalize)
-    dashboard.reset_widgets()
+    view = navigate_to(Server, "Dashboard")
+    view.reset_widgets()
     soft_assert(len(Widget.all()) == len(custom_widgets), "Count of the widgets differ")
     for custom_w in custom_widgets:
         try:
