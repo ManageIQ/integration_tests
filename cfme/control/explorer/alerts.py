@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from copy import copy
 from navmazing import NavigateToAttribute
 
-from widgetastic.widget import Text, Checkbox, View
+from widgetastic.widget import Checkbox, Text, View
+from widgetastic_manageiq import AlertEmail, SNMPForm
 from widgetastic_patternfly import BootstrapSelect, Button, Input
-from widgetastic_manageiq import SNMPForm, AlertEmail
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from utils.pretty import Pretty
 from utils.update import Updateable
-
-from copy import copy
 
 
 class AlertsAllView(ControlExplorerView):

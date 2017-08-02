@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 from cached_property import cached_property
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
 
-from widgetastic.widget import Text
-from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect, ManageIQTree, CheckboxSelect
+from widgetastic_manageiq import CheckboxSelect, ManageIQTree, MultiBoxSelect, SummaryFormItem
 from widgetastic_patternfly import BootstrapSelect, Button, Input
+
+from widgetastic.widget import Text
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from utils.pretty import Pretty
 from utils.update import Updateable
 
 
@@ -32,11 +33,7 @@ class ActionFormCommon(ControlExplorerView):
     action_type = BootstrapSelect("miq_action_type")
     snapshot_name = Input("snapshot_name")
     analysis_profile = BootstrapSelect("analysis_profile")
-    alerts_to_evaluate = MultiBoxSelect(
-        "formtest",
-        move_into=".//a[@data-submit='choices_chosen_div']/img",
-        move_from=".//a[@data-submit='members_chosen_div']/img"
-    )
+    alerts_to_evaluate = MultiBoxSelect()
     snapshot_age = BootstrapSelect("snapshot_age")
     parent_type = BootstrapSelect("parent_type")
     cpu_number = BootstrapSelect("cpu_value")
