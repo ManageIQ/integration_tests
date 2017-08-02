@@ -15,29 +15,6 @@ pytestmark = [
     test_requirements.chargeback
 ]
 
-"""
-app = get_or_create_current_appliance()
-view = navigate_to(app.server, 'Dashboard')
-time.sleep(60)
-
-assignment_view = view.browser.create_view(AssignmentsView)
-
-for row in assignment_view.selections.rows():
-    print row.name.text
-    # option = choice(row.rate.widget.all_options)
-    # row.rate.widget.select_by_visible_text(option.text)
-
-
-selected_option = assignment_view.browser.text(
-    assignment_view.selections.row.name.text("Enterprise").first_selected_option)
-assert selected_option == "Default", 'Selection does not match'
-
-
-selected_option = sel.text(
-        cb.assign_form.selections.select_by_name("Enterprise").first_selected_option)
-    assert selected_option == "Default", 'Selection does not match'
-"""
-
 
 @pytest.mark.meta(blockers=[1273654])
 def test_assign_compute_enterprise(virtualcenter_provider):
