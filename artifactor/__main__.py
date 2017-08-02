@@ -54,7 +54,7 @@ def main(run_id, port):
     port = port if port else random_port()
     try:
         run(port, run_id)
-        print ("Artifactor server running on port: {}").format(port)
+        print ("Artifactor server running on port: ", port)
     except Exception as e:
         import traceback
         import sys
