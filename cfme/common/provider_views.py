@@ -33,25 +33,6 @@ class ProviderDetailsToolBar(View):
     view_selector = View.nested(DetailsToolBarViewSelector)
 
 
-class ProviderDetailsSummaryView(View):
-    """
-    represents Details page when it is switched to Summary aka Tables view
-    """
-    properties = SummaryTable(title="Properties")
-    status = SummaryTable(title="Status")
-    relationships = SummaryTable(title="Relationships")
-    overview = SummaryTable(title="Overview")
-    smart_management = SummaryTable(title="Smart Management")
-
-
-class ProviderDetailsDashboardView(View):
-    """
-     represents Details page when it is switched to Dashboard aka Widgets view
-    """
-    # todo: need to develop this page
-    pass
-
-
 class ProviderDetailsView(BaseLoggedInPage):
     """
      main Details page
@@ -62,34 +43,27 @@ class ProviderDetailsView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(ProviderDetailsToolBar)
 
-    @View.nested
-    class contents(View):  # NOQA
-        # this is switchable view that gets replaced with concrete view.
-        # it gets changed according to currently chosen view type  every time
-        # when it is accessed
-        # it is provided provided by __getattribute__
+    contents = ConditionalSwitchableView(reference='toolbar.view_selector',
+                                         ignore_bad_reference=True)
+
+    @contents.register('Summary View', default=True)
+    class ProviderDetailsSummaryView(View):
+        """
+        represents Details page when it is switched to Summary aka Tables view
+        """
+        properties = SummaryTable(title="Properties")
+        status = SummaryTable(title="Status")
+        relationships = SummaryTable(title="Relationships")
+        overview = SummaryTable(title="Overview")
+        smart_management = SummaryTable(title="Smart Management")
+
+    @contents.register('Dashboard View')
+    class ProviderDetailsDashboardView(View):
+        """
+         represents Details page when it is switched to Dashboard aka Widgets view
+        """
+        # todo: need to develop this page
         pass
-
-    def __getattribute__(self, item):
-        # todo: to replace this code with switchable views asap
-        if item == 'contents':
-            if self.context['object'].appliance.version >= '5.7':
-                view_type = self.toolbar.view_selector.selected
-                # cloud provider details view doesn't have such switch, BZ(1460772)
-                if view_type == 'Summary View':
-                    return ProviderDetailsSummaryView(parent=self)
-
-                elif view_type == 'Dashboard View':
-                    return ProviderDetailsDashboardView(parent=self)
-
-                else:
-                    raise Exception('The content view type "{v}" for provider "{p}" doesnt '
-                                    'exist'.format(v=view_type, p=self.context['object'].name))
-            else:
-                return ProviderDetailsSummaryView(parent=self)  # 5.6 has only only Summary view
-
-        else:
-            return super(ProviderDetailsView, self).__getattribute__(item)
 
     @property
     def is_displayed(self):
