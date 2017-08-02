@@ -47,19 +47,19 @@ class Tenant(Navigatable):
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
 
-    def create(self, cancel=False):
-        navigate_to(self, 'Add')
-        create_tenant_form.fill(
-            {'prov_select': self.provider.name,
-             'name': self.name})
-        sel.click(form_buttons.cancel if cancel else create_tenant_form.save_button)
-
-        if cancel:
-            msg = version.pick({version.LOWEST: 'Add of new Cloud Tenant was cancelled by the user',
-                                '5.8': 'Add of Cloud Tenant was cancelled by the user'})
-            return flash.assert_success_message(msg)
-        else:
-            return flash.assert_success_message('Cloud Tenant "{}" created'.format(self.name))
+    # def create(self, cancel=False):
+    #     navigate_to(self, 'Add')
+    #     create_tenant_form.fill(
+    #         {'prov_select': self.provider.name,
+    #          'name': self.name})
+    #     sel.click(form_buttons.cancel if cancel else create_tenant_form.save_button)
+    #
+    #     if cancel:
+    #         msg = version.pick({version.LOWEST: 'Add of new Cloud Tenant was cancelled by the user',
+    #                             '5.8': 'Add of Cloud Tenant was cancelled by the user'})
+    #         return flash.assert_success_message(msg)
+    #     else:
+    #         return flash.assert_success_message('Cloud Tenant "{}" created'.format(self.name))
 
     def wait_for_disappear(self, timeout=300):
         try:
@@ -140,7 +140,7 @@ class Tenant(Navigatable):
             return False
 
 
-@navigator.register(Tenant, 'All')
+@navigator.register(TenantCollection, 'All')
 class TenantAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
@@ -170,7 +170,7 @@ class TenantDetails(CFMENavigateStep):
         sel.refresh()
 
 
-@navigator.register(Tenant, 'Add')
+@navigator.register(TenantCollection, 'Add')
 class TenantAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -198,3 +198,38 @@ class TenantEditTags(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         pol_btn('Edit Tags')
+
+
+class TenantCollection(Navigatable):
+    '''Collection object for the :py:class:`cfme.cloud.tenant.Tenant`.'''
+
+    def create(self, name, provider, appliance=None, cancel=False):
+        '''
+        Add a cloud Tenant from the UI, and return the Tenant object
+
+        Args:
+            name(str): name of the Tenant you want to add
+            provider(obj): provider on which you want to add the Tenant
+            appliance(obj): applience you are performing the action
+            cancel(bool): True if you want to fill and click cancel tenant form
+        Returns:q
+            Tenant object of the created Tenant
+        '''
+        # pdb.set_trace()
+        navigate_to(self, 'Add')
+        create_tenant_form.fill(
+            {'prov_select': provider.name,
+             'name': name})
+        sel.click(form_buttons.cancel if cancel else create_tenant_form.save_button)
+
+        if cancel:
+            msg = version.pick({version.LOWEST: 'Add of new Cloud Tenant was cancelled by the user',
+                                '5.8': 'Add of Cloud Tenant was cancelled by the user'})
+            return flash.assert_success_message(msg)
+        else:
+            return Tenant(name, provider)
+
+
+    def delete(self, *tenants):
+        pass
+    
