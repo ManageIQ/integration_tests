@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import os
 import sys
 
@@ -16,5 +17,5 @@ try:
 except:
     pass
 
-print sys.argv[1], sys.argv[2], coverage
+print(sys.argv[1], sys.argv[2], coverage)
 post_task_result(sys.argv[1], sys.argv[2], safe_string(data), coverage)

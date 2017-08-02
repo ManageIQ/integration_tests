@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import argparse
 import subprocess
 import socket
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     dkb.run()
 
     if args.watch:
-        print
+        print()
         print("  Waiting for VNC port to open...")
         wait_for(lambda: vnc_ready(ip, args.vnc), num_sec=60, delay=2)
 
