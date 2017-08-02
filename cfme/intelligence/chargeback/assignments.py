@@ -6,7 +6,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import Text
 from widgetastic_manageiq import Table
 from widgetastic_manageiq.hacks import BootstrapSelectByLocator
-from widgetastic_patternfly import BootstrapSelect, Button
+from widgetastic_patternfly import BootstrapSelect, Button, FlashMessages
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
@@ -26,7 +26,8 @@ class AssignmentsAllView(ChargebackView):
 
 class AssignmentsView(ChargebackView):
     title = Text("#explorer_title_text")
-
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
     save_button = Button("Save")
     reset_button = Button("Reset")
 
@@ -88,9 +89,6 @@ class Assign(Updateable, Pretty, Navigatable):
 
     def storageassign(self):
         view = navigate_to(self, 'Storage')
-
-        print view.selections[0][1].widget.all_options
-
         self._fill(view)
         view.save_button.click()
         view.flash.assert_no_error()
