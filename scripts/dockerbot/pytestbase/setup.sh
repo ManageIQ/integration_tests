@@ -64,10 +64,12 @@ do_or_die () {
 # Runs pip update - optionally can make use of wheelhouse
 run_pip_update () {
     if [ -n "$WHEEL_HOST_URL" ]; then
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements/dev.txt --no-cache-dir"
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
     else
-        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements/dev.txt --no-cache-dir"
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
     fi
+    # ensures entrypoint updates
+    run_n_log "pip install -e ."
 }
 
 trap on_exit EXIT
@@ -117,7 +119,6 @@ trackerbot:
 EOF
 
 # Export and get into the right place
-export PYTHONPATH=$CFME_REPO_DIR
 cd $CFME_REPO_DIR
 
 # Set some basic git configs so git doesn't complain
@@ -149,12 +150,9 @@ else
     run_n_log "git checkout -f $BRANCH"
 fi
 
-# If specified, update PIP
-if [ -n "$UPDATE_PIP" ]; then
-    log "Pip Update #~"
-    run_pip_update
-    log "#*"
-fi
+log "Pip Update #~"
+run_pip_update
+log "#*"
 
 # If asked, provision the appliance, and update the APPLIANCE variable
 if [ -n "$PROVIDER" ]; then
