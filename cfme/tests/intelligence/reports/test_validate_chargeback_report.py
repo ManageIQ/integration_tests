@@ -368,17 +368,21 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, appliance, provide
 def chargeback_report_default(vm_ownership, assign_default_rate, provider):
     # Create a Chargeback report based on the default rate; Queue the report.
     owner = vm_ownership
-    data = {'menu_name': 'cb_' + provider.name,
-            'title': 'cb_' + provider.name,
-            'base_report_on': 'Chargeback for Vms',
-            'report_fields': ['Memory Used', 'Memory Used Cost', 'Owner',
-            'CPU Used', 'CPU Used Cost',
-            'Disk I/O Used', 'Disk I/O Used Cost',
-            'Network I/O Used', 'Network I/O Used Cost',
-            'Storage Used', 'Storage Used Cost'],
+    data = {
+        'menu_name': 'cb_' + provider.name,
+        'title': 'cb_' + provider.name,
+        'base_report_on': 'Chargeback for Vms',
+        'report_fields': ['Memory Used', 'Memory Used Cost', 'Owner',
+        'CPU Used', 'CPU Used Cost',
+        'Disk I/O Used', 'Disk I/O Used Cost',
+        'Network I/O Used', 'Network I/O Used Cost',
+        'Storage Used', 'Storage Used Cost'],
+        'filter': {
             'filter_show_costs': 'Owner',
             'filter_owner': owner,
-            'interval_end': 'Today (partial)'}
+            'interval_end': 'Today (partial)'
+        }
+    }
     report = CustomReport(is_candu=True, **data)
     report.create()
 
@@ -393,17 +397,21 @@ def chargeback_report_default(vm_ownership, assign_default_rate, provider):
 def chargeback_report_custom(vm_ownership, assign_custom_rate, provider):
     # Create a Chargeback report based on a custom rate; Queue the report
     owner = vm_ownership
-    data = {'menu_name': 'cb_custom_' + provider.name,
-            'title': 'cb_custom' + provider.name,
-            'base_report_on': 'Chargeback for Vms',
-            'report_fields': ['Memory Used', 'Memory Used Cost', 'Owner',
-            'CPU Used', 'CPU Used Cost',
-            'Disk I/O Used', 'Disk I/O Used Cost',
-            'Network I/O Used', 'Network I/O Used Cost',
-            'Storage Used', 'Storage Used Cost'],
+    data = {
+        'menu_name': 'cb_custom_' + provider.name,
+        'title': 'cb_custom' + provider.name,
+        'base_report_on': 'Chargeback for Vms',
+        'report_fields': ['Memory Used', 'Memory Used Cost', 'Owner',
+        'CPU Used', 'CPU Used Cost',
+        'Disk I/O Used', 'Disk I/O Used Cost',
+        'Network I/O Used', 'Network I/O Used Cost',
+        'Storage Used', 'Storage Used Cost'],
+        'filter': {
             'filter_show_costs': 'Owner',
             'filter_owner': owner,
-            'interval_end': 'Today (partial)'}
+            'interval_end': 'Today (partial)'
+        }
+    }
     report = CustomReport(is_candu=True, **data)
     report.create()
 

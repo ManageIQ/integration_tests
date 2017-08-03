@@ -37,8 +37,10 @@ def test_charge_report_filter_owner(infra_provider, request):
             "Owner",
             "Total Cost",
         ],
-        filter_show_costs="Owner",
-        filter_owner="Administrator",
+        filter=dict(
+            filter_show_costs="Owner",
+            filter_owner="Administrator"
+        )
     )
     report.create()
 
@@ -69,9 +71,11 @@ def test_charge_report_filter_tag(infra_provider, request):
             "vCPUs Allocated Cost",
             "Total Cost",
         ],
-        filter_show_costs="My Company Tag",
-        filter_tag_cat="Location",
-        filter_tag_value="Chicago",
+        filter=dict(
+            filter_show_costs="My Company Tag",
+            filter_tag_cat="Location",
+            filter_tag_value="Chicago"
+        )
     )
     report.create()
 
