@@ -7,7 +7,7 @@ from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSe
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.infrastructure.host import HostsView
+from cfme.common.host_views import HostsView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
@@ -62,6 +62,17 @@ class DatastoresView(BaseLoggedInPage):
                 self.navigation.currently_selected == ['Compute', 'Infrastructure',
                                                        'Datastores'] and
                 self.entities.title.text == 'All Datastores')
+
+
+class HostAllDatastoresView(DatastoresView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ["Compute", "Infrastructure", "Hosts"] and
+            self.entities.title.text == "{} (All Datastores)".format(self.context["object"].name)
+        )
 
 
 class DatastoreDetailsView(BaseLoggedInPage):
