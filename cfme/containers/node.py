@@ -8,7 +8,6 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_manageiq import (
     BootstrapSelect, Button, Table, Accordion, ManageIQTree, PaginationPane)
-from widgetastic_patternfly import Dropdown
 
 from cfme.common import Taggable, SummaryMixin
 from cfme.containers.provider import ContainersProvider, Labelable,\
@@ -130,7 +129,6 @@ class All(CFMENavigateStep):
 
 class NodeDetailsView(NodeView):
     download = Button(name='download_view')
-    monitor = Dropdown('Monitoring')
 
     @property
     def is_displayed(self):

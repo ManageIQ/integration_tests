@@ -8,8 +8,6 @@ from cfme.containers.node import Node
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 
 NUM_OF_DEFAULT_LOG_ROUTES = 2
-
-
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.8"),
     pytest.mark.usefixtures('setup_provider'),
@@ -31,6 +29,13 @@ def logging_routes(provider):
     all_routers_up = all([router["status"]["ingress"][0]["conditions"][0]["status"]
                           for router in routers])
 
+    all_pods = {pod: status["Ready"]
+                for pod, status in provider.pods_per_ready_status().iteritems()}
+
+    all_pods = {pod: status for pod, status in all_pods.iteritems() if "logging" in pod}
+
+    assert all_pods, "no logging pods found"
+    assert all(all_pods), "some pods not ready"
     assert len(routers) <= NUM_OF_DEFAULT_LOG_ROUTES, "some logging route is missing"
     assert all_routers_up, "some logging route is off"
 
