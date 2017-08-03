@@ -26,7 +26,7 @@ def test_idle(appliance, request, scenario):
     appliance.clean_appliance()
 
     quantifiers = {}
-    scenario_data = {'appliance_ip': cfme_performance['appliance']['ip_address'],
+    scenario_data = {'appliance_ip': appliance.hostname,
         'appliance_name': cfme_performance['appliance']['appliance_name'],
         'test_dir': 'workload-idle',
         'test_name': 'Idle with {} Roles'.format(scenario['name']),
@@ -50,7 +50,7 @@ def test_idle(appliance, request, scenario):
     monitor_thread.start()
 
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
-    appliance.server_roles = {role: True for role in scenario['roles']}
+    appliance.update_server_roles({role: True for role in scenario['roles']})
     s_time = scenario['total_time']
     logger.info('Idling appliance for {}s'.format(s_time))
     time.sleep(s_time)

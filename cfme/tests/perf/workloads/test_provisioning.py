@@ -121,7 +121,7 @@ def test_provisioning(appliance, request, scenario):
     monitor_thread.start()
 
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
-    appliance.server_roles = {role: True for role in roles_provisioning}
+    appliance.update_server_roles({role: True for role in roles_provisioning})
     prov = get_crud(scenario['providers'][0])
     prov.create_rest()
     logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))

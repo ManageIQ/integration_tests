@@ -37,7 +37,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
     appliance.clean_appliance()
 
     quantifiers = {}
-    scenario_data = {'appliance_ip': cfme_performance['appliance']['ip_address'],
+    scenario_data = {'appliance_ip': appliance.hostname,
         'appliance_name': cfme_performance['appliance']['appliance_name'],
         'test_dir': 'workload-ssa',
         'test_name': 'SmartState Analysis',
@@ -61,7 +61,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
     monitor_thread.start()
 
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
-    appliance.server_roles = {role: True for role in roles_smartstate}
+    appliance.update_server_roles({role: True for role in roles_smartstate})
     for provider in scenario['providers']:
         get_crud(provider).create_rest()
     logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))
