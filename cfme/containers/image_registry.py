@@ -9,12 +9,10 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.containers.provider import pol_btn, navigate_and_get_rows,\
     ContainerObjectAllBaseView
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb, match_location,\
+from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location,\
     PagedTable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistry
-
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")

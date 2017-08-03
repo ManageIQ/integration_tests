@@ -7,11 +7,17 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import Dropdown
 from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
-from cfme.containers.provider import Labelable, navigate_and_get_rows,\
-    ContainerObjectAllBaseView
+from cfme.containers.provider import (Labelable,
+                                      navigate_and_get_rows,
+                                      ContainerObjectAllBaseView)
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, CheckboxTable, match_location, InfoBlock,\
-    flash, PagedTable
+from cfme.web_ui import (toolbar as tb,
+                         CheckboxTable,
+                         paginator,
+                         match_location,
+                         InfoBlock,
+                         flash,
+                         PagedTable)
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
 from cfme.configure import tasks
