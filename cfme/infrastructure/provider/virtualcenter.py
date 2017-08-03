@@ -1,6 +1,11 @@
-from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
-from . import InfraProvider
+from navmazing import NavigateToSibling
 from wrapanapi.virtualcenter import VMWareSystem
+
+from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.common.provider_views import ProviderNodesView
+from cfme.exceptions import DestinationNotFound
+from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from . import InfraProvider
 
 
 class VirtualCenterEndpoint(DefaultEndpoint):
@@ -62,3 +67,15 @@ class VMwareProvider(InfraProvider):
         return {'name': self.name,
                 'prov_type': 'VMware vCenter'
                 }
+
+
+@navigator.register(VMwareProvider, 'ProviderNodes')  # matching other infra class destinations
+class ProviderNodes(CFMENavigateStep):
+    VIEW = ProviderNodesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        try:
+            self.prerequisite_view.contents.relationships.click_at('Hosts')
+        except NameError:
+            raise DestinationNotFound("Hosts aren't present on details page of this provider")
