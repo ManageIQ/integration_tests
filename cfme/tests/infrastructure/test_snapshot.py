@@ -12,7 +12,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
 from utils.log import logger
 from utils.path import data_path
@@ -142,7 +141,6 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
 
     if provider.one_of(RHEVMProvider):
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
-        navigate_to(test_vm.provider, 'Details')
         test_vm.wait_for_vm_state_change(
             desired_state=test_vm.STATE_OFF, timeout=900)
 
@@ -153,7 +151,6 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=sel.refresh)
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
     test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
-    navigate_to(test_vm.provider, 'Details')
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)
     current_state = test_vm.find_quadicon().state
     soft_assert(current_state.startswith('currentstate-on'),
