@@ -127,6 +127,10 @@ git config --global user.name "DockerBot"
 
 log "#*"
 
+log "Ensuring scripts can be used"
+run_n_log "pip install -e ."
+log "#*"
+
 log "GPG Checking #~"
 # Get the GPG-Keys
 do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1" 5 1
