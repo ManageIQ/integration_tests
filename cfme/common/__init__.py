@@ -198,21 +198,21 @@ class WidgetasticTaggable(object):
                 reset: set True to reset already set up tag
         """
         view = navigate_to(self, 'EditTags')
-        if isinstance(tag, (list, tuple)):
+        if isinstance(tag, (list, tuple, set)):
             category = tag[0]
-            tag = tag[1]
+            tag_name = tag[1]
         else:
             category = tag.category.display_name
-            tag = tag.display_name
+            tag_name = tag.display_name
         try:
             view.fill({
                 "tag_category": '{} *'.format(category),
-                "tag_name": tag
+                "tag_name": tag_name
             })
         except NoSuchElementException:
             view.fill({
                 "tag_category": category,
-                "tag_name": tag
+                "tag_name": tag_name
             })
         self._tags_action(view, cancel, reset)
 

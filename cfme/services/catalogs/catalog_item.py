@@ -3,7 +3,7 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
 from widgetastic_manageiq import Table, ManageIQTree
-from cfme.common import WidgetasticTaggable
+from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form as request_form
 from cfme.web_ui import tabstrip
@@ -441,7 +441,7 @@ class AddButton(CFMENavigateStep):
 
 @navigator.register(CatalogItem, 'EditTags')
 class EditTags(CFMENavigateStep):
-    VIEW = EditTagsView
+    VIEW = TagPageView
 
     prerequisite = NavigateToSibling('Details')
 
