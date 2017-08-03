@@ -2,13 +2,12 @@ import fauxfactory
 import pytest
 from Crypto.PublicKey import RSA
 
-from cfme.cloud.keypairs import KeyPair
+from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import KeyPairNotFound
 from cfme.web_ui import mixins
 from utils import testgen
 from utils.blockers import BZ
-from utils.appliance.implementations.ui import navigate_to
 from utils.wait import TimedOutError
 
 pytestmark = [
@@ -30,9 +29,9 @@ def test_keypair_crud(openstack_provider):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
+    keypairs = KeyPairCollection()
     try:
-        keypair.create()
+        keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -46,8 +45,7 @@ def test_keypair_crud(openstack_provider):
         openstack_provider.mgmt.api.keypairs.delete(keypair.name)
         pytest.fail('Timed out deleting keypair')
 
-    with pytest.raises(KeyPairNotFound):
-        navigate_to(keypair, 'Details')
+    assert not keypair.exists
 
 
 @pytest.mark.tier(3)
@@ -61,11 +59,9 @@ def test_keypair_crud_with_key(openstack_provider):
     """
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
-    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(),
-                      public_key=public_key,
-                      provider=openstack_provider)
+    keypairs = KeyPairCollection()
     try:
-        keypair.create()
+        keypair = keypairs.create(fauxfactory.gen_alphanumeric(), openstack_provider, public_key)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -79,8 +75,7 @@ def test_keypair_crud_with_key(openstack_provider):
         openstack_provider.mgmt.api.keypairs.delete(keypair.name)
         pytest.fail('Timed out deleting keypair')
 
-    with pytest.raises(KeyPairNotFound):
-        navigate_to(keypair, 'Details')
+    assert not keypair.exists
 
 
 @pytest.mark.tier(3)
@@ -92,11 +87,10 @@ def test_keypair_create_cancel(openstack_provider):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
-    keypair.create(cancel=True)
+    keypairs = KeyPairCollection()
+    keypair = keypairs.create(name="", provider=openstack_provider, cancel=True)
 
-    with pytest.raises(KeyPairNotFound):
-        navigate_to(keypair, 'Details')
+    assert not keypair.exists
 
 
 def test_keypair_add_and_remove_tag(openstack_provider):
@@ -111,9 +105,9 @@ def test_keypair_add_and_remove_tag(openstack_provider):
         * Also delete it.
     """
     tag = ('Department', 'Accounting')
-    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
+    keypairs = KeyPairCollection()
     try:
-        keypair.create()
+        keypair = keypairs.create(fauxfactory.gen_alphanumeric(), openstack_provider)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -137,5 +131,4 @@ def test_keypair_add_and_remove_tag(openstack_provider):
         openstack_provider.mgmt.api.keypairs.delete(keypair.name)
         pytest.fail('Timed out deleting keypair')
 
-    with pytest.raises(KeyPairNotFound):
-        navigate_to(keypair, 'Details')
+    assert not keypair.exists
