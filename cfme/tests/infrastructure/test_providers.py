@@ -226,30 +226,31 @@ def test_provider_crud(provider):
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
 @test_requirements.provider_discovery
-@pytest.mark.parametrize('verify_tls', [False, True])
+@pytest.mark.parametrize('verify_tls', [False, True], ids=['no_tls', 'tls'])
 @pytest.mark.uncollectif(lambda provider:
     not provider.one_of(RHEVMProvider) and not provider.data['verify_tls'])
-def test_provider_rhv_create_delete_tls(provider, verify_tls):
+def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
     """Tests RHV provider creation with and without TLS encryption
 
     Metadata:
        test_flag: crud
     """
-    p = copy(provider)
+    prov = copy(provider)
+    request.addfinalizer(lambda: prov.delete_if_exists(cancel=False))
 
     if not verify_tls:
-        endpoints = deepcopy(p.endpoints)
+        endpoints = deepcopy(prov.endpoints)
         endpoints['default'].verify_tls = False
         endpoints['default'].ca_certs = None
 
-        p.endpoints = endpoints
-        p.name = "{}-no-tls".format(provider.name)
+        prov.endpoints = endpoints
+        prov.name = "{}-no-tls".format(provider.name)
 
-    p.create()
-    p.validate_stats(ui=True)
+    prov.create()
+    prov.validate_stats(ui=True)
 
-    p.delete(cancel=False)
-    p.wait_for_delete()
+    prov.delete(cancel=False)
+    prov.wait_for_delete()
 
 
 class TestProvidersRESTAPI(object):
