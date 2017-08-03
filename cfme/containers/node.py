@@ -12,7 +12,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme.common import Taggable, SummaryMixin
 from cfme.containers.provider import ContainersProvider, Labelable,\
-    ContainerObjectAllBaseView
+    ContainerObjectAllBaseView, LoggingableView
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
@@ -27,10 +27,9 @@ match_page = partial(match_location, controller='container_node', title='Nodes')
 resource_locator = "//div[@id='records_div']/table//span[@title='{}']"
 
 
-class NodeView(ContainerObjectAllBaseView):
+class NodeView(ContainerObjectAllBaseView, LoggingableView):
     TITLE_TEXT = 'Nodes'
 
-    monitor = Dropdown('Monitoring')
     nodes = Table(locator="//div[@id='list_grid']//table")
 
     @property
@@ -131,6 +130,7 @@ class All(CFMENavigateStep):
 
 class NodeDetailsView(NodeView):
     download = Button(name='download_view')
+    monitor = Dropdown('Monitoring')
 
     @property
     def is_displayed(self):

@@ -288,12 +288,9 @@ class Add(CFMENavigateStep):
         }))
 
 
-class ProviderDetailsView(BaseLoggedInPage):
-    monitor = Dropdown('Monitoring')
+class LoggingableView(View):
 
-    @property
-    def is_displayed(self):
-        return match_page(summary="{} (Summary)".format(self.obj.name))
+    monitor = Dropdown('Monitoring')
 
     def get_logging_url(self):
         browser_instance = browser()
@@ -315,9 +312,17 @@ class ProviderDetailsView(BaseLoggedInPage):
 
         logging_url = browser_instance.current_url
 
+        browser_instance.close()
         browser_instance.switch_to_window(appliance_window)
 
         return logging_url
+
+
+class ProviderDetailsView(BaseLoggedInPage, LoggingableView):
+
+    @property
+    def is_displayed(self):
+        return match_page(summary="{} (Summary)".format(self.obj.name))
 
 
 @navigator.register(ContainersProvider, 'Details')
