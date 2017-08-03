@@ -299,6 +299,7 @@ class HostAddView(HostFormView):
 
 
 class HostEditView(HostFormView):
+    """View for editing a single host"""
     save_button = Button("Save")
     reset_button = Button("Reset")
     change_stored_password = Text(".//a[contains(@ng-hide, 'bChangeStoredPassword')]")
@@ -306,3 +307,16 @@ class HostEditView(HostFormView):
     @property
     def is_displayed(self):
         return self.in_compute_infrastructure_hosts and self.title.text == "Info/Settings"
+
+
+class HostsEditView(HostEditView):
+    """View when editing multiple hosts
+        Restricted to endpoints section of the form
+        Title changes
+        Must select host before validation
+    """
+    validation_host = BootstrapSelect('validate_id')  # only shown when editing multiple hosts
+
+    @property
+    def is_displayed(self):
+        return self.in_compute_infrastructure_hosts and self.title.text == 'Credentials/Settings'

@@ -3,23 +3,17 @@ import pytest
 import random
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.infrastructure.host import credential_form
+from cfme.base.credential import Credential
+from cfme.common.host_views import HostsEditView
+from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
-from cfme.web_ui import Quadicon, fill, toolbar as tb, flash
+from cfme.web_ui import Quadicon
 from utils import testgen
-from utils import version
-from utils import conf
+from utils.conf import credentials
 from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 
-pytestmark = [
-    pytest.mark.meta(blockers=[1296258]),
-    pytest.mark.tier(3),
-]
-
-
-def config_option():
-    return version.pick({version.LOWEST: 'Edit Selected Hosts', '5.4': 'Edit Selected items'})
+pytestmark = [pytest.mark.tier(3)]
 
 
 def pytest_generate_tests(metafunc):
@@ -42,56 +36,66 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-# Tests to automate BZ 1201092
-def test_multiple_host_good_creds(setup_provider, provider):
-    """  Tests multiple host credentialing  with good credentials """
+def navigate_and_select_quads(provider):
+    """navigate to the hosts edit page and select all the quads on the first page
 
-    details_view = navigate_to(provider, 'Details')
-    details_view.contents.relationships.click_at('Hosts')
+    Returns:
+        view: the provider nodes view, quadicons already selected"""
+    hosts_view = navigate_to(provider, 'ProviderNodes')
+    assert hosts_view.is_displayed
 
     quads = Quadicon.all("host", this_page=True)
     for quad in quads:
-            sel.check(quad.checkbox())
-    tb.select("Configuration", config_option())
+        sel.check(quad.checkbox())
 
-    cfme_host = random.choice(provider.data["hosts"])
-    cred = cfme_host['credentials']
-    creds = conf.credentials[cred]
-    fill(credential_form, {'default_principal': creds['username'],
-                           'default_secret': creds['password'],
-                           'default_verify_secret': creds['password'],
-                           'validate_host': cfme_host["name"]})
+    hosts_view.toolbar.configuration.item_select('Edit Selected items')
+    edit_view = provider.create_view(HostsEditView)
+    assert edit_view.is_displayed
 
-    sel.click(credential_form.validate_multi_host)
-    flash.assert_message_match('Credential validation was successful')
+    return edit_view
 
-    sel.click(credential_form.save_btn)
-    flash.assert_message_match('Credentials/Settings saved successfully')
+
+# Tests to automate BZ 1201092
+def test_multiple_host_good_creds(setup_provider, provider):
+    """  Tests multiple host credentialing  with good credentials """
+    host = random.choice(provider.data["hosts"])
+    creds = credentials[host['credentials']]
+    cred = Credential(principal=creds.username, secret=creds.password)
+
+    edit_view = navigate_and_select_quads(provider=provider)
+
+    # Fill form with valid credentials for default endpoint and validate
+    edit_view.endpoints.default.fill_with(cred.view_value_mapping)
+    edit_view.validation_host.fill(host.name)
+    edit_view.endpoints.default.validate_button.click()
+
+    edit_view.flash.assert_no_error()
+    edit_view.flash.assert_success_message('Credential validation was successful')
+
+    # Save changes
+    edit_view.save_button.click()
+    view = provider.create_view(ProviderNodesView)
+    view.flash.assert_no_error()
+    view.flash.assert_success_message('Credentials/Settings saved successfully')
 
 
 def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials """
+    host = random.choice(provider.data["hosts"])
+    bad_creds = credentials[host['credentials']]
+    bad_creds.update({'password': 'bad_password'})
+    cred = Credential(principal=bad_creds.username, secret=bad_creds.password)
 
-    details_view = navigate_to(provider, 'Details')
-    details_view.contents.relationships.click_at('Hosts')
+    edit_view = navigate_and_select_quads(provider=provider)
 
-    quads = Quadicon.all("host", this_page=True)
-    for quad in quads:
-            sel.check(quad.checkbox())
-    tb.select("Configuration", config_option())
+    edit_view.endpoints.default.fill_with(cred.view_value_mapping)
+    edit_view.validation_host.fill(host.name)
+    edit_view.endpoints.default.validate_button.click()
 
-    cfme_host = random.choice(provider.data["hosts"])
-    creds = conf.credentials['bad_credentials']
-    fill(credential_form, {'default_principal': creds['username'],
-                           'default_secret': creds['password'],
-                           'default_verify_secret': creds['password'],
-                           'validate_host': cfme_host["name"]})
-
-    sel.click(credential_form.validate_multi_host)
     if provider.one_of(RHEVMProvider):
         msg = 'Login failed due to a bad username or password.'
     else:
         msg = 'Cannot complete login due to an incorrect user name or password.'
-    flash.assert_message_match(msg)
+    edit_view.flash.assert_message(msg)
 
-    sel.click(credential_form.cancel_changes)
+    edit_view.cancel_button.click()
