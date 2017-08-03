@@ -8,9 +8,10 @@ from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
 from utils.log import logger
 from utils.path import data_path
@@ -18,9 +19,11 @@ from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.long_running,
-              pytest.mark.tier(2),
-              test_requirements.snapshot]
+pytestmark = [
+    pytest.mark.long_running,
+    pytest.mark.tier(2),
+    test_requirements.snapshot
+]
 
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="module")
@@ -63,16 +66,16 @@ def new_snapshot(test_vm, has_name=True):
     return new_snapshot
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.type != 'virtualcenter' and (provider.type != 'rhevm' or
-          (provider.type == 'rhevm' and provider.version < 4)))
+@pytest.mark.uncollectif(lambda provider:
+    not provider.one_of(RHEVMProvider, VMwareProvider) or
+    (provider.one_of(RHEVMProvider) and provider.version < 4))
 def test_snapshot_crud(test_vm, provider):
     """Tests snapshot crud
 
     Metadata:
         test_flag: snapshot, provision
     """
-    if provider.type == 'rhevm':
+    if provider.one_of(RHEVMProvider):
         snapshot = new_snapshot(test_vm, has_name=False)
     else:
         snapshot = new_snapshot(test_vm)
@@ -80,7 +83,7 @@ def test_snapshot_crud(test_vm, provider):
     snapshot.delete()
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_delete_all_snapshots(test_vm, provider):
     """Tests snapshot removal
 
@@ -94,21 +97,26 @@ def test_delete_all_snapshots(test_vm, provider):
     snapshot2.delete_all()
 
 
-@pytest.mark.meta(blockers=[1333566])
-@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+@pytest.mark.uncollectif(lambda provider:
+    not provider.one_of(RHEVMProvider, VMwareProvider) or
+    (provider.one_of(RHEVMProvider) and provider.version < 4))
 def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
 
     Metadata:
         test_flag: snapshot, provision
     """
-    snapshot1 = new_snapshot(test_vm)
-    ip = snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name)
+    if provider.one_of(RHEVMProvider):
+        snapshot1 = new_snapshot(test_vm, has_name=False)
+    else:
+        snapshot1 = new_snapshot(test_vm)
+
     ssh_kwargs = {
+        'hostname': snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name),
         'username': credentials[provider.data['full_template']['creds']]['username'],
-        'password': credentials[provider.data['full_template']['creds']]['password'],
-        'hostname': ip
+        'password': credentials[provider.data['full_template']['creds']]['password']
     }
+
     ssh_client = SSHClient(**ssh_kwargs)
     # We need to wait for ssh to become available on the vm, it can take a while. Without
     # this wait, the ssh command would fail with 'port 22 not available' error.
@@ -124,15 +132,25 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     register_event(target_type='VmOrTemplate', target_name=test_vm.name,
                    event_type='vm_snapshot')
     ssh_client.run_command('touch snapshot2.txt')
-    snapshot2 = new_snapshot(test_vm)
+
+    if provider.one_of(RHEVMProvider):
+        snapshot2 = new_snapshot(test_vm, has_name=False)
+    else:
+        snapshot2 = new_snapshot(test_vm)
     snapshot2.create()
+
+    if provider.one_of(RHEVMProvider):
+        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
+        test_vm.wait_for_vm_state_change(
+            desired_state=test_vm.STATE_OFF, timeout=900)
+
     snapshot1.revert_to()
+
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
-    wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=sel.refresh)
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
     test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
-    navigate_to(test_vm.provider, 'Details')
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)
     current_state = test_vm.find_quadicon().state
     soft_assert(current_state.startswith('currentstate-on'),
@@ -148,10 +166,10 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         logger.info('Revert to snapshot %s successful', snapshot1.name)
     except:
         logger.exception('Revert to snapshot %s Failed', snapshot1.name)
+    ssh_client.close()
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
-@pytest.mark.meta(blockers=[1247664], automates=[1247664])
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_create_snapshot_via_ae(request, domain, test_vm):
     """This test checks whether the vm.create_snapshot works in AE.
 
@@ -197,7 +215,7 @@ def test_create_snapshot_via_ae(request, domain, test_vm):
         execute_methods=True,
         attributes_values={"snap_name": snap_name})
 
-    wait_for(snapshot.does_snapshot_exist, timeout="2m", delay=10,
+    wait_for(lambda: snapshot.exists, timeout="2m", delay=10,
              fail_func=sel.refresh, handle_exception=True)
 
     # Clean up if it appeared

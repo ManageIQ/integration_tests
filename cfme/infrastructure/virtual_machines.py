@@ -352,44 +352,58 @@ class Vm(BaseVM):
                 self.vm.load_details()
                 sel.click(InfoBlock.element("Properties", "Snapshots"))
 
-        def does_snapshot_exist(self):
+        @property
+        def exists(self):
             self._nav_to_snapshot_mgmt()
             try:
-                if self.name is not None:
-                    self.snapshot_tree.find_path_to(re.compile(self.name + r".*?"))
-                else:
-                    self.snapshot_tree.find_path_to(re.compile(self.description + r".*?"))
+                self.snapshot_tree.find_path_to(
+                    re.compile(r"{}.*?".format(self.name or self.description)))
                 return True
             except CandidateNotFound:
                 return False
             except NoSuchElementException:
                 return False
 
-        def wait_for_snapshot_active(self):
+        def _click_tree_path(self, prop):
+            """Find and click the given property in a snapshot tree path.
+
+            Args:
+                prop (str): Property to check (name or description).
+
+            Returns:
+                None
+            """
+            self.snapshot_tree.click_path(
+                *self.snapshot_tree.find_path_to(re.compile(prop)))
+
+        @property
+        def active(self):
+            """Check if the snapshot is active.
+
+            Returns:
+                bool: True if snapshot is active, False otherwise.
+            """
             self._nav_to_snapshot_mgmt()
             try:
-                self.snapshot_tree.click_path(
-                    *self.snapshot_tree.find_path_to(re.compile(self.name)))
-                if sel.is_displayed_text(self.name + " (Active)"):
+                self._click_tree_path(self.name or self.description)
+                if sel.is_displayed_text("{} (Active)".format(self.name or self.description)):
                     return True
             except CandidateNotFound:
                 return False
 
         def create(self):
+            snapshot_dict = {
+                'description': self.description,
+                'snapshot_memory': self.memory
+            }
             self._nav_to_snapshot_mgmt()
             toolbar.select('Create a new snapshot for this VM')
+
             if self.name is not None:
-                fill(snapshot_form, {'name': self.name,
-                                     'description': self.description,
-                                     'snapshot_memory': self.memory
-                                     },
-                     action=snapshot_form.create_button)
-            else:
-                fill(snapshot_form, {'description': self.description,
-                                     'snapshot_memory': self.memory
-                                     },
-                     action=snapshot_form.create_button)
-            wait_for(self.does_snapshot_exist, num_sec=300, delay=20, fail_func=sel.refresh,
+                snapshot_dict['name'] = self.name
+
+            fill(snapshot_form, snapshot_dict, action=snapshot_form.create_button)
+            wait_for(lambda: self.exists, num_sec=300, delay=20, fail_func=sel.refresh,
                      handle_exception=True)
 
         def delete(self, cancel=False):
@@ -410,7 +424,9 @@ class Vm(BaseVM):
 
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
-            self.snapshot_tree.click_path(*self.snapshot_tree.find_path_to(re.compile(self.name)))
+
+            self._click_tree_path(self.name or self.description)
+
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             flash.assert_message_match('Revert To Snapshot initiated for 1 VM and Instance from '
