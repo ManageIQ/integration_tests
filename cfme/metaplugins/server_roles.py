@@ -48,13 +48,14 @@ from markers.meta import plugin
 from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.utils.conf import cfme_data
 
-available_roles = {ServerInformation.ROLES}
+available_roles = {ServerInformation.server_roles}
 
 @plugin("server_roles", keys=["server_roles"])  # Could be omitted but I want to keep it clear
 @plugin("server_roles", keys=["server_roles", "server_roles_mode"])
 def add_server_roles(server_roles, server_roles_mode="add"):
     # Disable all server roles
     # and then figure out which ones should be enabled
+    server_settings = ServerInformation()
     roles_with_vals = {k: False for k in available_roles}
     if server_roles is None:
         # Only user interface
@@ -66,7 +67,7 @@ def add_server_roles(server_roles, server_roles_mode="add"):
     elif server_roles_mode == "add":
         # The ones that are already enabled and enable/disable the ones specified
         # -server_role, +server_role or server_role
-        roles_with_vals = ServerInformation.get_server_roles_db()
+        roles_with_vals = server_settings.server_roles_db
         if isinstance(server_roles, basestring):
             server_roles = server_roles.split(' ')
         for role in server_roles:
@@ -91,4 +92,4 @@ def add_server_roles(server_roles, server_roles_mode="add"):
         unknown_roles = ', '.join(set(roles_with_vals) - available_roles)
         raise Exception('Unknown server role(s): {}'.format(unknown_roles))
 
-    ServerInformation().set_server_roles_db(**roles_with_vals)
+    server_settings.update_server_roles_db(**roles_with_vals)

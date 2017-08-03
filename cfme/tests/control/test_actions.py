@@ -262,15 +262,15 @@ def automate_role_set(request):
 
     Sets the Automate role state back when finished the module tests.
     """
-    from cfme.configure.configuration.server_settings import ServerInformation
-    roles = ServerInformation.get_server_roles_db()
+    server_info = ServerInformation()
+    roles = server_info.server_roles_db
     old_roles = dict(roles)
     roles["automate"] = True
     roles["smartproxy"] = True
     roles["smartstate"] = True
-    ServerInformation().set_server_roles_db(**roles)
+    server_info.update_server_roles_db(**roles)
     yield
-    ServerInformation().set_server_roles_db(**old_roles)
+    server_info.update_server_roles_db(**old_roles)
 
 
 @pytest.fixture(scope="module")

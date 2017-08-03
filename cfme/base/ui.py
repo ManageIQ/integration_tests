@@ -8,7 +8,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, SummaryFormItem,
                                   TimelinesView)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
-    FlashMessages, BootstrapSelect, Tab)
+    FlashMessages, BootstrapSelect, Tab, CandidateNotFound)
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, Table, Text, Image, FileInput
 
@@ -475,19 +475,6 @@ class Details(CFMENavigateStep):
             "Zone: {} (current)".format(self.obj.appliance.zone_description),
             "Server: {} [{}] (current)".format(self.obj.appliance.server_name(),
                 self.obj.sid))
-
-
-@navigator.register(Server, 'Server')
-class ServerDetails(CFMENavigateStep):
-    VIEW = ServerView
-    prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self):
-        return (
-            self.view.is_displayed and self.view.server.is_displayed and self.view.server.is_active)
-
-    def step(self):
-        self.prerequisite_view.server.select()
 
 
 @navigator.register(Server)

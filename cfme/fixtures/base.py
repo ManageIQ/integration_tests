@@ -22,11 +22,11 @@ def set_session_timeout(appliance):
 @pytest.fixture(scope="session", autouse=True)
 def ensure_websocket_role_disabled():
     # TODO: This is a temporary solution until we find something better.
-    server_roles = ServerInformation(websocket=False)
-    roles = server_roles.get_server_roles_db()
+    server_roles = ServerInformation()
+    roles = server_roles.server_roles_db
     if 'websocket' in roles and roles['websocket']:
         logger.info('Disabling the websocket role to ensure we get no intrusive popups')
-        server_roles.update()
+        server_roles.update_server_roles_db(**roles)
 
 
 @pytest.fixture(scope="session", autouse=True)

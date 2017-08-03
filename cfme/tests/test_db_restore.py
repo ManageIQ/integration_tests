@@ -79,9 +79,9 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         # Manage infra,cloud providers and set some roles before taking a DB backup
-        server_info = ServerInformation(automate=True)
-        server_info.update()
-        roles = server_info.get_server_roles_db()
+        server_info = ServerInformation()
+        server_info.update_server_roles_db(automate=True)
+        roles = server_info.server_roles_db
         virtualcenter_provider_crud.setup()
         wait_for_a_provider()
         ec2_provider_crud.setup()
@@ -114,8 +114,9 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
 
         # Assert providers on the second appliance
         providers_appl2 = appl2.ipapp.managed_known_providers
-        assert set(providers_appl2).issubset(providers_appl1),\
+        assert set(providers_appl2).issubset(providers_appl1), (
             'Restored DB is missing some providers'
+        )
 
         # Verify that existing provider can detect new VMs on the second appliance
         vm = provision_vm(request, virtualcenter_provider_crud)
@@ -123,7 +124,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
         soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
 
         # Assert server roles on the second appliance
-        for role, is_enabled in server_info.get_server_roles_ui().items():
+        for role, is_enabled in server_info.server_roles_ui.iteritems():
             if is_enabled:
                 assert roles[role], "Role '{}' is selected but should not be".format(role)
             else:

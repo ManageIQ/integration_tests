@@ -140,11 +140,12 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
         set_host_credentials(request, provider, vm_analysis_data)
 
     # Make sure all roles are set
-    roles = ServerInformation.get_server_roles_ui()
+    server_info = ServerInformation()
+    roles = server_info.server_roles_ui
     roles["automate"] = True
     roles["smartproxy"] = True
     roles["smartstate"] = True
-    ServerInformation().set_server_roles_db(**roles)
+    server_info.update_server_roles_db(**roles)
 
 
 def set_host_credentials(request, provider, vm_analysis_data):

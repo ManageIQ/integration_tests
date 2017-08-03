@@ -17,7 +17,7 @@ def test_server_name(appliance):
     appliance.server.settings.update_basic_information({'appliance_name': new_server_name})
 
     # CFME updates about box only after any navigation BZ(1408681) - closed wontfix
-    #navigate_to(appliance.server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
 
     # opens and closes about modal
     current_server_name = about.get_detail(about.SERVER)
