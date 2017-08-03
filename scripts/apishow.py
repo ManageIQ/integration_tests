@@ -14,13 +14,28 @@ import re
 import warnings
 
 from collections import namedtuple
-from utils import conf
-from utils.appliances import get_or_create_current_appliance
-from utils.path import log_path
+
 from manageiq_client.api import ManageIQClient as MiqApi
+from utils import conf
+from utils.appliance import get_or_create_current_appliance
+from utils.path import log_path
 
 
 Coverage = namedtuple('Coverage', 'method, action, collection, entity, subcollection, subentity')
+
+method_re = re.compile(r'\[RESTAPI\] ([A-Z]*) http')
+action_re = re.compile(r'\'action\': u?\'([a-z_]*)')
+searches = [
+    # collection, e.g. /api/vms
+    r'/api/([a-z_]*) ',
+    # entity, e.g. /api/vms/1
+    r'/api/([a-z_]*)/([0-9]*) ',
+    # subcollection, e.g. /api/vms/1/tags
+    r'/api/([a-z_]*)/([0-9]*)/([a-z_]*) ',
+    # subcollection entity, e.g. /api/vms/1/tags/10
+    r'/api/([a-z_]*)/([0-9]*)/([a-z_]*)/([0-9]*) '
+]
+searches_re = [re.compile(search) for search in searches]
 
 
 def _init_store(key, store):
@@ -36,7 +51,7 @@ def parse_coverage_line(line):
     method = action = collection = entity = subcollection = subentity = None
 
     try:
-        method = re.search(r'\[RESTAPI\] ([A-Z]*) http', line).group(1)
+        method = method_re.search(line).group(1)
     except AttributeError:
         # line not in expected format
         return
@@ -45,24 +60,13 @@ def parse_coverage_line(line):
         return
 
     try:
-        action = re.search(r'\'action\': u?\'([a-z_]*)', line).group(1)
+        action = action_re.search(line).group(1)
     except AttributeError:
         # line not in expected format
         return
 
-    searches = [
-        # collection, e.g. /api/vms
-        r'/api/([a-z_]*) ',
-        # entity, e.g. /api/vms/1
-        r'/api/([a-z_]*)/([0-9]*) ',
-        # subcollection, e.g. /api/vms/1/tags
-        r'/api/([a-z_]*)/([0-9]*)/([a-z_]*) ',
-        # subcollection entity, e.g. /api/vms/1/tags/10
-        r'/api/([a-z_]*)/([0-9]*)/([a-z_]*)/([0-9]*) '
-    ]
-
-    for expr in searches:
-        search = re.search(expr, line)
+    for expr in searches_re:
+        search = expr.search(line)
         try:
             collection = search.group(1)
             entity = search.group(2)
@@ -132,11 +136,6 @@ def get_coverage(logfile, store):
 def get_collections_info(api, store):
     """Get info about collections, subcollections and their actions."""
 
-    try:
-        subcollections = api.collections.users[0].SUBCOLLECTIONS
-    except IndexError:
-        subcollections = {}
-
     def _get_actions(entity, store):
         try:
             entity.reload_if_needed()
@@ -152,7 +151,7 @@ def get_collections_info(api, store):
             else:
                 store[record['name']] = [record['method'].upper()]
 
-    def _process_collection(collection, store):
+    def _process_collection(collection, store, is_subcol=False):
         _init_store(collection.name, store)
         _init_store('actions_avail', store[collection.name])
         _get_actions(collection, store[collection.name]['actions_avail'])
@@ -160,21 +159,24 @@ def get_collections_info(api, store):
         try:
             collection_len = len(collection)
         except AttributeError:
-            collection_len = 0
+            return
+        if collection_len <= 0:
+            return
 
-        if collection_len > 0:
-            _init_store('entity', store[collection.name])
-            _init_store('actions_avail', store[collection.name]['entity'])
-            entity = random.choice(collection)
-            _get_actions(entity, store[collection.name]['entity']['actions_avail'])
+        _init_store('entity', store[collection.name])
+        _init_store('actions_avail', store[collection.name]['entity'])
+        entity = random.choice(collection)
+        _get_actions(entity, store[collection.name]['entity']['actions_avail'])
 
-            if collection.name in subcollections:
-                for subcol_name in subcollections[collection.name]:
-                    try:
-                        subcol = getattr(entity, subcol_name)
-                    except AttributeError:
-                        continue
-                    _process_collection(subcol, store[collection.name])
+        # don't try to process subcollections if we are already in subcollection
+        if not is_subcol:
+            subcollections = collection.options().get('subcollections', [])
+            for subcol_name in subcollections:
+                try:
+                    subcol = getattr(entity, subcol_name)
+                except AttributeError:
+                    continue
+                _process_collection(subcol, store[collection.name], is_subcol=True)
 
     for collection in api.collections.all:
         _process_collection(collection, store)
@@ -222,10 +224,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
-        '--address',
+        '--url',
         default=None,
-        help="hostname or ip address of target appliance, "
-             "default pulled from local environment conf")
+        help="URL of the target appliance, default pulled from local environment conf")
     parser.add_argument(
         '--logfile',
         metavar='FILE',
@@ -233,18 +234,18 @@ if __name__ == '__main__':
         help="path to cfme log file, default: %(default)s")
     args = parser.parse_args()
 
-    address = args.address or get_or_create_current_appliance().address
+    appliance_url = args.url or get_or_create_current_appliance().url
 
     # we are really not interested in any warnings and "warnings.simplefilter('ignore')"
     # doesn't work when it's redefined later in the REST API client
     warnings.showwarning = lambda *args, **kwargs: None
 
     api = MiqApi(
-        '{}/api'.format(address.rstrip('/')),
+        '{}/api'.format(appliance_url.rstrip('/')),
         (conf.credentials['default']['username'], conf.credentials['default']['password']),
         verify_ssl=False)
 
-    print("Appliance IP: {}".format(address))
+    print("Appliance URL: {}".format(appliance_url))
 
     store = {}
 
