@@ -9,8 +9,8 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.configure.configuration import get_server_roles, set_server_roles
 from cfme.configure.configuration.region_settings import CANDUCollection
+from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -42,22 +42,22 @@ pytestmark = [
 def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
     try:
-        original_roles = get_server_roles()
-        new_roles = original_roles.copy()
-        new_roles.update({
-            'ems_metrics_coordinator': True,
-            'ems_metrics_collector': True,
-            'ems_metrics_processor': True,
-            'automate': False,
-            'smartstate': False})
-        set_server_roles(**new_roles)
+        original_roles = ServerInformation.get_server_roles_db()
+        server_roles = ServerInformation(**original_roles)
+        with update(server_roles):
+            server_roles.ems_metrics_coordinator = True
+            server_roles.ems_metrics_collector = True
+            server_roles.ems_metrics_processor = True
+            server_roles.automate = False
+            server_roles.smartstate = False
         candu.enable_all()
         yield
     finally:
         candu.disable_all()
-        set_server_roles(**original_roles)
+        server_roles.update(original_roles)
 
 
+@pytest.yield_fixture(scope="module")
 @pytest.yield_fixture(scope="module")
 def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()

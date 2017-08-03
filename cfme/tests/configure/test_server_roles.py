@@ -2,7 +2,8 @@
 import pytest
 from functools import partial
 
-from cfme.configure import configuration
+#from cfme.configure import configuration
+from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.web_ui import flash
 from cfme.utils.conf import cfme_data
 
@@ -43,13 +44,15 @@ def test_server_roles_changing(request, roles):
       - Use for parametrization on more roles set?
       - Change the yaml role list to dict.
     """
-    request.addfinalizer(partial(configuration.set_server_roles,
-                                 **configuration.get_server_roles()))   # For reverting back
+    original_roles = ServerInformation.get_server_roles_db()
+    server_settings = ServerInformation(**original_roles)
+    request.addfinalizer(partial(server_settings.update, original_roles))  # For reverting back
     # Set roles
-    configuration.set_server_roles(db=False, **roles)
-    flash.assert_no_errors()
+    server_settings.update(roles)
+    #configuration.set_server_roles(db=False, **roles)
+    #flash.assert_no_errors()
     # Get roles and check; use UI because the changes take a while to propagate to DB
-    for role, is_enabled in configuration.get_server_roles(db=False).iteritems():
+    for role, is_enabled in server_settings.get_server_roles_ui().iteritems():
         if is_enabled:
             assert roles[role], "Role '{}' is selected but should not be".format(role)
         else:

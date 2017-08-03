@@ -45,11 +45,10 @@ see keys of :py:data:`cfme.configure.configuration.server_roles`.
 """
 from markers.meta import plugin
 
-from cfme.configure.configuration import get_server_roles, set_server_roles, server_roles
+from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.utils.conf import cfme_data
 
-available_roles = {field[0] for field in server_roles.fields}
-
+available_roles = {ServerInformation.ROLES}
 
 @plugin("server_roles", keys=["server_roles"])  # Could be omitted but I want to keep it clear
 @plugin("server_roles", keys=["server_roles", "server_roles_mode"])
@@ -67,7 +66,7 @@ def add_server_roles(server_roles, server_roles_mode="add"):
     elif server_roles_mode == "add":
         # The ones that are already enabled and enable/disable the ones specified
         # -server_role, +server_role or server_role
-        roles_with_vals = get_server_roles()
+        roles_with_vals = ServerInformation.get_server_roles_db()
         if isinstance(server_roles, basestring):
             server_roles = server_roles.split(' ')
         for role in server_roles:
@@ -92,4 +91,4 @@ def add_server_roles(server_roles, server_roles_mode="add"):
         unknown_roles = ', '.join(set(roles_with_vals) - available_roles)
         raise Exception('Unknown server role(s): {}'.format(unknown_roles))
 
-    set_server_roles(**roles_with_vals)
+    ServerInformation().set_server_roles_db(**roles_with_vals)

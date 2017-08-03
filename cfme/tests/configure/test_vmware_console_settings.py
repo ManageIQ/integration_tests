@@ -3,6 +3,7 @@ import pytest
 
 from cfme.utils.version import current_version
 
+from cfme.utils.update import update
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce

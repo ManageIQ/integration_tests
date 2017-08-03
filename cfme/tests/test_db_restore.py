@@ -3,7 +3,7 @@
 import fauxfactory
 import pytest
 
-from cfme.configure import configuration as config
+from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.cloud import provider as cloud_provider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.vm import VM
@@ -79,8 +79,9 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         # Manage infra,cloud providers and set some roles before taking a DB backup
-        config.set_server_roles(automate=True)
-        roles = config.get_server_roles()
+        server_info = ServerInformation(automate=True)
+        server_info.update()
+        roles = server_info.get_server_roles_db()
         virtualcenter_provider_crud.setup()
         wait_for_a_provider()
         ec2_provider_crud.setup()
@@ -122,7 +123,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
         soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
 
         # Assert server roles on the second appliance
-        for role, is_enabled in config.get_server_roles(db=False).iteritems():
+        for role, is_enabled in server_info.get_server_roles_ui().items():
             if is_enabled:
                 assert roles[role], "Role '{}' is selected but should not be".format(role)
             else:

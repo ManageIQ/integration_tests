@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.utils.appliance import get_or_create_current_appliance
-from cfme.configure import configuration
+from cfme.configure.configuration.server_settings import ServerInformation
 
 from fixtures.artifactor_plugin import fire_art_hook
 
@@ -22,11 +22,11 @@ def set_session_timeout(appliance):
 @pytest.fixture(scope="session", autouse=True)
 def ensure_websocket_role_disabled():
     # TODO: This is a temporary solution until we find something better.
-    roles = configuration.get_server_roles()
+    server_roles = ServerInformation(websocket=False)
+    roles = server_roles.get_server_roles_db()
     if 'websocket' in roles and roles['websocket']:
         logger.info('Disabling the websocket role to ensure we get no intrusive popups')
-        roles['websocket'] = False
-        configuration.set_server_roles(**roles)
+        server_roles.update()
 
 
 @pytest.fixture(scope="session", autouse=True)

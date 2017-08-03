@@ -14,7 +14,6 @@ from cfme.utils.update import Updateable
 
 class ServerInformationView(ServerView):
     """ Class represents full Server tab view"""
-
     title = Text("//div[@id='settings_server']/h3[1]")
     save_button = Button('Save')
     reset_button = Button('Reset')
