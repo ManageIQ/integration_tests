@@ -395,6 +395,8 @@ class DockerBot(object):
                                            "--perf").format(" ".join(files))
                 else:
                     self.args['pytest'] = "py.test -v --use-provider default -m smoke"
+        else:
+            sprout_appliances = 1
         if self.args['pr']:
             self.base_branch = self.get_base_branch(self.args['pr']) or self.base_branch
         if self.args['sprout']:
