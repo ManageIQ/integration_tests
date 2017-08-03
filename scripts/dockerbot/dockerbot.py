@@ -90,16 +90,20 @@ class SeleniumDocker(DockerInstance):
 
 
 class PytestDocker(DockerInstance):
-    def __init__(self, name, bindings, env, log_path, links, pytest_con, dry_run=False):
+    def __init__(self, name, bindings, env, log_path, links, pytest_con, artifactor_dir,
+                 dry_run=False):
         self.dry_run = dry_run
         self.links = links
         self.log_path = log_path
+        self.artifactor_dir = artifactor_dir
         self.process_bindings(bindings)
 
         if not self.dry_run:
             pt_name = name
             pt_create_info = dc.create_container(pytest_con, tty=True,
                                                  name=pt_name, environment=env,
+                                                 command='sh /setup.sh',
+                                                 volumes=[artifactor_dir],
                                                  ports=self.ports)
             self.container_id = _dgci(pt_create_info, 'id')
             pt_container_info = dc.inspect_container(self.container_id)
@@ -107,11 +111,9 @@ class PytestDocker(DockerInstance):
 
     def run(self):
         if not self.dry_run:
-            dc.start(
-                self.container_id, privileged=True, links=self.links,
-                binds={
-                    self.log_path: {'bind': '/integration_tests/log/', 'ro': False}},
-                port_bindings=self.port_bindings)
+            dc.start(self.container_id, privileged=True, links=self.links,
+                     binds={self.log_path: {'bind': self.artifactor_dir, 'ro': False}},
+                     port_bindings=self.port_bindings)
         else:
             print("Dry run running pytest")
 
@@ -148,6 +150,7 @@ class DockerBot(object):
                               env=self.env_details, log_path=self.log_path,
                               links=links,
                               pytest_con=self.args['pytest_con'],
+                              artifactor_dir=self.args['artifactor_dir'],
                               dry_run=self.args['dry_run'])
         pytest.run()
 
@@ -252,8 +255,8 @@ class DockerBot(object):
     def validate_args(self):
         ec = 0
 
-        appliance = self.args.get('appliance')
-        if self.args.get('appliance_name') and not appliance:
+        appliance = self.args.get('appliance', None)
+        if self.args.get('appliance_name', None) and not appliance:
             self.args['appliance'] = docker_conf['appliances'][self.args['appliance_name']]
 
         self.check_arg('nowait', False)
@@ -307,7 +310,7 @@ class DockerBot(object):
             print("You must supply a CFME Credentials REPO")
             ec += 1
 
-        self.check_arg('selff', 'cfmeqe/sel_ff_chrome')
+        self.check_arg('selff', 'cfme/sel_ff_chrome')
 
         self.check_arg('gh_token', None)
         self.check_arg('gh_owner', None)
@@ -333,6 +336,7 @@ class DockerBot(object):
         self.check_arg('update_pip', False)
         self.check_arg('wheel_host_url', None)
         self.check_arg('auto_gen_test', False)
+        self.check_arg('artifactor_dir', '/log_depot')
 
         self.check_arg('log_depot', None)
 
@@ -380,8 +384,8 @@ class DockerBot(object):
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
             self.pr_metadata = self.get_pr_metadata(self.args['pr'])
-            pytest = self.pr_metadata.get('pytest')
-            self.args['sprout_appliances'] = self.pr_metadata.get('sprouts', 1)
+            pytest = self.pr_metadata.get('pytest', None)
+            sprout_appliances = self.pr_metadata.get('sprouts', 1)
             if pytest:
                 self.args['pytest'] = "py.test {}".format(pytest)
             else:
@@ -391,12 +395,12 @@ class DockerBot(object):
                                            "--perf").format(" ".join(files))
                 else:
                     self.args['pytest'] = "py.test -v --use-provider default -m smoke"
-
+        else:
+            sprout_appliances = 1
         if self.args['pr']:
             self.base_branch = self.get_base_branch(self.args['pr']) or self.base_branch
         if self.args['sprout']:
-            self.args['pytest'] += ' --use-sprout --sprout-appliances {}'.format(
-                self.args['sprout_appliances'])
+            self.args['pytest'] += ' --use-sprout --sprout-appliances {}'.format(sprout_appliances)
             self.args['pytest'] += ' --sprout-group {}'.format(self.args['sprout_stream'])
             self.args['pytest'] += ' --sprout-desc {}'.format(self.args['sprout_description'])
         if not self.args['capture']:
@@ -423,6 +427,7 @@ class DockerBot(object):
                             'CFME_MY_IP_ADDRESS': self.args['server_ip'],
                             'PYTEST': self.args['pytest'],
                             'BRANCH': self.args['branch'],
+                            'ARTIFACTOR_DIR': self.args['artifactor_dir'],
                             'CFME_TESTS_KEY': self.enc_key(),
                             'YAYCL_CRYPT_KEY': self.enc_key()}
         print("  SERVER IP: {}".format(self.args['server_ip']))

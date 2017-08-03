@@ -1,8 +1,5 @@
-#!/cfme_pristine_venv/bin/python2
-try:
-    from cfme.utils import conf
-except ImportError:
-    from utils import conf
+#!/usr/bin/env python2
+from utils import conf
 import subprocess
 import sys
 import re

@@ -2,25 +2,27 @@
 
 RES=16
 # Append messages to setup.txt
-LOGFILE=/integration_tests/log/setup.txt
-
-
-
 log () {
-    echo "$@" | tee -a $LOGFILE
+    echo "$@" >> $ARTIFACTOR_DIR/setup.txt
 }
 
 # Runs given command and appends the stdout and stderr output to setup.txt
 run_n_log () {
-    eval "$1"  2>&1 | tee -a $LOGFILE
+    eval "$1" >> $ARTIFACTOR_DIR/setup.txt 2>&1
 }
+
 # Shutdown and destroy everything
 on_exit () {
     log "Beginning shutdown proc...#~"
-    echo $RES > /log_depot/result.txt
+    echo $RES > $ARTIFACTOR_DIR/result.txt
+    if [ -z "$MASTER_AVAILABLE" ]; then
+        log "cfme_tests master not available - exiting..."
+        return
+    fi
     log "Checking out master branch..."
     git checkout origin/master
-    
+    log "Running pip update..."
+    run_pip_update
     log "#*"
     if [ -n "$POST_TASK" ]; then
         [ $RES -eq 0 ] || [ $RES -eq 5 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
@@ -49,28 +51,43 @@ do_or_die () {
         if [ "$try" -lt "$max_retry" ]; then
             let try+=1;
             log "Running the command - try $try of $max_retry..."
-            run_n_log "$cmd"
-            let ret_val="$?";   
+            eval "$cmd"
+            let ret_val="$?";
             sleep "$sleep_duration"
         else
-            log "$cmd"
             log "Failed to run the command $try times - exiting now..."
             exit
         fi
     done
 }
 
+# Runs pip update - optionally can make use of wheelhouse
+run_pip_update () {
+    if [ -n "$WHEEL_HOST_URL" ]; then
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+    else
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements/frozen.txt --no-cache-dir"
+    fi
+    # ensures entrypoint updates
+    run_n_log "pip install -e ."
+}
 
 trap on_exit EXIT
 
 log "Cloning repos #~"
 log "Downloading the credentials..."
-# TODO: turn this into a volume
-do_or_die "GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO /cfme-qe-yamls"
-
+do_or_die "GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO $CFME_CRED_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+mkdir $CFME_REPO_DIR
+cd $CFME_REPO_DIR
 log "Downloading the master branch of cfme_tests repo..."
-do_or_die "git remote add repo_under_test $CFME_REPO "
-do_or_die "git fetch repo_under_test"
+do_or_die "git init >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git remote add origin $CFME_REPO >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git fetch >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git checkout -t origin/master >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+MASTER_AVAILABLE=true
+
+# Copy the credentials files into the conf folder instead of bothing to make symlinks
+cp $CFME_CRED_REPO_DIR/complete/* $CFME_REPO_DIR/conf/
 
 # If we are using Wharf then setup appropriately, otherwise use the the usual command executor
 if [ -n "$WHARF" ]; then
@@ -92,7 +109,7 @@ else
 fi
 
 # Put a basic config file so that the db module doesn't fall over
-cat > /integration_tests/conf/env.local.yaml <<EOF
+cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
 base_url: https://0.0.0.0
 $BROWSER_SECTION
 
@@ -101,19 +118,22 @@ trackerbot:
   url: $TRACKERBOT
 EOF
 
+# Export and get into the right place
+cd $CFME_REPO_DIR
 
+# Set some basic git configs so git doesn't complain
+git config --global user.email "me@dockerbot"
+git config --global user.name "DockerBot"
 
 log "#*"
 
-
-log "quickstart reexecute #~"
-. /cfme_venv/bin/activate
-run_n_log "python -m cfme.scripting.quickstart"
+log "Ensuring scripts can be used"
+run_n_log "pip install -e ."
 log "#*"
 
 log "GPG Checking #~"
 # Get the GPG-Keys
-do_or_die "/get_keys.py" 5 1
+do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1" 5 1
 
 # die on errors
 set -e
@@ -123,18 +143,20 @@ log "#*"
 # note that we DO NOT merge.
 if [ -n "$CFME_PR" ]; then
     log "Checking out PR $CFME_PR"
-    git fetch repo_under_test refs/pull/$CFME_PR/head:refs/remotes/repo_under_test/pr/$CFME_PR
+    git fetch origin refs/pull/$CFME_PR/head:refs/remotes/origin/pr/$CFME_PR
     run_n_log "/verify_commit.py origin/pr/$CFME_PR"
     log "merging against $BASE_BRANCH"
-    git fetch repo_under_test $BASE_BRANCH
-    git checkout -b branch-under-test repo_under_test/$BASE_BRANCH
-    run_n_log "git merge --no-ff --no-edit repo_under_test/pr/$CFME_PR"
+    git fetch origin $BASE_BRANCH
+    git checkout origin/$BASE_BRANCH
+    run_n_log "git merge --no-ff --no-edit origin/pr/$CFME_PR"
 else
     log "Checking out branch $BRANCH"
     run_n_log "git checkout -f $BRANCH"
 fi
 
-
+log "Pip Update #~"
+run_pip_update
+log "#*"
 
 # If asked, provision the appliance, and update the APPLIANCE variable
 if [ -n "$PROVIDER" ]; then
@@ -146,15 +168,15 @@ if [ -n "$PROVIDER" ]; then
     log "#*"
 fi
 export APPLIANCE=${APPLIANCE-"None"}
-log "appliance: $APPLIANCE"
+log $APPLIANCE
 
 # Now fill out the env yaml with ALL THE THINGS
-cat > /integration_tests/conf/env.local.yaml <<EOF
+cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
 base_url: $APPLIANCE
 $BROWSER_SECTION
 
 artifactor:
-    log_dir: /log_depot/artifacts
+    log_dir: $ARTIFACTOR_DIR
     per_run: test #test, run, None
     reuse_dir: True
     squash_exceptions: True
@@ -186,11 +208,11 @@ trackerbot:
 EOF
 
 log "Artifactor output #~"
-run_n_log "cat /integration_tests/conf/env.local.yaml"
+run_n_log "cat $CFME_REPO_DIR/conf/env.local.yaml"
 log "#*"
 
 # Remove .pyc files
-run_n_log "find /integration_tests/ -name \"*.pyc\" -exec rm -rf {} \;"
+run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
 
 set +e
 
