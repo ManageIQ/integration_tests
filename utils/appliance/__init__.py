@@ -1696,6 +1696,12 @@ class IPAppliance(object):
         self.set_yaml_config(yaml)
         wait_for(lambda: self.server_roles == roles, num_sec=300, delay=15)
 
+    def update_server_roles(self, changed_roles):
+        server_roles = self.server_roles.copy()
+        server_roles.update(changed_roles)
+        self.server_roles = server_roles
+        return server_roles == self.server_roles
+
     @cached_property
     def configuration_details(self):
         """Return details that are necessary to navigate through Configuration accordions.
