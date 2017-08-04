@@ -2155,6 +2155,14 @@ class BaseEntitiesView(View):
     class ListView(EntitiesConditionalView):
         elements = Table(locator='//div[@id="list_grid"]/table')
 
+        @property
+        def entity_names(self):
+            """ looks for entities and extracts their names
+
+            Returns: all current page entities
+            """
+            return [row.name.text for row in self.elements.rows()]
+
     @entities.register('Tile View')
     class TileView(EntitiesConditionalView):
         pass
