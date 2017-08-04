@@ -289,29 +289,6 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         assert view.is_displayed
         view.flash.assert_success_message('Button "btn_descr" was added')
 
-    # def edit_tags(self, tag, value):
-    #     view = navigate_to(self, 'EditTags')
-    #     view.fill({'select_tag': tag,
-    #                'select_value': value})
-    #     view.save_button.click()
-    #     view = self.create_view(DetailsCatalogItemView)
-    #     assert view.is_displayed
-    #     view.flash.assert_success_message('Tag edits were successfully saved')
-    #
-    # def remove_tag(self, tag_category, tag_name):
-    #     """ Remove tag from service catalog item
-    #         Args:
-    #             tag_category: Tag category
-    #             tag_name: Tag name
-    #     """
-    #     view = navigate_to(self, 'EditTags')
-    #     row = view.tag_table.row(category=tag_category, assigned_value=tag_name)
-    #     row[0].click()
-    #     view.save_button.click()
-    #     view = self.create_view(DetailsCatalogItemView)
-    #     view.flash.assert_success_message('Tag edits were successfully saved')
-    #     assert view.is_displayed
-
     @property
     def exists(self):
         try:

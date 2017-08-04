@@ -2,6 +2,9 @@
 from functools import partial
 import re
 from urlparse import urlparse
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import BootstrapSelect, Button
+from widgetastic.widget import Table, Text
 
 from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
@@ -17,9 +20,6 @@ from utils import attributize_string, version, deferred_verpick
 from utils.units import Unit
 from utils.varmeth import variable
 from utils.log import logger
-from widgetastic.exceptions import NoSuchElementException
-from widgetastic_patternfly import BootstrapSelect, Button
-from widgetastic.widget import Table, Text
 
 pol_btn = partial(toolbar.select, "Policy")
 
