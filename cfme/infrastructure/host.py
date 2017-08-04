@@ -129,8 +129,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
         view = navigate_to(self, "Edit")
         changed = view.fill(updates)
-        credentials = updates.pop("credentials")
-        ipmi_credentials = updates.pop("ipmi_credentials")
+        credentials = updates.get("credentials")
+        ipmi_credentials = updates.get("ipmi_credentials")
+        credentials_changed = False
+        ipmi_credentials_changed = False
         if credentials is not None:
             if view.change_stored_password.is_displayed:
                 view.change_stored_password.click()
