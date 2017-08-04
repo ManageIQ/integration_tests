@@ -30,7 +30,7 @@ def vnc_ready(addr, port):
 @click.option('--vnc', help='Chooses VNC port', default=5900)
 @click.option('--webdriver', help='Chooses webdriver port', default=4444)
 @click.option('--image', help='Chooses selenium container image',
-              default=docker_conf.get('selff', 'cfme/sel_ff_chrome'))
+              default=docker_conf.get('selff', 'cfmeqe/sel_ff_chrome'))
 @click.option('--vncviewer', help='Chooses VNC viewer command',
               default=docker_conf.get('vncviewer', 'vinagre'))
 @click.option('--random-ports', is_flag=True, default=False,
