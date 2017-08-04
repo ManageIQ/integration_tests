@@ -20,10 +20,8 @@ already been used, it will die
 
 
 """
-import atexit
 import os
 
-import diaper
 import pytest
 
 from artifactor import ArtifactorClient
