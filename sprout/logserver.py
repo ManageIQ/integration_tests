@@ -14,7 +14,6 @@ import struct
 from threading import Lock
 
 from sprout import sprout_path
-from utils.log import create_logger
 
 
 logs_path = sprout_path.join("log")
@@ -49,6 +48,17 @@ def close_logs():
                         except Exception as e:
                             print("Could not close handler:", type(e).__name__, str(e))
         logger_cache = {}
+
+
+def create_logger(name, filename, max_file_size, max_backups):
+    logger = logging.getLogger(name)
+    handler = logging.handlers.RotatingFileHandler(
+        filename, mode='a', maxBytes=max_file_size, backupCount=max_backups)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+    return logger
 
 
 class LogRecordStreamHandler(SocketServer.StreamRequestHandler):
@@ -141,6 +151,7 @@ def main():
         tcpserver.serve_until_stopped()
     except KeyboardInterrupt:
         print("Quitting")
+
 
 if __name__ == "__main__":
     main()
