@@ -2,7 +2,7 @@
 from collections import OrderedDict
 
 from widgetastic.widget import View, Checkbox
-from widgetastic_patternfly import Tab, BootstrapSelect, Input, BootstrapTreeview
+from widgetastic_patternfly import Tab, BootstrapSelect, Input, CheckableBootstrapTreeview
 from widgetastic_manageiq import VersionPick, Version, CheckboxSelect, Table, Calendar
 
 from cfme import web_ui as ui
@@ -39,9 +39,7 @@ class ProvisioningForm(BaseLoggedInPage):
     @View.nested
     class purpose(Tab):  # noqa
         TAB_NAME = 'Purpose'
-        apply_tags = VersionPick({
-            Version.lowest(): CheckboxSelect('//div[@id="all_tags_treebox"]//ul'),
-            '5.7': BootstrapTreeview('all_tags_treebox')})
+        apply_tags = CheckableBootstrapTreeview('all_tags_treebox')
 
     @View.nested
     class catalog(Tab):  # noqa

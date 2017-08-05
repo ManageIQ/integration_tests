@@ -122,41 +122,53 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
 
 
 @pytest.fixture(scope="function")
+def provision_check(request, provider):
+
+    def _provision_check(instance, inst_args, image):
+        instance.create(**inst_args)
+        logger.info('Waiting for cfme provision request for vm %s', instance.name)
+        row_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
+        cells = {'Description': row_description}
+        try:
+            row, __ = wait_for(requests.wait_for_request, [cells],
+                               fail_func=requests.reload, num_sec=1500, delay=20)
+        except Exception as e:
+            requests.debug_requests()
+            raise e
+        assert normalize_text(row.status.text) == 'ok'
+        assert normalize_text(
+            row.request_state.text) == 'finished', "Provisioning failed with the message {}".format(
+            row.last_message.text)
+        instance.wait_to_appear(timeout=800)
+        provider.refresh_provider_relationships()
+        logger.info("Refreshing provider relationships and power states")
+        refresh_timer = RefreshTimer(time_for_refresh=300)
+        wait_for(provider.is_refreshed,
+                 [refresh_timer],
+                 message="is_refreshed",
+                 num_sec=1000,
+                 delay=60,
+                 handle_exception=True)
+        return instance
+
+    return _provision_check
+
+
+@pytest.fixture(scope="function")
 def vm_name(request):
     return random_vm_name('prov')
 
 
 @pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(provider, testing_instance, soft_assert):
+def test_provision_from_template(testing_instance, provision_check, soft_assert):
     """ Tests instance provision from template
 
     Metadata:
         test_flag: provision
     """
     instance, inst_args, image = testing_instance
-    instance.create(**inst_args)
-    logger.info('Waiting for cfme provision request for vm %s', instance.name)
-    row_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
-    cells = {'Description': row_description}
-    try:
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=1500, delay=20)
-    except Exception as e:
-        requests.debug_requests()
-        raise e
-    assert normalize_text(row.status.text) == 'ok' and \
-        normalize_text(row.request_state.text) == 'finished', \
-        "Provisioning failed with the message {}".format(row.last_message.text)
-    instance.wait_to_appear(timeout=800)
-    provider.refresh_provider_relationships()
-    logger.info("Refreshing provider relationships and power states")
-    refresh_timer = RefreshTimer(time_for_refresh=300)
-    wait_for(provider.is_refreshed,
-             [refresh_timer],
-             message="is_refreshed",
-             num_sec=1000,
-             delay=60,
-             handle_exception=True)
+    instance = provision_check(instance, inst_args, image)
+
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
@@ -618,3 +630,26 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider.mgmt.volume_exists(volume_id):
                 provider.mgmt.delete_volume(volume_id)
+
+
+def test_cloud_provision_dialog_tag(testing_instance, provision_check, soft_assert):
+    """ Tests tagging instance using provisioning dialogs.
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, pick a tag.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit instance page, it should display the selected tags
+
+    Metadata:
+        test_flag: provision
+    """
+    instance, inst_args, image = testing_instance
+    inst_args['purpose'] = {'apply_tags': ('Service Level *', 'Gold')}
+    instance = provision_check(instance, inst_args, image)
+
+    soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+
+    tags = instance.get_tags()
+    assert any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+               for tag in tags), "Service Level: Gold not in tags ({})".format(str(tags))
