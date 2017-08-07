@@ -64,13 +64,6 @@ def test_vm_scan(appliance, vm, from_detail):
         return response.task.state.lower() == 'finished'
 
 
-COLLECTIONS_ADDED_IN_57 = {
-    "arbitration_profiles", "arbitration_rules", "arbitration_settings", "automate",
-    "automate_domains", "blueprints", "cloud_networks", "container_deployments", "currencies",
-    "measures", "notifications", "orchestration_templates", "virtual_templates",
-}
-
-
 COLLECTIONS_ADDED_IN_58 = {
     "actions", "alert_definitions", "alerts", "authentications", "configuration_script_payloads",
     "configuration_script_sources", "load_balancers",
@@ -105,7 +98,6 @@ COLLECTIONS_OMMITED = {"settings"}
 @pytest.mark.uncollectif(
     lambda collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_ADDED_IN_57 and current_version() < "5.7") or
         (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8")
 )
 def test_query_simple_collections(appliance, collection_name):
@@ -122,6 +114,7 @@ def test_query_simple_collections(appliance, collection_name):
     list(collection)
 
 
+# collections affected by BZ 1437201 in versions < 5.9
 COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categories", "roles"}
 
 
@@ -130,10 +123,7 @@ COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categorie
 @pytest.mark.uncollectif(
     lambda collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_ADDED_IN_57 and current_version() < "5.7") or
-        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
-        (collection_name in COLLECTIONS_BUGGY_ATTRS and
-            BZ(1437201, forced_streams=["5.6", "5.7", "5.8", "upstream"]).blocks)
+        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8")
 )
 def test_select_attributes(appliance, collection_name):
     """Tests that it's possible to limit returned attributes.
@@ -141,6 +131,8 @@ def test_select_attributes(appliance, collection_name):
     Metadata:
         test_flag: rest
     """
+    if collection_name in COLLECTIONS_BUGGY_ATTRS and current_version() < '5.9':
+        pytest.skip("Affected by BZ 1437201, cannot test.")
     collection = getattr(appliance.rest_api.collections, collection_name)
     response = appliance.rest_api.get(
         '{}{}'.format(collection._href, '?expand=resources&attributes=id'))
