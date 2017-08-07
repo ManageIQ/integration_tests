@@ -2188,7 +2188,7 @@ class EntitiesConditionalView(View):
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
 

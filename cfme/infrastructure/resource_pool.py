@@ -90,7 +90,7 @@ class ResourcePoolAllView(ResourcePoolView):
 
     toolbar = View.nested(ResourcePoolToolbar)
     entities = View.nested(ResourcePoolEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class ResourcePoolDetailsView(ResourcePoolView):

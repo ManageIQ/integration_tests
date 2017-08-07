@@ -103,7 +103,7 @@ class ClusterAllView(ClusterView):
 
     toolbar = View.nested(ClusterToolbar)
     entities = View.nested(ClusterEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class ClusterDetailsView(ClusterView):

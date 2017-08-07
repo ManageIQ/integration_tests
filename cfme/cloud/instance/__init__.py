@@ -113,7 +113,7 @@ class InstanceAllView(CloudInstanceView):
     toolbar = View.nested(InstanceToolbar)
     sidebar = View.nested(InstanceAccordion)
     entities = View.nested(InstanceEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class InstanceProviderAllView(CloudInstanceView):
@@ -128,7 +128,7 @@ class InstanceProviderAllView(CloudInstanceView):
     toolbar = View.nested(InstanceToolbar)
     sidebar = View.nested(InstanceAccordion)
     entities = View.nested(InstanceEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class InstanceDetailsView(CloudInstanceView):

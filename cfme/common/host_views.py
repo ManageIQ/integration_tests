@@ -235,7 +235,7 @@ class HostEntitiesView(BaseEntitiesView):
 class HostsView(ComputeInfrastructureHostsView):
     toolbar = View.nested(HostsToolbar)
     sidebar = View.nested(HostSideBar)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
     including_entities = View.include(HostEntitiesView, use_parent=True)
 
     @property

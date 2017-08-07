@@ -72,7 +72,7 @@ class VolumeAllView(VolumeView):
 
     toolbar = View.nested(VolumeToolbar)
     entities = View.nested(VolumeEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class VolumeDetailsView(VolumeView):

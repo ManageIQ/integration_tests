@@ -90,7 +90,7 @@ class KeyPairAllView(KeyPairView):
 
     toolbar = View.nested(KeyPairToolbar)
     entities = View.nested(KeyPairEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class KeyPairDetailsView(KeyPairView):
