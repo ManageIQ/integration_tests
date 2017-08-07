@@ -453,7 +453,7 @@ class CANDUCollection(Navigatable):
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
 
-    def _enable_disable(self, enable=True, reset=False):
+    def _set_state(self, enable=True, reset=False):
         """ Enable/Disable C and U
 
             Args:
@@ -479,7 +479,7 @@ class CANDUCollection(Navigatable):
             Args:
                 reset: Reset changes, default is 'False' - changes will not be reset
         """
-        self._enable_disable(reset=reset)
+        self._set_state(reset=reset)
 
     def disable_all(self, reset=False):
         """ Disable C and U
@@ -487,7 +487,7 @@ class CANDUCollection(Navigatable):
             Args:
                 reset: Reset changes, default is 'False' - changes will not be reset
         """
-        self._enable_disable(False, reset=reset)
+        self._set_state(False, reset=reset)
 
 
 @navigator.register(CANDUCollection)
