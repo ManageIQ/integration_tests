@@ -428,3 +428,72 @@ class MapTagsEdit(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.table.row(tag_category=self.obj.category).click()
+
+
+# ====================C and U===================================
+
+class CANDUCollectionView(RegionView):
+    """C and U View"""
+    all_clusters_cb = BootstrapSwitch(id='all_clusters')
+    all_datastores_cb = BootstrapSwitch(id='all_storages')
+
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.canducollection.is_active() and
+            self.all_clusters_cb.is_displayed
+        )
+
+
+class CANDUCollection(Navigatable):
+    """ Class represents a C and U in CFME UI """
+    def __init__(self, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
+
+    def _set_state(self, enable=True, reset=False):
+        """ Enable/Disable C and U
+
+            Args:
+                enable: Switches states, 'True'- enable
+                reset: Reset changes, default is 'False' - changes will not be reset
+        """
+        view = navigate_to(self, 'Details')
+        view.fill({
+            'all_clusters_cb': enable,
+            'all_datastores_cb': enable
+        })
+        if reset:
+            view.reset_button.click()
+            flash_message = 'All changes have been reset'
+        else:
+            view.save_button.click()
+            flash_message = 'Capacity and Utilization Collection settings saved'
+        view.flash.assert_success_message(flash_message)
+
+    def enable_all(self, reset=False):
+        """ Enable C and U
+
+            Args:
+                reset: Reset changes, default is 'False' - changes will not be reset
+        """
+        self._set_state(reset=reset)
+
+    def disable_all(self, reset=False):
+        """ Disable C and U
+
+            Args:
+                reset: Reset changes, default is 'False' - changes will not be reset
+        """
+        self._set_state(False, reset=reset)
+
+
+@navigator.register(CANDUCollection)
+class Details(CFMENavigateStep):
+    VIEW = CANDUCollectionView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self):
+        self.prerequisite_view.canducollection.select()

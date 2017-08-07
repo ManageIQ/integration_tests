@@ -14,7 +14,8 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
-from cfme.configure.configuration import get_server_roles, set_server_roles, candu
+from cfme.configure.configuration import get_server_roles, set_server_roles
+from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
@@ -99,6 +100,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
 def enable_candu():
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
+    candu = CANDUCollection()
     original_roles = get_server_roles()
     new_roles = original_roles.copy()
     new_roles.update({
