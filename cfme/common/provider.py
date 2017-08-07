@@ -262,12 +262,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 hostname=self.hostname,
                 ipaddress=self.ip_address,
                 name=self.name,
-                type="ManageIQ::Providers::" + self.db_types[0],
+                type="ManageIQ::Providers::{}".format(self.db_types[0]),
                 credentials={'userid': self.endpoints['default'].credentials.principal,
                              'password': self.endpoints['default'].credentials.secret})
 
             return self.appliance.rest_api.response.status_code == 200
-        except APIException as ex:
+        except APIException:
             return None
 
     def update(self, updates, cancel=False, validate_credentials=True):
@@ -753,11 +753,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         logger.debug('Retrieving the list of provider ids')
 
         provider_ids = []
-        for prov in self.appliance.rest_api.collections.providers.all:
-            try:
+        try:
+            for prov in self.appliance.rest_api.collections.providers.all:
                 provider_ids.append(prov.id)
-            except APIException as ex:
-                return None
+        except APIException:
+            return None
 
         return provider_ids
 
@@ -768,11 +768,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         logger.debug('Retrieving the list of vm ids')
 
         vm_ids = []
-        for vm in self.appliance.rest_api.collections.vms.all:
-            try:
+        try:
+            for vm in self.appliance.rest_api.collections.vms.all:
                 vm_ids.append(vm.id)
-            except APIException as ex:
-                return None
+        except APIException:
+            return None
 
         return vm_ids
 
@@ -783,11 +783,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         logger.debug('Retrieving the list of host ids')
 
         host_ids = []
-        for host in self.appliance.rest_api.collections.hosts.all:
-            try:
+        try:
+            for host in self.appliance.rest_api.collections.hosts.all:
                 host_ids.append(host.id)
-            except APIException as ex:
-                return None
+        except APIException:
+            return None
         return host_ids
 
     def get_all_template_ids(self):
@@ -795,11 +795,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         logger.debug('Retrieving the list of template ids')
 
         template_ids = []
-        for template in self.appliance.rest_api.collections.templates.all:
-            try:
+        try:
+            for template in self.appliance.rest_api.collections.templates.all:
                 template_ids.append(template.id)
-            except APIException as ex:
-                return None
+        except APIException:
+            return None
         return template_ids
 
     def get_provider_details(self, provider_id):
@@ -809,7 +809,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         details = {}
         try:
             prov = self.appliance.rest_api.collections.providers.get(id=provider_id)
-        except APIException as ex:
+        except APIException:
             return None
         details['id'] = prov.id
         details['name'] = prov.name
@@ -827,7 +827,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         details = {}
         try:
             vm = self.appliance.rest_api.collections.vms.get(id=vm_id)
-        except APIException as ex:
+        except APIException:
             return None
 
         details['id'] = vm.id
@@ -849,7 +849,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         template_details = {}
         try:
             template = self.appliance.rest_api.collections.templates.get(id=template_id)
-        except APIException as ex:
+        except APIException:
             return None
 
         template_details['name'] = template.name
@@ -863,7 +863,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         all_details = {}
         for id in self.get_all_template_ids():
-            all_details[id] = {}
             all_details[id] = self.get_template_details(id)
         return all_details
 
@@ -876,7 +875,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             details = self.get_provider_details(provider_id)
             if details['name'] == provider_name:
                 return provider_id
-        return
 
     def get_vm_id(self, vm_name):
         """
@@ -887,7 +885,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             details = self.get_vm_details(vm_id)
             if details['name'] == vm_name:
                 return vm_id
-        return
 
     def get_vm_ids(self, vm_names):
         """
@@ -897,7 +894,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         logger.debug('Retrieving the IDs for {} VM(s)'.format(len(name_list)))
         id_map = {}
         for vm_id in self.get_all_vm_ids():
-            if len(name_list) == 0:
+            if not name_list:
                 break
             vm_name = self.get_vm_details(vm_id)['name']
             if vm_name in name_list:
@@ -918,7 +915,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             for template_name in template_dict[provider]:
                 inner_tuple = ()
                 for id in all_template_details:
-                    _tmp = provider_type + '::Template'
+                    _tmp = '{}::Template'.format(provider_type)
                     if ((all_template_details[id]['name'] == template_name) and
                             (all_template_details[id]['type'] == _tmp)):
                         inner_tuple += (all_template_details[id]['guid'],)

@@ -83,14 +83,14 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
     total_time = scenario['total_time']
     starttime = time.time()
     time_between_analyses = scenario['time_between_analyses']
-    total_scanned_VMs = 0
+    total_scanned_vms = 0
 
     while ((time.time() - starttime) < total_time):
         start_ssa_time = time.time()
         for vm in scenario['vms_to_scan'].values():
             vm_api = appliance.rest_api.collections.vms.get(name=vm.name)
             vm_api.action.scan()
-            total_scanned_VMs += 1
+            total_scanned_vms += 1
         iteration_time = time.time()
 
         ssa_time = round(iteration_time - start_ssa_time, 2)
@@ -110,5 +110,5 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
                 '({})'.format(ssa_time, time_between_analyses))
 
     quantifiers['Elapsed_Time'] = round(time.time() - starttime, 2)
-    quantifiers['Queued_VM_Scans'] = total_scanned_VMs
+    quantifiers['Queued_VM_Scans'] = total_scanned_vms
     logger.info('Test Ending...')

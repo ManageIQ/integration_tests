@@ -303,7 +303,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             host = self.appliance.rest_api.collections.hosts.get(name=self.name)
             host.action.edit(credentials={"userid": credentials.principal,
                                           "password": credentials.secret})
-        except APIException as ex:
+        except APIException:
             return False
 
     def get_datastores(self):

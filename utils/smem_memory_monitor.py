@@ -1018,44 +1018,44 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
     plt.xlabel('Date / Time')
     plt.ylabel('Memory (MiB)')
     if use_slab:
-        Y = [used_memory_list, slab_memory_list, cache_memory_list, free_memory_list]
+        y = [used_memory_list, slab_memory_list, cache_memory_list, free_memory_list]
     else:
-        Y = [used_memory_list, buffers_memory_list, cache_memory_list, free_memory_list]
-    plt.stackplot(dates, *Y, baseline='zero')
-    ax.annotate('%s' % round(total_memory_list[0], 2), xy=(dates[0], total_memory_list[0]),
+        y = [used_memory_list, buffers_memory_list, cache_memory_list, free_memory_list]
+    plt.stackplot(dates, *y, baseline='zero')
+    ax.annotate(str(round(total_memory_list[0], 2)), xy=(dates[0], total_memory_list[0]),
                 xytext=(4, 4), textcoords='offset points')
-    ax.annotate('%s' % round(total_memory_list[-1], 2), xy=(dates[-1], total_memory_list[-1]),
+    ax.annotate(str(round(total_memory_list[-1], 2)), xy=(dates[-1], total_memory_list[-1]),
                 xytext=(4, -4), textcoords='offset points')
     if use_slab:
-        ax.annotate('%s' % round(slab_memory_list[0], 2), xy=(dates[0], used_memory_list[0] +
+        ax.annotate(str(round(slab_memory_list[0], 2)), xy=(dates[0], used_memory_list[0] +
                     slab_memory_list[0]), xytext=(4, 4), textcoords='offset points')
-        ax.annotate('%s' % round(slab_memory_list[-1], 2), xy=(dates[-1], used_memory_list[-1] +
+        ax.annotate(str(round(slab_memory_list[-1], 2)), xy=(dates[-1], used_memory_list[-1] +
                     slab_memory_list[-1]), xytext=(4, -4), textcoords='offset points')
-        ax.annotate('%s' % round(cache_memory_list[0], 2), xy=(dates[0], used_memory_list[0] +
+        ax.annotate(str(round(cache_memory_list[0], 2)), xy=(dates[0], used_memory_list[0] +
                     slab_memory_list[0] + cache_memory_list[0]), xytext=(4, 4),
                     textcoords='offset points')
-        ax.annotate('%s' % round(cache_memory_list[-1], 2), xy=(
+        ax.annotate(str(round(cache_memory_list[-1], 2)), xy=(
             dates[-1], used_memory_list[-1] + slab_memory_list[-1] + cache_memory_list[-1]),
             xytext=(4, -4), textcoords='offset points')
     else:
-        ax.annotate('%s' % round(buffers_memory_list[0], 2), xy=(
+        ax.annotate(str(round(buffers_memory_list[0], 2)), xy=(
             dates[0], used_memory_list[0] + buffers_memory_list[0]), xytext=(4, 4),
             textcoords='offset points')
-        ax.annotate('%s' % round(buffers_memory_list[-1], 2), xy=(dates[-1],
+        ax.annotate(str(round(buffers_memory_list[-1], 2)), xy=(dates[-1],
                     used_memory_list[-1] + buffers_memory_list[-1]), xytext=(4, -4),
                     textcoords='offset points')
-        ax.annotate('%s' % round(cache_memory_list[0], 2), xy=(dates[0], used_memory_list[0] +
+        ax.annotate(str(round(cache_memory_list[0], 2)), xy=(dates[0], used_memory_list[0] +
                     buffers_memory_list[0] + cache_memory_list[0]), xytext=(4, 4),
                     textcoords='offset points')
-        ax.annotate('%s' % round(cache_memory_list[-1], 2), xy=(
+        ax.annotate(str(round(cache_memory_list[-1], 2)), xy=(
             dates[-1], used_memory_list[-1] + buffers_memory_list[-1] + cache_memory_list[-1]),
             xytext=(4, -4), textcoords='offset points')
-    ax.annotate('%s' % round(used_memory_list[0], 2), xy=(dates[0], used_memory_list[0]),
+    ax.annotate(str(round(used_memory_list[0], 2)), xy=(dates[0], used_memory_list[0]),
         xytext=(4, 4), textcoords='offset points')
-    ax.annotate('%s' % round(used_memory_list[-1], 2), xy=(dates[-1], used_memory_list[-1]),
+    ax.annotate(str(round(used_memory_list[-1], 2)), xy=(dates[-1], used_memory_list[-1]),
         xytext=(4, -4), textcoords='offset points')
-    dateFmt = mdates.DateFormatter('%m-%d %H-%M')
-    ax.xaxis.set_major_formatter(dateFmt)
+    datefmt = mdates.DateFormatter('%m-%d %H-%M')
+    ax.xaxis.set_major_formatter(datefmt)
     ax.grid(True)
     p1 = plt.Rectangle((0, 0), 1, 1, fc='firebrick')
     p2 = plt.Rectangle((0, 0), 1, 1, fc='coral')
@@ -1080,18 +1080,18 @@ def graph_appliance_measurements(graphs_path, ver, appliance_results, use_slab, 
     plt.ylabel('Swap (MiB)')
 
     swap_used_list = [t - f for f, t in zip(swap_free_list, swap_total_list)]
-    Y = [swap_used_list, swap_free_list]
-    plt.stackplot(dates, *Y, baseline='zero')
-    ax.annotate('%s' % round(swap_total_list[0], 2), xy=(dates[0], swap_total_list[0]),
+    y = [swap_used_list, swap_free_list]
+    plt.stackplot(dates, *y, baseline='zero')
+    ax.annotate(str(round(swap_total_list[0], 2)), xy=(dates[0], swap_total_list[0]),
         xytext=(4, 4), textcoords='offset points')
-    ax.annotate('%s' % round(swap_total_list[-1], 2), xy=(dates[-1], swap_total_list[-1]),
+    ax.annotate(str(round(swap_total_list[-1], 2)), xy=(dates[-1], swap_total_list[-1]),
         xytext=(4, -4), textcoords='offset points')
-    ax.annotate('%s' % round(swap_used_list[0], 2), xy=(dates[0], swap_used_list[0]),
+    ax.annotate(str(round(swap_used_list[0], 2)), xy=(dates[0], swap_used_list[0]),
         xytext=(4, 4), textcoords='offset points')
-    ax.annotate('%s' % round(swap_used_list[-1], 2), xy=(dates[-1], swap_used_list[-1]),
+    ax.annotate(str(round(swap_used_list[-1], 2)), xy=(dates[-1], swap_used_list[-1]),
         xytext=(4, -4), textcoords='offset points')
-    dateFmt = mdates.DateFormatter('%m-%d %H-%M')
-    ax.xaxis.set_major_formatter(dateFmt)
+    datefmt = mdates.DateFormatter('%m-%d %H-%M')
+    ax.xaxis.set_major_formatter(datefmt)
     ax.grid(True)
     p1 = plt.Rectangle((0, 0), 1, 1, fc='firebrick')
     p2 = plt.Rectangle((0, 0), 1, 1, fc='forestgreen')
@@ -1129,8 +1129,8 @@ def graph_all_miq_workers(graph_file_path, process_results, provider_names):
                 plt.plot(dates, vss_samples, linewidth=1, label='{} {} VSS'.format(
                     process_pid, process_name))
 
-    dateFmt = mdates.DateFormatter('%m-%d %H-%M')
-    ax.xaxis.set_major_formatter(dateFmt)
+    datefmt = mdates.DateFormatter('%m-%d %H-%M')
+    ax.xaxis.set_major_formatter(datefmt)
     ax.grid(True)
     plt.legend(loc='upper center', bbox_to_anchor=(1.2, 0.1), fancybox=True)
     fig.autofmt_xdate()
@@ -1172,33 +1172,33 @@ def graph_individual_process_measurements(graph_file_path, process_results, prov
             plt.plot(dates, swap_samples, linewidth=1, label='Swap')
 
             if rss_samples:
-                ax.annotate('%s' % round(rss_samples[0], 2), xy=(dates[0], rss_samples[0]),
+                ax.annotate(str(round(rss_samples[0], 2)), xy=(dates[0], rss_samples[0]),
                     xytext=(4, 4), textcoords='offset points')
-                ax.annotate('%s' % round(rss_samples[-1], 2), xy=(dates[-1], rss_samples[-1]),
+                ax.annotate(str(round(rss_samples[-1], 2)), xy=(dates[-1], rss_samples[-1]),
                     xytext=(4, -4), textcoords='offset points')
             if pss_samples:
-                ax.annotate('%s' % round(pss_samples[0], 2), xy=(dates[0], pss_samples[0]),
+                ax.annotate(str(round(pss_samples[0], 2)), xy=(dates[0], pss_samples[0]),
                     xytext=(4, 4), textcoords='offset points')
-                ax.annotate('%s' % round(pss_samples[-1], 2), xy=(dates[-1], pss_samples[-1]),
+                ax.annotate(str(round(pss_samples[-1], 2)), xy=(dates[-1], pss_samples[-1]),
                     xytext=(4, -4), textcoords='offset points')
             if uss_samples:
-                ax.annotate('%s' % round(uss_samples[0], 2), xy=(dates[0], uss_samples[0]),
+                ax.annotate(str(round(uss_samples[0], 2)), xy=(dates[0], uss_samples[0]),
                     xytext=(4, 4), textcoords='offset points')
-                ax.annotate('%s' % round(uss_samples[-1], 2), xy=(dates[-1], uss_samples[-1]),
+                ax.annotate(str(round(uss_samples[-1], 2)), xy=(dates[-1], uss_samples[-1]),
                     xytext=(4, -4), textcoords='offset points')
             if vss_samples:
-                ax.annotate('%s' % round(vss_samples[0], 2), xy=(dates[0], vss_samples[0]),
+                ax.annotate(str(round(vss_samples[0], 2)), xy=(dates[0], vss_samples[0]),
                     xytext=(4, 4), textcoords='offset points')
-                ax.annotate('%s' % round(vss_samples[-1], 2), xy=(dates[-1], vss_samples[-1]),
+                ax.annotate(str(round(vss_samples[-1], 2)), xy=(dates[-1], vss_samples[-1]),
                     xytext=(4, -4), textcoords='offset points')
             if swap_samples:
-                ax.annotate('%s' % round(swap_samples[0], 2), xy=(dates[0], swap_samples[0]),
+                ax.annotate(str(round(swap_samples[0], 2)), xy=(dates[0], swap_samples[0]),
                     xytext=(4, 4), textcoords='offset points')
-                ax.annotate('%s' % round(swap_samples[-1], 2), xy=(dates[-1], swap_samples[-1]),
+                ax.annotate(str(round(swap_samples[-1], 2)), xy=(dates[-1], swap_samples[-1]),
                     xytext=(4, -4), textcoords='offset points')
 
-            dateFmt = mdates.DateFormatter('%m-%d %H-%M')
-            ax.xaxis.set_major_formatter(dateFmt)
+            datefmt = mdates.DateFormatter('%m-%d %H-%M')
+            ax.xaxis.set_major_formatter(datefmt)
             ax.grid(True)
             plt.legend(loc='upper center', bbox_to_anchor=(1.2, 0.1), fancybox=True)
             fig.autofmt_xdate()
@@ -1246,33 +1246,33 @@ def graph_same_miq_workers(graph_file_path, process_results, provider_names):
                 plt.plot(dates, vss_samples, linewidth=1, label='{} VSS'.format(process_pid))
                 plt.plot(dates, swap_samples, linewidth=1, label='{} SWAP'.format(process_pid))
                 if rss_samples:
-                    ax.annotate('%s' % round(rss_samples[0], 2), xy=(dates[0], rss_samples[0]),
+                    ax.annotate(str(round(rss_samples[0], 2)), xy=(dates[0], rss_samples[0]),
                         xytext=(4, 4), textcoords='offset points')
-                    ax.annotate('%s' % round(rss_samples[-1], 2), xy=(dates[-1],
+                    ax.annotate(str(round(rss_samples[-1], 2)), xy=(dates[-1],
                         rss_samples[-1]), xytext=(4, -4), textcoords='offset points')
                 if pss_samples:
-                    ax.annotate('%s' % round(pss_samples[0], 2), xy=(dates[0],
+                    ax.annotate(str(round(pss_samples[0], 2)), xy=(dates[0],
                         pss_samples[0]), xytext=(4, 4), textcoords='offset points')
-                    ax.annotate('%s' % round(pss_samples[-1], 2), xy=(dates[-1],
+                    ax.annotate(str(round(pss_samples[-1], 2)), xy=(dates[-1],
                         pss_samples[-1]), xytext=(4, -4), textcoords='offset points')
                 if uss_samples:
-                    ax.annotate('%s' % round(uss_samples[0], 2), xy=(dates[0],
+                    ax.annotate(str(round(uss_samples[0], 2)), xy=(dates[0],
                         uss_samples[0]), xytext=(4, 4), textcoords='offset points')
-                    ax.annotate('%s' % round(uss_samples[-1], 2), xy=(dates[-1],
+                    ax.annotate(str(round(uss_samples[-1], 2)), xy=(dates[-1],
                         uss_samples[-1]), xytext=(4, -4), textcoords='offset points')
                 if vss_samples:
-                    ax.annotate('%s' % round(vss_samples[0], 2), xy=(dates[0],
+                    ax.annotate(str(round(vss_samples[0], 2)), xy=(dates[0],
                         vss_samples[0]), xytext=(4, 4), textcoords='offset points')
-                    ax.annotate('%s' % round(vss_samples[-1], 2), xy=(dates[-1],
+                    ax.annotate(str(round(vss_samples[-1], 2)), xy=(dates[-1],
                         vss_samples[-1]), xytext=(4, -4), textcoords='offset points')
                 if swap_samples:
-                    ax.annotate('%s' % round(swap_samples[0], 2), xy=(dates[0],
+                    ax.annotate(str(round(swap_samples[0], 2)), xy=(dates[0],
                         swap_samples[0]), xytext=(4, 4), textcoords='offset points')
-                    ax.annotate('%s' % round(swap_samples[-1], 2), xy=(dates[-1],
+                    ax.annotate(str(round(swap_samples[-1], 2)), xy=(dates[-1],
                         swap_samples[-1]), xytext=(4, -4), textcoords='offset points')
 
-            dateFmt = mdates.DateFormatter('%m-%d %H-%M')
-            ax.xaxis.set_major_formatter(dateFmt)
+            datefmt = mdates.DateFormatter('%m-%d %H-%M')
+            ax.xaxis.set_major_formatter(datefmt)
             ax.grid(True)
             plt.legend(loc='upper center', bbox_to_anchor=(1.2, 0.1), fancybox=True)
             fig.autofmt_xdate()

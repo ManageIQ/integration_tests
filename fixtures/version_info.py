@@ -43,18 +43,18 @@ def get_process_versions(ssh_client):
     process_dict = {}
 
     ruby = str(ssh_client.run_command('ruby -v')[1])
-    rubyV = ruby[ruby.find(' ') + 1:find_nth_pos(ruby, ".", 2) + 2]
+    rubyv = ruby[ruby.find(' ') + 1:find_nth_pos(ruby, ".", 2) + 2]
     rails = str(ssh_client.run_command('rails -v')[1])
-    railsV = rails[rails.find(' ') + 1:find_nth_pos(rails, ".", 2) + 2]
+    railsv = rails[rails.find(' ') + 1:find_nth_pos(rails, ".", 2) + 2]
     postgres = str(ssh_client.run_command('postgres --version')[1])
-    postgresV = postgres[postgres.find('.') - 1:-1]
+    postgresv = postgres[postgres.find('.') - 1:-1]
     httpd = str(ssh_client.run_command('httpd -v')[1])
-    httpdV = httpd[httpd.find('/') + 1: httpd.find(' ', httpd.find('/'))]
+    httpdv = httpd[httpd.find('/') + 1: httpd.find(' ', httpd.find('/'))]
 
-    process_dict['ruby'] = rubyV
-    process_dict['rails'] = railsV
-    process_dict['postgres'] = postgresV
-    process_dict['httpd'] = httpdV
+    process_dict['ruby'] = rubyv
+    process_dict['rails'] = railsv
+    process_dict['postgres'] = postgresv
+    process_dict['httpd'] = httpdv
 
     timediff = time.time() - starttime
     logger.info('Got process version info in: {}'.format(timediff))
@@ -86,7 +86,7 @@ def get_rpm_versions(ssh_client):
     starttime = time.time()
 
     rpm_list = str(ssh_client.run_command(
-        "rpm -qa --queryformat='%{N}, %{V}-%{R}\n' | sort")[1]).split('\n')
+        "rpm -qa --queryformat='%{N}, %{V}-%{R}\n' | sort")[1]).split('\n')  # noqa
 
     timediff = time.time() - starttime
     logger.info('Got version info in: {}'.format(timediff))
