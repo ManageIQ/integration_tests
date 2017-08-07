@@ -39,13 +39,13 @@ class VMConsole(Pretty):
         # due to an exception being thrown.
         try:
             text = self.provider.get_console_connection_status()
-            logger.info('Read following text from console banner: {}'.format(text))
-        except NoSuchElementException as e:
-            logger.info('Could not find banner element.')
-            logger.info('Exception: {}'.format(e))
+        except NoSuchElementException:
+            logger.exception('Could not find banner element.')
             return None
+        finally:
+            self.switch_to_appliance()
 
-        self.switch_to_appliance()
+        logger.info('Read following text from console banner: %s', text)
         return text
 
     def get_screen(self):
