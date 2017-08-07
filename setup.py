@@ -66,7 +66,10 @@ setup(
             'infra = cfme.infrastructure.virtual_machines:Template',
             'cloud = cfme.cloud.instance.image:Image'
         ],
-
+        'pytest11':
+        [
+            'cfme = cfme.test_framework.pytest_plugin',
+        ]
     },
     packages=find_packages(),
 )
