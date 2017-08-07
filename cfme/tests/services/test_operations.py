@@ -56,7 +56,7 @@ def generated_request(appliance,
     e_mail = "{}@{}.test".format(first_name, last_name)
     host, datastore = map(provisioning.get, ('host', 'datastore'))
     vm = Vm(name=vm_name, provider=infra_provider, template_name=template_name)
-    navigate_to(vm, 'ProvisionVM')
+    navigate_to(vm, 'Provision')
 
     provisioning_data = {
         'email': e_mail,

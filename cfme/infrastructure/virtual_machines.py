@@ -10,34 +10,36 @@ import re
 from selenium.common.exceptions import NoSuchElementException
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import Text, View
+from widgetastic_patternfly import (
+    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
+from widgetastic_manageiq import (
+    TimelinesView, Accordion, ManageIQTree, SummaryTable, ConditionalSwitchableView)
+from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM, Template as BaseTemplate
-from cfme.common.vm_views import ManagementEngineView
-from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
-                             DestinationNotFound, TemplateNotFound)
+from cfme.common.vm_views import (
+    ManagementEngineView, ProvisionView, EditView, RetirementView, VMDetailsEntities, VMToolbar,
+    VMEntities)
+from cfme.exceptions import (
+    CandidateNotFound, VmNotFound, OptionNotAvailable, DestinationNotFound, ItemNotFound,
+    VmOrInstanceNotFound)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.requests import Request
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
-    CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    match_location, Table, search, toolbar, Calendar, Select, Input, CheckboxTable,
-    summary_title, BootstrapTreeview, AngularSelect
-)
-from cfme.web_ui.search import search_box
+    CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, fill, flash, form_buttons,
+    match_location, Table, toolbar, Calendar, Select, Input, CheckboxTable,
+    summary_title, BootstrapTreeview, AngularSelect)
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.wait import wait_for
 from utils import version, deferred_verpick
-from widgetastic.widget import Text, View
-from widgetastic_patternfly import (
-    Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput
-)
-from widgetastic_manageiq import TimelinesView
-from widgetastic_manageiq.vm_reconfigure import DisksTable
+
 
 # for provider specific vm/template page
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
@@ -86,46 +88,161 @@ retirement_date_form = Form(fields=[
 retire_remove_button = "//span[@id='remove_button']/a/img"
 
 match_page = partial(match_location, controller='vm_infra', title='Virtual Machines')
-vm_templates_tree = partial(accordion.tree, "VMs & Templates")
-vms_tree = partial(accordion.tree, "VMs")
-templates_tree = partial(accordion.tree, "Templates")
-
-
-def reset_page():
-    tb.select("Grid View")
-    from cfme.web_ui import paginator
-    if sel.is_displayed(search_box.search_field):
-        search.ensure_normal_search_empty()
-    if paginator.page_controls_exist():
-        # paginator.results_per_page(1000)
-        paginator.check_all()
-        paginator.uncheck_all()
 
 
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
-class InfraVmDetailsToolbar(View):
-    configuration = Dropdown("Configuration")
-    policy = Dropdown("Policy")
-    lifecycle = Dropdown("Lifecycle")
+class InfraVmTemplatesGenericDetailsToolbar(View):
+    reload = Button(title='Reload current display')
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
     monitoring = Dropdown("Monitoring")
-    power = Dropdown("Power")
+    download = Button(title='Download summary in PDF format')
+    lifecycle = Dropdown('Lifecycle')
+
+
+class InfraVmDetailsToolbar(InfraVmTemplatesGenericDetailsToolbar):
+    """Toolbar for VM details differs from All VMs&TemplatesView
+    """
     access = Dropdown("Access")
+    power = Dropdown('VM Power Functions')
 
 
-class InfraVmDetailsView(BaseLoggedInPage):
-    # TODO this is only minimal implementation for toolbar access through widgetastic
-    toolbar = View.nested(InfraVmDetailsToolbar)
+class VmsTemplatesAccordion(View):
+    """
+    The accordion on the Virtual Machines page
+    """
+    @View.nested
+    class vmstemplates(Accordion):  # noqa
+        ACCORDION_NAME = 'VMs & Templates'
+        tree = ManageIQTree()
+
+    @View.nested
+    class vms(Accordion):  # noqa
+        ACCORDION_NAME = 'VMs'
+        tree = ManageIQTree()
+
+    @View.nested
+    class templates(Accordion):  # noqa
+        ACCORDION_NAME = 'Templates'
+        tree = ManageIQTree()
+
+
+class InfraVMView(BaseLoggedInPage):
+    """Base view for header/nav check, inherit for navigatable views"""
+
+    @property
+    def in_infra_vms(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Infrastructure',
+                                                   'Virtual Machines'] and
+            match_location(controller='vm_infra', title='Virtual Machines'))
+
+
+class VmsTemplatesAllView(InfraVMView):
+    """
+    The collection page for instances
+    """
+    @property
+    def is_displayed(self):
+        return (
+            self.in_infra_vms and
+            self.sidebar.vmstemplates.tree.currently_selected == 'All VMs & Templates' and
+            self.entities.title.text == 'All VMs & Templates')
+    toolbar = View.nested(VMToolbar)
+    sidebar = View.nested(VmsTemplatesAccordion)
+    including_entities = View.include(VMEntities, use_parent=True)
+
+
+class VmTemplatesAllForProviderView(InfraVMView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_infra_vms and
+            self.entities.title.text == 'All VMs & Templates' and
+            self.entities.title.text == 'VM or Templates under Provider  "{}"'
+            .format(self.context['object'].provider.name))
+    toolbar = View.nested(VMToolbar)
+    sidebar = View.nested(VmsTemplatesAccordion)
+    including_entities = View.include(VMEntities, use_parent=True)
+
+
+class VmsOnlyAllView(InfraVMView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_infra_vms and
+            self.sidebar.vms.tree.currently_selected == 'All VMs' and
+            self.entities.title.text == 'All VMs')
+    toolbar = View.nested(VMToolbar)
+    sidebar = View.nested(VmsTemplatesAccordion)
+    including_entities = View.include(VMEntities, use_parent=True)
+
+
+class TemplatesOnlyAllView(InfraVMView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_infra_vms and
+            self.sidebar.templates.tree.currently_selected == 'All Templates' and
+            self.entities.title.text == 'All Templates')
+    toolbar = View.nested(VMToolbar)
+    sidebar = View.nested(VmsTemplatesAccordion)
+    including_entities = View.include(VMEntities, use_parent=True)
+
+
+class InfraVmSummaryView(VMDetailsEntities):
+    operating_ranges = SummaryTable(title="Normal Operating Ranges (over 30 days)")
+    datastore_allocation = SummaryTable(title="Datastore Allocation Summary")
+    datastore_usage = SummaryTable(title="Datastore Actual Usage Summary")
+
+
+class InfraVmDetailsView(InfraVMView):
+    title = Text('#explorer_title_text')
+    toolbar = ConditionalSwitchableView(reference='entities.title')
+
+    @toolbar.register(lambda title: "VM and Instance" in title)
+    class VmsToolbar(InfraVmDetailsToolbar):
+        pass
+
+    @toolbar.register(lambda title: "VM Template and Image" in title)
+    class TemplatesToolbar(InfraVmTemplatesGenericDetailsToolbar):
+        pass
+    sidebar = View.nested(VmsTemplatesAccordion)
+    entities = View.nested(InfraVmSummaryView)
+
+    @property
+    def is_displayed(self):
+        expected_name = self.context['object'].name
+        expected_provider = self.context['object'].provider.name
+        try:
+            relationship_provider_name = self.entities.relationships.get_text_of('Infrastructure '
+                                                                                 'Provider')
+        except NameError:
+            if self.sidebar.vmstemplates.tree.currently_selected[-1] in ['<Archived>',
+                                                                         '<Orphaned>']:
+                return (
+                    self.in_infra_vms and
+                    self.entities.title.text == 'VM and Instance "{}"'.format(expected_name))
+            logger.warning('No "Infrastructure Provider" Relationship, VM details view not '
+                           'displayed')
+            return False
+        return (
+            self.in_infra_vms and
+            self.entities.title.text == 'VM and Instance "{}"'.format(expected_name) and
+            relationship_provider_name == expected_provider)
 
 
 class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
     def is_displayed(self):
-        return self.logged_in_as_current_user and \
+        return (
+            self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Compute', 'Infrastructure',
-                                                   '/vm_infra/explorer'] and \
-            super(TimelinesView, self).is_displayed
+                                                   '/vm_infra/explorer'] and
+            super(TimelinesView, self).is_displayed)
 
 
 class InfraVmReconfigureView(BaseLoggedInPage):
@@ -149,6 +266,48 @@ class InfraVmReconfigureView(BaseLoggedInPage):
 
     # The page doesn't contain enough info to ensure that it's the right VM -> always navigate
     is_displayed = False
+
+
+class MigrateView(BaseLoggedInPage):
+    title = Text('#explorer_title_text')
+
+    @View.nested
+    class form(View):  # noqa
+        submit = Button('Submit')
+        cancel = Button('Cancel')
+
+        @View.nested
+        class request(Tab):  # noqa
+            TAB_NAME = 'Request'
+            email = WInput(name='requester__owner_email')
+            first_name = WInput(name='requester__owner_first_name')
+            last_name = WInput(name='requester__owner_last_name')
+            notes = WInput(name='requester__request_notes')
+            manager_name = WInput(name='requester__owner_manager')
+
+        @View.nested
+        class environment(Tab):  # noqa
+            TAB_NAME = 'Environment'
+            # Infra
+            datacenter = BootstrapSelect('environment__placement_dc_name')
+            cluster = BootstrapSelect('environment__placement_cluster_name')
+            resource_pool = BootstrapSelect('environment__placement_rp_name')
+            folder = BootstrapSelect('environment__placement_folder_name')
+            host_filter = BootstrapSelect('environment__host_filter')
+            host_name = Table('//div[@id="prov_host_div"]/table')
+            datastore_filter = BootstrapSelect('environment__ds_filter')
+            datastore_name = Table('//div[@id="prov_ds_div"]/table')
+
+        @View.nested
+        class schedule(Tab):  # noqa
+            TAB_NAME = 'Schedule'
+            # TODO radio widget #
+            # schedule_type = RadioWidget('schedule__schedule_type')
+
+    @property
+    def is_displayed(self):
+        # Nothing is shown
+        return False
 
 
 class VMDisk(
@@ -216,8 +375,9 @@ class VMConfiguration(Pretty):
         self._load()
 
     def __eq__(self, other):
-        return (self.hw == other.hw) and (self.num_disks == other.num_disks) and \
-            all(disk in other.disks for disk in self.disks)
+        return (
+            (self.hw == other.hw) and (self.num_disks == other.num_disks) and
+            all(disk in other.disks for disk in self.disks))
 
     def _load(self):
         """Loads the configuration from the VM object's appliance (through DB)
@@ -315,8 +475,8 @@ class VMConfiguration(Pretty):
             if getattr(self.hw, key) != getattr(other_configuration.hw, key):
                 changes[key] = str(getattr(other_configuration.hw, key))
                 changes['cpu'] = True
-        if self.hw.mem_size != other_configuration.hw.mem_size \
-                or self.hw.mem_size_unit != other_configuration.hw.mem_size_unit:
+        if (self.hw.mem_size != other_configuration.hw.mem_size or
+                self.hw.mem_size_unit != other_configuration.hw.mem_size_unit):
             changes['memory'] = True
             changes['mem_size'] = other_configuration.hw.mem_size
             changes['mem_size_unit'] = other_configuration.hw.mem_size_unit
@@ -457,6 +617,7 @@ class Vm(VM):
 
     ALL_LIST_LOCATION = "infra_vms"
     TO_OPEN_EDIT = "Edit this VM"
+    TO_OPEN_RECONFIGURE = "Reconfigure this VM"
     TO_RETIRE = "Retire this VM"
     VM_TYPE = "Virtual Machine"
 
@@ -966,22 +1127,18 @@ def get_number_of_vms(do_not_navigate=False):
 @navigator.register(Template, 'All')
 @navigator.register(Vm, 'All')
 class VmAllWithTemplates(CFMENavigateStep):
+    VIEW = VmsTemplatesAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
-        accordion.tree('VMs & Templates', 'All VMs & Templates')
-
-    def resetter(self, *args, **kwargs):
-        reset_page()
-
-    def am_i_here(self, *args, **kwargs):
-        return match_page(summary='All VMs & Templates')
+    def step(self):
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Virtual Machines')
+        self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
 
 
 @navigator.register(Template, 'AllForProvider')
 @navigator.register(Vm, 'AllForProvider')
 class VmAllWithTemplatesForProvider(CFMENavigateStep):
+    VIEW = VmTemplatesAllForProviderView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
@@ -991,84 +1148,7 @@ class VmAllWithTemplatesForProvider(CFMENavigateStep):
             provider = self.obj.provider.name
         else:
             raise DestinationNotFound("the destination isn't found")
-        accordion.tree('VMs & Templates', 'All VMs & Templates', provider)
-
-    def resetter(self, *args, **kwargs):
-        reset_page()
-
-    def am_i_here(self, *args, **kwargs):
-        if 'provider' in kwargs:
-            provider = kwargs['provider'].name
-        elif self.obj.provider:
-            provider = self.obj.provider.name
-        else:
-            raise DestinationNotFound("the destination isn't found")
-        return match_page(summary='VM or Templates under Provider "{}"'.format(provider))
-
-
-@navigator.register(Template, 'AllForDatacenter')
-@navigator.register(Vm, 'AllForDatacenter')
-class VmAllWithTemplatesForDatacenter(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self, *args, **kwargs):
-        if ('provider' in kwargs or self.obj.provider) and \
-           ('datacenter_name' in kwargs or self.obj.datacenter):
-            # todo: to obtain datacenter from db (ems_folders)
-            # currently, it's unclear how it is tied up with vms
-            try:
-                provider = kwargs['provider'].name
-            except KeyError:
-                provider = self.obj.provider.name
-            try:
-                datacenter = kwargs['datacenter_name']
-            except KeyError:
-                datacenter = self.obj.datacenter
-        else:
-            raise DestinationNotFound("the destination isn't found")
-        accordion.tree('VMs & Templates', 'All VMs & Templates', provider, datacenter)
-
-    def resetter(self, *args, **kwargs):
-        reset_page()
-
-    def am_i_here(self, *args, **kwargs):
-        if 'datacenter_name' in kwargs:
-            datacenter = kwargs['datacenter_name']
-        elif self.obj.datacenter:
-            datacenter = self.obj.datacenter
-        else:
-            raise DestinationNotFound("the destination isn't found")
-        return match_page(summary='VM or Templates under Folder "{}"'.format(datacenter))
-
-
-@navigator.register(Template, 'AllOrphaned')
-@navigator.register(Vm, 'AllOrphaned')
-class VmAllWithTemplatesOrphaned(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self, *args, **kwargs):
-        accordion.tree('VMs & Templates', 'All VMs & Templates', '<Orphaned>')
-
-    def resetter(self, *args, **kwargs):
-        reset_page()
-
-    def am_i_here(self, *args, **kwargs):
-            return match_page(summary='Orphaned VM or Templates')
-
-
-@navigator.register(Template, 'AllArchived')
-@navigator.register(Vm, 'AllArchived')
-class VmAllWithTemplatesArchived(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self, *args, **kwargs):
-        accordion.tree('VMs & Templates', 'All VMs & Templates', '<Archived>')
-
-    def resetter(self, *args, **kwargs):
-        reset_page()
-
-    def am_i_here(self, *args, **kwargs):
-            return match_page(summary='Archived VM or Templates')
+        self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates', provider)
 
 
 @navigator.register(Template, 'Details')
@@ -1077,113 +1157,100 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def step(self, *args, **kwargs):
-        sel.click(self.obj.find_quadicon(do_not_navigate=True))
+    def step(self):
+        self.prerequisite_view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
+        try:
+            entity_item = self.prerequisite_view.entities.get_entity(by_name=self.obj.name)
+        except ItemNotFound:
+            raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
+                                       format(self.obj.name))
+        entity_item.click()
 
-    def am_i_here(self, *args, **kwargs):
-            return match_page(summary='VM and Instance "{}"'.format(self.obj.name))
+    def resetter(self, *args, **kwargs):
+        self.view.toolbar.reload.click()
 
 
 @navigator.register(Vm, 'VMsOnly')
 class VmAll(CFMENavigateStep):
+    VIEW = VmsOnlyAllView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        vms = partial(accordion.tree, 'VMs', 'All VMs')
         if 'filter_folder' not in kwargs:
-            vms()
+            self.view.sidebar.vms.tree.click_path('All VMs')
         elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            vms(kwargs['filter_folder'], kwargs['filter_name'])
+            self.view.sidebar.vms.tree.click_path('All VMs', kwargs['filter_folder'],
+            kwargs['filter_name'])
         else:
             raise DestinationNotFound("the destination isn't found")
-
-    def resetter(self, *args, **kwargs):
-        reset_page()
-
-    def am_i_here(self, *args, **kwargs):
-        if 'filter_folder' not in kwargs:
-            return match_page(summary='All VMs')
-        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            return match_page(summary='All Virtual Machines - '
-                                      'Filtered by "{}"'.format(kwargs['filter_name']))
 
 
 @navigator.register(Vm, 'VMsOnlyDetails')
 class VmDetails(CFMENavigateStep):
+    VIEW = InfraVmDetailsView
     prerequisite = NavigateToSibling('VMsOnly')
 
     def step(self, *args, **kwargs):
-        sel.click(self.obj.find_quadicon(do_not_navigate=True))
+        try:
+            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name)
+        except ItemNotFound:
+            raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
+                                       format(self.obj.name))
+        row.click()
 
-    def am_i_here(self, *args, **kwargs):
-        return match_page(summary='Virtual Machine "{}"'.format(self.obj.name))
+    def resetter(self, *args, **kwargs):
+        self.view.toolbar.reload.click()
 
 
 @navigator.register(Vm, 'Migrate')
 class VmMigrate(CFMENavigateStep):
-    prerequisite = NavigateToSibling('VMsOnlyDetails')
+    VIEW = MigrateView
+    prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        lcl_btn("Migrate this VM")
-
-    def am_i_here(self, *args, **kwargs):
-        return match_page(summary='Migrate Virtual Machine')
+        self.prerequisite_view.toolbar.lifecycle.item_select("Migrate this VM")
 
 
 @navigator.register(Vm, 'Clone')
 class VmClone(CFMENavigateStep):
-    prerequisite = NavigateToSibling('VMsOnlyDetails')
+    VIEW = ProvisionView
+    prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        lcl_btn("Clone this VM")
+        self.prerequisite_view.toolbar.lifecycle.item_select("Clone this VM")
 
-    def am_i_here(self, *args, **kwargs):
-        return match_page(summary='Clone Virtual Machine')
+
+@navigator.register(Vm, 'SetRetirement')
+class SetRetirement(CFMENavigateStep):
+    VIEW = RetirementView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.lifecycle.item_select('Set Retirement Date')
 
 
 @navigator.register(Template, 'TemplatesOnly')
 class TemplatesAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
-        templates = partial(accordion.tree, 'Templates', 'All Templates')
-        if 'filter_folder' not in kwargs:
-            templates()
-        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            templates(kwargs['filter_folder'], kwargs['filter_name'])
-        else:
-            raise DestinationNotFound("the destination isn't found")
-
-    def resetter(self, *args, **kwargs):
-        reset_page()
-
-    def am_i_here(self, *args, **kwargs):
-        return match_page(summary='Template "{}"'.format(self.obj.name))
-
-
-@navigator.register(Vm, 'ProvisionVM')
-class ProvisionVM(CFMENavigateStep):
+    VIEW = TemplatesOnlyAllView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
-        lcl_btn("Provision VMs")
-
-        # choosing template and going further
-        template_select_form.template_table._update_cache()
-        template = template_select_form.template_table.find_row_by_cells({
-            'Name': self.obj.template_name,
-            'Provider': self.obj.provider.name
-        })
-        if template:
-            sel.click(template)
-            # In order to mitigate the sometimes very long spinner timeout, raise the timeout
-            with sel.ajax_timeout(90):
-                sel.click(form_buttons.FormButton("Continue", force_click=True))
-
+        if 'filter_folder' not in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates')
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            self.view.sidebar.templates.tree.click_path('All Templates', kwargs['filter_folder'],
+                                                        kwargs['filter_name'])
         else:
-            raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
-                self.obj.template_name, self.obj.provider.key))
+            raise DestinationNotFound("the destination isn't found")
+
+
+@navigator.register(Vm, 'Provision')
+class ProvisionVM(CFMENavigateStep):
+    VIEW = ProvisionView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.lifecycle.item_select('Provision VMs')
 
 
 @navigator.register(Vm, 'Timelines')
@@ -1192,7 +1259,7 @@ class Timelines(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Timelines')
+        self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
 @navigator.register(Vm, 'Reconfigure')
@@ -1202,6 +1269,15 @@ class VmReconfigure(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this VM')
+
+
+@navigator.register(Vm, 'Edit')
+class VmEdit(CFMENavigateStep):
+    VIEW = EditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this VM')
 
 
 @navigator.register(Vm, 'EditManagementEngineRelationship')

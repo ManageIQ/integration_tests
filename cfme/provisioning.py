@@ -169,7 +169,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
                        smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
     vm = Vm(name=vm_name, provider=provider, template_name=template_name)
-    navigate_to(vm, 'ProvisionVM')
+    navigate_to(vm, 'Provision')
 
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     provisioning_data.update({
