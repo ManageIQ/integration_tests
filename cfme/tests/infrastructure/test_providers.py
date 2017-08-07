@@ -228,7 +228,8 @@ def test_provider_crud(provider):
 @test_requirements.provider_discovery
 @pytest.mark.parametrize('verify_tls', [False, True], ids=['no_tls', 'tls'])
 @pytest.mark.uncollectif(lambda provider:
-    not provider.one_of(RHEVMProvider) and not provider.data.get('verify_tls'))
+    not (provider.one_of(RHEVMProvider) and
+         provider.endpoints.get('default').__dict__.get('verify_tls')))
 def test_provider_rhv_create_delete_tls(request, provider, verify_tls):
     """Tests RHV provider creation with and without TLS encryption
 
