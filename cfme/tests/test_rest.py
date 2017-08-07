@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
+
+import random
+
 import pytest
 import fauxfactory
-from utils import error
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
 from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
+from cfme.rest.gen_data import vm as _vm
 from fixtures.provider import setup_one_or_skip
-from utils.rest import assert_response
+from utils import error
+from utils.blockers import BZ
 from utils.providers import ProviderFilter
+from utils.rest import assert_response
 from utils.version import current_version
 from utils.wait import wait_for, wait_for_decorator
-from utils.blockers import BZ
 
 
 pytestmark = [test_requirements.rest]
@@ -420,6 +423,42 @@ def test_sorting_by_attributes(appliance):
     for resource in response_desc['resources']:
         assert resource['id'] < id_last
         id_last = resource['id']
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+@pytest.mark.parametrize('vendor', ['Microsoft', 'Redhat', 'Vmware'])
+def test_collection_class_valid(appliance, a_provider, vendor):
+    """Tests that it's possible to query using collection_class.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = appliance.rest_api.collections.vms
+    resource_type = collection[0].type
+    tested_type = 'ManageIQ::Providers::{}::InfraManager::Vm'.format(vendor)
+
+    response = collection.query_string(collection_class=tested_type)
+    if resource_type == tested_type:
+        assert response.count > 0
+
+    # all returned entities must have the same type
+    if response.count:
+        rand_num = 5 if response.count >= 5 else response.count
+        rand_entities = random.sample(response, rand_num)
+        for entity in rand_entities:
+            assert entity.type == tested_type
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_collection_class_invalid(appliance):
+    """Tests that it's not possible to query using invalid collection_class.
+
+    Metadata:
+        test_flag: rest
+    """
+    with error.expected('Invalid collection_class'):
+        appliance.rest_api.collections.vms.query_string(
+            collection_class='ManageIQ::Providers::Nonexistent::Vm')
 
 
 class TestBulkQueryRESTAPI(object):
