@@ -288,14 +288,15 @@ class Add(CFMENavigateStep):
         }))
 
 
-class ProviderDetailsView(BaseLoggedInPage):
+class LoggingableView(View):
+
     monitor = Dropdown('Monitoring')
 
-    @property
-    def is_displayed(self):
-        return match_page(summary="{} (Summary)".format(self.obj.name))
-
     def get_logging_url(self):
+
+        def report_kibana_failure():
+            raise RuntimeError("Kibana not found in the window title or content")
+
         browser_instance = browser()
 
         all_windows_before = browser_instance.window_handles
@@ -315,9 +316,22 @@ class ProviderDetailsView(BaseLoggedInPage):
 
         logging_url = browser_instance.current_url
 
+        wait_for(lambda: "kibana" in
+                         browser_instance.title.lower() + " " +
+                         browser_instance.page_source.lower(),
+                 fail_func=report_kibana_failure, num_sec=60, delay=5)
+
+        browser_instance.close()
         browser_instance.switch_to_window(appliance_window)
 
         return logging_url
+
+
+class ProviderDetailsView(BaseLoggedInPage, LoggingableView):
+
+    @property
+    def is_displayed(self):
+        return match_page(summary="{} (Summary)".format(self.obj.name))
 
 
 @navigator.register(ContainersProvider, 'Details')
