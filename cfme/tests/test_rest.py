@@ -70,6 +70,11 @@ COLLECTIONS_ADDED_IN_58 = {
 }
 
 
+COLLECTIONS_REMOVED_IN_59 = {
+    "arbitration_settings", "arbitration_profiles", "virtual_templates", "arbitration_rules",
+}
+
+
 COLLECTIONS_ALL = {
     "actions", "alert_definitions", "alerts", "arbitration_profiles",
     "arbitration_rules", "arbitration_settings", "authentications", "automate",
@@ -98,7 +103,8 @@ COLLECTIONS_OMMITED = {"settings"}
 @pytest.mark.uncollectif(
     lambda collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8")
+        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
 )
 def test_query_simple_collections(appliance, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
@@ -123,8 +129,10 @@ COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categorie
 @pytest.mark.uncollectif(
     lambda collection_name:
         (collection_name in COLLECTIONS_OMMITED) or
-        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8")
+        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
 )
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:15754'])
 def test_select_attributes(appliance, collection_name):
     """Tests that it's possible to limit returned attributes.
 
