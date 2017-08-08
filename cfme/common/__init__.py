@@ -203,15 +203,18 @@ class WidgetasticTaggable(object):
             category = tag.category.display_name
             tag = tag.display_name
         try:
-            view.fill({
+            updated = view.fill({
                 "tag_category": '{} *'.format(category),
                 "tag_name": tag
             })
         except NoSuchElementException:
-            view.fill({
+            updated = view.fill({
                 "tag_category": category,
                 "tag_name": tag
             })
+        # In case if field is not updated cancel the edition
+        if not updated:
+            cancel = True
         self._tags_action(view, cancel, reset)
 
     def edit_tags(self, tags):
