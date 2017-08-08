@@ -44,17 +44,27 @@ compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
 
 def pytest_addoption(parser):
     """Adds command line options."""
-    parser.getgroup('cfme')
-    parser.addoption("--generate-xmls", action="store_true", default=False,
+    group = parser.getgroup(
+        "Polarion importers: options related to creation of XML files for Polarion importers")
+    group.addoption("--generate-xmls", action="store_true", default=False,
         help="generate the xml files for import")
-    parser.addoption("--generate-legacy-xmls", action="store_true", default=False,
+    group.addoption("--generate-legacy-xmls", action="store_true", default=False,
         help="generate the legacy xml files for import")
-    parser.addoption("--xmls-testrun-id",
+    group.addoption("--xmls-testrun-id",
         help="testrun id")
-    parser.addoption("--xmls-testrun-title",
+    group.addoption("--xmls-testrun-title",
         help="testrun title")
-    parser.addoption("--xmls-no-blacklist", action="store_true", default=False,
+    group.addoption("--xmls-no-blacklist", action="store_true", default=False,
         help="don't filter testcases using the built-in blacklist")
+
+
+def get_polarion_name(item):
+    """Gets Polarion test case name out of the Node ID."""
+    param_legacy = (item.nodeid[item.nodeid.find('::') + 2:]
+              .replace('::()', '')
+              .replace('::', '.'))
+    param_strip = re.sub(r'\[.*\]', '', param_legacy)
+    return (param_legacy, param_strip)
 
 
 def testcase_record(
@@ -99,7 +109,8 @@ def testcase_record(
 
 def get_testcase_data(tests, test_names, item, legacy=False):
     """Gets data for single testcase entry."""
-    name = re.sub(r'\[.*\]', '', item.name) if not legacy else item.name
+    legacy_name, parametrized_name = get_polarion_name(item)
+    name = legacy_name if legacy else parametrized_name
     if name in test_names:
         return
 
@@ -177,14 +188,15 @@ def testresult_record(test_name, parameters=None, result=None):
 
 def get_testresult_data(tests, test_names, item, legacy=False):
     """Gets data for single test result entry."""
+    legacy_name, parametrized_name = get_polarion_name(item)
     if legacy:
-        if item.name in test_names:
+        name = legacy_name
+        if name in test_names:
             return
-        name = item.name
         param_dict = None
         test_names.append(name)
     else:
-        name = re.sub(r'\[.*\]', '', item.name)
+        name = parametrized_name
         try:
             params = item.callspec.params
             param_dict = {p: _get_name(v) for p, v in params.iteritems()}
