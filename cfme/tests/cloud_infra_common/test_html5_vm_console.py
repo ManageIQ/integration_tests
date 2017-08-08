@@ -6,6 +6,7 @@ import time
 import re
 
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.common.provider import CloudInfraProvider
 from cfme.configure.configuration import VMwareConsoleSupport
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure import configuration
@@ -14,12 +15,14 @@ from utils import testgen, version, ssh
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from utils.conf import credentials
+from utils.providers import ProviderFilter
 from wait_for import wait_for
 
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 pytest_generate_tests = testgen.generate(
-    [OpenStackProvider, VMwareProvider],
+    gen_func=testgen.providers,
+    filters=[ProviderFilter(classes=[CloudInfraProvider], required_flags=['html5_console'])],
     scope='module'
 )
 

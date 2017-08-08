@@ -7,13 +7,13 @@ import base64
 import re
 import tempfile
 
+from cfme.exceptions import ItemNotFound
 from PIL import Image, ImageFilter
 from pytesseract import image_to_string
+from selenium.webdriver.common.keys import Keys
 from utils.log import logger
 from utils.pretty import Pretty
 from wait_for import wait_for, TimedOutError
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.keys import Keys
 
 
 class VMConsole(Pretty):
@@ -39,7 +39,7 @@ class VMConsole(Pretty):
         # due to an exception being thrown.
         try:
             text = self.provider.get_console_connection_status()
-        except NoSuchElementException:
+        except ItemNotFound:
             logger.exception('Could not find banner element.')
             return None
         finally:
@@ -48,7 +48,7 @@ class VMConsole(Pretty):
         logger.info('Read following text from console banner: %s', text)
         return text
 
-    def get_screen(self):
+    def get_screen(self, timeout=15):
         """
         Retrieve the bit map from the canvas widget that represents the console screen.
 
@@ -62,10 +62,26 @@ class VMConsole(Pretty):
             https://qxf2.com/blog/selenium-html5-canvas-verify-what-was-drawn/
             https://stackoverflow.com/questions/38316402/how-to-save-a-canvas-as-png-in-selenium
         """
+        # Internal function to use in wait_for().   We need to try to get the
+        # canvas element within a try-catch, that is in within a wait_for() so
+        # we can handle it not showing up right away as it is wont to do on
+        # at least RHV providers.
+        def _get_canvas_element(provider):
+            try:
+                canvas = provider.get_remote_console_canvas()
+            except ItemNotFound:
+                logger.exception('Could not find canvas element.')
+                return False
+
+            return canvas
+
         self.switch_to_console()
 
         # Get the canvas element
-        canvas = self.provider.get_remote_console_canvas()
+        canvas, wait = wait_for(func=_get_canvas_element, func_args=[self.provider],
+                          delay=1, handle_exceptions=True,
+                          num_sec=timeout)
+        logger.info("canvas: {}\n".format(canvas))
 
         # Now run some java script to get the contents of the canvas element
         # base 64 encoded.
@@ -147,7 +163,7 @@ class VMConsole(Pretty):
         logger.info("Switching to console: window handle = {}".format(self.console_handle))
         self.selenium.switch_to_window(self.console_handle)
 
-    def wait_for_connect(self, timeout=15):
+    def wait_for_connect(self, timeout=30):
         """Wait for as long as the specified/default timeout for the console to be connected."""
         try:
             logger.info('Waiting for console connection (timeout={})'.format(timeout))
