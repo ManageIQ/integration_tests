@@ -10,6 +10,7 @@ from utils.log import logger
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 
 
 pytestmark = [
@@ -173,6 +174,8 @@ def test_suspend_vm_rest(appliance, vm_obj, verify_vm_running, soft_assert, from
         soft_assert(verify_vm_power_state(vm, vm_obj.STATE_SUSPENDED), "vm not suspended")
 
 
+@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider),
+                         reason='Not supported for RHV provider')
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_reset_vm_rest(vm_obj, verify_vm_running, from_detail, appliance):
     """
