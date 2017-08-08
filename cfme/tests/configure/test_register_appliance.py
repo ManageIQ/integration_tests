@@ -1,7 +1,6 @@
 import pytest
 
-from cfme.configure import red_hat_updates
-from cfme.web_ui import InfoBlock
+from cfme.configure.configuration.region_settings import RedHatUpdates
 from utils import conf, version
 from utils.testgen import parametrize
 from utils.wait import wait_for
@@ -77,8 +76,7 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
         proxy_url = None
         proxy_username = None
         proxy_password = None
-
-    red_hat_updates.update_registration(
+    red_hat_updates = RedHatUpdates(
         service=reg_method,
         url=reg_data['url'],
         username=conf.credentials[reg_method]['username'],
@@ -89,9 +87,9 @@ def test_rh_creds_validation(request, reg_method, reg_data, proxy_url, proxy_cre
         proxy_url=proxy_url,
         proxy_username=proxy_username,
         proxy_password=proxy_password,
-        set_default_repository=set_default_repo,
-        cancel=True
+        set_default_repository=set_default_repo
     )
+    red_hat_updates.update_registration(cancel=True)
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -112,8 +110,7 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         proxy_url = None
         proxy_username = None
         proxy_password = None
-
-    red_hat_updates.update_registration(
+    red_hat_updates = RedHatUpdates(
         service=reg_method,
         url=reg_data['url'],
         username=conf.credentials[reg_method]['username'],
@@ -124,13 +121,11 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         proxy_url=proxy_url,
         proxy_username=proxy_username,
         proxy_password=proxy_password,
-        set_default_repository=set_default_repo,
-        # Satellite 6 registration requires validation to be able to fetch organization
-        validate=False if reg_method != 'sat6' else True
+        set_default_repository=set_default_repo
     )
+    red_hat_updates.update_registration(validate=False if reg_method != 'sat6' else True)
 
-    used_repo_or_channel = InfoBlock(
-        'Red Hat Software Updates', 'Repository Name(s)').text
+    used_repo_or_channel = red_hat_updates.get_repository_names()
 
     red_hat_updates.register_appliances()  # Register all
 
