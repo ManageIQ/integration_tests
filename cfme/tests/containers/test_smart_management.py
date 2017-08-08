@@ -3,6 +3,7 @@ import random
 import pytest
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.version import current_version
 from cfme.web_ui import toolbar, AngularSelect, form_buttons
 from cfme.configure.configuration import Tag
@@ -24,6 +25,7 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
+
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
@@ -68,6 +70,9 @@ def wait_for_tag(obj_inst):
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
+@pytest.mark.meta(blockers=[BZ(1479412,
+                               forced_streams=['5.7'],
+                               unblock=lambda test_item: test_item.obj != Container)])
 def test_smart_management_add_tag(provider, test_item):
 
     # validate no tag set to project
