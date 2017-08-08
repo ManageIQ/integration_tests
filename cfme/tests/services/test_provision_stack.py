@@ -245,7 +245,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     assert 'Provisioned Successfully' in row.last_message.text
 
     stack = Stack(stack_data['stack_name'], provider=provider)
-    stack.wait_for_appear()
+    stack.wait_for_exists()
     stack.retire_stack()
 
     @request.addfinalizer

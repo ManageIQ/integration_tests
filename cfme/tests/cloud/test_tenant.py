@@ -40,9 +40,7 @@ def test_tenant_crud(tenant):
     tenant.create(cancel=True)
     assert not tenant.exists
 
-    tenant.create()
-
-    tenant.wait_for_appear()
+    tenant.create(wait=True)
     assert tenant.exists
 
     with update(tenant):
@@ -53,8 +51,7 @@ def test_tenant_crud(tenant):
     tenant.delete(from_details=False, cancel=True)
     assert tenant.exists
 
-    tenant.delete(from_details=True, cancel=False)
     # BZ#1411112 Delete/update cloud tenant
     #  not reflected in UI in cloud tenant list
-    tenant.provider.refresh_provider_relationships()
+    tenant.delete(from_details=True, cancel=False, wait=True)
     assert not tenant.exists
