@@ -1,0 +1,203 @@
+# -*- coding: utf-8 -*-
+"""
+Module containing classes with common behaviour for consoles of both VMs and Instances of all types.
+"""
+
+import base64
+import re
+import tempfile
+
+from PIL import Image, ImageFilter
+from pytesseract import image_to_string
+from utils.log import logger
+from utils.pretty import Pretty
+from wait_for import wait_for, TimedOutError
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.keys import Keys
+
+
+class VMConsole(Pretty):
+    """Class to manage the VM Console.   Presently, only support HTML5 Console."""
+
+    pretty_attrs = ['appliance_handle', 'browser', 'console_handle', 'name']
+
+    def __init__(self, vm, console_handle, appliance_handle):
+        self.name = vm.name
+        self.selenium = vm.appliance.browser.widgetastic.selenium
+        self.console_handle = console_handle
+        self.appliance_handle = appliance_handle
+        self.provider = vm.provider
+
+    ###
+    # Methods
+    #
+    def get_banner(self):
+        """Get the text of the banner above the console screen."""
+        self.switch_to_console()
+        # We know the widget may or may not be available right away
+        # so we do this in a try-catch to ensure the code is not stopped
+        # due to an exception being thrown.
+        try:
+            text = self.provider.get_console_connection_status()
+        except NoSuchElementException:
+            logger.exception('Could not find banner element.')
+            return None
+        finally:
+            self.switch_to_appliance()
+
+        logger.info('Read following text from console banner: %s', text)
+        return text
+
+    def get_screen(self):
+        """
+        Retrieve the bit map from the canvas widget that represents the console screen.
+
+        Returns it as a binary string.
+
+        Implementation:
+        The canvas tag has a method toDataURL() which one can use in javascript to
+        obtain the canvas image  base64 encoded.   Examples of how to do this can be
+        seen here:
+
+            https://qxf2.com/blog/selenium-html5-canvas-verify-what-was-drawn/
+            https://stackoverflow.com/questions/38316402/how-to-save-a-canvas-as-png-in-selenium
+        """
+        self.switch_to_console()
+
+        # Get the canvas element
+        canvas = self.provider.get_remote_console_canvas()
+
+        # Now run some java script to get the contents of the canvas element
+        # base 64 encoded.
+        image_base64_url = self.selenium.execute_script(
+            "return arguments[0].toDataURL('image/jpeg',1);",
+            canvas
+        )
+
+        # The results will look like:
+        #
+        #   data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAABkCAYAAABwx8J9AA...
+        #
+        # So parse out the data from the non image data from the URL:
+        image_base64 = image_base64_url.split(",")[1]
+
+        # Now convert to binary:
+        image_jpeg = base64.b64decode(image_base64)
+
+        self.switch_to_appliance()
+        return image_jpeg
+
+    def get_screen_text(self):
+        """
+        Return the text from a text console.
+
+        Uses OCR to scrape the text from the console image taken at the time of the call.
+        """
+        image_str = self.get_screen()
+
+        # Write the image string to a file as pytesseract requires
+        # a file, and doesn't take a string.
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpeg')
+        tmp_file.write(image_str)
+        tmp_file.flush()
+        tmp_file_name = tmp_file.name
+        # Open Image file, resize it to high resolution, sharpen it for clearer text
+        # and then run image_to_string operation which returns unicode that needs to
+        # be converted to utf-8 which gives us text [typr(text) == 'str']
+        # higher resolution allows tesseract to recognize text correctly
+        text = (image_to_string(((Image.open(tmp_file_name)).resize((7680, 4320),
+         Image.ANTIALIAS)).filter(ImageFilter.SHARPEN), lang='eng',
+         config='--user-words eng.user-words')).encode('utf-8')
+        tmp_file.close()
+
+        logger.info('screen text:{}'.format(text))
+        return text
+
+    def is_connected(self):
+        """Wait for the banner on the console to say the console is connected."""
+        banner = self.get_banner()
+        if banner is None:
+            return False
+        return re.match('Connected', banner) is not None
+
+    def send_keys(self, text):
+        """Send text to the console."""
+        self.switch_to_console()
+        canvas = self.provider.get_remote_console_canvas()
+        canvas.send_keys(text)
+        canvas.send_keys(Keys.ENTER)
+        logger.info("Sending following Keys to Console {}".format(text))
+        self.switch_to_appliance()
+
+    def send_ctrl_alt_delete(self):
+        """Press the ctrl-alt-delete button in the console tab."""
+        self.switch_to_console()
+        ctrl_alt_del_btn = self.provider.get_console_ctrl_alt_del_btn()
+        logger.info("Sending following Keys to Console CTRL+ALT+DEL")
+        ctrl_alt_del_btn.click()
+        self.switch_to_appliance()
+
+    def switch_to_appliance(self):
+        """Switch focus to appliance tab/window."""
+        logger.info("Switching to appliance: window handle = {}".format(self.appliance_handle))
+        self.selenium.switch_to_window(self.appliance_handle)
+
+    def switch_to_console(self):
+        """Switch focus to console tab/window."""
+        logger.info("Switching to console: window handle = {}".format(self.console_handle))
+        self.selenium.switch_to_window(self.console_handle)
+
+    def wait_for_connect(self, timeout=15):
+        """Wait for as long as the specified/default timeout for the console to be connected."""
+        try:
+            logger.info('Waiting for console connection (timeout={})'.format(timeout))
+            wait_for(func=lambda: self.is_connected(),
+                     delay=1, handle_exceptions=True,
+                     num_sec=timeout)
+            return True
+        except TimedOutError:
+            return False
+
+    def close_console_window(self):
+        """Attempt to close Console window at the end of test."""
+        if self.console_handle is not None:
+            self.switch_to_console()
+            self.selenium.close()
+            logger.info("Browser window/tab containing Console was closed.")
+            self.switch_to_appliance()
+
+    def find_text_on_screen(self, text_to_find, current_line=False):
+        """Find particular text is present on Screen.
+
+        This function uses get_screen_text function to get string containing
+        the text on the screen and then tries to match it against the 'text_to_find'.
+
+        Args:
+            text_to_find   - This is what re.search will try to search for on screen.
+        Returns:
+            If the match is found returns True else False.
+        """
+        if current_line:
+            return re.search(text_to_find, self.get_screen_text().split('\n')[-1]) is not None
+        return re.search(text_to_find, self.get_screen_text()) is not None
+
+    def wait_for_text(self, timeout=45, text_to_find="", to_disappear=False):
+        """Wait for as long as the specified/default timeout for the 'text' to show up on screen.
+
+        Args:
+            timeout         - Wait Time before wait_for function times out.
+            text_to_find    - value passed to find_text_on_screen function
+            to_disappear    - if set to True, function will wait for text_to_find to disappear
+                          from screen.
+        """
+        if not text_to_find:
+            return None
+        try:
+            if to_disappear:
+                logger.info("Waiting for {} to disappear from screen".format(text_to_find))
+            result = wait_for(func=lambda: to_disappear != self.find_text_on_screen(text_to_find),
+                     delay=5,
+                     num_sec=timeout)
+            return result.out
+        except TimedOutError:
+            return None

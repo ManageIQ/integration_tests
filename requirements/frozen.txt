@@ -99,6 +99,7 @@ pandocfilters==1.4.1
 paramiko==2.1.2
 parsedatetime==2.4
 pathlib2==2.2.1
+pillow==4.2.0
 pbr==3.0.1
 pdfminer==20140328
 pexpect==4.2.1
@@ -125,6 +126,7 @@ Pygments==2.2.0
 PyJWT==1.5.0
 pyparsing==2.2.0
 pytest==3.0.7
+pytesseract==0.1.7
 python-bugzilla==2.1.0
 python-cinderclient==2.2.0
 python-dateutil==2.6.0
