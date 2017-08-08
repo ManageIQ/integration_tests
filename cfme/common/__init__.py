@@ -184,13 +184,16 @@ class TagPageView(BaseLoggedInPage):
 class WidgetasticTaggable(object):
     """
         This class can be inherited by any class that honors tagging.
-        Class should have 'EditTags' navigate step registered.
+        Class should have 'EditTags' navigate step registered,
+        also 'Details' view should be present with tag attribute(widget with tag
+            information on details page)
+
         This class should be used for already converted to widgetastic classes
 
         It provides functionality to assign and unassigned tags.
     """
 
-    def edit_tag(self, category=None, tag=None, cancel=False, reset=False):
+    def add_tag(self, category=None, tag=None, cancel=False, reset=False):
         """ Add tag to tested item
             Args:
                 category: category(str)
@@ -217,7 +220,7 @@ class WidgetasticTaggable(object):
             cancel = True
         self._tags_action(view, cancel, reset)
 
-    def edit_tags(self, tags):
+    def add_tags(self, tags):
         """Add multiple tags
             Args:
                 tags: pass dict with category name as key, and tag as value,
@@ -225,10 +228,10 @@ class WidgetasticTaggable(object):
         """
         if isinstance(tags, dict):
             for category, tag in tags.items():
-                self.edit_tag(category=category, tag=tag)
+                self.add_tag(category=category, tag=tag)
         elif isinstance(tags, (list, tuple)):
             for tag in tags:
-                self.edit_tag(tag=tag)
+                self.add_tag(tag=tag)
 
     def remove_tag(self, category=None, tag=None, cancel=False, reset=False):
         """ Remove tag of tested item
