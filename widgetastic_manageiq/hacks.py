@@ -10,3 +10,6 @@ class BootstrapSelectByLocator(BootstrapSelect):
     def __init__(self, parent, locator, can_hide_on_select=False, logger=None):
         BootstrapSelect.__init__(self, parent, locator, can_hide_on_select, logger)
         self.locator = locator
+
+    def __locator__(self):
+        return self.browser.element(self.locator, parent=self.parent)
