@@ -13,6 +13,7 @@ from cfme.containers.node import Node
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
+from cfme.containers.container import Container
 from utils.wait import wait_for
 
 pytestmark = [
@@ -23,10 +24,7 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1467639
-    # from cfme.containers.container import Container (add to imports)
-    # pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
+    pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
     pytest.mark.polarion('CMP-9981')(ContainersTestItem(Image, 'CMP-9981')),
