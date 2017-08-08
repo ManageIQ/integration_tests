@@ -190,68 +190,74 @@ class WidgetasticTaggable(object):
         It provides functionality to assign and unassigned tags.
     """
 
-    def edit_tag(self, tag, cancel=False, reset=False):
+    def edit_tag(self, category=None, tag=None, cancel=False, reset=False):
         """ Add tag to tested item
             Args:
-                tag: list, tuple with tag category and tag name or Tag object
+                category: category(str)
+                tag: tag(str) or Tag object
                 cancel: set True to cancel tag assigment
                 reset: set True to reset already set up tag
         """
         view = navigate_to(self, 'EditTags')
-        if isinstance(tag, (list, tuple, set)):
-            category = tag[0]
-            tag_name = tag[1]
-        else:
+        if isinstance(tag, Tag):
             category = tag.category.display_name
-            tag_name = tag.display_name
+            tag = tag.display_name
         try:
             view.fill({
                 "tag_category": '{} *'.format(category),
-                "tag_name": tag_name
+                "tag_name": tag
             })
         except NoSuchElementException:
             view.fill({
                 "tag_category": category,
-                "tag_name": tag_name
+                "tag_name": tag
             })
         self._tags_action(view, cancel, reset)
 
     def edit_tags(self, tags):
-        """Add list of tags
+        """Add multiple tags
             Args:
-                tags: List of `Tag`
+                tags: pass dict with category name as key, and tag as value,
+                     or pass list with tag objects
         """
-        for tag in tags:
-            self.edit_tag(tag=tag)
+        if isinstance(tags, dict):
+            for category, tag in tags.items():
+                self.edit_tag(category=category, tag=tag)
+        elif isinstance(tags, (list, tuple)):
+            for tag in tags:
+                self.edit_tag(tag=tag)
 
-    def remove_tag(self, tag, cancel=False, reset=False):
+    def remove_tag(self, category=None, tag=None, cancel=False, reset=False):
         """ Remove tag of tested item
                Args:
-                   tag: list, tuple with tag category and tag name or Tag object
+                   category: category(str)
+                   tag: tag(str) or Tag object
                    cancel: set True to cancel tag deletion
                    reset: set True to reset tag changes
                """
         view = navigate_to(self, 'EditTags')
-        if isinstance(tag, (list, tuple)):
-            tag_category = tag[0]
-            tag_name = tag[1]
-        else:
-            tag_category = tag.category.display_name
-            tag_name = tag.display_name
+        if isinstance(tag, Tag):
+            category = tag.category.display_name
+            tag = tag.display_name
         try:
-            row = view.tag_table.row(category="{} *".format(tag_category), assigned_value=tag_name)
+            row = view.tag_table.row(category="{} *".format(category), assigned_value=tag)
         except Exception:
-            row = view.tag_table.row(category=tag_category, assigned_value=tag_name)
+            row = view.tag_table.row(category=category, assigned_value=tag)
         row[0].click()
         self._tags_action(view, cancel, reset)
 
     def remove_tags(self, tags):
-        """Remove list of tags
+        """Remove multiple of tags
             Args:
-                tags: List of `Tag`
+                tags: pass dict with category name as key, and tag as value,
+                     or pass list with tag objects
         """
-        for tag in tags:
-            self.remove_tag(tag=tag)
+        if isinstance(tags, dict):
+            for category, tag in tags.items():
+                self.remove_tag(category=category, tag=tag)
+        elif isinstance(tags, (list, tuple)):
+            for tag in tags:
+                self.remove_tag(tag=tag)
 
     def get_tags(self, tenant="My Company Tags"):
         """ Get list of tags assigned to item
