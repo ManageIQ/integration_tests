@@ -73,8 +73,8 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("List View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        paginator.check_all()
+        paginator.uncheck_all()
 
 
 @navigator.register(Replicator, 'Details')

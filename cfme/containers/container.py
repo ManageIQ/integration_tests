@@ -112,8 +112,8 @@ class ContainerAll(CFMENavigateStep):
             self.view.Filters.Navigation.select('ALL (Default)')
         tb.select('List View')
         if paginator.page_controls_exist():
-            sel.check(paginator.check_all())
-            sel.uncheck(paginator.check_all())
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(Container, 'Details')

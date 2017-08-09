@@ -729,10 +729,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         raise NotImplementedError("This method is not implemented for given provider")
 
 
-def get_paginator_value():
-    return paginator.rec_total()
-
-
 class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     vm_name = ""
     template_name = ""

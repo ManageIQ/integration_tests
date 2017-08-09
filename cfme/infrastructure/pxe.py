@@ -753,6 +753,6 @@ def remove_all_pxe_servers():
     navigate_to(PXEServer, 'All')
     navigate_to(PXEServer, 'All')  # Yes we really do this twice.
     if sel.is_displayed(pxe_server_table_exist):
-        sel.click(pg.check_all())
+        pg.check_all()
         cfg_btn('Remove PXE Servers from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=False)

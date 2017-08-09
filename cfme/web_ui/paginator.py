@@ -6,6 +6,11 @@ from selenium.common.exceptions import NoSuchElementException
 from functools import partial
 from utils import version
 from cfme.exceptions import PaginatorException
+from widgetastic_manageiq import PaginationPane
+from utils.appliance import get_or_create_current_appliance
+
+appliance = get_or_create_current_appliance()
+new_paginator = PaginationPane(parent=appliance.browser.widgetastic)
 
 
 def _locator():
@@ -28,16 +33,21 @@ _regexp = r"{}(?P<first>\d+)-?(?P<last>\d+)? of (?P<total>\d+)\s*(?:items?)?".fo
 
 def page_controls_exist():
     """ Simple check to see if page controls exist. """
-    return sel.is_displayed(_locator() + _page_cell)
+    return new_paginator.is_displayed
 
 
 def _page_nums():
-    return sel.text(_locator() + _page_cell)
+    return new_paginator.pages_amount
 
 
 def check_all():
-    """ Returns the Check All locator."""
-    return sel.element(_locator() + _check_all)
+    """ selects all items """
+    new_paginator.check_all()
+
+
+def uncheck_all():
+    """ unselects all items """
+    new_paginator.uncheck_all()
 
 
 def is_dimmed(btn):

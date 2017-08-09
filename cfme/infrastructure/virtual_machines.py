@@ -97,8 +97,8 @@ def reset_page():
         search.ensure_normal_search_empty()
     if paginator.page_controls_exist():
         # paginator.results_per_page(1000)
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        paginator.check_all()
+        paginator.uncheck_all()
 
 
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
