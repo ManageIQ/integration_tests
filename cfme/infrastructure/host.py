@@ -19,7 +19,6 @@ from cfme.common.host_views import (
     HostTimelinesView
 )
 from cfme.exceptions import HostNotFound, ItemNotFound
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.web_ui import mixins
 from utils import conf
@@ -409,8 +408,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     def toggle_maintenance_mode(self):
         """Initiate maintenance mode"""
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Toggle Maintenance Mode')
-        sel.handle_alert()
+        view.toolbar.configuration.item_select('Toggle Maintenance Mode', handle_alert=True)
 
 
 @navigator.register(Host)
