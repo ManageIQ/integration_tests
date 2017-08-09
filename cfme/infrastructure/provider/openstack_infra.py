@@ -6,7 +6,8 @@ from wrapanapi.openstack_infra import OpenstackInfraSystem
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
-from cfme.common.provider_views import ProviderNodesView, ProviderRegisterNodesView, BeforeFillMixin
+from cfme.common.provider_views import (BeforeFillMixin, ProviderNodesView,
+                                        ProviderRegisterNodesView, ProviderScaleDownView)
 from cfme.exceptions import DestinationNotFound
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
@@ -156,3 +157,13 @@ class ProviderRegisterNodes(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Register Nodes')
+
+
+@navigator.register(OpenstackInfraProvider, 'ScaleDown')
+class ProviderScaleDown(CFMENavigateStep):
+    VIEW = ProviderScaleDownView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item_title = 'Scale this Infrastructure Provider down'
+        self.prerequisite_view.toolbar.configuration.item_select(item_title)
