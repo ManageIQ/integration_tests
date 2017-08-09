@@ -230,12 +230,11 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
         navigate_to(self, 'Details')
         # TODO - remove it later.Workaround for BZ 1452425
-        sel.click(RELOAD_LOC)
         tb.select('List View')
         wait_for(self._does_profile_exist, num_sec=300, delay=20, fail_func=sel.refresh)
         config_profiles = []
         for row in page.list_table_config_profiles.rows():
-            if self.type == 'Ansible Tower' and version.current_version() >= '5.8':
+            if self.type == 'Ansible Tower':
                 name = row['name'].text
             else:
                 name = row['Description'].text

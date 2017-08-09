@@ -42,7 +42,6 @@ def catalog():
 def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type, vlan = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
-    # dialog, element = dialog
     item_name = dialog.label
     provisioning_data = dict(
         vm_name=vm_name,

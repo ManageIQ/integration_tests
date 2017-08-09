@@ -36,7 +36,6 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture
 def config_manager(config_manager_obj):
     """ Fixture that provides a random config manager and sets it up"""
-    DefaultView.set_default_view("Configuration Management Providers", "Grid View")
     if config_manager_obj.type == "Ansible Tower":
         config_manager_obj.create(validate=True)
     else:
@@ -52,9 +51,8 @@ def catalog_item(request, config_manager, dialog, catalog):
     provisioning_data = config_manager_obj.yaml_data['provisioning_data']
     item_type, provider_type, template = map(provisioning_data.get,
                                             ('item_type', 'provider_type', 'template'))
-    item_name = dialog.element_data.get("default_text_box")
     catalog_item = CatalogItem(item_type=item_type,
-                               name=item_name,
+                               name=dialog.label,
                                description="my catalog",
                                display_in=True,
                                catalog=catalog,
