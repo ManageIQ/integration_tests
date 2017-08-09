@@ -67,7 +67,7 @@ class FlavorAllView(FlavorView):
 
     toolbar = FlavorToolBar()
     entities = FlavorEntities()
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class FlavorDetailsView(FlavorView):

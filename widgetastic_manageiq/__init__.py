@@ -1079,7 +1079,130 @@ class Paginator(Widget):
         return re.search('(\d+)\s+of\s+(\d+)', text).groups()
 
 
-class PaginationPane(View):
+class JSPaginationPane(View):
+    """ Represents Paginator Pane with js api provided by ManageIQ.
+
+    The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
+    """
+    ROOT = '//div[@id="paging_div"]'
+    check_all_items = Checkbox(locator='.//input[@type="checkbox" and @title="Select All"]')
+
+    def _invoke_cmd(self, cmd, data=None):
+        cmd_header = "sendDataWithRx({controller: 'reportDataController'"
+        cmd_body = ", action: '{cmd}'".format(cmd=cmd)
+        if data:
+            cmd_body += ", data: [{data}]".format(data=data)
+        cmd_footer = "})"
+        full_cmd = cmd_header + cmd_body + cmd_footer
+        print("executed command: {cmd}".format(cmd=full_cmd))
+        self.logger.info("executed command: {cmd}".format(cmd=full_cmd))
+        self.browser.execute_script(full_cmd)
+        # command result is always stored in this global variable
+        return self.browser.execute_script('return ManageIQ.qe.gtl.result')
+
+    @property
+    def is_displayed(self):
+        # there are cases when paging_div is shown but it is empty
+        return self.check_all_items.is_displayed
+
+    @property
+    def exists(self):
+        return self.is_displayed
+
+    def check_all(self):
+        self._invoke_cmd('select_all', "true")
+
+    def uncheck_all(self):
+        self._invoke_cmd('select_all', "false")
+
+    def sort(self, sort_by, ascending=True):
+        ascending = "true" if ascending else "false"
+        data = "{{sortBy:{val}, isAscending: {asc}}}".format(val=sort_by, asc=ascending)
+        self._invoke_cmd('set_sorting', data)
+
+    @property
+    def sorted_by(self):
+        return self._invoke_cmd('get_sorting')
+
+    @property
+    def items_per_page(self):
+        return self._invoke_cmd('get_items_per_page')
+
+    def set_items_per_page(self, value):
+        self._invoke_cmd('set_items_per_page', value)
+
+    @property
+    def cur_page(self):
+        return self._invoke_cmd('get_current_page')
+
+    @property
+    def pages_amount(self):
+        return self._invoke_cmd('get_pages_amount')
+
+    def next_page(self):
+        self._invoke_cmd('next_page')
+
+    def prev_page(self):
+        # fixme: there is a bug in js api. fix call here when it is fixed in js api
+        self._invoke_cmd('perevious_page')
+
+    def first_page(self):
+        self._invoke_cmd('first_page')
+
+    def last_page(self):
+        self._invoke_cmd('last_page')
+
+    def go_to_page(self, value):
+        self._invoke_cmd('go_to_page', value)
+
+    @property
+    def items_amount(self):
+        return len(self._invoke_cmd('get_all_items'))
+
+    def pages(self):
+        """Generator to iterate over pages, yielding after moving to the next page"""
+        if self.exists:
+            # start iterating at the first page
+            if self.cur_page != 1:
+                self.logger.debug('Resetting paginator to first page')
+                self.first_page()
+
+            # Adding 1 to pages_amount to include the last page in loop
+            for page in range(1, self.pages_amount + 1):
+                yield self.cur_page
+                if self.cur_page == self.pages_amount:
+                    # last or only page, stop looping
+                    break
+                else:
+                    self.logger.debug('Paginator advancing to next page')
+                    self.next_page()
+        else:
+            return
+
+    def find_row_on_pages(self, table, *args, **kwargs):
+        """Find first row matching filters provided by kwargs on the given table widget
+
+        Args:
+            table: Table widget object
+            args: Filters to be passed to table.row()
+            kwargs: Filters to be passed to table.row()
+        """
+        self.first_page()
+        for _ in self.pages():
+            try:
+                row = table.row(*args, **kwargs)
+            except IndexError:
+                continue
+            if not row:
+                continue
+            else:
+                return row
+        else:
+            raise NoSuchElementException('Row matching filter {} not found on table {}'
+                                         .format(kwargs, table))
+
+
+class NonJSPaginationPane(View):
     """ Represents Paginator Pane with the following controls.
 
     The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
@@ -1213,6 +1336,13 @@ class PaginationPane(View):
         else:
             raise NoSuchElementException('Row matching filter {} not found on table {}'
                                          .format(kwargs, table))
+
+
+def PaginationPane():  # noqa
+    return VersionPick({
+        Version.lowest(): NonJSPaginationPane(),
+        '5.9': JSPaginationPane(),
+    })
 
 
 class Stepper(View):
@@ -2060,7 +2190,7 @@ class EntitiesConditionalView(View):
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
 
