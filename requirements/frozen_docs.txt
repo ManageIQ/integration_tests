@@ -115,7 +115,7 @@ reg==0.11
 repoze.lru==0.6
 requests==2.17.3
 requests-ntlm==1.0.0
-riggerlib==3.0.2
+riggerlib==3.1.2
 scandir==1.5
 scp==0.10.2
 selenium==2.53.6
