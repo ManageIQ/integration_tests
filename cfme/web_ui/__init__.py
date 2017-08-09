@@ -2777,39 +2777,9 @@ class Quadicon(Pretty):
     def uncheck(self):
         self.new_quadicon.uncheck()
 
-
     @property
     def exists(self):
-        try:
-            self.locate()
-            return True
-        except sel.NoSuchElementException:
-            return False
-
-    @property
-    def a_cond(self):
-        if self.qtype == "middleware":
-            return "contains(normalize-space(@title), {name})"\
-                .format(name=quoteattr('Name: {}'.format(self._name)))
-        else:
-            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
-
-    def locate(self):
-        """ Returns:  a locator for the quadicon anchor"""
-        try:
-            return sel.move_to_element(
-                'div/a',
-                root="//div[contains(@id, 'quadicon') and ../../..//a[{}]]".format(self.a_cond))
-        except sel.NoSuchElementException:
-            quads = sel.elements("//div[contains(@id, 'quadicon')]/../../../tr/td/a")
-            if not quads:
-                raise sel.NoSuchElementException("Quadicon {} not found. No quads present".format(
-                    self._name))
-            else:
-                quad_names = [self._get_title(quad) for quad in quads]
-                raise sel.NoSuchElementException(
-                    "Quadicon {} not found. These quads are present:\n{}".format(
-                        self._name, ", ".join(quad_names)))
+        return self.new_quadicon.is_displayed
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
@@ -2941,7 +2911,7 @@ class Quadicon(Pretty):
 
     @property
     def href(self):
-        return self.locate().get_attribute('href')
+        return self.new_quadicon.href
 
 
 class DHTMLSelect(Select):
