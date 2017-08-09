@@ -231,6 +231,7 @@ class ProviderScaleDownView(View):
      represents Scale down view (exists for Infra OpenStack provider)
     """
     table = Table(locator='//div[contains(@class, "form-horizontal")]//table')
+    checkbox = Checkbox(name='host_ids[]')
     scale_down = Button('Scale Down')
     cancel = Button('Cancel')
 
