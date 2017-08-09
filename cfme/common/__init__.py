@@ -288,10 +288,10 @@ class WidgetasticTaggable(object):
         if reset:
             view.reset_button.click()
             view.flash.assert_message('All changes have been reset')
-        elif cancel:
+        if cancel:
             view.cancel_button.click()
             view.flash.assert_success_message('Tag Edit was cancelled by the user')
-        else:
+        if not reset and not cancel:
             view.save_button.click()
             view.flash.assert_success_message('Tag edits were successfully saved')
 
