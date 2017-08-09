@@ -1,12 +1,10 @@
 import pytest
 
 
-from cfme.configure.tasks import is_host_analysis_finished
 from cfme.exceptions import HostNotFound
-from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.host import get_all_hosts, Host, wait_for_host_delete
+from cfme.infrastructure.host import get_all_hosts, Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import InfoBlock, Quadicon, toolbar, flash
+from cfme.web_ui import flash
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.wait import RefreshTimer, wait_for
@@ -46,16 +44,30 @@ def test_scale_provider_down(provider, host):
 
 
 @pytest.mark.requires_test('test_scale_provider_down')
-def test_delete_host(host):
+def test_delete_host(host, provider):
     """Remove host from appliance and Ironic service"""
+    def is_host_disappeared():
+        return host.name not in [h.uuid for h in provider.mgmt.iapi.node.list()]
+
     host.delete(cancel=False)
-    wait_for_host_delete(host)
+    wait_for(is_host_disappeared, timeout=300, delay=5)
+    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
     assert host.name not in get_all_hosts()
 
 
-# @pytest.mark.requires_test('test_delete_host')
-# def test_register_host(provider):
-#     """Register new host by uploading instackenv.json file"""
-#     provider.register(provider.get_yaml_data()['instackenv_file_path'])
-#     flash.assert_success()
-#     wait_for(lambda: provider.mgmt.iapi.node.)
+@pytest.mark.requires_test('test_delete_host')
+def test_register_host(provider, host):
+    """Register new host by uploading instackenv.json file"""
+    hosts_before = [h.uuid for h in provider.mgmt.iapi.node.list()]
+    provider.register(provider.get_yaml_data()['instackenv_file_path'])
+    flash.assert_success()
+    # Wait for a new host to appear
+    wait_for(lambda: len(provider.mgmt.iapi.node.list()) == len(hosts_before) + 1, timeout=300,
+             delay=5)
+    hosts_after = [h.uuid for h in provider.mgmt.iapi.node.list()]
+    # Look for a UUID of newly created host
+    for h in hosts_after:
+        if h not in hosts_before:
+            host.name = h
+    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    assert host.exists()
