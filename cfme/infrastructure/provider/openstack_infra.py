@@ -119,6 +119,12 @@ class OpenstackInfraProvider(InfraProvider):
         view.fill({'file': file_path})
         view.register.click()
 
+    def scale_down(self):
+        """Scales down provider"""
+        view = navigate_to(self, 'ScaleDown')
+        view.checkbox.click()
+        view.scale_down.click()
+
     def node_exist(self, name='my_node'):
         """" registered imported host exist
         This function is valid only for RHOS10 and above
