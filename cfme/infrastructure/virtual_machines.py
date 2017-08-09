@@ -393,14 +393,16 @@ class Vm(BaseVM):
 
         def create(self):
             snapshot_dict = {
-                'description': self.description,
-                'snapshot_memory': self.memory
+                'description': self.description
             }
             self._nav_to_snapshot_mgmt()
             toolbar.select('Create a new snapshot for this VM')
 
             if self.name is not None:
                 snapshot_dict['name'] = self.name
+
+            if self.vm.provider.mgmt.is_vm_running(self.vm.name):
+                snapshot_dict["snapshot_memory"] = self.memory
 
             fill(snapshot_form, snapshot_dict, action=snapshot_form.create_button)
             wait_for(lambda: self.exists, num_sec=300, delay=20, fail_func=sel.refresh,
