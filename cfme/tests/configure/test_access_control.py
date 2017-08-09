@@ -39,6 +39,11 @@ def a_provider(request):
     prov_filter = ProviderFilter(classes=[VMwareProvider])
     return setup_one_or_skip(request, filters=[prov_filter])
 
+@pytest.fixture(scope="module", params=Group.DEFAULT_GROUP_NAMES)
+def default_group_name(request):
+    return request.param
+
+
 
 def new_credential():
     return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
@@ -356,14 +361,14 @@ def test_group_description_required_error_validation():
 
 
 @pytest.mark.tier(3)
-def test_delete_default_group():
+def test_delete_default_group(default_group_name):
     """Test for deleting default group EvmGroup-administrator.
 
     Steps:
         * Login as Administrator user
-        * Try deleting the group EvmGroup-adminstrator
+        * Try deleting the group specified by group name
     """
-    group = Group(description='EvmGroup-administrator')
+    group = Group(description=default_group_name)
 
     with pytest.raises(RBACOperationBlocked):
         group.delete()
