@@ -165,9 +165,8 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         Args:
             cancel (bool): Whether to cancel the deletion, defaults to True
         """
-
         view = navigate_to(self, "Details")
-        view.toolbar.configuration.item_select("Remove item", handle_alert=cancel)
+        view.toolbar.configuration.item_select("Remove item", handle_alert=not cancel)
         if not cancel:
             view = self.create_view(HostsView)
             assert view.is_displayed
