@@ -13,7 +13,7 @@ from cfme.exceptions import (
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
-    form_buttons, paginator, toolbar, PagedTable, SplitPagedTable, search, CheckboxTable,
+    form_buttons, toolbar, PagedTable, SplitPagedTable, search, CheckboxTable,
     DriftGrid, BootstrapTreeview
 )
 import cfme.web_ui.toolbar as tb
@@ -296,6 +296,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
         Raises: VmOrInstanceNotFound
         """
+        from cfme.web_ui import paginator
         quadicon = Quadicon(self.name, self.quadicon_type)
         if not do_not_navigate:
             if from_any_provider:

@@ -19,7 +19,7 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
 from cfme.web_ui import (
     breadcrumbs_names, summary_title, flash, Quadicon, Region, fill, Form, toolbar as tb,
-    form_buttons, paginator)
+    form_buttons)
 from utils import ParamClassName, version, conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to

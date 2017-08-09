@@ -6,7 +6,7 @@ from navmazing import NavigateToAttribute
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Input, Region, Table, fill, flash, paginator, toolbar, match_location)
+    Input, Region, Table, fill, flash, toolbar, match_location)
 from utils.log import logger
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -188,6 +188,7 @@ def wait_for_request(cells, partial_check=False):
 
 def debug_requests():
     logger.debug('Outputting current requests')
+    from cfme.web_ui import paginator
     for page in paginator.pages():
         for row in fields.request_list.rows():
             logger.debug(' %s', row)
@@ -202,6 +203,7 @@ def find_request(cells, partial_check=False):
     Returns: row
     """
     navigate_to(Request, 'All')
+    from cfme.web_ui import paginator
     for page in paginator.pages():
         results = fields.request_list.find_rows_by_cells(cells, partial_check)
         if len(results) == 0:

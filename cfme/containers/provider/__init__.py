@@ -24,7 +24,7 @@ from cfme.common.provider_views import BeforeFillMixin,\
 from cfme.base.credential import TokenCredential
 from cfme.web_ui import (
     Quadicon, toolbar as tb,
-    InfoBlock, Region, paginator, match_location, PagedTable, CheckboxTable)
+    InfoBlock, Region, match_location, PagedTable, CheckboxTable)
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -272,6 +272,7 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("Grid View")
+        from cfme.web_ui import paginator
         paginator.check_all()
         paginator.uncheck_all()
 
@@ -639,6 +640,7 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
     tb.select('List View')
     if sel.is_displayed_text("No Records Found.") and silent_failure:
         return []
+    from cfme.web_ui import paginator
     paginator.results_per_page(1000)
     table = table_class(table_locator="//div[@id='list_grid']//table")
     rows = table.rows_as_list()

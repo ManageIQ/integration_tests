@@ -11,7 +11,7 @@ from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Region, Form, AngularSelect, InfoBlock, Input, Quadicon,
-    form_buttons, toolbar as tb, paginator, fill, FileInput,
+    form_buttons, toolbar as tb, fill, FileInput,
     CFMECheckbox, Select, flash, tabstrip
 )
 from utils import version
@@ -119,6 +119,7 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("Grid View")
+        from cfme.web_ui import paginator
         if paginator.page_controls_exist():
             paginator.check_all()
             paginator.uncheck_all()
