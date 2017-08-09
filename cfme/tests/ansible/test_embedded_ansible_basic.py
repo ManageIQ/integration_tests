@@ -5,6 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
 from cfme.ansible.credentials import CredentialsCollection
+from cfme.ansible.playbooks import PlaybooksCollection
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.version import current_version
@@ -57,6 +58,12 @@ CREDENTIALS = [
 ]
 
 
+REPOSITORIES = [
+    "https://github.com/quarckster/ansible_playbooks",
+    "https://github.com/patchkez/ansible_playbooks"
+]
+
+
 @pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
     appliance.wait_for_embedded_ansible()
@@ -88,7 +95,7 @@ def test_embedded_ansible_repository_crud(request, wait_for_ansible):
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
     ids=[cred[0] for cred in CREDENTIALS])
-def test_embedded_ansible_credential_crud(request, wait_for_ansible, credential_type, credentials):
+def test_embedded_ansible_credential_crud(wait_for_ansible, credential_type, credentials):
     credentials_collection = CredentialsCollection()
     credential = credentials_collection.create(
         "{}_credential_{}".format(credential_type, fauxfactory.gen_alpha()),
@@ -116,3 +123,21 @@ def test_embedded_ansible_credential_crud(request, wait_for_ansible, credential_
     else:
         wait_for_changes("Username")
     credential.delete()
+
+
+@pytest.mark.meta(blockers=[1437108])
+@pytest.mark.tier(2)
+def test_embed_tower_playbooks_list_changed(wait_for_ansible):
+    "Tests if playbooks list changed after playbooks repo removing"
+    playbooks = []
+    repositories_collection = RepositoryCollection()
+    playbooks_collection = PlaybooksCollection()
+    for repo_url in REPOSITORIES:
+        repository = repositories_collection.create(
+            fauxfactory.gen_alpha(),
+            repo_url,
+            description=fauxfactory.gen_alpha()
+        )
+        playbooks.append(playbooks_collection.all())
+        repository.delete()
+    assert not set(playbooks[1]).issuperset(set(playbooks[0]))
