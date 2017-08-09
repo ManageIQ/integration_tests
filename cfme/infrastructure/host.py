@@ -19,6 +19,7 @@ from cfme.common.host_views import (
     HostTimelinesView
 )
 from cfme.exceptions import HostNotFound, ItemNotFound
+from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.web_ui import mixins
 from utils import conf
@@ -405,6 +406,12 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """Removes the selected tag off the system"""
         navigate_to(self, 'Details')
         mixins.remove_tag(tag)
+
+    def toggle_maintenance_mode(self):
+        """Initiate maintenance mode"""
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Toggle Maintenance Mode')
+        sel.handle_alert()
 
 
 @navigator.register(Host)
