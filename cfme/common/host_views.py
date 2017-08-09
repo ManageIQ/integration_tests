@@ -240,7 +240,7 @@ class HostsView(ComputeInfrastructureHostsView):
 
     @property
     def is_displayed(self):
-        return self.in_compute_infrastructure_hosts and self.title.text == "Hosts"
+        return self.in_compute_infrastructure_hosts and self.title.text in "Hosts / Nodes"
 
 
 class HostFormView(ComputeInfrastructureHostsView):
