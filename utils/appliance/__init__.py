@@ -1921,7 +1921,7 @@ class IPAppliance(object):
         """Turns on Collect for All Clusters and Collect for all Datastores without using Web UI."""
         command = (
             'Metric::Targets.perf_capture_always = {:storage=>true, :host_and_cluster=>true};')
-        self.ssh_client.run_rails_console(command, timeout=None, log_less=True)
+        self.ssh_client.run_rails_console(command, timeout=None)
 
     def set_cfme_server_relationship(self, vm_name, server_id=1):
         """Set MiqServer record to the id of a VM by name, effectively setting the CFME Server
@@ -1929,12 +1929,12 @@ class IPAppliance(object):
         command = ('miq_server = MiqServer.find_by(id: {});'
                    'miq_server.vm_id = Vm.find_by(name: \'{}\').id;'
                    'miq_server.save'.format(server_id, vm_name))
-        self.ssh_client.run_rails_console(command, timeout=None, log_less=False)
+        self.ssh_client.run_rails_console(command, timeout=None)
 
     def set_pglogical_replication(self, replication_type=':none'):
         """Set pglogical replication type (:none, :remote, :global) without using the Web UI."""
         command = ('MiqRegion.replication_type = {}'.format(replication_type))
-        self.ssh_client.run_rails_console(command, timeout=None, log_less=False)
+        self.ssh_client.run_rails_console(command, timeout=None)
 
     def add_pglogical_replication_subscription(self, host):
         """Add a pglogical replication subscription without using the Web UI."""
@@ -1949,7 +1949,7 @@ class IPAppliance(object):
                    'sub.password = \'{}\';'
                    'sub.port = {};'
                    'sub.save'.format(dbname, host, user, password, port))
-        self.ssh_client.run_rails_console(command, timeout=None, log_less=True)
+        self.ssh_client.run_rails_console(command, timeout=None)
 
     def set_rubyrep_replication(self, host, port=5432, database='vmdb_production',
                                 username='root', password='v2:{I2SQ5PdmGPwN7t5goRiyaQ==}'):

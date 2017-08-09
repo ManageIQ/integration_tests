@@ -4,7 +4,6 @@ from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
-from utils.ssh import SSHClient
 from utils.workloads import get_idle_scenarios
 import time
 import pytest
@@ -32,7 +31,7 @@ def test_idle(appliance, request, scenario):
         'test_name': 'Idle with {} Roles'.format(scenario['name']),
         'appliance_roles': ', '.join(scenario['roles']),
         'scenario': scenario}
-    monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
+    monitor_thread = SmemMemoryMonitor(appliance.ssh_client(), scenario_data)
 
     def cleanup_workload(from_ts, quantifiers, scenario_data):
         starttime = time.time()

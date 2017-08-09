@@ -389,7 +389,7 @@ def create_report(scenario_data, appliance_results, process_results, use_slab, g
 
     workload_path = results_path.join('{}-{}-{}'.format(test_ts, scenario_data['test_dir'], ver))
     if not os.path.exists(str(workload_path)):
-        os.mkdir(str(workload_path))
+        os.makedirs(str(workload_path))
 
     scenario_path = workload_path.join(scenario_data['scenario']['name'])
     if os.path.exists(str(scenario_path)):
@@ -818,7 +818,7 @@ def generate_summary_html(directory, version_string, appliance_results, process_
                         pid, ordered_name))
                     html_file.write('</tr>\n')
             else:
-                logger.vdebug('Process/Worker not part of test: {}'.format(ordered_name))
+                logger.debug('Process/Worker not part of test: {}'.format(ordered_name))
 
         html_file.write('</table>\n')
 

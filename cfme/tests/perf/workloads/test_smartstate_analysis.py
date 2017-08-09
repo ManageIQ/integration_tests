@@ -6,7 +6,6 @@ from utils.log import logger
 from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
-from utils.ssh import SSHClient
 from utils.workloads import get_smartstate_analysis_scenarios
 from utils import conf
 
@@ -18,8 +17,8 @@ roles_smartstate = ['automate', 'database_operations', 'ems_inventory', 'ems_ope
     'web_services']
 
 
-def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
+def get_host_data_by_name(provider, host_name):
+    for host_obj in conf.cfme_data.get('management_systems', {})[provider.key].get('hosts', []):
         if host_name == host_obj['name']:
             return host_obj
     return None
@@ -43,7 +42,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
         'test_name': 'SmartState Analysis',
         'appliance_roles': ', '.join(roles_smartstate),
         'scenario': scenario}
-    monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
+    monitor_thread = SmemMemoryMonitor(appliance.ssh_client(), scenario_data)
 
     def cleanup_workload(scenario, from_ts, quantifiers, scenario_data):
         starttime = time.time()
@@ -74,10 +73,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
             host_data = get_host_data_by_name(get_crud(provider), api_host.name)
             credentials = host.get_credentials_from_config(host_data['credentials'])
             test_host.update_credentials_rest(credentials)
-        if (cfme_performance['providers'][provider]['type'] ==
-                "ManageIQ::Providers::Redhat::InfraManager"):
-            appliance.set_cfme_server_relationship(
-                cfme_performance['appliance']['appliance_name'])
+        appliance.set_cfme_server_relationship(cfme_performance['appliance']['appliance_name'])
 
     # Variable amount of time for SmartState Analysis workload
     total_time = scenario['total_time']
@@ -87,8 +83,8 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
 
     while ((time.time() - starttime) < total_time):
         start_ssa_time = time.time()
-        for vm in scenario['vms_to_scan'].values():
-            vm_api = appliance.rest_api.collections.vms.get(name=vm.name)
+        for vm in scenario['vms_to_scan'].values()[0]:
+            vm_api = appliance.rest_api.collections.vms.get(name=vm)
             vm_api.action.scan()
             total_scanned_vms += 1
         iteration_time = time.time()

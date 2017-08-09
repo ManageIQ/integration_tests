@@ -744,8 +744,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def get_console_ctrl_alt_del_btn(self):
         raise NotImplementedError("This method is not implemented for given provider")
 
-    cfme_appliance = conf.cfme_performance['appliance']
-
     def get_all_provider_ids(self):
         """
         Returns an integer list of provider ID's via the REST API
@@ -910,16 +908,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         result_list = []
         all_template_details = self.get_all_template_details()
-        for provider in template_dict:
-            provider_type = self.type
-            for template_name in template_dict[provider]:
+        for provider, templates in template_dict.iteritems():
+            for template_name in templates:
                 inner_tuple = ()
                 for id in all_template_details:
-                    _tmp = '{}::Template'.format(provider_type)
                     if ((all_template_details[id]['name'] == template_name) and
-                            (all_template_details[id]['type'] == _tmp)):
+                            (self.db_types[0] in all_template_details[id]['type'])):
                         inner_tuple += (all_template_details[id]['guid'],)
-                        inner_tuple += (provider.name,)
+                        inner_tuple += (provider,)
                         result_list.append(inner_tuple)
         return result_list
 

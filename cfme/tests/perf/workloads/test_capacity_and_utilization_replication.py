@@ -24,7 +24,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
     """Runs through provider based scenarios enabling C&U and replication, run for a set period of
     time. Memory Monitor creates graphs and summary at the end of each scenario."""
     from_ts = int(time.time() * 1000)
-    ssh_client = SSHClient()
+    ssh_client = appliance.ssh_client()
 
     ssh_master_args = {
         'hostname': scenario['replication_master']['ip_address'],
@@ -64,7 +64,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
             'appliance_roles': ', '.join(roles_cap_and_util_rep),
             'scenario': scenario}
     quantifiers = {}
-    monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
+    monitor_thread = SmemMemoryMonitor(appliance.ssh_client(), scenario_data)
 
     def cleanup_workload(scenario, from_ts, quantifiers, scenario_data):
         starttime = time.time()
@@ -105,7 +105,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
         # ssh_client.run_rake_command('evm:dbsync:uninstall')
         # time.sleep(30)  # Wait to quiecse
         # Turn on DB Sync role
-        appliance.server_roles = {role: True for role in roles_cap_and_util_rep}
+        appliance.update_server_roles({role: True for role in roles_cap_and_util_rep})
 
     # Variable amount of time for C&U collections/processing
     total_time = scenario['total_time']
@@ -124,7 +124,7 @@ def test_workload_capacity_and_utilization_rep(appliance, request, scenario, set
     if is_pglogical:
         appliance.set_pglogical_replication(replication_type=':none')
     else:
-        appliance.server_roles = {role: True for role in roles_cap_and_util_rep}
+        appliance.update_server_roles({role: True for role in roles_cap_and_util_rep})
 
     quantifiers['Elapsed_Time'] = round(elapsed_time, 2)
     logger.info('Test Ending...')

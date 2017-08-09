@@ -29,7 +29,7 @@ docs_path = project_path.join('docs')
 log_path = project_path.join('log')
 
 #: results path for performance tests, ``cfme_tests/results/``
-results_path = project_path.join('log')
+results_path = project_path.join('results')
 
 #: patch files (diffs)
 patches_path = data_path.join('patches')

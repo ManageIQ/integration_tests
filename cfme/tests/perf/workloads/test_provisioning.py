@@ -9,7 +9,7 @@ from utils.providers import get_crud
 from utils.smem_memory_monitor import add_workload_quantifiers
 from utils.smem_memory_monitor import SmemMemoryMonitor
 from utils.smem_memory_monitor import test_ts
-from utils.ssh import SSHClient
+from utils.wait import wait_for
 from utils.workloads import get_provisioning_scenarios
 from itertools import cycle
 import time
@@ -89,7 +89,7 @@ def test_provisioning(appliance, request, scenario):
         'test_name': 'Provisioning',
         'appliance_roles': ', '.join(roles_provisioning),
         'scenario': scenario}
-    monitor_thread = SmemMemoryMonitor(SSHClient(), scenario_data)
+    monitor_thread = SmemMemoryMonitor(appliance.ssh_client(), scenario_data)
 
     provision_order = []
 
@@ -98,7 +98,7 @@ def test_provisioning(appliance, request, scenario):
         to_ts = int(starttime * 1000)
         g_urls = get_scenario_dashboard_urls(scenario, from_ts, to_ts)
         logger.debug('Started cleaning up monitoring thread.')
-        appliance.server_roles = {role: True for role in roles_provisioning_cleanup}
+        appliance.update_server_roles({role: True for role in roles_provisioning_cleanup})
         monitor_thread.grafana_urls = g_urls
         monitor_thread.signal = False
         final_vm_size = len(vms_to_cleanup)
@@ -147,16 +147,26 @@ def test_provisioning(appliance, request, scenario):
             vm_to_provision = '{}-provision-{}'.format(
                 test_ts, str(total_provisioned_vms).zfill(4))
             guid_to_provision, provider_name = next(guid_cycle)
-            provider_to_provision = prov.name
             provision_order.append((vm_to_provision, provider_name))
             provision_list.append((vm_to_provision, guid_to_provision,
-                provider_to_provision['vlan_network']))
+                prov.data['provisioning']['vlan']))
 
         template = prov.data.get('small_template')
         provision_data = get_provision_data(appliance.rest_api, prov, template)
         vm_name = provision_data["vm_fields"]["vm_name"]
-        appliance.rest_api.collections.provision_requests.action.create(**provision_data)
+        response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
         assert appliance.rest_api.response.status_code == 200
+        provision_request = response[0]
+
+        def _finished():
+            provision_request.reload()
+            if "error" in provision_request.status.lower():
+                pytest.fail("Error when provisioning: `{}`".format(provision_request.message))
+            return provision_request.request_state.lower() in ("finished", "provisioned")
+
+        wait_for(_finished, num_sec=800, delay=5, message="REST provisioning finishes")
+
+        vm = appliance.rest_api.collections.vms.get(name=vm_name)
         creation_time = time.time()
         provision_time = round(creation_time - start_iteration_time, 2)
         logger.debug('Time to initiate provisioning: {}'.format(provision_time))
@@ -164,7 +174,7 @@ def test_provisioning(appliance, request, scenario):
 
         if provisioned_vms > cleanup_size * len(scenario['providers']):
             start_remove_time = time.time()
-            if appliance.rest_api.collections.vms.action.delete(vm_name):
+            if appliance.rest_api.collections.vms.action.delete(vm):
                 provision_order.pop(0)
                 provisioned_vms -= 1
                 total_deleted_vms += 1
