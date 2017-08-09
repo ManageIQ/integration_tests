@@ -182,7 +182,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         if not force and not self.exists:
             return
         navigate_to(self, 'All')
-        sel.check(Quadicon(self.quad_name, None).checkbox())
+        Quadicon(self.quad_name, None).check()
         item_text = version.pick({'5.6': 'Remove selected items from the VMDB',
                                   '5.7': 'Remove selected items'})
         cfg_btn(item_text, invokes_alert=True)
@@ -215,7 +215,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         """Refreshes relationships and power states of this manager"""
         navigate_to(self, 'All')
 
-        sel.check(Quadicon(self.quad_name, None).checkbox())
+        Quadicon(self.quad_name, None).check()
         cfg_btn('Refresh Relationships and Power states', invokes_alert=True)
 
         sel.handle_alert(cancel)
@@ -490,7 +490,7 @@ class MgrEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.quad_name, None).checkbox())
+        Quadicon(self.obj.quad_name, None).check()
         cfg_btn('Edit Selected item')
 
 

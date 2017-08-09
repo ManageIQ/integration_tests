@@ -145,7 +145,7 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        Quadicon(self.obj.name, self.obj.quad_name).check()
         cfg_btn('Edit Selected Middleware Provider')
 
 
@@ -162,7 +162,7 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        Quadicon(self.obj.name, self.obj.quad_name).check()
         pol_btn('Edit Tags')
 
 

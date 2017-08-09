@@ -2749,6 +2749,11 @@ class Quadicon(Pretty):
     def __init__(self, name, qtype=None):
         self._name = name
         self.qtype = qtype
+        from utils.appliance import get_or_create_current_appliance
+        from widgetastic_manageiq import BaseEntity
+        self.appl = get_or_create_current_appliance()
+        self.browser = self.appl.browser.widgetastic
+        self.new_quadicon = BaseEntity(parent=self.browser, name=self._name)
 
     def __repr__(self):
         return '{}({!r}, {!r})'.format(type(self).__name__, self._name, self.qtype)
@@ -2766,9 +2771,12 @@ class Quadicon(Pretty):
     def _quad_data(self):
         return self.QUADS[self.qtype]
 
-    def checkbox(self):
-        """ Returns:  a locator for the internal checkbox for the quadicon"""
-        return "//input[@type='checkbox' and ../../..//a[{}]]".format(self.a_cond)
+    def check(self):
+        self.new_quadicon.check()
+
+    def uncheck(self):
+        self.new_quadicon.uncheck()
+
 
     @property
     def exists(self):

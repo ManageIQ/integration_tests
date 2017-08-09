@@ -343,7 +343,7 @@ class Instance(VM, Navigatable):
             quadicon = Quadicon(self.name, "instance")
             if quadicon.exists:
                 if kwargs.get('mark', False):
-                    sel.check(quadicon.checkbox())
+                    quadicon.check()
                 return quadicon
         else:
             raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))

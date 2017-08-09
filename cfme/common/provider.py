@@ -489,7 +489,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """Clicks on Refresh relationships button in provider"""
         if from_list_view:
             navigate_to(self, 'All')
-            sel.check(Quadicon(self.name, self.quad_name).checkbox())
+            Quadicon(self.name, self.quad_name).check()
         else:
             navigate_to(self, 'Details')
         tb.select("Configuration", self.refresh_text, invokes_alert=True)

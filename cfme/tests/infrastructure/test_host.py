@@ -46,7 +46,7 @@ def navigate_and_select_quads(provider):
 
     quads = Quadicon.all("host", this_page=True)
     for quad in quads:
-        sel.check(quad.checkbox())
+        quad.check()
 
     hosts_view.toolbar.configuration.item_select('Edit Selected items')
     edit_view = provider.create_view(HostsEditView)

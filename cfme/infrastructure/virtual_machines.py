@@ -805,7 +805,7 @@ def _method_setup(vm_names, provider_crud=None):
     if paginator.page_controls_exist():
         paginator.results_per_page(1000)
     for vm_name in vm_names:
-        sel.check(Quadicon(vm_name, 'vm').checkbox())
+        Quadicon(vm_name, 'vm').check()
 
 
 def find_quadicon(vm_name, do_not_navigate=False):

@@ -33,7 +33,7 @@ def select_two_quads():
         count += 1
         if count > 2:
             break
-        fill(quad.checkbox(), True)
+        quad.check()
 
 
 def set_and_test_default_view(group_name, view, page):
