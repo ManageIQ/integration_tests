@@ -226,6 +226,19 @@ class ProviderRegisterNodesView(View):
         return False
 
 
+class ProviderScaleDownView(View):
+    """
+     represents Scale down view (exists for Infra OpenStack provider)
+    """
+    table = Table(locator='//div[contains(@class, "form-horizontal")]//table')
+    scale_down = Button('Scale Down')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
 class ProviderNodesView(BaseLoggedInPage):
     """
      represents main Nodes view (exists for Infra OpenStack provider)
