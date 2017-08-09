@@ -1,24 +1,84 @@
 # -*- coding: utf-8 -*-
-"""This is a directory of modules, each one represents one accordion item.
-
-  * :py:mod:`cfme.intelligence.reports.reports`
-  * :py:mod:`cfme.intelligence.reports.schedules`
-  * :py:mod:`cfme.intelligence.reports.import_export`
-  * :py:mod:`cfme.intelligence.reports.saved`
-  * :py:mod:`cfme.intelligence.reports.widgets`
-  * :py:mod:`cfme.intelligence.reports.dashboards`
-"""
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.utils import Parameter
+from widgetastic.widget import View
+from widgetastic_manageiq import ManageIQTree, MultiBoxSelect
+from widgetastic_patternfly import Accordion, Button, Dropdown, FlashMessages
 
+from cfme.base import Server
+from cfme.base.login import BaseLoggedInPage
 from cfme.web_ui import accordion
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
+class CloudIntelReportsView(BaseLoggedInPage):
+    flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
+
+    @property
+    def in_intel_reports(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ["Cloud Intel", "Reports"])
+
+    @property
+    def is_displayed(self):
+        return self.in_intel_reports and self.configuration.is_displayed
+
+    @View.nested
+    class saved_reports(Accordion):  # noqa
+        ACCORDION_NAME = "Saved Reports"
+        tree = ManageIQTree()
+
+    @View.nested
+    class reports(Accordion):  # noqa
+        tree = ManageIQTree()
+
+    @View.nested
+    class schedules(Accordion):  # noqa
+        tree = ManageIQTree()
+
+    @View.nested
+    class dashboards(Accordion):  # noqa
+        tree = ManageIQTree()
+
+    @View.nested
+    class dashboard_widgets(Accordion):  # noqa
+        ACCORDION_NAME = "Dashboard Widgets"
+        tree = ManageIQTree()
+
+    @View.nested
+    class edit_report_menus(Accordion):  # noqa
+        ACCORDION_NAME = "Edit Report Menus"
+
+        tree = ManageIQTree()
+
+    @View.nested
+    class import_export(Accordion):  # noqa
+        ACCORDION_NAME = "Import/Export"
+
+        tree = ManageIQTree()
+
+    configuration = Dropdown("Configuration")
+
+
+@navigator.register(Server)
+class CloudIntelReports(CFMENavigateStep):
+    VIEW = CloudIntelReportsView
+    prerequisite = NavigateToSibling("LoggedIn")
+
+    def step(self):
+        self.view.navigation.select("Cloud Intel", "Reports")
+
+
+class ReportsMultiBoxSelect(MultiBoxSelect):
+    move_into_button = Button(title=Parameter("@move_into"))
+    move_from_button = Button(title=Parameter("@move_from"))
+
+
 class Report(Navigatable):
     """
         This is fake class mainly needed for navmazing navigation
-
     """
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance)

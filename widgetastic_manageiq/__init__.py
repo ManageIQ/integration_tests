@@ -2,6 +2,7 @@
 import atexit
 import os
 import re
+import six
 from collections import namedtuple
 from datetime import date
 from math import ceil
@@ -14,7 +15,7 @@ from selenium.common.exceptions import WebDriverException
 from wait_for import wait_for
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
-from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
+from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -925,7 +926,7 @@ class SNMPHostsField(View):
 
     def fill(self, values):
         fields = self.host_fields
-        if isinstance(values, basestring):
+        if isinstance(values, six.string_types):
             values = [values]
         if len(values) > len(fields):
             raise ValueError("You cannot specify more hosts than the form allows!")
@@ -1568,7 +1569,7 @@ class AlertEmail(View):
         self.id = id
 
     def fill(self, values):
-        if isinstance(values, basestring):
+        if isinstance(values, six.string_types):
             values = [values]
         if self.all_emails == set(values):
             return False
@@ -2204,3 +2205,120 @@ class ProviderEntity(BaseEntity):
     quad_entity = ProviderQuadIconEntity
     list_entity = ProviderListEntity
     tile_entity = ProviderTileIconEntity
+
+
+class DashboardWidgetsPicker(View):
+    """ Represents widgets picker in Dashboard editing screen (Cloud Intel/Reports/Dashobards).
+
+    """
+    ROOT = ParametrizedLocator(".//div[@id='{@id}']")
+    select = BootstrapSelect(Parameter("@select_id"))
+
+    def __init__(self, parent, id, select_id, names_locator=None, remove_locator=None, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+        self.id = id
+        self.select_id = select_id
+        self.names_locator = names_locator
+        self.remove_locator = remove_locator
+
+    def add_widget(self, widget):
+        self.select.fill(widget)
+
+    def remove_widget(self, widget):
+        self.browser.click(self.remove_locator.format(quote(widget)))
+
+    @property
+    def all_elements(self):
+        return self.browser.elements(self.names_locator)
+
+    @property
+    def all_widgets(self):
+        if self.all_elements:
+            return [widget.text for widget in self.all_elements]
+        else:
+            return []
+
+    def _values_to_remove(self, values):
+        return list(set(self.all_widgets) - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - set(self.all_widgets))
+
+    def fill(self, values):
+        if isinstance(values, six.string_types):
+            values = [values]
+        if set(values) == set(self.all_widgets):
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            for value in values_to_remove:
+                self.remove_widget(value)
+            for value in values_to_add:
+                self.add_widget(value)
+            return True
+
+    def read(self):
+        return self.all_widgets
+
+
+class MenuShortcutsPicker(DashboardWidgetsPicker):
+    """ Represents shortcut picker in Menu Widget editing screen
+    (Cloud Intel/Reports/Dashboard Widgets/Menus).
+
+    """
+    @ParametrizedView.nested
+    class shortcut(ParametrizedView):  # noqa
+        PARAMETERS = ("number",)
+        alias = Input(name=ParametrizedString("shortcut_desc_{number}"))
+        remove_button = Text(ParametrizedLocator(".//a[@id=s_{@number|quote}_close]"))
+
+        def fill(self, alias):
+            self.alias.fill(alias)
+
+        def remove(self):
+            self.remove_button.click()
+
+    def add_shortcut(self, shortcut, alias):
+        # We need to get all options from the dropdown before picking
+        mapping = self.mapping
+        self.select.fill(shortcut)
+        if shortcut != alias:
+            self.shortcut(mapping[shortcut]).fill(alias)
+
+    @cached_property
+    def mapping(self):
+        return {option.text: option.value for option in self.select.all_options}
+
+    @property
+    def all_shortcuts(self):
+        if self.all_elements:
+            return [shortcut.get_attribute("value") for shortcut in self.all_elements]
+        else:
+            return []
+
+    def clear(self):
+        for el in self.browser.elements(".//a[@title='Remove this Shortcut']"):
+            self.browser.click(el)
+
+    def fill(self, values):
+        dict_values = None
+        if isinstance(values, six.string_types):
+            values = [values]
+        if isinstance(values, dict):
+            dict_values = values
+            values = values.values()
+        if set(values) == set(self.all_shortcuts):
+            return False
+        else:
+            self.clear()
+            if dict_values is not None:
+                dict_values_to_add = dict_values
+            else:
+                dict_values_to_add = {value: value for value in values}
+            for shortcut, alias in dict_values_to_add.iteritems():
+                self.add_shortcut(shortcut, alias)
+            return True
+
+    def read(self):
+        return self.all_shortcuts
