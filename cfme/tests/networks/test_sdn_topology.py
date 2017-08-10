@@ -2,22 +2,17 @@ import pytest
 import time
 from utils import testgen
 from random import choice
-from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider as EP
+from cfme.cloud.provider.azure import AzureProvider as AP
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.pytest_selenium import is_displayed_text
 from cfme.web_ui.topology import Topology
 from utils.browser import WithZoom
 from utils.wait import wait_for
 from cfme.networks.topology import NetworkTopology
-from cfme.web_ui import Quadicon
-from cfme.fixtures import pytest_selenium as sel
-from cfme.networks.cloud_network import CloudNetwork
-from cfme.networks.provider import NetworkProvider
-from utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate(classes=[EC2Provider, OpenStackProvider, AzureProvider], scope = 'module')
+pytest_generate_tests = testgen.generate(classes=[EP, OpenStackProvider, AP], scope='module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
@@ -30,7 +25,7 @@ def test_sdn_topology_names(provider, appliance):
     for show_names_state in (True, False):
         topology_object.display_names.enable(show_names_state)
         elements = topology_object.elements()
-        with WithZoom(-3): #zoom out to show all objects
+        with WithZoom(-3):  # zoom out to show all objects
             time.sleep(5)
             for elem in elements:
                 assert is_displayed_text(elem.name) == show_names_state
@@ -59,6 +54,7 @@ def test_topology_search(provider, appliance):
             if not el.is_hidden:
                 raise Exception('Element should be hidden. search: "{}", element found: "{}"'
                                 .format(search_term, el.name))
+
 
 def test_topology_toggle_display(provider):
     '''Testing display functionality in Topology view'''

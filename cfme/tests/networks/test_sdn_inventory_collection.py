@@ -1,18 +1,18 @@
 import pytest
 from utils import testgen
-from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.ec2 import EC2Provider as EP
+from cfme.cloud.provider.azure import AzureProvider as AP
+from cfme.cloud.provider.openstack import OpenStackProvider as OP
 from cfme.networks.cloud_network import CloudNetwork
 
 
-pytest_generate_tests = testgen.generate(classes=[EC2Provider, OpenStackProvider, AzureProvider], scope = 'module')
+pytest_generate_tests = testgen.generate(classes=[EP, AP, OP], scope = 'module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(
-    lambda provider: not provider.one_of(OpenStackProvider))
+    lambda provider: not provider.one_of(OP))
 def test_sdn_inventory_subnets(provider):
     ''' Test to compare mgmt system and ui list of networks
     Note: EC2 and Azure don't have list_network() method implemented yet

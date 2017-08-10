@@ -1,15 +1,17 @@
 from utils import version
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.web_ui import (
-    Region, InfoBlock, Quadicon, toolbar as tb, paginator
+    Region, Quadicon, toolbar as tb, paginator
 )
 from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils.appliance import Navigatable
 from utils.update import Updateable
 from cfme.common import Taggable, SummaryMixin
+from functools import partial
 
 
+pol_btn = partial(tb.select, 'Policy')
 details_page = Region(infoblock_type='detail')
 
 

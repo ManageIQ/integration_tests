@@ -39,6 +39,7 @@ def download_summary(spec_object):
     except:
         raise ValueError("Unknown extention. check the extentions_mapping")
 
+
 @pytest.mark.uncollect
 @pytest.mark.parametrize("filetype", FILETYPES)
 @pytest.mark.parametrize("objecttype", [NetworkProvider, Balancer,

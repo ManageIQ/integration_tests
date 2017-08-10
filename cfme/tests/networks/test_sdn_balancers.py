@@ -1,14 +1,14 @@
 import pytest
 from utils import testgen
-from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.azure import AzureProvider as AP
+from cfme.cloud.provider.ec2 import EC2Provider as EP
+from cfme.cloud.provider.openstack import OpenStackProvider as OP
 
 from cfme.networks.balancer import Balancer
 from cfme.networks.provider import NetworkProvider
 
 
-pytest_generate_tests = testgen.generate(classes=[AzureProvider,EC2Provider,OpenStackProvider], scope='module')
+pytest_generate_tests = testgen.generate(classes=[AP, EP, OP], scope='module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
@@ -34,7 +34,7 @@ def test_balances_detail(provider, appliance):
     for name in objects:
         temp = Balancer(name=name)
         check = temp.get_health_checks()
-        assert check != None
+        assert check is not None
 
     provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()

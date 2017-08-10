@@ -1,7 +1,7 @@
 from utils import version
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.web_ui import (
-    Region, InfoBlock, Quadicon, toolbar as tb, paginator
+    Region, Quadicon, toolbar as tb, paginator
 )
 from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -10,9 +10,10 @@ from utils.update import Updateable
 from cfme.common import Taggable, SummaryMixin
 from utils import providers
 from cfme.networks.provider import NetworkProvider
-from cfme.web_ui import Quadicon
+from functools import partial
 
 
+pol_btn = partial(tb.select, 'Policy')
 details_page = Region(infoblock_type='detail')
 
 
@@ -47,19 +48,19 @@ class CloudNetwork(Taggable, Updateable, SummaryMixin, Navigatable):
 
     def get_parent_provider(self):
         ''' Return object of parent cloud provider '''
-        provider_name = self.get_detail('Relationships','Parent ems cloud')
+        provider_name = self.get_detail('Relationships', 'Parent ems cloud')
         provider = providers.get_crud_by_name(provider_name)
         return provider
 
     def get_network_provider(self):
         ''' Return object of network manager '''
-        manager_name = self.get_detail('Relationships','Network Manager')
+        manager_name = self.get_detail('Relationships', 'Network Manager')
         prov_obj = NetworkProvider(name=manager_name)
         return prov_obj
 
     def get_network_type(self):
         ''' Return type of network '''
-        return self.get_detail('Properties','Type')
+        return self.get_detail('Properties', 'Type')
 
     @staticmethod
     def get_all():

@@ -2,12 +2,15 @@ from utils import version
 from cfme.common.provider import BaseProvider
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.web_ui import (
-    Region, InfoBlock, Quadicon, toolbar as tb, paginator
+    InfoBlock, Quadicon, toolbar as tb, paginator
 )
-import cfme.web_ui.toolbar as tb
 from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils.appliance import Navigatable
+from functools import partial
+
+
+pol_btn = partial(tb.select, 'Policy')
 
 
 class NetworkProvider(BaseProvider):
@@ -45,12 +48,12 @@ class NetworkProvider(BaseProvider):
     def refresh_provider(self):
         ''' Refresh relationships of network provider '''
         self.load_details()
-        tb.select("Configuration","Refresh Relationships and Power States", invokes_alert=True)
+        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert()
 
     def check_default_credentials_state(self):
         ''' Checks whether credentials are valid '''
-        cred_state = get_detail('Status','Default Credentials')
+        cred_state = self.get_detail('Status', 'Default Credentials')
         if cred_state == "Valid":
             return True
         return False
@@ -61,7 +64,6 @@ class NetworkProvider(BaseProvider):
         navigate_to(NetworkProvider, 'All')
         list_network = [q.name for q in Quadicon.all()]
         return list_network
-
 
 
 @navigator.register(NetworkProvider, 'All')
@@ -105,7 +107,7 @@ class EditTagsFromDetails(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'CloudSubnets')
-class ProviderMessagings(CFMENavigateStep):
+class OpenCloudSubnets(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -113,7 +115,7 @@ class ProviderMessagings(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'CloudNetworks')
-class ProviderMessagings(CFMENavigateStep):
+class OpenCloudNetworks(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -121,7 +123,7 @@ class ProviderMessagings(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'NetworkRouters')
-class ProviderMessagings(CFMENavigateStep):
+class OpenNetworkRouters(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -129,7 +131,7 @@ class ProviderMessagings(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'SecurityGroups')
-class ProviderMessagings(CFMENavigateStep):
+class OpenSecurityGroups(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -137,7 +139,7 @@ class ProviderMessagings(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'FloatingIPs')
-class ProviderMessagings(CFMENavigateStep):
+class OpenFloatingIPs(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -145,7 +147,7 @@ class ProviderMessagings(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'NetworkPorts')
-class ProviderMessagings(CFMENavigateStep):
+class OpenNetworkPorts(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -153,7 +155,7 @@ class ProviderMessagings(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'LoadBalancers')
-class ProviderMessagings(CFMENavigateStep):
+class OpenNetworkBalancers(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -161,7 +163,7 @@ class ProviderMessagings(CFMENavigateStep):
 
 
 @navigator.register(NetworkProvider, 'TopologyFromDetails')
-class ProviderMessagings(CFMENavigateStep):
+class OpenTopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
