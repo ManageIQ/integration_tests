@@ -22,6 +22,8 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
 from utils.varmeth import variable
+from utils.version import current_version
+
 
 cfg_btn = partial(tb.select, 'Configuration')
 
