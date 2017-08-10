@@ -4,7 +4,7 @@ from . import ContainersProvider
 from utils.varmeth import variable
 from utils.path import data_path
 from os import path
-from wrapanapi.openshift import Openshift
+from wrapanapi.containers.providers.openshift import Openshift
 from utils.ocp_cli import OcpCli
 from cfme.containers.provider import ContainersProviderDefaultEndpoint,\
     ContainersProviderEndpointsForm
