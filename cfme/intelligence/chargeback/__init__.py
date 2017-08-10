@@ -12,14 +12,14 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 class ChargebackView(BaseLoggedInPage):
 
     @property
-    def in_intel_chargeback(self):
+    def in_chargeback(self):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Cloud Intel', 'Chargeback'])
 
     @property
     def is_displayed(self):
-        return self.in_intel_chargeback
+        return self.in_chargeback
 
     @View.nested
     class reports(Accordion):  # noqa

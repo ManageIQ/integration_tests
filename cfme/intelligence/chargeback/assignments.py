@@ -19,7 +19,7 @@ class AssignmentsAllView(ChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_intel_chargeback and
+            self.in_chargeback and
             self.title.text == "All Assignments"
         )
 
@@ -34,7 +34,7 @@ class AssignmentsView(ChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_intel_chargeback and
+            self.in_chargeback and
             self.title.text == '"{}" Rate Assignments'.format(
                 self.context["object"].description) and
             self.assignments.is_opened and
