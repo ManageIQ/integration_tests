@@ -95,6 +95,7 @@ class HostDetailsEntities(View):
     configuration = SummaryTable(title="Configuration")
     smart_management = SummaryTable(title="Smart Management")
     authentication_status = SummaryTable(title="Authentication Status")
+    openstack_hardware = SummaryTable(title="Openstack Hardware")
 
 
 class HostDetailsView(ComputeInfrastructureHostsView):
