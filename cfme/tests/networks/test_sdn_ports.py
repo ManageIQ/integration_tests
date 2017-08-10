@@ -1,14 +1,15 @@
 import pytest
 from utils import testgen
-from cfme.cloud.provider.azure import AzureProvider as AP
-from cfme.cloud.provider.ec2 import EC2Provider as EP
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 
 from cfme.networks.provider import NetworkProvider
 from cfme.networks.network_port import NetworkPort
 
 
-pytest_generate_tests = testgen.generate(classes=[AP, EP, EC2Provider], scope='module')
+pytest_generate_tests = testgen.generate(
+    classes=[AzureProvider, EC2Provider, OpenStackProvider], scope='module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 

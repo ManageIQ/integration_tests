@@ -4,11 +4,10 @@ from cfme.web_ui import (
     Region, Quadicon, toolbar as tb, paginator
 )
 from cfme.fixtures import pytest_selenium as sel
-from cfme.base.login import BaseLoggedInPage
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils.appliance import Navigatable
 from utils.update import Updateable
-from cfme.common import PolicyProfileAssignable, Taggable, SummaryMixin
+from cfme.common import Taggable, SummaryMixin
 from functools import partial
 
 

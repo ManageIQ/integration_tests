@@ -2,8 +2,8 @@ import pytest
 import time
 from utils import testgen
 from random import choice
-from cfme.cloud.provider.ec2 import EC2Provider as EP
-from cfme.cloud.provider.azure import AzureProvider as AP
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures.pytest_selenium import is_displayed_text
 from cfme.web_ui.topology import Topology
@@ -12,7 +12,8 @@ from utils.wait import wait_for
 from cfme.networks.topology import NetworkTopology
 
 
-pytest_generate_tests = testgen.generate(classes=[EP, OpenStackProvider, AP], scope='module')
+pytest_generate_tests = testgen.generate(
+    classes=[EC2Provider, OpenStackProvider, AzureProvider], scope='module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 

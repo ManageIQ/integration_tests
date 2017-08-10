@@ -1,15 +1,16 @@
 import pytest
 from utils import testgen
-from cfme.cloud.provider.ec2 import EC2Provider as EP
-from cfme.cloud.provider.azure import AzureProvider as AP
-from cfme.cloud.provider.openstack import OpenStackProvider as OP
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from utils.appliance.implementations.ui import navigate_to
 import cfme.fixtures.pytest_selenium as sel
 
 from cfme.web_ui import Region
 from cfme.networks.provider import NetworkProvider
 
-pytest_generate_tests = testgen.generate(classes=[EP, AP, OP], scope='module')
+pytest_generate_tests = testgen.generate(
+    classes=[EC2Provider, AzureProvider, OpenStackProvider], scope='module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 details_page = Region(infoblock_type='detail')
