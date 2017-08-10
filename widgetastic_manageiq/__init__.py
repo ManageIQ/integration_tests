@@ -42,7 +42,7 @@ from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
 
 class DynamicTableAddError(Exception):
-    """Raised when an attempt to add a row to a dynamictable fails"""
+    """Raised when an attempt to add or save a row to a `widgetastic_manageiq.DynamicTable` fails"""
     pass
 
 
@@ -2357,9 +2357,11 @@ class DynamicTable(VanillaTable):
             int positive row index of the action row where the new widgets should be displayed
         """
         # convert action_row into a positive index
-        pos_action_index = (self.action_row
-                            if self.action_row >= 0
-                            else self._process_negative_index(nindex=self.action_row))
+        if self.action_row >= 0:
+            pos_action_index = self.action_row
+        else:
+            pos_action_index = self._process_negative_index(nindex=self.action_row)
+
         try:
             self[pos_action_index].click()
         except IndexError:  # self.action_row must have been None
