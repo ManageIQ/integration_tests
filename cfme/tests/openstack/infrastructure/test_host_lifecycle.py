@@ -71,3 +71,22 @@ def test_register_host(provider, host):
             host.name = h
     wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
     assert host.exists()
+
+
+@pytest.mark.requires_test('test_register_host')
+def test_introspect_host(host, provider):
+    """Introspect host"""
+    host.run_introspection()
+    wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
+             timeout=600)
+    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    assert host.get_detail('Openstack Hardware', 'Introspected') == 'true'
+
+
+@pytest.mark.requires_test('test_register_host')
+def test_provide_host(host, provider):
+    """Provide host"""
+    host.provide_node()
+    provider.mgmt.iapi.node.wait_for_provision_state(host.name, 'available', timeout=300)
+    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
