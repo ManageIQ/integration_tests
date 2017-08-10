@@ -20,7 +20,7 @@ class RatesView(ChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_intel_chargeback and self.configuration.is_displayed and
+            self.in_chargeback and self.configuration.is_displayed and
             self.title.text == "Compute Chargeback Rates"
         )
 
@@ -33,7 +33,7 @@ class RatesDetailView(ChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_intel_chargeback and self.configuration.is_displayed and
+            self.in_chargeback and self.configuration.is_displayed and
             self.title.text == 'Compute Chargeback Rate "{}"'.format(
                 self.context["object"].description) and
             self.rates.is_opened and
@@ -88,7 +88,7 @@ class AddComputeChargebackView(RatesView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
+            self.in_chargeback and
             self.title.text == 'Compute Chargeback Rates' and
             self.description.is_displayed)
 
@@ -101,7 +101,7 @@ class EditComputeChargebackView(AddComputeChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
+            self.in_chargeback and
             self.title.text == 'Compute Chargeback Rate "{}"'.format(self.obj.description))
 
 
@@ -117,7 +117,7 @@ class AddStorageChargebackView(AddComputeChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
+            self.in_chargeback and
             self.title.text == 'Storage Chargeback Rates' and
             self.description.is_displayed)
 
@@ -126,7 +126,7 @@ class EditStorageChargebackView(EditComputeChargebackView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
+            self.in_chargeback and
             self.title.text == 'Storage Chargeback Rate "{}"'.format(self.obj.description))
 
 
@@ -210,7 +210,6 @@ class ComputeRateAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.rates.tree.click_path(
             "Rates",
             "Compute"
@@ -223,7 +222,6 @@ class ComputeRateNew(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.configuration.item_select("Add a new Chargeback Rate")
 
 
@@ -233,7 +231,6 @@ class ComputeRateDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.rates.tree.click_path(
             "Rates",
             "Compute", self.obj.description
@@ -246,7 +243,6 @@ class ComputeRateEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.configuration.item_select("Edit this Chargeback Rate")
 
 
@@ -256,7 +252,6 @@ class StorageRateAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'IntelChargeback')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.rates.tree.click_path(
             "Rates",
             "Storage"
@@ -269,7 +264,6 @@ class StorageRateNew(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.configuration.item_select("Add a new Chargeback Rate")
 
 
@@ -279,7 +273,6 @@ class StorageRateDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.rates.tree.click_path(
             "Rates",
             "Storage", self.obj.description
@@ -292,5 +285,4 @@ class StorageRateEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         self.view.configuration.item_select("Edit this Chargeback Rate")

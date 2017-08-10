@@ -28,7 +28,6 @@ class AutomateExplorerView(BaseLoggedInPage):
 
     @View.nested
     class datastore(Accordion):  # noqa
-
         tree = ManageIQTree()
 
     configuration = Dropdown('Configuration')
