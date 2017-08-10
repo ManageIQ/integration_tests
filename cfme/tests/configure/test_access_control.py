@@ -405,14 +405,15 @@ def test_delete_group_with_assigned_user():
 
 
 @pytest.mark.tier(3)
-def test_edit_default_group():
+@pytest.mark.parametrize("default_group_name", Group().get_default_group_names())
+def test_edit_default_group(default_group_name):
     """Test that CFME prevents a user from editing a default group
 
     Steps:
         * Login as Administrator user
         * Try editing the group EvmGroup-adminstrator
     """
-    group = Group(description='EvmGroup-approver')
+    group = Group(default_group_name)
 
     group_updates = {}
     with pytest.raises(RBACOperationBlocked):
