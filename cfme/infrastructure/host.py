@@ -210,6 +210,11 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     def get_power_state(self):
         return self.get_detail("Properties", "Power State")
 
+    def provide(self):
+        """Provide Openstack infra node"""
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Provide Node', handle_alert=True)
+
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the host.
 
