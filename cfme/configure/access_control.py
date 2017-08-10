@@ -570,15 +570,6 @@ class Group(Updateable, Pretty, Navigatable):
             appliance: appliance under test
     """
     pretty_attrs = ['description', 'role']
-    DEFAULT_GROUP_NAMES = [
-        "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
-        "EvmGroup-consumption_administrator", "EvmGroup-container_administrator",
-        "EvmGroup-desktop", "EvmGroup-operator", "EvmGroup-security",
-        "EvmGroup-super_administrator", "EvmGroup-support", "EvmGroup-tenant_administrator",
-        "EvmGroup-tenant_quota_administrator", "EvmGroup-user",
-        "EvmGroup-user_limited_self_service", "EvmGroup-user_self_service",
-        "EvmGroup-vm_user", ]
-
 
     def __init__(self, description=None, role=None, tenant="My Company", user_to_lookup=None,
                  ldap_credentials=None, tag=None, host_cluster=None, vm_template=None,
@@ -853,6 +844,27 @@ class Group(Updateable, Pretty, Navigatable):
         view = self.create_view(DetailsGroupView)
         view.flash.assert_success_message('Tag edits were successfully saved')
         assert view.is_displayed
+    
+    def get_default_group_names(self):
+        group_names = VersionPick({
+            '5.8': [
+            "EvmGroup-Administrator", "EvmGroup-approver", "EvmGroup-auditor",
+            "EvmGroup-consumption_administrator", "EvmGroup-container_administrator",
+            "EvmGroup-desktop", "EvmGroup-operator", "EvmGroup-security",
+            "EvmGroup-super_administrator", "EvmGroup-support", "EvmGroup-tenant_administrator",
+            "EvmGroup-tenant_quota_administrator", "EvmGroup-user",
+            "EvmGroup-user_limited_self_service", "EvmGroup-user_self_service",
+            "EvmGroup-vm_user", ],
+            '5.7': [
+            "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
+            "EvmGroup-consumption_administrator", "EvmGroup-desktop", "EvmGroup-operator",
+            "EvmGroup-security", "EvmGroup-super_administrator", "EvmGroup-support",
+            "EvmGroup-tenant_administrator", "EvmGroup-tenant_quota_administrator",
+            "EvmGroup-user", "EvmGroup-user_limited_self_service",
+            "EvmGroup-user_self_service", "EvmGroup-vm_user", ], }).pick(
+                    self.appliance.version)
+
+        return group_names
 
     def set_group_order(self, updated_order):
         """ Sets group order for group lookup
