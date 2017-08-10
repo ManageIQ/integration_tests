@@ -204,6 +204,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     def update_basic_information(self, updates, reset=False):
         """ Navigate to a Server Tab. Updates basic information form
+
         Args:
              updates: dict, widgets will be updated regarding updates.
                 ex. update_basic_information({'company_name': 'New name'})
@@ -280,6 +281,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     def update_smtp_server(self, updates, reset=False):
         """ Navigate to a Server Tab. Updates smtp server
+
         Args:
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
@@ -308,6 +310,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     def update_web_services(self, updates, reset=False):
         """ Navigate to a Server Tab. Updates web services
+
         Args:
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
@@ -326,6 +329,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     def update_logging_form(self, updates, reset=False):
         """ Navigate to a Server Tab. Updates logging form
+
         Args:
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
@@ -344,6 +348,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     def update_custom_support_url(self, updates, reset=False):
         """ Navigate to a Server Tab. Updates custom support url
+
         Args:
              updates: dict, widgets will be updated regarding updates.
              reset: By default(False) changes will not be reset, if True changes will be reset
