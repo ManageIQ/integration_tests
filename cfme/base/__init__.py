@@ -28,6 +28,12 @@ class Server(Navigatable, sentaku.modeling.ElementMixin):
         setting = ServerInformation(appliance=self.appliance)
         return setting
 
+    @property
+    def authentication(self):
+        from cfme.configure.configuration.server_settings import AuthenticationSetting
+        auth_settings = AuthenticationSetting(self.appliance)
+        return auth_settings
+
 
 class ZoneCollection(Navigatable, sentaku.modeling.ElementMixin):
 

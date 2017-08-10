@@ -2,7 +2,6 @@
 import fauxfactory
 from time import sleep
 
-from cfme.configure.configuration import DatabaseAuthSetting, ExternalAuthSetting
 from cfme.utils import appliance
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.conf import credentials
@@ -61,8 +60,9 @@ def setup_external_auth_ipa(**data):
             current_appliance.server.settings.update_ntp_servers(
                 {'ntp_server_1': data["ipaserver"]})
             sleep(120)
-        auth = ExternalAuthSetting(get_groups=data.pop("get_groups", False))
-        auth.setup()
+        appliance.server.authentication.set_auth_mode(
+            mode='external', get_groups=data.pop("get_groups", False)
+        )
         creds = credentials.get(data.pop("credentials"), {})
         data.update(**creds)
         assert ssh.run_command(
@@ -99,8 +99,9 @@ def setup_external_auth_openldap(**data):
                                 local_path=conf_path.strpath)
     ensure_browser_open()
     appliance.current_appliance.server.login_admin()
-    auth = ExternalAuthSetting(get_groups=data.pop("get_groups", True))
-    auth.setup()
+    appliance.server.authentication.set_auth_mode(
+        mode='external', get_groups=data.pop("get_groups", True)
+    )
     current_appliance.configure_appliance_for_openldap_ext_auth(appliance_fqdn)
     appliance.current_appliance.server.logout()
 
@@ -111,16 +112,14 @@ def disable_external_auth_ipa():
     with current_appliance.ssh_client as ssh:
         ensure_browser_open()
         appliance.current_appliance.server.login_admin()
-        auth = DatabaseAuthSetting()
-        auth.update()
+        appliance.server.authentication.set_auth_mode()
         assert ssh.run_command("appliance_console_cli --uninstall-ipa")
         current_appliance.wait_for_web_ui()
     appliance.current_appliance.server.logout()
 
 
 def disable_external_auth_openldap():
-    auth = DatabaseAuthSetting()
-    auth.update()
+    appliance.server.authentication.set_auth_mode()
     sssd_conf = '/etc/sssd/sssd.conf'
     httpd_auth = '/etc/pam.d/httpd-auth'
     manageiq_remoteuser = '/etc/httpd/conf.d/manageiq-remote-user.conf'
