@@ -66,10 +66,10 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
-    if not pxe_server.exists:
+    if not pxe_server.exists():
         pxe_server.create()
     pxe_server.set_pxe_image_type(provisioning['pxe_image'], provisioning['pxe_image_type'])
-    if not pxe_cust_template.exists:
+    if not pxe_cust_template.exists():
         pxe_cust_template.create()
 
 
@@ -122,4 +122,4 @@ def test_pxe_servicecatalog(setup_provider, provider, catalog_item, request):
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=3100, delay=20)
-    assert row.last_message.text == 'Request complete'
+    assert row.request_state.text == 'Finished'
