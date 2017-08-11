@@ -619,7 +619,7 @@ class TestServiceTemplateRESTAPI(object):
 
 class TestServiceCatalogsRESTAPI(object):
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_edit_service_catalogs(self, appliance, service_catalogs, from_detail):
+    def test_edit_catalogs(self, appliance, service_catalogs, from_detail):
         """Tests editing catalog items using the REST API.
 
         Metadata:
@@ -741,6 +741,53 @@ class TestServiceCatalogsRESTAPI(object):
         @request.addfinalizer
         def _finished():
             appliance.rest_api.collections.services.action.delete(*new_services)
+
+    @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
+    def test_delete_catalog_from_detail(self, appliance, service_catalogs, method):
+        """Tests delete service catalogs from detail using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        for catalog in service_catalogs:
+            if method == 'post':
+                del_action = catalog.action.delete.POST
+            else:
+                del_action = catalog.action.delete.DELETE
+
+            del_action()
+            assert_response(appliance)
+            wait_for(
+                lambda: not appliance.rest_api.collections.service_catalogs.find_by(
+                    name=catalog.name),
+                num_sec=100,
+                delay=5
+            )
+
+            with error.expected('ActiveRecord::RecordNotFound'):
+                del_action()
+            assert_response(appliance, http_status=404)
+
+    def test_delete_catalog_from_collection(self, appliance, service_catalogs):
+        """Tests delete service catalogs from detail using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
+        assert_response(appliance)
+
+        for catalog in service_catalogs:
+            wait_for(
+                lambda: not appliance.rest_api.collections.service_catalogs.find_by(
+                    name=catalog.name),
+                num_sec=300,
+                delay=5
+            )
+
+        with error.expected('ActiveRecord::RecordNotFound'):
+            appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
+        assert_response(appliance, http_status=404)
 
 
 class TestBlueprintsRESTAPI(object):
