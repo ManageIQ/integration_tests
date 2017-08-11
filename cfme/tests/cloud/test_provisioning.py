@@ -52,7 +52,6 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         'notes': note,
     }
     # TODO Move this into helpers on the provider classes
-
     recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
 
     # Check whether auto-selection of environment is passed
@@ -63,7 +62,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         auto = False
 
     # All providers other than Azure
-    if not isinstance(provider, AzureProvider):
+    if not provider.one_of(AzureProvider):
         recursive_update(inst_args, {
             'properties': {
                 'instance_type': provisioning['instance_type'],
@@ -76,7 +75,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         })
 
     # Openstack specific
-    if isinstance(provider, OpenStackProvider):
+    if provider.one_of(OpenStackProvider):
         recursive_update(inst_args, {
             'environment': {
                 'cloud_network': None if auto else provisioning['cloud_network']
@@ -84,7 +83,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         })
 
     # GCE specific
-    if isinstance(provider, GCEProvider):
+    if provider.one_of(GCEProvider):
         recursive_update(inst_args, {
             'environment': {
                 'cloud_network': None if auto else provisioning['cloud_network']
@@ -95,7 +94,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         })
 
     # Azure specific
-    if isinstance(provider, AzureProvider):
+    if provider.one_of(AzureProvider):
         # Azure uses different provisioning keys for some reason
         recursive_update(inst_args, {
             'environment': {

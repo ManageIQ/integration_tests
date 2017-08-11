@@ -12,7 +12,8 @@ from selenium.common.exceptions import NoSuchElementException
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm import VM as BaseVM, Template as BaseTemplate, EditServerRelationShipView
+from cfme.common.vm import VM, Template as BaseTemplate
+from cfme.common.vm_views import ManagementEngineView
 from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
@@ -115,6 +116,7 @@ class InfraVmDetailsToolbar(View):
 class InfraVmDetailsView(BaseLoggedInPage):
     # TODO this is only minimal implementation for toolbar access through widgetastic
     toolbar = View.nested(InfraVmDetailsToolbar)
+
 
 class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
     @property
@@ -325,7 +327,7 @@ class VMConfiguration(Pretty):
         return changes
 
 
-class Vm(BaseVM):
+class Vm(VM):
     """Represents a VM in CFME
 
     Args:
@@ -1194,8 +1196,9 @@ class VmReconfigure(CFMENavigateStep):
 
 @navigator.register(Vm, 'EditManagementEngineRelationship')
 class VmEngineRelationship(CFMENavigateStep):
-    VIEW = EditServerRelationShipView
+    VIEW = ManagementEngineView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit Management Engine Relationship')
+        self.prerequisite_view.toolbar.configuration.item_select(
+            'Edit Management Engine Relationship')
