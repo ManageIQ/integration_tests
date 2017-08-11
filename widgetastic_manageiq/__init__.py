@@ -1675,7 +1675,7 @@ class TimelinesChart(View):
     # currently only event collection is available
     # todo: to add widgets for all controls and add chart objects interaction functionality
     """
-    ROOT = '//div[contains(@class, "timeline-container")]'
+    ROOT = ParametrizedLocator('{@locator}')
     CATEGORIES = './/*[name()="g" and contains(@class, "timeline-pf-labels")]' \
                  '//*[name()="text" and @class="timeline-pf-label"]'
 
@@ -1692,8 +1692,9 @@ class TimelinesChart(View):
             params = ", ".join(["{}={}".format(attr, getattr(self, attr)) for attr in attrs])
             return "TimelinesEvent({})".format(params)
 
-    def __init__(self, parent, logger=None):
+    def __init__(self, parent, locator=None, logger=None):
         super(TimelinesChart, self).__init__(parent=parent, logger=logger)
+        self.locator = locator or '//div[contains(@class, "timeline-container")]'
 
     def get_categories(self, *categories):
         br = self.browser
