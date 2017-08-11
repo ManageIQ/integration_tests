@@ -138,7 +138,6 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
     app.server.login(app.user)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
     '''Tests appliance upgrade between streams'''
     appliance_preupdate.evmserverd.stop()
