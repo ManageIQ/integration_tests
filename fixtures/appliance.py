@@ -14,6 +14,7 @@ from contextlib import contextmanager
 
 import pytest
 
+from utils.version import get_stream
 from cfme.test_framework.sprout.client import SproutClient
 
 
@@ -66,7 +67,8 @@ def temp_appliance_preconfig_funcscope():
 
 @pytest.yield_fixture(scope="function")
 def temp_appliance_preconfig_funcscope_upgrade(appliance):
-    stream = 5.8 if appliance.version >= "5.9" else 5.7
+    stream = (int(''.join([i for i in get_stream(appliance.version)
+        if i.isdigit()])) - 1)
     with temp_appliances(preconfigured=True, stream=stream) as appliances:
         yield appliances[0]
 

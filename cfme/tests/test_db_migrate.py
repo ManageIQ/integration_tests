@@ -6,6 +6,7 @@ from utils.appliance import ApplianceException
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
+from utils.version import get_stream
 from scripts.repo_gen import process_url, build_file
 import tempfile
 
@@ -33,10 +34,12 @@ def temp_appliance_extended_db(temp_appliance_preconfig):
 
 
 @pytest.yield_fixture(scope="function")
-def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade):
+def appliance_preupdate(temp_appliance_preconfig_funcscope_upgrade, appliance):
     '''Reconfigures appliance partitions and adds repo file for upgrade'''
+    update_url = ('update_url_' + ''.join([i for i in get_stream(appliance.version)
+        if i.isdigit()]))
     temp_appliance_preconfig_funcscope_upgrade.db.extend_partition()
-    urls = process_url(cfme_data['basic_info']['update_url'])
+    urls = process_url(cfme_data['basic_info'][update_url])
     output = build_file(urls)
     with tempfile.NamedTemporaryFile('w') as f:
         f.write(output)
