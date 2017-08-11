@@ -3402,7 +3402,7 @@ class DriftGrid(Pretty):
     """ Class representing the table (grid) specific to host drift analysis comparison page
     """
 
-    def __init__(self, loc="//div[@id='drift_grid_div']"):
+    def __init__(self, loc="//div[@id='compare-grid']"):
         self.loc = loc
 
     def get_cell(self, row_text, col_index):
@@ -3420,7 +3420,8 @@ class DriftGrid(Pretty):
             Selenium element of the cell.
         """
         self.expand_all_sections()
-        cell_loc = ".//div/div[1][contains(., '{}')]/../div[{}]".format(row_text, col_index + 2)
+        cell_loc = ".//th[contains(normalize-space(.), '{}')]/../td[{}]".format(row_text,
+                                                                                col_index + 1)
         cell = sel.element(cell_loc, root=self.loc)
         return cell
 
@@ -3442,9 +3443,8 @@ class DriftGrid(Pretty):
 
         # Cell either contains an image
         try:
-            cell_img = sel.element(".//img", root=cell)
-            if sel.get_attribute(cell_img, "alt") == 'Changed from previous':
-                return True
+            cell_img = sel.element(".//i | .//img", root=cell)
+            return sel.get_attribute(cell_img, "title") == 'Changed from previous'
         # or text
         except NoSuchElementException:
             if 'color: rgb(33, 160, 236)' in sel.get_attribute(cell, 'style'):

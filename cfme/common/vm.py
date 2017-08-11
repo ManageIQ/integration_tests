@@ -14,7 +14,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
     form_buttons, paginator, toolbar, PagedTable, SplitPagedTable, search, CheckboxTable,
-    DriftGrid
+    DriftGrid, BootstrapTreeview
 )
 import cfme.web_ui.toolbar as tb
 from utils import version, ParamClassName
@@ -50,6 +50,7 @@ set_ownership_form = Form(fields=[
 ])
 
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
+drift_section = BootstrapTreeview('all_sectionsbox')
 
 
 def base_types(template=False):
@@ -803,29 +804,15 @@ class VM(BaseVM):
         tb.select("Select up to 10 timestamps for Drift Analysis")
 
         # Make sure the section we need is active/open
-        sec_loc_map = {
-            'Properties': 'Properties',
-            'Security': 'Security',
-            'Configuration': 'Configuration',
-            'My Company Tags': 'Categories'}
-        sec_loc_template = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]" \
-                           "//span[contains(@class, 'dynatree-checkbox')]"
-        sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]" \
-            "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
         sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
 
         # Deselect other sections
-        for other_section in sec_loc_map.keys():
-            other_section_loc = sec_loc_template.format(sec_loc_map[other_section])
-            other_section_classes = sel.get_attribute(other_section_loc + '/..', "class")
-            if other_section != section and 'dynatree-partsel' in other_section_classes:
-                # Element needs to be checked out if it has no dynatree-selected
-                if 'dynatree-selected' not in other_section_classes:
-                    sel.click(other_section_loc)
-                sel.click(other_section_loc)
+        for other_section in drift_section.child_items():
+            drift_section.check_node(other_section.text)
+            drift_section.uncheck_node(other_section.text)
 
         # Activate the required section
-        sel.click(sec_checkbox_loc)
+        drift_section.check_node(section)
         sel.click(sec_apply_btn)
 
         if not tb.is_active("All attributes"):

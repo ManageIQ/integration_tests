@@ -21,7 +21,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
     Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
-from cfme.web_ui.form_buttons import change_stored_password
+from cfme.web_ui.form_buttons import change_stored_password, FormButton
 from utils import version, conf
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -216,7 +216,7 @@ class AnalysisProfile(Pretty, Updateable, Navigatable):
 
     def create(self):
         navigate_to(self, 'Add')
-        fill(self.form, self, action=form_buttons.add)
+        fill(self.form, self, action=FormButton("Add", classes=[FormButton.PRIMARY]))
         flash.assert_no_errors()
 
     def update(self, updates=None):
