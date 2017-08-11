@@ -222,6 +222,75 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         view = navigate_to(self, 'Details')
         return view.basic_information.read()
 
+# =============================== Server Roles Form ===================================
+
+    def update_server_roles_ui(self, updates, reset=False):
+        """ Navigate to a Server Tab. Updates server roles via UI
+
+        Args:
+             updates: dict, widgets will be updated regarding updates.
+             reset: By default(False) changes will not be reset, if True changes will be reset
+
+        """
+        view = navigate_to(self, 'Details')
+        if self.appliance.version < '5.8':
+            updates.pop('embedded_ansible')
+        view.server_roles.fill(updates)
+        self._save_action(view, updates, reset)
+
+    def update_server_roles_db(self, **roles):
+        """ Set server roles on Configure / Configuration pages.
+
+        Args:
+            **roles: Roles specified as in server_roles Form in this module. Set to True or False
+        """
+        if self.server_roles_db == roles:
+            logger.debug(' Roles already match, returning...')
+            return
+        else:
+            self.appliance.server_roles = roles
+
+    @property
+    def server_roles_db(self):
+        """ Get server roles from Configure / Configuration from DB
+
+        Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
+            accepts as kwargs.
+        """
+        return self.appliance.server_roles
+
+    @property
+    def server_roles_ui(self):
+        view = navigate_to(self, 'Details')
+        roles = view.server_roles.read()
+        # default_smart_proxy is not a role, but text info
+        roles.pop('default_smart_proxy')
+        return roles
+
+    def server_roles_enabled(self, *roles):
+        """ Enables Server roles """
+        return self._change_server_roles_state(True, *roles)
+
+    def server_roles_disabled(self, *roles):
+        """ Disable Server roles """
+        return self._change_server_roles_state(False, *roles)
+
+    def _change_server_roles_state(self, enable, *roles):
+        """ Takes care of setting required roles and then restoring original roles.
+
+        Args:
+            enable: Whether to enable the roles.
+        """
+        try:
+            original_roles = self.server_roles_db
+            set_roles = {}
+            for role in roles:
+                set_roles[role] = enable
+            self.update_server_roles_db(**set_roles)
+            yield
+        finally:
+            self.update_server_roles_db(**original_roles)
+
 # ============================= VMware Console Form =================================
 
     def update_vmware_console(self, updates, reset=False):
@@ -362,73 +431,6 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         """ Returns(dict): custom_support_url fields values"""
         view = navigate_to(self, 'Details')
         return view.custom_support_url.read()
-
-# =============================== Server Roles Form ===================================
-
-    def update_server_roles_ui(self, updates, reset=False):
-        """ Navigate to a Server Tab. Updates server roles via UI
-        Args:
-             updates: dict, widgets will be updated regarding updates.
-             reset: By default(False) changes will not be reset, if True changes will be reset
-        """
-        view = navigate_to(self, 'Details')
-        # embedded_ansible server role available from 5.8 version
-        if self.appliance.version < '5.8' and 'embedded_ansible' in updates:
-            updates.pop('embedded_ansible')
-        # cockpit_ws element is not present for downstream version
-        if self.appliance.version != version.UPSTREAM and 'cockpit_ws' in updates:
-            updates.pop('cockpit_ws')
-        view.server_roles.fill(updates)
-        self._save_action(view, updates, reset)
-
-    def update_server_roles_db(self, roles):
-        """ Set server roles on Configure / Configuration pages.
-        Args:
-            roles: Roles specified as in server_roles dict in this module. Set to True or False
-        """
-        if self.server_roles_db == roles:
-            logger.debug(' Roles already match, returning...')
-            return
-        else:
-            self.appliance.server_roles = roles
-
-    @property
-    def server_roles_db(self):
-        """ Get server roles from Configure / Configuration from DB
-        Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
-            accepts as kwargs.
-        """
-        return self.appliance.server_roles
-
-    @property
-    def server_roles_ui(self):
-        view = navigate_to(self, 'Details')
-        roles = view.server_roles.read()
-        # default_smart_proxy is not a role, but text info
-        roles.pop('default_smart_proxy')
-        return roles
-
-    def server_roles_enabled(self, *roles):
-        """ Enables Server roles """
-        self._change_server_roles_state(True, *roles)
-
-    def server_roles_disabled(self, *roles):
-        """ Disable Server roles """
-        self._change_server_roles_state(False, *roles)
-
-    def _change_server_roles_state(self, enable, *roles):
-        """ Takes care of setting required roles and then restoring original roles.
-        Args:
-            enable: Whether to enable the roles.
-        """
-        try:
-            original_roles = self.server_roles_db
-            set_roles = copy(original_roles)
-            for role in roles:
-                set_roles[role] = enable
-            self.update_server_roles_db(set_roles)
-        except Exception:
-            self.update_server_roles_db(original_roles)
 
     def _save_action(self, view, updates, reset):
         """ Take care of actions to do after updates """

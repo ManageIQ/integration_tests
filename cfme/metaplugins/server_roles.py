@@ -48,7 +48,7 @@ from markers.meta import plugin
 from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.utils.conf import cfme_data
 
-available_roles = {ServerInformation.server_roles}
+available_roles = set(ServerInformation.server_roles)
 
 @plugin("server_roles", keys=["server_roles"])  # Could be omitted but I want to keep it clear
 @plugin("server_roles", keys=["server_roles", "server_roles_mode"])

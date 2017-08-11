@@ -71,11 +71,11 @@ def test_provider_refresh(request, a_provider, appliance):
         pytest.skip("Refresh action is not implemented in this version")
     provider_rest = appliance.rest_api.collections.providers.get(name=a_provider.name)
     server_settings = ServerInformation()
-    with server_settings.server_roles_disabled("ems_inventory", "ems_operations"):
-        vm_name = deploy_template(
-            a_provider.key,
-            "test_rest_prov_refresh_{}".format(fauxfactory.gen_alphanumeric(length=4)))
-        request.addfinalizer(lambda: a_provider.mgmt.delete_vm(vm_name))
+    server_settings.server_roles_disabled("ems_inventory", "ems_operations")
+    vm_name = deploy_template(
+        a_provider.key,
+        "test_rest_prov_refresh_{}".format(fauxfactory.gen_alphanumeric(length=4)))
+    request.addfinalizer(lambda: a_provider.mgmt.delete_vm(vm_name))
     provider_rest.reload()
     old_refresh_dt = provider_rest.last_refresh_date
     response = provider_rest.action.refresh()

@@ -187,7 +187,8 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
         server_settings.update_server_roles_db(database_synchronization=False)
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
-                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
+                 num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
+                 message="get_replication_status")
         server_settings.update_server_roles_db(database_synchronization=True)
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=False,
@@ -227,7 +228,8 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         server_settings.update_server_roles_db(database_synchronization=False)
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
-                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
+                 num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
+                 message="get_replication_status")
         server_settings.update_server_roles_db(database_synchronization=True)
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=False,
