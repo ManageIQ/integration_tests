@@ -49,7 +49,6 @@ def appliance_preupdate(old_version):
         logger.warning("Couldn't provision appliance with following error:")
         logger.warning("{}".format(e))
         raise SproutException('No provision available')
-    yield apps[0]
 
     apps[0].db.extend_partition()
     urls = process_url(cfme_data['basic_info'][update_url])
@@ -60,7 +59,7 @@ def appliance_preupdate(old_version):
         os.fsync(f.fileno())
         apps[0].ssh_client.put_file(
             f.name, '/etc/yum.repos.d/update.repo')
-
+    yield apps[0]
     apps[0].ssh_client.close()
     sp.destroy_pool(pool_id)
 
