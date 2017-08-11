@@ -38,9 +38,9 @@ def appliance_preupdate(old_version):
     sp = SproutClient.from_config()
     available_versions = set(sp.call_method('available_cfme_versions'))
     for ver in versions:
-            for a in available_versions:
-                if a.startswith(ver):
-                    usable.append(a)
+        for a in available_versions:
+            if a.startswith(ver):
+                usable.append(a)
     usable = sorted([Version(i) for i in usable], reverse=True)
     try:
         apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
