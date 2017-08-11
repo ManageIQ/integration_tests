@@ -28,7 +28,9 @@ def host(provider):
 
 
 def test_scale_provider_down(provider, host):
-    """Scale down Openstack Infrastructure provider"""
+    """Scale down Openstack Infrastructure provider
+    Metadata:
+        test_flag: openstack_scale"""
     host.toggle_maintenance_mode()
     flash.assert_success()
     host_uuid = host.name.split()[0]  # cut off deployment role part from host's name
