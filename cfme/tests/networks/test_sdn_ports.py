@@ -16,7 +16,7 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 def test_port_detail_name(provider, appliance):
     ''' Test equality of quadicon and detail names '''
     ports = NetworkPort.get_all()
-    if len(ports)>5:
+    if len(ports) > 5:
         ports = ports[:5]
     for port in ports:
         temp_port = NetworkPort(name=port, appliance=appliance)
@@ -28,7 +28,7 @@ def test_port_net_prov(provider, appliance):
     ''' Test functionality of quadicon and detail network providers'''
     providers = NetworkProvider.get_all()
     ports = NetworkPort.get_all()
-    if len(ports)>5:
+    if len(ports) > 5:
         ports = ports[:5]
     for port in ports:
         temp_port = NetworkPort(name=port, appliance=appliance)
