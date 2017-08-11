@@ -5,7 +5,6 @@ import pytest
 from cfme.test_framework.sprout.client import SproutClient, SproutException
 from scripts.repo_gen import process_url, build_file
 from utils.version import Version
-from utils.appliance import current_appliance
 from utils.log import logger
 from utils.conf import cfme_data
 from utils.version import get_stream
@@ -15,21 +14,20 @@ versions = []
 
 
 @pytest.yield_fixture(scope="function")
-def appliance_preupdate(old_version):
+def appliance_preupdate(old_version, appliance):
 
     """The following lines generate appliance versions based from the current build.
     Appliance version is split and minor_build is picked out for generating each version
     and appending it to the empty versions list"""
 
-    version = current_appliance.version
+    version = appliance.version
     split_ver = str(version).split(".")
     minor_build = split_ver[2]
 
     for i in range(int(minor_build) - 1, -1, -1):
         versions.append("{}.{}.{}".format(split_ver[0], split_ver[1], i))
 
-    update_url = ('update_url_' + ''.join([i for i in get_stream(current_appliance.version)
-        if i.isdigit()]))
+    update_url = ('update_url_' + ''.join([i for i in get_stream(appliance.version)if i.isdigit()]))
 
     """Requests appliance from sprout based on old_versions, edits partitions and adds
     repo file for update"""
