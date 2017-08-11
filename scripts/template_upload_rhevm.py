@@ -714,6 +714,12 @@ def run(**kwargs):
             sshname = credentials[ssh_rhevm_creds]['username']
             sshpass = credentials[ssh_rhevm_creds]['password']
             rhevip = mgmt_sys[provider]['ipaddress']
+
+        if (mgmt_sys[provider].get('template_upload') and
+                mgmt_sys[provider]['template_upload'].get('block_upload')):
+            # Providers template_upload section indicates upload should not happen on this provider
+            continue
+
         print("RHEVM:{} verifying provider's state before template upload".format(provider))
         if not net.is_pingable(rhevip):
             continue
