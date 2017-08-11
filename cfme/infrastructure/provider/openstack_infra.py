@@ -132,7 +132,7 @@ class OpenstackInfraProvider(InfraProvider):
             increase_by - count of nodes to be added to infra provider
         """
         view = navigate_to(self, 'ScaleOut')
-        curr_compute_count = view.compute_count.read()
+        curr_compute_count = int(view.compute_count.value)
         view.compute_count.fill(curr_compute_count + increase_by)
         view.scale.click()
 
