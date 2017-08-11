@@ -672,8 +672,8 @@ class TestServiceCatalogsRESTAPI(object):
         catalog.service_templates.reload()
         template = catalog.service_templates[0]
 
-        # this doesn't return resource in the "service_requests"
-        # using workarount with `response.json()` instead
+        # this doesn't return resource in the "service_requests" collection
+        # using workarount with `response.json()`
         template.action.order()
         results = appliance.rest_api.response.json()
         assert_response(appliance)
@@ -711,8 +711,8 @@ class TestServiceCatalogsRESTAPI(object):
             catalog.service_templates.action.assign(template)
             template.reload()
 
-        # this doesn't return resource in the "service_requests"
-        # using workarount with `response.json()` instead
+        # this doesn't return resource in the "service_requests" collection
+        # using workarount with `response.json()`
         catalog.service_templates.action.order(*service_templates)
         results = appliance.rest_api.response.json()
         results = results['results']
