@@ -13,9 +13,9 @@ from utils import os
 
 versions = []
 
-'''The following lines generate appliance versions based from the current build. appliance version
-is split and minor_build is picked out for generating each version and appending it to the empty
-versions list'''
+'''The following lines generate appliance versions based from the current build.
+Appliance version is split and minor_build is picked out for generating each version
+and appending it to the empty versions list'''
 
 version = current_appliance.version
 split_ver = str(version).split(".")
@@ -28,8 +28,8 @@ for i in range(int(minor_build) - 1, -1, -1):
 @pytest.yield_fixture(scope="function")
 def appliance_preupdate(old_version):
 
-    '''Requests appliance from sprout based on old_versions, edits partitions and adds repo file
-    for update'''
+    '''Requests appliance from sprout based on old_versions, edits partitions and adds
+    repo file for update'''
     usable = []
     sp = SproutClient.from_config()
     available_versions = set(sp.call_method('available_cfme_versions'))
@@ -39,8 +39,8 @@ def appliance_preupdate(old_version):
                     usable.append(a)
     usable = sorted([Version(i) for i in usable], reverse=True)
     try:
-        apps, pool_id = sp.provision_appliances(count=1, preconfigured=True, lease_time=180,
-            version=str(usable[0]))
+        apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
+            lease_time=180, version=str(usable[0]))
     except Exception as e:
         logger.warning("Couldn't provision appliance with following error:")
         logger.warning("{}".format(e))
