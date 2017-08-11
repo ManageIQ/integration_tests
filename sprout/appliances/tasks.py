@@ -72,7 +72,7 @@ def retrieve_cfme_appliance_version(template_name):
 
 
 def trackerbot():
-    return api()
+    return api(trackerbot_url=settings.HUBBER_URL.rstrip('/') + '/api/')
 
 
 def none_dict(l):
