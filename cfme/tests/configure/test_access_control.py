@@ -380,7 +380,7 @@ def test_delete_default_group_all_selection(default_group_name):
     Steps:
         * Login as Administrator user
         * Navigate to Configuration -> Group
-        * Try deleting the group 
+        * Try deleting the group
     """
     group = Group(description=default_group_name)
 
@@ -579,6 +579,10 @@ def test_edit_default_roles_all_selection(default_role_name):
 
     with pytest.raises(RBACOperationBlocked):
         role.update(role_updates, all_selection=True)
+
+    # When the role update is blocked the screen will leave the current role checked
+    # which causes the next edit role test to have all previous role messages selected
+    navigate_to(role.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)

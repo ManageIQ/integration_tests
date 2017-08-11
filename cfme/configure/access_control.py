@@ -844,24 +844,24 @@ class Group(Updateable, Pretty, Navigatable):
         view = self.create_view(DetailsGroupView)
         view.flash.assert_success_message('Tag edits were successfully saved')
         assert view.is_displayed
-    
+
     def get_default_group_names(self):
         group_names = VersionPick({
             '5.8': [
-            "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
-            "EvmGroup-consumption_administrator", "EvmGroup-container_administrator",
-            "EvmGroup-desktop", "EvmGroup-operator", "EvmGroup-security",
-            "EvmGroup-super_administrator", "EvmGroup-support", "EvmGroup-tenant_administrator",
-            "EvmGroup-tenant_quota_administrator", "EvmGroup-user",
-            "EvmGroup-user_limited_self_service", "EvmGroup-user_self_service",
-            "EvmGroup-vm_user", ],
+                "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
+                "EvmGroup-consumption_administrator", "EvmGroup-container_administrator",
+                "EvmGroup-desktop", "EvmGroup-operator", "EvmGroup-security",
+                "EvmGroup-super_administrator", "EvmGroup-support", "EvmGroup-tenant_administrator",
+                "EvmGroup-tenant_quota_administrator", "EvmGroup-user",
+                "EvmGroup-user_limited_self_service", "EvmGroup-user_self_service",
+                "EvmGroup-vm_user", ],
             '5.7': [
-            "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
-            "EvmGroup-consumption_administrator", "EvmGroup-desktop", "EvmGroup-operator",
-            "EvmGroup-security", "EvmGroup-super_administrator", "EvmGroup-support",
-            "EvmGroup-tenant_administrator", "EvmGroup-tenant_quota_administrator",
-            "EvmGroup-user", "EvmGroup-user_limited_self_service",
-            "EvmGroup-user_self_service", "EvmGroup-vm_user", ], }).pick(
+                "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
+                "EvmGroup-consumption_administrator", "EvmGroup-desktop", "EvmGroup-operator",
+                "EvmGroup-security", "EvmGroup-super_administrator", "EvmGroup-support",
+                "EvmGroup-tenant_administrator", "EvmGroup-tenant_quota_administrator",
+                "EvmGroup-user", "EvmGroup-user_limited_self_service",
+                "EvmGroup-user_self_service", "EvmGroup-vm_user", ], }).pick(
                     self.appliance.version)
 
         return group_names
@@ -1252,20 +1252,20 @@ class Role(Updateable, Pretty, Navigatable):
     def get_default_role_names(self):
         role_names = VersionPick({
             '5.8': [
-            "EvmRole-administrator", "EvmRole-approver", "EvmRole-auditor",
-            "EvmRole-consumption_administrator", "EvmRole-container_administrator",
-            "EvmRole-desktop", "EvmRole-operator", "EvmRole-security",
-            "EvmRole-super_administrator", "EvmRole-support", "EvmRole-tenant_administrator",
-            "EvmRole-tenant_quota_administrator", "EvmRole-user",
-            "EvmRole-user_limited_self_service", "EvmRole-user_self_service",
-            "EvmRole-vm_user", ],
+                "EvmRole-administrator", "EvmRole-approver", "EvmRole-auditor",
+                "EvmRole-consumption_administrator", "EvmRole-container_administrator",
+                "EvmRole-desktop", "EvmRole-operator", "EvmRole-security",
+                "EvmRole-super_administrator", "EvmRole-support", "EvmRole-tenant_administrator",
+                "EvmRole-tenant_quota_administrator", "EvmRole-user",
+                "EvmRole-user_limited_self_service", "EvmRole-user_self_service",
+                "EvmRole-vm_user", ],
             '5.7': [
-            "EvmRole-administrator", "EvmRole-approver", "EvmRole-auditor",
-            "EvmRole-consumption_administrator", "EvmRole-desktop", "EvmRole-operator",
-            "EvmRole-security", "EvmRole-super_administrator", "EvmRole-support",
-            "EvmRole-tenant_administrator", "EvmRole-tenant_quota_administrator",
-            "EvmRole-user", "EvmRole-user_limited_self_service",
-            "EvmRole-user_self_service", "EvmRole-vm_user", ], }).pick(
+                "EvmRole-administrator", "EvmRole-approver", "EvmRole-auditor",
+                "EvmRole-consumption_administrator", "EvmRole-desktop", "EvmRole-operator",
+                "EvmRole-security", "EvmRole-super_administrator", "EvmRole-support",
+                "EvmRole-tenant_administrator", "EvmRole-tenant_quota_administrator",
+                "EvmRole-user", "EvmRole-user_limited_self_service",
+                "EvmRole-user_self_service", "EvmRole-vm_user", ], }).pick(
                     self.appliance.version)
 
         return role_names
