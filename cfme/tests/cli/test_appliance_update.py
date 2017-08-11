@@ -8,6 +8,7 @@ from utils.version import Version
 from utils.appliance import current_appliance
 from utils.log import logger
 from utils.conf import cfme_data
+from utils.version import get_stream
 from utils import os
 
 
@@ -23,6 +24,9 @@ minor_build = split_ver[2]
 
 for i in range(int(minor_build) - 1, -1, -1):
     versions.append("{}.{}.{}".format(split_ver[0], split_ver[1], i))
+
+update_url = ('update_url_' + ''.join([i for i in get_stream(current_appliance.version)
+    if i.isdigit()]))
 
 
 @pytest.yield_fixture(scope="function")
@@ -50,7 +54,7 @@ def appliance_preupdate(old_version):
     yield apps[0]
 
     apps[0].db.extend_partition()
-    urls = process_url(cfme_data['basic_info']['update_url'])
+    urls = process_url(cfme_data['basic_info'][update_url])
     output = build_file(urls)
     with tempfile.NamedTemporaryFile('w') as f:
         f.write(output)
@@ -72,5 +76,5 @@ def test_update_yum(appliance_preupdate, appliance):
     with appliance_preupdate.ssh_client as ssh:
         rc, out = ssh.run_command('yum update -y', timeout=3600)
         assert rc == 0, "update failed {}".format(out)
-    appliance_preupdate.start_evm_service()
+    appliance_preupdate.evmserverd.start()
     assert appliance.version == appliance_preupdate.version
