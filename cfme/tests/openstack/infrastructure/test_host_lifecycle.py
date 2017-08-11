@@ -7,7 +7,7 @@ from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import flash
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
-from utils.wait import RefreshTimer, wait_for
+from utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
@@ -35,12 +35,12 @@ def test_scale_provider_down(provider, host):
     flash.assert_success()
     host_uuid = host.name.split()[0]  # cut off deployment role part from host's name
     wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).maintenance, timeout=600, delay=5)
-    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    wait_for(provider.is_refreshed, timeout=600)
     assert host.get_detail('Properties', 'Maintenance Mode') == 'Enabled'
     provider.scale_down(host_uuid)
     flash.assert_success()
     provider.mgmt.iapi.node.wait_for_provision_state(host_uuid, 'available', timeout=1200)
-    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)  # Refresh again
+    wait_for(provider.is_refreshed, timeout=600)  # Refresh again
     host.name = host_uuid  # host's name is changed after scale down
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
@@ -53,7 +53,7 @@ def test_delete_host(host, provider):
 
     host.delete(cancel=False)
     wait_for(is_host_disappeared, timeout=300, delay=5)
-    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    wait_for(provider.is_refreshed, timeout=600)
     assert host.name not in get_all_hosts()
 
 
@@ -71,7 +71,7 @@ def test_register_host(provider, host):
     for h in hosts_after:
         if h not in hosts_before:
             host.name = h
-    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    wait_for(provider.is_refreshed, timeout=600)
     assert host.exists()
 
 
@@ -81,7 +81,7 @@ def test_introspect_host(host, provider):
     host.run_introspection()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
              timeout=600)
-    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    wait_for(provider.is_refreshed, timeout=600)
     assert host.get_detail('Openstack Hardware', 'Introspected') == 'true'
 
 
@@ -90,7 +90,7 @@ def test_provide_host(host, provider):
     """Provide host"""
     host.provide_node()
     provider.mgmt.iapi.node.wait_for_provision_state(host.name, 'available', timeout=300)
-    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    wait_for(provider.is_refreshed, timeout=600)
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
@@ -106,7 +106,7 @@ def test_scale_provider_out(host, provider):
     # This action takes usually a lot of time, so big delay and timeout are set
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'active', delay=120,
              timeout=1200)
-    wait_for(provider.is_refreshed, [RefreshTimer(400)], timeout=600)
+    wait_for(provider.is_refreshed, timeout=600)
     host.name += ' (NovaCompute)'  # Host will change it's name after successful scale out
     assert host.exists()
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'active'
