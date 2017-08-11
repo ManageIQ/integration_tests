@@ -7,8 +7,10 @@ from utils import error
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
-from utils.version import current_version
 from utils.blockers import BZ
+from utils.rest import assert_response
+from utils.version import current_version
+from utils.wait import wait_for
 
 pytestmark = [
     test_requirements.rest
@@ -20,7 +22,7 @@ class TestConditionsRESTAPI(object):
     def conditions(self, request, appliance):
         num_conditions = 2
         response = _conditions(request, appliance.rest_api, num=num_conditions)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num_conditions
         return response
 
@@ -43,13 +45,25 @@ class TestConditionsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == 'delete' else 200
         for condition in conditions:
-            condition.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            if method == 'post':
+                del_action = condition.action.delete.POST
+            else:
+                del_action = condition.action.delete.DELETE
+
+            del_action()
+            assert_response(appliance)
+
+            wait_for(
+                lambda: not appliance.rest_api.collections.conditions.find_by(
+                    name=condition.name),
+                num_sec=100,
+                delay=5
+            )
+
             with error.expected('ActiveRecord::RecordNotFound'):
-                condition.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+                del_action()
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     def test_delete_conditions_from_collection(self, conditions, appliance):
@@ -59,11 +73,20 @@ class TestConditionsRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.conditions
-        collection.action.delete(*conditions)
-        assert appliance.rest_api.response.status_code == 200
+        collection.action.delete.POST(*conditions)
+        assert_response(appliance)
+
+        for condition in conditions:
+            wait_for(
+                lambda: not appliance.rest_api.collections.conditions.find_by(
+                    name=condition.name),
+                num_sec=100,
+                delay=5
+            )
+
         with error.expected('ActiveRecord::RecordNotFound'):
-            collection.action.delete(*conditions)
-        assert appliance.rest_api.response.status_code == 404
+            collection.action.delete.POST(*conditions)
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.parametrize(
@@ -80,17 +103,24 @@ class TestConditionsRESTAPI(object):
         new = [{'description': 'Edited Test Condition {}'.format(u)} for u in uniq]
         if from_detail:
             edited = []
-            for i in range(num_conditions):
-                edited.append(conditions[i].action.edit(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+            for index in range(num_conditions):
+                edited.append(conditions[index].action.edit(**new[index]))
+                assert_response(appliance)
         else:
-            for i in range(num_conditions):
-                new[i].update(conditions[i]._ref_repr())
+            for index in range(num_conditions):
+                new[index].update(conditions[index]._ref_repr())
             edited = appliance.rest_api.collections.conditions.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         assert len(edited) == num_conditions
-        for i in range(num_conditions):
-            assert edited[i].description == new[i]['description']
+        for index, condition in enumerate(conditions):
+            record, __ = wait_for(
+                lambda: appliance.rest_api.collections.conditions.find_by(
+                    description=new[index]['description']) or False,
+                num_sec=100,
+                delay=5,
+            )
+            condition.reload()
+            assert condition.description == edited[index].description == record[0].description
 
 
 class TestPoliciesRESTAPI(object):
@@ -98,7 +128,7 @@ class TestPoliciesRESTAPI(object):
     def policies(self, request, appliance):
         num_policies = 2
         response = _policies(request, appliance.rest_api, num=num_policies)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num_policies
         return response
 
@@ -121,11 +151,19 @@ class TestPoliciesRESTAPI(object):
             test_flag: rest
         """
         for policy in policies:
-            policy.action.delete(force_method='post')
-            assert appliance.rest_api.response.status_code == 200
+            policy.action.delete.POST()
+            assert_response(appliance)
+
+            wait_for(
+                lambda: not appliance.rest_api.collections.policies.find_by(
+                    name=policy.name),
+                num_sec=100,
+                delay=5
+            )
+
             with error.expected('ActiveRecord::RecordNotFound'):
-                policy.action.delete(force_method='post')
-            assert appliance.rest_api.response.status_code == 404
+                policy.action.delete.POST()
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.9')
     @pytest.mark.meta(blockers=[BZ(1435773, forced_streams=['5.9'])])
@@ -136,11 +174,19 @@ class TestPoliciesRESTAPI(object):
             test_flag: rest
         """
         for policy in policies:
-            policy.action.delete(force_method='delete')
-            assert appliance.rest_api.response.status_code == 204
+            policy.action.delete.DELETE()
+            assert_response(appliance)
+
+            wait_for(
+                lambda: not appliance.rest_api.collections.policies.find_by(
+                    name=policy.name),
+                num_sec=100,
+                delay=5
+            )
+
             with error.expected('ActiveRecord::RecordNotFound'):
-                policy.action.delete(force_method='delete')
-            assert appliance.rest_api.response.status_code == 404
+                policy.action.delete.DELETE()
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     def test_delete_policies_from_collection(self, policies, appliance):
@@ -150,11 +196,20 @@ class TestPoliciesRESTAPI(object):
             test_flag: rest
         """
         collection = appliance.rest_api.collections.policies
-        collection.action.delete(*policies)
-        assert appliance.rest_api.response.status_code == 200
+        collection.action.delete.POST(*policies)
+        assert_response(appliance)
+
+        for policy in policies:
+            wait_for(
+                lambda: not appliance.rest_api.collections.policies.find_by(
+                    name=policy.name),
+                num_sec=100,
+                delay=5
+            )
+
         with error.expected('ActiveRecord::RecordNotFound'):
-            collection.action.delete(*policies)
-        assert appliance.rest_api.response.status_code == 404
+            collection.action.delete.POST(*policies)
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.8')
     @pytest.mark.meta(blockers=[BZ(1435777, forced_streams=['5.8', 'upstream'])])
@@ -172,14 +227,21 @@ class TestPoliciesRESTAPI(object):
         new = [{'description': 'Edited Test Policy {}'.format(u)} for u in uniq]
         if from_detail:
             edited = []
-            for i in range(num_policies):
-                edited.append(policies[i].action.edit(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+            for index in range(num_policies):
+                edited.append(policies[index].action.edit(**new[index]))
+                assert_response(appliance)
         else:
-            for i in range(num_policies):
-                new[i].update(policies[i]._ref_repr())
+            for index in range(num_policies):
+                new[index].update(policies[index]._ref_repr())
             edited = appliance.rest_api.collections.policies.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         assert len(edited) == num_policies
-        for i in range(num_policies):
-            assert edited[i].description == new[i]['description']
+        for index, policy in enumerate(policies):
+            record, __ = wait_for(
+                lambda: appliance.rest_api.collections.policies.find_by(
+                    description=new[index]['description']) or False,
+                num_sec=100,
+                delay=5,
+            )
+            policy.reload()
+            assert policy.description == edited[index].description == record[0].description
