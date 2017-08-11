@@ -98,7 +98,7 @@ def test_provide_host(host, provider):
 def test_scale_provider_out(host, provider):
     """Scale out Infra provider"""
     # Host has to be given a profile role before the scale out
-    params = [{'path': '/properties/capabilities', 'value': 'profile:compute,boot_device:local',
+    params = [{'path': '/properties/capabilities', 'value': 'profile:compute,boot_option:local',
                'op': 'replace'}]
     provider.mgmt.iapi.node.update(host.name, params)
     provider.scale_out(1)
