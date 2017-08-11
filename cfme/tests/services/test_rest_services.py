@@ -654,7 +654,8 @@ class TestServiceCatalogsRESTAPI(object):
                 delay=10,
             )
             catalog.reload()
-            assert catalog.description == edited[index].description == record[0].description
+            assert catalog.description == edited[index].description
+            assert catalog.description == record[0].description
 
     def test_order_single_catalog_item(
             self, request, appliance, service_catalogs, service_templates):
