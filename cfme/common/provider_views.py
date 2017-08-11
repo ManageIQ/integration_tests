@@ -240,6 +240,20 @@ class ProviderScaleDownView(View):
         return False
 
 
+class ProviderScaleOutView(View):
+    """
+     represents Scale view (exists for Infra OpenStack provider)
+    """
+
+    compute_count = Input(name='ComputeCount')
+    scale = Button('Scale')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
 class ProviderNodesView(BaseLoggedInPage):
     """
      represents main Nodes view (exists for Infra OpenStack provider)
