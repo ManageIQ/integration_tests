@@ -7,7 +7,8 @@ from wrapanapi.openstack_infra import OpenstackInfraSystem
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import (BeforeFillMixin, ProviderNodesView,
-                                        ProviderRegisterNodesView, ProviderScaleDownView)
+                                        ProviderRegisterNodesView, ProviderScaleDownView,
+                                        ProviderScaleOutView)
 from cfme.exceptions import DestinationNotFound
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
@@ -125,6 +126,16 @@ class OpenstackInfraProvider(InfraProvider):
         view.checkbox.click()
         view.scale_down.click()
 
+    def scale_out(self, increase_by=1):
+        """Scale out Openstack Infra provider
+        Args:
+            increase_by - count of nodes to be added to infra provider
+        """
+        view = navigate_to(self, 'ScaleOut')
+        curr_compute_count = view.compute_count.read()
+        view.compute_count.fill(curr_compute_count + increase_by)
+        view.scale.click()
+
     def node_exist(self, name='my_node'):
         """" registered imported host exist
         This function is valid only for RHOS10 and above
@@ -172,4 +183,14 @@ class ProviderScaleDown(CFMENavigateStep):
 
     def step(self):
         item_title = 'Scale this Infrastructure Provider down'
+        self.prerequisite_view.toolbar.configuration.item_select(item_title)
+
+
+@navigator.register(OpenstackInfraProvider, 'ScaleOut')
+class ProviderScaleOut(CFMENavigateStep):
+    VIEW = ProviderScaleOutView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item_title = 'Scale this Infrastructure Provider'
         self.prerequisite_view.toolbar.configuration.item_select(item_title)
