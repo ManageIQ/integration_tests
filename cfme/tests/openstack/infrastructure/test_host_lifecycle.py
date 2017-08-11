@@ -37,7 +37,7 @@ def test_scale_provider_down(provider, host):
     wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).maintenance, timeout=600, delay=5)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     assert host.get_detail('Properties', 'Maintenance Mode') == 'Enabled'
-    provider.scale_down(host_uuid)
+    provider.scale_down()
     flash.assert_success()
     provider.mgmt.iapi.node.wait_for_provision_state(host_uuid, 'available', timeout=1200)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
