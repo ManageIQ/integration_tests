@@ -3,6 +3,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """
 import re
+from widgetastic_patternfly import Button
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.base import Server
@@ -26,6 +27,13 @@ page = Region(
 
 
 class DashboardView(BaseLoggedInPage):
+    reset_button = Button(title="Reset Dashboard Widgets to the defaults")
+
+    def reset_widgets(self, cancel=False):
+        self.reset_button.click()
+        self.browser.handle_alert(cancel=cancel, wait=10.0)
+        self.browser.plugin.ensure_page_safe()
+
     @property
     def is_displayed(self):
         return (
