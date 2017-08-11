@@ -48,8 +48,6 @@ def appliance_preupdate(old_version):
     except Exception as e:
         logger.warning("Couldn't provision appliance with following error:")
         logger.warning("{}".format(e))
-    finally:
-        logger.error("Couldn't provision an appliance at all")
         raise SproutException('No provision available')
     yield apps[0]
 
