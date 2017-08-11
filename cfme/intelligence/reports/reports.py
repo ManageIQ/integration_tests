@@ -12,7 +12,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
 from cfme.web_ui import (CAndUGroupTable, Form, Table, Select, ShowingInputs, accordion, fill,
-    flash, form_buttons, paginator, table_in_object, tabstrip, toolbar, CheckboxTable)
+    flash, form_buttons, table_in_object, tabstrip, toolbar, CheckboxTable)
 from cfme.web_ui.expression_editor import Expression
 from cfme.web_ui.tabstrip import TabStripForm
 from cfme.web_ui.multibox import MultiBoxSelect
@@ -194,6 +194,7 @@ class CustomReport(Updateable, Navigatable):
         navigate_to(self, 'Saved')
         results = []
         try:
+            from cfme.web_ui import paginator
             for page in paginator.pages():
                 sel.wait_for_element(records_table)
                 for row in records_table.rows():
@@ -313,6 +314,7 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
         try:
             headers = tuple([sel.text(hdr).encode("utf-8") for hdr in self._table.headers])
             body = []
+            from cfme.web_ui import paginator
             for page in paginator.pages():
                 for row in self._table.rows():
                     row_data = tuple([sel.text(row[header]).encode("utf-8") for header in headers])
@@ -411,6 +413,7 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         navigate_to(self, "Saved")
         results = []
         try:
+            from cfme.web_ui import paginator
             for page in paginator.pages():
                 for row in records_table.rows():
                     results.append(

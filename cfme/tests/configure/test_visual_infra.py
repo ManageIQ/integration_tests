@@ -6,7 +6,7 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
-from cfme.web_ui import paginator, toolbar as tb
+from cfme.web_ui import toolbar as tb
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.provider import InfraProvider
 from utils.appliance.implementations.ui import navigate_to
@@ -134,6 +134,7 @@ def test_infra_grid_page_per_item(request, page, set_grid):
     limit = visual.grid_view_limit
     navigate_to(page, 'All')
     tb.select('Grid View')
+    from cfme.web_ui import paginator
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
 
@@ -150,6 +151,7 @@ def test_infra_tile_page_per_item(request, page, set_tile):
     limit = visual.tile_view_limit
     navigate_to(page, 'All')
     tb.select('Tile View')
+    from cfme.web_ui import paginator
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
 
@@ -166,6 +168,7 @@ def test_infra_list_page_per_item(request, page, set_list):
     limit = visual.list_view_limit
     navigate_to(page, 'All')
     tb.select('List View')
+    from cfme.web_ui import paginator
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
 
@@ -181,6 +184,7 @@ def test_infra_report_page_per_item(set_report):
     limit = visual.report_view_limit
     report = CannedSavedReport.new(path)
     report.navigate()
+    from cfme.web_ui import paginator
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Reportview Failed!"
 

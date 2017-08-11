@@ -6,7 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties, Container
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import (
-    CheckboxTable, paginator, Form, Input, fill, InfoBlock
+    CheckboxTable, Form, Input, fill, InfoBlock
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui import toolbar as tb
@@ -121,6 +121,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         _get_servers_page(provider=provider, server_group=server_group)
         if sel.is_displayed(list_tbl):
             _provider = provider
+            from cfme.web_ui import paginator
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     if strict:

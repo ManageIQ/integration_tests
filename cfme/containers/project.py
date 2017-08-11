@@ -4,7 +4,7 @@ import itertools
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, paginator, match_location,\
+from cfme.web_ui import toolbar as tb, match_location,\
     PagedTable, CheckboxTable
 from cfme.containers.provider import details_page, Labelable,\
     ContainerObjectAllBaseView
@@ -71,6 +71,7 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("List View")
+        from cfme.web_ui import paginator
         paginator.check_all()
         paginator.uncheck_all()
 

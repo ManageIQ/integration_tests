@@ -3,7 +3,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator, flash, toolbar as tb
+from cfme.web_ui import CheckboxTable, flash, toolbar as tb
 from wrapanapi.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
@@ -106,6 +106,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
         datasources = []
         _get_datasources_page(provider=provider, server=server)
         if sel.is_displayed(list_tbl):
+            from cfme.web_ui import paginator
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     _server = MiddlewareServer(provider=provider,
@@ -174,6 +175,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
     @classmethod
     def remove_from_list(cls, datasource):
         _get_datasources_page(server=datasource.server)
+        from cfme.web_ui import paginator
         if paginator.page_controls_exist():
             paginator.results_per_page(1000)
         list_tbl.select_row_by_cells({
@@ -273,6 +275,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        from cfme.web_ui import paginator
         if paginator.page_controls_exist():
             paginator.results_per_page(1000)
         list_tbl.click_row_by_cells({

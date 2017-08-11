@@ -15,7 +15,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.containers.provider import details_page, pol_btn, mon_btn
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location, PagedTable
+from cfme.web_ui import CheckboxTable, toolbar as tb, match_location, PagedTable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils import version
@@ -111,6 +111,7 @@ class ContainerAll(CFMENavigateStep):
         else:
             self.view.Filters.Navigation.select('ALL (Default)')
         tb.select('List View')
+        from cfme.web_ui import paginator
         if paginator.page_controls_exist():
             paginator.check_all()
             paginator.uncheck_all()

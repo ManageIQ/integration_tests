@@ -4,7 +4,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
+from cfme.web_ui import CheckboxTable, toolbar as tb
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable, current_appliance
@@ -105,6 +105,7 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
         messagings = []
         _get_messagings_page(provider=provider, server=server)
         if sel.is_displayed(list_tbl):
+            from cfme.web_ui import paginator
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     _server = MiddlewareServer(provider=provider, name=row.server.text)

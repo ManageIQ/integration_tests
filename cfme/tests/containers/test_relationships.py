@@ -4,7 +4,7 @@ import pytest
 
 from utils import testgen
 from utils.version import current_version
-from cfme.web_ui import paginator, summary_title
+from cfme.web_ui import summary_title
 
 from cfme.containers.pod import Pod
 from cfme.containers.provider import ContainersProvider,\
@@ -60,6 +60,7 @@ def check_relationships(instance):
     link_value = attr.value
     attr.click()
     if type(link_value) is int:
+        from cfme.web_ui import paginator
         rec_total = paginator.rec_total()
         if rec_total != link_value:
             raise Exception('Difference between the value({}) in the relationships table in {}'
