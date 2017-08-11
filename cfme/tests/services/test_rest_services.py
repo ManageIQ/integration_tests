@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
+import re
+
 import fauxfactory
 import pytest
 
@@ -13,9 +15,10 @@ from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
 from fixtures.provider import setup_one_or_skip
 from utils import error, version
-from utils.providers import ProviderFilter
-from utils.wait import wait_for
 from utils.blockers import BZ
+from utils.providers import ProviderFilter
+from utils.rest import assert_response
+from utils.wait import wait_for
 
 
 pytestmark = [
@@ -106,6 +109,18 @@ def service_templates(request, appliance):
 @pytest.fixture(scope="function")
 def service_data(request, appliance, a_provider):
     return _service_data(request, appliance.rest_api, a_provider)
+
+
+def unassign_templates(templates):
+    rest_api = templates[0].collection.api
+    for template in templates:
+        template.reload()
+        # if the template is already assigned, unassign it first
+        if hasattr(template, 'service_template_catalog_id'):
+            scl_a = rest_api.collections.service_catalogs.get(
+                id=template.service_template_catalog_id)
+            scl_a.service_templates.action.unassign(template)
+            template.reload()
 
 
 class TestServiceRESTAPI(object):
@@ -467,7 +482,7 @@ class TestServiceDialogsRESTAPI(object):
 
 class TestServiceTemplateRESTAPI(object):
     def test_create_service_templates(self, appliance, service_templates):
-        """Tests creation of service_templates.
+        """Tests creation of service templates.
 
         Metadata:
             test_flag: rest
@@ -554,12 +569,7 @@ class TestServiceTemplateRESTAPI(object):
         stpl = service_templates[0]
         scl = service_catalogs[0]
 
-        # if the template is already assigned, unassign it first
-        stpl.reload()
-        if hasattr(stpl, 'service_template_catalog_id'):
-            scl_a = appliance.rest_api.collections.service_catalogs.get(
-                id=stpl.service_template_catalog_id)
-            scl_a.service_templates.action.unassign(stpl)
+        unassign_templates([stpl])
 
         scl.service_templates.action.assign(stpl)
         assert appliance.rest_api.response.status_code == 200
@@ -577,7 +587,8 @@ class TestServiceTemplateRESTAPI(object):
         assert not hasattr(stpl, 'service_template_catalog_id')
 
     def test_edit_multiple_service_templates(self, appliance, service_templates):
-        """Tests editing multiple service catalogs at time.
+        """Tests editing multiple service templates at time.
+
         Prerequisities:
             * An appliance with ``/api`` available.
         Steps:
@@ -604,6 +615,180 @@ class TestServiceTemplateRESTAPI(object):
             service_template = service_templates[i]
             service_template.reload()
             assert service_template.name == new_names[i]
+
+
+class TestServiceCatalogsRESTAPI(object):
+    @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
+    def test_edit_catalogs(self, appliance, service_catalogs, from_detail):
+        """Tests editing catalog items using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        new_descriptions = []
+        if from_detail:
+            edited = []
+            for catalog in service_catalogs:
+                new_description = 'Test Catalog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_descriptions.append(new_description)
+                edited.append(catalog.action.edit(description=new_description))
+                assert_response(appliance)
+        else:
+            catalog_edited = []
+            for catalog in service_catalogs:
+                new_description = 'Test Catalog {}'.format(fauxfactory.gen_alphanumeric().lower())
+                new_descriptions.append(new_description)
+                catalog.reload()
+                catalog_edited.append({
+                    'href': catalog.href,
+                    'description': new_description,
+                })
+            edited = appliance.rest_api.collections.service_catalogs.action.edit(*catalog_edited)
+            assert_response(appliance)
+        assert len(edited) == len(service_catalogs)
+        for index, catalog in enumerate(service_catalogs):
+            record, __ = wait_for(
+                lambda: appliance.rest_api.collections.service_catalogs.find_by(
+                    description=new_descriptions[index]) or False,
+                num_sec=180,
+                delay=10,
+            )
+            catalog.reload()
+            assert catalog.description == edited[index].description
+            assert catalog.description == record[0].description
+
+    def test_order_single_catalog_item(
+            self, request, appliance, service_catalogs, service_templates):
+        """Tests ordering single catalog item using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        catalog = service_catalogs[0]
+        unassign_templates(service_templates)
+
+        for template in service_templates:
+            catalog.service_templates.action.assign(template)
+
+        catalog.service_templates.reload()
+        template = catalog.service_templates[0]
+
+        # this doesn't return resource in the "service_requests" collection
+        # using workarount with `response.json()`
+        template.action.order()
+        results = appliance.rest_api.response.json()
+        assert_response(appliance)
+
+        service_request = appliance.rest_api.get_entity('service_requests', results['id'])
+
+        def _order_finished():
+            service_request.reload()
+            return (
+                service_request.status.lower() == 'ok' and
+                service_request.request_state.lower() == 'finished')
+
+        wait_for(_order_finished, num_sec=180, delay=10)
+
+        service_name = re.search(
+            r'\[({}[0-9-]*)\] '.format(template.name), service_request.message).group(1)
+        # this fails if the service with the `service_name` doesn't exist
+        new_service = appliance.rest_api.collections.services.get(name=service_name)
+
+        @request.addfinalizer
+        def _finished():
+            new_service.action.delete()
+
+    def test_order_multiple_catalog_items(
+            self, request, appliance, service_catalogs, service_templates):
+        """Tests ordering multiple catalog items using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        catalog = service_catalogs[0]
+        unassign_templates(service_templates)
+
+        for template in service_templates:
+            catalog.service_templates.action.assign(template)
+            template.reload()
+
+        # this doesn't return resource in the "service_requests" collection
+        # using workarount with `response.json()`
+        catalog.service_templates.action.order(*service_templates)
+        results = appliance.rest_api.response.json()
+        results = results['results']
+        assert_response(appliance)
+
+        if not BZ(1480281, forced_streams=['5.7', '5.8', 'upstream']).blocks:
+            assert 'href' in results[0], "BZ 1480281 doesn't seem to be fixed"
+
+        def _order_finished(service_request):
+            service_request.reload()
+            return (
+                service_request.status.lower() == 'ok' and
+                service_request.request_state.lower() == 'finished')
+
+        new_services = []
+        for index, result in enumerate(results):
+            service_request = appliance.rest_api.get_entity('service_requests', result['id'])
+            wait_for(_order_finished, func_args=[service_request], num_sec=180, delay=10)
+            service_name = re.search(
+                r'\[({}[0-9-]*)\] '.format(service_templates[index].name),
+                service_request.message).group(1)
+            # this fails if the service with the `service_name` doesn't exist
+            new_service = appliance.rest_api.collections.services.get(name=service_name)
+            new_services.append(new_service)
+
+        @request.addfinalizer
+        def _finished():
+            appliance.rest_api.collections.services.action.delete(*new_services)
+
+    @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
+    def test_delete_catalog_from_detail(self, appliance, service_catalogs, method):
+        """Tests delete service catalogs from detail using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        for catalog in service_catalogs:
+            if method == 'post':
+                del_action = catalog.action.delete.POST
+            else:
+                del_action = catalog.action.delete.DELETE
+
+            del_action()
+            assert_response(appliance)
+            wait_for(
+                lambda: not appliance.rest_api.collections.service_catalogs.find_by(
+                    name=catalog.name),
+                num_sec=100,
+                delay=5
+            )
+
+            with error.expected('ActiveRecord::RecordNotFound'):
+                del_action()
+            assert_response(appliance, http_status=404)
+
+    def test_delete_catalog_from_collection(self, appliance, service_catalogs):
+        """Tests delete service catalogs from detail using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
+        assert_response(appliance)
+
+        for catalog in service_catalogs:
+            wait_for(
+                lambda: not appliance.rest_api.collections.service_catalogs.find_by(
+                    name=catalog.name),
+                num_sec=300,
+                delay=5
+            )
+
+        with error.expected('ActiveRecord::RecordNotFound'):
+            appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
+        assert_response(appliance, http_status=404)
 
 
 class TestBlueprintsRESTAPI(object):
