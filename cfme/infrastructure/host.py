@@ -118,17 +118,22 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         assert view.is_displayed
         view.flash.assert_success_message(flash_message)
 
-    def update(self, updates, cancel=False, validate_credentials=False):
+    def update(self, updates, validate_credentials=False):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
         Args:
            updates (dict): fields that are changing.
-           cancel (bool): whether to cancel out of the update.
         """
 
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
+        changed = view.fill({
+            "name": updates.get("name"),
+            "hostname": updates.get("hostname") or updates.get("ip_address"),
+            "custom_ident": updates.get("custom_ident"),
+            "ipmi_address": updates.get("ipmi_address"),
+            "mac_address": updates.get("mac_address")
+        })
         credentials = updates.get("credentials")
         ipmi_credentials = updates.get("ipmi_credentials")
         credentials_changed = False
