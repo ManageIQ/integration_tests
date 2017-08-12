@@ -107,7 +107,7 @@ def vm_name_big(provider):
 @pytest.yield_fixture(scope="function")
 def configure_fleecing(request, appliance, provider, vm):
     setup_host_creds(provider.key, vm.api.host.name)
-    appliance.install_vddk(vddk_url=vddk_url_map[str(provider.version)])
+    appliance.install_vddk(reboot=False, vddk_url=vddk_url_map[str(provider.version)])
     yield
     appliance.uninstall_vddk()
     setup_host_creds(provider.key, vm.api.host.name, remove_creds=True)
@@ -526,7 +526,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On",
         ["Initiate SmartState Analysis for VM"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False, from_details=True)
     vm.crud.load_details()

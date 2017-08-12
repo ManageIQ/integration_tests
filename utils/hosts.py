@@ -40,7 +40,6 @@ def setup_host_creds(provider_key, host_name, remove_creds=False, ignore_errors=
             with update(test_host):
                 test_host.credentials = host.Host.Credential(principal="", secret="",
                     verify_secret="")
-                test_host.validate_credentials = False
     except Exception as e:
         if not ignore_errors:
             raise e
