@@ -128,7 +128,13 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
 
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
+        changed = view.fill({
+            "name": updates.get("name"),
+            "hostname": updates.get("hostname") or updates.get("ip_address"),
+            "custom_ident": updates.get("custom_ident"),
+            "ipmi_address": updates.get("ipmi_address"),
+            "mac_address": updates.get("mac_address")
+        })
         credentials = updates.get("credentials")
         ipmi_credentials = updates.get("ipmi_credentials")
         credentials_changed = False
