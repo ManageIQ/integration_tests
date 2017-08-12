@@ -39,7 +39,8 @@ def test_scale_provider_down(provider, host):
     assert host.get_detail('Properties', 'Maintenance Mode') == 'Enabled'
     provider.scale_down()
     flash.assert_success()
-    provider.mgmt.iapi.node.wait_for_provision_state(host_uuid, 'available', timeout=1200)
+    wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).provision_state == 'available', delay=5,
+             timeout=1200)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     host.name = host_uuid  # host's name is changed after scale down
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
@@ -89,7 +90,8 @@ def test_introspect_host(host, provider):
 def test_provide_host(host, provider):
     """Provide host"""
     host.provide_node()
-    provider.mgmt.iapi.node.wait_for_provision_state(host.name, 'available', timeout=300)
+    wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'available', delay=5,
+             timeout=300)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
