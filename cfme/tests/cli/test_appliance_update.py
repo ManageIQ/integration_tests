@@ -7,25 +7,28 @@ from scripts.repo_gen import process_url, build_file
 from utils.version import Version
 from utils.log import logger
 from utils.conf import cfme_data
+from utils.appliance import current_appliance
 from utils.version import get_stream
 from utils import os
 
 versions = []
 
 
-@pytest.yield_fixture(scope="function")
-def appliance_preupdate(old_version, appliance):
-
+def pytest_generate_tests(metafunc):
     """The following lines generate appliance versions based from the current build.
     Appliance version is split and minor_build is picked out for generating each version
     and appending it to the empty versions list"""
 
-    version = appliance.version
+    version = current_appliance.version
     split_ver = str(version).split(".")
     minor_build = split_ver[2]
 
     for i in range(int(minor_build) - 1, -1, -1):
         versions.append("{}.{}.{}".format(split_ver[0], split_ver[1], i))
+
+
+@pytest.yield_fixture(scope="function")
+def appliance_preupdate(old_version, appliance):
 
     update_url = ('update_url_' + ''.join([i for i in get_stream(appliance.version)if i.isdigit()]))
 
