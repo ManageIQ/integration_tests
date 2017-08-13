@@ -3,12 +3,12 @@ utils.hosts
 --------------
 
 """
+import socket
+
 from cfme.infrastructure import host
-from utils.wait import wait_for
 from utils import conf
 from utils.log import logger
-import cfme.fixtures.pytest_selenium as sel
-import socket
+from utils.update import update
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -18,28 +18,22 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def setup_host_creds(provider_key, host_name, ignore_errors=False):
+def setup_host_creds(provider_key, host_name, remove_creds=False, ignore_errors=False):
     try:
         host_data = get_host_data_by_name(provider_key, host_name)
         test_host = host.Host(name=host_name)
         if not test_host.has_valid_credentials:
             logger.info("Setting up creds for host: %s", host_name)
-
-            # double check ip address (issue around added ipv6 to the test
-            #    beds for upcoming support)
-            if test_host.ip_address is None:
-                test_host.ip_address = socket.gethostbyname_ex(host_name)[2][0]
-            test_host.update(
-                updates={'credentials': host.get_credentials_from_config(host_data['credentials']),
-                         'ip_address': test_host.ip_address}
-            )
-
-            wait_for(
-                lambda: test_host.has_valid_credentials,
-                delay=10,
-                num_sec=120,
-                fail_func=sel.refresh
-            )
+            with update(test_host):
+                # double check ip address
+                # (issue around added ipv6 to the test beds for upcoming support)
+                if test_host.ip_address is None:
+                    test_host.ip_address = socket.gethostbyname_ex(host_name)[2][0]
+                test_host.credentials = host.get_credentials_from_config(host_data['credentials'])
+        elif test_host.has_valid_credentials and remove_creds:
+            with update(test_host):
+                test_host.credentials = host.Host.Credential(principal="", secret="",
+                    verify_secret="")
     except Exception as e:
         if not ignore_errors:
             raise e
