@@ -30,7 +30,7 @@ def main():
     pass
 
 
-@main.command('reboot', help='Reboots a provider')
+@main.command('reboot', help='Reboots the appliance')
 @click.argument('appliance_ip', default=None, required=False)
 @click.option('--wait-for-ui', is_flag=True, default=True)
 def reboot_appliance(appliance_ip, wait_for_ui):
