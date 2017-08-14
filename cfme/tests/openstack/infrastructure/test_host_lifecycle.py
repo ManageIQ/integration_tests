@@ -46,7 +46,7 @@ def test_scale_provider_down(provider, host):
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
-@pytest.mark.requires_test('test_scale_provider_down')
+@pytest.mark.requires_test(test_scale_provider_down)
 def test_delete_host(host, provider):
     """Remove host from appliance and Ironic service"""
     def is_host_disappeared():
@@ -58,7 +58,7 @@ def test_delete_host(host, provider):
     assert host.name not in get_all_hosts()
 
 
-@pytest.mark.requires_test('test_delete_host')
+@pytest.mark.requires_test(test_delete_host)
 def test_register_host(provider, host):
     """Register new host by uploading instackenv.json file"""
     hosts_before = [h.uuid for h in provider.mgmt.iapi.node.list()]
@@ -76,27 +76,29 @@ def test_register_host(provider, host):
     assert host.exists()
 
 
-@pytest.mark.requires_test('test_register_host')
+@pytest.mark.requires_test(test_register_host)
 def test_introspect_host(host, provider):
     """Introspect host"""
     host.run_introspection()
+    flash.assert_success()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
              func_kwargs=dict(refresh_delta=20), timeout=600)
     wait_for(provider.is_refreshed, timeout=600)
     assert host.get_detail('Openstack Hardware', 'Introspected') == 'true'
 
 
-@pytest.mark.requires_test('test_register_host')
+@pytest.mark.requires_test(test_register_host)
 def test_provide_host(host, provider):
     """Provide host"""
     host.provide_node()
+    flash.assert_success()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'available', delay=5,
              timeout=300)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
-@pytest.mark.requires_test('test_provide_host')
+@pytest.mark.requires_test(test_provide_host)
 def test_scale_provider_out(host, provider):
     """Scale out Infra provider"""
     # Host has to be given a profile role before the scale out
