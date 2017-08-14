@@ -218,8 +218,8 @@ class ProviderRegisterNodesView(View):
      represents Register Nodes view (exists for Infra OpenStack provider)
     """
     file = FileInput(locator='//input[@id="nodes_json_file"]')
-    register = Button('Register')
-    cancel = Button('Cancel')
+    register = Button(value='Register')
+    cancel = Button(value='Cancel')
 
     @property
     def is_displayed(self):
