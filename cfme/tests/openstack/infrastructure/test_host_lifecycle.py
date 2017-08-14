@@ -47,7 +47,9 @@ def test_scale_provider_down(provider, host):
 
 
 def test_delete_host(host, provider):
-    """Remove host from appliance and Ironic service"""
+    """Remove host from appliance and Ironic service
+    Metadata:
+        test_flag: openstack_scale"""
     def is_host_disappeared():
         return host.name not in [h.uuid for h in provider.mgmt.iapi.node.list()]
 
@@ -58,7 +60,9 @@ def test_delete_host(host, provider):
 
 
 def test_register_host(provider, host):
-    """Register new host by uploading instackenv.json file"""
+    """Register new host by uploading instackenv.json file
+    Metadata:
+        test_flag: openstack_scale"""
     hosts_before = [h.uuid for h in provider.mgmt.iapi.node.list()]
     provider.register(provider.get_yaml_data()['instackenv_file_path'])
     flash.assert_success()
@@ -75,7 +79,9 @@ def test_register_host(provider, host):
 
 
 def test_introspect_host(host, provider):
-    """Introspect host"""
+    """Introspect host
+    Metadata:
+        test_flag: openstack_scale"""
     host.run_introspection()
     flash.assert_success()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
@@ -85,7 +91,9 @@ def test_introspect_host(host, provider):
 
 
 def test_provide_host(host, provider):
-    """Provide host"""
+    """Provide host
+    Metadata:
+        test_flag: openstack_scale"""
     host.provide_node()
     flash.assert_success()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'available', delay=5,
@@ -95,7 +103,9 @@ def test_provide_host(host, provider):
 
 
 def test_scale_provider_out(host, provider):
-    """Scale out Infra provider"""
+    """Scale out Infra provider
+    Metadata:
+        test_flag: openstack_scale"""
     # Host has to be given a profile role before the scale out
     params = [{'path': '/properties/capabilities', 'value': 'profile:compute,boot_option:local',
                'op': 'replace'}]
@@ -104,7 +114,7 @@ def test_scale_provider_out(host, provider):
     flash.assert_success()
     # This action takes usually a lot of time, so big delay and timeout are set
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'active', delay=120,
-             timeout=1200)
+             timeout=1800)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     host.name += ' (NovaCompute)'  # Host will change it's name after successful scale out
     assert host.exists
