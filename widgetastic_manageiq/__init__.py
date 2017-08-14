@@ -1989,9 +1989,8 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
 
     """
     PARAMETERS = ('name',)
-    TABLE_LOCATOR = ParametrizedLocator('.//table[.//td[normalize-space(.)={name|quote}]]')
     ROOT = ParametrizedLocator('.//tr[./td[normalize-space(.)={name|quote}]]')
-    parent_table = Table(locator=TABLE_LOCATOR)
+    parent_table = Table(locator='./ancestor::table[1]')
     checkbox = Checkbox(locator='.//input[@type="checkbox"]')
 
     @property
