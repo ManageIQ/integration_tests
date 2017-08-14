@@ -16,6 +16,7 @@ from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navi
 from utils.appliance import Navigatable
 from cfme.configure import tasks
 from utils.wait import wait_for, TimedOutError
+from wrapanapi.containers.image import Image as ApiImage
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -34,6 +35,10 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
         self.id = image_id
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
+
+    @cached_property
+    def mgmt(self):
+        return ApiImage(self.provider.mgmt, self.name, self.id)
 
     # TODO: remove load_details and dynamic usage from cfme.common.Summary when nav is more complete
     def load_details(self, refresh=False):

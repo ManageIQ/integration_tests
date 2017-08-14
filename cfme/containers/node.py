@@ -4,6 +4,8 @@ from functools import partial
 import random
 import itertools
 
+from cached_property import cached_property
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_manageiq import (
@@ -17,6 +19,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from wrapanapi.containers.node import Node as ApiNode
+
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
@@ -88,6 +92,10 @@ class Node(Taggable, Labelable, SummaryMixin, Navigatable):
             collection = NodeCollection(appliance=appliance)
         self.collection = collection
         Navigatable.__init__(self, appliance=appliance)
+
+    @cached_property
+    def mgmt(self):
+        return ApiNode(self.provider.mgmt, self.name)
 
     def load_details(self, refresh=False):
         navigate_to(self, 'Details')

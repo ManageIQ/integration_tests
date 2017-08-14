@@ -3,6 +3,8 @@ from functools import partial
 import random
 import itertools
 
+from cached_property import cached_property
+
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, match_location,\
@@ -13,6 +15,8 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
+from wrapanapi.containers.pod import Pod as ApiPod
+
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -30,6 +34,10 @@ class Pod(Taggable, Labelable, SummaryMixin, Navigatable):
         self.provider = provider
         self.project_name = project_name
         Navigatable.__init__(self, appliance=appliance)
+
+    @cached_property
+    def mgmt(self):
+        return ApiPod(self.provider.mgmt, self.name, self.project_name)
 
     def load_details(self, refresh=False):
         navigate_to(self, 'Details')
