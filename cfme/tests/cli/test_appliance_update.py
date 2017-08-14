@@ -8,7 +8,6 @@ from utils.version import Version
 from utils.log import logger
 from utils.conf import cfme_data
 from utils.appliance import current_appliance
-from utils.version import get_stream
 from utils import os
 
 versions = []
@@ -30,7 +29,8 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture(scope="function")
 def appliance_preupdate(old_version, appliance):
 
-    update_url = ('update_url_' + ''.join([i for i in get_stream(appliance.version)if i.isdigit()]))
+    series = appliance.version.series()
+    update_url = "update_url_{}".format(series[0] + series[2])
 
     """Requests appliance from sprout based on old_versions, edits partitions and adds
     repo file for update"""
