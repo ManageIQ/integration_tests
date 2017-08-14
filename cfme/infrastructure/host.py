@@ -166,10 +166,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select("Remove item", handle_alert=not cancel)
-        if not cancel:
-            view = self.create_view(HostsView)
-            assert view.is_displayed
-            view.flash.assert_success_message("The selected Hosts / Nodes was deleted")
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins.
@@ -414,6 +410,16 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """Initiate maintenance mode"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Toggle Maintenance Mode', handle_alert=True)
+
+    def provide_node(self):
+        """Provide node - make it available"""
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Provide Node', handle_alert=True)
+
+    def run_introspection(self):
+        """Run introspection"""
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Introspect Node', handle_alert=True)
 
 
 @navigator.register(Host)
