@@ -5,7 +5,7 @@ import time
 
 
 @pytest.yield_fixture(scope='session')
-def change_forgery_protection():
+def disable_forgery_protection():
     starttime = time.time()
     ssh_client = SSHClient()
     logger.info('Turning off "allow_forgery_protection"')

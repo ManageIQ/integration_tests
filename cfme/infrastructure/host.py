@@ -299,6 +299,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             credentials (dict) : credentials from yaml file
         Returns: ``True`` if credentials are saved and valid; ``False`` otherwise
         """
+        # TODO: Move to Sentaku
         try:
             host = self.appliance.rest_api.collections.hosts.get(name=self.name)
             host.action.edit(credentials={"userid": credentials.principal,

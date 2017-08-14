@@ -49,7 +49,7 @@ pytest_plugins = (
     'fixtures.blockers',
     'fixtures.browser',
     'fixtures.cfme_data',
-    'fixtures.change_forgery_protection',
+    'fixtures.disable_forgery_protection',
     'fixtures.datafile',
     'fixtures.fixtureconf',
     'fixtures.log',

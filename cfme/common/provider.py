@@ -748,6 +748,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         Returns an integer list of provider ID's via the REST API
         """
+        # TODO: Move to ProviderCollection
         logger.debug('Retrieving the list of provider ids')
 
         provider_ids = []
@@ -763,6 +764,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         Returns an integer list of vm ID's via the REST API
         """
+        # TODO: Move to VMCollection or BaseVMCollection
         logger.debug('Retrieving the list of vm ids')
 
         vm_ids = []
@@ -778,6 +780,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         Returns an integer list of host ID's via the Rest API
         """
+        # TODO: Move to HostCollection
         logger.debug('Retrieving the list of host ids')
 
         host_ids = []
@@ -790,6 +793,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     def get_all_template_ids(self):
         """Returns an integer list of template ID's via the Rest API"""
+        # TODO: Move to TemplateCollection
         logger.debug('Retrieving the list of template ids')
 
         template_ids = []
@@ -802,6 +806,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     def get_provider_details(self, provider_id):
         """Returns the name, and type associated with the provider_id"""
+        # TODO: Move to ProviderCollection.find
         logger.debug('Retrieving the provider details for ID: {}'.format(provider_id))
 
         details = {}
@@ -820,6 +825,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Returns the name, type, vendor, host_id, and power_state associated with
         the vm_id.
         """
+        # TODO: Move to VMCollection.find
         logger.debug('Retrieving the VM details for ID: {}'.format(vm_id))
 
         details = {}
@@ -841,6 +847,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         Returns the name, type, and guid associated with the template_id
         """
+        # TODO: Move to TemplateCollection.find
         logger.debug('Retrieving the template details for ID: {}'
                      .format(template_id))
 
@@ -859,6 +866,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         Returns a dictionary mapping template ids to their name, type, and guid
         """
+        # TODO: Move to TemplateCollection.all
         all_details = {}
         for id in self.get_all_template_ids():
             all_details[id] = self.get_template_details(id)
@@ -868,6 +876,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """"
         Return the ID associated with the specified provider name
         """
+        # TODO: Get Provider object from ProviderCollection.find, then use Provider.id to get the id
         logger.debug('Retrieving the ID for provider: {}'.format(provider_name))
         for provider_id in self.get_all_provider_ids():
             details = self.get_provider_details(provider_id)
@@ -878,6 +887,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         Return the ID associated with the specified VM name
         """
+        # TODO: Get Provider object from VMCollection.find, then use VM.id to get the id
         logger.debug('Retrieving the ID for VM: {}'.format(vm_name))
         for vm_id in self.get_all_vm_ids():
             details = self.get_vm_details(vm_id)
@@ -888,6 +898,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         Returns a dictionary mapping each VM name to it's id
         """
+        # TODO: Move to VMCollection.find or VMCollection.all
         name_list = vm_names[:]
         logger.debug('Retrieving the IDs for {} VM(s)'.format(len(name_list)))
         id_map = {}
@@ -906,6 +917,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         is in index 0, and its provider's name is in index 1. Expects a dictionary
         mapping a provider to its templates
         """
+        # TODO: Move to TemplateCollection
         result_list = []
         all_template_details = self.get_all_template_details()
         for provider, templates in template_dict.iteritems():

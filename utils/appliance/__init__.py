@@ -1899,7 +1899,8 @@ class IPAppliance(object):
         self.ssh_client.run_command('service evmserverd stop')
         self.ssh_client.run_command('sync; sync; echo 3 > /proc/sys/vm/drop_caches')
         self.ssh_client.run_command('service collectd stop')
-        self.ssh_client.run_command('service rh-postgresql95-postgresql restart')
+        self.ssh_client.run_command('service {}-postgresql restart').format(
+            self.db.postgres_version)
         self.ssh_client.run_command(
             'cd /var/www/miq/vmdb;DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bin/rake evm:db:reset')
         self.ssh_client.run_rake_command('db:seed')
@@ -1952,8 +1953,9 @@ class IPAppliance(object):
         self.ssh_client.run_rails_console(command, timeout=None)
 
     def set_rubyrep_replication(self, host, port=5432, database='vmdb_production',
-                                username='root', password='v2:{I2SQ5PdmGPwN7t5goRiyaQ==}'):
+                                username='root', password=None):
         """Sets up rubyrep replication via advanced configuration settings yaml."""
+        password = password or self._encrypt_string(conf.credentials['ssh']['password'])
         yaml = self.get_yaml_config()
         if 'replication_worker' in yaml['workers']['worker_base']:
             dest = yaml['workers']['worker_base']['replication_worker']['replication'][
