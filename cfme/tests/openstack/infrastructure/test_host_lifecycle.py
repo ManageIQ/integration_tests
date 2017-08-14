@@ -107,5 +107,5 @@ def test_scale_provider_out(host, provider):
              timeout=1200)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     host.name += ' (NovaCompute)'  # Host will change it's name after successful scale out
-    assert host.exists()
+    assert host.exists
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'active'
