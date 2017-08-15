@@ -166,6 +166,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
         view = navigate_to(self, "Details")
         view.toolbar.configuration.item_select("Remove item", handle_alert=not cancel)
+        if not cancel:
+            view = self.create_view(HostsView)
+            assert view.is_displayed
+            view.flash.assert_success_message("The selected Hosts / Nodes was deleted")
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins.
