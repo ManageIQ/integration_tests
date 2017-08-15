@@ -127,10 +127,14 @@ class ProviderFilter(object):
         if self.required_flags:
             test_flags = [flag.strip() for flag in self.required_flags]
 
-            defined_flags = conf.cfme_data.get('test_flags', '').split(',')
+            defined_flags = conf.cfme_data.get('test_flags', '')
+            if isinstance(defined_flags, six.string_types):
+                defined_flags = defined_flags.split(',')
             defined_flags = [flag.strip() for flag in defined_flags]
 
-            excluded_flags = provider.data.get('excluded_test_flags', '').split(',')
+            excluded_flags = provider.data.get('excluded_test_flags', '')
+            if isinstance(excluded_flags, six.string_types):
+                excluded_flags = excluded_flags.split(',')
             excluded_flags = [flag.strip() for flag in excluded_flags]
 
             allowed_flags = set(defined_flags) - set(excluded_flags)
