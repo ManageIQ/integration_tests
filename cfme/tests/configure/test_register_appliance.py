@@ -6,6 +6,10 @@ from utils.testgen import parametrize
 from utils.wait import wait_for
 from utils.log import logger
 
+from scripts.repo_gen import process_url, build_file
+from utils import os
+from utils.conf import cfme_data
+import tempfile
 
 REG_METHODS = ('rhsm', 'sat6')
 
@@ -20,6 +24,8 @@ These tests do not check registration results in the web UI, only through SSH.
 
 
 def pytest_generate_tests(metafunc):
+    if metafunc.function in {test_rh_updates}:
+        return
     """ Generates tests specific to RHSM or SAT6 with proxy-on or off """
     argnames = ['reg_method', 'reg_data', 'proxy_url', 'proxy_creds']
     argvalues = []
@@ -56,6 +62,30 @@ def pytest_generate_tests(metafunc):
             idlist.append(argid)
             argvalues.append(argval)
         parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+
+
+def is_appliance_updated(self, appliance):
+    version = appliance.version
+    split_ver = str(version).split(".")
+    next_build = (int(split_ver[2]) + 1)
+    upgrade_version = ("{}.{}.{}".format(split_ver[0], split_ver[1], next_build))
+    ver = self.version
+    del ver.__dict__['version']
+    assert self.version == upgrade_version
+
+
+@pytest.yield_fixture(scope="function")
+def appliance_preupdate(temp_appliance_preconfig_funcscope):
+    temp_appliance_preconfig_funcscope.db.extend_partition()
+    urls = process_url(cfme_data['basic_info']['update_url_57'])
+    output = build_file(urls)
+    with tempfile.NamedTemporaryFile('w') as f:
+        f.write(output)
+        f.flush()
+        os.fsync(f.fileno())
+        temp_appliance_preconfig_funcscope.ssh_client.put_file(
+            f.name, '/etc/yum.repos.d/update.repo')
+    yield temp_appliance_preconfig_funcscope
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -166,3 +196,33 @@ def test_rh_registration(appliance, request, reg_method, reg_data, proxy_url, pr
         delay=20,
         num_sec=400
     )
+
+
+def test_rh_updates(appliance_preupdate, appliance):
+    """ Tests whether the update button in the webui functions correctly """
+
+    set_default_repo = True
+
+    red_hat_updates = RedHatUpdates(
+        service='rhsm',
+        url=conf.cfme_data['redhat_updates']['registration']['rhsm']['url'],
+        username=conf.credentials['rhsm']['username'],
+        password=conf.credentials['rhsm']['password'],
+        set_default_repository=set_default_repo
+    )
+    red_hat_updates.update_registration(validate=False)
+
+    red_hat_updates.check_updates()
+
+    wait_for(
+        func=red_hat_updates.checked_updates,
+        func_args=[appliance.server.name],
+        delay=10,
+        num_sec=100,
+        fail_func=red_hat_updates.refresh
+    )
+
+    if red_hat_updates.platform_updates_available():
+        red_hat_updates.update_appliances()
+
+    wait_for(lambda: is_appliance_updated, num_sec=900)
