@@ -1,13 +1,6 @@
 from cfme.web_ui import flash, toolbar
-from utils import conf
 from utils.log import logger
 from utils.wait import wait_for
-
-vddk_url_map = {
-    "5.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v5_5"),
-    "6": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v6_0"),
-    "6.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v6_5")
-}
 
 
 def wait_for_ssa_enabled():

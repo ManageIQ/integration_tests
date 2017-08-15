@@ -9,11 +9,11 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration import AnalysisProfile
-from utils import testgen
+from utils import conf, testgen
 from utils.hosts import setup_providers_hosts_credentials
 from utils.update import update
 from cfme import test_requirements
-from . import do_scan, vddk_url_map
+from . import do_scan
 
 
 pytestmark = [
@@ -60,10 +60,25 @@ def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
     host.unassign_policy_profiles(policy_profile_name)
 
 
+@pytest.fixture(scope="module")
+def vddk_url(provider):
+    try:
+        major, minor = str(provider.version).split(".")
+    except ValueError:
+        major = str(provider.version)
+        minor = 0
+    vddk_version = "v{}_{}".format(major, minor)
+    try:
+        return conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
+    except AttributeError:
+        pytest.skip("There is no vddk url for this VMware provider version")
+
+
 @pytest.yield_fixture(scope="module")
-def configure_fleecing(appliance, has_no_providers_modscope, provider, setup_provider_modscope):
+def configure_fleecing(appliance, has_no_providers_modscope, provider, setup_provider_modscope,
+        vddk_url):
     setup_providers_hosts_credentials(provider.key)
-    appliance.install_vddk(reboot=True, vddk_url=vddk_url_map[str(provider.version)])
+    appliance.install_vddk(reboot=True, vddk_url=vddk_url)
     appliance.reboot()
     appliance.browser.quit_browser()
     yield

@@ -26,7 +26,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme import test_requirements
-from utils import testgen
+from utils import conf, testgen
 from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.hosts import setup_host_creds
@@ -35,7 +35,7 @@ from utils.pretty import Pretty
 from utils.update import update
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
-from . import vddk_url_map, do_scan, wait_for_ssa_enabled
+from . import do_scan, wait_for_ssa_enabled
 
 
 pytest_generate_tests = testgen.generate(gen_func=testgen.all_providers, scope="module")
@@ -104,10 +104,24 @@ def vm_name_big(provider):
     return random_vm_name("action", max_length=16)
 
 
+@pytest.fixture(scope="module")
+def vddk_url(provider):
+    try:
+        major, minor = str(provider.version).split(".")
+    except ValueError:
+        major = str(provider.version)
+        minor = "0"
+    vddk_version = "v{}_{}".format(major, minor)
+    try:
+        return conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
+    except AttributeError:
+        pytest.skip("There is no vddk url for this VMware provider version")
+
+
 @pytest.yield_fixture(scope="function")
-def configure_fleecing(request, appliance, provider, vm):
+def configure_fleecing(appliance, provider, vm, vddk_url):
     setup_host_creds(provider.key, vm.api.host.name)
-    appliance.install_vddk(reboot=False, vddk_url=vddk_url_map[str(provider.version)])
+    appliance.install_vddk(reboot=False, vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
     setup_host_creds(provider.key, vm.api.host.name, remove_creds=True)
@@ -166,7 +180,8 @@ def _get_vm(request, provider, template_name, vm_name):
 
     # Get the REST API object
     api = wait_for(
-        lambda: get_vm_object(provider.appliance, vm_name),
+        get_vm_object,
+        func_args=[provider.appliance, vm_name],
         message="VM object {} appears in CFME".format(vm_name),
         fail_condition=None,
         num_sec=600,
@@ -373,7 +388,7 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
             if "Policy success" not in line:
                 continue
             match_string = "policy: [{}], event: [VM Power On], entity name: [{}]".format(
-                policy_for_testing.description, vm.name)
+                policy_desc, vm.name)
             if match_string in line:
                 logger.info("Found corresponding log message: %s", line.strip())
                 return True
@@ -395,7 +410,7 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
     """
     # Set up the policy and prepare finalizer
     policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
     vm.start_vm()
     policy_desc = policy_for_testing.description
