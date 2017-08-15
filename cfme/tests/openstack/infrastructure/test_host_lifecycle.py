@@ -2,7 +2,8 @@ import pytest
 
 
 from cfme.exceptions import HostNotFound
-from cfme.infrastructure.host import get_all_hosts, Host
+from cfme.infrastructure.host import get_all_hosts
+from cfme.infrastructure.openstack_node import OpenstackNode
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import flash
 from utils import testgen
@@ -18,12 +19,12 @@ pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 @pytest.fixture(scope='module')
 def host(provider):
     """Find a host for test scenario"""
-    view = navigate_to(Host, 'All')
+    view = navigate_to(OpenstackNode, 'All')
     hosts = view.entities.get_all()
     # Find a compute host with no instances on it
     for h in hosts:
         if 'Compute' in h.name and h.quad_entity(h.name).no_vm == 0:
-            return Host(h.name, provider=provider)
+            return OpenstackNode(h.name, provider=provider)
     raise HostNotFound('There is no proper host for tests')
 
 

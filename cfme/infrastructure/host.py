@@ -210,11 +210,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     def get_power_state(self):
         return self.get_detail("Properties", "Power State")
 
-    def provide(self):
-        """Provide Openstack infra node"""
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Provide Node', handle_alert=True)
-
     def refresh(self, cancel=False):
         """Perform 'Refresh Relationships and Power States' for the host.
 
@@ -409,21 +404,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """Removes the selected tag off the system"""
         navigate_to(self, 'Details')
         mixins.remove_tag(tag)
-
-    def toggle_maintenance_mode(self):
-        """Initiate maintenance mode"""
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Toggle Maintenance Mode', handle_alert=True)
-
-    def provide_node(self):
-        """Provide node - make it available"""
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Provide Node', handle_alert=True)
-
-    def run_introspection(self):
-        """Run introspection"""
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Introspect Node', handle_alert=True)
 
 
 @navigator.register(Host)
