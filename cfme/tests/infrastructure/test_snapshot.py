@@ -220,6 +220,30 @@ def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_operations_powered_off_vm(small_test_vm, provider, soft_assert):
+    # Make sure the VM is off
+    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
+    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
+    # Create first snapshot
+    snapshot1 = new_snapshot(small_test_vm)
+    snapshot1.create()
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    # Create second snapshot
+    snapshot2 = new_snapshot(small_test_vm)
+    snapshot2.create()
+    wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh)
+    # Try to revert to first snapshot while the VM is off
+    snapshot1.revert_to()
+    wait_for(lambda: snapshot1.active is True, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    # Try to delete both snapshots while the VM is off
+    snapshot2.delete_all()
+    wait_for(lambda: not snapshot1.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    logger.info("First snapshot successfully deleted")
+    wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot2.refresh)
+    logger.info("Second snapshot successfully deleted")
+
+
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_create_snapshot_via_ae(request, domain, small_test_vm):
     """This test checks whether the vm.create_snapshot works in AE.
 
