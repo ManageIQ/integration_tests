@@ -1,14 +1,12 @@
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSelect, Button
-from widgetastic_manageiq import RadioGroup, FileInput
+from widgetastic_manageiq import Checkbox, RadioGroup, FileInput, Table
 from wrapanapi.openstack_infra import OpenstackInfraSystem
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
-from cfme.common.provider_views import (BeforeFillMixin, ProviderNodesView,
-                                        ProviderRegisterNodesView, ProviderScaleDownView,
-                                        ProviderScaleOutView)
+from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView
 from cfme.exceptions import DestinationNotFound
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
@@ -165,6 +163,47 @@ class ProviderNodes(CFMENavigateStep):
             view.contents.relationships.click_at('Nodes')
         except NameError:
             raise DestinationNotFound("Nodes aren't present on details page of this provider")
+
+
+class ProviderRegisterNodesView(View):
+    """
+     represents Register Nodes view
+    """
+    file = FileInput(locator='//input[@id="nodes_json_file"]')
+    register = Button(value='Register')
+    cancel = Button(value='Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class ProviderScaleDownView(View):
+    """
+     represents Scale down view
+    """
+    table = Table(locator='//div[contains(@class, "form-horizontal")]//table')
+    checkbox = Checkbox(name='host_ids[]')
+    scale_down = Button('Scale Down')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class ProviderScaleOutView(View):
+    """
+     represents Scale view
+    """
+
+    compute_count = Input(name='ComputeCount')
+    scale = Button('Scale')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 @navigator.register(OpenstackInfraProvider, 'RegisterNodes')

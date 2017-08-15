@@ -13,7 +13,6 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Checkbox,
                                   Input,
                                   Table,
-                                  FileInput,
                                   BaseEntitiesView,
                                   DynaTree,
                                   BootstrapTreeview,
@@ -211,47 +210,6 @@ class NodesToolBar(View):
     power = Dropdown(text='Power')
     download = Dropdown(text='Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
-
-
-class ProviderRegisterNodesView(View):
-    """
-     represents Register Nodes view (exists for Infra OpenStack provider)
-    """
-    file = FileInput(locator='//input[@id="nodes_json_file"]')
-    register = Button(value='Register')
-    cancel = Button(value='Cancel')
-
-    @property
-    def is_displayed(self):
-        return False
-
-
-class ProviderScaleDownView(View):
-    """
-     represents Scale down view (exists for Infra OpenStack provider)
-    """
-    table = Table(locator='//div[contains(@class, "form-horizontal")]//table')
-    checkbox = Checkbox(name='host_ids[]')
-    scale_down = Button('Scale Down')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return False
-
-
-class ProviderScaleOutView(View):
-    """
-     represents Scale view (exists for Infra OpenStack provider)
-    """
-
-    compute_count = Input(name='ComputeCount')
-    scale = Button('Scale')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return False
 
 
 class ProviderNodesView(BaseLoggedInPage):
