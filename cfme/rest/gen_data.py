@@ -223,25 +223,62 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-def service_templates_ui(request, rest_api, service_dialog=None, service_catalog=None, num=4):
+def service_templates_ui(request, rest_api, service_dialog=None, service_catalog=None,
+        a_provider=None, vmdb=None, num=4):
     if not service_dialog:
         service_dialog = dialog()
     if not service_catalog:
         service_catalog = service_catalog_obj(request, rest_api)
 
+    catalog_item_type = 'Generic'
+    provisioning_args = {}
+
     catalog_items = []
     new_names = []
+    vm_names = []
     for _ in range(num):
+        if a_provider:
+            template, host, datastore, vlan, catalog_item_type = map(
+                a_provider.data.get('provisioning').get,
+                ('template', 'host', 'datastore', 'vlan', 'catalog_item_type'))
+
+            vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
+            vm_names.append(vm_name)
+            provisioning_data = {
+                'vm_name': vm_name,
+                'host_name': {'name': [host]},
+                'datastore_name': {'name': [datastore]}
+            }
+
+            if a_provider.type == 'rhevm':
+                provisioning_data['provision_type'] = 'Native Clone'
+                provisioning_data['vlan'] = vlan
+                catalog_item_type = 'RHEV'
+            elif a_provider.type == 'virtualcenter':
+                provisioning_data['provision_type'] = 'VMware'
+                provisioning_data['vlan'] = vlan
+
+            vm_name = version.pick({
+                version.LOWEST: provisioning_data['vm_name'] + '_0001',
+                '5.7': provisioning_data['vm_name'] + '0001'})
+
+            provisioning_args = dict(
+                catalog_name=template,
+                provider=a_provider,
+                prov_data=provisioning_data
+            )
+
         new_name = 'item_{}'.format(fauxfactory.gen_alphanumeric())
         new_names.append(new_name)
         catalog_items.append(
             CatalogItem(
-                item_type='Generic',
+                item_type=catalog_item_type,
                 name=new_name,
                 description='my catalog',
                 display_in=True,
                 catalog=service_catalog,
-                dialog=service_dialog
+                dialog=service_dialog,
+                **provisioning_args
             )
         )
 
@@ -261,6 +298,16 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
         to_delete = [ent for ent in collection if ent.name in new_names]
         if to_delete:
             collection.action.delete(*to_delete)
+
+        for vm_name in vm_names:
+            try:
+                a_provider.mgmt.delete_vm(vm_name)
+            except Exception:
+                # vm can be deleted/retired by test
+                logger.warning("Failed to delete vm '{}'.".format(vm_name))
+
+    if isinstance(vmdb, list):
+        vmdb.extend(vm_names)
 
     return s_tpls
 
