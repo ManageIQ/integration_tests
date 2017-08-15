@@ -232,8 +232,8 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         view = navigate_to(self, "All")
 
         def _looking_for_state_change():
-            power_state = self.get_detail('Properties', 'Power State')
-            return power_state == desired_state
+            entity = view.entities.get_entity(by_name=self.name)
+            return "currentstate-{}".format(desired_state) in entity.status
 
         return wait_for(
             _looking_for_state_change,
