@@ -39,9 +39,12 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
 
     @property
     def in_compute_infrastructure_hosts(self):
+        def _host_page(title):
+            return self.navigation.currently_selected == ["Compute", "Infrastructure", title]
+
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ["Compute", "Infrastructure", "Hosts"]
+            self.logged_in_as_current_user and (_host_page("Hosts") or _host_page("Nodes") or
+                                                _host_page("Hosts / Nodes"))
         )
 
 
