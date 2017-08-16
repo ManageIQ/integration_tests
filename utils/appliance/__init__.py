@@ -514,8 +514,8 @@ class IPAppliance(object):
             # Let's not log passwords
             logging.disable(logging.CRITICAL)
             rc, out = self.ssh_client.run_rails_command(
-                "puts MiqPassword.encrypt('{}')".format(string))
-            return out
+                "\"puts MiqPassword.encrypt('{}')\"".format(string))
+            return out.strip()
         finally:
             logging.disable(logging.NOTSET)
 
