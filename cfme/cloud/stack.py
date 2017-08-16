@@ -4,7 +4,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages, BootstrapNav
 from widgetastic_manageiq import (
     Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
-    SummaryTable, Table, Text)
+    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import DestinationNotFound, StackNotFound, CandidateNotFound
@@ -80,6 +80,7 @@ class StackEditTagEntities(View):
     """The entities on the edit tags page"""
     breadcrumb = BreadCrumb()
     title = Text('#explorer_title_text')
+    included_widgets = View.include(BaseNonInteractiveEntitiesView, use_parent=True)
 
 
 class StackSecurityGroupsEntities(View):

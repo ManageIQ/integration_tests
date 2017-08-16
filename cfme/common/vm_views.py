@@ -1,15 +1,66 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 
-from widgetastic.widget import View, Text, TextInput, Checkbox
+from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, FlashMessages, Tab, Input, BootstrapTreeview)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (
-    Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect,
-    CheckableManageIQTree, VersionPick, Version, CheckboxSelect, BaseEntitiesView)
+    Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, CheckboxSelect,
+    CheckableManageIQTree, VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity,
+    BaseQuadIconEntity, BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
+
+
+class InstanceQuadIconEntity(BaseQuadIconEntity):
+    """ Provider child of Quad Icon entity
+
+    """
+    @property
+    def data(self):
+        br = self.browser
+
+        return {
+            "os": br.get_attribute('src', self.QUADRANT.format(pos='a')),
+            "state": br.get_attribute('src', self.QUADRANT.format(pos='b')),
+            "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
+            "no_snapshot": br.text(self.QUADRANT.format(pos='d')),
+            "policy": br.get_attribute('src', self.QUADRANT.format(pos='g')),
+        }
+
+
+class InstanceTileIconEntity(BaseTileIconEntity):
+    """ Provider child of Tile Icon entity
+
+    """
+    quad_icon = ParametrizedView.nested(InstanceQuadIconEntity)
+
+
+class InstanceListEntity(BaseListEntity):
+    """ Provider child of List entity
+
+    """
+    pass
+
+
+class NonJSInstanceEntity(NonJSBaseEntity):
+    """ Provider child of Proxy entity
+
+    """
+    quad_entity = InstanceQuadIconEntity
+    list_entity = InstanceListEntity
+    tile_entity = InstanceTileIconEntity
+
+
+def InstanceEntity():  # noqa
+    """ Temporary wrapper for Instance Entity during transition to JS based Entity
+
+    """
+    return VersionPick({
+        Version.lowest(): NonJSInstanceEntity,
+        '5.9': JSBaseEntity,
+    })
 
 
 class VMToolbar(View):
@@ -30,6 +81,10 @@ class VMEntities(BaseEntitiesView):
     """
     Entities view for vms/instances collection destinations
     """
+    @property
+    def entity_class(self):
+        return InstanceEntity().pick(self.browser.product_version)
+
     adv_search_clear = Text('//div[@id="main-content"]//h1//span[@id="clear_search"]/a')
 
 
@@ -227,6 +282,7 @@ class RetirementView(BaseLoggedInPage):
         # TODO This is just an anchor with an image, weaksauce
         # remove_date = Button()
         retirement_warning = BootstrapSelect(id='retirementWarning')
+        entities = View.nested(BaseNonInteractiveEntitiesView)
         save_button = Button('Save')
         cancel_button = Button('Cancel')
 
@@ -273,6 +329,7 @@ class EditTagsView(BaseLoggedInPage):
         tag = BootstrapSelect('tag_add')
         # TODO implement table element with ability to remove selected tags
         # https://github.com/RedHatQE/widgetastic.core/issues/26
+        entities = View.nested(BaseNonInteractiveEntitiesView)
         save_button = Button('Save')
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
@@ -292,6 +349,7 @@ class SetOwnershipView(BaseLoggedInPage):
     class form(View):  # noqa
         user_name = BootstrapSelect('user_name')
         group_name = BootstrapSelect('group_name')
+        entities = View.nested(BaseNonInteractiveEntitiesView)
         save_button = Button('Save')
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
@@ -327,6 +385,7 @@ class ManagePoliciesView(BaseLoggedInPage):
     @View.nested
     class form(View):  # noqa
         policy_profiles = CheckableManageIQTree(tree_id='protectbox')
+        entities = View.nested(BaseNonInteractiveEntitiesView)
         save_button = Button('Save')
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
@@ -345,6 +404,7 @@ class PolicySimulationView(BaseLoggedInPage):
     class form(View):  # noqa
         policy = BootstrapSelect('policy_id')
         # TODO policies table, ability to remove
+        entities = View.nested(BaseNonInteractiveEntitiesView)
         cancel_button = Button('Cancel')
 
     @property

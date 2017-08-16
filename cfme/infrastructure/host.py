@@ -275,7 +275,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
         view = navigate_to(self, "All")
         try:
-            view.entities.get_first_entity(by_name=self.name)
+            view.entities.get_entity(by_name=self.name, surf_pages=True)
         except ItemNotFound:
             return False
         else:
@@ -288,7 +288,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         Returns: :py:class:`bool`
         """
         view = navigate_to(self, "All")
-        entity = view.entities.get_first_entity(by_name=self.name)
+        entity = view.entities.get_entity(by_name=self.name, surf_pages=True)
         return entity.creds.strip().lower() == "checkmark"
 
     def update_credentials_rest(self, credentials):
@@ -447,7 +447,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling("All")
 
     def step(self):
-        self.prerequisite_view.entities.get_first_entity(by_name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(Host)
@@ -602,7 +602,7 @@ def find_quadicon(host_name):
     if view.toolbar.view_selector.selected != "Grid View":
         view.toolbar.view_selector.select("Grid View")
     try:
-        quad_icon = view.entities.get_first_entity(by_name=host_name)
+        quad_icon = view.entities.get_entity(by_name=host_name, surf_pages=True)
     except ItemNotFound:
         raise HostNotFound("Host '{}' not found in UI!".format(host_name))
     else:

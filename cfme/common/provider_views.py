@@ -17,7 +17,8 @@ from widgetastic_manageiq import (BreadCrumb,
                                   BaseEntitiesView,
                                   DynaTree,
                                   BootstrapTreeview,
-                                  ProviderEntity)
+                                  ProviderEntity,
+                                  BaseNonInteractiveEntitiesView)
 
 
 class ProviderDetailsToolBar(View):
@@ -176,6 +177,13 @@ class ProvidersManagePoliciesView(BaseLoggedInPage):
     """
     policies = VersionPick({Version.lowest(): DynaTree('protect_treebox'),
                             '5.7': BootstrapTreeview('protectbox')})
+
+    @View.nested
+    class entities(BaseNonInteractiveEntitiesView):  # noqa
+        @property
+        def entity_class(self):
+            return ProviderEntity().pick(self.browser.product_version)
+
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')
@@ -192,6 +200,12 @@ class ProvidersEditTagsView(BaseLoggedInPage):
     tag_category = BootstrapSelect('tag_cat')
     tag = BootstrapSelect('tag_add')
     chosen_tags = Table(locator='//div[@id="assignments_div"]/table')
+
+    @View.nested
+    class entities(BaseNonInteractiveEntitiesView):  # noqa
+        @property
+        def entity_class(self):
+            return ProviderEntity().pick(self.browser.product_version)
 
     save = Button('Save')
     reset = Button('Reset')

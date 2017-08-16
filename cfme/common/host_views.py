@@ -17,7 +17,8 @@ from widgetastic_manageiq import (
     PaginationPane,
     SummaryTable,
     Table,
-    TimelinesView
+    TimelinesView,
+    BaseNonInteractiveEntitiesView
 )
 from widgetastic_patternfly import (
     BootstrapSelect,
@@ -197,6 +198,7 @@ class HostDiscoverView(ComputeInfrastructureHostsView):
 class HostManagePoliciesView(BaseLoggedInPage):
     """Host's Manage Policies view."""
     policies = BootstrapTreeview("protectbox")
+    entities = View.nested(BaseNonInteractiveEntitiesView)
     save_button = Button("Save")
     reset_button = Button("Reset")
     cancel_button = Button("Cancel")
@@ -211,7 +213,7 @@ class HostEditTagsView(BaseLoggedInPage):
     tag_category = BootstrapSelect("tag_cat")
     tag = BootstrapSelect("tag_add")
     chosen_tags = Table(locator='.//div[@id="assignments_div"]/table')
-
+    entities = View.nested(BaseNonInteractiveEntitiesView)
     save_button = Button("Save")
     reset_button = Button("Reset")
     cancel_button = Button("Cancel")
