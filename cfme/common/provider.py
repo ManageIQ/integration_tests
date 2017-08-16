@@ -127,11 +127,19 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         # gotta stash this in here to prevent circular imports
         from utils.providers import get_mgmt
+        from cfme.containers.provider.openshift import OpenshiftProvider
+
+        if isinstance(self, OpenshiftProvider):
+            credentials = conf.cfme_data['management_systems'][self.key]['endpoints']['default']['credentials']
+            credentials = conf.credentials[credentials]
+            credentials['token'] = self.cli.run_command('oc whoami -t').output
+        else:
+            credentials = None
 
         if self.key:
-            return get_mgmt(self.key)
+            return get_mgmt(self.key, credentials=credentials)
         elif getattr(self, 'provider_data', None):
-            return get_mgmt(self.provider_data)
+            return get_mgmt(self.provider_data, credentials=credentials)
         else:
             raise ProviderHasNoKey(
                 'Provider {} has no key, so cannot get mgmt system'.format(self.name))
