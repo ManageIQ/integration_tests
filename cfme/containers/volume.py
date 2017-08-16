@@ -10,7 +10,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import SummaryMixin, Taggable
 from cfme.containers.provider import navigate_and_get_rows
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, paginator, match_location, InfoBlock,\
+from cfme.web_ui import toolbar as tb, match_location, InfoBlock,\
     PagedTable, CheckboxTable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
@@ -76,9 +76,10 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Volumes')
 
     def resetter(self):
+        from cfme.web_ui import paginator
         tb.select('Grid View')
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        paginator.check_all()
+        paginator.uncheck_all()
 
 
 @navigator.register(Volume, 'Details')

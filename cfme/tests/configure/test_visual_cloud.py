@@ -11,7 +11,7 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.stack import Stack
 from cfme.cloud.tenant import Tenant
-from cfme.web_ui import paginator, toolbar as tb, match_location
+from cfme.web_ui import toolbar as tb, match_location
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -99,6 +99,7 @@ def test_cloud_grid_page_per_item(request, page, set_grid):
     limit = visual.grid_view_limit
     navigate_to(page, 'All')
     tb.select('Grid View')
+    from cfme.web_ui import paginator
     if paginator.rec_total() is not None:
         if int(paginator.rec_total()) >= int(limit):
             assert int(paginator.rec_end()) == int(limit), \
@@ -116,6 +117,7 @@ def test_cloud_tile_page_per_item(request, page, set_tile):
     limit = visual.tile_view_limit
     navigate_to(page, 'All')
     tb.select('Tile View')
+    from cfme.web_ui import paginator
     if paginator.rec_total() is not None:
         if int(paginator.rec_total()) >= int(limit):
             assert int(paginator.rec_end()) == int(limit), \
@@ -133,6 +135,7 @@ def test_cloud_list_page_per_item(request, page, set_list):
     limit = visual.list_view_limit
     navigate_to(page, 'All')
     tb.select('List View')
+    from cfme.web_ui import paginator
     if paginator.rec_total() is not None:
         if int(paginator.rec_total()) >= int(limit):
             assert int(paginator.rec_end()) == int(limit), \

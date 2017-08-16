@@ -6,7 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import Deployable
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
+from cfme.web_ui import CheckboxTable, toolbar as tb
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.providers import get_crud_by_name, list_providers_by_class
@@ -97,6 +97,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
         deployments = []
         _get_deployments_page(provider=provider, server=server)
         if sel.is_displayed(list_tbl):
+            from cfme.web_ui import paginator
             _provider = provider  # In deployment UI, we cannot get provider name on list all page
             for _ in paginator.pages():
                 for row in list_tbl.rows():
@@ -233,6 +234,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        from cfme.web_ui import paginator
         if paginator.page_controls_exist():
             paginator.results_per_page(1000)
         list_tbl.click_row_by_cells({'Deployment Name': self.obj.name,

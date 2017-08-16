@@ -1083,7 +1083,7 @@ class Paginator(Widget):
     def page_info(self):
         cur_page = self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator)
         text = cur_page.text
-        return re.search('(\d+)\s+of\s+(\d+)', text).groups()
+        return re.search('(\d+)?-?(\d+)\s+of\s+(\d+)', text).groups()
 
 
 class PaginationPane(View):
@@ -1130,7 +1130,7 @@ class PaginationPane(View):
         self.items_on_page.select_by_visible_text(str(value))
 
     def _parse_pages(self):
-        max_item, item_amt = self.paginator.page_info()
+        min_item, max_item, item_amt = self.paginator.page_info()
 
         item_amt = int(item_amt)
         max_item = int(max_item)
@@ -1197,7 +1197,7 @@ class PaginationPane(View):
 
     @property
     def items_amount(self):
-        return self.paginator.page_info()[1]
+        return self.paginator.page_info()[2]
 
     def find_row_on_pages(self, table, *args, **kwargs):
         """Find first row matching filters provided by kwargs on the given table widget

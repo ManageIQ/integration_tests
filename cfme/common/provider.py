@@ -19,7 +19,7 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
 from cfme.web_ui import (
     breadcrumbs_names, summary_title, flash, Quadicon, Region, fill, Form, toolbar as tb,
-    form_buttons, paginator)
+    form_buttons)
 from utils import ParamClassName, version, conf
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
@@ -727,10 +727,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     def get_console_ctrl_alt_del_btn(self):
         raise NotImplementedError("This method is not implemented for given provider")
-
-
-def get_paginator_value():
-    return paginator.rec_total()
 
 
 class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):

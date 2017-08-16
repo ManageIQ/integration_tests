@@ -10,7 +10,6 @@ import cfme.web_ui.accordion as acc
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table, form_buttons, Input
-from cfme.web_ui import paginator as pg
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from utils.appliance import Navigatable
@@ -753,6 +752,7 @@ def remove_all_pxe_servers():
     navigate_to(PXEServer, 'All')
     navigate_to(PXEServer, 'All')  # Yes we really do this twice.
     if sel.is_displayed(pxe_server_table_exist):
-        sel.click(pg.check_all())
+        from cfme.web_ui import paginator as pg
+        pg.check_all()
         cfg_btn('Remove PXE Servers from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=False)

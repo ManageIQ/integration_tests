@@ -5,7 +5,7 @@ from cfme.exceptions import MiddlewareDomainNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
+from cfme.web_ui import CheckboxTable, InfoBlock, toolbar as tb
 from wrapanapi.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.appliance import Navigatable, current_appliance
@@ -85,6 +85,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
         _get_domains_page(provider=provider)
         if sel.is_displayed(list_tbl):
             _provider = provider
+            from cfme.web_ui import paginator
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     if strict:

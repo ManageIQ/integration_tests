@@ -5,7 +5,7 @@ from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties, Container
 from cfme.web_ui import (
-    CheckboxTable, paginator, InfoBlock, toolbar as tb, Form, Input, fill
+    CheckboxTable, InfoBlock, toolbar as tb, Form, Input, fill
 )
 from cfme.web_ui.form_buttons import FormButton
 from wrapanapi.hawkular import CanonicalPath
@@ -96,6 +96,7 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
         _get_server_groups_page(domain=domain)
         if sel.is_displayed(list_tbl):
             _domain = domain
+            from cfme.web_ui import paginator
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     if strict:

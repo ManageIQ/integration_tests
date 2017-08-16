@@ -4,7 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
-from cfme.web_ui import paginator, Table
+from cfme.web_ui import Table
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -62,6 +62,7 @@ def test_paginator(some_dialogs, soft_assert):
         * During the cycling, assert the paginator does not get stuck.
     """
     navigate_to(DialogCollection, 'All')
+    from cfme.web_ui import paginator
     paginator.results_per_page(50)
     paginator.results_per_page(5)
     # Now we must have only 5

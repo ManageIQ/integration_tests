@@ -22,7 +22,7 @@ from cfme.services import requests
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    match_location, Table, search, paginator, toolbar, Calendar, Select, Input, CheckboxTable,
+    match_location, Table, search, toolbar, Calendar, Select, Input, CheckboxTable,
     summary_title, BootstrapTreeview, AngularSelect
 )
 from cfme.web_ui.search import search_box
@@ -93,12 +93,13 @@ templates_tree = partial(accordion.tree, "Templates")
 
 def reset_page():
     tb.select("Grid View")
+    from cfme.web_ui import paginator
     if sel.is_displayed(search_box.search_field):
         search.ensure_normal_search_empty()
     if paginator.page_controls_exist():
         # paginator.results_per_page(1000)
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        paginator.check_all()
+        paginator.uncheck_all()
 
 
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
@@ -804,6 +805,7 @@ def _method_setup(vm_names, provider_crud=None):
         provider_crud.load_all_provider_vms()
     else:
         navigate_to(Vm, 'VMsOnly')
+    from cfme.web_ui import paginator
     if paginator.page_controls_exist():
         paginator.results_per_page(1000)
     for vm_name in vm_names:
@@ -819,6 +821,7 @@ def find_quadicon(vm_name, do_not_navigate=False):
     """
     if not do_not_navigate:
         navigate_to(Vm, 'VMsOnly')
+    from cfme.web_ui import paginator
     if not paginator.page_controls_exist():
         raise VmNotFound("VM '{}' not found in UI!".format(vm_name))
 
@@ -945,6 +948,7 @@ def get_number_of_vms(do_not_navigate=False):
     logger.info("Getting number of vms")
     if not do_not_navigate:
         navigate_to(Vm, 'VMsOnly')
+    from cfme.web_ui import paginator
     if not paginator.page_controls_exist():
         logger.debug("No page controls")
         return 0

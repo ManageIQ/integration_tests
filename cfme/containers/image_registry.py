@@ -8,7 +8,7 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.containers.provider import pol_btn, navigate_and_get_rows,\
     ContainerObjectAllBaseView
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location,\
+from cfme.web_ui import CheckboxTable, toolbar as tb, match_location,\
     PagedTable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -61,10 +61,11 @@ class ImageRegistryAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Image Registries')
 
     def resetter(self):
+        from cfme.web_ui import paginator
         tb.select('List View')
         if paginator.page_controls_exist():
-            sel.check(paginator.check_all())
-            sel.uncheck(paginator.check_all())
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(ImageRegistry, 'Details')

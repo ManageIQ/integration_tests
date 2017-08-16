@@ -2,8 +2,6 @@
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic_manageiq import ScriptBox, Table
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import paginator as pg
 from navmazing import NavigateToAttribute, NavigateToSibling
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -172,7 +170,8 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable):
 
     def delete_all_templates(self):
         view = navigate_to(self, "TemplateType")
-        sel.click(pg.check_all())
+        from cfme.web_ui import paginator
+        paginator.check_all()
         view.configuration.item_select("Remove selected Orchestration Templates", handle_alert=True)
 
     def copy_template(self, template_name, content, draft=None, description=None):
