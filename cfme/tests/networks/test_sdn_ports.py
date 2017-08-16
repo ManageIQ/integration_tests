@@ -3,9 +3,9 @@ from utils import testgen
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-
-from cfme.networks.provider import NetworkProvider
-from cfme.networks.network_port import NetworkPort
+from utils.appliance.implementations.ui import navigate_to
+from cfme.networks.provider import NetworkProviderCollection
+from cfme.networks.network_port import NetworkPortCollection
 
 
 pytest_generate_tests = testgen.generate(
@@ -13,30 +13,33 @@ pytest_generate_tests = testgen.generate(
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
-def test_port_detail_name(provider, appliance):
+def test_port_detail_name(provider):
     ''' Test equality of quadicon and detail names '''
-    ports = NetworkPort.get_all()
+    port_collection = NetworkPortCollection()
+    ports = port_collection.all()
     if len(ports) > 5:
         ports = ports[:5]
     for port in ports:
-        temp_port = NetworkPort(name=port, appliance=appliance)
-        det_name = temp_port.get_detail('Properties', 'Name')
-        assert port == det_name
+        view = navigate_to(port, 'Details')
+        det_name = view.contents.properties.get_text_of('Name')
+        assert port.name == det_name
 
 
-def test_port_net_prov(provider, appliance):
+def test_port_net_prov(provider):
     ''' Test functionality of quadicon and detail network providers'''
-    providers = NetworkProvider.get_all()
-    ports = NetworkPort.get_all()
+    prov_collection = NetworkProviderCollection()
+    port_collection = NetworkPortCollection()
+    providers = [entity.name for entity in prov_collection.all()]
+    ports = port_collection.all()
     if len(ports) > 5:
         ports = ports[:5]
     for port in ports:
-        temp_port = NetworkPort(name=port, appliance=appliance)
         try:
-            prov = temp_port.get_detail('Relationships', 'Network Manager')
-        except:
+            view = navigate_to(port, 'Details')
+            prov_name = view.contents.relationships.get_text_of('Network Manager')
+        except Exception:
             continue
-        assert prov in providers
+        assert prov_name in providers
 
-    provider.delete_if_exists(cancel=False)
+    provider.delete()
     provider.wait_for_delete()

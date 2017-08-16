@@ -1,18 +1,25 @@
 from utils import version
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.web_ui import (
-    Region, Quadicon, toolbar as tb, paginator
-)
-from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils.appliance import Navigatable
 from utils.update import Updateable
 from cfme.common import Taggable, SummaryMixin
-from functools import partial
+from cfme.networks.views import NetworkRouterView
+from cfme.networks.views import NetworkRouterDetailsView
 
 
-pol_btn = partial(tb.select, 'Policy')
-details_page = Region(infoblock_type='detail')
+class NetworkRouterCollection(Navigatable):
+    ''' Collection object for NetworkRouter object
+        Note: Network providers object are not implemented in mgmt
+    '''
+
+    def instantiate(self, name):
+        return NetworkRouter(name=name)
+
+    def all(self):
+        view = navigate_to(NetworkRouter, 'All')
+        list_networks_obj = view.entities.get_all(surf_pages=True)
+        return [NetworkRouter(name=r.name) for r in list_networks_obj]
 
 
 class NetworkRouter(Taggable, Updateable, SummaryMixin, Navigatable):
@@ -24,35 +31,19 @@ class NetworkRouter(Taggable, Updateable, SummaryMixin, Navigatable):
     db_types = ["NetworkRouter"]
 
     def __init__(
-            self, name=None, key=None, zone=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+            self, name, provider=None):
+        if provider:
+            self.appliance = provider.appliance
+        else:
+            self.appliance = None
+        Navigatable.__init__(self, appliance=self.appliance)
         self.name = name
-        self.key = key
-        self.zone = zone
-
-    def load_details(self):
-        """Load details page via navigation"""
-        navigate_to(self, 'Details')
-
-    def get_detail(self, *ident):
-        ''' Gets details from the details infoblock
-        The function first ensures that we are on the detail page for the specific provider.
-        Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
-        '''
-        self.load_details()
-        return details_page.infoblock.text(*ident)
-
-    @staticmethod
-    def get_all():
-        navigate_to(NetworkRouter, 'All')
-        list_routers = [q.name for q in Quadicon.all()]
-        return list_routers
+        self.provider = provider
 
 
 @navigator.register(NetworkRouter, 'All')
 class All(CFMENavigateStep):
+    VIEW = NetworkRouterView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -60,32 +51,29 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("Grid View")
-        if paginator.page_controls_exist():
-            sel.check(paginator.check_all())
-            sel.uncheck(paginator.check_all())
+        tb = self.view.toolbar
+        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
+            tb.view_selector.select("Grid View")
+        paginator = self.view.entities.paginator
+        if paginator.exists:
+            paginator.check_all()
+            paginator.uncheck_all()
 
 
 @navigator.register(NetworkRouter, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
+    VIEW = NetworkRouterDetailsView
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.entities.get_first_entity(by_name=self.obj.name).click()
 
 
 @navigator.register(NetworkRouter, 'EditTags')
 class EditTags(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        pol_btn('Edit Tags')
-
-
-@navigator.register(NetworkRouter, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = NetworkRouterDetailsView
 
     def step(self):
-        pol_btn('Edit Tags')
+        self.tb = self.view.toolbar
+        self.tb.policy.item_select('Edit Tags')

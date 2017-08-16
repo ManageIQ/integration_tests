@@ -1,16 +1,16 @@
 import pytest
-from cfme.networks.provider import NetworkProvider
-from cfme.networks.balancer import Balancer
-from cfme.networks.cloud_network import CloudNetwork
-from cfme.networks.network_port import NetworkPort
-from cfme.cloud.provider.azure import AzureProvider
-import cfme.web_ui.flash as flash
 from utils import testgen
 from utils import version
 from utils.version import current_version
-from functools import partial
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.networks.provider import (NetworkProvider, NetworkProviderCollection)
+from cfme.networks.balancer import (Balancer, BalancerCollection)
+from cfme.networks.cloud_network import (CloudNetwork, CloudNetworkCollection)
+from cfme.networks.network_port import (NetworkPort, NetworkPortCollection)
+from cfme.networks.security_group import (SecurityGroup, SecurityGroupCollection)
+from cfme.networks.subnet import (Subnet, SubnetCollection)
+from cfme.networks.network_router import (NetworkRouter, NetworkRouterCollection)
 from utils.appliance.implementations.ui import navigate_to
-import cfme.web_ui.toolbar as tb
 
 
 pytestmark = [
@@ -20,47 +20,46 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([AzureProvider], scope="module")
 FILETYPES = ["txt", "csv", "pdf"]
 extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
-download_btn = partial(tb.select, "Download")
-download_summary_btn = partial(tb.select, "Download summary in PDF format")
 
 
 def download(objecttype, extension):
     try:
-        navigate_to(objecttype, 'All')
-        download_btn("Download as {}".format(extensions_mapping[extension]))
-    except:
+        view = navigate_to(objecttype, 'All')
+        view.toolbar.download.item_select("Download as {}".format(extensions_mapping[extension]))
+    except Exception:
         raise ValueError("Unknown extention. check the extentions_mapping")
 
 
 def download_summary(spec_object):
     try:
-        navigate_to(spec_object, 'Details')
-        download_summary_btn()
-    except:
+        view = navigate_to(spec_object, 'Details')
+        view.toolbar.download.click()
+    except Exception:
         raise ValueError("Unknown extention. check the extentions_mapping")
 
 
-@pytest.mark.uncollect
 @pytest.mark.parametrize("filetype", FILETYPES)
 @pytest.mark.parametrize("objecttype", [NetworkProvider, Balancer,
-                                        CloudNetwork, NetworkPort])
+                                        CloudNetwork, NetworkPort,
+                                        SecurityGroup, NetworkRouter,
+                                        Subnet])
 @pytest.mark.uncollectif(lambda filetype: filetype in {"pdf"} and
                          current_version() == version.UPSTREAM)
 def test_download_lists_base(filetype, objecttype):
     ''' Download the items from base lists. '''
     download(objecttype, filetype)
-    flash.assert_no_errors()
 
 
-@pytest.mark.parametrize("objecttype", [NetworkProvider, Balancer,
-                                        CloudNetwork, NetworkPort])
+@pytest.mark.parametrize("objecttype", [NetworkProviderCollection, BalancerCollection,
+                                        CloudNetworkCollection, NetworkPortCollection,
+                                        SecurityGroupCollection, SubnetCollection,
+                                        NetworkRouterCollection])
 @pytest.mark.uncollectif(current_version() == version.UPSTREAM)
-def test_download_pdf_summary(objecttype):
+def test_download_pdf_summary(objecttype, provider):
     ''' Download the summary details of specific object '''
-    try:
-        random_obj = objecttype.get_all()[0]
-    except:
-        return
-    obj = objecttype(random_obj)
-    download_summary(obj)
-    flash.assert_no_errors()
+    instance = objecttype()
+    print str(len(instance.all()))
+    if len(instance.all()) > 0:
+        random_obj = instance.all()[0].name
+        obj = instance.instantiate(random_obj)
+        download_summary(obj)
