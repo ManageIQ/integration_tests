@@ -1,5 +1,4 @@
 import tempfile
-
 import pytest
 
 from cfme.test_framework.sprout.client import SproutClient, SproutException
@@ -30,7 +29,7 @@ def pytest_generate_tests(metafunc):
 def appliance_preupdate(old_version, appliance):
 
     series = appliance.version.series()
-    update_url = "update_url_{}".format(series[0] + series[2])
+    update_url = "update_url_{}".format(series.replace('.', ''))
 
     """Requests appliance from sprout based on old_versions, edits partitions and adds
     repo file for update"""
@@ -38,10 +37,9 @@ def appliance_preupdate(old_version, appliance):
     usable = []
     sp = SproutClient.from_config()
     available_versions = set(sp.call_method('available_cfme_versions'))
-    for ver in versions:
-        for a in available_versions:
-            if a.startswith(ver):
-                usable.append(a)
+    for a in available_versions:
+        if a.startswith(old_version):
+            usable.append(a)
     usable = sorted([Version(i) for i in usable], reverse=True)
     try:
         apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
