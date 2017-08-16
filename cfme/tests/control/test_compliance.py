@@ -9,19 +9,12 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration import AnalysisProfile
-from cfme.web_ui import flash, toolbar
-from cfme import test_requirements
-from utils import testgen, version, conf
+from utils import conf, testgen
 from utils.hosts import setup_providers_hosts_credentials
-from utils.log import logger
 from utils.update import update
-from utils.wait import wait_for
+from cfme import test_requirements
+from . import do_scan
 
-vddk_url_map = {
-    "5.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v5_5"),
-    "6": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v6_0"),
-    "6.5": conf.cfme_data.get("basic_info", {}).get("vddk_url").get("v6_5")
-}
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
@@ -32,12 +25,6 @@ pytestmark = [
 
 
 pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
-
-
-def wait_for_ssa_enabled():
-    wait_for(
-        lambda: not toolbar.is_greyed('Configuration', 'Perform SmartState Analysis'),
-        delay=10, handle_exception=True, num_sec=600, fail_func=lambda: toolbar.select("Reload"))
 
 
 @pytest.fixture
@@ -73,10 +60,25 @@ def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
     host.unassign_policy_profiles(policy_profile_name)
 
 
+@pytest.fixture(scope="module")
+def vddk_url(provider):
+    try:
+        major, minor = str(provider.version).split(".")
+    except ValueError:
+        major = str(provider.version)
+        minor = 0
+    vddk_version = "v{}_{}".format(major, minor)
+    try:
+        return conf.cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
+    except AttributeError:
+        pytest.skip("There is no vddk url for this VMware provider version")
+
+
 @pytest.yield_fixture(scope="module")
-def configure_fleecing(appliance, has_no_providers_modscope, provider, setup_provider_modscope):
+def configure_fleecing(appliance, has_no_providers_modscope, provider, setup_provider_modscope,
+        vddk_url):
     setup_providers_hosts_credentials(provider.key)
-    appliance.install_vddk(reboot=True, vddk_url=vddk_url_map[str(provider.version)])
+    appliance.install_vddk(reboot=True, vddk_url=vddk_url)
     appliance.reboot()
     appliance.browser.quit_browser()
     yield
@@ -117,31 +119,6 @@ def analysis_profile():
     ap.create()
     yield ap
     ap.delete()
-
-
-def do_scan(vm, additional_item_check=None):
-    if vm.rediscover_if_analysis_data_present():
-        # policy profile assignment is lost so reassign
-        vm.assign_policy_profiles(*vm.assigned_policy_profiles)
-
-    def _scan():
-        return vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
-    original = _scan()
-    if additional_item_check is not None:
-        original_item = vm.get_detail(properties=additional_item_check)
-    vm.smartstate_scan(cancel=False, from_details=True)
-    flash.assert_message_contain(version.pick({
-        version.LOWEST: "Smart State Analysis initiated",
-        "5.5": "Analysis initiated for 1 VM and Instance from the CFME Database"}))
-    logger.info("Scan initiated")
-    wait_for(
-        lambda: _scan() != original,
-        num_sec=600, delay=5, fail_func=lambda: toolbar.select("Reload"))
-    if additional_item_check is not None:
-        wait_for(
-            lambda: vm.get_detail(properties=additional_item_check) != original_item,
-            num_sec=120, delay=5, fail_func=lambda: toolbar.select("Reload"))
-    logger.info("Scan finished")
 
 
 def test_check_package_presence(request, compliance_vm, analysis_profile):
