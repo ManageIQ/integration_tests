@@ -16,6 +16,7 @@ from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
 
+
 def simple_user(userid, password):
     creds = Credential(principal=userid, secret=password)
     return User(name=userid, credential=creds)
@@ -33,10 +34,15 @@ class UserForm(ConfigurationView):
     cancel_button = Button('Cancel')
 
 
+class UsersEntities(View):
+    table = Table('//div[@id=\'records_div\']//table')
+
+
 class AllUserView(ConfigurationView):
     """ All Users View."""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
+    entities = View.nested(UsersEntities)
 
     @property
     def is_displayed(self):
