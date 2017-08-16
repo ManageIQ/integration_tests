@@ -1,0 +1,16 @@
+- hosts: localhost
+  tasks:
+  - manageiq_tag_assignment:
+      tags:
+      - {category: ca1, name: value 1}
+      - {category: ca2, name: value 2}
+      resource: provider
+      resource_name:
+      miq_password:
+      miq_url:
+      miq_username:
+      miq_verify_ssl: false
+      state:
+    name: Create a tag in ManageIQ
+    register: result
+  - {debug: var=result}
