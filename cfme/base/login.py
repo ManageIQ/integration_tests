@@ -6,7 +6,7 @@ class BaseLoggedInPage(View):
     """This page should be subclassed by any page that models any other page that is available as
     logged in.
     """
-    flash = FlashMessages('div#flash_text_div')
+    flash = FlashMessages('.//div[starts-with(@class, "flash_text_div") or @id="flash_text_div"]')
     help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]')
     settings = NavDropdown('.//li[./a[@id="dropdownMenu2"]]')
     navigation = VerticalNavigation('#maintab')
