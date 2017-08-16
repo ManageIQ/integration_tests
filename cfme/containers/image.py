@@ -38,7 +38,7 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
 
     @cached_property
     def mgmt(self):
-        return ApiImage(self.provider.mgmt, self.name, self.id)
+        return ApiImage(self.provider.mgmt, self.name, self.sha256)
 
     # TODO: remove load_details and dynamic usage from cfme.common.Summary when nav is more complete
     def load_details(self, refresh=False):
@@ -57,7 +57,7 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
 
     @cached_property
     def sha256(self):
-        return self.id.split('sha256:')[-1]
+        return self.id.split('@')[-1]
 
     def perform_smartstate_analysis(self, wait_for_finish=False, timeout='7M'):
         """Performing SmartState Analysis on this Image
@@ -75,14 +75,13 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
                                     .format(timeout))
 
     @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None, ocp_only=False):
-        """Generating random instances. (ocp_only: means for images available in OCP only)"""
+    def get_random_instances(cls, provider, count=1, appliance=None, docker_only=False):
+        """Generating random instances. (docker_only: means for docker images only)"""
         # Grab the images from the UI since we have no way to calculate the name by API attributes
         rows = navigate_and_get_rows(provider, cls, count=1000)
-        if ocp_only:
-            list_by_cli = str(provider.cli.run_command(
-                'oc get images --all-namespaces'))
-            rows = filter(lambda r: r.id.text.split('@sha256:')[-1] in list_by_cli,
+        if docker_only:
+            docker_image_ids = [img.id for img in provider.mgmt.list_docker_image()]
+            rows = filter(lambda r: r.id.text.split('@')[-1] in docker_image_ids,
                           rows)
         random.shuffle(rows)
         return [cls(row.name.text, row.id.text, provider, appliance=appliance)

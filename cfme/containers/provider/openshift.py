@@ -10,6 +10,7 @@ from cfme.containers.provider import ContainersProviderDefaultEndpoint,\
     ContainersProviderEndpointsForm
 from cfme.common.provider import DefaultEndpoint
 from utils.version import current_version
+from cfme.exceptions import ProviderHasNoKey
 
 
 class CustomAttribute(object):
@@ -69,6 +70,34 @@ class OpenshiftProvider(ContainersProvider):
     @cached_property
     def cli(self):
         return OcpCli(self)
+
+    def get_bearer_token(self):
+
+        username = self.endpoints['default'].credentials.principal
+        res = self.cli.run_command('oc login -u={} -p={}'.format(
+            username, self.endpoints['default'].credentials.secret))
+        if not res.success:
+            raise Exception('Failed to login user "{}": "{}"'.format(username, res.output))
+        res = self.cli.run_command('oc whoami -t')
+        if res.success:
+            return res.output.strip()
+        raise Exception('Failed to get Bearer token: "{}"'.format(res.output))
+
+    def get_mgmt_system(self):
+        """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
+        """
+        # gotta stash this in here to prevent circular imports
+        from utils.providers import get_mgmt
+
+        credentials = {'token': self.get_bearer_token()}
+
+        if self.key:
+            return get_mgmt(self.key, credentials=credentials)
+        elif hasattr(self, 'provider_data'):
+            return get_mgmt(self.provider_data, credentials=credentials)
+        else:
+            raise ProviderHasNoKey(
+                'Provider {} has no key, so cannot get mgmt system'.format(self.name))
 
     def href(self):
         return self.appliance.rest_api.collections.providers\

@@ -1,8 +1,8 @@
-import random
 import re
-import json
+import random
 from functools import partial
 from random import sample
+from traceback import format_exc
 
 
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -506,46 +506,10 @@ class ContainersTestItem(object):
 class Labelable(object):
     """Provide the functionality to set labels"""
     _LABEL_NAMEVAL_PATTERN = re.compile(r'^[A-Za-z0-9_.]+$')
-    _CONTAINER_OBJECTS = {
-        # <object_name>: <resource name>
-        'Image': 'image',
-        'Node': 'node',
-        'Pod': 'pod',
-        'Project': 'namespace',
-        'Replicator': 'rc',
-        'Route': 'route',
-        'Service': 'service',
-        'Template': 'template',
-        'Volume': 'persistentVolume'
-    }
-
-    @property
-    def _cli_resource_name(self):
-        return ('sha256:{}'.format(self.sha256) if
-               (self.__class__.__name__ == 'Image') else self.name)
-
-    @property
-    def _cli_resource_type(self):
-        return self._CONTAINER_OBJECTS[self.__class__.__name__]
-
-    def _get_json(self):
-        "Getting resource json"
-        if hasattr(self, 'project_name'):
-            self.provider.cli.run_command('oc project {}'.format(self.project_name))
-        return json.loads(str(self.provider.cli.run_command(
-            'oc get {} {} -o json'.
-            format(
-                self._cli_resource_type, self._cli_resource_name
-            )
-        )))
-
-    def _get_metadata(self):
-        """Get object metadata"""
-        return self._get_json()['metadata']
 
     def get_labels(self):
         """List labels"""
-        return self._get_metadata().get('labels', {})
+        return self.mgmt.list_labels()
 
     def set_label(self, name, value):
 
@@ -556,40 +520,15 @@ class Labelable(object):
             :var value: the value of the label
 
         Returns:
-            :py:class:`SSHResult`
-
-        Raises:
-            :py:class:`SetLabelException`.
+            self.mgmt.set_label return value.
         """
-
-        assert self.__class__.__name__ in self._CONTAINER_OBJECTS.keys(), \
-            'object {} is not supported for label assignments.'
-        name, value = str(name), str(value)
         assert self._LABEL_NAMEVAL_PATTERN.match(name), \
             'name part ({}) must match the regex pattern {}'.format(
                 name, self._LABEL_NAMEVAL_PATTERN.pattern)
         assert self._LABEL_NAMEVAL_PATTERN.match(value), \
             'value part ({}) must match the regex pattern {}'.format(
                 value, self._LABEL_NAMEVAL_PATTERN.pattern)
-
-        if hasattr(self, 'project_name'):
-            results = self.provider.cli.run_command('oc project {}'.format(self.project_name))
-            assert results.success, 'Could not set project {}. SSH Results: {}'.format(
-                self.project_name, results)
-
-        payload = {'metadata': {'labels': {name: value}}}
-
-        results = self.provider.cli.run_command(
-            'oc patch {} {} -p \'{}\''.format(self._cli_resource_type, self._cli_resource_name,
-                json.dumps(payload)
-            )
-        )
-
-        if results.failed:
-            raise exceptions.SetLabelException(
-                'Failed to set label "{} = {}" to {} {}. SSH Results: {}'
-                .format(name, value, self.__class__.__name__, self.name, results))
-        return results
+        return self.mgmt.set_label(name, value)
 
     def remove_label(self, name, silent_failure=False):
         """Remove label by name.
@@ -601,24 +540,15 @@ class Labelable(object):
         Raises:
             :py:class:`LabelNotFoundException`.
         """
-        json_content = self._get_json()
-        if name not in json_content['metadata'].get('labels', {}).keys():
-            failure_signature = 'Could not find label "{}", labels: {}' \
-                .format(name, json_content['metadata']['labels'])
+        try:
+            self.mgmt.delete_label(name)
+            return True
+        except Exception:  # TODO: add appropriate exception in wrapanapi
+            failure_signature = format_exc()
             if silent_failure:
                 logger.warning(failure_signature)
                 return False
-            else:
-                raise exceptions.LabelNotFoundException(failure_signature)
-        self.provider.cli.run_command(
-            'oc label {} {} {}-'.format(
-                self._cli_resource_type,
-                ('sha256:{}'.format(self.sha256)
-                 if (self.__class__.__name__ == 'Image') else self.name),
-                name
-            )
-        )
-        return True
+            raise exceptions.LabelNotFoundException(failure_signature)
 
 
 def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
@@ -641,7 +571,7 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
     if sel.is_displayed_text("No Records Found.") and silent_failure:
         return []
     from cfme.web_ui import paginator
-    paginator.results_per_page(1000)
+    paginator.results_per_page('1000 items')
     table = table_class(table_locator="//div[@id='list_grid']//table")
     rows = table.rows_as_list()
     if not rows:
