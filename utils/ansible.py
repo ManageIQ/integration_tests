@@ -1,3 +1,4 @@
+
 import tempfile
 from os import listdir, mkdir, makedirs, path
 from shutil import copy, copyfile, rmtree
@@ -60,7 +61,7 @@ def get_values_for_providers_test(provider):
         'miq_password': conf.credentials['default'].password,
         'provider_api_hostname': providers_data[provider.name]['endpoints']['default'].hostname,
         'provider_api_port': providers_data[provider.name]['endpoints']['default'].api_port,
-        'provider_api_auth_token': get_crud(provider.name).credentials['token'].token,
+        'provider_api_auth_token': providers_data[provider.name]['endpoints']['default'].token,
         'monitoring_hostname': providers_data[provider.name]['endpoints']['hawkular'].hostname,
         'monitoring_port': providers_data[provider.name]['endpoints']['hawkular'].api_port
     }
