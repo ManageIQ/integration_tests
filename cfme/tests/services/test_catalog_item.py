@@ -9,6 +9,7 @@ from cfme import test_requirements
 from cfme.services.catalogs.catalog_item import CatalogItem, CatalogBundle
 from cfme.web_ui import flash
 from utils import error
+from utils.appliance import current_appliance
 from utils.blockers import BZ
 from utils.log import logger
 from utils.update import update
@@ -139,3 +140,15 @@ def test_tagvis_catalog_bundle(check_catalog_visibility, catalog_bundle):
             4. Login as restricted user, catalog bundle is not visible for user
         """
     check_catalog_visibility(catalog_bundle)
+
+
+@pytest.mark.uncollectif(lambda: current_appliance.version < "5.8")
+def test_service_ansible_playbook_crud():
+    cat_item = CatalogItem(
+        item_type="Generic",
+        name='test_item_' + fauxfactory.gen_alphanumeric(),
+        description="my catalog item",
+        display_in=True,
+        catalog=catalog,
+        dialog=dialog
+    )

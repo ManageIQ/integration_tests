@@ -443,6 +443,53 @@ class SummaryFormItem(Widget):
         return text
 
 
+class SummaryForm(Widget):
+    """The UI item that shows the values for objects that are NOT VMs, Providers and such ones.
+
+    Args:
+        group_title (str): Description
+    """
+
+    ROOT = ParametrizedLocator(".//h3[normalize-space(.)={@group_title|quote}]")
+    ALL_LABELS = "./following-sibling::div//label"
+    LABEL_TEXT = "./following-sibling::div//label[normalize-space(.)={}]/following-sibling::div"
+
+    def __init__(self, parent, group_title, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.group_title = group_title
+
+    @property
+    def items(self):
+        """Returns a list of the items names."""
+        b = self.browser
+        return [b.text(el) for el in b.elements(self.ALL_LABELS)]
+
+    def get_item(self, item_name):
+        return self.browser.element(self.LABEL_TEXT.format(quote(item_name)))
+
+    def click_at(self, item_name):
+        """Clicks the item with this name.
+
+        Args:
+            item_name: Name of the item
+        """
+        return self.browser.click(self.get_item(item_name))
+
+    def get_text_of(self, item_name):
+        """Returns the text of the item with this name.
+
+        Args:
+            item_name: Name of the item
+
+        Returns:
+            :py:class:`str`
+        """
+        return self.browser.text(self.get_item(item_name))
+
+    def read(self):
+        return {item: self.get_text_of(item) for item in self.items}
+
+
 class MultiBoxSelect(View):
 
     """This view combines two `<select>` elements and buttons for moving items between them.
