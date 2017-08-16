@@ -9,7 +9,7 @@ from utils.version import current_version
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.7"),
+    pytest.mark.uncollectif(lambda: current_version() < "5.8"),
     pytest.mark.usefixtures('setup_provider')]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 
