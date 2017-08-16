@@ -1356,11 +1356,13 @@ class NonJSPaginationPane(View):
                                          .format(kwargs, table))
 
 
-def PaginationPane():  # noqa
-    return VersionPick({
-        Version.lowest(): NonJSPaginationPane(),
-        '5.9': JSPaginationPane(),
+def PaginationPane(*args, **kwargs):  # noqa
+    parent = kwargs.get("parent")
+    verpick_obj = VersionPick({
+        Version.lowest(): NonJSPaginationPane(*args, **kwargs),
+        '5.9': JSPaginationPane(*args, **kwargs),
     })
+    return verpick_obj.pick(parent.browser.product_version) if parent else verpick_obj
 
 
 class Stepper(View):
