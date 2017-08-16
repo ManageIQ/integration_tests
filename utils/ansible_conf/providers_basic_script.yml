@@ -1,0 +1,24 @@
+---
+-
+  hosts: localhost
+  tasks:
+    -
+      manageiq_provider:
+        monitoring: 'hawkular'
+        monitoring_hostname:
+        monitoring_port: 443
+        miq_password:
+        miq_url:
+        miq_username:
+        name:
+        provider_api_auth_token: ~
+        provider_api_hostname: ~
+        provider_api_port: 8443
+        provider_type: 'openshift-origin'
+        state: present
+        miq_verify_ssl: false
+        provider_verify_ssl: false
+      name: "Add Openshift Containers Provider to ManageIQ"
+      register: result
+    -
+      debug: var=result
