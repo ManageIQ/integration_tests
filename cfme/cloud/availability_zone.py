@@ -78,7 +78,7 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
 
     toolbar = View.nested(AvailabilityZoneToolBar)
     entities = View.nested(AvailabilityZoneEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
 
 class AvailabilityZoneDetailsView(AvailabilityZoneView):

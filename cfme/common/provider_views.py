@@ -266,7 +266,7 @@ class ProviderEntitiesView(BaseEntitiesView):
     """
     @property
     def entity_class(self):
-        return ProviderEntity
+        return ProviderEntity().pick(self.browser.product_version)
 
 
 class ProvidersView(BaseLoggedInPage):

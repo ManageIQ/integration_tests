@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import atexit
+import json
 import os
 import re
 import six
@@ -1086,7 +1087,140 @@ class Paginator(Widget):
         return re.search('(\d+)?-?(\d+)\s+of\s+(\d+)', text).groups()
 
 
-class PaginationPane(View):
+class ReportDataControllerMixin(object):
+    """
+    This is helper mixin for several widgets which use Miq JS API
+    """
+    def _invoke_cmd(self, cmd, data=None):
+        raw_data = {'controller': 'reportDataController', 'action': cmd}
+        if data:
+            raw_data['data'] = [data]
+        json_data = json.dumps(raw_data)
+        js_cmd = 'sendDataWithRx({data}); return ManageIQ.qe.gtl.result'.format(data=json_data)
+        self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
+        # command result is always stored in this global variable
+        return self.browser.execute_script(js_cmd)
+
+    def _call_item_method(self, method):
+        raw_data = {'controller': 'reportDataController',
+                    'action': 'get_item',
+                    'data': [self.name]}
+        js_data = json.dumps(raw_data)
+        js_cmd = ('sendDataWithRx({data}); '
+                  'return ManageIQ.qe.gtl.result.{method}()').format(data=js_data, method=method)
+        self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
+        return self.browser.execute_script(js_cmd)
+
+
+class JSPaginationPane(View, ReportDataControllerMixin):
+    """ Represents Paginator Pane with js api provided by ManageIQ.
+
+    The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
+    """
+    @property
+    def is_displayed(self):
+        # upstream sometimes shows old pagination page and sometime new one
+        paginator = ("return $('#paging_div').length !== 0 || "
+                     "document.getElementsByTagName('miq-pagination').length != 0")
+        return self.browser.execute_script(paginator)
+
+    @property
+    def exists(self):
+        return self.is_displayed
+
+    def check_all(self):
+        self._invoke_cmd('select_all', True)
+
+    def uncheck_all(self):
+        self._invoke_cmd('select_all', False)
+
+    def sort(self, sort_by, ascending=True):
+        # in order to change both sorting and direction, command has to be called twice
+        data = {'columnName': sort_by, 'isAscending': ascending}
+        self._invoke_cmd('set_sorting', data)
+
+    @property
+    def sorted_by(self):
+        return self._invoke_cmd('get_sorting')
+
+    @property
+    def items_per_page(self):
+        return self._invoke_cmd('get_items_per_page')
+
+    def set_items_per_page(self, value):
+        self._invoke_cmd('set_items_per_page', value)
+
+    @property
+    def cur_page(self):
+        return self._invoke_cmd('get_current_page')
+
+    @property
+    def pages_amount(self):
+        return self._invoke_cmd('get_pages_amount')
+
+    def next_page(self):
+        self._invoke_cmd('next_page')
+
+    def prev_page(self):
+        self._invoke_cmd('previous_page')
+
+    def first_page(self):
+        self._invoke_cmd('first_page')
+
+    def last_page(self):
+        self._invoke_cmd('last_page')
+
+    def go_to_page(self, value):
+        self._invoke_cmd('go_to_page', value)
+
+    @property
+    def items_amount(self):
+        return len(self._invoke_cmd('get_all_items'))
+
+    def pages(self):
+        """Generator to iterate over pages, yielding after moving to the next page"""
+        if self.exists:
+            # start iterating at the first page
+            if self.cur_page != 1:
+                self.logger.debug('Resetting paginator to first page')
+                self.first_page()
+
+            # Adding 1 to pages_amount to include the last page in loop
+            for page in range(1, self.pages_amount + 1):
+                yield self.cur_page
+                if self.cur_page == self.pages_amount:
+                    # last or only page, stop looping
+                    break
+                else:
+                    self.logger.debug('Paginator advancing to next page')
+                    self.next_page()
+        else:
+            return
+
+    def find_row_on_pages(self, table, *args, **kwargs):
+        """Find first row matching filters provided by kwargs on the given table widget
+
+        Args:
+            table: Table widget object
+            args: Filters to be passed to table.row()
+            kwargs: Filters to be passed to table.row()
+        """
+        self.first_page()
+        for _ in self.pages():
+            try:
+                row = table.row(*args, **kwargs)
+            except IndexError:
+                continue
+            if not row:
+                continue
+            else:
+                return row
+        else:
+            raise NoSuchElementException('Row matching filter {} not found on table {}'
+                                         .format(kwargs, table))
+
+
+class NonJSPaginationPane(View):
     """ Represents Paginator Pane with the following controls.
 
     The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
@@ -1220,6 +1354,13 @@ class PaginationPane(View):
         else:
             raise NoSuchElementException('Row matching filter {} not found on table {}'
                                          .format(kwargs, table))
+
+
+def PaginationPane():  # noqa
+    return VersionPick({
+        Version.lowest(): NonJSPaginationPane(),
+        '5.9': JSPaginationPane(),
+    })
 
 
 class Stepper(View):
@@ -1902,9 +2043,6 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     def uncheck(self):
         return self.checkbox.fill(False)
 
-    @property
-    def href(self):
-        return self.browser.get_attribute('href', self.label)
 
     @property
     def data(self):
@@ -1949,10 +2087,6 @@ class BaseTileIconEntity(ParametrizedView):
 
     def uncheck(self):
         return self.quad_icon(self.context['name']).uncheck()
-
-    @property
-    def href(self):
-        return self.quad_icon(self.context['name']).href
 
     @property
     def data(self):
@@ -2004,10 +2138,6 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
         return self.checkbox.fill(False)
 
     @property
-    def href(self):
-        return None
-
-    @property
     def data(self):
         """ every entity like QuadIcon/ListEntity etc displays some data,
         which is different for each entity type.
@@ -2026,7 +2156,7 @@ class BaseListEntity(ParametrizedView, ClickableMixin):
         return self.check(values)
 
 
-class BaseEntity(View):
+class NonJSBaseEntity(View):
     """ represents Proxy class which represents Entity despite of state it is in.
         it passes calls to concrete entity taking into account which entity type is displayed atm
     """
@@ -2060,14 +2190,60 @@ class BaseEntity(View):
         return repr(self._get_existing_entity())
 
 
-class EntitiesConditionalView(View):
+class JSBaseEntity(View, ReportDataControllerMixin):
+    """ represents Entity, no matter what state it is in.
+        It is implemented using ManageIQ JS API
+    """
+    def __init__(self, parent, name, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.name = name
+
+    @property
+    def is_checked(self):
+        return self._call_item_method('is_selected')
+
+    def check(self):
+        self._call_item_method('select')
+
+    def uncheck(self):
+        self._call_item_method('unselect')
+
+    def click(self):
+        self._call_item_method('click')
+
+    @property
+    def data(self):
+        """ every entity like QuadIcon/ListEntity etc displays some data,
+        which is different for each entity type.
+        This is property which should hold such data.
+        """
+        data = self._invoke_cmd('get_item', self.name)['item']
+        cells = data.pop('cells')
+        data.update(cells)
+        return {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+
+    def read(self):
+        return self.is_checked
+
+    def fill(self, values):
+        if values:
+            self.check()
+        else:
+            self.uncheck()
+
+    @property
+    def is_displayed(self):
+        return self._invoke_cmd('is_displayed', self.name)
+
+
+class EntitiesConditionalView(View, ReportDataControllerMixin):
     """ represents Entities view with regard to view selector state
 
     """
     elements = '//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/a'
     title = Text('//div[@id="main-content"]//h1')
     search = View.nested(Search)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
 
@@ -2077,8 +2253,18 @@ class EntitiesConditionalView(View):
 
         Returns: all current page entities
         """
-        br = self.browser
-        return [br.get_attribute('title', el) for el in br.elements(self.elements)]
+        current_version = VersionPick({
+            Version.lowest(): 'old',
+            '5.9': 'new',
+            'upstream': 'new'
+        }).pick(self.browser.product_version)
+
+        if current_version == 'old':
+            br = self.browser
+            return [br.get_attribute('title', el) for el in br.elements(self.elements)]
+        else:
+            entities = self._invoke_cmd('get_all_items')
+            return [entity['item']['cells']['Name'] for entity in entities]
 
     def get_all(self, surf_pages=False):
         """ obtains all entities like QuadIcon displayed by view
@@ -2090,11 +2276,11 @@ class EntitiesConditionalView(View):
         if not surf_pages:
             return [self.parent.entity_class(parent=self, name=name) for name in self.entity_names]
         else:
-            items = []
+            entities = []
             for _ in self.paginator.pages():
-                items.extend([self.parent.entity_class(parent=self, name=name)
-                              for name in self.entity_names])
-            return items
+                entities.extend([self.parent.entity_class(parent=self, name=name)
+                                for name in self.entity_names])
+            return entities
 
     def get_entities(self, by_name=None, surf_pages=False):
         """ obtains all matched entities like QuadIcon displayed by view
@@ -2104,13 +2290,13 @@ class EntitiesConditionalView(View):
 
         Returns: all matched entities (QuadIcon/etc.) displayed by view
         """
-        items = self.get_all(surf_pages)
-        remaining_items = []
-        for item in items:
-            if by_name and by_name in item.name:
-                remaining_items.append(item)
+        entities = self.get_all(surf_pages)
+        remaining_entities = []
+        for entity in entities:
+            if by_name and by_name in entity.name:
+                remaining_entities.append(entity)
             # todo: by_type and by_regexp will be implemented later if needed
-        return remaining_items
+        return remaining_entities
 
     def get_entity(self, by_name=None, surf_pages=False):
         """ obtains one entity matched to by_name
@@ -2121,12 +2307,12 @@ class EntitiesConditionalView(View):
 
         Returns: matched entities (QuadIcon/etc.)
         """
-        items = self.get_entities(by_name=by_name, surf_pages=surf_pages)
-        if len(items) == 0:
+        entities = self.get_entities(by_name=by_name, surf_pages=surf_pages)
+        if len(entities) == 0:
             raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
-        elif len(items) > 1:
+        elif len(entities) > 1:
             raise ManyEntitiesFound("Several entities with {name} were found".format(name=by_name))
-        return items[0]
+        return entities[0]
 
     def get_first_entity(self, by_name=None):
         """ obtains one entity matched to by_name and stops on that page
@@ -2137,10 +2323,10 @@ class EntitiesConditionalView(View):
         Returns: matched entity (QuadIcon/etc.)
         """
         for _ in self.paginator.pages():
-            found_items = [self.parent.entity_class(parent=self, name=name)
-                           for name in self.entity_names if by_name == name]
-            if found_items:
-                return found_items[0]
+            found_entities = [self.parent.entity_class(parent=self, name=name)
+                              for name in self.entity_names if by_name == name]
+            if found_entities:
+                return found_entities[0]
 
         raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
 
@@ -2151,7 +2337,10 @@ class BaseEntitiesView(View):
     """
     @property
     def entity_class(self):
-        return BaseEntity
+        return VersionPick({
+            Version.lowest(): NonJSBaseEntity,
+            '5.9': JSBaseEntity
+        }).pick(self.browser.product_version)
 
     entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
                                          ignore_bad_reference=True)
@@ -2205,13 +2394,23 @@ class ProviderListEntity(BaseListEntity):
     pass
 
 
-class ProviderEntity(BaseEntity):
+class NonJSProviderEntity(NonJSBaseEntity):
     """ Provider child of Proxy entity
 
     """
     quad_entity = ProviderQuadIconEntity
     list_entity = ProviderListEntity
     tile_entity = ProviderTileIconEntity
+
+
+def ProviderEntity():  # noqa
+    """ Temporary wrapper for Provider Entity during transition to JS based Entity
+
+    """
+    return VersionPick({
+        Version.lowest(): NonJSProviderEntity,
+        '5.9': JSBaseEntity,
+    })
 
 
 class DashboardWidgetsPicker(View):
