@@ -86,7 +86,7 @@ def configure_websocket():
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')
-def test_html5_vm_console(appliance, provider, vm_obj, configure_websocket,
+def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
         configure_vmware_console_for_test):
     """
     Test the HTML5 console support for a particular provider.
@@ -195,4 +195,12 @@ def test_html5_vm_console(appliance, provider, vm_obj, configure_websocket,
             assert command_result
     finally:
         vm_console.close_console_window()
+        # Logout is required because when running the Test back 2 back against RHV and VMware
+        # Providers, following issue would arise:
+        # If test for RHV is just finished, code would proceed to adding VMware Provider and once it
+        # is added, then it will navigate to Infrastructure -> Virtual Machines Page, it will see
+        # "Page Does not Exists" Error, because the browser will try to go to the
+        # VM details page of RHV VM which is already deleted
+        # at the End of test for RHV Provider Console and test would fail.
+        # Logging out would get rid of this issue.
         appliance.server.logout()
