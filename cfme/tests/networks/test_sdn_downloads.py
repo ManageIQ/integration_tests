@@ -58,7 +58,6 @@ def test_download_lists_base(filetype, objecttype):
 def test_download_pdf_summary(objecttype, provider):
     ''' Download the summary details of specific object '''
     instance = objecttype()
-    print str(len(instance.all()))
     if len(instance.all()) > 0:
         random_obj = instance.all()[0].name
         obj = instance.instantiate(random_obj)
