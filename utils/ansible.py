@@ -6,7 +6,6 @@ from subprocess import check_output, CalledProcessError, STDOUT
 
 from fauxfactory import gen_alphanumeric
 from utils import conf
-from utils.providers import get_crud
 from utils.providers import providers_data
 
 
@@ -90,6 +89,15 @@ def get_values_for_custom_attributes_test(provider):
     }
 
 
+def get_values_for_tags_test(provider):
+    return {
+        'resource': 'provider',
+        'resource_name': provider.name,
+        'miq_url': config_formatter(),
+        'miq_username': conf.credentials['default'].username,
+        'miq_password': conf.credentials['default'].password,
+    }
+
 def get_values_from_conf(provider, script_type):
     if script_type == 'providers':
         return get_values_for_providers_test(provider)
@@ -97,6 +105,8 @@ def get_values_from_conf(provider, script_type):
         return get_values_for_users_test(provider)
     if script_type == 'custom_attributes':
         return get_values_for_custom_attributes_test(provider)
+    if script_type == 'tags':
+        return get_values_for_tags_test(provider)
 
 
 # TODO Avoid reading files every time
@@ -126,6 +136,8 @@ def setup_basic_script(provider, script_type):
             doc[0]['tasks'][0]['manageiq_user'][key] = values_dict[key]
         elif script_type == 'custom_attributes':
             doc[0]['tasks'][0]['manageiq_custom_attributes'][key] = values_dict[key]
+        elif script_type == 'tags':
+            doc[0]['tasks'][0]['manageiq_tag_assignment'][key] = values_dict[key]
         with open(script_path, 'w') as f:
             f.write(dump(doc))
 
@@ -227,6 +239,30 @@ def setup_ansible_script(provider, script, script_type=None, values_to_update=No
                 doc[0]['tasks'][0]['manageiq_custom_attributes']['custom_attributes'][count] = key
                 count += 1
         write_yml(script, doc)
+
+    elif script == 'add_tags':
+        count = 0
+        while count < len(values_to_update):
+            for key in values_to_update:
+                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['category'] = \
+                    values_to_update[count]['category']
+                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['name'] = \
+                    values_to_update[count]['name']
+                count += 1
+            doc[0]['tasks'][0]['manageiq_tag_assignment']['state'] = 'present'
+            write_yml(script, doc)
+
+    elif script == 'remove_tags':
+        count = 0
+        while count < len(values_to_update):
+            for key in values_to_update:
+                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['category'] = \
+                    values_to_update[count]['category']
+                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['name'] = \
+                    values_to_update[count]['name']
+                count += 1
+            doc[0]['tasks'][0]['manageiq_tag_assignment']['state'] = 'absent'
+            write_yml(script, doc)
 
 
 def run_ansible(script):
