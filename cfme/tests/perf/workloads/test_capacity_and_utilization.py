@@ -4,8 +4,7 @@ from utils import conf
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
 from utils.providers import get_crud
-from utils.smem_memory_monitor import add_workload_quantifiers
-from utils.smem_memory_monitor import SmemMemoryMonitor
+from utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
 from utils.workloads import get_capacity_and_utilization_scenarios
 import time
 import pytest

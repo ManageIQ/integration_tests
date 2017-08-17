@@ -6,9 +6,7 @@ from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
 from utils.providers import get_crud
-from utils.smem_memory_monitor import add_workload_quantifiers
-from utils.smem_memory_monitor import SmemMemoryMonitor
-from utils.smem_memory_monitor import test_ts
+from utils.smem_memory_monitor import add_workload_quantifiers, test_ts, SmemMemoryMonitor
 from utils.wait import wait_for
 from utils.workloads import get_provisioning_scenarios
 from itertools import cycle

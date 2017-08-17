@@ -326,10 +326,10 @@ class SSHClient(paramiko.SSHClient):
         double quotes. Sandbox rolls back all changes made to the database if used.
         """
         if sandbox:
-            return self.run_command('cd /var/www/miq/vmdb; echo \"' + command + '\" '
-                '| bundle exec bin/rails c -s 2> /dev/null', timeout=timeout)
-        return self.run_command('cd /var/www/miq/vmdb; echo \"' + command + '\" '
-            '| bundle exec bin/rails c 2> /dev/null', timeout=timeout)
+            return self.run_command('cd /var/www/miq/vmdb; echo \"{}\" '
+                '| bundle exec bin/rails c -s 2> /dev/null'.format(command), timeout=timeout)
+        return self.run_command('cd /var/www/miq/vmdb; echo \"{}\" '
+            '| bundle exec bin/rails c 2> /dev/null'.format(command), timeout=timeout)
 
     def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
         logger.info("Running rake command %r", command)

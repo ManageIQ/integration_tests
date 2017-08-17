@@ -4,10 +4,8 @@ from utils.conf import cfme_performance
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
 from utils.providers import get_crud
-from utils.smem_memory_monitor import add_workload_quantifiers
-from utils.smem_memory_monitor import SmemMemoryMonitor
-from utils.ssh import SSHClient
-from utils.ssh import SSHTail
+from utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
+from utils.ssh import SSHClient, SSHTail
 from utils.workloads import get_capacity_and_utilization_replication_scenarios
 import time
 import pytest
