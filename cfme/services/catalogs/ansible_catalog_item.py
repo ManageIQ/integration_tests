@@ -1,8 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Checkbox, Table, Text, View
-from widgetastic.xpath import quote
 from widgetastic_manageiq import FileInput, SummaryForm, SummaryTable
 from widgetastic_patternfly import (
     BootstrapSelect as VanillaBootstrapSelect,
@@ -26,7 +24,6 @@ class BootstrapSelect(VanillaBootstrapSelect):
     BootstrapSelect widgets don't have `data-id` attribute, so we have to override ROOT locator.
 
     """
-
     ROOT = ParametrizedLocator('.//select[normalize-space(@name)={@id|quote}]/..')
 
 
@@ -46,8 +43,8 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         hosts = Input("provisioning_inventory")
         escalate_privilege = BootstrapSwitch("provisioning_become_enabled")
         verbosity = BootstrapSelect("provisioning_verbosity")
-        use_exisiting = Checkbox(name="213")
-        create_new = Checkbox(name="214")
+        use_exisiting = Checkbox(locator=".//label[normalize-space(.)='Use Existing']/input")
+        create_new = Checkbox(locator=".//label[normalize-space(.)='Create New']/input")
         provisioning_dialog_id = BootstrapSelect("provisioning_dialog_id")
         provisioning_dialog_name = Input(name="vm.provisioning_dialog_name")
 
@@ -76,7 +73,7 @@ class SelectCatalogItemTypeView(ServicesCatalogView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
+            self.in_explorer() and
             self.title.text == "Adding a new Service Catalog Item" and
             self.catalog_item_type.is_displayed
         )
@@ -108,18 +105,18 @@ class DetailsAnsibleCatalogItemView(ServicesCatalogView):
 
     @View.nested
     class provisioning(Tab):  # noqa
-        provisioning_info = SummaryForm("Provisioning Info")
+        info = SummaryForm("Provisioning Info")
         variables_and_default_values = Table(".//div[@id='provisioning']//table")
 
     @View.nested
     class retirement(Tab):  # noqa
-        retirement_info = SummaryForm("Retirement Info")
+        info = SummaryForm("Retirement Info")
         variables_and_default_values = Table(".//div[@id='retirement']//table")
 
     @property
     def is_displayed(self):
         return (
-            self.in_explorer and
+            self.in_explorer() and
             self.title.text == 'Service Catalog Item "{}"'.format(self.context["object"].name)
         )
 
@@ -132,7 +129,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
         self.name = name
         self.description = description
         self.display_in_catalog = display_in_catalog
-        self.catalog = catalog
+        self.catalog = getattr(catalog, "name", None)
         self.provisioning = provisioning
         self.retirement = retirement
 
@@ -187,7 +184,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
         else:
             view.cancel.click()
             msg = "Edit of Catalog Item {} was cancelled by the user".format(self.name)
-        view = self.create_view(DetailsAnsibleCatalogItemView)
+        view = self.create_view(DetailsAnsibleCatalogItemView, override=updates)
         assert view.is_displayed
         view.flash.assert_success_message(msg)
 
@@ -197,6 +194,15 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
         view = self.create_view(AllCatalogItemView)
         assert view.is_displayed
         view.flash.assert_success_message("The selected Catalog Item was deleted")
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, "Details")
+        except Exception:
+            return False
+        else:
+            return True
 
 
 @navigator.register(AnsiblePlaybookCatalogItem, "All")
@@ -218,7 +224,7 @@ class Details(CFMENavigateStep):
         tree = self.prerequisite_view.catalog_items.tree
         tree.click_path(
             "All Catalog Items",
-            self.obj.catalog.name,
+            getattr(self.obj.catalog, "name", "Unassigned"),
             self.obj.name
         )
 
