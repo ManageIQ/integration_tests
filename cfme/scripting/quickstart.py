@@ -38,20 +38,23 @@ REDHAT_PACKAGES_OLD = (
     " python-virtualenv gcc postgresql-devel libxml2-devel"
     " libxslt-devel zeromq3-devel libcurl-devel"
     " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python-devel tesseract")
+    " libffi-devel python-devel tesseract"
+    " freetype-devel")
 
 
 REDHAT_PACKAGES_F25 = (
     " python2-virtualenv gcc postgresql-devel libxml2-devel"
     " libxslt-devel zeromq3-devel libcurl-devel"
     " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python2-devel tesseract")
+    " libffi-devel python2-devel tesseract"
+    " freetype-devel")
 
 REDHAT_PACKAGES_F26 = (
     " python2-virtualenv gcc postgresql-devel libxml2-devel"
     " libxslt-devel zeromq-devel libcurl-devel"
     " redhat-rpm-config gcc-c++ openssl-devel"
-    " libffi-devel python2-devel tesseract")
+    " libffi-devel python2-devel tesseract"
+    " freetype-devel")
 
 
 if REDHAT_BASED:

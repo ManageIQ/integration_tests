@@ -1,0 +1,333 @@
+{
+	"mappings": {
+		"metadata": {
+			"properties": {
+				"generated-by-version": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+				"run_dirname": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+				"generated-by": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+				"TimeStamp": {
+					"type": "date",
+					"format": "yyyy-MM-dd HH:mm:ss"
+				},
+				"workload_type": {
+					"fielddata": true,
+					"type": "text",
+					"fields": {
+						"raw": {
+							"index": "not_analyzed",
+							"type": "text"
+						}
+					}
+				},
+				"cfme_version": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+				"version_info": {
+					"properties": {
+						"processes": {
+							"properties": {
+								"version": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								},
+								"package": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								}
+							}
+						},
+						"system": {
+							"properties": {
+								"kernel_name": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								},
+								"kernel_release": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								},
+								"operating_system": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								},
+								"kernel_version": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								}
+							}
+						},
+						"rpms": {
+							"properties": {
+								"version": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								},
+								"package": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								}
+							}
+						},
+						"gems": {
+							"properties": {
+								"version": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								},
+								"package": {
+									"type": "text",
+									"fields": {
+										"keyword": {
+											"ignore_above": 256,
+											"type": "keyword"
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"cfme_run_md5": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				}
+			}
+		},
+    "summary_data": {
+      "properties": {
+        "provider": {
+          "fielddata": true,
+          "type": "text",
+          "fields": {
+            "raw": {
+              "index": "not_analyzed",
+              "type": "text"
+            }
+          }
+        },
+        "TimeStamp": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss"
+        },
+        "process_worker_type": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "ignore_above": 256,
+              "type": "keyword"
+            }
+          }
+        },
+        "memory_data_type": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "ignore_above": 256,
+              "type": "keyword"
+            }
+          }
+        },
+        "cfme_version": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+        "workload_type": {
+					"fielddata": true,
+					"type": "text",
+					"fields": {
+						"raw": {
+							"index": "not_analyzed",
+							"type": "text"
+						}
+					}
+				},
+        "cfme_run_md5": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+        "end_of_test": {
+          "type": "float"
+        },
+        "PID": {
+          "type": "integer"
+        },
+        "start_of_test": {
+          "type": "float"
+        },
+        "scenario_name": {
+          "fielddata": true,
+          "type": "text",
+          "fields": {
+            "raw": {
+              "index": "not_analyzed",
+              "type": "text"
+            }
+          }
+        }
+      }
+    },
+		"total_memory": {
+    	"properties": {
+      	"Measurement": {
+        	"type": "text",
+          "fields": {
+          	"keyword": {
+            	"ignore_above": 256,
+              "type": "keyword"
+            }
+        	}
+        },
+        "start_of_test": {
+        	"type": "float"
+        },
+        "end_of_test": {
+        	"type": "float"
+        },
+				"TimeStamp": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss"
+        },
+				"scenario_name": {
+          "fielddata": true,
+          "type": "text",
+          "fields": {
+            "raw": {
+              "index": "not_analyzed",
+              "type": "text"
+            }
+          }
+        },
+				"cfme_run_md5": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+				"provider": {
+          "fielddata": true,
+          "type": "text",
+          "fields": {
+            "raw": {
+              "index": "not_analyzed",
+              "type": "text"
+            }
+          }
+        },
+				"cfme_version": {
+					"type": "text",
+					"fields": {
+						"keyword": {
+							"ignore_above": 256,
+							"type": "keyword"
+						}
+					}
+				},
+				"workload_type": {
+					"fielddata": true,
+					"type": "text",
+					"fields": {
+						"raw": {
+							"index": "not_analyzed",
+							"type": "text"
+						}
+					}
+				}
+    	}
+  	}
+	},
+	"template": "cfme-run.summary-*",
+	"settings": {}
+}

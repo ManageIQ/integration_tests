@@ -30,6 +30,7 @@ mock
 multimethods.py
 navmazing
 numpy
+matplotlib>=1.5.1
 paramiko
 parsedatetime
 pdfminer

@@ -239,6 +239,12 @@ def setup_only_one_provider(request, has_no_providers):
     return setup_one_or_skip(request)
 
 
+@pytest.fixture(scope="function")
+def setup_perf_provider(request, use_global_filters=True):
+    pf = ProviderFilter(required_tags=['perf'])
+    return setup_one_or_skip(request, filters=[pf], use_global_filters=use_global_filters)
+
+
 # When we want to setup a provider provided by testgen
 # ----------------------------------------------------
 @pytest.fixture(scope='function')

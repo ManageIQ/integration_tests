@@ -4,7 +4,6 @@
 """
 
 import argparse
-from urlparse import urlparse
 from utils.appliance import IPAppliance, get_or_create_current_appliance
 from utils.conf import cfme_data
 
