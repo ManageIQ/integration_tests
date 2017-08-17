@@ -1,7 +1,7 @@
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_manageiq import Accordion, ManageIQTree
-from widgetastic_patternfly import Dropdown
+from widgetastic_patternfly import Dropdown, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base import Server
@@ -42,6 +42,7 @@ class ServicesCatalogView(BaseLoggedInPage):
 
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
+    flash = FlashMessages(".//div[@id='flash_msg_div']/div")
 
 
 @navigator.register(Server)
