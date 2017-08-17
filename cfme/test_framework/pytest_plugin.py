@@ -13,6 +13,11 @@ def pytest_addoption(parser):
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
 
 
+def pytest_configure(config):
+    # silence our deprecationwarnings in pytest output
+    config.option.disable_warnings = True
+
+
 def pytest_collection_finish(session):
     from fixtures.pytest_store import store
     store.terminalreporter.write(
