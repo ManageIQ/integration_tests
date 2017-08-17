@@ -39,8 +39,8 @@ def appliance_preupdate(old_version, appliance):
     available_versions = set(sp.call_method('available_cfme_versions'))
     for a in available_versions:
         if a.startswith(old_version):
-            usable.append(a)
-    usable = sorted([Version(i) for i in usable], reverse=True)
+            usable.append(Version(a))
+    usable.sort(reverse=True)
     try:
         apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
             lease_time=180, version=str(usable[0]))
@@ -66,7 +66,7 @@ def appliance_preupdate(old_version, appliance):
 @pytest.mark.parametrize('old_version', versions)
 def test_update_yum(appliance_preupdate, appliance):
 
-    # Tests appliance update between versions
+    """Tests appliance update between versions"""
 
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
