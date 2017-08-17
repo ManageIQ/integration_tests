@@ -138,7 +138,7 @@ class StackAllView(StackView):
     """The main list page"""
     toolbar = View.nested(StackToolbar)
     entities = View.nested(StackEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
