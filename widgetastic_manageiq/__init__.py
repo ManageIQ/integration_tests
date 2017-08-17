@@ -2033,7 +2033,7 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     label = Text(locator=ParametrizedLocator('./tbody/tr/td/a[contains(@title, {name|quote})]'))
     checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
-    QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img]'
+    QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
 
     @property
     def is_checked(self):
@@ -2044,7 +2044,6 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
 
     def uncheck(self):
         return self.checkbox.fill(False)
-
 
     @property
     def data(self):
