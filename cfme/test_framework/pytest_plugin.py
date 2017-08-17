@@ -14,8 +14,9 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    # silence our deprecationwarnings in pytest output
-    config.option.disable_warnings = True
+    # disable pytest warnings plugin in order to keep our own warning logging
+    # we might want to remove this one
+    config.pluginmanager.set_blocked('warnings')
 
 
 def pytest_collection_finish(session):
