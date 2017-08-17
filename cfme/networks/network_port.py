@@ -18,7 +18,7 @@ class NetworkPortCollection(Navigatable):
 
     def all(self):
         view = navigate_to(NetworkPort, 'All')
-        list_networks_obj = view.entities.get_all(surf_pages=True)
+        list_networks_obj = view.entities.get_all()
         return [NetworkPort(name=p.name) for p in list_networks_obj]
 
 
