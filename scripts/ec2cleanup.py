@@ -5,6 +5,9 @@ from tabulate import tabulate
 
 from utils.path import log_path
 from utils.providers import list_provider_keys, get_mgmt
+from utils.log import logger, add_stdout_handler
+
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -32,19 +35,19 @@ def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
         for ip in provider_mgmt.get_all_disassociated_addresses():
             if ip.allocation_id:
                 if excluded_eips and ip.allocation_id in excluded_eips:
-                    print("  Excluding allocation ID: {}".format(ip.allocation_id))
+                    logger.info("  Excluding allocation ID: %r", ip.allocation_id)
                     continue
                 else:
                     ip_list.append([provider_name, ip.public_ip, ip.allocation_id])
                     provider_mgmt.release_vpc_address(alloc_id=ip.allocation_id)
             else:
                 if excluded_eips and ip.public_ip in excluded_eips:
-                    print("  Excluding IP: {}".format(ip.public_ip))
+                    logger.info("  Excluding IP: %r", ip.public_ip)
                     continue
                 else:
                     ip_list.append([provider_name, ip.public_ip, 'N/A'])
                     provider_mgmt.release_address(address=ip.public_ip)
-        print("  Released Addresses: {}".format(ip_list))
+        logger.info("  Released Addresses: %r", ip_list)
         with open(output, 'a+') as report:
             if ip_list:
                 # tabulate ip_list and write it
@@ -52,8 +55,9 @@ def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
                                       headers=['Provider Key', 'Public IP', 'Allocation ID'],
                                       tablefmt='orgtbl'))
 
-    except Exception as e:
-        print(e)
+    except Exception:
+        # TODO don't diaper this whole method
+        logger.exception('Exception in %r', delete_disassociated_addresses.__name__)
 
 
 def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
@@ -62,20 +66,21 @@ def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
     try:
         for volume in provider_mgmt.get_all_unattached_volumes():
             if excluded_volumes and volume.id in excluded_volumes:
-                print("  Excluding volume id: {}".format(volume.id))
+                logger.info("  Excluding volume id: %r", volume.id)
                 continue
             else:
                 volume_list.append([provider_name, volume.id])
                 volume.delete()
-        print("  Deleted Volumes: {}".format(volume_list))
+        logger.info("  Deleted Volumes: %r", volume_list)
         with open(output, 'a+') as report:
             if volume_list:
                 # tabulate volume_list and write it
                 report.write(tabulate(tabular_data=volume_list,
                                       headers=['Provider Key', 'Volume ID'],
                                       tablefmt='orgtbl'))
-    except Exception as e:
-        print(e)
+    except Exception:
+        # TODO don't diaper this whole method
+        logger.exception('Exception in %r', delete_unattached_volumes.__name__)
 
 
 def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
@@ -84,20 +89,21 @@ def delete_unused_loadbalancers(provider_mgmt, excluded_elbs, output):
     try:
         for elb in provider_mgmt.get_all_unused_loadbalancers():
             if excluded_elbs and elb.name in excluded_elbs:
-                print("  Excluding Elastic LoadBalancer id: {}".format(elb.name))
+                logger.info("  Excluding Elastic LoadBalancer id: %r", elb.name)
                 continue
             else:
                 elb_list.append([provider_name, elb.name])
                 provider_mgmt.delete_loadbalancer(loadbalancer=elb)
-        print("  Deleted Elastic LoadBalancers: {}".format(elb_list))
+        logger.info("  Deleted Elastic LoadBalancers: %r", elb_list)
         with open(output, 'a+') as report:
             if elb_list:
                 # tabulate volume_list and write it
                 report.write(tabulate(tabular_data=elb_list,
                                       headers=['Provider Key', 'ELB name'],
                                       tablefmt='orgtbl'))
-    except Exception as e:
-        print(e)
+    except Exception:
+        # TODO don't diaper this whole method
+        logger.exception('Exception in %r', delete_unused_loadbalancers.__name__)
 
 
 def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
@@ -106,20 +112,21 @@ def delete_unused_network_interfaces(provider_mgmt, excluded_enis, output):
     try:
         for eni in provider_mgmt.get_all_unused_network_interfaces():
             if excluded_enis and eni.id in excluded_enis:
-                print("  Excluding Elastic Network Interface id: {}".format(eni.id))
+                logger.info("  Excluding Elastic Network Interface id: %r", eni.id)
                 continue
             else:
                 eni_list.append([provider_name, eni.id])
                 eni.delete()
-        print("  Deleted Elastic Network Interfaces: {}".format(eni_list))
+        logger.info("  Deleted Elastic Network Interfaces: %r", eni_list)
         with open(output, 'a+') as report:
             if eni_list:
                 # tabulate volume_list and write it
                 report.write(tabulate(tabular_data=eni_list,
                                       headers=['Provider Key', 'ENI ID'],
                                       tablefmt='orgtbl'))
-    except Exception as e:
-        print(e)
+    except Exception:
+        # TODO don't diaper this whole method
+        logger.exception('Exception in %r', delete_unused_network_interfaces.__name__)
 
 
 def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, output):
@@ -128,20 +135,20 @@ def ec2cleanup(exclude_volumes, exclude_eips, exclude_elbs, exclude_enis, output
         report.write("\nDate: {}\n".format(datetime.now()))
     for provider_key in list_provider_keys('ec2'):
         provider_mgmt = get_mgmt(provider_key)
-        print("----- Provider: {} -----".format(provider_key))
-        print("Deleting volumes...")
+        logger.info("----- Provider: %r -----", provider_key)
+        logger.info("Deleting volumes...")
         delete_unattached_volumes(provider_mgmt=provider_mgmt,
                                   excluded_volumes=exclude_volumes,
                                   output=output)
-        print("Deleting Elastic LoadBalancers...")
+        logger.info("Deleting Elastic LoadBalancers...")
         delete_unused_loadbalancers(provider_mgmt=provider_mgmt,
-                                  excluded_elbs=exclude_elbs,
-                                  output=output)
-        print("Deleting Elastic Network Interfaces...")
-        delete_unused_network_interfaces(provider_mgmt=provider_mgmt,
-                                    excluded_enis=exclude_enis,
+                                    excluded_elbs=exclude_elbs,
                                     output=output)
-        print("Releasing addresses...")
+        logger.info("Deleting Elastic Network Interfaces...")
+        delete_unused_network_interfaces(provider_mgmt=provider_mgmt,
+                                         excluded_enis=exclude_enis,
+                                         output=output)
+        logger.info("Releasing addresses...")
         delete_disassociated_addresses(provider_mgmt=provider_mgmt,
                                        excluded_eips=exclude_eips,
                                        output=output)

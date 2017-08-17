@@ -477,6 +477,16 @@ def setup_for_worker(workername, loggers=('cfme', 'py.warnings')):
         log.debug("worker log started")  # directly reopens the file
 
 
+def add_stdout_handler(logger):
+    """Look for a stdout handler in the logger, add one if not present"""
+    for handle in logger.handlers:
+        if isinstance(handle, logging.StreamHandler) and 'stdout' in handle.stream.name:
+            break
+    else:
+        # Never found a stdout StreamHandler
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+
+
 _configure_warnings()
 
 # Register a custom excepthook to log unhandled exceptions

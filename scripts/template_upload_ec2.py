@@ -18,11 +18,14 @@ from wrapanapi.exceptions import ImageNotFoundError, MultipleImagesError
 
 from utils import trackerbot
 from utils.conf import cfme_data
+from utils.log import logger, add_stdout_handler
 from utils.providers import get_mgmt
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 lock = Lock()
+
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -64,7 +67,7 @@ def make_kwargs(args, **kwargs):
 
     for key, val in kwargs.iteritems():
         if val is None:
-            print("ERROR: please supply required parameter '{}'.".format(key))
+            logger.error("ERROR: please supply required parameter '%r'.", key)
             sys.exit(127)
 
     return kwargs
@@ -109,7 +112,7 @@ def download_image_file(image_url):
         if file_size == os.path.getsize(file_name):
             return file_name, file_path
         os.remove(file_name)
-    print("Downloading: {} Bytes: {}".format(file_name, file_size))
+    logger.info("Downloading: %r Bytes: %r", file_name, file_size)
     with open(file_name, 'wb') as image_file:
         # os.system('cls')
         file_size_dl = 0
@@ -132,12 +135,11 @@ def create_image(ec2, ami_name, bucket_name):
     :param bucket_name: name of the s3 bucket where the image is
     :return: none
     """
-    print('EC2:{}: Adding image {} from bucket {}...'
-          .format(ec2.api.region, ami_name, bucket_name))
+    logger.info('EC2:%r: Adding image %r from bucket %r...', ec2.api.region, ami_name, bucket_name)
     import_task_id = ec2.import_image(
         s3bucket=bucket_name, s3key=ami_name, description=ami_name)
 
-    print('EC2:{}: Monitoring image task id {}...'.format(ec2.api.region, import_task_id))
+    logger.info('EC2:%r: Monitoring image task id %r...', ec2.api.region, import_task_id)
     wait_for(ec2.get_image_id_if_import_completed,
              func_args=[import_task_id],
              fail_condition=False,
@@ -147,10 +149,10 @@ def create_image(ec2, ami_name, bucket_name):
 
     ami_id = ec2.get_image_id_if_import_completed(import_task_id)
 
-    print("EC2:{}: Copying image to set 'name' attribute {}...".format(ec2.api.region, ami_name))
+    logger.info("EC2:%r: Copying image to set 'name' attribute %r...", ec2.api.region, ami_name)
     ec2.copy_image(source_region=ec2.api.region.name, source_image=ami_id, image_id=ami_name)
 
-    print("EC2:{}: Removing original un-named imported image {}...".format(ec2.api.region, ami_id))
+    logger.info("EC2:%r: Removing original un-named imported image %r...", ec2.api.region, ami_id)
     ec2.deregister_image(image_id=ami_id)
 
 
@@ -163,18 +165,16 @@ def upload_to_s3(ec2, bucket_name, ami_name, file_path):
     :param file_path: string path to the local file to upload
     :return: none
     """
-    print("EC2:{}: Creating bucket {}...".format(ec2.api.region, bucket_name))
+    logger.info("EC2:%r: Creating bucket %r...", ec2.api.region, bucket_name)
     ec2.create_s3_bucket(bucket_name)  # Will return false if the bucket exists
 
     if ec2.object_exists_in_bucket(bucket_name=bucket_name, object_key=ami_name):
-        print('EC2:{}: Image {} in bucket {} already'
-              .format(ec2.api.region, ami_name, bucket_name))
+        logger.info('EC2:%r: Image %r in bucket %r already', ec2.api.region, ami_name, bucket_name)
         return
 
-    print('EC2:{}: uploading file {} to bucket {}...'
-          .format(ec2.api.region, file_path, bucket_name))
+    logger.info('EC2:%r: uploading file %r to bucket %r...', ec2.api.region, file_path, bucket_name)
     ec2.upload_file_to_s3_bucket(bucket_name, file_path=file_path, file_name=ami_name)
-    print('EC2:{}: File uploading done ...'.format(ec2.api.region.name))
+    logger.info('EC2:%r: File uploading done ...', ec2.api.region.name)
 
 
 def cleanup_s3(ec2, bucket_name, ami_name):
@@ -183,8 +183,8 @@ def cleanup_s3(ec2, bucket_name, ami_name):
     :param bucket_name: string name of bucket to create/upload to
     :param ami_name: string name of the file in the bucket
     """
-    print('EC2:{}: Removing object "{}" from bucket "{}"'
-          .format(ec2.api.region.name, ami_name, bucket_name))
+    logger.info('EC2:%r: Removing object "%r" from bucket "%r"',
+                ec2.api.region.name, ami_name, bucket_name)
     ec2.delete_objects_from_s3_bucket(bucket_name=bucket_name, object_keys=[ami_name])
 
 
@@ -209,9 +209,9 @@ def run(template_name, image_url, stream, **kwargs):
     ]
 
     if valid_providers:
-        print("Uploading to following enabled ec2 providers/regions: {}".format(valid_providers))
+        logger.info("Uploading to following enabled ec2 providers/regions: %r", valid_providers)
     else:
-        print('ERROR: No providers found with ec2 type and no disabled tag')
+        logger.info('ERROR: No providers found with ec2 type and no disabled tag')
         return
 
     # Look for template name on all ec2 regions, in case we can just copy it
@@ -221,12 +221,12 @@ def run(template_name, image_url, stream, **kwargs):
         try:
             ami_id = check_for_ami(ec2, ami_name)
         except MultipleImagesError:
-            print('ERROR: Already multiple images with name "{}"'.format(ami_name))
+            logger.info('ERROR: Already multiple images with name "%r"', ami_name)
             return
 
         if ami_id:
             # TODO roll this into a flag that copies it to regions without it
-            print('EC2 {}: AMI already exists with name "{}"'.format(prov_key, ami_name))
+            logger.info('EC2 %r: AMI already exists with name "%r"', prov_key, ami_name)
             continue
         else:
             # Need to upload on this region
@@ -234,13 +234,13 @@ def run(template_name, image_url, stream, **kwargs):
 
     # See if we actually need to upload
     if not prov_to_upload:
-        print('DONE: No templates to upload, all regions have the ami: "{}"'.format(ami_name))
+        logger.info('DONE: No templates to upload, all regions have the ami: "%r"', ami_name)
         return
 
     # download image
-    print("INFO: Starting image download {} ...".format(kwargs.get('image_url')))
+    logger.info("INFO: Starting image download %r ...", kwargs.get('image_url'))
     file_name, file_path = download_image_file(image_url)
-    print("INFO: Image downloaded {} ...".format(file_path))
+    logger.info("INFO: Image downloaded %r ...", file_path)
 
     # TODO: thread + copy within amazon for when we have multiple regions enabled
     # create ami's in the regions
@@ -248,7 +248,7 @@ def run(template_name, image_url, stream, **kwargs):
         region = mgmt_sys[prov_key].get('region', prov_key)
         bucket_name = mgmt_sys[prov_key].get('upload_bucket_name', 'cfme-template-upload')
 
-        print('EC2:{}:{} Starting S3 upload of {}'.format(prov_key, region, file_path))
+        logger.info('EC2:%r:%r Starting S3 upload of %r', prov_key, region, file_path)
         ec2 = get_mgmt(provider_key=prov_key)
         upload_to_s3(ec2=ec2, bucket_name=bucket_name, ami_name=ami_name, file_path=file_path)
 
@@ -257,10 +257,10 @@ def run(template_name, image_url, stream, **kwargs):
         cleanup_s3(ec2=ec2, bucket_name=bucket_name, ami_name=ami_name)
 
         # Track it
-        print("EC2:{}:{} Adding template {} to trackerbot for stream "
-              .format(prov_key, region, ami_name, stream))
+        logger.info("EC2:%r:%r Adding template %r to trackerbot for stream",
+                    prov_key, region, ami_name, stream)
         trackerbot.trackerbot_add_provider_template(stream, prov_key, ami_name)
-        print('EC2:{}:{} Template {} creation complete'.format(prov_key, region, ami_name))
+        logger.info('EC2:%r:%r Template %r creation complete', prov_key, region, ami_name)
 
 
 if __name__ == '__main__':

@@ -15,10 +15,12 @@ import os
 
 from utils import trackerbot
 from utils.providers import list_provider_keys
-from utils.conf import cfme_data
-from utils.conf import credentials
+from utils.conf import cfme_data, credentials
+from utils.log import logger, add_stdout_handler
 from utils.wait import wait_for
 from wrapanapi.scvmm import SCVMMSystem
+
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -37,19 +39,19 @@ def parse_cmd_line():
 
 def upload_vhd(client, url, library, vhd):
 
-    print("SCVMM: Downloading VHD file, then updating Library")
+    logger.info("SCVMM: Downloading VHD file, then updating Library")
 
     script = """
         (New-Object System.Net.WebClient).DownloadFile("{}", "{}{}")
     """.format(url, library, vhd)
-    print(str(script))
+    logger.info(str(script))
     client.run_script(script)
     client.update_scvmm_library()
 
 
 def make_template(client, host_fqdn, name, library, network, os_type, username_scvmm, cores, ram):
 
-    print("SCVMM: Adding HW Resource File and Template to Library")
+    logger.info("SCVMM: Adding HW Resource File and Template to Library")
 
     src_path = "{}{}.vhd".format(library, name)
     script = """
@@ -79,7 +81,7 @@ def make_template(client, host_fqdn, name, library, network, os_type, username_s
         src_path=src_path,
         host_fqdn=host_fqdn,
         os_type=os_type)
-    print(str(script))
+    logger.info(str(script))
     client.run_script(script)
 
 
@@ -88,13 +90,13 @@ def check_kwargs(**kwargs):
     # If we don't have an image url, we're done.
     url = kwargs.get('image_url')
     if url is None:
-        print("SCVMM - There is nothing we can do without an image url set.  See help.")
+        logger.info("SCVMM - There is nothing we can do without an image url set.  See help.")
         sys.exit(127)
 
     # If we don't have an provider, we're done.
     provider = kwargs.get('provider')
     if provider is None:
-        print("SCVMM - There is nothing we can do without a provider set.  See help.")
+        logger.info("SCVMM - There is nothing we can do without a provider set.  See help.")
         sys.exit(127)
 
 
@@ -172,12 +174,12 @@ def run(**kwargs):
         if new_template_name is None:
             new_template_name = os.path.basename(url)[:-4]
 
-        print("SCVMM:{} Make Template out of the VHD {}".format(provider, new_template_name))
+        logger.info("SCVMM:{} Make Template out of the VHD {}", provider, new_template_name)
 
         # use_library is either user input or we use the cfme_data value
         library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds', None))
 
-        print("SCVMM:{} Template Library: {}".format(provider, library))
+        logger.info("SCVMM:{} Template Library: {}", provider, library)
 
         #  The VHD name changed, match the template_name.
         new_vhd_name = new_template_name + '.vhd'
@@ -190,11 +192,10 @@ def run(**kwargs):
         # Uses PowerShell Get-SCVMTemplate to return a list of  templates and aborts if exists.
         if not client.does_template_exist(new_template_name):
             if kwargs.get('upload'):
-                print("SCVMM:{} Uploading VHD image to Library VHD folder.".format(provider))
+                logger.info("SCVMM:{} Uploading VHD image to Library VHD folder.", provider)
                 upload_vhd(client, url, library, new_vhd_name)
             if kwargs.get('template'):
-                print("SCVMM:{} Make Template out of the VHD {}".format(
-                    provider, new_template_name))
+                logger.info("SCVMM:{} Make Template out of the VHD {}", provider, new_template_name)
 
                 make_template(
                     client,
@@ -210,24 +211,22 @@ def run(**kwargs):
             try:
                 wait_for(lambda: client.does_template_exist(new_template_name),
                          fail_condition=False, delay=5)
-                print("SCVMM:{} template {} uploaded successfully".format(
-                    provider, new_template_name))
-                print("SCVMM:{} Adding template {} to trackerbot".format(
-                    provider, new_template_name))
+                logger.info("SCVMM:{} template {} uploaded success", provider, new_template_name)
+                logger.info("SCVMM:{} Add template {} to trackerbot", provider, new_template_name)
                 trackerbot.trackerbot_add_provider_template(kwargs.get('stream'),
-                                                            provider, kwargs.get('template_name'))
-            except Exception as e:
-                print(e)
-                print("SCVMM:{} Exception occured while verifying the template {} upload".
-                    format(provider, new_template_name))
+                                                            provider,
+                                                            kwargs.get('template_name'))
+            except Exception:
+                logger.exception("SCVMM:{} Exception verifying the template {}",
+                                 provider, new_template_name)
         else:
-            print("SCVMM: A Template with that name already exists in the SCVMMLibrary")
+            logger.info("SCVMM: A Template with that name already exists in the SCVMMLibrary")
 
 
 if __name__ == "__main__":
-    print("Start SCVMM Template upload")
+    logger.info("Start SCVMM Template upload")
     args = parse_cmd_line()
-    print("Args: {}".format(str(args)))
+    logger.info("Args: {}", str(args))
     kwargs = cfme_data['template_upload']['template_upload_scvmm']
 
     final_kwargs = make_kwargs(args, **kwargs)

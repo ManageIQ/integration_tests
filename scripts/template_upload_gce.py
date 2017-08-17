@@ -14,15 +14,16 @@ import re
 import sys
 from os.path import join
 from threading import Lock, Thread
-from datetime import datetime
 
 from utils import trackerbot
-from utils.conf import cfme_data
-from utils.conf import credentials
+from utils.conf import cfme_data, credentials
+from utils.log import logger, add_stdout_handler
 from utils.ssh import SSHClient
 from utils.providers import list_provider_keys
 
 lock = Lock()
+
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -68,7 +69,7 @@ def make_kwargs(args, **kwargs):
 
     for key, val in kwargs.iteritems():
         if val is None:
-            print("ERROR: please supply required parameter '{}'.".format(key))
+            logger.error("ERROR: please supply required parameter '{}'.".format(key))
             sys.exit(127)
 
     return kwargs
@@ -83,13 +84,6 @@ def make_ssh_client(ssh_host, ssh_user, ssh_pass):
     return SSHClient(**connect_kwargs)
 
 
-def log_detail(message, provider=None):
-    if provider:
-        print("{} GCE: {}: {}".format(datetime.utcnow(), provider, message))
-    else:
-        print("{} INFO: {}".format(datetime.utcnow(), message))
-
-
 def download_image_file(image_url, ssh_client):
     """
     Download the file to the cli-tool-client and return the file path + file name
@@ -102,14 +96,14 @@ def download_image_file(image_url, ssh_client):
     target_dir = '/var/tmp/templates/'
     file_name = image_url.split('/')[-1]
     # check if file exists
-    print('INFO: Checking if file exists on cli-tool-client...')
+    logger.info('INFO: Checking if file exists on cli-tool-client...')
     result = ssh_client.run_command('ls -1 {}'.format(join(target_dir, file_name)))
     if result.success:
-        print('INFO: File exists on cli-tool-client, skipping download...')
+        logger.info('INFO: File exists on cli-tool-client, skipping download...')
         return file_name, target_dir
 
     # target directory setup
-    print('INFO: Prepping cli-tool-client machine for download...')
+    logger.info('INFO: Prepping cli-tool-client machine for download...')
     assert ssh_client.run_command('mkdir -p {}'.format(target_dir))
     # This should keep the downloads directory clean
     assert ssh_client.run_command('rm -f {}'.format(join(target_dir, '*.gz')))
@@ -117,9 +111,9 @@ def download_image_file(image_url, ssh_client):
     # get the file
     download_cmd = 'cd {}; ' \
                    'curl -O {}'.format(target_dir, image_url)
-    print('INFO: Downloading file to cli-tool-client with command: {}'.format(download_cmd))
+    logger.info('INFO: Downloading file to cli-tool-client with command: {}'.format(download_cmd))
     assert ssh_client.run_command(download_cmd)
-    print('INFO: Download finished...')
+    logger.info('INFO: Download finished...')
 
     return file_name, target_dir
 
@@ -142,59 +136,60 @@ def upload_template(provider,
     bucket = bucket_name or cfme_data['template_upload']['template_upload_gce']['bucket_name']
     try:
         # IMAGE CHECK
-        log_detail('Checking if template {} present...'.format(template_name), provider)
+        logger.info('GCE: %r: Checking if template %r present', provider, template_name)
         result = ssh_client.run_command('gcloud compute images list {}'.format(template_name))
         if 'Listed 0 items' not in result.output:
-            log_detail('Image {} already present in GCE, stopping upload'.format(template_name),
-                       provider)
+            logger.info('GCE: %r: Image %r already present in GCE, stopping upload',
+                        provider, template_name)
             return True
-        log_detail('Image {} NOT present, continuing upload'.format(template_name), provider)
+        logger.info('GCE: %r: Image %r NOT present, continuing upload', provider, template_name)
 
         # MAKE BUCKET
-        log_detail('Creating bucket {}...'.format(bucket))
+        logger.info('GCE: %r: Creating bucket %r...', provider, bucket)
         # gsutil has RC 1 and a API 409 in stdout if bucket exists
         result = ssh_client.run_command('gsutil mb gs://{}'.format(bucket))
         assert result or 'already exists' in result
 
         # BUCKET CHECK
-        log_detail('Checking if file on bucket already...')
+        logger.info('GCE: %r: Checking if file on bucket already', provider)
         result = ssh_client.run_command('gsutil ls gs://{}'.format(join(bucket, file_name)))
         if result.failed:
             # FILE UPLOAD
-            log_detail('Uploading to bucket...')
+            logger.info('GCE: %r: Uploading to bucket...')
             result = ssh_client.run_command('gsutil cp {} gs://{}'
                                             .format(join(file_path, file_name),
                                                     bucket))
             assert result.success
-            log_detail('File uploading done ...')
+            logger.info('GCE: %r: File uploading done ...')
         else:
-            log_detail('File already on bucket...')
+            logger.info('GCE: %r: File already on bucket...')
 
         # IMAGE CREATION
-        log_detail('Creating template {}...'.format(template_name), provider)
+        logger.info('GCE: %r: Creating template %r', provider, template_name)
         template_name = check_template_name(template_name)
         result = ssh_client.run_command('gcloud compute images create {} --source-uri gs://{}'
                                         .format(template_name,
                                                 join(bucket, file_name)))
         assert result.success
-        log_detail('Successfully added template {} from bucket {}'.format(template_name, bucket),
-                   provider)
+        logger.info('GCE: %r: Successfully added template %r from bucket %r',
+                    provider, template_name, bucket)
 
-        log_detail('Adding template {} to trackerbot for stream {}'
-                   .format(template_name, stream), provider)
+        logger.info('GCE: %r: Adding template %r to trackerbot for stream %r',
+                    provider, template_name, stream)
         trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
 
         # DELETE FILE FROM BUCKET
-        log_detail('Cleaning up, removing {} from bucket {}...'.format(file_name, bucket), provider)
+        logger.info('GCE: %r: Cleaning up, removing %r from bucket %r',
+                    provider, file_name, bucket)
         result = ssh_client.run_command('gsutil rm gs://{}'.format(join(bucket, file_name)))
         assert result.success
-    except Exception as e:
-        print(e)
-        # exception often empty, try to include last ssh command output
-        log_detail('Error occurred in upload_template: \n {}'.format(result.output), provider)
+    except Exception:
+        # Exception often empty, include last code's stdout
+        logger.exception('GCE: %r: Exception occurred in upload_template, last ssh stdout: \n %r',
+                         provider, str(result))
         return False
     finally:
-        log_detail('End template {} upload...'.format(template_name), provider)
+        logger.info('GCE: %r: End template %r upload...', provider, template_name)
         return True
 
 
