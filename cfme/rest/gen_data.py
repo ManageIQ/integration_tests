@@ -418,6 +418,18 @@ def roles(request, rest_api, num=1):
     return roles
 
 
+def copy_role(rest_api, orig_name, new_name=None):
+    orig_role = rest_api.collections.roles.get(name=orig_name)
+    orig_features = orig_role._data['features']
+    orig_settings = orig_role._data['settings']
+    new_role = rest_api.collections.roles.action.create(
+        name=new_name or 'EvmRole-{}'.format(fauxfactory.gen_alphanumeric()),
+        features=orig_features,
+        settings=orig_settings
+    )
+    return new_role[0]
+
+
 def tenants(request, rest_api, num=1):
     parent = rest_api.collections.tenants.get(name='My Company')
     data = []

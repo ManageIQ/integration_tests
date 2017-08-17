@@ -5,16 +5,23 @@ import re
 import fauxfactory
 import pytest
 
+from manageiq_client.api import ManageIQClient as MiqApi
+
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from cfme.rest.gen_data import blueprints as _blueprints
-from cfme.rest.gen_data import dialog as _dialog
-from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
-from cfme.rest.gen_data import service_catalog_obj as _service_catalog_obj
-from cfme.rest.gen_data import service_catalogs as _service_catalogs
-from cfme.rest.gen_data import service_data as _service_data
-from cfme.rest.gen_data import service_templates as _service_templates
-from cfme.rest.gen_data import service_templates_ui
+from cfme.rest.gen_data import (
+    _creating_skeleton,
+    blueprints as _blueprints,
+    copy_role,
+    dialog as _dialog,
+    groups,
+    orchestration_templates as _orchestration_templates,
+    service_catalog_obj as _service_catalog_obj,
+    service_catalogs as _service_catalogs,
+    service_data as _service_data,
+    service_templates as _service_templates,
+    service_templates_ui,
+)
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from fixtures.provider import setup_one_or_skip
 from utils import error, version
@@ -866,6 +873,81 @@ class TestServiceCatalogsRESTAPI(object):
         with error.expected('ActiveRecord::RecordNotFound'):
             appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
         assert_response(appliance, http_status=404)
+
+
+class TestServiceRequests(object):
+    @pytest.yield_fixture(scope='class')
+    def new_role(self, appliance):
+        role = copy_role(appliance.rest_api, 'EvmRole-user_self_service')
+        # allow role to access all Services, VMs, and Templates
+        role.action.edit(settings=None)
+        yield role
+        role.action.delete()
+
+    @pytest.fixture(scope='class')
+    def new_group(self, request, appliance, new_role):
+        tenant = appliance.rest_api.collections.tenants.get(name='My Company')
+        return groups(request, appliance.rest_api, new_role, tenant, num=1)
+
+    @pytest.fixture(scope='class')
+    def user_auth(self, request, appliance, new_group):
+        password = fauxfactory.gen_alphanumeric()
+        data = [{
+            "userid": "user_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
+            "password": password,
+            "group": {"id": new_group.id}
+        }]
+
+        user = _creating_skeleton(request, appliance.rest_api, "users", data)
+        user = user[0]
+        return user.userid, password
+
+    @pytest.fixture(scope='class')
+    def user_api(self, appliance, user_auth):
+        entry_point = appliance.rest_api._entry_point
+        return MiqApi(entry_point, user_auth, verify_ssl=False)
+
+    def test_user_item_order(self, appliance, request, user_api):
+        """Tests ordering a catalog item using the REST API as a non-admin user.
+
+        Metadata:
+            test_flag: rest
+        """
+        new_template = _service_templates(request, appliance.rest_api, num=1)
+        new_template = new_template[0]
+        catalog_id = new_template.service_template_catalog_id
+        template_id = new_template.id
+
+        catalog = user_api.get_entity('service_catalogs', catalog_id)
+        templates_collection = catalog.service_templates
+        template_href = '{}/service_templates/{}'.format(catalog.href, template_id)
+
+        # The "order" action doesn't return resource in the "service_requests" collection
+        # using workaround with `response.json()`
+        templates_collection.action.order(href=template_href)
+        assert user_api.response
+        result = user_api.response.json()
+        result = result['results'][0]
+
+        service_request = appliance.rest_api.get_entity('service_requests', result['id'])
+
+        def _order_finished():
+            service_request.reload()
+            return (
+                service_request.status.lower() == 'ok' and
+                service_request.request_state.lower() == 'finished')
+
+        wait_for(_order_finished, num_sec=180, delay=10)
+
+        service_name = re.search(
+            r'\[({}[0-9-]*)\] '.format(new_template.name), service_request.message).group(1)
+        # this fails if the service with the `service_name` doesn't exist
+        new_service = appliance.rest_api.collections.services.get(name=service_name)
+
+        @request.addfinalizer
+        def _finished():
+            new_service.action.delete()
 
 
 class TestBlueprintsRESTAPI(object):
