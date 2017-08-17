@@ -3,7 +3,7 @@ from utils.conf import cfme_performance
 
 
 def get_capacity_and_utilization_replication_scenarios():
-    if 'test_cap_and_util_rep' in cfme_performance.tests.workloads:
+    if 'test_cap_and_util_rep' in cfme_performance.get('tests', {}).get('workloads', []):
         if (cfme_performance['tests']['workloads']['test_cap_and_util_rep']['scenarios'] and
                 len(
                 cfme_performance['tests']['workloads']['test_cap_and_util_rep']['scenarios']) > 0):
@@ -15,7 +15,7 @@ def get_capacity_and_utilization_replication_scenarios():
 
 
 def get_capacity_and_utilization_scenarios():
-    if 'test_cap_and_util' in cfme_performance.tests.workloads:
+    if 'test_cap_and_util' in cfme_performance.get('tests', {}).get('workloads', []):
         if (cfme_performance['tests']['workloads']['test_cap_and_util']['scenarios'] and
                 len(cfme_performance['tests']['workloads']['test_cap_and_util']['scenarios']) > 0):
             return cfme_performance['tests']['workloads']['test_cap_and_util']['scenarios']
@@ -23,7 +23,7 @@ def get_capacity_and_utilization_scenarios():
 
 
 def get_idle_scenarios():
-    if 'test_idle' in cfme_performance.tests.workloads:
+    if 'test_idle' in cfme_performance.get('tests', {}).get('workloads', []):
         if(cfme_performance['tests']['workloads']['test_idle']['scenarios'] and
                 len(cfme_performance['tests']['workloads']['test_idle']['scenarios']) > 0):
             return cfme_performance['tests']['workloads']['test_idle']['scenarios']
@@ -31,7 +31,7 @@ def get_idle_scenarios():
 
 
 def get_provisioning_scenarios():
-    if 'test_provisioning' in cfme_performance.tests.workloads:
+    if 'test_provisioning' in cfme_performance.get('tests', {}).get('workloads', []):
         if(cfme_performance['tests']['workloads']['test_provisioning']['scenarios'] and
                 len(cfme_performance['tests']['workloads']['test_provisioning']['scenarios']) > 0):
             return cfme_performance['tests']['workloads']['test_provisioning']['scenarios']
@@ -39,7 +39,7 @@ def get_provisioning_scenarios():
 
 
 def get_refresh_providers_scenarios():
-    if 'test_refresh_providers' in cfme_performance.tests.workloads:
+    if 'test_refresh_providers' in cfme_performance.get('tests', {}).get('workloads', []):
         if (cfme_performance['tests']['workloads']['test_refresh_providers']['scenarios'] and
             len(
                 cfme_performance['tests']['workloads']['test_refresh_providers']['scenarios']) > 0):
@@ -48,7 +48,7 @@ def get_refresh_providers_scenarios():
 
 
 def get_refresh_vms_scenarios():
-    if 'test_refresh_vms' in cfme_performance.tests.workloads:
+    if 'test_refresh_vms' in cfme_performance.get('tests', {}).get('workloads', []):
         if (cfme_performance['tests']['workloads']['test_refresh_vms']['scenarios'] and
                 len(cfme_performance['tests']['workloads']['test_refresh_vms']['scenarios']) > 0):
             return cfme_performance['tests']['workloads']['test_refresh_vms']['scenarios']
@@ -56,7 +56,7 @@ def get_refresh_vms_scenarios():
 
 
 def get_smartstate_analysis_scenarios():
-    if 'test_smartstate' in cfme_performance.tests.workloads:
+    if 'test_smartstate' in cfme_performance.get('tests', {}).get('workloads', []):
         if(cfme_performance['tests']['workloads']['test_smartstate']['scenarios'] and
                 len(cfme_performance['tests']['workloads']['test_smartstate']['scenarios']) > 0):
             return cfme_performance['tests']['workloads']['test_smartstate']['scenarios']
@@ -64,7 +64,7 @@ def get_smartstate_analysis_scenarios():
 
 
 def get_ui_single_page_scenarios():
-    if 'test_ui_single_page' in cfme_performance.tests.ui_workloads:
+    if 'test_ui_single_page' in cfme_performance.get('tests', {}).get('ui_workloads', []):
         if(cfme_performance['tests']['ui_workloads']['test_ui_single_page']['scenarios'] and
            len(cfme_performance['tests']['ui_workloads']['test_ui_single_page']['scenarios']) > 0):
             return cfme_performance['tests']['ui_workloads']['test_ui_single_page']['scenarios']
