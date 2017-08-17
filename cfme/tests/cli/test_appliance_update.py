@@ -45,8 +45,7 @@ def appliance_preupdate(old_version, appliance):
         apps, pool_id = sp.provision_appliances(count=1, preconfigured=True,
             lease_time=180, version=str(usable[0]))
     except Exception as e:
-        logger.warning("Couldn't provision appliance with following error:")
-        logger.warning("{}".format(e))
+        logger.exception(e)
         raise SproutException('No provision available')
 
     apps[0].db.extend_partition()
