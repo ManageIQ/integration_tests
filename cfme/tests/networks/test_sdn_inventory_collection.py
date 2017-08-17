@@ -26,5 +26,5 @@ def test_sdn_inventory_subnets(provider):
         net_name = view.contents.properties.get_text_of('Name')
         assert net_name == network_name
 
-    provider.delete()
+    provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()

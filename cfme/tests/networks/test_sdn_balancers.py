@@ -39,5 +39,5 @@ def test_balances_detail(provider):
         check = name.health_checks
         assert check is not None
 
-    provider.delete()
+    provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()

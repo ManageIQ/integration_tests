@@ -33,5 +33,5 @@ def test_provider_topology_navigation(provider):
     network_provider = NetworkProvider(name=net_prov_name)
     navigate_to(network_provider, "TopologyFromDetails")
 
-    provider.delete()
+    provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()

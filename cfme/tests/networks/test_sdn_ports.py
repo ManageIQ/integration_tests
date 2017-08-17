@@ -41,5 +41,5 @@ def test_port_net_prov(provider):
             continue
         assert prov_name in providers
 
-    provider.delete()
+    provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()
