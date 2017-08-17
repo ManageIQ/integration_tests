@@ -1176,13 +1176,9 @@ class Role(Updateable, Pretty, Navigatable):
                     not having appropriate permissions OR delete is not allowed
                     for currently selected role
         """
-        flash_blocked_msg = VersionPick({
-            "5.7": ("Role \"{}\": Error during delete: Cannot delete record "
-                "because of dependent entitlements")}).pick(
-                    self.appliance.version).format(self.name)
-        flash_success_msg = VersionPick({
-            "5.7": ('Role "{}": Delete successful')}).pick(
-                self.appliance.version).format(self.name)
+        flash_blocked_msg = ("Role \"{}\": Error during delete: Cannot delete record "
+                "because of dependent entitlements".format(self.name))
+        flash_success_msg = 'Role "{}": Delete successful'.format(self.name)
         delete_role_txt = 'Delete this Role'
 
         if all_selection:
