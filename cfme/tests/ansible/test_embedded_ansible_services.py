@@ -35,6 +35,7 @@ def ansible_repository(wait_for_ansible):
     repository.delete()
 
 
+@pytest.mark.tier(1)
 def test_service_ansible_playbook_crud(ansible_repository):
     cat_item = AnsiblePlaybookCatalogItem(
         fauxfactory.gen_alphanumeric(),

@@ -21,7 +21,8 @@ from . import ServicesCatalogView
 class BootstrapSelect(VanillaBootstrapSelect):
     """BootstrapSelect widget for Ansible Playbook Catalog Item form.
 
-    BootstrapSelect widgets don't have `data-id` attribute, so we have to override ROOT locator.
+    BootstrapSelect widgets don't have `data-id` attribute in this form, so we have to override ROOT
+    locator.
 
     """
     ROOT = ParametrizedLocator('.//select[normalize-space(@name)={@id|quote}]/..')
@@ -122,8 +123,35 @@ class DetailsAnsibleCatalogItemView(ServicesCatalogView):
 
 
 class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
+    """Represents Ansible Playbook catalog item.
 
-    def __init__(self, name, description, display_in_catalog=None, catalog=None, provisioning=None,
+    Example:
+
+        >>> from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
+        >>> catalog_item = AnsiblePlaybookCatalogItem(
+        ...     "some_catalog_name",
+        ...     "some_description",
+        ...     provisioning={
+        ...         "repository": "Some repository",
+        ...         "playbook": "some_playbook.yml",
+        ...         "machine_credential": "CFME Default Credential",
+        ...         "create_new": True,
+        ...         "provisioning_dialog_name": "some_dialog"
+        ...     }
+        ... )
+        >>> catalog_item.create()
+        >>> catalog_item.delete()
+
+    Attributes:
+        name (str): catalog item name
+        description (str): catalog item description
+        provisioning (dict): provisioning data
+        catalog (py:class:`cfme.services.catalogs.catalog.Catalog`): catalog object
+        display_in_catalog (bool): whether this playbook displayed in catalog
+        retirement (dict): retirement data
+    """
+
+    def __init__(self, name, description, provisioning, display_in_catalog=None, catalog=None,
             retirement=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
@@ -144,6 +172,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
         view.provisioning.fill({
             "repository": self.provisioning["repository"]
         })
+        # After filling "repository" we have to wait for a while until other widgets appeared
         wait_for(lambda: view.provisioning.playbook.is_displayed, delay=0.5, num_sec=2)
         view.provisioning.fill({
             "playbook": self.provisioning["playbook"],
@@ -180,7 +209,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
         changed = view.fill(updates)
         if changed:
             view.save.click()
-            msg = "Catalog Item {} was saved".format(updates.get("name") or self.name)
+            msg = "Catalog Item {} was saved".format(updates.get("name", self.name))
         else:
             view.cancel.click()
             msg = "Edit of Catalog Item {} was cancelled by the user".format(self.name)
@@ -188,12 +217,16 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
         assert view.is_displayed
         view.flash.assert_success_message(msg)
 
-    def delete(self):
+    def delete(self, cancel=False):
         view = navigate_to(self, "Details")
-        view.configuration.item_select("Remove Catalog Item")
-        view = self.create_view(AllCatalogItemView)
-        assert view.is_displayed
-        view.flash.assert_success_message("The selected Catalog Item was deleted")
+        view.configuration.item_select("Remove Catalog Item", handle_alert=not cancel)
+        if cancel:
+            assert view.is_displayed
+            view.flash.assert_no_error()
+        else:
+            view = self.create_view(AllCatalogItemView)
+            assert view.is_displayed
+            view.flash.assert_success_message("The selected Catalog Item was deleted")
 
     @property
     def exists(self):

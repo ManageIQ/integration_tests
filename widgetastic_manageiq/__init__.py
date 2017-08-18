@@ -444,10 +444,10 @@ class SummaryFormItem(Widget):
 
 
 class SummaryForm(Widget):
-    """The UI item that shows the values for objects that are NOT VMs, Providers and such ones.
+    """Represents a group of SummaryFormItem widgets.
 
     Args:
-        group_title (str): Description
+        group_title (str): title of a summary form, e.g. "Basic Information"
     """
 
     ROOT = ParametrizedLocator(".//h3[normalize-space(.)={@group_title|quote}]")
