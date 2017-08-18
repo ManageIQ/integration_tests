@@ -127,22 +127,23 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
 
     Example:
 
-        >>> from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
-        >>> catalog_item = AnsiblePlaybookCatalogItem(
-        ...     "some_catalog_name",
-        ...     "some_description",
-        ...     provisioning={
-        ...         "repository": "Some repository",
-        ...         "playbook": "some_playbook.yml",
-        ...         "machine_credential": "CFME Default Credential",
-        ...         "create_new": True,
-        ...         "provisioning_dialog_name": "some_dialog"
-        ...     }
-        ... )
-        >>> catalog_item.create()
-        >>> catalog_item.delete()
+        .. code-block:: python
+            from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
+            catalog_item = AnsiblePlaybookCatalogItem(
+                "some_catalog_name",
+                "some_description",
+                provisioning={
+                    "repository": "Some repository",
+                    "playbook": "some_playbook.yml",
+                    "machine_credential": "CFME Default Credential",
+                    "create_new": True,
+                    "provisioning_dialog_name": "some_dialog"
+                }
+            )
+            catalog_item.create()
+            catalog_item.delete()
 
-    Attributes:
+    Args:
         name (str): catalog item name
         description (str): catalog item description
         provisioning (dict): provisioning data
@@ -241,10 +242,9 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
 @navigator.register(AnsiblePlaybookCatalogItem, "All")
 class All(CFMENavigateStep):
     VIEW = AllCatalogItemView
-    prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
+    prerequisite = NavigateToAttribute("appliance.server", "ServicesCatalog")
 
     def step(self):
-        self.prerequisite_view.navigation.select("Services", "Catalogs")
         self.view.catalog_items.tree.click_path("All Catalog Items")
 
 
@@ -262,15 +262,22 @@ class Details(CFMENavigateStep):
         )
 
 
-@navigator.register(AnsiblePlaybookCatalogItem, "Add")
-class Add(CFMENavigateStep):
-    VIEW = AddAnsibleCatalogItemView
+@navigator.register(AnsiblePlaybookCatalogItem, "PickItemType")
+class PickItemType(CFMENavigateStep):
+    VIEW = SelectCatalogItemTypeView
     prerequisite = NavigateToSibling("All")
 
     def step(self):
         self.prerequisite_view.configuration.item_select("Add a New Catalog Item")
-        view = self.prerequisite_view.browser.create_view(SelectCatalogItemTypeView)
-        view.catalog_item_type.select_by_visible_text("Ansible Playbook")
+
+
+@navigator.register(AnsiblePlaybookCatalogItem, "Add")
+class Add(CFMENavigateStep):
+    VIEW = AddAnsibleCatalogItemView
+    prerequisite = NavigateToSibling("PickItemType")
+
+    def step(self):
+        self.prerequisite_view.catalog_item_type.select_by_visible_text("Ansible Playbook")
 
 
 @navigator.register(AnsiblePlaybookCatalogItem, "Edit")
