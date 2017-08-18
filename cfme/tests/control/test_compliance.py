@@ -88,7 +88,7 @@ def configure_fleecing(appliance, has_no_providers_modscope, provider, setup_pro
 @pytest.yield_fixture(scope="module")
 def compliance_vm(configure_fleecing, provider, full_template_modscope):
     name = "{}-{}".format("test-compliance", fauxfactory.gen_alpha(4))
-    vm = VM.factory(name, provider, template_name=full_template_modscope["name"])
+    vm = VM.factory(name, provider, template_name=full_template_modscope)
     vm.create_on_provider(allow_skip="default")
     provider.mgmt.start_vm(vm.name)
     provider.mgmt.wait_vm_running(vm.name)
