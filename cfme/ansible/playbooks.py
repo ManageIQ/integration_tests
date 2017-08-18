@@ -97,23 +97,33 @@ class PlaybooksView(PlaybookBaseView):
         )
 
 
-class PlaybooksCollection(object):
+class PlaybooksCollection(Navigatable):
+    """Collection object for the :py:class:`Playbook`."""
+
+    def __init__(self, parent_repository):
+        self.parent = parent_repository
+        Navigatable.__init__(self, appliance=parent_repository.appliance)
+
+    def instantiate(self, name, repository):
+        return Playbook(name, repository, self)
 
     def all(self):
         view = navigate_to(Server, "AnsiblePlaybooks")
         playbooks = []
-        for entity in view.entities.get_all():
-            playbooks.append(
-                Playbook(entity.data["Name"], entity.data["Repository"])
-            )
+        for entity in view.entities.get_all(surf_pages=True):
+            if entity.data["Repository"] == self.parent.name:
+                playbooks.append(
+                    self.instantiate(entity.data["Name"], entity.data["Repository"])
+                )
         return playbooks
 
 
 class Playbook(Navigatable):
     """A class representing one Embedded Ansible playbook in the UI."""
 
-    def __init__(self, name, repository, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, name, repository, collection):
+        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection
         self.name = name
         self.repository = repository
 

@@ -5,7 +5,6 @@ import pytest
 from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
 from cfme.ansible.credentials import CredentialsCollection
-from cfme.ansible.playbooks import PlaybooksCollection
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.version import current_version
@@ -131,13 +130,12 @@ def test_embed_tower_playbooks_list_changed(wait_for_ansible):
     "Tests if playbooks list changed after playbooks repo removing"
     playbooks = []
     repositories_collection = RepositoryCollection()
-    playbooks_collection = PlaybooksCollection()
     for repo_url in REPOSITORIES:
         repository = repositories_collection.create(
             fauxfactory.gen_alpha(),
             repo_url,
             description=fauxfactory.gen_alpha()
         )
-        playbooks.append(playbooks_collection.all())
+        playbooks.append(repository.playbooks.all())
         repository.delete()
     assert not set(playbooks[1]).issuperset(set(playbooks[0]))
