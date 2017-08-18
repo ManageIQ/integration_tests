@@ -100,7 +100,7 @@ class TenantAllView(TenantView):
     """The all tenants page"""
     toolbar = View.nested(TenantToolbar)
     entities = View.nested(TenantEntities)
-    paginator = View.nested(PaginationPane)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
