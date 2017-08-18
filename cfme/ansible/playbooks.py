@@ -4,12 +4,12 @@ from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
 from widgetastic_manageiq import (
     BaseEntitiesView,
-    BaseEntity,
     BaseListEntity,
     BaseQuadIconEntity,
     BaseTileIconEntity,
     BreadCrumb,
     ItemsToolBarViewSelector,
+    NonJSBaseEntity,
     PaginationPane,
     SummaryTable,
 )
@@ -51,7 +51,7 @@ class PlaybookListEntity(BaseListEntity):
     pass
 
 
-class PlaybookEntity(BaseEntity):
+class PlaybookEntity(NonJSBaseEntity):
     grid_entity = PlaybookGridIconEntity
     tile_entity = PlaybookTileIconEntity
     list_entity = PlaybookListEntity
