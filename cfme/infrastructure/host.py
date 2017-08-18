@@ -412,7 +412,8 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         drift_history_view.analyze_button.click()
         drift_analysis_view = self.create_view(HostDriftAnalysis)
         assert drift_analysis_view.is_displayed
-        drift_analysis_view.drift_sections.check(section)
+        drift_analysis_view.drift_sections.check_node(section)
+        drift_analysis_view.apply_button.click()
         if not drift_analysis_view.toolbar.all_attributes.active:
             drift_analysis_view.toolbar.all_attributes.click()
         return drift_analysis_view.drift_analysis(drift_section).is_changed
