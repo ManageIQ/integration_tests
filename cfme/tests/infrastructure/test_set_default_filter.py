@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-from functools import partial
-
 import pytest
 
 from cfme.infrastructure import host, datastore
 from cfme.web_ui.search import search_box
 from utils import version
-from cfme.web_ui import accordion, listaccordion as list_acc
+from cfme.web_ui import listaccordion as list_acc
 from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
@@ -46,7 +44,7 @@ def test_clear_host_filter_results():
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= "5.6")
-def test_set_default_datastore_filter(request):
+def test_set_default_datastore_filter(request, appliance):
     """ Test for setting default filter for datastores."""
 
     # I guess this test has to be redesigned
@@ -60,8 +58,8 @@ def test_set_default_datastore_filter(request):
     navigate_to(Datastore, 'All')
     list_acc.select('Filters', 'Store Type / NFS', by_title=False)
     pytest.sel.click(datastore.default_datastore_filter_btn)
-    logout()
-    login_admin()
+    appliance.server.logout()
+    appliance.server.login_admin()
     navigate_to(Datastore, 'All')
     assert list_acc.is_selected('Filters', 'Store Type / NFS (Default)', by_title=False),\
         'Store Type / NFS not set as default'

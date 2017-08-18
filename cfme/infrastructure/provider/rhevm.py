@@ -8,6 +8,7 @@ from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpoint
 from wrapanapi.rhevm import RHEVMSystem
 from cfme.exceptions import ItemNotFound
 
+
 class RHEVMEndpoint(DefaultEndpoint):
     @property
     def view_value_mapping(self):

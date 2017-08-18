@@ -837,8 +837,8 @@ class CANDUCollection(Navigatable):
         self._set_state(False, reset=reset)
 
 
-@navigator.register(CANDUCollection)
-class Details(CFMENavigateStep):
+@navigator.register(CANDUCollection, 'Details')
+class CANDUCollectionDetails(CFMENavigateStep):
     VIEW = CANDUCollectionView
     prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
 

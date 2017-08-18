@@ -3,6 +3,7 @@ import re
 from traceback import format_exc
 
 import pytest
+from widgetastic_patternfly import CandidateNotFound
 from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
