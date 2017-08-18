@@ -11,7 +11,7 @@ from cfme.networks.views import CloudNetworkDetailsView
 
 class CloudNetworkCollection(Navigatable):
     ''' Collection object for Cloud Network object '''
-    def __init__(self, appliance, parent_provider):
+    def __init__(self, appliance=None, parent_provider=None):
         self.appliance = appliance
         self.parent = parent_provider
 
