@@ -6,6 +6,7 @@ Module containing classes with common behaviour for consoles of both VMs and Ins
 import base64
 import re
 import tempfile
+import time
 
 from cfme.exceptions import ItemNotFound
 from PIL import Image, ImageFilter
@@ -140,9 +141,13 @@ class VMConsole(Pretty):
         """Send text to the console."""
         self.switch_to_console()
         canvas = self.provider.get_remote_console_canvas()
-        canvas.send_keys(text)
-        canvas.send_keys(Keys.ENTER)
         logger.info("Sending following Keys to Console {}".format(text))
+        for character in text:
+            canvas.send_keys(character)
+            # time.sleep() is used as a short delay between two keystrokes.
+            # If keys are sent to canvas any faster, canvas fails to receive them.
+            time.sleep(0.3)
+        canvas.send_keys(Keys.ENTER)
         self.switch_to_appliance()
 
     def send_ctrl_alt_delete(self):
