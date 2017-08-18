@@ -6,20 +6,52 @@ from utils.appliance import Navigatable
 from utils.wait import wait_for
 from cfme.networks.views import NetworkProviderView
 from cfme.networks.views import NetworkProviderDetailsView
+from cfme.networks.balancer import BalancerCollection
+from cfme.networks.cloud_network import CloudNetworkCollection
+from cfme.networks.network_port import NetworkPortCollection
+from cfme.networks.network_router import NetworkRouterCollection
+from cfme.networks.subnet import SubnetCollection
+from cfme.networks.security_group import SecurityGroupCollection
 
 
 class NetworkProviderCollection(Navigatable):
     ''' Collection object for NetworkProvider object
         Note: Network providers object are not implemented in mgmt
     '''
+    def __init__(self, appliance=None):
+        self.appliance = appliance
 
     def instantiate(self, name):
-        return NetworkProvider(name=name)
+        return NetworkProvider(name=name, appliance=self.appliance)
 
     def all(self):
         view = navigate_to(NetworkProvider, 'All')
         list_networks = view.entities.get_all(surf_pages=True)
-        return [NetworkProvider(name=p.name) for p in list_networks]
+        return [self.instantiate(name=p.name) for p in list_networks]
+
+    @property
+    def balancers(self):
+        return BalancerCollection(parent_provider=self)
+
+    @property
+    def subnets(self):
+        return SubnetCollection(parent_provider=self)
+
+    @property
+    def networks(self):
+        return CloudNetworkCollection(parent_provider=self)
+
+    @property
+    def ports(self):
+        return NetworkPortCollection(parent_provider=self)
+
+    @property
+    def routers(self):
+        return NetworkRouterCollection(parent_provider=self)
+
+    @property
+    def security_groups(self):
+        return SecurityGroupCollection(parent_provider=self)
 
 
 class NetworkProvider(BaseProvider):
@@ -31,23 +63,21 @@ class NetworkProvider(BaseProvider):
     string_name = 'Networks'
     in_version = ('5.8', version.LATEST)
     page_name = 'networks'
-    edit_page_suffix = ""
-    detail_page_suffix = ""
-    refresh_text = "Refresh items and relationships"
+    edit_page_suffix = ''
+    detail_page_suffix = ''
+    refresh_text = 'Refresh items and relationships'
     quad_name = None
-    category = "networks"
+    category = 'networks'
     provider_types = {}
     property_tuples = []
     detail_page_suffix = 'provider_detail'
-    db_types = ["NetworksManager"]
+    db_types = ['NetworksManager']
 
-    def __init__(
-            self, name, provider=None):
-        if provider:
-            self.appliance = provider.appliance
-        else:
-            self.appliance = None
-        Navigatable.__init__(self, appliance=self.appliance)
+    def __init__(self, name, provider=None, collection=None, appliance=None):
+        if collection is None:
+            collection = NetworkProviderCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -61,7 +91,7 @@ class NetworkProvider(BaseProvider):
         ''' Deltes a network provider from CFME '''
         view = navigate_to(self, 'Details')
         wait_for(lambda: view.toolbar.configuration.item_enabled('Remove this Network Provider'),
-                 fail_condition=False, num_sec=10)
+                 num_sec=10)
         view.toolbar.configuration.item_select('Remove this Network Provider',
                                                handle_alert=not cancel)
 
@@ -70,9 +100,7 @@ class NetworkProvider(BaseProvider):
         ''' Checks whether credentials are valid '''
         view = navigate_to(self, 'Details')
         cred_state = view.contents.status.get_text_of('Default Credentials')
-        if cred_state == "Valid":
-            return True
-        return False
+        return cred_state == "Valid"
 
     @property
     def exists(self):
@@ -87,16 +115,6 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Providers')
-
-    def resetter(self):
-        # Reset view and selection
-        tb = self.view.toolbar
-        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
-            tb.view_selector.select("Grid View")
-        paginator = self.view.entities.paginator
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
 
 
 @navigator.register(NetworkProvider, 'Details')

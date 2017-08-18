@@ -11,32 +11,33 @@ from cfme.networks.views import CloudNetworkDetailsView
 
 class CloudNetworkCollection(Navigatable):
     ''' Collection object for Cloud Network object '''
+    def __init__(self, appliance, parent_provider):
+        self.appliance = appliance
+        self.parent = parent_provider
 
     def instantiate(self, name):
-        return CloudNetwork(name=name)
+        return CloudNetwork(name=name, appliance=self.appliance)
 
     def all(self):
         view = navigate_to(CloudNetwork, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [CloudNetwork(name=n.name) for n in list_networks_obj]
+        return [self.instantiate(name=n.name) for n in list_networks_obj]
 
 
 class CloudNetwork(Taggable, Updateable, SummaryMixin, Navigatable):
     ''' Class representing cloud networks in cfme database '''
     in_version = ('5.8', version.LATEST)
-    category = "networks"
+    category = 'networks'
     page_name = 'cloud_network'
     string_name = 'CloudNetwork'
     quad_name = None
-    db_types = ["CloudNetworks"]
+    db_types = ['CloudNetwork']
 
-    def __init__(
-            self, name, provider=None):
-        if provider:
-            self.appliance = provider.appliance
-        else:
-            self.appliance = None
-        Navigatable.__init__(self, appliance=self.appliance)
+    def __init__(self, name, provider=None, collection=None, appliance=None):
+        if collection is None:
+            collection = CloudNetworkCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -58,8 +59,7 @@ class CloudNetwork(Taggable, Updateable, SummaryMixin, Navigatable):
     def network_type(self):
         ''' Return type of network '''
         view = navigate_to(self, 'Details')
-        type_name = view.contents.properties.get_text_of('Type')
-        return type_name
+        return view.contents.properties.get_text_of('Type')
 
 
 @navigator.register(CloudNetwork, 'All')
@@ -69,16 +69,6 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Networks')
-
-    def resetter(self):
-        # Reset view and selection
-        tb = self.view.toolbar
-        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
-            tb.view_selector.select("Grid View")
-        paginator = self.view.entities.paginator
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
 
 
 @navigator.register(CloudNetwork, 'Details')

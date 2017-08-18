@@ -28,7 +28,7 @@ def test_port_detail_name(provider):
 def test_port_net_prov(provider):
     ''' Test functionality of quadicon and detail network providers'''
     prov_collection = NetworkProviderCollection()
-    port_collection = NetworkPortCollection()
+    port_collection = prov_collection.ports
     providers = [entity.name for entity in prov_collection.all()]
     ports = port_collection.all()
     if len(ports) > 5:

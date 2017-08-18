@@ -12,31 +12,32 @@ class NetworkRouterCollection(Navigatable):
     ''' Collection object for NetworkRouter object
         Note: Network providers object are not implemented in mgmt
     '''
+    def __init__(self, appliance=None, parent_provider=None):
+        self.appliance = appliance
+        self.parent = parent_provider
 
     def instantiate(self, name):
-        return NetworkRouter(name=name)
+        return NetworkRouter(name=name, appliance=self.appliance)
 
     def all(self):
         view = navigate_to(NetworkRouter, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [NetworkRouter(name=r.name) for r in list_networks_obj]
+        return [self.instantiate(name=r.name) for r in list_networks_obj]
 
 
 class NetworkRouter(Taggable, Updateable, SummaryMixin, Navigatable):
     in_version = ('5.8', version.LATEST)
-    category = "networks"
+    category = 'networks'
     page_name = 'NetworkRouter'
     string_name = 'NetworkRouter'
     quad_name = None
-    db_types = ["NetworkRouter"]
+    db_types = ['NetworkRouter']
 
-    def __init__(
-            self, name, provider=None):
-        if provider:
-            self.appliance = provider.appliance
-        else:
-            self.appliance = None
-        Navigatable.__init__(self, appliance=self.appliance)
+    def __init__(self, name, provider=None, collection=None, appliance=None):
+        if collection is None:
+            collection = NetworkRouterCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -48,16 +49,6 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Network Routers')
-
-    def resetter(self):
-        # Reset view and selection
-        tb = self.view.toolbar
-        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
-            tb.view_selector.select("Grid View")
-        paginator = self.view.entities.paginator
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
 
 
 @navigator.register(NetworkRouter, 'Details')

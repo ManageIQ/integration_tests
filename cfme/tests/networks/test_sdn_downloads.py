@@ -13,11 +13,8 @@ from cfme.networks.network_router import (NetworkRouter, NetworkRouterCollection
 from utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.uncollectif(lambda: current_version() < '5.7'),
-]
 pytest_generate_tests = testgen.generate([AzureProvider], scope="module")
+pytestmark = pytest.mark.usefixtures('setup_provider')
 FILETYPES = ["txt", "csv", "pdf"]
 extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
 
@@ -58,7 +55,7 @@ def test_download_lists_base(filetype, objecttype):
 def test_download_pdf_summary(objecttype, provider):
     ''' Download the summary details of specific object '''
     instance = objecttype()
-    if len(instance.all()) > 0:
+    if instance.all():
         random_obj = instance.all()[0].name
         obj = instance.instantiate(random_obj)
         download_summary(obj)

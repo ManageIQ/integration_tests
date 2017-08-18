@@ -19,8 +19,8 @@ def test_prov_balances_number(provider):
     Prerequisites:
         Only one refreshed cloud provider in cfme database
     '''
-    bal_collection = BalancerCollection()
     prov_collection = NetworkProviderCollection()
+    bal_collection = prov_collection.balancers
     sum_all = len(bal_collection.all())
     sum_manual = 0
     providers = prov_collection.all()

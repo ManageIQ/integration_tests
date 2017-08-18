@@ -12,31 +12,32 @@ class SecurityGroupCollection(Navigatable):
     ''' Collection object for SecurityGroup object
         Note: Network providers object are not implemented in mgmt
     '''
+    def __init__(self, appliance=None, parent_provider=None):
+        self.appliance = appliance
+        self.parent = parent_provider
 
     def instantiate(self, name):
-        return SecurityGroup(name=name)
+        return SecurityGroup(name=name, appliance=self.appliance)
 
     def all(self):
         view = navigate_to(SecurityGroup, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [SecurityGroup(name=s.name) for s in list_networks_obj]
+        return [self.instantiate(name=s.name) for s in list_networks_obj]
 
 
 class SecurityGroup(Taggable, Updateable, SummaryMixin, Navigatable):
     in_version = ('5.8', version.LATEST)
-    category = "networks"
+    category = 'networks'
     page_name = 'security_group'
     string_name = 'SecurityGroup'
     quad_name = None
-    db_types = ["SecurityGroup"]
+    db_types = ['SecurityGroup']
 
-    def __init__(
-            self, name, provider=None):
-        if provider:
-            self.appliance = provider.appliance
-        else:
-            self.appliance = None
-        Navigatable.__init__(self, appliance=self.appliance)
+    def __init__(self, name, provider=None, collection=None, appliance=None):
+        if collection is None:
+            collection = SecurityGroupCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -48,16 +49,6 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Security Groups')
-
-    def resetter(self):
-        # Reset view and selection
-        tb = self.view.toolbar
-        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
-            tb.view_selector.select("Grid View")
-        paginator = self.view.entities.paginator
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
 
 
 @navigator.register(SecurityGroup, 'Details')

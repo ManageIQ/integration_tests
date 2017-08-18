@@ -12,14 +12,17 @@ class NetworkPortCollection(Navigatable):
     ''' Collection object for NetworkPort object
         Note: Network providers object are not implemented in mgmt
     '''
+    def __init__(self, appliance=None, parent_provider=None):
+        self.appliance = appliance
+        self.parent = parent_provider
 
     def instantiate(self, name):
-        return NetworkPort(name=name)
+        return NetworkPort(name=name, appliance=self.appliance)
 
     def all(self):
         view = navigate_to(NetworkPort, 'All')
         list_networks_obj = view.entities.get_all()
-        return [NetworkPort(name=p.name) for p in list_networks_obj]
+        return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 
 class NetworkPort(Taggable, Updateable, SummaryMixin, Navigatable):
@@ -29,15 +32,13 @@ class NetworkPort(Taggable, Updateable, SummaryMixin, Navigatable):
     page_name = 'network_port'
     string_name = 'NetworkPort'
     quad_name = None
-    db_types = ["CloudNetworkPort"]
+    db_types = ['CloudNetworkPort']
 
-    def __init__(
-            self, name, provider=None):
-        if provider:
-            self.appliance = provider.appliance
-        else:
-            self.appliance = None
-        Navigatable.__init__(self, appliance=self.appliance)
+    def __init__(self, name, provider=None, collection=None, appliance=None):
+        if collection is None:
+            collection = NetworkPortCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -45,28 +46,24 @@ class NetworkPort(Taggable, Updateable, SummaryMixin, Navigatable):
     def mac_address(self):
         ''' Returns mac adress (string) of the port '''
         view = navigate_to(self, 'Details')
-        mac = view.contents.properties.get_text_of('Mac address')
-        return mac
+        return view.contents.properties.get_text_of('Mac address')
 
     @property
     def network_type(self):
         view = navigate_to(self, 'Details')
-        net_type = view.contents.properties.get_text_of('Type')
-        return net_type
+        return view.contents.properties.get_text_of('Type')
 
     @property
     def floating_ips(self):
         ''' Returns floating ips (string) of the port '''
         view = navigate_to(self, 'Details')
-        ips = view.contents.properties.get_text_of('Floating ip addresses')
-        return ips
+        return view.contents.properties.get_text_of('Floating ip addresses')
 
     @property
     def fixed_ips(self):
         ''' Returns fixed ips (string) of the port '''
         view = navigate_to(self, 'Details')
-        ips = view.contents.properties.get_text_of('Fixed ip addresses')
-        return ips
+        return view.contents.properties.get_text_of('Fixed ip addresses')
 
 
 @navigator.register(NetworkPort, 'All')
@@ -76,16 +73,6 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Network Ports')
-
-    def resetter(self):
-        # Reset view and selection
-        tb = self.view.toolbar
-        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
-            tb.view_selector.select("Grid View")
-        paginator = self.view.entities.paginator
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
 
 
 @navigator.register(NetworkPort, 'Details')

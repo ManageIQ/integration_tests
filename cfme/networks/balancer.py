@@ -11,34 +11,35 @@ from cfme.networks.views import BalancerDetailsView
 class BalancerCollection(Navigatable):
     ''' Collection object for Balancer object
     '''
+    def __init__(self, appliance=None, parent_provider=None):
+        self.appliance = appliance
+        self.parent = parent_provider
 
     def instantiate(self, name):
-        return Balancer(name=name)
+        return Balancer(name=name, appliance=self.appliance)
 
     def all(self):
         view = navigate_to(Balancer, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [Balancer(name=b.name) for b in list_networks_obj]
+        return [self.instantiate(name=b.name) for b in list_networks_obj]
 
 
 class Balancer(Taggable, Updateable, SummaryMixin, Navigatable):
     ''' Class representing balancers in sdn '''
     in_version = ('5.8', version.LATEST)
-    category = "networks"
+    category = 'networks'
     page_name = 'network_balancer'
     string_name = 'NetworkBalancer'
-    refresh_text = "Refresh items and relationships"
+    refresh_text = 'Refresh items and relationships'
     detail_page_suffix = 'network_balancer_detail'
     quad_name = None
-    db_types = ["NetworkBalancer"]
+    db_types = ['NetworkBalancer']
 
-    def __init__(
-            self, name, provider=None):
-        if provider:
-            self.appliance = provider.appliance
-        else:
-            self.appliance = None
-        Navigatable.__init__(self, appliance=self.appliance)
+    def __init__(self, name, provider=None, collection=None, appliance=None):
+        if collection is None:
+            collection = BalancerCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -46,15 +47,13 @@ class Balancer(Taggable, Updateable, SummaryMixin, Navigatable):
     def health_checks(self):
         ''' Returns health check state '''
         view = navigate_to(self, 'Details')
-        checks = view.contents.properties.get_text_of('Health checks')
-        return checks
+        return view.contents.properties.get_text_of('Health checks')
 
     @property
     def listeners(self):
         ''' Returns listeners of balancer '''
         view = navigate_to(self, 'Details')
-        listener = view.contents.properties.get_text_of('Listeners')
-        return listener
+        return view.contents.properties.get_text_of('Listeners')
 
 
 @navigator.register(Balancer, 'All')
@@ -64,16 +63,6 @@ class All(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.navigation.select('Networks', 'Load Balancers')
-
-    def resetter(self):
-        # Reset view and selection
-        tb = self.view.toolbar
-        if tb.view_selector.is_displayed and 'Grid View' not in tb.view_selector.selected:
-            tb.view_selector.select("Grid View")
-        paginator = self.view.entities.paginator
-        if paginator.exists:
-            paginator.check_all()
-            paginator.uncheck_all()
 
 
 @navigator.register(Balancer, 'Details')
