@@ -17,7 +17,7 @@ def report_vms(infra_provider):
         title=fauxfactory.gen_alphanumeric(),
         base_report_on="Virtual Machines",
         report_fields=[
-            "Cloud/Infrastructure Provider : Name",
+            "Provider : Name",
             "Cluster / Deployment Role : Name",
             "Datastore : Name",
             "Hardware : Number of CPUs",
@@ -30,7 +30,7 @@ def report_vms(infra_provider):
     report.queue(wait_for_finish=True)
     yield sample(
         filter(
-            lambda i: len(i["Cloud/Infrastructure Provider Name"].strip()) > 0,
+            lambda i: len(i["Provider Name"].strip()) > 0,
             list(report.get_saved_reports()[0].data.rows)), 2)
     report.delete()
 
@@ -48,7 +48,7 @@ def test_custom_vm_report(soft_assert, report_vms):
     for row in report_vms:
         if row["Name"].startswith("test_"):
             continue  # Might disappear meanwhile
-        provider_name = row["Cloud/Infrastructure Provider Name"]
+        provider_name = row["Provider Name"]
         provider = get_crud_by_name(provider_name).mgmt
         provider_hosts_and_ips = utils.net.resolve_ips(provider.list_host())
         provider_datastores = provider.list_datastore()

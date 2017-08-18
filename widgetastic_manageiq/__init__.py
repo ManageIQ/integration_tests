@@ -8,7 +8,7 @@ from collections import namedtuple
 from datetime import date
 from math import ceil
 from tempfile import NamedTemporaryFile
-from wait_for import wait_for
+from wait_for import TimedOutError, wait_for
 
 from cached_property import cached_property
 from jsmin import jsmin
@@ -1235,7 +1235,11 @@ class NonJSPaginationPane(View):
     @property
     def is_displayed(self):
         # there are cases when paging_div is shown but it is empty
-        return self.check_all_items.is_displayed
+        return (
+            self.check_all_items.is_displayed or
+            self.paginator.is_displayed and
+            self.items_on_page.is_displayed
+        )
 
     @property
     def exists(self):
@@ -2597,3 +2601,119 @@ class DynamicTable(VanillaTable):
             raise DynamicTableAddError('DynamicTable action_row index "{}" not found in table'
                                        .format(self.action_row))
         return self._process_negative_index(nindex=-1)  # use process_negative_index to get last row
+
+
+class FolderManager(Widget):
+    """ Represents the folder manager in Edit Report Menus screen
+    (Cloud Intel/Reports/Edit Report Menus).
+
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+
+    top_button = Button(title="Move selected folder top")
+    up_button = Button(title="Move selected folder up")
+    down_button = Button(title="Move selected folder down")
+    bottom_button = Button(title="Move selected folder to bottom")
+    delete_button = Button(title="Delete selected folder and its contents")
+    add_button = Button(title="Add subfolder to selected folder")
+
+    commit_button = Button("Commit")
+    discard_button = Button("Discard")
+
+    _fields = ".//div[@id='folder_grid']/div/div/div"
+    _field = ".//div[@id='folder_grid']/div/div/div[normalize-space(.)={folder}]"
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    class _BailOut(Exception):
+        pass
+
+    @classmethod
+    def bail_out(cls):
+        """If something gets wrong, you can use this method to cancel editing of the items in
+        the context manager.
+        Raises: :py:class:`FolderManager._BailOut` exception
+        """
+        raise cls._BailOut()
+
+    def commit(self):
+        self.commit_button.click()
+
+    def discard(self):
+        self.discard_button.click()
+
+    @property
+    def _all_fields(self):
+        return self.browser.elements(self._fields)
+
+    @property
+    def fields(self):
+        """Returns all fields' text values"""
+        return [el.text for el in self._all_fields]
+
+    @property
+    def selected_field_element(self):
+        """Return selected field's element.
+        Returns: :py:class:`WebElement` if field is selected, else `None`
+        """
+        selected_fields = [el for el in self._all_fields if "active" in el.get_attribute("class")]
+        if len(selected_fields) == 0:
+            return None
+        else:
+            return selected_fields[0]
+
+    @property
+    def selected_field(self):
+        """Return selected field's text.
+        Returns: :py:class:`str` if field is selected, else `None`
+        """
+        if self.selected_field_element is None:
+            return None
+        else:
+            return self.selected_field_element.text.encode("utf-8").strip()
+
+    def add(self, subfolder):
+        self.add_subfolder()
+        wait_for(lambda: self.selected_field_element is not None, num_sec=5, delay=0.1)
+        self.browser.double_click(self.selected_field_element, wait_ajax=False)
+        self.browser.handle_alert(prompt=subfolder)
+
+    def select_field(self, field):
+        """Select field by text.
+        Args:
+            field: Field text.
+        """
+        self.browser.click(self.browser.element(self._field.format(folder=quote(field))))
+        wait_for(lambda: self.selected_field is not None, num_sec=5, delay=0.1)
+
+    def has_field(self, field):
+        """Returns if the field is present.
+        Args:
+            field: Field to check.
+        """
+        try:
+            self.select_field(field)
+            return True
+        except (NoSuchElementException, TimedOutError):
+            return False
+
+    def delete_field(self, field):
+        self.select_field(field)
+        self.delete_button.click()
+
+    def move_first(self, field):
+        self.select_field(field)
+        self.top_button.click()
+
+    def move_last(self, field):
+        self.select_field(field)
+        self.bottom_button.click()
+
+    def clear(self):
+        for field in self.fields:
+            self.delete_field(field)
+
+    def read(self):
+        return self.fields
