@@ -119,13 +119,12 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         assert view.is_displayed
         view.flash.assert_success_message(flash_message)
 
-    def update(self, updates, cancel=False, validate_credentials=False):
+    def update(self, updates, validate_credentials=False):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
         this directly.
 
         Args:
            updates (dict): fields that are changing.
-           cancel (bool): whether to cancel out of the update.
         """
 
         view = navigate_to(self, "Edit")
