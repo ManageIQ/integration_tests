@@ -203,6 +203,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                             # there are some endpoints which don't demand validation like
                             #  RSA key pair
                             endp_view.validate.click()
+                            # Flash message widget is in add_view, not in endpoints tab
+                            logger.info(
+                                'Validating credentials flash message for endpoint %s',
+                                endpoint_name)
+                            add_view.flash.assert_no_error()
+                            add_view.flash.assert_success_message(
+                                'Credential validation was successful')
                 if self.one_of(InfraProvider):
                     main_view_obj = InfraProvidersView
                 elif self.one_of(CloudProvider):
@@ -963,18 +970,6 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
                 self.default_endpoint.ipaddress = value
         else:
             logger.warn("can't set ipaddress because default endpoint is absent")
-
-    def wait_for_creds_ok(self):
-        """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
-        self.refresh_provider_relationships(from_list_view=True)
-
-        def _wait_f():
-            navigate_to(self, 'All')
-            q = Quadicon(self.name, self.quad_name)
-            creds = q.creds
-            return "checkmark" in creds
-
-        wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
 
     @property
     def _assigned_policy_profiles(self):
