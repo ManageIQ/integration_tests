@@ -4,6 +4,8 @@ import fauxfactory
 from cfme.automate.service_dialogs import DialogCollection
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -250,17 +252,13 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
                 'datastore_name': {'name': [datastore]}
             }
 
-            if a_provider.type == 'rhevm':
+            if a_provider.one_of(RHEVMProvider):
                 provisioning_data['provision_type'] = 'Native Clone'
                 provisioning_data['vlan'] = vlan
                 catalog_item_type = 'RHEV'
-            elif a_provider.type == 'virtualcenter':
+            elif a_provider.one_of(VMwareProvider):
                 provisioning_data['provision_type'] = 'VMware'
                 provisioning_data['vlan'] = vlan
-
-            vm_name = version.pick({
-                version.LOWEST: provisioning_data['vm_name'] + '_0001',
-                '5.7': provisioning_data['vm_name'] + '0001'})
 
             provisioning_args = dict(
                 catalog_name=template,
@@ -292,6 +290,9 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
 
     s_tpls = [ent for ent in collection if ent.name in new_names]
 
+    if isinstance(vmdb, list):
+        vmdb.extend(vm_names)
+
     @request.addfinalizer
     def _finished():
         collection.reload()
@@ -300,14 +301,14 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
             collection.action.delete(*to_delete)
 
         for vm_name in vm_names:
-            try:
-                a_provider.mgmt.delete_vm(vm_name)
-            except Exception:
-                # vm can be deleted/retired by test
-                logger.warning("Failed to delete vm '{}'.".format(vm_name))
-
-    if isinstance(vmdb, list):
-        vmdb.extend(vm_names)
+            # find and delete all vms provisioned from the template
+            prov_vms = rest_api.collections.vms.find_by(name='{}%'.format(vm_name))
+            for vm in prov_vms:
+                try:
+                    a_provider.mgmt.delete_vm(vm)
+                except Exception:
+                    # vm can be deleted/retired by test
+                    logger.warning("Failed to delete vm '{}'.".format(vm))
 
     return s_tpls
 
