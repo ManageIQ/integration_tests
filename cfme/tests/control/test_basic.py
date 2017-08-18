@@ -14,6 +14,7 @@ import random
 from cfme.control.explorer import (actions, alert_profiles, alerts, conditions, policies,
     policy_profiles)
 
+from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.version import current_version
 from utils.blockers import BZ
@@ -482,3 +483,10 @@ def test_alert_profile_assigning(alert_profile):
     else:
         alert_profile.assign_to("The Enterprise")
     alert_profile.delete()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda: current_version() < "5.8")
+def test_control_is_ansible_playbook_available_in_actions_dropdown():
+    view = navigate_to(actions.Action, "Add")
+    assert "Run Ansible Playbook" in [option.text for option in view.action_type.all_options]
