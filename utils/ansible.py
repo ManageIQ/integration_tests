@@ -98,6 +98,7 @@ def get_values_for_tags_test(provider):
         'miq_password': conf.credentials['default'].password,
     }
 
+
 def get_values_from_conf(provider, script_type):
     if script_type == 'providers':
         return get_values_for_providers_test(provider)

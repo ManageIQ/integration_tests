@@ -6,7 +6,6 @@ from functools import partial
 from wrapanapi import exceptions
 
 from cfme import js
-from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_console import VMConsole
 from cfme.exceptions import (
     VmOrInstanceNotFound, TemplateNotFound, OptionNotAvailable, UnknownProviderType)

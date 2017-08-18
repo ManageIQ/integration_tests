@@ -90,7 +90,8 @@ def new_credential():
     """
     return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
 
-#TODO should be updated(add_tag/remove_tag), after all used classes will support Taggable class
+
+# TODO should be updated(add_tag/remove_tag), after all used classes will support Taggable class
 @pytest.fixture(scope='function')
 def check_item_visibility(tag, user_restricted):
     def _check_item_visibility(vis_object, visibility_result):

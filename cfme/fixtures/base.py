@@ -1,7 +1,6 @@
 import pytest
 
 from utils.appliance import get_or_create_current_appliance
-from utils.appliance import ApplianceException
 from cfme.configure import configuration
 
 from fixtures.artifactor_plugin import fire_art_hook

@@ -22,10 +22,9 @@ def _db_select_query(name=None, feed=None, provider=None):
     `provider_name`, `ems_ref`, `properties`"""
     t_md = current_appliance.db.client['middleware_domains']
     t_ems = current_appliance.db.client['ext_management_systems']
-    query = current_appliance.db.client.session.query(t_md.id, t_md.name, t_md.feed,
-                                   t_ems.name.label('provider_name'),
-                                   t_md.ems_ref, t_md.properties)\
-        .join(t_ems, t_md.ems_id == t_ems.id)
+    query = current_appliance.db.client.session.query(
+        t_md.id, t_md.name, t_md.feed, t_ems.name.label('provider_name'),
+        t_md.ems_ref, t_md.properties).join(t_ems, t_md.ems_id == t_ems.id)
     if name:
         query = query.filter(t_md.name == name)
     if feed:
