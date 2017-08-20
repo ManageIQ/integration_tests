@@ -115,20 +115,20 @@ def test_html5_vm_console(appliance, provider, vm_obj, configure_websocket,
     try:
         # If the banner/connection-status element exists we can get
         # the connection status text and if the console is healthy, it should connect.
-        assert vm_console.wait_for_connect(), "VM Console did not reach 'connected' state"
+        assert vm_console.wait_for_connect(180), "VM Console did not reach 'connected' state"
 
         # Get the login screen image, and make sure it is a jpeg file:
         screen = vm_console.get_screen()
         assert imghdr.what('', screen) == 'jpeg'
 
-        assert vm_console.wait_for_text(text_to_find="login:", timeout=200),\
-            "VM Console didn't prompt for Login"
+        assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
+            " didn't prompt for Login")
 
         # Enter Username:
         vm_console.send_keys(console_vm_username)
 
-        assert vm_console.wait_for_text(text_to_find="Password", timeout=200),\
-            "VM Console didn't prompt for Password"
+        assert vm_console.wait_for_text(text_to_find="Password", timeout=200), ("VM Console"
+            " didn't prompt for Password")
         # Enter Password:
         vm_console.send_keys("{}\n".format(console_vm_password))
 
@@ -178,8 +178,12 @@ def test_html5_vm_console(appliance, provider, vm_obj, configure_websocket,
         # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
         vm_console.send_ctrl_alt_delete()
         vm_console.wait_for_text(text_to_find="login:", timeout=200, to_disappear=True)
-        assert vm_console.wait_for_text(text_to_find="login:", timeout=200),\
-            "VM Console didn't prompt for Login"
+        assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
+            " didn't prompt for Login")
+
+        if not provider.one_of(OpenStackProvider):
+            assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does"
+            " not work")
 
         with ssh.SSHClient(hostname=vm_obj.ip_address, username=console_vm_username,
                 password=console_vm_password) as ssh_client:
@@ -191,3 +195,4 @@ def test_html5_vm_console(appliance, provider, vm_obj, configure_websocket,
             assert command_result
     finally:
         vm_console.close_console_window()
+        appliance.server.logout()

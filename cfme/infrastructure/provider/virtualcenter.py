@@ -27,6 +27,7 @@ class VMwareProvider(InfraProvider):
     _console_connection_status_element = '//*[@id="connection-status"]'
     _canvas_element = '//*[@id="remote-console"]/canvas'
     _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
+    _fullscreen_xpath = '//*[@id="fullscreen"]'
 
     def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
@@ -94,6 +95,13 @@ class VMwareProvider(InfraProvider):
         try:
             return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
                 self._ctrl_alt_del_xpath)
+        except:
+            raise ItemNotFound("Element not found on screen, is current focus on console window?")
+
+    def get_console_fullscreen_btn(self):
+        try:
+            return self.appliance.browser.widgetastic.selenium.find_element_by_xpath(
+                self._fullscreen_xpath)
         except:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
 
