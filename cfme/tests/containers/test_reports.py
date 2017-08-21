@@ -49,18 +49,18 @@ def get_report(menu_name, candu=False):
     """Queue a report by menu name , wait for finish and return it"""
     path_to_report = ['Configuration Management', 'Containers', menu_name]
     try:
-        run_at = CannedSavedReport.queue_canned_report(path_to_report)
+        run_at, queued_at = CannedSavedReport.queue_canned_report(path_to_report)
     except CandidateNotFound:
         pytest.skip('Could not find report "{}" in containers.\nTraceback:\n{}'
                     .format(path_to_report, format_exc()))
-    return CannedSavedReport(path_to_report, run_at, candu=candu)
+    return CannedSavedReport(path_to_report, run_at, queued_at, candu=candu)
 
 
 @pytest.mark.polarion('CMP-10617')
 def test_container_reports_base_on_options(soft_assert):
     """This test verifies that all containers options are available in the report 'based on'
     Dropdown in the report creation"""
-    navigate_to(CustomReport, 'New')
+    view = navigate_to(CustomReport, 'Add')
     for base_on in (
         'Chargeback Container Images',
         'Container Images',
@@ -72,7 +72,7 @@ def test_container_reports_base_on_options(soft_assert):
         'Performance - Containers'
     ):
         compare = (base_on.match if hasattr(base_on, 'match') else base_on.__eq__)
-        option = [opt for opt in select(id="chosen_model").all_options
+        option = [opt for opt in view.base_report_on.all_options
                   if compare(str(opt.text))]
         soft_assert(option, 'Could not find option "{}" for base report on.'.format(base_on))
 
@@ -84,11 +84,11 @@ def test_report_pods_per_ready_status(soft_assert, provider):
     report = get_report('Pods per Ready Status')
     for row in report.data.rows:
         name = row['# Pods per Ready Status']
-        readiness_ui = eval_strings([row['Ready Condition Status']]).pop()
+        readiness_ui = bool(eval_strings([row['Ready Condition Status']]).pop())
         if soft_assert(name in pods_per_ready_status,  # this check based on BZ#1435958
                 'Could not find pod "{}" in openshift.'
                 .format(name)):
-            expected_readiness = pods_per_ready_status.get(name, {}).get('Ready', False)
+            expected_readiness = bool(pods_per_ready_status.get(name, {}).get('Ready', False))
             soft_assert(expected_readiness == readiness_ui,
                         'For pod "{}" expected readiness is "{}" Found "{}"'
                         .format(name, expected_readiness, readiness_ui))
@@ -224,41 +224,27 @@ def test_report_pod_counts_for_container_images_by_project(provider, soft_assert
     see polarion case for more info"""
     report = get_report('Pod counts For Container Images by Project', candu=True)
 
-    for project_entities in report.data:
-        if not project_entities.id.startswith('Name:'):
-            # Columns like: All Rows | Count: x
-            continue
-        id_match = re.search(r'Name: (.+) \|', project_entities.id)
-        if id_match:
-            project_name = id_match.group(1)
-        else:
-            raise Exception('Could not parse project name from summary row: {}'
-                            .format(project_entities.id))
+    pods_api = provider.mgmt.api.get('pod')[1]['items']
+    pods_per_project = {}
+    for project in provider.mgmt.list_project():
+        pods_per_project[project.name] = [
+            pd for pd in pods_api if pd['metadata']['namespace'] == project.name]
 
-        # TODO: Add this logic to wrapanapi:
-        pods_api = [pd for pd in provider.mgmt.api.get('pod')[1]['items']
-                    if pd['metadata']['namespace'] == project_name]
-        # Collecting images per pod from the report
-        images_per_pod = {}
-        for row in project_entities.rows:
-            pod_name = row['Pod Name']
-            if pod_name not in images_per_pod:
-                images_per_pod[pod_name] = []
-            images_per_pod[pod_name].append(row['Image Name'])
-        # Going over each pod from the API and checking that it founds in the report
-        # under the current project and that its image founds in the pod's images.
-        for pd in pods_api:
-            expected_pod = pd['metadata']['name']
+    rows = list(report.data.rows)
+    for row in rows:
+        project_name, pod_name = row['Project Name'], row['Pod Name']
+        pod = filter(lambda pd: pd['metadata']['name'] == pod_name,
+                     pods_per_project[project_name])
+        soft_assert(pod, 'Could not find pod "{}" of project "{}" in the report.'
+                    .format(pod_name, project_name))
+        pod = pod.pop()
+        for pd in pods_per_project[project_name]:
             expected_image = pd['spec']['containers'][-1]['image']
-            if not soft_assert(expected_pod in images_per_pod,
-                               'Couldn\'t find pod {} in report'.format(expected_pod)):
-                continue
-            pod_images = images_per_pod[expected_pod]
+            pod_images = [r['Image Name'] for r in rows if r['Pod Name'] == pod_name]
             # Use 'in' since the image name in the API may include also registry and tag
-            is_image = filter(lambda img_nm: img_nm in expected_image, pod_images)
-            soft_assert(is_image,
+            soft_assert(filter(lambda img_nm: img_nm in expected_image, pod_images),
                         'Could not find image "{}" in pod "{}". Pod images in report: {}'
-                        .format(expected_image, expected_pod, pod_images))
+                        .format(expected_image, pod_name, pod_images))
 
 
 @pytest.mark.long_running_env
@@ -280,14 +266,14 @@ def test_report_number_of_images_per_node(provider, soft_assert):
     """Testing 'Number of Images per Node' report, see polarion case for more info"""
     pods_api = provider.mgmt.api.get('pod')[-1]['items']
     report = get_report('Number of Images per Node', candu=True)
-    report_data = {node_data.id.split(' |')[0]: node_data.rows for node_data in report.data}
+    report_data = list(report.data.rows)
     for pod in pods_api:
         expected_image = pod['spec']['containers'][0]['image']
         node = pod['spec']['nodeName']
-        report_node_data = report_data[node]
         pod_name = pod['metadata']['name']
-        pod_images = [row['Image Name'] for row in report_node_data
-                      if row['Pod Name'] == pod_name]
+        pod_images = [row['Image Name'] for row in report_data
+                      if row['Pod Name'] == pod_name and
+                      row['Node Name'] == node]
         # Use 'in' since the image name in the API may include also registry and tag
         is_image = filter(lambda img_nm: img_nm in expected_image, pod_images)
         soft_assert(is_image,
