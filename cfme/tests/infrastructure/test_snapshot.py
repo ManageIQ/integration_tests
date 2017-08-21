@@ -17,7 +17,9 @@ from utils.generators import random_vm_name
 from utils.log import logger
 from utils.path import data_path
 from utils.ssh import SSHClient
+from utils.version import current_version
 from utils.wait import wait_for
+from selenium.common.exceptions import NoSuchElementException
 
 
 pytestmark = [
@@ -72,6 +74,33 @@ def new_snapshot(test_vm, has_name=True, memory=False):
             memory=memory, parent_vm=test_vm
         )
     return new_snapshot
+
+
+@pytest.mark.uncollectif(lambda provider:
+    not provider.one_of(RHEVMProvider, VMwareProvider) or
+    (provider.one_of(RHEVMProvider) and provider.version < 4) or
+    current_version() < '5.8')
+def test_memory_checkbox(small_test_vm, provider, soft_assert):
+    # Make sure the VM is powered on
+    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
+    # Try to create snapshot with memory on powered on VM
+    has_name = not provider.one_of(RHEVMProvider)
+    snapshot1 = new_snapshot(small_test_vm, has_name=has_name, memory=True)
+    snapshot1.create()
+    assert snapshot1.exists
+    # Power off the VM
+    small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
+    small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
+    soft_assert(small_test_vm.provider.mgmt.is_vm_stopped(small_test_vm.name), "VM is not stopped!")
+    # Try to create snapshot with memory on powered off VM
+    snapshot2 = new_snapshot(small_test_vm, has_name=has_name, memory=True)
+    try:
+        snapshot2.create(force_check_memory=True)
+    except NoSuchElementException:
+        logger.info("Memory checkbox is not present on powered off VM.")
+    # Make sure that snapshot with memory was not created
+    wait_for(lambda: not snapshot2.exists, num_sec=40, delay=20, fail_func=sel.refresh,
+             handle_exception=True)
 
 
 @pytest.mark.uncollectif(lambda provider:
