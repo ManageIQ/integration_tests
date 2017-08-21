@@ -1535,26 +1535,6 @@ class IPAppliance(object):
                     'Appliance must be restarted before the netapp functionality can be used.')
         clear_property_cache(self, 'is_storage_enabled')
 
-    @logger_wrap('Starting postgresql service: {}')
-    def start_db_service(self, log_callback=None):
-        """Starts the postgresql service via systemctl"""
-        service = '{}-postgresql'.format(self.db.postgres_version)
-        log_callback('Starting {}'.format(service))
-        with self.ssh_client as ssh:
-            start_postgres = 'systemctl start {}'.format(service)
-            assert ssh.run_command(start_postgres).success, 'Failed to start {}'.format(service)
-        log_callback('Started service: {}'.format(service))
-
-    @logger_wrap('Stopping postgresql service: {}')
-    def stop_db_service(self, log_callback=None):
-        """Starts the postgresql service via systemctl"""
-        service = '{}-postgresql'.format(self.db.postgres_version)
-        log_callback('Stopping {}'.format(service))
-        with self.ssh_client as ssh:
-            stop_postgres = 'systemctl stop {}'.format(service)
-            assert ssh.run_command(stop_postgres).success, 'Failed to stop {}'.format(service)
-        log_callback('Stopped {}'.format(service))
-
     @logger_wrap('Updating appliance UUID: {}')
     def update_uuid(self, log_callback=None):
         uuid_gen = 'uuidgen |tee /var/www/miq/vmdb/GUID'
@@ -1563,7 +1543,7 @@ class IPAppliance(object):
             result = ssh.run_command(uuid_gen)
             assert result.success, 'Failed to generate UUID'
         log_callback('Updated UUID: {}'.format(str(result)))
-        return str(result)  # should return UUID from stdout
+        return str(result).rstrip('\n')  # should return UUID from stdout
 
     def wait_for_ssh(self, timeout=600):
         """Waits for appliance SSH connection to be ready

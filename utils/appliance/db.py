@@ -23,6 +23,7 @@ class ApplianceDB(AppliancePlugin):
 
     # Until this needs a version pick, make it an attr
     postgres_version = 'rh-postgresql95'
+    service_name = '{}-postgresql'.format(postgres_version)
 
     @cached_property
     def client(self):
@@ -385,3 +386,20 @@ class ApplianceDB(AppliancePlugin):
             'WHERE table_schema = \'public\';" vmdb_production | grep -q vmdb_production')
         result = self.ssh_client.run_command(db_check_command)
         return result.rc == 0
+
+    def start_db_service(self):
+        """Starts the postgresql service via systemctl"""
+        self.logger.info('Starting service: {}'.format(self.service_name))
+        with self.ssh_client as ssh:
+            result = ssh.run_command('systemctl start {}'.format(self.service_name))
+            assert result.success, 'Failed to start {}'.format(self.service_name)
+            self.logger.info('Started service: {}'.format(self.service_name))
+
+    def stop_db_service(self):
+        """Starts the postgresql service via systemctl"""
+        service = '{}-postgresql'.format(self.postgres_version)
+        self.logger.info('Stopping {}'.format(service))
+        with self.ssh_client as ssh:
+            result = ssh.run_command('systemctl stop {}'.format(self.service_name))
+            assert result.success, 'Failed to stop {}'.format(service)
+            self.logger.info('Stopped {}'.format(service))

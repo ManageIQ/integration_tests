@@ -260,9 +260,9 @@ def test_appliance_replicate_database_disconnection(request, virtualcenter_provi
     with appl1.ipapp:
         configure_db_replication(appl2.address)
         # Replication is up and running, now stop the DB on the replication parent
-        appl2.stop_db_service()
+        appl2.db.stop_db_service()
         sleep(60)
-        appl2.start_db_service()
+        appl2.db.start_db_service()
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
                  fail_condition=False, num_sec=360, delay=10,
@@ -297,9 +297,9 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, virtua
         configure_db_replication(appl2.address)
         # Replication is up and running, now stop the DB on the replication parent
         virtualcenter_provider.create()
-        appl2.stop_db_service()
+        appl2.db.stop_db_service()
         sleep(60)
-        appl2.start_db_service()
+        appl2.db.start_db_service()
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
                  fail_condition=False, num_sec=360, delay=10,
