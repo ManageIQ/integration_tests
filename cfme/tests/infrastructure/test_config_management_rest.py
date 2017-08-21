@@ -192,3 +192,13 @@ class TestAuthenticationsRESTAPI(object):
         # this will fail once BZ1476869 is fixed
         appliance.rest_api.collections.authentications.action.delete.POST(*authentications)
         assert_response(appliance, success=False)
+
+    def test_authentications_options(self, appliance, config_manager):
+        """Tests that credential types can be listed through OPTIONS HTTP method..
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.authentications
+        assert 'credential_types' in collection.options()['data']
+        assert_response(appliance)
