@@ -1,9 +1,7 @@
 import pytest
+import yaml
 from utils import testgen
-
 from utils.version import current_version
-
-from cfme.configure.configuration import Tag
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.image import Image
 from cfme.containers.project import Project
@@ -21,32 +19,43 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
-ITEMS_TO_SAMPLE = [Tag, ContainersProvider, Image, Project, Node,
+ITEMS_TO_SAMPLE = [ContainersProvider, Image, Project, Node,
                    ImageRegistry, Pod, Template, Container]
 MAX_SAMPLES_PER_OBJECT = 10
 
 
-def save_object_state(provider, object):
-    rows = navigate_and_get_rows(provider, object, MAX_SAMPLES_PER_OBJECT)
-    headers_mapping = {header.text: indx for
-                       indx, header in enumerate(rows[0].table.headers) if header.text}
+def save_object_state(provider, obj):
+    rows = navigate_and_get_rows(provider, obj, MAX_SAMPLES_PER_OBJECT)
+    headers_mapping = {str(header.text): indx for indx, header in
+                       enumerate(rows[0].table.headers) if header.text}
 
-    all_instance = {}
+    all_instance = {"main_key": None, "values": {}}
+
+    # Get the most left column on the table to be the main key
+    main_key = min(headers_mapping, key=headers_mapping.get)
+
+    # Save main_key as metadata for case table change between CFME version
+    all_instance["main_key"] = main_key
 
     for instance in rows:
-        curr_instance_name = None
-        curr_instance_values = {}
-        for filed in headers_mapping:
-            if filed == "Name":
-                curr_instance_name = instance.table.headers[filed].text
-            else:
-                curr_instance_values[filed] = instance.table.headers[filed].text
-        all_instance[curr_instance_name] = curr_instance_values
+        curr_instance_name = str(instance[main_key].text)
+
+        # collect all instance values
+        all_instance["values"][curr_instance_name] = \
+            {filed: str(instance.columns[headers_mapping[filed]].text) for
+             filed in set(headers_mapping) - set([main_key])}
+
     return all_instance
 
 
-def test_pre_upgrade_status_save():
-    pass
+def test_pre_upgrade_status_save(provider):
+
+    all_samples = {obj.__name__: save_object_state(provider, obj) for obj in ITEMS_TO_SAMPLE}
+    all_data = {"current_version": current_version().vstring, "samples": all_samples}
+
+    output_file_name = "/tmp/upgrade_test_output.yaml"
+    with open(output_file_name, "w") as output_file:
+        yaml.dump(all_data, output_file, default_flow_style=False)
 
 
 def test_post_upgrade_status_validation():
