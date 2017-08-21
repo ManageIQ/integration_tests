@@ -1,20 +1,17 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from riggerlib import recursive_update
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, Button, BootstrapSelect
-from widgetastic_manageiq import (
-    ManageIQTree, CheckboxSelect, TimelinesView, Select, Accordion, Input)
+from widgetastic_patternfly import Dropdown, Button
+from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
 from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, RetirementView, EditView,
     EditTagsView, SetOwnershipView, ManagementEngineView, ManagePoliciesView,
-    PolicySimulationView, RightSizeView)
-from cfme.exceptions import InstanceNotFound, DestinationNotFound, ItemNotFound
+    PolicySimulationView)
+from cfme.exceptions import InstanceNotFound, ItemNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import flash, Quadicon, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
@@ -132,101 +129,6 @@ class InstanceTimelinesView(CloudInstanceView, TimelinesView):
         return (
             super(CloudInstanceView, self).in_cloud_instance and
             super(TimelinesView, self).is_displayed)
-
-
-class AddFloatingIPView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        ip = Select(name='floating_ip')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
-
-
-class AttachVolumeView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        volume = BootstrapSelect('volume_id')
-        mountpoint = Input(name='device_path')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
-
-
-class DetachVolumeView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        volume = BootstrapSelect('volume_id')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
-
-
-class EvacuateView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        auto_select = CheckboxSelect('auto_select_host')
-        shared_storage = CheckboxSelect('on_shared_storage')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
-
-
-class ReconfigureView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        flavor = BootstrapSelect('flavor')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
-
-
-class RemoveFloatingIPView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        ip = Select('floating_ip')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
-
-
-class MigrateView(CloudInstanceView):
-    @View.nested
-    class form(View):  # noqa
-        auto_select = CheckboxSelect('auto_select_host')
-        block_migration = CheckboxSelect('block_migration')
-        disk_overcommit = CheckboxSelect('disk_over_commit')
-        submit_button = Button('Submit')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # Only the instance name is displayed, cannot confirm provider
-        return False
 
 
 class Instance(VM, Navigatable):
@@ -459,42 +361,6 @@ class AllForProvider(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
-@navigator.register(Instance, 'AddFloatingIP')
-class AddFloatingIP(CFMENavigateStep):
-    VIEW = AddFloatingIPView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Add Floating IP only available for Openstack instances')
-        return navigate_to(self.obj, 'Details')
-
-    def step(self):
-            try:
-                self.prerequisite_view.toolbar.configuration.item_select(
-                    'Associate a Floating IP with this Instance')
-            except NoSuchElementException:
-                raise DestinationNotFound('Add Floating IP option not available for instance')
-
-
-@navigator.register(Instance, 'AttachVolume')
-class AttachVolume(CFMENavigateStep):
-    VIEW = AttachVolumeView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Attach Volume only available for Openstack instances')
-        elif self.obj.appliance.version < '5.7':
-            raise DestinationNotFound('Attach Volume not available for appliance version')
-        return navigate_to(self.obj, 'Details')
-
-    def step(self):
-        try:
-            self.prerequisite_view.toolbar.configuration.item_select(
-                'Attach a Cloud Volume to this Instance')
-        except NoSuchElementException:
-            raise DestinationNotFound('Attach Cloud Volume option not available for instance')
-
-
 @navigator.register(Instance, 'Details')
 class Details(CFMENavigateStep):
     VIEW = InstanceDetailsView
@@ -512,25 +378,6 @@ class Details(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
-@navigator.register(Instance, 'DetachVolume')
-class DetachVolume(CFMENavigateStep):
-    VIEW = DetachVolumeView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Detach Volume only available for Openstack instances')
-        elif self.obj.appliance.version < '5.7':
-            raise DestinationNotFound('Detach Volume not available for appliance version')
-        return navigate_to(self.obj, 'Details')
-
-    def step(self):
-        try:
-            self.prerequisite_view.toolbar.configuration.item_select(
-                'Detach a Cloud Volume from this Instance')
-        except NoSuchElementException:
-            raise DestinationNotFound('Detach Cloud Volume option not available for instance')
-
-
 @navigator.register(Instance, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = EditView
@@ -546,8 +393,8 @@ class EditManagementEngineRelationship(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.configuration.item_select(
-            'Edit Management Engine Relationship')
+        configuration = self.prerequisite_view.toolbar.configuration
+        configuration.item_select('Edit Management Engine Relationship')
 
 
 @navigator.register(Instance, 'EditTags')
@@ -559,22 +406,6 @@ class EditTags(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
-@navigator.register(Instance, 'Evacuate')
-class Evacuate(CFMENavigateStep):
-    VIEW = EvacuateView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Evacuate only available for Openstack instances')
-        return navigate_to(self.obj, 'Details')
-
-    def step(self):
-        try:
-            self.prerequisite_view.toolbar.lifecycle.item_select('Evacuate Instance')
-        except NoSuchElementException:
-            raise DestinationNotFound('Evacuate option not available for instance')
-
-
 @navigator.register(Instance, 'ManagePolicies')
 class ManagePolicies(CFMENavigateStep):
     VIEW = ManagePoliciesView
@@ -582,21 +413,6 @@ class ManagePolicies(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
-
-
-@navigator.register(Instance, 'Migrate')
-class Migrate(CFMENavigateStep):
-    VIEW = MigrateView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Migrate only available for Openstack instances')
-
-    def step(self):
-        try:
-            self.prerequisite_view.toolbar.lifecycle.item_select('Migrate Instance')
-        except NoSuchElementException:
-            raise DestinationNotFound('Migrate option not available for instance')
 
 
 @navigator.register(Instance, 'Provision')
@@ -615,57 +431,6 @@ class PolicySimulation(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.policy.item_select('Policy Simulation')
-
-
-@navigator.register(Instance, 'Reconfigure')
-class Reconfigure(CFMENavigateStep):
-    VIEW = ReconfigureView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Reconfigure only available for Openstack instances')
-        return navigate_to(self.obj, 'Details')
-
-    def step(self):
-        try:
-            self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this Instance')
-        except NoSuchElementException:
-            raise DestinationNotFound('Reconfigure option not available for instance')
-
-
-@navigator.register(Instance, 'RightSize')
-class RightSize(CFMENavigateStep):
-    VIEW = RightSizeView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Right Size only available for Openstack instances')
-        return navigate_to(self.obj, 'Details')
-
-    def step(self):
-        try:
-            self.prerequisite_view.toolbar.configuration.item_select('Right-Size Recommendations')
-        except NoSuchElementException:
-            raise DestinationNotFound('Right Size option not available for instance')
-
-
-@navigator.register(Instance, 'RemoveFloatingIP')
-class RemoveFloatingIP(CFMENavigateStep):
-    VIEW = RemoveFloatingIPView
-
-    def prerequisite(self, *args, **kwargs):
-        if not self.obj.provider.one_of(OpenStackProvider):
-            raise DestinationNotFound('Remove Floating IP only available for Openstack instances')
-        elif self.obj.appliance.version < '5.7':
-            raise DestinationNotFound('Remove Floating IP not available for appliance version')
-        return navigate_to(self.obj, 'Details')
-
-    def step(self):
-        try:
-            self.prerequisite_view.toolbar.configuration.item_select(
-                'Disassociate a Floating IP from this Instance')
-        except NoSuchElementException:
-            raise DestinationNotFound('Remove Floating IP option not available for instance')
 
 
 @navigator.register(Instance, 'SetOwnership')
