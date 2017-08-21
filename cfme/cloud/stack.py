@@ -258,7 +258,7 @@ class StackCollection(Navigatable):
         stacks = list(stacks)
         checked_stacks = list()
 
-        view = navigate_to(self,'All')
+        view = navigate_to(self, 'All')
         view.toolbar.view_selector.select('List View')
 
         for stack in stacks:
@@ -272,7 +272,9 @@ class StackCollection(Navigatable):
         if set(stacks) == set(checked_stacks):
             view.toolbar.configuration.item_select('Remove Orchestration Stacks', handle_alert=True)
             view.entities.flash.assert_no_error()
-            flash_msg = 'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(len(stacks))
+            flash_msg = \
+                'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
+                    len(stacks))
             view.entities.flash.assert_success_message(flash_msg)
 
             wait_for(lambda: not stacks[0].exists, num_sec=15 * 60,
