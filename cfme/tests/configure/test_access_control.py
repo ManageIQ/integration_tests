@@ -579,14 +579,11 @@ def _go_to(cls, dest='All'):
     return lambda: navigate_to(cls, dest)
 
 
-cat_name = "Settings"
-
-
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'role,allowed_actions,disallowed_actions',
     [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
-                                 [['Everything', cat_name, 'Tasks'], True]]),
+                                 [['Everything', 'Settings', 'Tasks'], True]]),
       {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
       {
           'my services': _go_to(MyService),
@@ -609,9 +606,6 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     """ Test that that under the specified role the allowed acctions succeed
         and the disallowed actions fail
 
-        actions are a list of actions with each item consisting of a dictionary object:
-               [ { "Action Name": function_reference_action }, ...]
-
         Args:
             appliance - cfme_test appliance fixture
             role - reference to a function that will create a role object
@@ -619,6 +613,9 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
                 permission
             disallowed_actions - Action(s) that should fail under given roles
                 permission
+
+        *_actions are a list of actions with each item consisting of a dictionary
+            object: [ { "Action Name": function_reference_action }, ...]
     """
     # create a user and role
     role = role()  # call function to get role
@@ -677,7 +674,7 @@ def single_task_permission_test(appliance, product_features, actions):
 @pytest.mark.meta(blockers=[1262764])
 def test_permissions_role_crud(appliance):
     single_task_permission_test(appliance,
-                                [['Everything', cat_name, 'Configuration'],
+                                [['Everything', 'Settings', 'Configuration'],
                                  ['Everything', 'Services', 'Catalogs Explorer']],
                                 {'Role CRUD': test_role_crud})
 
