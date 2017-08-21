@@ -5,14 +5,17 @@ import re
 import fauxfactory
 import pytest
 
-from cfme.rest.gen_data import dialog as _dialog
-from cfme.rest.gen_data import service_data as _service_data
-from cfme.rest.gen_data import service_catalogs as _service_catalogs
-from cfme.rest.gen_data import service_templates as _service_templates
-from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
-from cfme.rest.gen_data import blueprints as _blueprints
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from cfme.rest.gen_data import blueprints as _blueprints
+from cfme.rest.gen_data import dialog as _dialog
+from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
+from cfme.rest.gen_data import service_catalog_obj as _service_catalog_obj
+from cfme.rest.gen_data import service_catalogs as _service_catalogs
+from cfme.rest.gen_data import service_data as _service_data
+from cfme.rest.gen_data import service_templates as _service_templates
+from cfme.rest.gen_data import service_templates_ui
+from cfme.services.catalogs.catalog_item import CatalogBundle
 from fixtures.provider import setup_one_or_skip
 from utils import error, version
 from utils.blockers import BZ
@@ -78,6 +81,42 @@ def service_catalogs(request, appliance):
     response = _service_catalogs(request, appliance.rest_api)
     assert appliance.rest_api.response.status_code == 200
     return response
+
+
+@pytest.yield_fixture(scope='function')
+def catalog_bundle(request, dialog, service_catalog_obj, appliance, a_provider):
+    catalog_items = service_templates_ui(
+        request,
+        appliance.rest_api,
+        service_dialog=dialog,
+        service_catalog=service_catalog_obj,
+        a_provider=a_provider,
+        num=4)
+
+    uid = fauxfactory.gen_alphanumeric()
+    bundle_name = 'test_rest_bundle_{}'.format(uid)
+    bundle = CatalogBundle(
+        name=bundle_name,
+        description='Test REST Bundle {}'.format(uid),
+        display_in=True,
+        catalog=service_catalog_obj,
+        dialog=dialog,
+        catalog_items=[item.name for item in catalog_items])
+    bundle.create()
+
+    catalog_rest = appliance.rest_api.collections.service_catalogs.get(
+        name=service_catalog_obj.name)
+    bundle_rest = catalog_rest.service_templates.get(name=bundle_name)
+
+    yield bundle_rest
+
+    if bundle.exists:
+        bundle.delete()
+
+
+@pytest.fixture(scope="function")
+def service_catalog_obj(request, appliance):
+    return _service_catalog_obj(request, appliance.rest_api)
 
 
 @pytest.fixture(scope="function")
@@ -742,6 +781,44 @@ class TestServiceCatalogsRESTAPI(object):
         @request.addfinalizer
         def _finished():
             appliance.rest_api.collections.services.action.delete(*new_services)
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_order_catalog_bundle(self, appliance, request, catalog_bundle):
+        """Tests ordering catalog bundle using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        # this doesn't return resource in the "service_requests" collection
+        # using workarount with `response.json()`
+        catalog_bundle.action.order()
+        results = appliance.rest_api.response.json()
+        assert_response(appliance)
+
+        service_request = appliance.rest_api.get_entity('service_requests', results['id'])
+
+        def _order_finished():
+            service_request.reload()
+            return (
+                service_request.status.lower() == 'ok' and
+                service_request.request_state.lower() == 'finished')
+
+        wait_for(_order_finished, num_sec=2000, delay=10)
+
+        service_name = re.search(
+            r'\[({}[0-9-]*)\] '.format(catalog_bundle.name), service_request.message).group(1)
+        # this fails if the service with the `service_name` doesn't exist
+        new_service = appliance.rest_api.collections.services.get(name=service_name)
+
+        @request.addfinalizer
+        def _finished():
+            new_service.action.delete()
+
+        vms = new_service.vms
+        vms.reload()
+        assert len(vms) == 4
+        children = appliance.rest_api.collections.services.find_by(ancestry=str(new_service.id))
+        assert len(children) == 4
 
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_catalog_from_detail(self, appliance, service_catalogs, method):
