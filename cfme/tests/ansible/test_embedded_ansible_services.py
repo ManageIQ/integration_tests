@@ -36,6 +36,12 @@ def ansible_repository(wait_for_ansible):
 
 
 @pytest.mark.tier(1)
+def test_service_ansible_playbook_available():
+    view = navigate_to(AnsiblePlaybookCatalogItem("", "", provisioning={}), "PickItemType")
+    assert "Ansible Playbook" in [option.text for option in view.catalog_item_type.all_options]
+
+
+@pytest.mark.tier(1)
 def test_service_ansible_playbook_crud(ansible_repository):
     cat_item = AnsiblePlaybookCatalogItem(
         fauxfactory.gen_alphanumeric(),
