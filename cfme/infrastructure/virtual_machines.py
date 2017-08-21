@@ -1195,7 +1195,7 @@ class VmReconfigure(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Reconfigure this VM')
+        self.prerequisite_view.toolbar.configuration.item_select('Reconfigure this VM')
 
 
 @navigator.register(Vm, 'EditManagementEngineRelationship')
