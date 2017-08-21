@@ -29,7 +29,7 @@ layered-yaml-attrdict-config
 mock
 multimethods.py
 navmazing
-numpy
+numpy>=1.13.1
 matplotlib>=1.5.1
 paramiko
 parsedatetime
