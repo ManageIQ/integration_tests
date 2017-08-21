@@ -1536,13 +1536,14 @@ class IPAppliance(object):
         clear_property_cache(self, 'is_storage_enabled')
 
     @logger_wrap('Updating appliance UUID: {}')
-    def update_uuid(self, log_callback=None):
-        uuid_gen = 'uuidgen |tee /var/www/miq/vmdb/GUID'
-        log_callback('Running {} to generate UUID'.format(uuid_gen))
+    def update_guid(self, log_callback=None):
+        guid_gen = 'uuidgen |tee /var/www/miq/vmdb/GUID'
+        log_callback('Running {} to generate UUID'.format(guid_gen))
         with self.ssh_client as ssh:
-            result = ssh.run_command(uuid_gen)
+            result = ssh.run_command(guid_gen)
             assert result.success, 'Failed to generate UUID'
         log_callback('Updated UUID: {}'.format(str(result)))
+        del self.__dict__['guid']  # invalidate cached_property
         return str(result).rstrip('\n')  # should return UUID from stdout
 
     def wait_for_ssh(self, timeout=600):

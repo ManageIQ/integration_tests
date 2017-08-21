@@ -49,7 +49,7 @@ def get_replication_appliances():
     appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
     appl1.configure(region=1)
     appl1.ipapp.wait_for_web_ui()
-    appl2.update_uuid()
+    appl2.update_guid()
     appl2.configure(region=2, key_address=appl1.address)
     appl2.ipapp.wait_for_web_ui()
     return appl1, appl2
