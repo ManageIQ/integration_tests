@@ -603,6 +603,20 @@ cat_name = "Settings"
       {}]])
 @pytest.mark.meta(blockers=[1262759])
 def test_permissions(appliance, role, allowed_actions, disallowed_actions):
+    """ Test that that under the specified role the allowed acctions succeed
+        and the disallowed actions fail
+
+        actions are a list of actions with each item consisting of a dictionary object:
+               [ { "Action Name": function_reference_action }, ...]
+
+        Args:
+            appliance - cfme_test appliance fixture
+            role - reference to a function that will create a role object
+            allowed_actions - Action(s) that should succeed under given roles
+                permission
+            disallowed_actions - Action(s) that should fail under given roles
+                permission
+    """
     # create a user and role
     role = role()  # call function to get role
     role.create()
@@ -613,18 +627,19 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     fails = {}
     try:
         with user:
-            appliance.server.login_admin()
             for name, action_thunk in allowed_actions.items():
                 try:
                     action_thunk()
                 except Exception:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
+
             for name, action_thunk in disallowed_actions.items():
                 try:
                     with error.expected(Exception):
                         action_thunk()
                 except error.UnexpectedSuccessException:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
+
             if fails:
                 message = ''
                 for failure in fails.values():
@@ -637,16 +652,22 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
 def single_task_permission_test(appliance, product_features, actions):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
+    # Enable only specified product features
+    test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=[(['Everything'], False)] +
-                              [(f, True) for f in product_features]),
-                     actions,
-                     {})
+                              product_features=test_prod_features), actions, {})
+
+    # Enable everything but specified product features
+    test_prod_features = [(['Everything'], True)]
+    # CFME 5.7 - New roles have the checkbox for 'Everything' checked but the
+    # only child item checked is 'Access Rules for all Virtual Machines' so
+    # clear 'Everything' so all child items can be enabled to start
+    if appliance.version.version <= "5.7":
+        test_prod_features = [(['Everything'], False)] + test_prod_features
+
+    test_prod_features += [(f, False) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=[(['Everything'], True)] +
-                              [(f, False) for f in product_features]),
-                     {},
-                     actions)
+                              product_features=test_prod_features), {}, actions)
 
 
 @pytest.mark.tier(3)
