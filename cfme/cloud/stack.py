@@ -1,4 +1,4 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
 from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages, BootstrapNav
@@ -251,6 +251,36 @@ class StackResourcesView(StackView):
             self.entities.breadcrumb.active_location == expected_title)
 
 
+class StackCollection(Navigatable):
+    """Collection class for cfme.cloud.stack.Stack"""
+
+    def delete(self, *stacks):
+        stacks = list(stacks)
+        checked_stacks = list()
+
+        view = navigate_to(self,'All')
+        view.toolbar.view_selector.select('List View')
+
+        for stack in stacks:
+            try:
+                row = view.paginator.find_row_on_pages(view.entities.table, name=stack.name)
+                row[0].check()
+                checked_stacks.append(stack)
+            except NoSuchElementException:
+                break
+
+        if set(stacks) == set(checked_stacks):
+            view.toolbar.configuration.item_select('Remove Orchestration Stacks', handle_alert=True)
+            view.entities.flash.assert_no_error()
+            flash_msg = 'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(len(stacks))
+            view.entities.flash.assert_success_message(flash_msg)
+
+            wait_for(lambda: not stacks[0].exists, num_sec=15 * 60,
+                     delay=30, message='Wait for stack to be deleted')
+        else:
+            raise ValueError('Some Stacks not found in the UI')
+
+
 class Stack(Pretty, Navigatable):
     _param_name = "Stack"
     pretty_attrs = ['name']
@@ -263,7 +293,7 @@ class Stack(Pretty, Navigatable):
 
     @property
     def exists(self):
-        view = navigate_to(self, 'All')
+        view = navigate_to(StackCollection, 'All')
         view.toolbar.view_selector.select('List View')
         try:
             view.paginator.find_row_on_pages(view.entities.table, name=self.name)
@@ -271,33 +301,12 @@ class Stack(Pretty, Navigatable):
         except NoSuchElementException:
             return False
 
-    def delete(self, from_dest='All'):
-        """Delete the stack, starting from the destination provided by from_dest"""
-        # Navigate to the starting destination
-        if from_dest in navigator.list_destinations(self):
-            view = navigate_to(self, from_dest)
-        else:
-            msg = 'cfme.cloud.stack does not have destination {}'.format(from_dest)
-            raise DestinationNotFound(msg)
-
-        # Delete using the method appropriate for the starting destination
-        if from_dest == 'All':
-            view.toolbar.view_selector.select('List View')
-            try:
-                row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
-                row[0].check()
-                view.toolbar.configuration.item_select('Remove Orchestration Stacks',
-                                                       handle_alert=True)
-            except NoSuchElementException:
-                raise StackNotFound('Stack {} not found'.format(self.name))
-            view.entities.flash.assert_no_error()
-            view.entities.flash.assert_success_message(
-                'Delete initiated for 1 Orchestration Stacks from the CFME Database')
-        elif from_dest == 'Details':
-            view.toolbar.configuration.item_select('Remove this Orchestration Stack',
-                                                   handle_alert=True)
-            view.entities.flash.assert_no_error()
-            view.entities.flash.assert_success_message('Delete initiated for 1 Orchestration Stack')
+    def delete(self):
+        """Delete the stack from detail view"""
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this Orchestration Stack', handle_alert=True)
+        view.entities.flash.assert_no_error()
+        view.entities.flash.assert_success_message('The selected Orchestration Stacks was deleted')
 
         def refresh():
             """Refresh the view"""
@@ -327,7 +336,7 @@ class Stack(Pretty, Navigatable):
 
     def wait_for_exists(self):
         """Wait for the row to show up"""
-        view = navigate_to(self, 'All')
+        view = navigate_to(StackCollection, 'All')
 
         def refresh():
             """Refresh the view"""
@@ -340,7 +349,7 @@ class Stack(Pretty, Navigatable):
                  delay=30, message='Wait for stack to exist')
 
     def retire_stack(self, wait=True):
-        view = navigate_to(self, 'All')
+        view = navigate_to(StackCollection, 'All')
         view.toolbar.view_selector.select('List View')
         row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
         row[0].check()
@@ -360,7 +369,7 @@ class Stack(Pretty, Navigatable):
                      num_sec=15 * 60, message='Wait for stack to be deleted')
 
 
-@navigator.register(Stack, 'All')
+@navigator.register(StackCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = StackAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -379,7 +388,7 @@ class All(CFMENavigateStep):
 @navigator.register(Stack, 'Details')
 class Details(CFMENavigateStep):
     VIEW = StackDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToObject(StackCollection, 'All')
 
     def step(self, *args, **kwargs):
         """Go to the details page"""
