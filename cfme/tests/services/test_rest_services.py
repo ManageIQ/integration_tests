@@ -893,13 +893,13 @@ class TestServiceRequests(object):
     def user_auth(self, request, appliance, new_group):
         password = fauxfactory.gen_alphanumeric()
         data = [{
-            "userid": "user_{}".format(fauxfactory.gen_alphanumeric(3)),
-            "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
+            "userid": "rest_{}".format(fauxfactory.gen_alphanumeric(3).lower()),
+            "name": "REST User {}".format(fauxfactory.gen_alphanumeric()),
             "password": password,
             "group": {"id": new_group.id}
         }]
 
-        user = _creating_skeleton(request, appliance.rest_api, "users", data)
+        user = _creating_skeleton(request, appliance.rest_api, 'users', data)
         user = user[0]
         return user.userid, password
 
@@ -944,10 +944,7 @@ class TestServiceRequests(object):
             r'\[({}[0-9-]*)\] '.format(new_template.name), service_request.message).group(1)
         # this fails if the service with the `service_name` doesn't exist
         new_service = appliance.rest_api.collections.services.get(name=service_name)
-
-        @request.addfinalizer
-        def _finished():
-            new_service.action.delete()
+        request.addfinalizer(new_service.action.delete)
 
 
 class TestBlueprintsRESTAPI(object):
