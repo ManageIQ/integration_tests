@@ -2,7 +2,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -78,9 +78,9 @@ def test_order_tower_catalog_item(catalog_item, request):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1400, delay=20)
-    assert 'Provisioned Successfully' in row.last_message.text
+    order_request = Request(cells=cells, partial_check=True)
+    order_request.wait_for_request(method='ui')
+    assert order_request.is_succeeded()
     DefaultView.set_default_view("Configuration Management Providers", "List View")
 
 
@@ -96,8 +96,8 @@ def test_retire_ansible_service(catalog_item, request):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1400, delay=20)
-    assert 'Provisioned Successfully' in row.last_message.text
+    order_request = Request(cells=cells, partial_check=True)
+    order_request.wait_for_request(method='ui')
+    assert order_request.is_succeeded()
     myservice = MyService(catalog_item.name)
     myservice.retire()

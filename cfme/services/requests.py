@@ -21,7 +21,7 @@ class Request(Navigatable):
 
     REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
-    def __init__(self, description=None, cells=None, partial_check=True, appliance=None):
+    def __init__(self, description=None, cells=None, partial_check=False, appliance=None):
         """
         Args:
             description: by default we'll be checking Description column to find required row
@@ -31,15 +31,15 @@ class Request(Navigatable):
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.partial_check = partial_check
+        self.cells = {'Description': self.description} if cells is None else cells
         self.rest = self._get_request_from_rest(self.partial_check)
-        self.cells = {'Description': self.rest.description} if cells is None else cells
         self.row = None
 
     @variable(alias='rest')
     def wait_for_request(self):
         def _finished():
             self.rest.reload()
-            if self.rest.request_state not in self.REQUEST_FINISHED_STATES:
+            if self.rest.request_state.title() not in self.REQUEST_FINISHED_STATES:
                 return False
             return True
 
@@ -56,15 +56,10 @@ class Request(Navigatable):
         wait_for(_finished, num_sec=800, delay=20, message="Request finished")
 
     def _get_request_from_rest(self, partial_check):
-        requests = self.appliance.rest_api.collections.requests.all
-        matching_requests = []
-        for request in requests:
-            if partial_check:
-                if self.description in request.description:
-                    matching_requests.append(request)
-            else:
-                if self.description == request.description:
-                    matching_requests.append(request)
+        matching_requests = (self.appliance.rest_api.collections.requests.find_by(
+            description=self.cells['Description']) if partial_check is False else
+            self.appliance.rest_api.collections.requests.find_by(
+            description='%{}%'.format(self.cells['Description'])))
         if len(matching_requests) > 1:
             raise RequestException(
                 'Multiple requests with matching \"{}\" '
@@ -72,10 +67,10 @@ class Request(Navigatable):
                     self.description))
         elif len(matching_requests) == 0:
             raise RequestException(
-                'Nothing matching \"{}\" with partial_check={} was found'.format(self.description,
-                                                                             self.partial_check)
-            )
+                'Nothing matching \"{}\" with partial_check={} was found'.format(
+                    self.cells['Description'], self.partial_check))
         else:
+            self.description = matching_requests[0].description
             return matching_requests[0]
 
     def get_request_row_from_ui(self):
@@ -116,15 +111,17 @@ class Request(Navigatable):
         """Updates Request object details - last message, status etc
         """
         self.rest.reload()
+        self.description = self.rest.description
+        self.cells = {'Description': self.description}
 
     @update.variant('ui')
     def update_ui(self):
         view = navigate_to(self, 'All')
-        view.reload_btn.click()
+        view.reload.click()
         self.row = view.find_request(cells=self.cells, partial_check=self.partial_check)
 
     @variable(alias='rest')
-    def approve_request(self, reason, cancel=False):
+    def approve_request(self, reason):
         """Approves request with specified reason
         Args:
             reason: Reason for approving the request.
@@ -143,7 +140,7 @@ class Request(Navigatable):
         view.flash.assert_no_error()
 
     @variable(alias='rest')
-    def deny_request(self, reason, cancel=False):
+    def deny_request(self, reason):
         """Opens the specified request and deny it.
         Args:
             reason: Reason for denying the request.
@@ -174,41 +171,54 @@ class Request(Navigatable):
         """Helper function checks if a request is completed
         """
         self.update()
-        return self.rest.request_state in self.REQUEST_FINISHED_STATES
+        return self.rest.request_state.title() in self.REQUEST_FINISHED_STATES
 
     @is_finished.variant('ui')
-    def is_finished(self):
+    def is_finished_ui(self):
         self.update(method='ui')
         return self.row.request_state.text in self.REQUEST_FINISHED_STATES
 
     @variable(alias='rest')
     def is_succeeded(self):
-        return self.is_finished() and self.rest.status == 'Ok'
+        return self.is_finished() and self.rest.status.title() == 'Ok'
 
     @is_succeeded.variant('ui')
     def is_succeeded_ui(self):
         return self.is_finished(method=('ui')) and self.row.status.text == 'Ok'
 
-    def copy_request(self, values=None):
+    def copy_request(self, values=None, cancel=False):
         """Copies the request  and edits if needed
         """
         view = navigate_to(self, 'Copy')
-        if values is not None:
-            view.form.fill(values)
-            view.submit_button_click()
-        view.submit_button_click()
+        view.form.fill(values)
+        if not cancel:
+            view.submit_button.click()
+        else:
+            view.cancel_button.click()
+        view.flash.assert_no_error()
+        # The way we identify request is a description which is based on vm_name,
+        # no need returning Request obj if name is the same => raw request copy
+        if 'vm_name' in values.keys():
+            return Request(description=values['vm_name'], partial_check=True)
 
-    def edit_request(self, values):
+    def edit_request(self, values, cancel=False):
         """Opens the request for editing and saves or cancels depending on success.
         """
         view = navigate_to(self, 'Edit')
-        view.form.fill(values)
-        view.form.submit_button_click()
-        self.update()
+        if view.form.fill(values):
+            if not cancel:
+                view.submit_button.click()
+                self.update()
+            else:
+                view.cancel_button.click()
+        else:
+            logger.debug('Nothing was changed in current request')
+        view.flash.assert_no_error()
 
 
 class RequestBasicView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
+    reload = Button(title='Reload the current display')
 
     @property
     def in_requests(self):
@@ -219,9 +229,8 @@ class RequestBasicView(BaseLoggedInPage):
 
 class RequestsView(RequestBasicView):
     table = Table(locator='//*[@id="list_grid"]/table')
-    pagination_pane = PaginationPane()
+    paginator = PaginationPane()
     flash = FlashMessages('.//div[@id="flash_msg_div"]')
-    reload_btn = Button(title='Reload the current display')
 
     def find_request(self, cells, partial_check=False):
         """Finds the request and returns the row element
@@ -232,8 +241,12 @@ class RequestsView(RequestBasicView):
         """
         cells = dict(cells)
         contains = '' if not partial_check else '__contains'
+        column_list = self.table.attributized_headers
         for key in cells.keys():
-            cells['{}{}'.format(key, contains).lower()] = cells.pop(key)
+            for column_name, column_text in column_list.items():
+                if key == column_text:
+                    cells['{}{}'.format(column_name, contains)] = cells.pop(key)
+                    break
 
         # TODO Replace Paginator with paginator_pane after 1450002 gets resolved
         from cfme.web_ui import paginator
@@ -264,7 +277,6 @@ class RequestDetailsToolBar(RequestsView):
     copy = Button(title='Copy original Request')
     edit = Button(title='Edit the original Request')
     delete = Button(title='Delete this Request')
-    reload_btn = Button(title='Reload the current display')
     approve = Button(title='Approve this Request')
     deny = Button(title='Deny this Request')
 

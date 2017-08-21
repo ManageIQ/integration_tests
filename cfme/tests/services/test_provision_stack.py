@@ -8,7 +8,7 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
@@ -168,12 +168,10 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=2500, delay=20)
-
-    assert 'Provisioned Successfully' in row.last_message.text
+    request_description = catalog_item.name
+    provision_request = Request(request_description, partial_check=True)
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded()
 
 
 def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
@@ -192,12 +190,10 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=2000, delay=20)
-
-    assert 'Provisioned Successfully' in row.last_message.text
+    request_description = catalog_item.name
+    provision_request = Request(request_description, partial_check=True)
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded()
 
     myservice = MyService(catalog_item.name)
     myservice.reconfigure_service()
@@ -215,13 +211,12 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     service_catalogs.order()
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
-    row_description = 'Provisioning Service [{}] from [{}]'.format(catalog_item.name,
-        catalog_item.name)
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=1000, delay=20)
-    assert row.last_message.text == 'Service_Template_Provisioning failed' or\
-        row.status.text == "Error"
+    request_description = 'Provisioning Service [{}] from [{}]'.format(catalog_item.name,
+                                                                       catalog_item.name)
+    provision_request = Request(request_description)
+    provision_request.wait_for_request(method='ui')
+    assert (provision_request.row.last_message.text == 'Service_Template_Provisioning failed' or
+            provision_request.row.status.text == "Error")
 
 
 def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
@@ -237,13 +232,10 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=2500, delay=20)
-
-    assert 'Provisioned Successfully' in row.last_message.text
-
+    request_description = catalog_item.name
+    provision_request = Request(request_description, partial_check=True)
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded()
     stack = Stack(stack_data['stack_name'], provider=provider)
     stack.wait_for_exists()
     stack.retire_stack()

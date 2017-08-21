@@ -112,7 +112,6 @@ class VMDetailsEntities(View):
 
 
 class BasicProvisionFormView(View):
-
     @View.nested
     class request(Tab):  # noqa
         TAB_NAME = 'Request'
@@ -147,7 +146,6 @@ class BasicProvisionFormView(View):
     @View.nested
     class environment(Tab):  # noqa
         TAB_NAME = 'Environment'
-
         automatic_placement = Checkbox(id='environment__placement_auto')
         # Cloud
         availability_zone = BootstrapSelect('environment__placement_availability_zone')

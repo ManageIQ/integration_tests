@@ -4,11 +4,10 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
 
-from utils.wait import wait_for
 from utils.generators import random_vm_name
 from utils import testgen
 
@@ -49,8 +48,8 @@ def test_vm_migrate(new_vm, provider):
     migrate_to = [vds.name for vds in provider.hosts if vds.name not in vm_host][0]
     new_vm.migrate_vm("email@xyz.com", "first", "last", host_name=migrate_to)
     flash.assert_no_errors()
-    row_description = new_vm.name
-    cells = {'Description': row_description, 'Request Type': 'Migrate'}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=600, delay=20)
-    assert row.request_state.text == 'Migrated'
+    request_description = new_vm.name
+    cells = {'Description': request_description, 'Request Type': 'Migrate'}
+    migrate_request = Request(request_description, cells=cells, partial_check=True)
+    migrate_request.wait_for_request(method='ui')
+    assert migrate_request.is_succeeded(method='ui')

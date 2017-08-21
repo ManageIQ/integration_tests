@@ -7,7 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
 from utils.log import logger
@@ -46,11 +46,10 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1400, delay=20)
-    assert row.request_state.text == 'Finished'
+    request_description = catalog_item.name
+    provision_request = Request(request_description, partial_check=True)
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded()
 
 
 @pytest.mark.tier(2)
@@ -99,11 +98,10 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_bundle.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(bundle_name))
-    row_description = bundle_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1200, delay=20)
-    assert row.request_state.text == 'Finished'
+    request_description = bundle_name
+    provision_request = Request(request_description, partial_check=True)
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded()
 
 
 # Note here this needs to be reduced, doesn't need to test against all providers
@@ -149,11 +147,9 @@ def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
+    request_description = catalog_item.name
+    provision_request = Request(request_description, partial_check=True)
     provider.delete(cancel=False)
     provider.wait_for_delete()
-    requests.go_to_request(cells)
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1800, delay=20)
-    assert row.status.text == 'Error'
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.status.text == 'Error'

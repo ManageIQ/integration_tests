@@ -5,14 +5,12 @@ from datetime import datetime
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.web_ui import toolbar as tb
 from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
 from utils.log import logger
-from utils.wait import wait_for
 from utils.update import update
 from utils.version import appliance_is_downstream
 
@@ -54,11 +52,10 @@ def myservice(setup_provider, provider, catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=tb.refresh, num_sec=2000, delay=60)
-    assert row.request_state.text == 'Finished'
+    request_description = catalog_item.name
+    service_request = Request(request_description, partial_check=True)
+    service_request.wait_for_request()
+    assert service_request.is_succeeded()
 
     yield MyService(catalog_item.name, vm_name)
 
