@@ -5,11 +5,8 @@ from utils import conf, version
 from utils.testgen import parametrize
 from utils.wait import wait_for
 from utils.log import logger
-
-from scripts.repo_gen import process_url, build_file
-from utils import os
 from utils.conf import cfme_data
-import tempfile
+from scripts.repo_gen import process_url
 
 REG_METHODS = ('rhsm', 'sat6')
 
@@ -67,7 +64,7 @@ def pytest_generate_tests(metafunc):
 def is_appliance_updated(self, appliance):
     version = appliance.version
     split_ver = str(version).split(".")
-    next_build = (int(split_ver[2]) + 1)
+    next_build = '99'
     upgrade_version = ("{}.{}.{}".format(split_ver[0], split_ver[1], next_build))
     ver = self.version
     del ver.__dict__['version']
@@ -75,16 +72,21 @@ def is_appliance_updated(self, appliance):
 
 
 @pytest.yield_fixture(scope="function")
-def appliance_preupdate(temp_appliance_preconfig_funcscope):
+def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
+    """Requests appliance from sprout and configures rpms for fake update"""
+    series = appliance.version.series()
+    run = temp_appliance_preconfig_funcscope.ssh_client.run_command
+    url = process_url(cfme_data['basic_info']['rpmbuild'])
+    url_local = process_url(cfme_data['basic_info']['local_url'])
     temp_appliance_preconfig_funcscope.db.extend_partition()
-    urls = process_url(cfme_data['basic_info']['update_url_57'])
-    output = build_file(urls)
-    with tempfile.NamedTemporaryFile('w') as f:
-        f.write(output)
-        f.flush()
-        os.fsync(f.fileno())
-        temp_appliance_preconfig_funcscope.ssh_client.put_file(
-            f.name, '/etc/yum.repos.d/update.repo')
+    run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
+    run('yum install rpmrebuild -y')
+    run('mkdir /myrepo')
+    run('rpmrebuild --release=99 cfme-appliance')
+    run('cp /root/rpmbuild/RPMS/x86_64/cfme-appliance-* '
+        '/myrepo/cfme-{}-update-99.x86_64.rpm'.format(series))
+    run('createrepo /myrepo/')
+    run('curl -o /etc/yum.repos.d/update.repo {}'.format(url_local))
     yield temp_appliance_preconfig_funcscope
 
 
@@ -226,3 +228,5 @@ def test_rh_updates(appliance_preupdate, appliance):
         red_hat_updates.update_appliances()
 
     wait_for(lambda: is_appliance_updated, num_sec=900)
+    assert appliance_preupdate.ssh_client.run_command(
+        'rpm -qa cfme-appliance-{}-99x86_64.rpm'.format(appliance.version))
