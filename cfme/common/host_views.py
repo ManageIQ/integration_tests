@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-from widgetastic.utils import ParametrizedLocator, Version, VersionPick
+from widgetastic.utils import (
+    Parameter,
+    ParametrizedLocator,
+    Version,
+    VersionPick
+)
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_manageiq import (
     BaseEntitiesView,
@@ -96,6 +101,14 @@ class HostDetailsToolbar(View):
     configuration = Dropdown(text="Configuration")
     policy = Dropdown(text="Policy")
     power = Dropdown(text="Power")
+
+    @ParametrizedView.nested
+    class custom_button(ParametrizedView):  # noqa
+        PARAMETERS = ("button_group", )
+        _dropdown = Dropdown(text=Parameter("button_group"))
+
+        def item_select(self, button, handle_alert=False):
+            self._dropdown.item_select(button, handle_alert=handle_alert)
 
 
 class HostDetailsEntities(View):
