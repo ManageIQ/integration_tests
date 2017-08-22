@@ -120,8 +120,8 @@ def test_delete(stack, provider, request):
 
 @pytest.mark.tier(3)
 def test_collection_delete(provider, setup_provider_modscope):
-    stack1 = Stack(provider.data['provisioning']['stack'], provider=provider)
-    stack2 = Stack(provider.data['provisioning']['stack_extra'], provider=provider)
+    stack1 = Stack(provider.data['provisioning']['stack'][0], provider=provider)
+    stack2 = Stack(provider.data['provisioning']['stack'][1], provider=provider)
 
     stack1.wait_for_exists()
     stack2.wait_for_exists()
