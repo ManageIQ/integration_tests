@@ -60,16 +60,6 @@ def pytest_generate_tests(metafunc):
         parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-def is_appliance_updated(self, appliance):
-    version = appliance.version
-    split_ver = str(version).split(".")
-    next_build = '99'
-    upgrade_version = ("{}.{}.{}".format(split_ver[0], split_ver[1], next_build))
-    ver = self.version
-    del ver.__dict__['version']
-    assert self.version == upgrade_version
-
-
 @pytest.yield_fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
     """Requests appliance from sprout and configures rpms for crud update"""
@@ -225,6 +215,12 @@ def test_rh_updates(appliance_preupdate, appliance):
         if red_hat_updates.platform_updates_available():
             red_hat_updates.update_appliances()
 
-        wait_for(lambda: is_appliance_updated, num_sec=900)
-    assert appliance_preupdate.ssh_client.run_command(
-        'rpm -qa cfme-appliance-{}-99x86_64.rpm'.format(appliance.version))
+    def is_package_updated(appliance):
+        """Checks if cfme-appliance package is at version 99"""
+        return_code, output = appliance.ssh_client.run_command('rpm -qa cfme-appliance | grep 99')
+        return return_code == 0
+
+    wait_for(is_package_updated, func_args=[appliance_preupdate], num_sec=900)
+    return_code, output = appliance_preupdate.ssh_client.run_command(
+        'rpm -qa cfme-appliance | grep 99')
+    assert return_code == 0
