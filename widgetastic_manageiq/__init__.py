@@ -14,6 +14,7 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
+from utils.blockers import BZ
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
@@ -1386,7 +1387,8 @@ class NonJSPaginationPane(View):
                 else:
                     self.logger.debug('Paginator advancing to next page')
                     self.next_page()
-
+        elif BZ.bugzilla.get_bug('1460377').is_opened:
+            yield
         else:
             return
 
