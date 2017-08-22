@@ -16,7 +16,7 @@ from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
-from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
+from cfme.web_ui import Table, InfoBlock, toolbar as tb
 from cfme.configure import tasks
 from fixtures.provider import setup_one_or_skip
 from utils.appliance.implementations.ui import navigate_to
@@ -317,7 +317,6 @@ def test_group_crud_with_tag(a_provider, category, tag):
 
 @pytest.mark.tier(3)
 def test_group_duplicate_name(appliance):
-    region = appliance.server_region
     group = new_group()
     group.create()
     with pytest.raises(RBACOperationBlocked):
@@ -389,9 +388,12 @@ def test_delete_default_group_all_selection():
 
 @pytest.mark.tier(3)
 def test_delete_group_with_assigned_user():
-    flash_msg = version.pick({
-        '5.7': ("EVM Group \"{}\": Error during delete: "
-                "The group has users assigned that do not belong to any other group"), })
+    """Test that CFME prevents deletion of a group that has users assigned
+    """
+    flash_msg = ("EVM Group \"{}\": Error during delete: "
+                "The group has users assigned that do not "
+                "belong to any other group")
+
     group = new_group()
     group.create()
     user = new_user(group=group)
@@ -504,6 +506,7 @@ def test_rolename_duplicate_validation():
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
     navigate_to(role.appliance.server, 'Dashboard')
+
 
 @pytest.mark.tier(3)
 def test_delete_default_roles():
@@ -754,12 +757,11 @@ def test_permissions_role_crud(appliance):
 
 @pytest.mark.tier(3)
 def test_permissions_vm_provisioning(appliance):
-    features = version.pick({
-        version.LOWEST: [
-            ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ], })
+    features = [
+        ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+            'Provision VMs']
+    ]
 
     single_task_permission_test(
         appliance,

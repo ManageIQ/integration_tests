@@ -163,10 +163,11 @@ class User(Updateable, Pretty, Navigatable):
                 not having appropriate permissions OR update is not allowed
                 for currently selected role
         """
-        user_blocked_msg = VersionPick({
-            '5.8': ("Userid is not unique within region {}".format(
-                self.appliance.server_region())),
-            '5.7': ("Userid has already been taken")}).pick(self.appliance.version)
+        if self.appliance.version < "5.8":
+            user_blocked_msg = ("Userid has already been taken")
+        else:
+            user_blocked_msg = ("Userid is not unique within region {}".format(
+                self.appliance.server_region()))
 
         view = navigate_to(self, 'Add')
         view.fill({
@@ -259,23 +260,15 @@ class User(Updateable, Pretty, Navigatable):
 
     def _delete_using_all_selection(self):
         """
-        Delete existing user by selecting it from the access control group list
-
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR delete is not allowed
-                for currently selected user
+        Select the existing user by selecting it from the access control group list
         """
         name_column = "Full Name"
         find_row_kwargs = {name_column: self.name}
 
         view = navigate_to(User, 'All')
-        try:
-            user_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
-            # Zero index is the unnamed column with the checkbox
-            user_row[0].check()
-        except NoSuchElementException:
-            raise Exception("Failed to find user row with name {}".format(self.name))
+        user_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+        # Zero index is the unnamed column with the checkbox
+        user_row[0].check()
 
     def delete(self, cancel=True, all_selection=False):
         """
@@ -601,11 +594,11 @@ class Group(Updateable, Pretty, Navigatable):
                     not having appropriate permissions OR delete is not allowed
                     for currently selected user
         """
-
-        flash_blocked_msg = VersionPick({
-            '5.8': ("Description is not unique within region {}".format(
-                self.appliance.server_region())),
-            '5.7': ("Description has already been taken")}).pick(self.appliance.version)
+        if self.appliance.version < "5.8":
+            flash_blocked_msg = ("Description has already been taken")
+        else:
+            flash_blocked_msg = "Description is not unique within region {}".format(
+                self.appliance.server_region())
 
         view = navigate_to(self, 'Add')
         view.fill({
@@ -961,6 +954,7 @@ class GroupTagsEdit(CFMENavigateStep):
 # END RBAC GROUP METHODS
 ####################################################################################################
 
+
 ####################################################################################################
 # RBAC ROLE METHODS
 ####################################################################################################
@@ -1149,22 +1143,14 @@ class Role(Updateable, Pretty, Navigatable):
     def _delete_using_all_selection(self):
         """
         Delete existing role by selecting it from the access control role list
-
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR delete is not allowed
-                for currently selected role
         """
         name_column = "Name"
         find_row_kwargs = {name_column: self.name}
 
         view = navigate_to(Role, 'All')
-        try:
-            role_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
-            # Zero index is the unnamed column with the checkbox
-            role_row[0].check()
-        except NoSuchElementException:
-            raise Exception("Failed to find role row with name {}".format(self.name))
+        role_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+        # Zero index is the unnamed column with the checkbox
+        role_row[0].check()
 
     def delete(self, cancel=True, all_selection=False):
         """ Delete existing role
@@ -1589,6 +1575,7 @@ class TenantManageQuotas(CFMENavigateStep):
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # END TENANT METHODS
 ####################################################################################################
+
 
 ####################################################################################################
 # RBAC PROJECT METHODS
