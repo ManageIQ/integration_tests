@@ -154,12 +154,8 @@ def test_group_quota_max_memory_check_by_tagging(
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                     fail_func=requests.reload, num_sec=300, delay=20)
-    if version.current_version() >= "5.4":
-        assert row.last_message.text == 'Request denied due to the following quota limits:'\
-            '(Group Allocated Memory 0.00GB + Requested 4.00GB > Quota 2.00GB)'
-    else:
-        assert row.last_message.text == 'Request denied due to the following quota limits:'\
-            '(Group Allocated Memory 0.00GB + Requested 4.00GB \> Quota 2.00GB)'
+    assert row.last_message.text == 'Request denied due to the following quota limits:'\
+        '(Group Allocated Memory 0.00GB + Requested 4.00GB > Quota 2.00GB)'
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
@@ -193,12 +189,8 @@ def test_group_quota_max_cpu_check_by_tagging(
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
                     fail_func=sel.refresh, num_sec=300, delay=20)
-    if version.current_version() >= "5.4":
-        assert row.last_message.text == 'Request denied due to the following quota limits:'\
-            '(Group Allocated vCPUs 0 + Requested 8 > Quota 2)'
-    else:
-        assert row.last_message.text == 'Request denied due to the following quota limits:'\
-            '(Group Allocated vCPUs 0 + Requested 8 \> Quota 2)'
+    assert row.last_message.text == 'Request denied due to the following quota limits:'\
+        '(Group Allocated vCPUs 0 + Requested 8 > Quota 2)'
 
 
 @pytest.mark.tier(2)

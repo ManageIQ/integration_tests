@@ -3,7 +3,6 @@ import pytest
 from cfme.configure.access_control import simple_user
 from utils.conf import credentials
 from utils.testgen import auth_groups, generate
-from utils import version
 
 pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='aws_iam')
 
@@ -21,13 +20,13 @@ def test_group_roles(
     request.addfinalizer(appliance.server.login_admin)
 
     # This should be removed but currently these roles are subject to a bug
-    if version.current_version() >= '5.4' and group_name in ['evmgroup-administrator',
-                                                             'evmgroup-approver',
-                                                             'evmgroup-auditor',
-                                                             'evmgroup-operator',
-                                                             'evmgroup-security',
-                                                             'evmgroup-support',
-                                                             'evmgroup-user']:
+    if group_name in ['evmgroup-administrator',
+                      'evmgroup-approver',
+                      'evmgroup-auditor',
+                      'evmgroup-operator',
+                      'evmgroup-security',
+                      'evmgroup-support',
+                      'evmgroup-user']:
         pytest.skip("This role currently fails this test")
 
     try:

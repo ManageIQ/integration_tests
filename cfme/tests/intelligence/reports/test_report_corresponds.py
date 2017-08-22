@@ -6,7 +6,6 @@ from random import sample
 import utils
 from cfme.intelligence.reports.reports import CustomReport
 from utils.providers import get_crud_by_name
-from utils.version import since_date_or_version
 from cfme import test_requirements
 
 
@@ -39,12 +38,8 @@ def report_vms(infra_provider):
 @pytest.mark.meta(blockers=[1244715])
 @test_requirements.report
 def test_custom_vm_report(soft_assert, report_vms):
-    if since_date_or_version(version="5.4.0.0.25"):
-        cluster = "Cluster / Deployment Role Name"
-        host = "Host / Node Name"
-    else:
-        cluster = "Cluster Name"
-        host = "Host Name"
+    cluster = "Cluster / Deployment Role Name"
+    host = "Host / Node Name"
     for row in report_vms:
         if row["Name"].startswith("test_"):
             continue  # Might disappear meanwhile

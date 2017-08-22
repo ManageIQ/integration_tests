@@ -56,8 +56,7 @@ def test_assign_compute_cluster(virtualcenter_provider):
     cluster_name = random.choice(virtualcenter_provider.get_yaml_data()["clusters"])
 
     cluster = cb.Assign(
-        assign_to=version.pick({version.LOWEST: 'Selected Clusters',
-                            '5.4': 'Selected Cluster / Deployment Roles'}),
+        assign_to='Selected Cluster / Deployment Roles',
         selections={
             cluster_name: {'Rate': 'Default'}
         })
