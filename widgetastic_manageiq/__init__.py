@@ -2763,3 +2763,58 @@ class FolderManager(Widget):
 
     def read(self):
         return self.fields
+
+
+class ViewButtonGroup(Widget):
+    """This widget represents one of the button groups used in My Settings to set views.
+
+    Args:
+        title: Title of the section where the group is located.
+        name: Name in front of the button group.
+    """
+    ROOT = ParametrizedLocator(
+        './/fieldset[./h3[normalize-space(.)={@title|quote}]]'
+        '/div[./label[normalize-space(.)={@name|quote}]]')
+    ALL_ITEMS = './div/ul/li//i'
+    ACTIVE_ITEM = './div/ul/li[contains(@class, "active")]//i'
+    PARTICULAR_ITEM = (
+        './div/ul/li//i[normalize-space(@title)={name} or normalize-space(@alt)={name}]')
+
+    def __init__(self, parent, title, name, logger=None):
+        super(ViewButtonGroup, self).__init__(parent, logger=logger)
+        self.title = title
+        self.name = name
+
+    @property
+    def buttons(self):
+        """Return a list of all buttons' text"""
+        result = []
+        for item_element in self.browser.elements(self.ALL_ITEMS):
+            result.append(
+                self.browser.get_attribute('alt', item_element) or
+                self.browser.get_attribute('title', item_element))
+        return result
+
+    @property
+    def active_button(self):
+        """Returns the currently active button."""
+        selected = self.browser.element(self.ACTIVE_ITEM)
+        return self.browser.get_attribute('title', selected)
+
+    def select_button(self, name):
+        """Selects a button by its alt/title.
+
+        Args:
+            name: ``alt`` or ``title`` of the button.
+        """
+        button_element = self.browser.element(self.PARTICULAR_ITEM.format(name=quote(name)))
+        self.browser.click(button_element)
+
+    def read(self):
+        return self.active_button
+
+    def fill(self, value):
+        if self.active_button == value:
+            return False
+        self.select_button(value)
+        return True
