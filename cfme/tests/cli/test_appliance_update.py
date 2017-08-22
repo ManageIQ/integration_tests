@@ -19,7 +19,11 @@ def pytest_generate_tests(metafunc):
 
     version = current_appliance.version
     split_ver = str(version).split(".")
-    minor_build = split_ver[2]
+    try:
+        minor_build = split_ver[2]
+    except IndexError:
+        logger.exception('Caught IndexError generating for test_appliance_update, skipping')
+        pytest.skip('Could not parse minor_build version from: {}'.format(version))
 
     for i in range(int(minor_build) - 1, -1, -1):
         versions.append("{}.{}.{}".format(split_ver[0], split_ver[1], i))
@@ -63,6 +67,7 @@ def appliance_preupdate(old_version, appliance):
 
 
 @pytest.mark.parametrize('old_version', versions)
+@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
 def test_update_yum(appliance_preupdate, appliance):
 
     """Tests appliance update between versions"""
