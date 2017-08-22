@@ -153,6 +153,20 @@ class VMConsole(Pretty):
         ctrl_alt_del_btn.click()
         self.switch_to_appliance()
 
+    def send_fullscreen(self):
+        """Press the fullscreen button in the console tab."""
+        self.switch_to_console()
+        fullscreen_btn = self.provider.get_console_fullscreen_btn()
+        logger.info("Sending following Keys to Console Toggle Fullscreen")
+        before_height = self.selenium.get_window_size()['height']
+        fullscreen_btn.click()
+        after_height = self.selenium.get_window_size()['height']
+        fullscreen_btn.click()
+        self.switch_to_console()
+        if after_height > before_height:
+            return True
+        return False
+
     def switch_to_appliance(self):
         """Switch focus to appliance tab/window."""
         logger.info("Switching to appliance: window handle = {}".format(self.appliance_handle))

@@ -379,13 +379,16 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         # Get the consoles window handle, and then create a VMConsole object, and store
         # the VMConsole object aside.
         console_handle = self.console_handle
+
         if console_handle is None:
             raise TypeError("Console handle should not be None")
+
         appliance_handle = self.appliance.browser.widgetastic.window_handle
         logger.info("Creating VMConsole:")
         logger.info("   appliance_handle: {}".format(appliance_handle))
         logger.info("     console_handle: {}".format(console_handle))
         logger.info("               name: {}".format(self.name))
+
         self.vm_console = VMConsole(
             appliance_handle=appliance_handle,
             console_handle=console_handle,
