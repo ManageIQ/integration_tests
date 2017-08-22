@@ -44,7 +44,7 @@ pygal
 python-novaclient<7.0.0
 
 PyGithub
-pytest==3.0.7
+pytest==3.2.0
 python-bugzilla>=1.2.0
 python-dateutil
 python-jenkins

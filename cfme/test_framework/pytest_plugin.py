@@ -13,6 +13,12 @@ def pytest_addoption(parser):
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
 
 
+def pytest_configure(config):
+    # disable pytest warnings plugin in order to keep our own warning logging
+    # we might want to remove this one
+    config.pluginmanager.set_blocked('warnings')
+
+
 def pytest_collection_finish(session):
     from fixtures.pytest_store import store
     store.terminalreporter.write(
@@ -91,7 +97,3 @@ pytest_plugins = (
 
     'cfme.metaplugins',
 )
-
-# work around pytest bug
-# https://github.com/pytest-dev/pytest/issues/2353
-pytest.register_assert_rewrite(*pytest_plugins)
