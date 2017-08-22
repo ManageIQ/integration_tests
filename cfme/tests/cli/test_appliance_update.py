@@ -2,11 +2,11 @@ import tempfile
 import pytest
 
 from cfme.test_framework.sprout.client import SproutClient, SproutException
+from fixtures.pytest_store import store
 from scripts.repo_gen import process_url, build_file
 from utils.version import Version
 from utils.log import logger
 from utils.conf import cfme_data
-from utils.appliance import current_appliance
 from utils import os
 
 versions = []
@@ -17,7 +17,7 @@ def pytest_generate_tests(metafunc):
     Appliance version is split and minor_build is picked out for generating each version
     and appending it to the empty versions list"""
 
-    version = current_appliance.version
+    version = store.current_appliance.version
     split_ver = str(version).split(".")
     try:
         minor_build = split_ver[2]
@@ -67,7 +67,7 @@ def appliance_preupdate(old_version, appliance):
 
 
 @pytest.mark.parametrize('old_version', versions)
-@pytest.mark.uncollectif(lambda appliance: not appliance.is_downstream)
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
 def test_update_yum(appliance_preupdate, appliance):
 
     """Tests appliance update between versions"""
