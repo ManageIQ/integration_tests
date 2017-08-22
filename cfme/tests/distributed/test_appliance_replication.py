@@ -98,10 +98,10 @@ def test_vm(virtualcenter_provider):
     vm = VM.factory(vm_name, virtualcenter_provider)
 
     if not virtualcenter_provider.mgmt.does_vm_exist(vm_name):
-        logger.info("deploying %s on provider %s", vm_name, virtualcenter_provider.key)
+        logger.info("deploying %r on provider %r", vm_name, virtualcenter_provider.key)
         vm.create_on_provider(allow_skip="default")
     else:
-        logger.info("recycling deployed vm %s on provider %s", vm_name, virtualcenter_provider.key)
+        logger.info("recycling deployed vm %r on provider %r", vm_name, virtualcenter_provider.key)
     vm.provider.refresh_provider_relationships()
     vm.wait_to_appear()
     yield vm
@@ -109,7 +109,7 @@ def test_vm(virtualcenter_provider):
     try:
         virtualcenter_provider.mgmt.delete_vm(vm_name=vm_name)
     except Exception:
-        logger.exception('Failed deleting VM "%s" on "%s"', vm_name, virtualcenter_provider.name)
+        logger.exception('Failed deleting VM "%r" on "%r"', vm_name, virtualcenter_provider.name)
 
 
 @pytest.mark.tier(2)
