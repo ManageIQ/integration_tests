@@ -5,7 +5,7 @@ from cfme.exceptions import HostNotFound
 from cfme.infrastructure.host import get_all_hosts
 from cfme.infrastructure.openstack_node import OpenstackNode
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import flash
+from cfme.web_ui import flash, toolbar
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
@@ -37,6 +37,7 @@ def test_scale_provider_down(provider, host):
     host_uuid = host.name.split()[0]  # cut off deployment role part from host's name
     wait_for(lambda: provider.mgmt.iapi.node.get(host_uuid).maintenance, timeout=600, delay=5)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
+    toolbar.refresh()
     assert host.get_detail('Properties', 'Maintenance Mode') == 'Enabled'
     provider.scale_down()
     flash.assert_success()
@@ -44,6 +45,7 @@ def test_scale_provider_down(provider, host):
              timeout=1200)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     host.name = host_uuid  # host's name is changed after scale down
+    toolbar.refresh()
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
@@ -57,6 +59,7 @@ def test_delete_host(host, provider):
     host.delete(cancel=False)
     wait_for(is_host_disappeared, timeout=300, delay=5)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
+    toolbar.refresh()
     assert host.name not in get_all_hosts()
 
 
@@ -88,6 +91,7 @@ def test_introspect_host(host, provider):
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
              timeout=600)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
+    toolbar.refresh()
     assert host.get_detail('Openstack Hardware', 'Introspected') == 'true'
 
 
@@ -100,6 +104,7 @@ def test_provide_host(host, provider):
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'available', delay=5,
              timeout=300)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
+    toolbar.refresh()
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
@@ -118,5 +123,6 @@ def test_scale_provider_out(host, provider):
              timeout=1800)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
     host.name += ' (NovaCompute)'  # Host will change it's name after successful scale out
+    toolbar.refresh()
     assert host.exists
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'active'
