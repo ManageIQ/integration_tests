@@ -11,6 +11,7 @@ from widgetastic_patternfly import Dropdown, Button, Input, FlashMessages
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.wait import wait_for
+from .playbooks import PlaybooksCollection
 
 
 class RepositoryBaseView(BaseLoggedInPage):
@@ -87,6 +88,20 @@ class RepositoryEditView(RepositoryFormView):
 class RepositoryCollection(Navigatable):
     """Collection object for the :py:class:`cfme.ansible.repositories.Repository`."""
 
+    def instantiate(self, name, url, description=None, scm_credentials=None, scm_branch=None,
+           clean=None, delete_on_update=None, update_on_launch=None):
+        return Repository(
+            name,
+            url,
+            description=description,
+            scm_credentials=scm_credentials,
+            scm_branch=scm_branch,
+            clean=clean,
+            delete_on_update=delete_on_update,
+            update_on_launch=update_on_launch,
+            collection=self
+        )
+
     def create(self, name, url, description=None, scm_credentials=None, scm_branch=None,
                clean=None, delete_on_update=None, update_on_launch=None):
         """Add an ansible repository in the UI and return a Repository object.
@@ -130,20 +145,19 @@ class RepositoryCollection(Navigatable):
                 return False
 
         wait_for(_wait_until_appeared, delay=10, fail_func=repo_list_page.browser.selenium.refresh)
-        return Repository(
+        return self.instantiate(
             name,
             url,
-            description=description or "",
+            description=description,
             scm_credentials=scm_credentials,
-            scm_branch=scm_branch or "",
-            clean=clean or False,
-            delete_on_update=delete_on_update or False,
-            update_on_launch=update_on_launch or False,
-            appliance=self.appliance
+            scm_branch=scm_branch,
+            clean=clean,
+            delete_on_update=delete_on_update,
+            update_on_launch=update_on_launch
         )
 
     def all(self):
-        """Return all repositories of the applaince.
+        """Return all repositories of the appliance.
 
         Returns: a :py:class:`list` of :py:class:`cfme.ansible.repositories.Repository` instances
         """
@@ -276,6 +290,10 @@ class Repository(Navigatable):
         view.configuration.item_select("Refresh this Repository", handle_alert=True)
         view.flash.assert_no_error()
         view.flash.assert_message("Embedded Ansible refresh has been successfully initiated")
+
+    @property
+    def playbooks(self):
+        return PlaybooksCollection(self)
 
 
 @navigator.register(Server)
