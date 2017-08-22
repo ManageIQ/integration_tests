@@ -213,9 +213,7 @@ def test_delete_default_user():
     """
     user = User(name='Administrator')
     navigate_to(User, 'All')
-    column = version.pick({version.LOWEST: "Name",
-                           "5.4": "Full Name"})
-    row = records_table.find_row_by_cells({column: user.name})
+    row = records_table.find_row_by_cells({'Full Name': user.name})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Delete selected Users', invokes_alert=True)
     sel.handle_alert()

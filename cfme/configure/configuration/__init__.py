@@ -1233,18 +1233,10 @@ class DatabaseBackupSchedule(Schedule):
         ("timer_weeks", Select("select#timer_weekss")),    # Not a typo!
         ("timer_months", Select("select#timer_months")),
         ("timer_value", AngularSelect('timer_value'), {"appeared_in": "5.5"}),
-        ("time_zone", {
-            version.LOWEST: Select("select#time_zone"),
-            '5.5': AngularSelect('time_zone')}),
-        ("start_date", {
-            '5.4': Calendar("miq_angular_date_1"),
-            '5.5': Calendar("start_date")}),
-        ("start_hour", {
-            version.LOWEST: Select("select#start_hour"),
-            '5.5': AngularSelect('start_hour')}),
-        ("start_min", {
-            version.LOWEST: Select("select#start_min"),
-            '5.5': AngularSelect('start_min')}),
+        ("time_zone", AngularSelect('time_zone')),
+        ("start_date", Calendar("start_date")),
+        ("start_hour", AngularSelect('start_hour')),
+        ("start_min", AngularSelect('start_min')),
     ])
 
     def __init__(self, name, description, active=True, protocol=None, depot_name=None, uri=None,

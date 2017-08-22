@@ -108,10 +108,7 @@ class ButtonGroup(Updateable, Navigatable):
     """
     CLUSTER = "Cluster"
     DATASTORE = "Datastore"
-    HOST = VersionPick({
-        version.LOWEST: "Host",
-        '5.4': "Host / Node"}
-    )
+    HOST = "Host / Node"
     PROVIDER = "Provider"
     SERVICE = "Service"
     TEMPLATE = "VM Template and Image"

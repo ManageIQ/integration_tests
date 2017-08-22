@@ -145,8 +145,7 @@ def old_select(root, sub=None, invokes_alert=False):
     if sub is not None and isinstance(sub, dict):
         sub = version.pick(sub)
 
-    root_obj = version.pick({'5.4': 'miq_toolbars',
-        '5.5.0.7': 'ManageIQ.toolbars'})
+    root_obj = 'ManageIQ.toolbars'
 
     if sub:
         search = sub_loc(sub)

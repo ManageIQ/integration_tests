@@ -9,7 +9,6 @@ from cfme.infrastructure.host import Host
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
-from utils.version import current_version
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -37,10 +36,7 @@ def close_search():
 
 
 def get_expression(user_input=False, op=">"):
-    if current_version() >= "5.4":
-        expression = "fill_count(Host / Node.VMs, {}".format(op)
-    else:
-        expression = "fill_count(Host.VMs, {}".format(op)
+    expression = "fill_count(Host / Node.VMs, {}".format(op)
     if user_input:
         return expression + ")"
     else:
