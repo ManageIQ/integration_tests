@@ -22,6 +22,8 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
 from utils.varmeth import variable
+from utils.version import LOWEST, pick
+
 
 cfg_btn = partial(tb.select, 'Configuration')
 
@@ -754,5 +756,11 @@ def remove_all_pxe_servers():
     if sel.is_displayed(pxe_server_table_exist):
         from cfme.web_ui import paginator as pg
         pg.check_all()
-        cfg_btn('Remove PXE Servers from the VMDB', invokes_alert=True)
+        cfg_btn(
+            pick({
+                LOWEST: 'Remove PXE Servers from the VMDB',
+                '5.8': 'Remove PXE Servers'
+            }),
+            invokes_alert=True
+        )
         sel.handle_alert(cancel=False)

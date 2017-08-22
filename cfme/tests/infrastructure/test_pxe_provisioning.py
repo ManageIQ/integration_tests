@@ -5,6 +5,7 @@ import pytest
 from utils.conf import cfme_data
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.provisioning import do_vm_provisioning
 from utils import testgen
@@ -19,7 +20,8 @@ pytestmark = [
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [InfraProvider], required_fields=[
+        metafunc, [InfraProvider],
+        required_fields=[
             ['provisioning', 'pxe_server'],
             ['provisioning', 'pxe_image'],
             ['provisioning', 'pxe_image_type'],
@@ -29,7 +31,8 @@ def pytest_generate_tests(metafunc):
             ['provisioning', 'host'],
             ['provisioning', 'pxe_root_password'],
             ['provisioning', 'vlan']
-        ])
+        ]
+    )
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
@@ -39,14 +42,18 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
 
-        if args['provider'].type == "scvmm":
+        provider = args['provider']
+
+        if provider.one_of(SCVMMProvider):
             continue
 
-        pxe_server_name = args['provider'].data['provisioning']['pxe_server']
+        provisioning_data = provider.data['provisioning']
+
+        pxe_server_name = provisioning_data['pxe_server']
         if pxe_server_name not in pxe_server_names:
             continue
 
-        pxe_cust_template = args['provider'].data['provisioning']['pxe_kickstart']
+        pxe_cust_template = provisioning_data['pxe_kickstart']
         if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
@@ -60,10 +67,11 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
-    if not pxe_server.exists:
+    if not pxe_server.exists():
         pxe_server.create()
+
     pxe_server.set_pxe_image_type(provisioning['pxe_image'], provisioning['pxe_image_type'])
-    if not pxe_cust_template.exists:
+    if not pxe_cust_template.exists():
         pxe_cust_template.create()
 
 
@@ -73,9 +81,10 @@ def vm_name():
     return vm_name
 
 
-@pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
-def test_pxe_provision_from_template(provider, vm_name, smtp_test, setup_provider,
-                                     request, setup_pxe_servers_vm_prov):
+def test_pxe_provision_from_template(
+        provider, vm_name, smtp_test, setup_provider,
+        request, setup_pxe_servers_vm_prov
+):
     """Tests provisioning via PXE
 
     Metadata:
@@ -84,10 +93,18 @@ def test_pxe_provision_from_template(provider, vm_name, smtp_test, setup_provide
     """
 
     # generate_tests makes sure these have values
-    pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart,\
-        pxe_root_password, pxe_image_type, pxe_vlan = map(provider.data['provisioning'].get,
-            ('pxe_template', 'host', 'datastore', 'pxe_server', 'pxe_image', 'pxe_kickstart',
-             'pxe_root_password', 'pxe_image_type', 'vlan'))
+    (
+        pxe_template, host, datastore,
+        pxe_server, pxe_image, pxe_kickstart,
+        pxe_root_password, pxe_image_type, pxe_vlan
+    ) = map(
+        provider.data['provisioning'].get,
+        (
+            'pxe_template', 'host', 'datastore',
+            'pxe_server', 'pxe_image', 'pxe_kickstart',
+            'pxe_root_password', 'pxe_image_type', 'vlan'
+        )
+    )
 
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
@@ -103,5 +120,7 @@ def test_pxe_provision_from_template(provider, vm_name, smtp_test, setup_provide
         'vlan': pxe_vlan,
     }
 
-    do_vm_provisioning(pxe_template, provider, vm_name, provisioning_data, request, smtp_test,
-                       num_sec=2100)
+    do_vm_provisioning(
+        pxe_template, provider, vm_name, provisioning_data,
+        request, smtp_test, num_sec=2100
+    )
