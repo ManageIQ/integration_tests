@@ -1543,7 +1543,10 @@ class IPAppliance(object):
             result = ssh.run_command(guid_gen)
             assert result.success, 'Failed to generate UUID'
         log_callback('Updated UUID: {}'.format(str(result)))
-        del self.__dict__['guid']  # invalidate cached_property
+        try:
+            del self.__dict__['guid']  # invalidate cached_property
+        except KeyError:
+            logger.exception('Exception clearing cached_property "guid"')
         return str(result).rstrip('\n')  # should return UUID from stdout
 
     def wait_for_ssh(self, timeout=600):
