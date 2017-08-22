@@ -6,7 +6,6 @@ from utils.testgen import parametrize
 from utils.wait import wait_for
 from utils.log import logger
 from utils.conf import cfme_data
-from scripts.repo_gen import process_url
 
 REG_METHODS = ('rhsm', 'sat6')
 
@@ -73,20 +72,19 @@ def is_appliance_updated(self, appliance):
 
 @pytest.yield_fixture(scope="function")
 def appliance_preupdate(temp_appliance_preconfig_funcscope, appliance):
-    """Requests appliance from sprout and configures rpms for fake update"""
-    series = appliance.version.series()
+    """Requests appliance from sprout and configures rpms for crud update"""
     run = temp_appliance_preconfig_funcscope.ssh_client.run_command
-    url = process_url(cfme_data['basic_info']['rpmbuild'])
-    url_local = process_url(cfme_data['basic_info']['local_url'])
-    temp_appliance_preconfig_funcscope.db.extend_partition()
+    url = cfme_data['basic_info']['rpmrebuild']
     run('curl -o /etc/yum.repos.d/rpmrebuild.repo {}'.format(url))
     run('yum install rpmrebuild -y')
     run('mkdir /myrepo')
     run('rpmrebuild --release=99 cfme-appliance')
     run('cp /root/rpmbuild/RPMS/x86_64/cfme-appliance-* '
-        '/myrepo/cfme-{}-update-99.x86_64.rpm'.format(series))
+        '/myrepo/cfme-{}-99.x86_64.rpm'.format(appliance.version))
     run('createrepo /myrepo/')
-    run('curl -o /etc/yum.repos.d/update.repo {}'.format(url_local))
+    run('echo '
+        '"[local-repo]\nname=Internal repository\nbaseurl=file:///myrepo/\nenabled=1\ngpgcheck=0"'
+        ' > /etc/yum.repos.d/local.repo')
     yield temp_appliance_preconfig_funcscope
 
 
@@ -205,28 +203,28 @@ def test_rh_updates(appliance_preupdate, appliance):
 
     set_default_repo = True
 
-    red_hat_updates = RedHatUpdates(
-        service='rhsm',
-        url=conf.cfme_data['redhat_updates']['registration']['rhsm']['url'],
-        username=conf.credentials['rhsm']['username'],
-        password=conf.credentials['rhsm']['password'],
-        set_default_repository=set_default_repo
-    )
-    red_hat_updates.update_registration(validate=False)
+    with appliance_preupdate:
+        red_hat_updates = RedHatUpdates(
+            service='rhsm',
+            url=conf.cfme_data['redhat_updates']['registration']['rhsm']['url'],
+            username=conf.credentials['rhsm']['username'],
+            password=conf.credentials['rhsm']['password'],
+            set_default_repository=set_default_repo
+        )
+        red_hat_updates.update_registration(validate=False)
 
-    red_hat_updates.check_updates()
+        red_hat_updates.check_updates()
 
-    wait_for(
-        func=red_hat_updates.checked_updates,
-        func_args=[appliance.server.name],
-        delay=10,
-        num_sec=100,
-        fail_func=red_hat_updates.refresh
-    )
+        wait_for(
+            func=red_hat_updates.checked_updates,
+            func_args=[appliance.server.name],
+            delay=10,
+            num_sec=100,
+            fail_func=red_hat_updates.refresh
+        )
+        if red_hat_updates.platform_updates_available():
+            red_hat_updates.update_appliances()
 
-    if red_hat_updates.platform_updates_available():
-        red_hat_updates.update_appliances()
-
-    wait_for(lambda: is_appliance_updated, num_sec=900)
+        wait_for(lambda: is_appliance_updated, num_sec=900)
     assert appliance_preupdate.ssh_client.run_command(
         'rpm -qa cfme-appliance-{}-99x86_64.rpm'.format(appliance.version))
