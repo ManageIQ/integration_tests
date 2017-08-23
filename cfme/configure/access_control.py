@@ -1,5 +1,5 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import UpDownSelect, SummaryFormItem
+from widgetastic_manageiq import PaginationPane, SummaryFormItem, UpDownSelect
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
@@ -437,6 +437,7 @@ class AllGroupView(ConfigurationView):
     policy = Dropdown('Policy')
 
     table = Table("//div[@id='main_div']//table")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -448,10 +449,15 @@ class AllGroupView(ConfigurationView):
 
 class EditGroupSequenceView(ConfigurationView):
     """ Edit Groups Sequence View in CFME UI """
+    #group_order_selector = UpDownSelect(
+    #    '#seq_fields',
+    #    './/a[@title="Move selected fields up"]/img',
+    #    './/a[@title="Move selected fields down"]/img')
+
     group_order_selector = UpDownSelect(
         '#seq_fields',
-        './/a[@title="Move selected fields up"]/img',
-        './/a[@title="Move selected fields down"]/img')
+        '//button[@title="Move selected fields up"]/i',
+        '//button[@title="Move selected fields down"]/i')
 
     save_button = Button('Save')
     reset_button = Button('Reset')

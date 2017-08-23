@@ -395,11 +395,14 @@ def test_edit_sequence_usergroups(request):
     group = new_group()
     group.create()
     request.addfinalizer(group.delete)
+
+    name_column = "Name"
+    find_row_kwargs = {name_column: group.description}
     view = navigate_to(Group, 'All')
-    row = view.table.row(name=group.description)
+    row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
     original_sequence = row.sequence.text
     group.set_group_order(group.description)
-    row = view.table.row(name=group.description)
+    row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
     changed_sequence = row.sequence.text
     assert original_sequence != changed_sequence, "Edit Sequence Failed"
 
