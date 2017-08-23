@@ -11,6 +11,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class AutomateCustomizationView(BaseLoggedInPage):
+    # TODO re-model this so it can be nested as a sidebar instead of inherited
     @property
     def in_customization(self):
         return (

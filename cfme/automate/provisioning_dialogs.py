@@ -1,138 +1,238 @@
 # -*- coding: utf-8 -*-
-from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import View, Text, TextInput
+from widgetastic_patternfly import Dropdown, BootstrapSelect, CandidateNotFound
+from widgetastic_manageiq import Button, Table, PaginationPane, SummaryFormItem, ScriptBox
 
-from cfme.exceptions import CandidateNotFound
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Select, SortTable, accordion, fill, flash, form_buttons, toolbar, \
-    Input
+from cfme.base.login import BaseLoggedInPage
+from cfme.base.ui import automate_menu_name
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.update import Updateable
 from utils.pretty import Pretty
+from utils.update import Updateable
+from . import AutomateCustomizationView
+
+group_title = 'Basic Information'
 
 
-acc_tree = partial(accordion.tree, "Provisioning Dialogs")
-cfg_btn = partial(toolbar.select, "Configuration")
+class ProvDiagAllToolbar(View):
+    """Toolbar with singular configuration dropdown"""
+    configuration = Dropdown('Configuration')
 
-dialog_table = SortTable("//div[@id='records_div']//table[contains(@class, 'table')]")
+
+class ProvDiagAllEntities(View):
+    """All entities view - no view selector, not using BaseEntitiesView"""
+    title = Text('#explorer_title_text')
+    table = Table("//div[@id='records_div']//table")
+    paginator = PaginationPane()
 
 
-class DialogTypeSelect(Pretty):
-    pretty_attrs = ['loc']
+class ProvDiagDetailsEntities(View):
+    """Entities for details page"""
+    title = Text('#explorer_title_text')
+    info_name = SummaryFormItem(group_title=group_title, item_name='Name')
+    info_description = SummaryFormItem(group_title=group_title, item_name='Description')
+    content = ScriptBox('//textarea[contains(@id, "script_data")]')
 
-    def __init__(self, loc):
-        self._loc = loc
 
+class ProvDiagForm(View):
+    """Base form with common widgets for add and edit"""
+    name = TextInput('name')
+    description = TextInput('description')
+    diag_type = BootstrapSelect(id='dialog_type')
+    content = ScriptBox('//textarea[contains(@id, "content_data")]')
+    cancel = Button('Cancel')
+
+
+class ProvDiagView(BaseLoggedInPage):
     @property
-    def select(self):
-        return Select(self._loc)
+    def in_customization(self):
+        expected_navigation = automate_menu_name(self.context['object'].appliance)
+        expected_navigation.append('Customization')
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == expected_navigation)
+
+    # sidebar are the same on all, details, etc
+    sidebar = View.nested(AutomateCustomizationView)
 
 
-@fill.method((DialogTypeSelect, tuple))
-def _fill_dts_o(dts, tup):
-    """To allow our ``constants`` (HOST_PROVISION, ...) being simply assigned, make a wrapper"""
-    return fill(dts.select, tup[-1])
+class ProvDiagAllView(ProvDiagView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and
+            self.entities.title.text == 'All Dialogs')
+
+    toolbar = View.nested(ProvDiagAllToolbar)
+    entities = View.nested(ProvDiagAllEntities)
+
+
+class ProvDiagDetailsView(ProvDiagView):
+    @property
+    def is_displayed(self):
+        # FIXME https://github.com/ManageIQ/manageiq-ui-classic/issues/1983
+        # 'Editing' should NOT be in the title here
+        expected_title = 'Editing Dialog "{}"'.format(self.context['object'].description)
+        return (
+            self.in_customization and
+            self.entities.title.text == expected_title and
+            self.entities.info_name.text == self.context['object'].name and
+            self.entities.info_description.text == self.context['object'].description)
+
+    toolbar = View.nested(ProvDiagAllToolbar)
+    entities = View.nested(ProvDiagDetailsEntities)
+
+
+class ProvDiagAddView(ProvDiagView):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_customization and
+            self.title.text == 'Adding a new Dialog' and
+            self.form.is_displayed)
+
+    title = Text('#explorer_title_text')
+
+    @View.nested
+    class form(ProvDiagForm):  # noqa
+        add = Button('Add')
+
+
+class ProvDiagEditView(ProvDiagView):
+    @property
+    def is_displayed(self):
+        # FIXME https://github.com/ManageIQ/manageiq-ui-classic/issues/1983
+        # 'Editing' should only be in the title once
+        expected_title = 'Editing Editing Dialog "{}"'.format(self.context['object'].description)
+        return (
+            self.in_customization and
+            self.title.text == expected_title and
+            self.form.is_displayed)
+
+    title = Text('#explorer_title_text')
+
+    @View.nested
+    class form(ProvDiagForm):  # noqa
+        save = Button('Save')
+        reset = Button('Reset')
 
 
 class ProvisioningDialog(Updateable, Pretty, Navigatable):
-    form = Form(fields=[
-        ("name", Input('name')),
-        ("description", Input('description')),
-        ("type", DialogTypeSelect("//select[@id='dialog_type']")),
-        ("content", "//textarea[@id='content_data']"),
-    ])
+    HOST_PROVISION = 'Host Provision'
+    VM_MIGRATE = 'VM Migrate'
+    VM_PROVISION = 'VM Provision'
+    SYSTEM_PROVISION = 'Configured System Provision'
+    ALLOWED_TYPES = {HOST_PROVISION, VM_MIGRATE, VM_PROVISION, SYSTEM_PROVISION}
 
-    HOST_PROVISION = ("host_provision", "Host Provision")
-    VM_MIGRATE = ("vm_migrate", "VM Migrate")
-    VM_PROVISION = ("vm_provision", "VM Provision")
-    ALLOWED_TYPES = {HOST_PROVISION, VM_MIGRATE, VM_PROVISION}
+    pretty_attrs = ['name', 'description', 'diag_type', 'content']
 
-    pretty_attrs = ['name', 'description', 'content']
-
-    def __init__(self, type, name=None, description=None, content=None, appliance=None):
+    def __init__(self, diag_type, name=None, description=None, content=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
-        self.type = type
         self.content = content
+        if diag_type in self.ALLOWED_TYPES:
+            self.diag_type = diag_type
+        else:
+            raise TypeError('Type must be one of ProvisioningDialog constants: {}'
+                            .format(self.ALLOWED_TYPES))
 
     def __str__(self):
         return self.name
 
     @property
-    def type_nav(self):
-        return self.type[0]
-
-    @property
-    def type_tree_nav(self):
-        return self.type[1]
-
-    @property
     def exists(self):
         try:
             navigate_to(self, 'Details')
-            return True
         except CandidateNotFound:
             return False
+        return True
 
     def create(self, cancel=False):
-        navigate_to(self, 'Add')
-        fill(self.form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
-        flash.assert_no_errors()
+        view = navigate_to(self, 'Add')
+        # might not want to use pretty_attrs here, overloading its intended use
+        fill_args = {key: self.__dict__[key] for key in self.pretty_attrs}
+        view.form.fill(fill_args)
+        if cancel:
+            flash_msg = 'Add of new Dialog was cancelled by the user'
+            btn = view.form.cancel
+        else:
+            flash_msg = 'Dialog "{}" was added'.format(self.name)
+            btn = view.form.add
 
-    def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
+        btn.click()
+        view = self.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        view.flash.assert_success_message(flash_msg)
+
+    def update(self, updates, cancel=False, reset=False):
+        view = navigate_to(self, 'Edit')
+        view.form.fill(updates)
+        if reset:
+            cancel = True
+            view.form.reset.click()
+            view.flash.assert_message('All changes have been reset')
+        if cancel:
+            flash_msg = 'Edit of Dialog "TEST COPY" was cancelled by the user'
+            btn = view.form.cancel
+        else:
+            flash_msg = ('Dialog "{}" was saved'
+                         .format(updates.get('name') or self.name))
+            btn = view.form.save
+
+        btn.click()
+        view = self.create_view(ProvDiagDetailsView)
+        # self hasn't been updated yet, can't assert is_displayed
+        view.flash.assert_no_error()
+        view.flash.assert_success_message(flash_msg)
 
     def delete(self, cancel=False):
-        navigate_to(self, 'Details')
-        if self.appliance.version >= '5.7':
-            btn_name = "Remove Dialog"
-        else:
-            btn_name = "Remove from the VMDB"
-        cfg_btn(btn_name, invokes_alert=True)
-        sel.handle_alert(cancel)
+        view = navigate_to(self, 'Details')
+        option = 'Remove Dialog' if self.appliance.version >= '5.7' else 'Remove from the VMDB'
+        view.toolbar.configuration.item_select(option, handle_alert=(not cancel))  # True is confirm
 
-    def change_type(self, new_type):
-        """Safely changes type of the dialog. It would normally mess up the navigation"""
-        navigate_to(self, 'Edit')
-        self.type = new_type
-        fill(self.form, {"type": new_type}, action=form_buttons.save)
-        flash.assert_no_errors()
+        view = self.create_view(ProvDiagDetailsView if cancel else ProvDiagAllView)
+        if cancel:
+            assert view.is_displayed
+        else:
+            # redirects to the type folder, not 'All'
+            assert view.sidebar.provisioning_dialogs.tree.selected_item.text == self.diag_type
 
 
 @navigator.register(ProvisioningDialog, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
+    VIEW = ProvDiagAllView
 
     def step(self):
         self.prerequisite_view.provisioning_dialogs.tree.click_path('All Dialogs')
 
 
 @navigator.register(ProvisioningDialog, 'Add')
-class New(CFMENavigateStep):
+class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
+    VIEW = ProvDiagAddView
 
     def step(self):
-        accordion.tree("Provisioning Dialogs", "All Dialogs", self.obj.type_tree_nav)
-        cfg_btn("Add a new Dialog")
+        self.prerequisite_view.toolbar.configuration.item_select("Add a new Dialog")
 
 
 @navigator.register(ProvisioningDialog, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
+    VIEW = ProvDiagDetailsView
 
     def step(self):
-        accordion.tree("Provisioning Dialogs", "All Dialogs", self.obj.type_tree_nav,
-            self.obj.description)
+        accordion_tree = self.prerequisite_view.sidebar.provisioning_dialogs.tree
+        accordion_tree.click_path("All Dialogs", self.obj.diag_type, self.obj.description)
 
 
 @navigator.register(ProvisioningDialog, 'Edit')
 class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = ProvDiagEditView
 
     def step(self):
-        cfg_btn("Edit this Dialog")
+        self.prerequisite_view.toolbar.configuration.item_select("Edit this Dialog")
