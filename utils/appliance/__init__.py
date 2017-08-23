@@ -1536,6 +1536,20 @@ class IPAppliance(object):
                     'Appliance must be restarted before the netapp functionality can be used.')
         clear_property_cache(self, 'is_storage_enabled')
 
+    @logger_wrap('Updating appliance UUID: {}')
+    def update_guid(self, log_callback=None):
+        guid_gen = 'uuidgen |tee /var/www/miq/vmdb/GUID'
+        log_callback('Running {} to generate UUID'.format(guid_gen))
+        with self.ssh_client as ssh:
+            result = ssh.run_command(guid_gen)
+            assert result.success, 'Failed to generate UUID'
+        log_callback('Updated UUID: {}'.format(str(result)))
+        try:
+            del self.__dict__['guid']  # invalidate cached_property
+        except KeyError:
+            logger.exception('Exception clearing cached_property "guid"')
+        return str(result).rstrip('\n')  # should return UUID from stdout
+
     def wait_for_ssh(self, timeout=600):
         """Waits for appliance SSH connection to be ready
 
