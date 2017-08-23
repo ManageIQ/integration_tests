@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 import fauxfactory
 
 from cfme.automate.service_dialogs import DialogCollection
@@ -6,15 +8,14 @@ from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
+from cfme.services.catalogs.catalog_item import CatalogItem
 from fixtures.provider import setup_one_by_class_or_skip
+from utils import version
+from utils.log import logger
+from utils.rest import get_vms_in_service
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils.log import logger
-from utils import version
 
 
 _TEMPLATE_TORSO = """{
@@ -99,86 +100,60 @@ def dialog():
     return service_dialog
 
 
-def service_data(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
+def services(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
     """
     The attempt to add the service entities via web
     """
-    if not service_dialog:
-        service_dialog = dialog()
-    if not service_catalog:
-        service_catalog = service_catalog_obj(request, rest_api)
-
-    template, host, datastore, vlan, catalog_item_type = map(
-        a_provider.data.get('provisioning').get,
-        ('template', 'host', 'datastore', 'vlan', 'catalog_item_type'))
-
-    provisioning_data = {
-        'vm_name': 'test_rest_{}'.format(fauxfactory.gen_alphanumeric()),
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]}
-    }
-
-    if a_provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
-        provisioning_data['vlan'] = vlan
-        catalog_item_type = 'RHEV'
-    elif a_provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
-        provisioning_data['vlan'] = vlan
-
-    vm_name = version.pick({
-        version.LOWEST: provisioning_data['vm_name'] + '_0001',
-        '5.7': provisioning_data['vm_name'] + '0001'})
-
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(
-        item_type=catalog_item_type,
-        name=item_name,
-        description='my catalog',
-        display_in=True,
-        catalog=service_catalog,
-        dialog=service_dialog,
-        catalog_name=template,
-        provider=a_provider,
-        prov_data=provisioning_data
+    service_template = service_templates_ui(
+        request,
+        rest_api,
+        service_dialog=service_dialog,
+        service_catalog=service_catalog,
+        a_provider=a_provider,
+        num=1
     )
 
-    catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
-    service_catalogs.order()
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, _ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2000, delay=60)
-    assert row.request_state.text == 'Finished'
-    assert row.status.text != 'Error', "Provisioning failed with the message `{}`".format(
-        row.last_message.text)
+    service_template = service_template[0]
+    service_catalog = rest_api.get_entity(
+        'service_catalogs',
+        service_template.service_template_catalog_id
+    )
+    template_subcollection = rest_api.get_entity(
+        service_catalog.service_templates,
+        service_template.id
+    )
+    template_subcollection.action.order()
+    results = rest_api.response.json()
+    service_request = rest_api.get_entity('service_requests', results['id'])
 
-    # on 5.8 the service name visible via REST API is in form <assigned_name>-DATE-TIMESTAMP
-    # (i.e. 2ojnKgZRCJ-20170410-113646) for services created using UI
-    rest_service = rest_api.collections.services.get(name='{}%'.format(catalog_item.name))
+    def _order_finished():
+        service_request.reload()
+        return service_request.request_state.lower() == 'finished'
+
+    wait_for(_order_finished, num_sec=2000, delay=10)
+    assert 'error' not in service_request.message.lower(), \
+        'Provisioning failed with the message `{}`'.format(service_request.message)
+
+    service_name = re.search(
+        r'\[({}[0-9-]*)\] '.format(template_subcollection.name), service_request.message).group(1)
+    provisioned_service = rest_api.collections.services.get(name=service_name)
 
     @request.addfinalizer
     def _finished():
         try:
-            a_provider.mgmt.delete_vm(vm_name)
+            provisioned_service.action.delete()
         except Exception:
-            # vm can be deleted/retired by test
-            logger.warning("Failed to delete vm '{}'.".format(vm_name))
-        try:
-            rest_api.collections.services.get(name=rest_service.name).action.delete()
-        except ValueError:
             # service can be deleted by test
-            logger.warning("Failed to delete service '{}'.".format(rest_service.name))
+            logger.warning('Failed to delete service `{}`.'.format(service_name))
 
-    return {'service_name': rest_service.name, 'vm_name': vm_name}
-
-
-def services(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
-    new_service = service_data(request, rest_api, a_provider, service_dialog, service_catalog)
-    rest_service = rest_api.collections.services.get(name=new_service['service_name'])
     # tests expect iterable
-    return [rest_service]
+    return [provisioned_service]
+
+
+def service_data(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
+    prov_service = services(request, rest_api, a_provider, service_dialog, service_catalog).pop()
+    prov_vm = get_vms_in_service(rest_api, prov_service).pop()
+    return {'service_name': prov_service.name, 'vm_name': prov_vm.name}
 
 
 def rates(request, rest_api, num=3):
@@ -226,7 +201,7 @@ def vm(request, a_provider, rest_api):
 
 
 def service_templates_ui(request, rest_api, service_dialog=None, service_catalog=None,
-        a_provider=None, vmdb=None, num=4):
+        a_provider=None, num=4):
     if not service_dialog:
         service_dialog = dialog()
     if not service_catalog:
@@ -237,7 +212,6 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
 
     catalog_items = []
     new_names = []
-    vm_names = []
     for _ in range(num):
         if a_provider:
             template, host, datastore, vlan, catalog_item_type = map(
@@ -245,7 +219,6 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
                 ('template', 'host', 'datastore', 'vlan', 'catalog_item_type'))
 
             vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
-            vm_names.append(vm_name)
             provisioning_data = {
                 'vm_name': vm_name,
                 'host_name': {'name': [host]},
@@ -290,25 +263,12 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
 
     s_tpls = [ent for ent in collection if ent.name in new_names]
 
-    if isinstance(vmdb, list):
-        vmdb.extend(vm_names)
-
     @request.addfinalizer
     def _finished():
         collection.reload()
         to_delete = [ent for ent in collection if ent.name in new_names]
         if to_delete:
             collection.action.delete(*to_delete)
-
-        for vm_name in vm_names:
-            # find and delete all vms provisioned from the template
-            prov_vms = rest_api.collections.vms.find_by(name='{}%'.format(vm_name))
-            for vm in prov_vms:
-                try:
-                    a_provider.mgmt.delete_vm(vm)
-                except Exception:
-                    # vm can be deleted/retired by test
-                    logger.warning("Failed to delete vm '{}'.".format(vm))
 
     return s_tpls
 

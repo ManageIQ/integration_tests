@@ -38,3 +38,11 @@ def assert_response(appliance, success=None, http_status=None, results_num=None)
             _check_result(result)
     else:
         _check_result(content)
+
+
+def get_vms_in_service(rest_api, service):
+    """Gets list of vm entities associated with the service."""
+    service.vms.reload()
+    # return entities under /api/vms, not under /api/services/:id/vms subcollection
+    # where "actions" are not available
+    return [rest_api.get_entity('vms', vm['id']) for vm in service.vms.all]
