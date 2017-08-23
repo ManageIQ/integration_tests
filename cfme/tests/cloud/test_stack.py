@@ -25,7 +25,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.yield_fixture(scope="module")
 def stack(setup_provider_modscope, provider):
-    stack = Stack(provider.data['provisioning']['stack'][0], provider=provider)
+    stack = Stack(provider.data['provisioning']['stacks'][0], provider=provider)
     stack.wait_for_exists()
     yield stack
 

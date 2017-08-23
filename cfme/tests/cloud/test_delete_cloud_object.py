@@ -73,7 +73,7 @@ def test_delete_stack_appear_after_refresh(setup_provider, provider, provisionin
     Metadata:
         test_flag: delete_object
     """
-    stack = Stack(provisioning['stack'][0], provider=provider)
+    stack = Stack(provisioning['stacks'][0], provider=provider)
     refresh_and_wait(provider, stack)
     stack.delete()
     navigate_to(stack, 'All')
