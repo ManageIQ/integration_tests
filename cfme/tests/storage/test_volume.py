@@ -7,8 +7,8 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.volume import Volume
 
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytest_generate_tests = testgen.generate([CloudProvider])

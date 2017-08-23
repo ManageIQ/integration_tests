@@ -3,8 +3,8 @@ import sys
 from datetime import datetime
 from tabulate import tabulate
 
-from utils.path import log_path
-from utils.providers import list_provider_keys, get_mgmt
+from cfme.utils.path import log_path
+from cfme.utils.providers import list_provider_keys, get_mgmt
 
 
 def parse_cmd_line():

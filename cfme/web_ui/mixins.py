@@ -2,7 +2,7 @@
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill, Form, AngularSelect, Table, toolbar, form_buttons, flash
 from xml.sax.saxutils import quoteattr
-from utils.version import current_version
+from cfme.utils.version import current_version
 
 tag_form = Form(
     fields=[

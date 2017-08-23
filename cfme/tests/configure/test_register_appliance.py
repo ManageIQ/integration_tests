@@ -1,11 +1,11 @@
 import pytest
 
 from cfme.configure.configuration.region_settings import RedHatUpdates
-from utils import conf, version
-from utils.testgen import parametrize
-from utils.wait import wait_for
-from utils.log import logger
-from utils.conf import cfme_data
+from cfme.utils import conf, version
+from cfme.utils.testgen import parametrize
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.conf import cfme_data
 
 REG_METHODS = ('rhsm', 'sat6')
 

@@ -42,8 +42,8 @@ from pdb import Pdb
 from textwrap import dedent
 
 from fixtures.pytest_store import store, write_line
-from utils import conf
-from utils.log import logger
+from cfme.utils import conf
+from cfme.utils.log import logger
 
 _breakpoint_exceptions = {}
 

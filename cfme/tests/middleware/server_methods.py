@@ -1,5 +1,5 @@
 import re
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 from cfme.middleware.server import MiddlewareServer
 
 EAP_PRODUCT_NAME = 'JBoss EAP'

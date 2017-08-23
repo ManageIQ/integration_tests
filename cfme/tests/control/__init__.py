@@ -1,6 +1,6 @@
 from cfme.web_ui import flash, toolbar
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 def wait_for_ssa_enabled():

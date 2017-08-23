@@ -7,9 +7,9 @@ import pytest
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.pxe import get_template_from_config
-from utils import testgen, ssh
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen, ssh
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 

@@ -9,9 +9,9 @@ from cfme.cloud.instance.image import Image
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.stack import Stack
 from cfme.cloud.provider import CloudProvider
-from utils import version
-from utils.blockers import BZ
-from utils.providers import ProviderFilter
+from cfme.utils import version
+from cfme.utils.blockers import BZ
+from cfme.utils.providers import ProviderFilter
 from fixtures.provider import setup_one_or_skip
 
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]

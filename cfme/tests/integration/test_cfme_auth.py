@@ -3,7 +3,7 @@ import pytest
 
 from cfme.base.credential import Credential
 from cfme.configure.access_control import Group, User
-from utils.conf import cfme_data
+from cfme.utils.conf import cfme_data
 
 
 RETRIEVE_GROUP = 'retrieve_group'

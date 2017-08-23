@@ -11,10 +11,10 @@ from widgetastic_patternfly import (
 )
 
 from cfme.services.catalogs.catalog_item import AllCatalogItemView
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from utils.update import Updateable
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 from . import ServicesCatalogView
 
 

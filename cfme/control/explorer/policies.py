@@ -8,11 +8,11 @@ from widgetastic.widget import Text, Checkbox, TextInput
 from . import ControlExplorerView
 from actions import Action
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
-from utils import ParamClassName
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils import ParamClassName
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 from widgetastic_manageiq import (BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect,
     SummaryFormItem)
 

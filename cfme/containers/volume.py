@@ -12,8 +12,8 @@ from cfme.containers.provider import navigate_and_get_rows
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, match_location, InfoBlock,\
     PagedTable, CheckboxTable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance import Navigatable
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")

@@ -7,8 +7,8 @@ from collections import namedtuple
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from smtpd import SMTPServer
-from utils.path import log_path, template_path
-from utils.timeutil import parsetime
+from cfme.utils.path import log_path, template_path
+from cfme.utils.timeutil import parsetime
 import asyncore
 import email
 import json

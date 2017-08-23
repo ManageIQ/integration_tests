@@ -5,8 +5,8 @@ from cfme.base import ui
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
-from utils import conf, error
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import conf, error
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = pytest.mark.usefixtures('browser')
 

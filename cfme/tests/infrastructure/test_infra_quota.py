@@ -11,9 +11,9 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import fill, flash
-from utils import testgen, version
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.quota,

@@ -10,11 +10,11 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
 from cfme.web_ui import toolbar
-from utils import testgen
-from utils.blockers import BZ
-from utils.log import logger
-from utils.wait import wait_for
-from utils.version import pick
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils.version import pick
 
 
 pytestmark = [

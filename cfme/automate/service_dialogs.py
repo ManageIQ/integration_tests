@@ -6,8 +6,8 @@ from widgetastic_patternfly import CandidateNotFound, Button, Input, Dropdown
 from cached_property import cached_property
 
 from cfme.exceptions import ItemNotFound
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateCustomizationView
 

@@ -5,8 +5,8 @@ from random import random
 
 import pytest
 
-from utils import testgen
-from utils.log import logger
+from cfme.utils import testgen
+from cfme.utils.log import logger
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.chargeback import assignments, rates
 from cfme.intelligence.reports.reports import CustomReport

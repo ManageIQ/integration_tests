@@ -8,10 +8,10 @@ from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostsView
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.pretty import Pretty
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
 
 
 class DatastoreToolBar(View):

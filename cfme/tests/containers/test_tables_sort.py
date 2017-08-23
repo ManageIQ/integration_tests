@@ -1,10 +1,10 @@
 import pytest
-from utils import testgen
+from cfme.utils import testgen
 from cfme.web_ui import toolbar
 from cfme.containers.replicator import Replicator
 from cfme.containers.route import Route
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

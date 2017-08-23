@@ -9,9 +9,9 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import SummaryMixin, Taggable
 from cfme.exceptions import KeyPairNotFound
 from cfme.web_ui import match_location, mixins
-from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from utils.appliance import Navigatable
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.appliance import Navigatable
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Text, TextInput, Table, Search, PaginationPane, Accordion,
     ManageIQTree, BreadCrumb, SummaryTable, BootstrapSelect)

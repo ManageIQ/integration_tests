@@ -1,5 +1,5 @@
-from utils.log_validator import LogValidator
-from utils import version
+from cfme.utils.log_validator import LogValidator
+from cfme.utils import version
 import pytest
 
 

@@ -8,8 +8,8 @@ from widgetastic_patternfly import Accordion, Button, Dropdown, FlashMessages
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.web_ui import accordion
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class CloudIntelReportsView(BaseLoggedInPage):

@@ -3,8 +3,8 @@ import pytest
 
 from cfme import dashboard
 from cfme.base.ui import Server, LoginPage
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for, TimedOutError
 
 
 @pytest.mark.tier(2)

@@ -2,7 +2,7 @@
 import pytest
 
 from cfme.configure import about
-from utils import version
+from cfme.utils import version
 
 
 @pytest.mark.tier(3)

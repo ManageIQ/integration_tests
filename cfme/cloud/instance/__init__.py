@@ -13,10 +13,10 @@ from cfme.common.vm_views import (
 from cfme.exceptions import InstanceNotFound, ItemNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import flash, Quadicon, match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 class InstanceDetailsToolbar(View):

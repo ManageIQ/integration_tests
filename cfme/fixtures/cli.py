@@ -1,8 +1,8 @@
-from utils.version import get_stream
+from cfme.utils.version import get_stream
 from collections import namedtuple
 from cfme.test_framework.sprout.client import SproutClient
-from utils.conf import cfme_data, credentials
-from utils.log import logger
+from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.log import logger
 import pytest
 from wait_for import wait_for
 from cfme.test_framework.sprout.client import SproutException

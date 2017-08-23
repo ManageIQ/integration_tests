@@ -24,11 +24,11 @@ from cfme.rest.gen_data import (
 )
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from fixtures.provider import setup_one_or_skip
-from utils import error, version
-from utils.blockers import BZ
-from utils.providers import ProviderFilter
-from utils.rest import assert_response
-from utils.wait import wait_for
+from cfme.utils import error, version
+from cfme.utils.blockers import BZ
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.rest import assert_response
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

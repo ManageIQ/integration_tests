@@ -1,15 +1,15 @@
 from cached_property import cached_property
 
 from . import ContainersProvider
-from utils.varmeth import variable
-from utils.path import data_path
+from cfme.utils.varmeth import variable
+from cfme.utils.path import data_path
 from os import path
 from wrapanapi.containers.providers.openshift import Openshift
-from utils.ocp_cli import OcpCli
+from cfme.utils.ocp_cli import OcpCli
 from cfme.containers.provider import ContainersProviderDefaultEndpoint,\
     ContainersProviderEndpointsForm
 from cfme.common.provider import DefaultEndpoint
-from utils.version import current_version
+from cfme.utils.version import current_version
 
 
 class CustomAttribute(object):

@@ -2,7 +2,7 @@ import collections
 
 import pytest
 
-from utils import log
+from cfme.utils import log
 
 #: A dict of tests, and their state at various test phases
 test_tracking = collections.defaultdict(dict)

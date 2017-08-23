@@ -7,9 +7,9 @@ from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
-from utils import conf, testgen, version
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils import conf, testgen, version
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.smartstate,

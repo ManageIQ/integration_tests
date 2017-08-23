@@ -3,11 +3,11 @@ import fauxfactory
 import pytest
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
-from utils import testgen, error
-from utils.update import update
+from cfme.utils import testgen, error
+from cfme.utils.update import update
 from cfme.web_ui import mixins
 from cfme import test_requirements
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [test_requirements.stack, pytest.mark.tier(2)]

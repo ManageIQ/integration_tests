@@ -15,10 +15,10 @@ from cfme.optimize.utilization import Utilization
 from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.infrastructure.networking import InfraNetworking
 from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
-from utils import version
-from utils.appliance import current_appliance
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
+from cfme.utils import version
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 LOCATIONS = [
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),

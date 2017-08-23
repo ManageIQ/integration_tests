@@ -1,13 +1,13 @@
 from . import Server
-from utils.appliance import ViaSSUI
-from utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
 
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
 from widgetastic_patternfly import Input, Button, FlashMessages
-from utils import conf
-from utils.browser import ensure_browser_open, quit
-from utils.log import logger
+from cfme.utils import conf
+from cfme.utils.browser import ensure_browser_open, quit
+from cfme.utils.log import logger
 
 from widgetastic.widget import View
 
@@ -45,7 +45,7 @@ def login(self, user=None, **kwargs):
 class LoggedIn(SSUINavigateStep):
 
     def step(self):
-        from utils.browser import browser
+        from cfme.utils.browser import browser
         browser()
         with self.obj.appliance.context.use(ViaSSUI):
             self.obj.login()
@@ -56,7 +56,7 @@ class LoginScreen(SSUINavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        from utils.browser import ensure_browser_open
+        from cfme.utils.browser import ensure_browser_open
         ensure_browser_open(self.obj.appliance.server.address())
 
     def step(self):

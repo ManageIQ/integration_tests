@@ -1,7 +1,7 @@
 """A set of functions for dealing with the paginator controls."""
 from cfme.exceptions import PaginatorException
 from widgetastic_manageiq import PaginationPane
-from utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import get_or_create_current_appliance
 
 appliance = get_or_create_current_appliance()
 new_paginator = PaginationPane(parent=appliance.browser.widgetastic)

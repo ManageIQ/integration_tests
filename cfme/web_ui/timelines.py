@@ -1,5 +1,5 @@
 from datetime import datetime
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 NONE_GROUP = 'NONE'
 

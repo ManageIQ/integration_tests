@@ -4,7 +4,7 @@ from wrapanapi.virtualcenter import VMWareSystem
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import ProviderNodesView
 from cfme.exceptions import DestinationNotFound
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import InfraProvider
 from cfme.exceptions import ItemNotFound
 

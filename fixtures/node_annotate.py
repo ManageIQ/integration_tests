@@ -5,8 +5,8 @@ import yaml
 import os
 
 from operator import itemgetter
-from utils.path import project_path
-from utils.conf import cfme_data
+from cfme.utils.path import project_path
+from cfme.utils.conf import cfme_data
 from .pytest_store import store
 
 

@@ -2,7 +2,7 @@ import pytest
 
 from cfme.infrastructure import pxe
 from cfme.infrastructure.provider import InfraProvider
-from utils import testgen
+from cfme.utils import testgen
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),

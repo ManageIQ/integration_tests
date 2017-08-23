@@ -26,15 +26,15 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme import test_requirements
-from utils import conf, testgen
-from utils.blockers import BZ
-from utils.generators import random_vm_name
-from utils.hosts import setup_host_creds
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.update import update
-from utils.virtual_machines import deploy_template
-from utils.wait import wait_for, TimedOutError
+from cfme.utils import conf, testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.hosts import setup_host_creds
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import update
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for, TimedOutError
 from . import do_scan, wait_for_ssa_enabled
 
 

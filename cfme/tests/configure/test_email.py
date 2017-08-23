@@ -1,5 +1,5 @@
 from cfme.configure import configuration
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 import pytest
 

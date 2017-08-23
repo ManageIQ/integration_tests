@@ -13,9 +13,9 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
 from cfme.web_ui import StatusBox
 
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),

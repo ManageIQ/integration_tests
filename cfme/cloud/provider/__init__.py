@@ -17,11 +17,11 @@ from cfme.common.provider_views import (CloudProviderAddView,
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui import InfoBlock, match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.log import logger
-from utils.wait import wait_for
-from utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
 
 
 match_page = partial(match_location, controller='ems_cloud', title='Cloud Providers')

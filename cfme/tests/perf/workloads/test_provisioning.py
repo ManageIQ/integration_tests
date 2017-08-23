@@ -2,13 +2,13 @@
 import fauxfactory
 
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from utils.conf import cfme_performance
-from utils.grafana import get_scenario_dashboard_urls
-from utils.log import logger
-from utils.providers import get_crud
-from utils.smem_memory_monitor import add_workload_quantifiers, test_ts, SmemMemoryMonitor
-from utils.wait import wait_for
-from utils.workloads import get_provisioning_scenarios
+from cfme.utils.conf import cfme_performance
+from cfme.utils.grafana import get_scenario_dashboard_urls
+from cfme.utils.log import logger
+from cfme.utils.providers import get_crud
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers, test_ts, SmemMemoryMonitor
+from cfme.utils.wait import wait_for
+from cfme.utils.workloads import get_provisioning_scenarios
 from itertools import cycle
 import time
 import pytest

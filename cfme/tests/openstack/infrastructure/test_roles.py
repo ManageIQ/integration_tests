@@ -7,9 +7,9 @@ from cfme.infrastructure.deployment_roles import DeploymentRoles
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import flash, Quadicon, summary_title, toolbar
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],

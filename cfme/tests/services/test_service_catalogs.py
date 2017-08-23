@@ -10,9 +10,9 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
-from utils.log import logger
-from utils.wait import wait_for, wait_for_decorator
-from utils import testgen, error
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils import testgen, error
 
 
 pytestmark = [

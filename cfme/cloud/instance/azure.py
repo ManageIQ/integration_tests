@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from cfme.exceptions import OptionNotAvailable
-from utils import version, deferred_verpick
+from cfme.utils import version, deferred_verpick
 from . import Instance
 
 

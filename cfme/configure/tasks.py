@@ -13,10 +13,10 @@ from cfme import web_ui as ui
 from cfme.base.login import BaseLoggedInPage
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.log import logger
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, TimedOutError
 from cfme.services import requests
 
 buttons = Region(

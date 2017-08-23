@@ -7,8 +7,8 @@ import pytest
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import FlashMessageException
 from cfme.web_ui import flash
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 
 
 pytestmark = [

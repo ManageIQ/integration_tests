@@ -12,13 +12,13 @@ from cfme.web_ui import (
     accordion, Quadicon, Form, Input, fill, form_buttons, mixins, Table, Region,
     AngularSelect, match_location
 )
-from utils import version, conf
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils.wait import wait_for
+from cfme.utils import version, conf
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 
 properties_form = Form(
     fields=[

@@ -9,9 +9,9 @@ from widgetastic_manageiq import (
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound
 from cfme.web_ui import match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
-from utils.log import logger
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.log import logger
 
 
 class VolumeToolbar(View):

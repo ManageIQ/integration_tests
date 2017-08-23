@@ -14,7 +14,7 @@ from collections import defaultdict
 
 from artifactor import ArtifactorBasePlugin
 
-from utils.path import log_path
+from cfme.utils.path import log_path
 
 # preseed the normal statuses, but let defaultdict handle
 # any unexpected statuses, which should probably never happen

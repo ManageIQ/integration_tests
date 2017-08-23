@@ -1,8 +1,8 @@
 import re
 from cfme.fixtures import pytest_selenium as sel
 from selenium.common.exceptions import ElementNotVisibleException, StaleElementReferenceException
-from utils import attributize_string
-from utils.browser import ensure_browser_open
+from cfme.utils import attributize_string
+from cfme.utils.browser import ensure_browser_open
 from wait_for import wait_for
 
 

@@ -16,9 +16,9 @@ from cfme.containers.provider import details_page, pol_btn, mon_btn
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, match_location, PagedTable
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils import version
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")

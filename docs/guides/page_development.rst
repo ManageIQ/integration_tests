@@ -61,8 +61,8 @@ To begin with we have the imports, we have added comments after each to specify 
   from cfme.web_ui import Region, Quadicon, Form  # Loads the Region, Quadicon and Form UI elements
   import cfme.web_ui.flash as flash               # Flash message handler
   import cfme.fixtures.pytest_selenium as sel     # The selenium zero-level functions
-  from utils import conf                       # Loads all configuration from the yamls
-  from utils.update import Updateable             # Updatable class to give update capabilities
+  from cfme.utils import conf                       # Loads all configuration from the yamls
+  from cfme.utils.update import Updateable             # Updatable class to give update capabilities
   import cfme.web_ui.toolbar as tb                # Toolbar UI element for clicking Center Toolbar
 
 Locators

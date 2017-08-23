@@ -4,8 +4,8 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect
 from widgetastic_manageiq import ManageIQTree, Table, TextInput
 from widgetastic.xpath import quote
 
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from .dialog_box import AddBoxView
 from . import AutomateCustomizationView

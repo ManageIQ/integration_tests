@@ -46,8 +46,8 @@ from cfme.common.provider import BaseProvider, all_types
 from fixtures.artifactor_plugin import fire_art_test_hook
 from fixtures.pytest_store import store
 from fixtures.templateloader import TEMPLATES
-from utils.providers import ProviderFilter, list_providers
-from utils.log import logger
+from cfme.utils.providers import ProviderFilter, list_providers
+from cfme.utils.log import logger
 from collections import Mapping
 
 # List of problematic providers that will be ignored

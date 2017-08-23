@@ -9,14 +9,14 @@ from cfme.base.ui import ServerView
 from cfme.common.vm import VM
 from cfme.configure import configuration as conf
 from cfme.infrastructure.provider import wait_for_a_provider
-from utils import version
-from utils.appliance import provision_appliance, current_appliance
-from utils.appliance.implementations.ui import navigate_to
-from utils.conf import credentials
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.appliance import provision_appliance, current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 from cfme import test_requirements
 

@@ -7,7 +7,7 @@ from cfme.infrastructure.datastore import Datastore
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from fixtures.provider import setup_one_or_skip
-from utils.providers import ProviderFilter
+from cfme.utils.providers import ProviderFilter
 
 
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]

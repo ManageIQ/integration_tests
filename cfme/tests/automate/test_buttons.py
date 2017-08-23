@@ -5,9 +5,9 @@ from cfme import test_requirements
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate.buttons import Button, ButtonGroup
 from cfme.infrastructure import host
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.update import update
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.update import update
 
 
 pytestmark = [test_requirements.automate,

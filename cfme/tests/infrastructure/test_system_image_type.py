@@ -3,8 +3,8 @@ import fauxfactory
 import pytest
 
 from cfme.infrastructure.pxe import SystemImageType
-from utils import error
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
 

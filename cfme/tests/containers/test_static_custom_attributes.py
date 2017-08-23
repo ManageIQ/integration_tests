@@ -6,8 +6,8 @@ import pytest
 
 from manageiq_client.api import APIException
 
-from utils.version import current_version
-from utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils import testgen
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider.openshift import CustomAttribute
 

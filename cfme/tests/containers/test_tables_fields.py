@@ -12,9 +12,9 @@ from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.route import Route
 
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
+from cfme.utils import testgen
 
 
 pytestmark = [

@@ -1,8 +1,8 @@
 import pytest
 
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils import testgen
+from cfme.utils import testgen
 
 
 pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),

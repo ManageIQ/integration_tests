@@ -76,7 +76,7 @@ class OpenStackProvider(CloudProvider):
         if prov_config['endpoints'].get(endp_name):
             endpoints[endp_name] = EventsEndpoint(**prov_config['endpoints'][endp_name])
 
-        from utils.providers import get_crud
+        from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
         infra_provider = get_crud(infra_prov_key, appliance=appliance) if infra_prov_key else None
         return cls(name=prov_config['name'],

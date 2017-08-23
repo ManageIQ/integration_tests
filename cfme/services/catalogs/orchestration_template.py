@@ -3,10 +3,10 @@ from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic_manageiq import ScriptBox, Table
 from navmazing import NavigateToAttribute, NavigateToSibling
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 from . import ServicesCatalogView

@@ -7,9 +7,9 @@ from cfme import web_ui
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Table, toolbar as tb, flash
 from wrapanapi.hawkular import MetricEnumCounter, MetricEnumGauge
-from utils import attributize_string
-from utils.browser import ensure_browser_open
-from utils.units import Unit
+from cfme.utils import attributize_string
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.units import Unit
 
 mon_btn = partial(tb.select, 'Monitoring')
 CHARTS = "//*[contains(@class, 'chart_parent')]"

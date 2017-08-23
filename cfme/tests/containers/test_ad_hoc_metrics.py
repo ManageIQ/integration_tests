@@ -1,10 +1,10 @@
 import pytest
 import requests
-from utils import testgen
-from utils.log import logger
+from cfme.utils import testgen
+from cfme.utils.log import logger
 from cfme.containers.provider import ContainersProvider
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

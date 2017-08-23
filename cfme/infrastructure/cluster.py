@@ -14,10 +14,10 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ClusterNotFound
 from cfme.web_ui import match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
 
 
 # TODO: since Cluster always requires provider, it will use only one way to get to Cluster Detail's

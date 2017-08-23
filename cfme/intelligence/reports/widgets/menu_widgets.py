@@ -2,7 +2,7 @@
 """Page model for Cloud Intel / Reports / Dashboard Widgets / Menus"""
 from widgetastic_manageiq import MenuShortcutsPicker
 
-from utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import navigator
 from . import (
     BaseDashboardReportWidget,
     BaseDashboardWidgetFormCommon,

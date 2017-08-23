@@ -14,10 +14,10 @@ from cfme.control.explorer.alerts import Alert, AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
 from cfme.infrastructure.virtual_machines import Vm
-from utils.appliance.implementations.ui import navigate_to
-from utils.generators import random_vm_name
-from utils.appliance import get_or_create_current_appliance
-from utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.blockers import BZ
 from widgetastic.widget import Text
 
 

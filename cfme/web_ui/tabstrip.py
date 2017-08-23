@@ -13,8 +13,8 @@ from collections import Mapping, OrderedDict
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui
-from utils.log import logger
-from utils.pretty import Pretty
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
 
 # Entry point
 # There have been different types of the entry points throughout the history, sometimes even

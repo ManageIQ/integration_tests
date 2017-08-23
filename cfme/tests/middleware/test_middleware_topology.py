@@ -1,9 +1,9 @@
 import pytest
 
 from cfme.middleware.provider import MiddlewareProvider
-from utils import testgen
-from utils import version
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils import version
+from cfme.utils.version import current_version
 from cfme.middleware.server import MiddlewareServer
 from cfme.middleware.messaging import MiddlewareMessaging
 from cfme.middleware.datasource import MiddlewareDatasource

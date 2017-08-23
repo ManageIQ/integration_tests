@@ -12,10 +12,10 @@ from multiprocessing import Manager, Pool
 import pytz
 from tabulate import tabulate
 
-from utils.log import logger
-from utils.conf import cfme_data
-from utils.path import log_path
-from utils.providers import list_provider_keys, get_mgmt
+from cfme.utils.log import logger
+from cfme.utils.conf import cfme_data
+from cfme.utils.path import log_path
+from cfme.utils.providers import list_provider_keys, get_mgmt
 
 # Constant strings for the report
 PASS = 'PASS'

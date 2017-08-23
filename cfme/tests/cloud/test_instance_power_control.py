@@ -8,11 +8,11 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.wait import wait_for, TimedOutError, RefreshTimer
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
 pytest_generate_tests = testgen.generate(

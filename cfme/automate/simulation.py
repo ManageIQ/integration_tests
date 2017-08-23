@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from utils.appliance import get_or_create_current_appliance
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 def simulate(

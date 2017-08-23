@@ -8,11 +8,11 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.services import requests
 from cfme.web_ui import fill
-from utils import normalize_text, testgen
-from utils.blockers import BZ
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import normalize_text, testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),

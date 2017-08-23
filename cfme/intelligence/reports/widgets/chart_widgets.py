@@ -3,7 +3,7 @@
 from widgetastic_manageiq import Calendar
 from widgetastic_patternfly import BootstrapSelect
 
-from utils.appliance.implementations.ui import navigator
+from cfme.utils.appliance.implementations.ui import navigator
 from . import (
     BaseDashboardReportWidget,
     BaseDashboardWidgetFormCommon,

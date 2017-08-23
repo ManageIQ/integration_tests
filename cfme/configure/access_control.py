@@ -9,12 +9,12 @@ from widgetastic.widget import Checkbox, View, Table, Text
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
 from cfme.exceptions import OptionNotAvailable
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 
 
 def simple_user(userid, password):

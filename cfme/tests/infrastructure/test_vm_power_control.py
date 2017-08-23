@@ -11,10 +11,10 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
-from utils import testgen
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.wait import wait_for, TimedOutError
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, TimedOutError
 
 pytestmark = [
     pytest.mark.long_running,
