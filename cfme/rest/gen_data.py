@@ -11,10 +11,10 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from fixtures.provider import setup_one_by_class_or_skip
-from utils.virtual_machines import deploy_template
-from utils.wait import wait_for
-from utils.log import logger
-from utils import version
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils import version
 
 
 _TEMPLATE_TORSO = """{

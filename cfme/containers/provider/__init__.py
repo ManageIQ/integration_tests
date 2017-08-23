@@ -25,14 +25,14 @@ from cfme.base.credential import TokenCredential
 from cfme.web_ui import (
     Quadicon, toolbar as tb,
     InfoBlock, Region, match_location, PagedTable, CheckboxTable)
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.browser import ensure_browser_open, browser
-from utils.pretty import Pretty
-from utils.varmeth import variable
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.browser import ensure_browser_open, browser
+from cfme.utils.pretty import Pretty
+from cfme.utils.varmeth import variable
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")

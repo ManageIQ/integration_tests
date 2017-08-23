@@ -6,7 +6,7 @@ import pytest
 
 from copy import copy, deepcopy
 
-from utils import error
+from cfme.utils import error
 from cfme.base.credential import Credential
 from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProvidersView,
@@ -14,9 +14,9 @@ from cfme.common.provider_views import (InfraProviderAddView,
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider, RHEVMEndpoint
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider, VirtualCenterEndpoint
-from utils import testgen, version
-from utils.update import update
-from utils.blockers import BZ
+from cfme.utils import testgen, version
+from cfme.utils.update import update
+from cfme.utils.blockers import BZ
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")

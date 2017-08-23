@@ -20,10 +20,10 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
 from fixtures.provider import setup_or_skip
-from utils import testgen
-from utils.blockers import BZ
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

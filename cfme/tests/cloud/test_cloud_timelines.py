@@ -8,12 +8,12 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.ec2 import EC2Provider
-from utils import testgen, version
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.tier(2),

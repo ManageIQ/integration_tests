@@ -3,9 +3,9 @@ import fauxfactory
 import pytest
 from random import sample
 
-import utils
+import cfme.utils
 from cfme.intelligence.reports.reports import CustomReport
-from utils.providers import get_crud_by_name
+from cfme.utils.providers import get_crud_by_name
 from cfme import test_requirements
 
 
@@ -45,7 +45,7 @@ def test_custom_vm_report(soft_assert, report_vms):
             continue  # Might disappear meanwhile
         provider_name = row["Provider Name"]
         provider = get_crud_by_name(provider_name).mgmt
-        provider_hosts_and_ips = utils.net.resolve_ips(provider.list_host())
+        provider_hosts_and_ips = cfme.utils.net.resolve_ips(provider.list_host())
         provider_datastores = provider.list_datastore()
         provider_clusters = provider.list_cluster()
         soft_assert(provider.does_vm_exist(row["Name"]), "VM {} does not exist in {}!".format(
@@ -65,7 +65,7 @@ def test_custom_vm_report(soft_assert, report_vms):
         # Because of mixing long and short host names, we have to use both-directional `in` op.
         if row[host]:
             found = False
-            possible_ips_or_hosts = utils.net.resolve_ips((row[host], ))
+            possible_ips_or_hosts = cfme.utils.net.resolve_ips((row[host], ))
             for possible_ip_or_host in possible_ips_or_hosts:
                 for host_ip in provider_hosts_and_ips:
                     if possible_ip_or_host in host_ip or host_ip in possible_ip_or_host:

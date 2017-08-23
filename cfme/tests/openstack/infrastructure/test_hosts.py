@@ -6,9 +6,9 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host, wait_for_host_delete
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import flash, InfoBlock, Quadicon, toolbar
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],

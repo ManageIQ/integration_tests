@@ -18,7 +18,7 @@ from xml.sax.saxutils import quoteattr
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import ListAccordionLinkNotFound
-from utils.pretty import Pretty
+from cfme.utils.pretty import Pretty
 
 LOCATOR = "|".join([
     # The older one

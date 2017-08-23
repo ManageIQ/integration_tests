@@ -8,8 +8,8 @@ from cfme.cloud.stack import Stack
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar, Quadicon
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=['remove_test'], scope="module")

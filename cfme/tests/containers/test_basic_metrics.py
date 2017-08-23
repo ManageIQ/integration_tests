@@ -1,8 +1,8 @@
 import pytest
 import re
 from cfme.containers.provider import ContainersProvider
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 
 
 pytestmark = [

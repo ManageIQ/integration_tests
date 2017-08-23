@@ -12,13 +12,13 @@ import re
 
 from cfme import test_requirements
 from cfme.configure import configuration as configure
-from utils import conf, testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.ftp import FTPClient
-from utils.providers import get_mgmt
-from utils.version import current_version
-from utils.virtual_machines import deploy_template
+from cfme.utils import conf, testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.ftp import FTPClient
+from cfme.utils.providers import get_mgmt
+from cfme.utils.version import current_version
+from cfme.utils.virtual_machines import deploy_template
 
 
 pytestmark = [test_requirements.log_depot]

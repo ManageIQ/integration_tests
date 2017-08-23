@@ -1,11 +1,11 @@
 import pytest
 from cfme.fixtures import pytest_selenium as sel
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from cfme.web_ui import toolbar as tb, Quadicon, breadcrumbs_names
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.provider import ContainersProvider
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

@@ -9,9 +9,9 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from utils import testgen
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.service,

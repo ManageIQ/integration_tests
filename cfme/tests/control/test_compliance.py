@@ -9,9 +9,9 @@ from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration import AnalysisProfile
-from utils import conf, testgen
-from utils.hosts import setup_providers_hosts_credentials
-from utils.update import update
+from cfme.utils import conf, testgen
+from cfme.utils.hosts import setup_providers_hosts_credentials
+from cfme.utils.update import update
 from cfme import test_requirements
 from . import do_scan
 

@@ -6,9 +6,9 @@ from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.import_export import AutomateGitRepository
 
-from utils import error
-from utils.appliance.implementations.ui import navigate_to
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
 
 
 pytestmark = [test_requirements.automate]

@@ -5,7 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
 from cfme.web_ui import Table
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]

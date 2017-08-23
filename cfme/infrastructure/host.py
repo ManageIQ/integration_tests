@@ -22,14 +22,14 @@ from cfme.common.host_views import (
 from cfme.exceptions import HostNotFound, ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.web_ui import mixins
-from utils import conf
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
-from utils.ipmi import IPMI
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils.wait import wait_for
+from cfme.utils import conf
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.utils.ipmi import IPMI
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 
 
 class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):

@@ -9,14 +9,14 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import toolbar as tb
-from utils import testgen
-from utils.blockers import BZ
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.providers import ProviderFilter
-from utils.timeutil import parsetime
-from utils.wait import wait_for
-from utils.version import pick, current_version
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.timeutil import parsetime
+from cfme.utils.wait import wait_for
+from cfme.utils.version import pick, current_version
 
 
 pytest_generate_tests = testgen.generate(

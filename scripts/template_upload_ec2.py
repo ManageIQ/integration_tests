@@ -16,11 +16,11 @@ from threading import Lock
 
 from wrapanapi.exceptions import ImageNotFoundError, MultipleImagesError
 
-from utils import trackerbot
-from utils.conf import cfme_data
-from utils.providers import get_mgmt
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils import trackerbot
+from cfme.utils.conf import cfme_data
+from cfme.utils.providers import get_mgmt
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 lock = Lock()
 

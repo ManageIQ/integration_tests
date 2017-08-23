@@ -10,12 +10,12 @@ from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import vm as _vm
-from utils.update import update
-from utils.wait import wait_for
-from utils.rest import assert_response
-from utils.version import current_version
-from utils.blockers import BZ
-from utils import error
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
+from cfme.utils.rest import assert_response
+from cfme.utils.version import current_version
+from cfme.utils.blockers import BZ
+from cfme.utils import error
 
 
 @pytest.yield_fixture

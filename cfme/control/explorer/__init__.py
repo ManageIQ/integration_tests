@@ -6,7 +6,7 @@ from widgetastic_patternfly import Accordion, Dropdown
 
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class ControlExplorerView(BaseLoggedInPage):

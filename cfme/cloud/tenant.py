@@ -16,11 +16,11 @@ from widgetastic_manageiq import (
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import TenantNotFound, DestinationNotFound, OptionNotAvailable
 from cfme.web_ui import match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.log import logger
-from utils.wait import wait_for, TimedOutError
-from utils.version import Version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.version import Version
 
 
 class TenantToolbar(View):

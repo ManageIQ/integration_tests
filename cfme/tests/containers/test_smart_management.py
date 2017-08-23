@@ -1,10 +1,10 @@
 import re
 import random
 import pytest
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.version import current_version
 from cfme.web_ui import toolbar, AngularSelect, form_buttons
 from cfme.configure.configuration import Tag
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
@@ -15,7 +15,7 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
 from cfme.containers.container import Container
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < "5.6"),

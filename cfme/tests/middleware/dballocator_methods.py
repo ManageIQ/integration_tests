@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
 from cfme.exceptions import DbAllocatorConfigNotFound
-from utils import conf
+from cfme.utils import conf
 
 
 REQUESTEE = "cfme_tests"

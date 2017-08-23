@@ -1,9 +1,9 @@
 import pytest
 
-from utils.conf import cfme_data, credentials
+from cfme.utils.conf import cfme_data, credentials
 from cfme.configure import configuration
-from utils.appliance import current_appliance
-from utils.ext_auth import disable_external_auth_ipa, disable_external_auth_openldap, \
+from cfme.utils.appliance import current_appliance
+from cfme.utils.ext_auth import disable_external_auth_ipa, disable_external_auth_openldap, \
     setup_external_auth_ipa, setup_external_auth_openldap
 
 

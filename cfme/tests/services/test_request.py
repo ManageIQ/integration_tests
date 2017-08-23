@@ -6,8 +6,8 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme import test_requirements
-from utils import testgen
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

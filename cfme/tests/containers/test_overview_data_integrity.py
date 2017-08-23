@@ -10,8 +10,8 @@ from cfme.containers.route import Route
 from cfme.containers.overview import ContainersOverview
 from cfme.web_ui import StatusBox
 
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

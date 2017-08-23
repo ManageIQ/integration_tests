@@ -12,11 +12,11 @@ from cfme.services import requests
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
-from utils import testgen
-from utils.path import orchestration_path
-from utils.datafile import load_data_file
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.path import orchestration_path
+from cfme.utils.datafile import load_data_file
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

@@ -9,10 +9,10 @@ from cfme.web_ui import toolbar as tb, match_location,\
     PagedTable, CheckboxTable
 from cfme.containers.provider import details_page, Labelable,\
     ContainerObjectAllBaseView
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
-from utils.appliance import Navigatable
+from cfme.utils.appliance import Navigatable
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")

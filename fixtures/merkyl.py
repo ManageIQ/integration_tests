@@ -2,7 +2,7 @@ import pytest
 
 from fixtures.artifactor_plugin import fire_art_test_hook
 
-from utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import get_or_create_current_appliance
 
 
 class MerkylInspector(object):

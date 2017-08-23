@@ -8,8 +8,8 @@ from lxml import etree
 import pytest
 
 # pylint: disable=no-name-in-module
-from utils.conf import xunit, cfme_data
-from utils.pytest_shortcuts import extract_fixtures_values
+from cfme.utils.conf import xunit, cfme_data
+from cfme.utils.pytest_shortcuts import extract_fixtures_values
 
 
 default_custom_fields = {

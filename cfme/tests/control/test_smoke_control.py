@@ -4,7 +4,7 @@ import pytest
 
 from cfme.base import Server
 from cfme import control, test_requirements
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     test_requirements.control,

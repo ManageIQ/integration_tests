@@ -4,8 +4,8 @@ import pytest
 import time
 
 from cfme.configure.configuration import AuthSetting
-from utils.browser import ensure_browser_open, quit
-from utils.wait import wait_for
+from cfme.utils.browser import ensure_browser_open, quit
+from cfme.utils.wait import wait_for
 
 
 @pytest.mark.tier(3)

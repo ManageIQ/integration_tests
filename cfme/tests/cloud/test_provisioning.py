@@ -16,13 +16,13 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services import requests
-from utils import normalize_text, testgen
-from utils.rest import assert_response
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.update import update
-from utils.version import current_version
-from utils.wait import wait_for, RefreshTimer
+from cfme.utils import normalize_text, testgen
+from cfme.utils.rest import assert_response
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.update import update
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for, RefreshTimer
 
 pytestmark = [pytest.mark.meta(server_roles="+automate"),
               test_requirements.provision, pytest.mark.tier(2)]

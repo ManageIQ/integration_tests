@@ -10,7 +10,7 @@ import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils import testgen
+from cfme.utils import testgen
 from cfme import test_requirements
 # from utils.log import logger
 

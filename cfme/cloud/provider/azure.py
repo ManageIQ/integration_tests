@@ -2,7 +2,7 @@ from wrapanapi.azure import AzureSystem
 
 from . import CloudProvider
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
-from utils.version import pick
+from cfme.utils.version import pick
 
 
 class AzureEndpoint(DefaultEndpoint):

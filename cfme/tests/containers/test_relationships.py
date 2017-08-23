@@ -2,8 +2,8 @@ from random import shuffle
 
 import pytest
 
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from cfme.web_ui import summary_title
 
 from cfme.containers.pod import Pod

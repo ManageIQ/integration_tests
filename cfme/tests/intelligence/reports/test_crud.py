@@ -11,10 +11,10 @@ from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
 from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
 from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
 from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
-from utils.blockers import BZ
-from utils.path import data_path
-from utils.update import update
-from utils.wait import wait_for_decorator
+from cfme.utils.blockers import BZ
+from cfme.utils.path import data_path
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for_decorator
 
 
 report_crud_dir = data_path.join("reports_crud")

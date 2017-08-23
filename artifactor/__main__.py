@@ -4,9 +4,9 @@ import click
 
 from artifactor import Artifactor, initialize
 from artifactor.plugins import merkyl, logger, video, filedump, reporter, post_result, ostriz
-from utils.conf import env
-from utils.net import random_port
-from utils.path import log_path
+from cfme.utils.conf import env
+from cfme.utils.net import random_port
+from cfme.utils.path import log_path
 
 import bottle
 bottle.BaseRequest.MEMFILE_MAX = 1073741824

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
-from utils import version
+from cfme.utils import version
 from cfme.web_ui import FileInput, Input, Radio, form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils import conf
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 
 
 class FromConfigMixin(object):

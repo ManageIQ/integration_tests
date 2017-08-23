@@ -14,12 +14,12 @@ from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
 from fixtures.provider import setup_one_or_skip
-from utils import error
-from utils.blockers import BZ
-from utils.providers import ProviderFilter
-from utils.rest import assert_response
-from utils.version import current_version
-from utils.wait import wait_for, wait_for_decorator
+from cfme.utils import error
+from cfme.utils.blockers import BZ
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.rest import assert_response
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for, wait_for_decorator
 
 
 pytestmark = [test_requirements.rest]

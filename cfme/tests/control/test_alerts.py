@@ -11,15 +11,15 @@ from cfme.control.explorer import actions, alert_profiles, alerts, policies, pol
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import ports, testgen
-from utils.conf import credentials
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.net import net_check
-from utils.providers import ProviderFilter
-from utils.ssh import SSHClient
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils import ports, testgen
+from cfme.utils.conf import credentials
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.net import net_check
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.ssh import SSHClient
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,

@@ -11,8 +11,8 @@ from cfme.exceptions import ItemNotFound
 from PIL import Image, ImageFilter
 from pytesseract import image_to_string
 from selenium.webdriver.common.keys import Keys
-from utils.log import logger
-from utils.pretty import Pretty
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
 from wait_for import wait_for, TimedOutError
 
 

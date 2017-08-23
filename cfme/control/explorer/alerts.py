@@ -8,10 +8,10 @@ from widgetastic_manageiq import AlertEmail, SNMPForm
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 
 
 class AlertsAllView(ControlExplorerView):

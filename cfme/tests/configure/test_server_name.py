@@ -5,8 +5,8 @@ from cfme.configure import about
 from cfme.configure.configuration import BasicInformation
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import flash
-from utils import clear_property_cache
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import clear_property_cache
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.mark.tier(3)

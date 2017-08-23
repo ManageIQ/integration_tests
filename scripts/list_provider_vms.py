@@ -4,9 +4,9 @@ from multiprocessing import Process, Queue
 
 from wrapanapi.exceptions import VMError
 
-from utils.conf import cfme_data
-from utils.path import log_path
-from utils.providers import get_mgmt, list_provider_keys
+from cfme.utils.conf import cfme_data
+from cfme.utils.path import log_path
+from cfme.utils.providers import get_mgmt, list_provider_keys
 
 
 # Constant for report

@@ -3,7 +3,7 @@
 import pytest
 
 from cfme import test_requirements
-from utils import version
+from cfme.utils import version
 
 
 pytestmark = [test_requirements.rest]

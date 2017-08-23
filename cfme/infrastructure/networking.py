@@ -1,6 +1,6 @@
-from utils.appliance import Navigatable
+from cfme.utils.appliance import Navigatable
 from navmazing import NavigateToAttribute
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from cfme.web_ui import toolbar as tb
 
 

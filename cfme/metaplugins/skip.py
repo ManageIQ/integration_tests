@@ -5,7 +5,7 @@ from markers.meta import plugin
 import pytest
 from kwargify import kwargify
 
-from utils.pytest_shortcuts import extract_fixtures_values
+from cfme.utils.pytest_shortcuts import extract_fixtures_values
 
 
 @plugin("skip", keys=["skip"], run=plugin.BEFORE_RUN)

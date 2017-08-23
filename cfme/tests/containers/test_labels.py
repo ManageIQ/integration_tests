@@ -16,10 +16,10 @@ from cfme.containers.route import Route
 from cfme.containers.template import Template
 from cfme.exceptions import SetLabelException
 
-from utils import testgen
-from utils.wait import wait_for
-from utils.log import logger
-from utils.blockers import BZ
+from cfme.utils import testgen
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [

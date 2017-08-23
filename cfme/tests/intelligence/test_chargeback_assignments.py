@@ -6,8 +6,8 @@ import random
 from cfme.base import Server
 from cfme.intelligence.chargeback.assignments import AssignmentsView
 from cfme import test_requirements
-from utils import version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.tier(3),

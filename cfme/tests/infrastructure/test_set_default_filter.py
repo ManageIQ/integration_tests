@@ -3,9 +3,9 @@ import pytest
 
 from cfme.infrastructure import host, datastore
 from cfme.web_ui.search import search_box
-from utils import version
+from cfme.utils import version
 from cfme.web_ui import listaccordion as list_acc
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
 

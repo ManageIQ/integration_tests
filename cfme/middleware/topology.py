@@ -1,6 +1,6 @@
 from cfme.common import TopologyMixin
 from navmazing import NavigateToAttribute
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 
 
 class MiddlewareTopology(TopologyMixin):

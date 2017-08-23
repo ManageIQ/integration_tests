@@ -2,11 +2,11 @@ import pytest
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable
-from utils import testgen
-from utils.ansible import setup_ansible_script, run_ansible, get_yml_value, \
+from cfme.utils import testgen
+from cfme.utils.ansible import setup_ansible_script, run_ansible, get_yml_value, \
     fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 
 
 pytestmark = [

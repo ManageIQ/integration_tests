@@ -1,6 +1,6 @@
 import pytest
 
-from utils import conf
+from cfme.utils import conf
 
 
 @pytest.fixture(scope="session")

@@ -57,11 +57,11 @@ from py.error import ENOENT
 from py.path import local
 
 from fixtures.pytest_store import store
-from utils import conf, version
-from utils.log import create_sublogger
-from utils.path import conf_path, log_path, scripts_data_path
-from utils.quote import quote
-from utils.wait import wait_for, TimedOutError
+from cfme.utils import conf, version
+from cfme.utils.log import create_sublogger
+from cfme.utils.path import conf_path, log_path, scripts_data_path
+from cfme.utils.quote import quote
+from cfme.utils.wait import wait_for, TimedOutError
 
 # paths to all of the coverage-related files
 
@@ -121,7 +121,7 @@ class CoverageManager(object):
     def collection_appliance(self):
         # if parallelized, this is decided in sessionstart and written to the conf
         if store.parallelizer_role == 'slave':
-            from utils.appliance import IPAppliance
+            from cfme.utils.appliance import IPAppliance
             return IPAppliance(conf['.ui-coverage']['collection_appliance'])
         else:
             # otherwise, coverage only happens on one appliance

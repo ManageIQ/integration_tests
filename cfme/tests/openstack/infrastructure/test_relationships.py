@@ -9,8 +9,8 @@ import cfme.fixtures.pytest_selenium as sel
 from selenium.common.exceptions import NoSuchElementException
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import InfoBlock, Table
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),

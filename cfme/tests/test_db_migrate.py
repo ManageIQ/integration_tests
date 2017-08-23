@@ -1,12 +1,12 @@
 import pytest
 from os import path as os_path
 
-from utils import version, os
-from utils.appliance import ApplianceException
-from utils.blockers import BZ
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.version import get_stream
+from cfme.utils import version, os
+from cfme.utils.appliance import ApplianceException
+from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.version import get_stream
 from scripts.repo_gen import process_url, build_file
 import tempfile
 

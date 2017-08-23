@@ -2,12 +2,12 @@
 import fauxfactory
 import pytest
 
-from utils.conf import cfme_data
+from cfme.utils.conf import cfme_data
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.provisioning import do_vm_provisioning
-from utils import testgen
+from cfme.utils import testgen
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

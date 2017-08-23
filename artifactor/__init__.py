@@ -129,8 +129,8 @@ import sys
 from py.path import local
 from riggerlib import Rigger, RiggerBasePlugin, RiggerClient
 
-from utils.net import random_port
-from utils.path import log_path
+from cfme.utils.net import random_port
+from cfme.utils.path import log_path
 
 
 class Artifactor(Rigger):

@@ -1,6 +1,6 @@
 import pytest
 
-from utils.path import log_path
+from cfme.utils.path import log_path
 
 
 def pytest_sessionstart():

@@ -1,7 +1,7 @@
 import sentaku
 
-from utils.appliance import Navigatable, Parent
-from utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable, Parent
+from cfme.utils.pretty import Pretty
 
 
 class Server(Navigatable, sentaku.modeling.ElementMixin):

@@ -2,8 +2,8 @@
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
 import re
-from utils import version
-from utils.wait import wait_for_decorator
+from cfme.utils import version
+from cfme.utils.wait import wait_for_decorator
 
 
 @pytest.yield_fixture(scope="module")
