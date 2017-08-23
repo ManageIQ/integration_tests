@@ -197,9 +197,9 @@ def abstract_test_chargeback_cost(
 
 
 @pytest.yield_fixture(scope='module')
-def compute_rate(appliance, rt_i_o_group):
-    rate_type = rt_i_o_group[0]
-    interval = rt_i_o_group[1]
+def compute_rate(appliance, rt_i_group):
+    rate_type = rt_i_group[0]
+    interval = rt_i_group[1]
     variable_rate = 1 if rate_type == 'variable' else 0
     description = 'custom_rate_' + fauxfactory.gen_alphanumeric()
     data = {
@@ -224,8 +224,7 @@ def compute_rate(appliance, rt_i_o_group):
 
 
 @pytest.yield_fixture(scope='module')
-def assign_compute_rate(rt_i_o_group, compute_rate, provider):
-    obj_type = rt_i_o_group[2]
+def assign_compute_rate(rt_i_group, compute_rate, obj_type, provider):
     assign_custom_compute_rate(obj_type, compute_rate, provider)
     yield compute_rate
     revert_to_default_rate(provider)
@@ -233,9 +232,8 @@ def assign_compute_rate(rt_i_o_group, compute_rate, provider):
 
 @pytest.yield_fixture(scope='module')
 def chargeback_report(
-        rt_i_o_group, assign_compute_rate, provider):
-    interval = rt_i_o_group[1]
-    obj_type = rt_i_o_group[2]
+        rt_i_group, assign_compute_rate, obj_type, provider):
+    interval = rt_i_group[1]
     report = gen_report_base(obj_type, provider, assign_compute_rate.description, interval)
     yield report
     report.delete()
@@ -247,31 +245,32 @@ variable_rates = ['CpuCores', 'Memory', 'Network']
 all_rates = set(fixed_rates + variable_rates)
 intervals = ['Hourly', 'Daily', 'Weekly', 'Monthly']
 rate_types = ['fixed', 'variable']
-rt_i_o_groups = [(rt, i, o) for o in obj_types for rt in rate_types for i in intervals]
+rt_i_groups = [(rt, i) for rt in rate_types for i in intervals]
 
 
 @pytest.mark.parametrize('rate', all_rates)
+@pytest.mark.parametrize('obj_type', obj_types)
 @pytest.mark.parametrize(
-    'rt_i_o_group',
-    rt_i_o_groups,
-    ids=lambda rt_i_o: '{}-{}-{}'.format(rt_i_o[0], rt_i_o[1], rt_i_o[2]),
+    'rt_i_group',
+    rt_i_groups,
+    ids=lambda rt_i: '{}-{}'.format(rt_i[0], rt_i[1]),
     scope='module')
 @pytest.mark.uncollectif(
-    lambda rt_i_o_group, rate:
-        (rt_i_o_group[0] == 'variable' and rate not in variable_rates) or
-        (rt_i_o_group[0] == 'fixed' and rate not in fixed_rates)
+    lambda rt_i_group, rate:
+        (rt_i_group[0] == 'variable' and rate not in variable_rates) or
+        (rt_i_group[0] == 'fixed' and rate not in fixed_rates)
 )
 @pytest.mark.long_running_env
 def test_chargeback_rate(
-        chargeback_report, compute_rate, rt_i_o_group, rate, soft_assert):
+        chargeback_report, compute_rate, rt_i_group, rate, obj_type, soft_assert):
     report_data = chargeback_report.get_saved_reports()[0].data
+    interval = rt_i_group[1]
     if sel.is_displayed_text("No records found for this report"):
         pytest.skip('No records found in the report. probably the setup didn\'t '
                     'manage to collect enough metrics for the current rate. '
                     'rate={}; interval={} report={}'
-                    .format(compute_rate.description, rt_i_o_group[1],
+                    .format(compute_rate.description, interval,
                             chargeback_report.menu_name))
-    interval = rt_i_o_group[1]
-    obj_type = rt_i_o_group[2]
+
     abstract_test_chargeback_cost(
         obj_type, report_data, compute_rate, rate, interval, soft_assert)
