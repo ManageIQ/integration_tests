@@ -662,7 +662,7 @@ def single_task_permission_test(appliance, product_features, actions):
     # CFME 5.7 - New roles have the checkbox for 'Everything' checked but the
     # only child item checked is 'Access Rules for all Virtual Machines' so
     # clear 'Everything' so all child items can be enabled to start
-    if appliance.version.version <= "5.7":
+    if appliance.version < "5.8":
         test_prod_features = [(['Everything'], False)] + test_prod_features
 
     test_prod_features += [(f, False) for f in product_features]
@@ -681,17 +681,11 @@ def test_permissions_role_crud(appliance):
 
 @pytest.mark.tier(3)
 def test_permissions_vm_provisioning(appliance):
-    features = version.pick({
-        version.LOWEST: [
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ],
-        '5.6': [
-            ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ]})
+    features = [
+        ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+            'Provision VMs']
+    ]
     single_task_permission_test(
         appliance,
         features,
