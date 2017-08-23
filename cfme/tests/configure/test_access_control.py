@@ -528,9 +528,14 @@ def _test_vm_removal():
 def test_permission_edit(appliance, request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
+    Args:
+        appliance - cfme appliance fixture
+        request - pytest request fixture
+        product_features - product features to set for test role
+        action - reference to a function to execute under the test user context
     """
     product_features = version.pick(product_features)
-    request.addfinalizer(appliance.server.login_admin())
+    request.addfinalizer(appliance.server.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
     role = Role(name=role_name,
                 vm_restriction=None,
