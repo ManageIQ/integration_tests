@@ -3,7 +3,7 @@
 
 .. code-block:: python
 
-    from utils.varmeth import variable
+    from cfme.utils.varmeth import variable
 
     class SomeClass(object):
         secret = 42

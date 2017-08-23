@@ -19,7 +19,7 @@ changes because most of the element handling routines are version picking away. 
 receive a dict as an argument, they will automatically try to resolve it using the version picking tool.
 To use version picking is easy::
 
-    from utils import version
+    from cfme.utils import version
 
     version.pick({'5.4': "Houses",
                   '5.3': "House",
