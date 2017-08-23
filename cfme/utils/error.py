@@ -8,7 +8,7 @@ is caught.
 
 Usage:
 
-    from utils import error
+    from cfme.utils import error
     with error.expected('foo'):
         x = 1
         raise Exception('oh noes foo happened!')  # this will be caught because regex matches

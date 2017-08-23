@@ -287,7 +287,7 @@ class Perflog(object):
 
     Usage:
 
-        from utils.log import perflog
+        from cfme.utils.log import perflog
         perflog.start('event_name')
         # do stuff
         seconds_taken = perflog.stop('event_name')
