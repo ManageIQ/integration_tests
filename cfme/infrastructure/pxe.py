@@ -1,98 +1,166 @@
 # -*- coding: utf-8 -*-
 """ A model of a PXE Server in CFME
 """
-
-from functools import partial
-
-from cfme.exceptions import CandidateNotFound
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.accordion as acc
-import cfme.web_ui.flash as flash
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table, form_buttons, Input
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
+from widgetastic.widget import View, Text, Checkbox
+from widgetastic_manageiq import ManageIQTree, Input, ScriptBox, SummaryTable, Table
+from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, BootstrapSelect, Button
+
+from cfme.base.login import BaseLoggedInPage
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils import conf
 from utils.datafile import load_data_file
-from utils.log import logger
 from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
 from utils.varmeth import variable
-from utils.version import LOWEST, pick
 
 
-cfg_btn = partial(tb.select, 'Configuration')
-
-pxe_server_table_exist = Table('//div[@id="records_div"]/table/tbody/tr/td')
-pxe_details_page = Region(locators=dict(
-    last_refreshed=InfoBlock("Basic Information", "Last Refreshed On"),
-    pxe_image_type=InfoBlock("Basic Information", "Type")
-))
-
-pxe_properties_form = Form(
-    fields=[
-        ('name_text', Input('name')),
-        ('log_protocol', Select("//select[@id='log_protocol']")),
-        ('userid_text', Input('log_userid')),
-        ('password_text', Input('log_password')),
-        ('verify_text', Input('log_verify')),
-        ('validate_btn', "//a[@id='val']"),
-        ('access_url_text', Input('access_url')),
-        ('uri_text', Input('uri')),
-        ('pxe_dir_text', Input('pxe_directory')),
-        ('windows_dir_text', Input('windows_images_directory')),
-        ('customize_dir_text', Input('customization_directory')),
-        ('pxe_menu_text', Input('pxemenu_0')),
-    ])
-
-pxe_image_type_form = Form(
-    fields=[
-        ('image_type', Select("//select[@id='image_typ']"))
-    ])
+class PXEToolBar(View):
+    """
+    represents PXE toolbar and its controls
+    """
+    # todo: add back button later
+    configuration = Dropdown(text='Configuration')
 
 
-template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
+class PXESideBar(View):
+    """
+    represents left side bar. it usually contains navigation, filters, etc
+    """
+    @View.nested
+    class servers(Accordion):  # noqa
+        ACCORDION_NAME = "PXE Servers"
+        tree = ManageIQTree()
 
-template_properties_form = Form(
-    fields=[
-        ('name_text', Input('name')),
-        ('description_text', Input('description')),
-        ('image_type', Select('//select[@id="img_typ"]')),
-        ('script_type', Select('//select[@id="typ"]')),
-        ('script_data', ScriptBox(ta_locator="//textarea[@id='script_data']"))
-    ])
+    @View.nested
+    class templates(Accordion):  # noqa
+        ACCORDION_NAME = "Customization Templates"
+        tree = ManageIQTree()
 
+    @View.nested
+    class image_types(Accordion):  # noqa
+        ACCORDION_NAME = "System Image Types"
+        tree = ManageIQTree()
 
-image_table = Table('//div[@id="records_div"]//table')
-
-image_properties_form = Form(
-    fields=[
-        ('name_text', Input('name')),
-        ('provision_type', Select('//select[@id="provision_type"]'))
-    ])
-
-iso_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
-
-iso_properties_form = Form(
-    fields=[
-        ('provider', Select('//select[@id="ems_id"]')),
-    ])
-
-iso_image_type_form = Form(
-    fields=[
-        ('image_type', Select("//select[@id='image_typ']"))
-    ])
+    @View.nested
+    class datastores(Accordion):  # noqa
+        ACCORDION_NAME = "ISO Datastores"
+        tree = ManageIQTree()
 
 
-pxe_tree = partial(acc.tree, "PXE Servers", "All PXE Servers")
-template_tree = partial(acc.tree, "Customization Templates",
-                        "All Customization Templates - System Image Types")
-image_tree = partial(acc.tree, "System Image Types", "All System Image Types")
-iso_tree = partial(acc.tree, "ISO Datastores", "All ISO Datastores")
+class PXEMainView(BaseLoggedInPage):
+    """
+    represents whole All PXE Servers page
+    """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(PXEToolBar)
+    sidebar = View.nested(PXESideBar)
+    title = Text('//div[@id="main-content"]//h1')
+    entities = Table(locator='.//div[@id="records_div"]/table')
+
+    @property
+    def is_displayed(self):
+        return self.navigation.currently_selected == ['Compute', 'Infrastructure', 'PXE']
+
+
+class PXEServersView(PXEMainView):
+    """
+     represents whole All PXE Servers page
+    """
+    @property
+    def is_displayed(self):
+        return (super(PXEServersView, self).is_displayed and
+                self.title.text == 'All PXE Servers')
+
+
+class PXEDetailsToolBar(PXEToolBar):
+    """
+     represents the toolbar which appears when any pxe entity is clicked
+    """
+    reload = Button(title='Reload current display')
+
+
+class PXEServerDetailsView(PXEMainView):
+    """
+     represents Server Details view
+    """
+    toolbar = View.nested(PXEDetailsToolBar)
+
+    @View.nested
+    class entities(View):  # noqa
+        basic_information = SummaryTable(title="Basic Information")
+        pxe_image_menus = SummaryTable(title='PXE Image Menus')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class PXEServerForm(View):
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    # common fields
+    name = Input(id='name')
+    depot_type = BootstrapSelect(id='log_protocol')
+    access_url = Input(id='access_url')
+    pxe_dir = Input(id='pxe_directory')
+    windows_images_dir = Input(id='windows_images_directory')
+    customization_dir = Input(id='customization_directory')
+    filename = Input(id='pxemenu_0')
+
+    uri = Input(id='uri')  # both NFS and Samba
+
+    # Samba only
+    username = Input(id='log_userid')
+    password = Input(id='log_password')
+    confirm_password = Input(id='log_verify')
+    validate = Button('Validate the credentials by logging into the Server')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class PXEServerAddView(PXEServerForm):
+    """
+      represents Add New PXE Server view
+    """
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+
+class PXEServerEditView(PXEServerForm):
+    """
+     represents PXE Server Edit view
+    """
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
+class PXEImageEditView(View):
+    """
+    it can be found when some image is clicked in PXE Server Tree
+    """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    default_for_windows = Checkbox(id='default_for_windows')
+    type = BootstrapSelect(id='image_typ')
+
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class PXEServer(Updateable, Pretty, Navigatable):
@@ -120,32 +188,13 @@ class PXEServer(Updateable, Pretty, Navigatable):
         self.depot_type = depot_type
         self.uri = uri
         self.userid = userid
+        # todo: turn into Credentials class
         self.password = password
         self.access_url = access_url
         self.pxe_dir = pxe_dir
         self.windows_dir = windows_dir
         self.customize_dir = customize_dir
         self.menu_filename = menu_filename
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'log_protocol': kwargs.get('depot_type'),
-                'uri_text': kwargs.get('uri'),
-                'password_text': kwargs.get('password'),
-                'verify_text': kwargs.get('password'),
-                'access_url_text': kwargs.get('access_url'),
-                'pxe_dir_text': kwargs.get('pxe_dir'),
-                'windows_dir_text': kwargs.get('windows_dir'),
-                'customize_dir_text': kwargs.get('customize_dir'),
-                'pxe_menu_text': kwargs.get('menu_filename')}
-
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            sel.click(form_buttons.cancel)
-            # sel.wait_for_element(page.configuration_btn)
-        else:
-            sel.click(submit_button)
-            flash.assert_no_errors()
 
     def create(self, cancel=False, refresh=True, refresh_timeout=120):
         """
@@ -157,15 +206,32 @@ class PXEServer(Updateable, Pretty, Navigatable):
             refresh (boolean): Whether to run the refresh operation on the PXE server after
                 the add has been completed.
         """
-        navigate_to(self, 'Add')
-        fill(pxe_properties_form, self._form_mapping(True, **self.__dict__))
-        self._submit(cancel, form_buttons.add)
-        if not cancel:
-            flash.assert_message_match('PXE Server "{}" was added'.format(self.name))
+        view = navigate_to(self, 'Add')
+        view.fill({'name': self.name,
+                   'depot_type': self.depot_type,
+                   'access_url': self.access_url,
+                   'pxe_dir': self.pxe_dir,
+                   'windows_images_dir': self.windows_dir,
+                   'customization_dir': self.customize_dir,
+                   'filename': self.menu_filename,
+                   'uri': self.uri,
+                   # Samba only
+                   'username': self.userid,
+                   'password': self.password,
+                   'confirm_password': self.password})
+        if self.depot_type == 'Samba' and self.userid and self.password:
+            view.validate.click()
+
+        main_view = self.create_view(PXEServersView)
+        if cancel:
+            view.cancel.click()
+            main_view.flash.assert_success_message('Add of new PXE Server '
+                                                   'was cancelled by the user')
+        else:
+            view.add.click()
+            main_view.flash.assert_success_message('PXE Server "{}" was added'.format(self.name))
             if refresh:
                 self.refresh(timeout=refresh_timeout)
-        else:
-            flash.assert_message_match('Add of new PXE Server was cancelled by the user')
 
     @variable(alias="db")
     def exists(self):
@@ -181,12 +247,9 @@ class PXEServer(Updateable, Pretty, Navigatable):
         """
         Checks if the PXE server already exists
         """
-        navigate_to(self, 'All')
         try:
-            pxe_tree(self.name)
+            navigate_to(self, 'Details')
             return True
-        except CandidateNotFound:
-            return False
         except NoSuchElementException:
             return False
 
@@ -200,15 +263,20 @@ class PXEServer(Updateable, Pretty, Navigatable):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        navigate_to(self, 'Edit')
-        fill(pxe_properties_form, self._form_mapping(**updates))
-        self._submit(cancel, form_buttons.save)
+        view = navigate_to(self, 'Edit')
+        view.fill(updates)
+        if updates.get('userid') or updates.get('password'):
+            view.validate.click()
+
         name = updates.get('name') or self.name
-        if not cancel:
-            flash.assert_message_match('PXE Server "{}" was saved'.format(name))
+        main_view = self.create_view(PXEServersView, override=updates)
+        if cancel:
+            view.cancel.click()
+            main_view.flash.assert_success_message('Edit of PXE Server "{}" was '
+                                                   'cancelled by the user'.format(name))
         else:
-            flash.assert_message_match(
-                'Edit of PXE Server "{}" was cancelled by the user'.format(name))
+            view.save.click()
+            main_view.flash.assert_success_message('PXE Server "{}" was saved'.format(name))
 
     def delete(self, cancel=True):
         """
@@ -217,29 +285,27 @@ class PXEServer(Updateable, Pretty, Navigatable):
         Args:
             cancel: Whether to cancel the deletion, defaults to True
         """
-
-        navigate_to(self, 'Details')
-        if self.appliance.version < '5.7':
-            btn_name = 'Remove this PXE Server from the VMDB'
-        else:
-            btn_name = 'Remove this PXE Server'
-        cfg_btn(btn_name, invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this PXE Server', handle_alert=not cancel)
         if not cancel:
-            flash.assert_message_match('PXE Server "{}": Delete successful'.format(self.name))
+            main_view = self.create_view(PXEServersView)
+            main_view.flash.assert_success_message('PXE Server "{}": '
+                                                   'Delete successful'.format(self.name))
+        else:
+            navigate_to(self, 'Details')
 
     def refresh(self, wait=True, timeout=120):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
-        navigate_to(self, 'Details')
-        last_time = pxe_details_page.last_refreshed.text
-        cfg_btn('Refresh Relationships', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_message_match(
-            'PXE Server "{}": Refresh Relationships successfully initiated'.format(self.name))
+        view = navigate_to(self, 'Details')
+        last_time = view.entities.basic_information.get_text_of('Last Refreshed On')
+        view.toolbar.configuration.item_select('Refresh Relationships', handle_alert=True)
+        view.flash.assert_success_message('PXE Server "{}": Refresh Relationships '
+                                          'successfully initiated'.format(self.name))
         if wait:
-            wait_for(lambda lt: lt != pxe_details_page.last_refreshed.text,
-                     func_args=[last_time], fail_func=sel.refresh, num_sec=timeout,
+            basic_info = view.entities.basic_information
+            wait_for(lambda lt: lt != basic_info.get_text_of('Last Refreshed On'),
+                     func_args=[last_time], fail_func=view.toolbar.reload.click, num_sec=timeout,
                      message="pxe refresh")
 
     @variable(alias='db')
@@ -259,52 +325,121 @@ class PXEServer(Updateable, Pretty, Navigatable):
 
     @get_pxe_image_type.variant('ui')
     def get_pxe_image_type_ui(self, image_name):
-        navigate_to(self, 'All')
-        pxe_tree(self.name, 'PXE Images', image_name)
-        return pxe_details_page.pxe_image_type.text
+        view = navigate_to(self, 'Details')
+        view.sidebar.servers.tree.click_path('All PXE Servers', self.name,
+                                             'PXE Images', image_name)
+        details_view = self.create_view(PXESystemImageTypeDetailsView)
+        return details_view.entities.basic_information.get_text_of('Type')
 
     def set_pxe_image_type(self, image_name, image_type):
         """
         Function to set the image type of a PXE image
         """
+        # todo: maybe create appropriate navmazing destinations instead ?
         if self.get_pxe_image_type(image_name) != image_type:
-            navigate_to(self, 'All')
-            pxe_tree(self.name, 'PXE Images', image_name)
-            cfg_btn('Edit this PXE Image')
-            fill(pxe_image_type_form, {'image_type': image_type}, action=form_buttons.save)
+            view = navigate_to(self, 'Details')
+            view.sidebar.servers.tree.click_path('All PXE Servers', self.name,
+                                                 'PXE Images', image_name)
+            details_view = self.create_view(PXESystemImageTypeDetailsView)
+            details_view.toolbar.configuration.item_select('Edit this PXE Image')
+            edit_view = self.create_view(PXEImageEditView)
+            edit_view.fill({'type': image_type})
+            edit_view.save.click()
 
 
 @navigator.register(PXEServer, 'All')
 class PXEServerAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = PXEServersView
+    prerequisite = NavigateToSibling('PXEMainPage')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
-        acc.tree("PXE Servers", "All PXE Servers")
+        self.view.sidebar.servers.tree.click_path('All PXE Servers')
 
 
 @navigator.register(PXEServer, 'Add')
 class PXEServerAdd(CFMENavigateStep):
+    VIEW = PXEServerAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New PXE Server')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New PXE Server')
 
 
 @navigator.register(PXEServer, 'Details')
 class PXEServerDetails(CFMENavigateStep):
+    VIEW = PXEServerDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        acc.tree("PXE Servers", "All PXE Servers", self.obj.name)
+        self.prerequisite_view.sidebar.servers.tree.click_path('All PXE Servers', self.obj.name)
 
 
 @navigator.register(PXEServer, 'Edit')
 class PXEServerEdit(CFMENavigateStep):
+    VIEW = PXEServerEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this PXE Server')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this PXE Server')
+
+
+class PXECustomizationTemplatesView(PXEMainView):
+    """
+    represents Customization Template Groups page
+    """
+    entities = Table(locator='.//div[@id="template_folders_div"]/table')
+
+    @property
+    def is_displayed(self):
+        return (super(PXECustomizationTemplatesView, self).is_displayed and
+                self.title.text == 'All Customization Templates - System Image Types')
+
+
+class PXECustomizationTemplateDetailsView(PXEMainView):
+    """
+    represents some certain Customization Template Details page
+    """
+    toolbar = View.nested(PXEDetailsToolBar)
+
+    @View.nested
+    class entities(View):  # noqa
+        basic_information = SummaryTable(title="Basic Information")
+        script = ScriptBox(locator='//textarea[contains(@id, "script_data")]')
+
+    @property
+    def is_displayed(self):
+        if getattr(self.context['object'], 'name'):
+            title = 'Customization Template "{name}"'.format(self.context['object'].name)
+            return (super(PXECustomizationTemplateDetailsView, self).is_displayed and
+                    self.entities.title.text == title)
+        else:
+            return False
+
+
+class PXECustomizationTemplateForm(View):
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    name = Input(id='name')
+    description = Input(id='description')
+    image_type = BootstrapSelect(id='img_typ')
+    type = BootstrapSelect(id='typ')
+    script = ScriptBox(locator='//textarea[contains(@id, "script_data")]')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class PXECustomizationTemplateAddView(PXECustomizationTemplateForm):
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+
+class PXECustomizationTemplateEditView(PXECustomizationTemplateForm):
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
 
 class CustomizationTemplate(Updateable, Pretty, Navigatable):
@@ -328,21 +463,6 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         self.script_type = script_type
         self.script_data = script_data
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'description_text': kwargs.get('description'),
-                'image_type': kwargs.get('image_type'),
-                'script_type': kwargs.get('script_type'),
-                'script_data': kwargs.get('script_data')}
-
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            sel.click(form_buttons.cancel)
-            # sel.wait_for_element(page.configuration_btn)
-        else:
-            sel.click(submit_button)
-            flash.assert_no_errors()
-
     def create(self, cancel=False):
         """
         Creates a Customization Template object
@@ -351,14 +471,22 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
             cancel (boolean): Whether to cancel out of the creation.  The cancel is done
                 after all the information present in the CT has been filled in the UI.
         """
-        navigate_to(self, 'Add')
-        fill(template_properties_form, self._form_mapping(True, **self.__dict__))
-        self._submit(cancel, form_buttons.add)
-        if not cancel:
-            flash.assert_message_match('Customization Template "{}" was saved'.format(self.name))
+        view = navigate_to(self, 'Add')
+
+        view.fill({'name': self.name,
+                   'description': self.description,
+                   'image_type': self.image_type,
+                   'type': self.script_type,
+                   'script': self.script_data})
+        main_view = self.create_view(PXECustomizationTemplatesView)
+
+        if cancel:
+            view.cancel.click()
+            msg = 'Add of new Customization Template was cancelled by the user'
         else:
-            flash.assert_message_match(
-                'Add of new Customization Template was cancelled by the user')
+            view.add.click()
+            msg = 'Customization Template "{}" was saved'.format(self.name)
+        main_view.flash.assert_success_message(msg)
 
     @variable(alias='db')
     def exists(self):
@@ -374,12 +502,9 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         """
         Checks if the Customization template already exists
         """
-        navigate_to(self, 'All')
         try:
-            template_tree(self.image_type, self.name)
+            navigate_to(self, 'Details')
             return True
-        except CandidateNotFound:
-            return False
         except NoSuchElementException:
             return False
 
@@ -392,16 +517,18 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
-
-        navigate_to(self, 'Edit')
-        fill(template_properties_form, self._form_mapping(**updates))
-        self._submit(cancel, form_buttons.save)
+        view = navigate_to(self, 'Edit')
+        view.fill(updates)
+        main_view = self.create_view(PXECustomizationTemplatesView, override=updates)
         name = updates.get('name') or self.name
-        if not cancel:
-            flash.assert_message_match('Customization Template "{}" was saved'.format(name))
+
+        if cancel:
+            view.cancel.click()
+            msg = 'Edit of Customization Template "{}" was cancelled by the user'.format(name)
         else:
-            flash.assert_message_match(
-                'Edit of Customization Template "{}" was cancelled by the user'.format(name))
+            view.save.click()
+            msg = 'Customization Template "{}" was saved'.format(name)
+        main_view.flash.assert_success_message(msg)
 
     def delete(self, cancel=True):
         """
@@ -410,51 +537,100 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
         Args:
             cancel: Whether to cancel the deletion, defaults to True
         """
-
-        navigate_to(self, 'Details')
-        if self.appliance.version < '5.7':
-            btn_name = 'Remove this Customization Template from the VMDB'
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this Customization Template',
+                                               handle_alert=cancel)
+        if not cancel:
+            main_view = self.create_view(PXECustomizationTemplatesView)
+            msg = 'Customization Template "{}": Delete successful'.format(self.description)
+            main_view.flash.assert_success_message(msg)
         else:
-            btn_name = 'Remove this Customization Template'
-        cfg_btn(btn_name, invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-        flash.assert_message_match(
-            'Customization Template "{}": Delete successful'.format(self.description))
+            navigate_to(self, 'Details')
 
 
 @navigator.register(CustomizationTemplate, 'All')
 class CustomizationTemplateAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = PXECustomizationTemplatesView
+    prerequisite = NavigateToSibling('PXEMainPage')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
-        acc.tree("Customization Templates",
-            "All Customization Templates - System Image Types")
+        self.view.sidebar.templates.tree.click_path(('All Customization Templates - '
+                                                     'System Image Types'))
 
 
 @navigator.register(CustomizationTemplate, 'Add')
 class CustomizationTemplateAdd(CFMENavigateStep):
+    VIEW = PXECustomizationTemplateAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Customization Template')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New Customization Template')
 
 
 @navigator.register(CustomizationTemplate, 'Details')
 class CustomizationTemplateDetails(CFMENavigateStep):
+    VIEW = PXECustomizationTemplateDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        acc.tree("Customization Templates", "All Customization Templates - System Image Types",
-            self.obj.image_type, self.obj.name)
+        tree = self.view.sidebar.templates.tree
+        tree.click_path('All Customization Templates - System Image Types', self.obj.image_type,
+                        self.obj.name)
 
 
 @navigator.register(CustomizationTemplate, 'Edit')
 class CustomizationTemplateEdit(CFMENavigateStep):
+    VIEW = PXECustomizationTemplateEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this Customization Template')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Customization Template')
+
+
+class PXESystemImageTypesView(PXEMainView):
+    """
+    represents whole All System Image Types page
+    """
+
+    @property
+    def is_displayed(self):
+        return (super(PXESystemImageTypesView, self).is_displayed and
+                self.title.text == 'All System Image Types')
+
+
+class PXESystemImageTypeDetailsView(PXEMainView):
+    toolbar = View.nested(PXEDetailsToolBar)
+
+    @View.nested
+    class entities(View):  # noqa
+        basic_information = SummaryTable(title="Basic Information")
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class PXESystemImageTypeForm(View):
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    name = Input(id='name')
+    type = BootstrapSelect(id='provision_type')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class PXESystemImageTypeAddView(PXESystemImageTypeForm):
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+
+class PXESystemImageTypeEditView(PXESystemImageTypeForm):
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
 
 class SystemImageType(Updateable, Pretty, Navigatable):
@@ -473,18 +649,6 @@ class SystemImageType(Updateable, Pretty, Navigatable):
         self.name = name
         self.provision_type = provision_type
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'provision_type': kwargs.get('provision_type')}
-
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            sel.click(form_buttons.cancel)
-            # sel.wait_for_element(page.configuration_btn)
-        else:
-            sel.click(submit_button)
-            flash.assert_no_errors()
-
     def create(self, cancel=False):
         """
         Creates a System Image Type object
@@ -493,14 +657,16 @@ class SystemImageType(Updateable, Pretty, Navigatable):
             cancel (boolean): Whether to cancel out of the creation.  The cancel is done
                 after all the information present in the SIT has been filled in the UI.
         """
-        navigate_to(self, 'Add')
-        fill(image_properties_form, self._form_mapping(True, **self.__dict__))
-        self._submit(cancel, form_buttons.add)
-        if not cancel:
-            flash.assert_message_match('System Image Type "{}" was added'.format(self.name))
+        view = navigate_to(self, 'Add')
+        view.fill({'name': self.name, 'type': self.provision_type})
+        main_view = self.create_view(PXESystemImageTypesView)
+        if cancel:
+            view.cancel.click()
+            msg = 'Add of new System Image Type was cancelled by the user'
         else:
-            flash.assert_message_match(
-                'Add of new System Image Type was cancelled by the user')
+            view.add.click()
+            msg = 'System Image Type "{}" was added'.format(self.name)
+        main_view.flash.assert_success_message(msg)
 
     def update(self, updates, cancel=False):
         """
@@ -512,9 +678,12 @@ class SystemImageType(Updateable, Pretty, Navigatable):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        navigate_to(self, 'Edit')
-        fill(image_properties_form, self._form_mapping(**updates))
-        self._submit(cancel, form_buttons.save)
+        view = navigate_to(self, 'Edit')
+        view.fill({'name': updates.get('name'), 'type': updates.get('provision_type')})
+        if cancel:
+            view.cancel.click()
+        else:
+            view.save.click()
         # No flash message
 
     def delete(self, cancel=True):
@@ -524,48 +693,97 @@ class SystemImageType(Updateable, Pretty, Navigatable):
         Args:
             cancel: Whether to cancel the deletion, defaults to True
         """
-
-        navigate_to(self, 'Details')
-        if self.appliance.version < '5.7':
-            btn_name = 'Remove this System Image Type from the VMDB'
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this System Image Type',
+                                               handle_alert=not cancel)
+        if not cancel:
+            main_view = self.create_view(PXESystemImageTypesView)
+            msg = 'System Image Type "{}": Delete successful'.format(self.name)
+            main_view.flash.assert_success_message(msg)
         else:
-            btn_name = 'Remove this System Image Type'
-        cfg_btn(btn_name, invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-        flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
+            navigate_to(self, 'Details')
 
 
 @navigator.register(SystemImageType, 'All')
 class SystemImageTypeAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = PXESystemImageTypesView
+    prerequisite = NavigateToSibling('PXEMainPage')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
-        acc.tree("System Image Types", "All System Image Types")
+        self.view.sidebar.image_types.tree.click_path('All System Image Types')
 
 
 @navigator.register(SystemImageType, 'Add')
 class SystemImageTypeAdd(CFMENavigateStep):
+    VIEW = PXESystemImageTypeAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a new System Image Type')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new System Image Type')
 
 
 @navigator.register(SystemImageType, 'Details')
 class SystemImageTypeDetails(CFMENavigateStep):
+    VIEW = PXESystemImageTypeDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        image_table.click_cell('name', self.obj.name)
+        self.prerequisite_view.sidebar.image_types.tree.click_path('All System Image Types',
+                                                                   self.obj.name)
 
 
 @navigator.register(SystemImageType, 'Edit')
 class SystemImageTypeEdit(CFMENavigateStep):
+    VIEW = PXESystemImageTypeEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this System Image Type')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this System Image Type')
+
+
+class PXEDatastoresView(PXEMainView):
+    """
+    represents whole All ISO Datastores page
+    """
+
+    @property
+    def is_displayed(self):
+        return (super(PXEDatastoresView, self).is_displayed and
+                self.title.text == 'All ISO Datastores')
+
+
+class PXEDatastoreDetailsView(PXEMainView):
+    toolbar = View.nested(PXEDetailsToolBar)
+
+    @View.nested
+    class entities(View):  # noqa
+        basic_information = SummaryTable(title="Basic Information")
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class PXEDatastoreForm(View):
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    provider = BootstrapSelect(id='ems_id')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class PXEDatastoreAddView(PXEDatastoreForm):
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+
+class PXEDatastoreEditView(PXEDatastoreForm):
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
 
 
 class ISODatastore(Updateable, Pretty, Navigatable):
@@ -580,17 +798,6 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         Navigatable.__init__(self, appliance=appliance)
         self.provider = provider
 
-    def _form_mapping(self, create=None, **kwargs):
-        return {'provider': kwargs.get('provider')}
-
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            sel.click(form_buttons.cancel)
-            # sel.wait_for_element(page.configuration_btn)
-        else:
-            sel.click(submit_button)
-            flash.assert_no_errors()
-
     def create(self, cancel=False, refresh=True, refresh_timeout=120):
         """
         Creates an ISO datastore object
@@ -601,10 +808,17 @@ class ISODatastore(Updateable, Pretty, Navigatable):
             refresh (boolean): Whether to run the refresh operation on the ISO datastore after
                 the add has been completed.
         """
-        navigate_to(self, 'Add')
-        fill(iso_properties_form, self._form_mapping(True, **self.__dict__))
-        self._submit(cancel, form_buttons.add)
-        flash.assert_message_match('ISO Datastore "{}" was added'.format(self.provider))
+        view = navigate_to(self, 'Add')
+        view.fill({'provider': self.provider})
+        main_view = self.create_view(PXEDatastoresView)
+        if cancel:
+            view.cancel.click()
+            msg = 'Add of new ISO Datastore was cancelled by the user'
+        else:
+            view.add.click()
+            msg = 'ISO Datastore "{}" was added'.format(self.provider)
+        main_view.flash.assert_success_message(msg)
+
         if refresh:
             self.refresh(timeout=refresh_timeout)
 
@@ -629,11 +843,10 @@ class ISODatastore(Updateable, Pretty, Navigatable):
         """
         Checks if the ISO Datastore already exists via UI
         """
-        navigate_to(self, 'All')
         try:
-            iso_tree(self.provider)
+            navigate_to(self, 'Details')
             return True
-        except CandidateNotFound:
+        except NoSuchElementException:
             return False
 
     def delete(self, cancel=True):
@@ -644,68 +857,81 @@ class ISODatastore(Updateable, Pretty, Navigatable):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        navigate_to(self, 'Details')
-        if self.appliance.version < '5.7':
-            btn_name = 'Remove this ISO Datastore from the VMDB'
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this ISO Datastore', handle_alert=not cancel)
+        if not cancel:
+            main_view = self.create_view(PXEDatastoresView)
+            msg = 'ISO Datastore "{}": Delete successful'.format(self.provider)
+            main_view.flash.assert_success_message(msg)
         else:
-            btn_name = 'Remove this ISO Datastore'
-        cfg_btn(btn_name, invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-        flash.assert_message_match('ISO Datastore "{}": Delete successful'.format(self.provider))
+            navigate_to(self, 'Details')
 
     def refresh(self, wait=True, timeout=120):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
-        navigate_to(self, 'Details')
-        last_time = pxe_details_page.last_refreshed.text
-        cfg_btn('Refresh Relationships', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_message_match(
-            'ISO Datastore "{}": Refresh Relationships successfully initiated'
-            .format(self.provider))
+        view = navigate_to(self, 'Details')
+        basic_info = view.entities.basic_information
+        last_time = basic_info.get_text_of('Last Refreshed On')
+        view.toolbar.configuration.item_select('Refresh Relationships', handle_alert=True)
+        view.flash.assert_success_message(('ISO Datastore "{}": Refresh Relationships successfully '
+                                           'initiated'.format(self.provider)))
         if wait:
-            wait_for(lambda lt: lt != pxe_details_page.last_refreshed.text,
-                     func_args=[last_time], fail_func=sel.refresh, num_sec=timeout,
+            wait_for(lambda lt: lt != basic_info.get_text_of('Last Refreshed On'),
+                     func_args=[last_time], fail_func=view.toolbar.reload.click, num_sec=timeout,
                      message="iso refresh")
 
     def set_iso_image_type(self, image_name, image_type):
         """
         Function to set the image type of a PXE image
         """
-        navigate_to(self, 'All')
-        iso_tree(self.provider, 'ISO Images', image_name)
-        cfg_btn('Edit this ISO Image')
-        fill(iso_image_type_form, {'image_type': image_type})
+        view = navigate_to(self, 'All')
+        view.sidebar.datastores.tree.click_path('All ISO Datastores', self.provider,
+                                                'ISO Images', image_name)
+        view.toolbar.configuration.item_select('Edit this ISO Image')
+        view.fill({'image_type': image_type})
         # Click save if enabled else click Cancel
-        try:
-            sel.click(form_buttons.save)
-        except:
-            sel.click(form_buttons.cancel)
+        if view.save.active:
+            view.save.click()
+        else:
+            view.cancel.click()
 
 
 @navigator.register(ISODatastore, 'All')
 class ISODatastoreAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = PXEDatastoresView
+    prerequisite = NavigateToSibling('PXEMainPage')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
-        acc.tree("ISO Datastores", "All ISO Datastores")
+        self.view.sidebar.datastores.tree.click_path("All ISO Datastores")
 
 
 @navigator.register(ISODatastore, 'Add')
 class ISODatastoreAdd(CFMENavigateStep):
+    VIEW = PXEDatastoreAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New ISO Datastore')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New ISO Datastore')
 
 
 @navigator.register(ISODatastore, 'Details')
 class ISODatastoreDetails(CFMENavigateStep):
+    VIEW = PXEDatastoreDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        acc.tree("ISO Datastores", "All ISO Datastores", self.obj.provider)
+        self.view.sidebar.datastores.tree.click_path("All ISO Datastores", self.obj.provider)
+
+
+@navigator.register(PXEServer, 'PXEMainPage')
+@navigator.register(CustomizationTemplate, 'PXEMainPage')
+@navigator.register(SystemImageType, 'PXEMainPage')
+@navigator.register(ISODatastore, 'PXEMainPage')
+class PXEMainPage(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
 
 
 def get_template_from_config(template_config_name):
@@ -750,17 +976,8 @@ def remove_all_pxe_servers():
     """
     Convenience function to remove all PXE servers
     """
-    logger.debug('Removing all PXE servers')
-    navigate_to(PXEServer, 'All')
-    navigate_to(PXEServer, 'All')  # Yes we really do this twice.
-    if sel.is_displayed(pxe_server_table_exist):
-        from cfme.web_ui import paginator as pg
-        pg.check_all()
-        cfg_btn(
-            pick({
-                LOWEST: 'Remove PXE Servers from the VMDB',
-                '5.8': 'Remove PXE Servers'
-            }),
-            invokes_alert=True
-        )
-        sel.handle_alert(cancel=False)
+    view = navigate_to(PXEServer, 'All')
+    if view.entities.is_displayed:
+        for entity in view.entities.rows():
+            entity[0].check()
+        view.toolbar.configuration.item_select('Remove PXE Servers', handle_alert=True)
