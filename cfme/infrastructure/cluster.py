@@ -4,7 +4,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Cluster pages.
 """
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
@@ -17,7 +17,8 @@ from cfme.web_ui import match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.pretty import Pretty
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
+from utils.log import logger
 
 
 # TODO: since Cluster always requires provider, it will use only one way to get to Cluster Detail's
@@ -132,6 +133,43 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
             super(TimelinesView, self).is_displayed)
 
 
+class ClusterCollection(Navigatable):
+    """Collection object for the :py:class:`cfme.infrastructure.cluster.Cluster`."""
+
+    def delete(self, *clusters):
+        """Delete one or more Clusters from the list of the Clusters
+
+        Args:
+            list of the `cfme.infrastructure.cluster.Cluster` objects
+        """
+        clusters = list(clusters)
+        checked_clusters = []
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+
+        if not view.entities.table.is_displayed:
+            raise ValueError('No Clusters found')
+
+        for row in view.entities.table:
+            for cluster in clusters:
+                if cluster.name == row.name.text:
+                    checked_clusters.append(cluster)
+                    row[0].check()
+                    break
+            if set(clusters) == set(checked_clusters):
+                break
+        if set(clusters) != set(checked_clusters):
+            raise ValueError('Some Clusters were not found in the UI')
+        view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
+        view.entities.flash.assert_no_error()
+        flash_msg = \
+            'Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.format(
+                len(clusters))
+        view.flash.assert_message(flash_msg)
+        for cluster in clusters:
+            cluster.wait_for_disappear()
+
+
 class Cluster(Pretty, Navigatable):
     """ Model of an infrastructure cluster in cfme
 
@@ -185,18 +223,24 @@ class Cluster(Pretty, Navigatable):
             view.entities.flash.assert_success_message(msg)
 
         if wait:
-            def refresh():
-                if self.provider:
-                    self.provider.refresh_provider_relationships()
-                view.browser.selenium.refresh()
-                view.flush_widget_cache()
+            self.provider.refresh_provider_relationships()
+            self.wait_for_disappear()
 
-            wait_for(lambda: not self.exists, fail_condition=False, num_sec=500, fail_func=refresh,
-                     message='Wait cluster to disappear')
+    def wait_for_disappear(self, timeout=300):
+        self.provider.refresh_provider_relationships()
+        try:
+            return wait_for(lambda: self.exists,
+                            fail_condition=True,
+                            timeout=timeout,
+                            message='Wait for cluster to disappear',
+                            delay=10,
+                            fail_func=self.browser.refresh)
+        except TimedOutError:
+            logger.error('Timed out waiting for cluster to disappear, continuing')
 
     def wait_for_exists(self):
         """Wait for the cluster to be refreshed"""
-        view = navigate_to(self, 'All')
+        view = navigate_to(ClusterCollection, 'All')
 
         def refresh():
             if self.provider:
@@ -221,7 +265,7 @@ class Cluster(Pretty, Navigatable):
 
     @property
     def exists(self):
-        view = navigate_to(self, 'All')
+        view = navigate_to(ClusterCollection, 'All')
         try:
             view.paginator.find_row_on_pages(view.entities.table, name=self.name)
             return True
@@ -246,7 +290,7 @@ class Cluster(Pretty, Navigatable):
                                                    'initiated')
 
 
-@navigator.register(Cluster, 'All')
+@navigator.register(ClusterCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = ClusterAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -265,7 +309,7 @@ class All(CFMENavigateStep):
 @navigator.register(Cluster, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ClusterDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToObject(ClusterCollection, 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
