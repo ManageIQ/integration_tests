@@ -622,7 +622,7 @@ class RedHatUpdates(Navigatable, Pretty):
         """
         view = navigate_to(self, 'Details')
         self.select_appliances(*appliance_names)
-        view.apply_updates.click()
+        view.apply_cfme_update.click()
         view.flash.assert_message("Update has been initiated for the selected Servers")
 
     def check_updates(self, *appliance_names):
@@ -633,7 +633,7 @@ class RedHatUpdates(Navigatable, Pretty):
         """
         view = navigate_to(self, 'Details')
         self.select_appliances(*appliance_names)
-        view.check_updates.click()
+        view.check_for_updates.click()
         view.flash.assert_message(
             "Check for updates has been initiated for the selected Servers")
 
