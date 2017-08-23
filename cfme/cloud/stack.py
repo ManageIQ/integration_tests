@@ -277,7 +277,8 @@ class StackCollection(Navigatable):
                     len(stacks))
             view.entities.flash.assert_success_message(flash_msg)
 
-            wait_for(lambda: not stacks[0].exists, num_sec=15 * 60,
+            for stack in stacks:
+                wait_for(lambda: not stack.exists, num_sec=15 * 60,
                      delay=30, message='Wait for stack to be deleted')
         else:
             raise ValueError('Some Stacks not found in the UI')
