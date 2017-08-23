@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import math
 import re
+from collections import namedtuple
 
 # TODO: Split the 1000 and 1024 factor out. Now it is not an issue as it is used FOR COMPARISON ONLY
 FACTOR = 1024
@@ -95,3 +96,19 @@ class Unit(object):
 
     def __str__(self):
         return '{} {}{}'.format(self.number, self.prefix, self.unit_type)
+
+
+# Chargeback header names: used in chargeback tests for convenience
+_HeaderNames = namedtuple('_HeaderNames', ['rate_name', 'metric_name', 'cost_name'])
+CHARGEBACK_HEADER_NAMES = {
+    'Fixed1': _HeaderNames('Fixed Compute Cost 1', 'Fixed Compute Metric', 'Fixed Compute Cost 1'),
+    'Fixed2': _HeaderNames('Fixed Compute Cost 2', 'Fixed Compute Metric', 'Fixed Compute Cost 2'),
+    'CpuCores': _HeaderNames('Used CPU Cores', 'Cpu Cores Used Metric', 'Cpu Cores Used Cost'),
+    'Memory': _HeaderNames('Used Memory', 'Memory Used', 'Memory Used Cost'),
+    'Network': _HeaderNames('Used Network I/O', 'Network I/O Used', 'Network I/O Used Cost'),
+}
+
+
+def parse_number(str_):
+    """parsing only the numbers in the string"""
+    return float(''.join(re.findall('[\d\.]+', str_)) or 0)
