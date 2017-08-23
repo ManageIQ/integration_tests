@@ -86,15 +86,18 @@ def test_iso_provision_from_template(provider, vm_name, smtp_test, datastore_ini
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
-        'provision_type': 'ISO',
-        'iso_file': {'name': [iso_file]},
-        'custom_template': {'name': [iso_kickstart]},
-        'root_password': iso_root_password,
-        'vlan': vlan,
-    }
+        'catalog': {
+            'vm_name': vm_name,
+            'provision_type': 'ISO',
+            'iso_file': {'name': iso_file}},
+        'environment': {
+            'host_name': {'name': host},
+            'datastore_name': {'name': datastore}},
+        'customize': {
+            'custom_template': {'name': iso_kickstart},
+            'root_password': iso_root_password},
+        'network': {
+            'vlan': vlan}}
 
     do_vm_provisioning(iso_template, provider, vm_name, provisioning_data, request, smtp_test,
                        num_sec=1500)

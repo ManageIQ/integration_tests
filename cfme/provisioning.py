@@ -169,18 +169,15 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
                        smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
     vm = Vm(name=vm_name, provider=provider, template_name=template_name)
-    navigate_to(vm, 'Provision')
-
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     provisioning_data.update({
-        'email': 'template_provisioner@example.com',
-        'first_name': 'Template',
-        'last_name': 'Provisioner',
-        'notes': note,
-    })
-
-    fill(provisioning_form, provisioning_data,
-         action=provisioning_form.submit_button)
+        'request': {
+            'email': 'template_provisioner@example.com',
+            'first_name': 'Template',
+            'last_name': 'Provisioner',
+            'notes': note}})
+    view = navigate_to(vm, 'Provision')
+    view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
     flash.assert_no_errors()
     if not wait:
         return

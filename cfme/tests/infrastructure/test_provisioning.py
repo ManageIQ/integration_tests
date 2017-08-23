@@ -43,7 +43,7 @@ def vm_name():
 
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
-def test_provision_from_template(rbac_role, setup_provider, provider, vm_name, smtp_test,
+def test_provision_from_template(setup_provider, provider, vm_name, smtp_test,
                                  request, provisioning, auto):
     """ Tests provisioning from a template
 
@@ -64,25 +64,16 @@ def test_provision_from_template(rbac_role, setup_provider, provider, vm_name, s
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': provisioning['host']} if not auto else None,
-        'datastore_name': {'name': provisioning['datastore']} if not auto else None,
-        'automatic_placement': True if auto else None
-    }
-
-    # Same thing, different names. :\
-    if provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
-    elif provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
-
-    try:
-        provisioning_data['vlan'] = provisioning['vlan']
-    except KeyError:
-        # provisioning['vlan'] is required for rhevm provisioning
-        if provider.type == 'rhevm':
-            raise pytest.fail('rhevm requires a vlan value in provisioning info')
-
+        'catalog': {
+            'vm_name': vm_name
+        },
+        'environment':
+            {'vm_name': vm_name,
+            'host_name': {'name': provisioning['host']} if not auto else None,
+            'datastore_name': {'name': provisioning['datastore']} if not auto else None,
+            'automatic_placement': True if auto else None},
+        'network':
+            {'vlan': provisioning['vlan']}}
     do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
                        num_sec=900)
 
@@ -124,24 +115,14 @@ def test_provision_approval(
         lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
-        'num_vms': "2",
-    }
-
-    # Same thing, different names. :\
-    if provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
-    elif provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
-
-    try:
-        provisioning_data['vlan'] = provisioning['vlan']
-    except KeyError:
-        # provisioning['vlan'] is required for rhevm provisioning
-        if provider.type == 'rhevm':
-            raise pytest.fail('rhevm requires a vlan value in provisioning info')
+        'catalog': {
+            'vm_name': vm_name,
+            'num_vms': '2'},
+        'environment':
+            {'host_name': {'name': provisioning['host']},
+            'datastore_name': {'name': provisioning['datastore']}},
+        'network':
+            {'vlan': provisioning['vlan']}}
 
     do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
                        wait=False)

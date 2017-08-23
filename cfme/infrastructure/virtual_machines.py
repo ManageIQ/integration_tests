@@ -145,52 +145,64 @@ class VmsTemplatesAllView(InfraVMView):
     """
     The collection page for instances
     """
+    toolbar = View.nested(VMToolbar)
+    sidebar = View.nested(VmsTemplatesAccordion)
+    including_entities = View.include(VMEntities, use_parent=True)
+
     @property
     def is_displayed(self):
         return (
             self.in_infra_vms and
             self.sidebar.vmstemplates.tree.currently_selected == 'All VMs & Templates' and
             self.entities.title.text == 'All VMs & Templates')
+
+    def reset_page(self):
+        self.entities.search.clear_search()
+
+
+class VmTemplatesAllForProviderView(InfraVMView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
 
-
-class VmTemplatesAllForProviderView(InfraVMView):
     @property
     def is_displayed(self):
         return (
             self.in_infra_vms and
-            self.entities.title.text == 'All VMs & Templates' and
-            self.entities.title.text == 'VM or Templates under Provider  "{}"'
-            .format(self.context['object'].provider.name))
+            str(self.entities.title.text) ==
+            'VM or Templates under Provider \"{}\"'.format(self.context['object'].provider.name))
+
+    def reset_page(self):
+        self.entities.search.clear_search()
+
+
+class VmsOnlyAllView(InfraVMView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
 
-
-class VmsOnlyAllView(InfraVMView):
     @property
     def is_displayed(self):
         return (
             self.in_infra_vms and
             self.sidebar.vms.tree.currently_selected == 'All VMs' and
             self.entities.title.text == 'All VMs')
+
+    def reset_page(self):
+        self.entities.search.clear_search()
+
+
+class TemplatesOnlyAllView(InfraVMView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
 
-
-class TemplatesOnlyAllView(InfraVMView):
     @property
     def is_displayed(self):
         return (
             self.in_infra_vms and
             self.sidebar.templates.tree.currently_selected == 'All Templates' and
             self.entities.title.text == 'All Templates')
-    toolbar = View.nested(VMToolbar)
-    sidebar = View.nested(VmsTemplatesAccordion)
-    including_entities = View.include(VMEntities, use_parent=True)
 
 
 class InfraVmSummaryView(VMDetailsEntities):
@@ -210,6 +222,7 @@ class InfraVmDetailsView(InfraVMView):
     @toolbar.register(lambda title: "VM Template and Image" in title)
     class TemplatesToolbar(InfraVmTemplatesGenericDetailsToolbar):
         pass
+
     sidebar = View.nested(VmsTemplatesAccordion)
     entities = View.nested(InfraVmSummaryView)
 
@@ -221,12 +234,12 @@ class InfraVmDetailsView(InfraVMView):
             relationship_provider_name = self.entities.relationships.get_text_of('Infrastructure '
                                                                                  'Provider')
         except NameError:
-            if self.sidebar.vmstemplates.tree.currently_selected[-1] in ['<Archived>',
-                                                                         '<Orphaned>']:
+            currently_selected = self.sidebar.vmstemplates.tree.currently_selected[-1]
+            if currently_selected in ['<Archived>', '<Orphaned>']:
                 return (
                     self.in_infra_vms and
                     self.entities.title.text == 'VM and Instance "{}"'.format(expected_name))
-            logger.warning('No "Infrastructure Provider" Relationship, VM details view not '
+            self.logger.warning('No "Infrastructure Provider" Relationship, VM details view not '
                            'displayed')
             return False
         return (
@@ -1134,6 +1147,9 @@ class VmAllWithTemplates(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Virtual Machines')
         self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
 
+    def resetter(self, *args, **kwargs):
+        self.view.reset_page()
+
 
 @navigator.register(Template, 'AllForProvider')
 @navigator.register(Vm, 'AllForProvider')
@@ -1149,6 +1165,9 @@ class VmAllWithTemplatesForProvider(CFMENavigateStep):
         else:
             raise DestinationNotFound("the destination isn't found")
         self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates', provider)
+
+    def resetter(self, *args, **kwargs):
+        self.view.reset_page()
 
 
 @navigator.register(Template, 'Details')
@@ -1183,6 +1202,9 @@ class VmAll(CFMENavigateStep):
             kwargs['filter_name'])
         else:
             raise DestinationNotFound("the destination isn't found")
+
+    def resetter(self, *args, **kwargs):
+        self.view.reset_page()
 
 
 @navigator.register(Vm, 'VMsOnlyDetails')

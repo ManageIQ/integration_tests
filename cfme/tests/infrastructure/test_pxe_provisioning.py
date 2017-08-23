@@ -109,16 +109,19 @@ def test_pxe_provision_from_template(
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
-        'provision_type': 'PXE',
-        'pxe_server': pxe_server,
-        'pxe_image': {'name': [pxe_image]},
-        'custom_template': {'name': [pxe_kickstart]},
-        'root_password': pxe_root_password,
-        'vlan': pxe_vlan,
-    }
+        'catalog': {
+            'vm_name': vm_name,
+            'provision_type': 'PXE',
+            'pxe_server': pxe_server,
+            'pxe_image': {'name': pxe_image}},
+        'environment': {
+            'host_name': {'name': host},
+            'datastore_name': {'name': datastore}},
+        'customize': {
+            'custom_template': {'name': pxe_kickstart},
+            'root_password': pxe_root_password},
+        'network': {
+            'vlan': pxe_vlan}}
 
     do_vm_provisioning(
         pxe_template, provider, vm_name, provisioning_data,
