@@ -359,6 +359,12 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
             body = []
             for _ in view.paginator.pages():
                 for row in view.table.rows():
+                    if not all([c[1].is_displayed for c in row]):
+                        # This is a temporary workaround for cases we have row span
+                        # greater that 1 column (e.g. in case of "Totals: ddd" column).
+                        # TODO: Support this functionality in widgetastic. Issue:
+                        # https://github.com/RedHatQE/widgetastic.core/issues/26
+                        continue
                     row_data = tuple([row[header].text.encode("utf-8") for header in headers])
                     body.append(row_data)
         except NoSuchElementException:
@@ -503,6 +509,12 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         try:
             for _ in view.saved_reports.paginator.pages():
                 for row in view.saved_reports.table.rows():
+                    if not all([c[1].is_displayed for c in row]):
+                        # This is a temporary workaround for cases we have row span
+                        # greater that 1 column (e.g. in case of "Totals: ddd" column).
+                        # TODO: Support this functionality in widgetastic. Issue:
+                        # https://github.com/RedHatQE/widgetastic.core/issues/26
+                        continue
                     results.append(
                         CannedSavedReport(
                             path,
