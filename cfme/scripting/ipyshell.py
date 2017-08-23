@@ -6,10 +6,10 @@ from . import quickstart
 from IPython.terminal.interactiveshell import TerminalInteractiveShell
 
 IMPORTS = [
-    'from utils import conf',
+    'from cfme.utils import conf',
     'from fixtures.pytest_store import store',
-    'from utils.appliance.implementations.ui import navigate_to',
-    'from utils import providers'
+    'from cfme.utils.appliance.implementations.ui import navigate_to',
+    'from cfme.utils import providers'
 ]
 
 
