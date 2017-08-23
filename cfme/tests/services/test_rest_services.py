@@ -57,15 +57,21 @@ def wait_for_vm_power_state(vm, resulting_state):
             resulting_state, vm.power_state))
 
 
-def is_retired(entity):
-    if not entity.collection.find_by(id=entity.id):
-        return True
-    try:
-        entity.reload()
-        return entity.retirement_state == 'retired'
-    except Exception:
-        pass
-    return False
+def wait_for_retired(entity, num_sec=1000):
+    def is_retired(entity):
+        if not entity.collection.find_by(id=entity.id):
+            return True
+        try:
+            entity.reload()
+            return entity.retirement_state == 'retired'
+        except Exception:
+            pass
+        return False
+
+    # wait until retired, if this fails, settle with "retiring" state
+    retval = wait_for(lambda: is_retired(entity), num_sec=num_sec, delay=10, silent_failure=True)
+    if not retval:
+        assert entity.retirement_state == 'retiring'
 
 
 def service_body(**kwargs):
@@ -86,7 +92,7 @@ def dialog():
 @pytest.fixture(scope="function")
 def service_catalogs(request, appliance):
     response = _service_catalogs(request, appliance.rest_api)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
     return response
 
 
@@ -132,7 +138,7 @@ def services(request, appliance, a_provider):
     bodies = [service_body() for _ in range(3)]
     collection = appliance.rest_api.collections.services
     new_services = collection.action.create(*bodies)
-    assert appliance.rest_api.response.status_code == 200
+    assert_response(appliance)
 
     @request.addfinalizer
     def _finished():
@@ -148,7 +154,7 @@ def services(request, appliance, a_provider):
 @pytest.fixture(scope="function")
 def service_templates(request, appliance):
     response = _service_templates(request, appliance.rest_api)
-    assert appliance.rest_api.response
+    assert_response(appliance)
     return response
 
 
@@ -183,7 +189,7 @@ class TestServiceRESTAPI(object):
         for service in services:
             new_name = fauxfactory.gen_alphanumeric()
             response = service.action.edit(name=new_name)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             assert response.name == new_name
             service.reload()
             assert service.name == new_name
@@ -208,7 +214,7 @@ class TestServiceRESTAPI(object):
                 "name": new_name,
             })
         response = appliance.rest_api.collections.services.action.edit(*services_data_edited)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         for i, resource in enumerate(response):
             assert resource.name == new_names[i]
             service = services[i]
@@ -224,11 +230,11 @@ class TestServiceRESTAPI(object):
             test_flag: rest
         """
         for service in services:
-            service.action.delete(force_method="post")
-            assert appliance.rest_api.response.status_code == 200
+            service.action.delete.POST()
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
-                service.action.delete(force_method="post")
-            assert appliance.rest_api.response.status_code == 404
+                service.action.delete.POST()
+            assert_response(appliance, http_status=404)
 
     def test_delete_service_delete(self, appliance, services):
         """Tests deleting services from detail using DELETE method.
@@ -237,11 +243,11 @@ class TestServiceRESTAPI(object):
             test_flag: rest
         """
         for service in services:
-            service.action.delete(force_method="delete")
-            assert appliance.rest_api.response.status_code == 204
+            service.action.delete.DELETE()
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
-                service.action.delete(force_method="delete")
-            assert appliance.rest_api.response.status_code == 404
+                service.action.delete.DELETE()
+            assert_response(appliance, http_status=404)
 
     def test_delete_services(self, appliance, services):
         """Tests deleting services from collection.
@@ -250,10 +256,10 @@ class TestServiceRESTAPI(object):
             test_flag: rest
         """
         appliance.rest_api.collections.services.action.delete(*services)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
             appliance.rest_api.collections.services.action.delete(*services)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.parametrize(
         "from_detail", [True, False],
@@ -270,13 +276,13 @@ class TestServiceRESTAPI(object):
 
         if from_detail:
             service.action.retire()
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         else:
             collection.action.retire(service)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
 
-        wait_for(lambda: is_retired(service), num_sec=600, delay=10)
-        wait_for(lambda: is_retired(vm), num_sec=1000, delay=10)
+        wait_for_retired(service)
+        wait_for_retired(vm)
 
     @pytest.mark.parametrize(
         "from_detail", [True, False],
@@ -296,10 +302,10 @@ class TestServiceRESTAPI(object):
         if from_detail:
             for service in services:
                 service.action.retire(**future)
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             appliance.rest_api.collections.services.action.retire(*services, **future)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
 
         def _finished(service):
             service.reload()
@@ -324,7 +330,7 @@ class TestServiceRESTAPI(object):
         }
         for service in services:
             service.action.set_ownership(**data)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             service.reload()
             assert hasattr(service, "evm_owner_id")
             assert service.evm_owner_id == user.id
@@ -341,7 +347,7 @@ class TestServiceRESTAPI(object):
             "owner": {"href": user.href}
         } for service in services]
         appliance.rest_api.collections.services.action.set_ownership(*requests)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         for service in services:
             service.reload()
             assert hasattr(service, "evm_owner_id")
@@ -368,7 +374,7 @@ class TestServiceRESTAPI(object):
                 getattr(service.action, action)()
             else:
                 getattr(collection.action, action)(service)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             wait_for_vm_power_state(vm, resulting_state)
 
         wait_for_vm_power_state(vm, 'on')
@@ -404,7 +410,7 @@ class TestServiceRESTAPI(object):
         for ref in references:
             bodies.append(service_body(parent_service=ref))
         response = collection.action.create(*bodies)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         for ent in response:
             assert ent.ancestry == str(service.id)
 
@@ -421,7 +427,7 @@ class TestServiceRESTAPI(object):
         assert parent.ancestry == str(grandparent.id)
         assert child.ancestry == '{}/{}'.format(grandparent.id, parent.id)
         grandparent.action.delete()
-        assert appliance.rest_api.response.status_code in (200, 204)
+        assert_response(appliance)
         wait_for(
             lambda: not appliance.rest_api.collections.services.find_by(name=grandparent.name),
             num_sec=600,
@@ -442,7 +448,7 @@ class TestServiceRESTAPI(object):
         request.addfinalizer(parent.action.delete)
         child = collection.action.create(service_body())[0]
         child.action.edit(ancestry=str(parent.id))
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         child.reload()
         assert child.ancestry == str(parent.id)
 
@@ -466,7 +472,7 @@ class TestServiceRESTAPI(object):
 
         def _action_and_check(action, resulting_state):
             getattr(service.action, action)()
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             wait_for_vm_power_state(vm, resulting_state)
 
         wait_for_vm_power_state(vm, 'on')
@@ -490,10 +496,10 @@ class TestServiceRESTAPI(object):
         child.reload()
 
         parent.action.retire()
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
 
-        wait_for(lambda: is_retired(child), num_sec=600, delay=10)
-        wait_for(lambda: is_retired(vm), num_sec=1000, delay=10)
+        wait_for_retired(child)
+        wait_for_retired(vm)
 
 
 class TestServiceDialogsRESTAPI(object):
@@ -504,13 +510,18 @@ class TestServiceDialogsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == "delete" else 200
         service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
-        service_dialog.action.delete(force_method=method)
-        assert appliance.rest_api.response.status_code == status
+
+        if method == "delete":
+            del_action = service_dialog.action.delete.DELETE
+        else:
+            del_action = service_dialog.action.delete.POST
+
+        del_action()
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
-            service_dialog.action.delete(force_method=method)
-        assert appliance.rest_api.response.status_code == 404
+            del_action()
+        assert_response(appliance, http_status=404)
 
     def test_delete_service_dialogs(self, appliance, dialog):
         """Tests deleting service dialogs from collection.
@@ -520,10 +531,10 @@ class TestServiceDialogsRESTAPI(object):
         """
         service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
         appliance.rest_api.collections.service_dialogs.action.delete(service_dialog)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
             appliance.rest_api.collections.service_dialogs.action.delete(service_dialog)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
 
 class TestServiceTemplateRESTAPI(object):
@@ -551,7 +562,7 @@ class TestServiceTemplateRESTAPI(object):
         for service_template in service_templates:
             new_name = fauxfactory.gen_alphanumeric()
             response = service_template.action.edit(name=new_name)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
             assert response.name == new_name
             service_template.reload()
             assert service_template.name == new_name
@@ -563,10 +574,10 @@ class TestServiceTemplateRESTAPI(object):
             test_flag: rest
         """
         appliance.rest_api.collections.service_templates.action.delete(*service_templates)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
             appliance.rest_api.collections.service_templates.action.delete(*service_templates)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     # POST method is not available on < 5.8, as described in BZ 1427338
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
@@ -577,11 +588,11 @@ class TestServiceTemplateRESTAPI(object):
             test_flag: rest
         """
         for service_template in service_templates:
-            service_template.action.delete(force_method="post")
-            assert appliance.rest_api.response.status_code == 200
+            service_template.action.delete.POST()
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
-                service_template.action.delete(force_method="post")
-            assert appliance.rest_api.response.status_code == 404
+                service_template.action.delete.POST()
+            assert_response(appliance, http_status=404)
 
     def test_delete_service_template_delete(self, appliance, service_templates):
         """Tests deleting service templates from detail using DELETE method.
@@ -590,11 +601,11 @@ class TestServiceTemplateRESTAPI(object):
             test_flag: rest
         """
         for service_template in service_templates:
-            service_template.action.delete(force_method="delete")
-            assert appliance.rest_api.response.status_code == 204
+            service_template.action.delete.DELETE()
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
-                service_template.action.delete(force_method="delete")
-            assert appliance.rest_api.response.status_code == 404
+                service_template.action.delete.DELETE()
+            assert_response(appliance, http_status=404)
 
     def test_assign_unassign_service_template_to_service_catalog(self, appliance, service_catalogs,
             service_templates):
@@ -618,14 +629,14 @@ class TestServiceTemplateRESTAPI(object):
         unassign_templates([stpl])
 
         scl.service_templates.action.assign(stpl)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         scl.reload()
         stpl.reload()
         assert stpl.id in [st.id for st in scl.service_templates.all]
         assert stpl.service_template_catalog_id == scl.id
 
         scl.service_templates.action.unassign(stpl)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         scl.reload()
         assert stpl.id not in [st.id for st in scl.service_templates.all]
         # load data again so we get rid of attributes that are no longer there
@@ -655,7 +666,7 @@ class TestServiceTemplateRESTAPI(object):
             })
         response = appliance.rest_api.collections.service_templates.action.edit(
             *service_tpls_data_edited)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         for i, resource in enumerate(response):
             assert resource.name == new_names[i]
             service_template = service_templates[i]
@@ -952,7 +963,7 @@ class TestBlueprintsRESTAPI(object):
     def blueprints(self, request, appliance):
         num = 2
         response = _blueprints(request, appliance.rest_api, num=num)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num
         return response
 
@@ -977,13 +988,17 @@ class TestBlueprintsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        status = 204 if method == "delete" else 200
         for blueprint in blueprints:
-            blueprint.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == status
+            if method == "delete":
+                del_action = blueprint.action.delete.DELETE
+            else:
+                del_action = blueprint.action.delete.POST
+
+            del_action()
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
-                blueprint.action.delete(force_method=method)
-            assert appliance.rest_api.response.status_code == 404
+                del_action()
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     def test_delete_blueprints_from_collection(self, appliance, blueprints):
@@ -994,10 +1009,10 @@ class TestBlueprintsRESTAPI(object):
         """
         collection = appliance.rest_api.collections.blueprints
         collection.action.delete(*blueprints)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
             collection.action.delete(*blueprints)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
@@ -1019,12 +1034,12 @@ class TestBlueprintsRESTAPI(object):
             edited = []
             for i in range(response_len):
                 edited.append(blueprints[i].action.edit(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             for i in range(response_len):
                 new[i].update(blueprints[i]._ref_repr())
             edited = appliance.rest_api.collections.blueprints.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].ui_properties == new[i]['ui_properties']
@@ -1037,7 +1052,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
     def orchestration_templates(self, request, appliance):
         num = 2
         response = _orchestration_templates(request, appliance.rest_api, num=num)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         assert len(response) == num
         return response
 
@@ -1064,10 +1079,10 @@ class TestOrchestrationTemplatesRESTAPI(object):
         """
         collection = appliance.rest_api.collections.orchestration_templates
         collection.action.delete(*orchestration_templates)
-        assert appliance.rest_api.response.status_code == 200
+        assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
             collection.action.delete(*orchestration_templates)
-        assert appliance.rest_api.response.status_code == 404
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', '5.8', 'upstream'])])
@@ -1079,11 +1094,11 @@ class TestOrchestrationTemplatesRESTAPI(object):
             test_flag: rest
         """
         for ent in orchestration_templates:
-            ent.action.delete(force_method="post")
-            assert appliance.rest_api.response.status_code == 200
+            ent.action.delete.POST()
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
-                ent.action.delete(force_method="post")
-            assert appliance.rest_api.response.status_code == 404
+                ent.action.delete.POST()
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     def test_delete_orchestration_templates_from_detail_delete(self, orchestration_templates,
@@ -1094,11 +1109,11 @@ class TestOrchestrationTemplatesRESTAPI(object):
             test_flag: rest
         """
         for ent in orchestration_templates:
-            ent.action.delete(force_method="delete")
-            assert appliance.rest_api.response.status_code == 204
+            ent.action.delete.DELETE()
+            assert_response(appliance)
             with error.expected("ActiveRecord::RecordNotFound"):
-                ent.action.delete(force_method="delete")
-            assert appliance.rest_api.response.status_code == 404
+                ent.action.delete.DELETE()
+            assert_response(appliance, http_status=404)
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
@@ -1118,12 +1133,12 @@ class TestOrchestrationTemplatesRESTAPI(object):
             edited = []
             for i in range(response_len):
                 edited.append(orchestration_templates[i].action.edit(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             for i in range(response_len):
                 new[i].update(orchestration_templates[i]._ref_repr())
             edited = appliance.rest_api.collections.orchestration_templates.action.edit(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].description == new[i]['description']
@@ -1154,12 +1169,12 @@ class TestOrchestrationTemplatesRESTAPI(object):
             copied = []
             for i in range(num_orch_templates):
                 copied.append(orchestration_templates[i].action.copy(**new[i]))
-                assert appliance.rest_api.response.status_code == 200
+                assert_response(appliance)
         else:
             for i in range(num_orch_templates):
                 new[i].update(orchestration_templates[i]._ref_repr())
             copied = appliance.rest_api.collections.orchestration_templates.action.copy(*new)
-            assert appliance.rest_api.response.status_code == 200
+            assert_response(appliance)
 
         request.addfinalizer(
             lambda: appliance.rest_api.collections.orchestration_templates.action.delete(*copied))
@@ -1196,10 +1211,10 @@ class TestOrchestrationTemplatesRESTAPI(object):
             for i in range(num_orch_templates):
                 with error.expected("content must be unique"):
                     orchestration_templates[i].action.copy(**new[i])
-                assert appliance.rest_api.response.status_code == 400
+                assert_response(appliance, http_status=400)
         else:
             for i in range(num_orch_templates):
                 new[i].update(orchestration_templates[i]._ref_repr())
             with error.expected("content must be unique"):
                 appliance.rest_api.collections.orchestration_templates.action.copy(*new)
-            assert appliance.rest_api.response.status_code == 400
+            assert_response(appliance, http_status=400)
