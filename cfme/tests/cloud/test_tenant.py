@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils.update import update
-from cfme.cloud.tenant import Tenant
+from cfme.cloud.tenant import TenantCollection
 from utils import testgen
 from utils.log import logger
 from utils.version import current_version
@@ -12,8 +12,9 @@ pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
 
 
 @pytest.yield_fixture(scope='function')
-def tenant(provider, setup_provider):
-    tenant = Tenant(name=fauxfactory.gen_alphanumeric(8), provider=provider)
+def tenant(provider, setup_provider, appliance):
+    collection = TenantCollection(appliance=appliance)
+    tenant = collection.create(name=fauxfactory.gen_alphanumeric(8), provider=provider)
 
     yield tenant
 
@@ -37,21 +38,7 @@ def test_tenant_crud(tenant):
         test_flag: tenant
     """
 
-    tenant.create(cancel=True)
-    assert not tenant.exists
-
-    tenant.create(wait=True)
-    assert tenant.exists
-
     with update(tenant):
         tenant.name = fauxfactory.gen_alphanumeric(8)
     tenant.wait_for_appear()
     assert tenant.exists
-
-    tenant.delete(from_details=False, cancel=True)
-    assert tenant.exists
-
-    # BZ#1411112 Delete/update cloud tenant
-    #  not reflected in UI in cloud tenant list
-    tenant.delete(from_details=True, cancel=False, wait=True)
-    assert not tenant.exists

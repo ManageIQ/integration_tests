@@ -194,30 +194,32 @@ class TenantEditTagsView(TenantView):
             self.entities.breadcrumb.active_location == 'Tag Assignment')
 
 
-class Tenant(Navigatable):
-    _param_name = 'Tenant'
+class TenantCollection(Navigatable):
+    """Collection object for the :py:class:`cfme.cloud.tenant.Tenant`."""
 
-    def __init__(self, name, provider, appliance=None):
-        """Base class for a Tenant"""
-        self.name = name
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance=None):
+        self.appliance = appliance
 
-    def create(self, cancel=False, wait=False):
-        view = navigate_to(self, 'Add')
-        view.form.fill({
-            'cloud_provider': self.provider.name,
-            'name': self.name
+    def instantiate(self, name, provider):
+        return Tenant(name, provider, collection=self)
+
+    def create(self, name, provider, appliance=None, wait=True):
+        """Add a cloud Tenant from the UI and return the Tenant object"""
+        page = navigate_to(self, 'Add')
+        changed = page.form.fill({
+            'cloud_provider': provider.name,
+            'name': name
         })
-        if cancel:
-            view.form.cancel_button.click()
+        if changed:
+            page.form.save_button.click()
         else:
-            view.form.save_button.click()
+            page.form.cancel_button.click()
 
         all_view = self.create_view(TenantAllView)
-        wait_for(lambda: all_view.is_displayed, fail_condition=False, num_sec=120, delay=3,
-                 fail_func=lambda: all_view.flush_widget_cache(), handle_exception=True)
-        if cancel:
+        wait_for(lambda: all_view.is_displayed, num_sec=120, delay=3,
+                 fail_func=all_view.flush_widget_cache, handle_exception=True)
+
+        if not changed:
             if self.appliance.version >= '5.8':
                 msg = 'Add of Cloud Tenant was cancelled by the user'
             else:
@@ -225,16 +227,66 @@ class Tenant(Navigatable):
             all_view.entities.flash.assert_success_message(msg)
         else:
             all_view.entities.flash.assert_success_message(
-                'Cloud Tenant "{}" created'.format(self.name))
+                'Cloud Tenant "{}" created'.format(name))
+
+        tenant = self.instantiate(name, provider)
+
         if wait:
             def refresh():
                 """Refresh a few things"""
-                self.provider.refresh_provider_relationships()
+                tenant.provider.refresh_provider_relationships()
                 all_view.flush_widget_cache()
                 self.browser.refresh()
 
-            wait_for(lambda: self.exists, timeout=600, message='Wait for cloud tenant to appear',
+            wait_for(lambda: tenant.exists, timeout=600,
+                     message='Wait for cloud tenant to appear',
                      delay=10, fail_func=refresh)
+
+        return tenant
+
+    def delete(self, *tenants):
+        """Delete one or more  Tenants from the list of the Tenants
+
+        Args:
+            list of the `cfme.cloud.tenant.Tenant` objects
+        """
+
+        tenants = list(tenants)
+        checked_tenants = []
+        view = navigate_to(self, 'All')
+        # double check we're in List View
+        view.toolbar.view_selector.select('List View')
+        if not view.entities.table.is_displayed:
+            raise ValueError('No Tenants found')
+        for row in view.entities.table:
+            for tenant in tenants:
+                if tenant.name == row.name.text:
+                    checked_tenants.append(tenant)
+                    row[0].check()
+                    break
+            if set(tenants) == set(checked_tenants):
+                break
+        if set(tenants) != set(checked_tenants):
+            raise ValueError('Some tenants were not found in the UI')
+        view.toolbar.configuration.item_select('Delete Cloud Tenants', handle_alert=True)
+        for tenant in tenants:
+            tenant.wait_for_disappear()
+        view.entities.flash.assert_no_error()
+
+        # TODO: Assert deletion flash message for selected tenants
+        # it is not shown in current UI, so not asserting
+
+
+class Tenant(Navigatable):
+    '''Tenant Class'''
+    _param_name = 'Tenant'
+
+    def __init__(self, name, provider, collection=None):
+        """Base class for a Tenant"""
+        self.name = name
+        self.provider = provider
+        self.collection = collection or TenantCollection()
+        Navigatable.__init__(self, appliance=self.collection.appliance)
 
     def wait_for_disappear(self, timeout=300):
         self.provider.refresh_provider_relationships()
@@ -253,7 +305,7 @@ class Tenant(Navigatable):
         return wait_for(lambda: self.exists, timeout=timeout, delay=10,
                         message='Wait for cloud tenant to appear', fail_func=self.browser.refresh)
 
-    def update(self, updates, wait=True):
+    def update(self, updates):
         view = navigate_to(self, 'Edit')
         updated_name = updates.get('name', self.name + '_edited')
         view.form.fill({'name': updated_name})
@@ -263,54 +315,35 @@ class Tenant(Navigatable):
                         message='Wait for cloud tenant to appear', delay=10,
                         fail_func=self.browser.refresh)
 
-    def delete(self, cancel=False, from_details=True, wait=True):
+    def delete(self, wait=True):
         """Delete the tenant"""
-        if self.appliance.version < '5.7':
-            raise OptionNotAvailable('Cannot delete cloud tenants in CFME < 5.7')
-        if from_details:
-            if cancel:
-                raise OptionNotAvailable('Cannot cancel cloud tenant delete from details page')
-            # Generates no alert or confirmation
-            try:
-                view = navigate_to(self, 'Details')
-            except Exception as ex:
-                # Catch general navigation exceptions and raise
-                raise TenantNotFound('Exception while navigating to Tenant details: {}'.format(ex))
-            view.toolbar.configuration.item_select('Delete Cloud Tenant')
-        else:
-            # Have to select the row in the list
-            view = navigate_to(self, 'All')
-            # double check we're in List View
-            view.toolbar.view_selector.select('List View')
-            try:
-                row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
-                row[0].check()
-                view.toolbar.configuration.item_select('Delete Cloud Tenants',
-                                                       handle_alert=not cancel)
-            except NoSuchElementException:
-                raise TenantNotFound('Tenant {} not found'.format(self.name))
 
-        if cancel:
-            return self.exists
-        else:
-            # Flash message is the same whether deleted from details or by selection
-            result = view.entities.flash.assert_success_message(
+        try:
+            view = navigate_to(self, 'Details')
+        except NoSuchElementException as ex:
+            # Catch general navigation exceptions and raise
+            raise TenantNotFound(
+                'Exception while navigating to Tenant details: {}'.format(ex))
+        view.toolbar.configuration.item_select('Delete Cloud Tenant')
+
+        result = view.entities.flash.assert_success_message(
                 'Delete initiated for 1 Cloud Tenant.')
-            if wait:
-                self.provider.refresh_provider_relationships()
-                result = self.wait_for_disappear(600)
-                return result
+        if wait:
+            self.provider.refresh_provider_relationships()
+            result = self.wait_for_disappear(600)
+        return result
 
     @property
     def exists(self):
         try:
             navigate_to(self, 'Details')
-            return True
-        except Exception:
+        except NoSuchElementException:
             return False
+        else:
+            return True
 
 
-@navigator.register(Tenant, 'All')
+@navigator.register(TenantCollection, 'All')
 class TenantAll(CFMENavigateStep):
     VIEW = TenantAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -330,7 +363,7 @@ class TenantAll(CFMENavigateStep):
 @navigator.register(Tenant, 'Details')
 class TenantDetails(CFMENavigateStep):
     VIEW = TenantDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the details page"""
@@ -344,7 +377,7 @@ class TenantDetails(CFMENavigateStep):
         self.view.browser.refresh()
 
 
-@navigator.register(Tenant, 'Add')
+@navigator.register(TenantCollection, 'Add')
 class TenantAdd(CFMENavigateStep):
     VIEW = TenantAddView
     prerequisite = NavigateToSibling('All')
