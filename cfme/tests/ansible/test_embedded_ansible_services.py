@@ -67,3 +67,13 @@ def test_service_ansible_playbook_crud(ansible_repository):
     assert view.provisioning.info.get_text_of("Playbook") == "copy_file_example.yml"
     cat_item.delete()
     assert not cat_item.exists
+
+
+@pytest.mark.tier(2)
+def test_service_ansible_playbook_negative():
+    view = navigate_to(AnsiblePlaybookCatalogItem("", "", {}), "Add")
+    view.fill({
+        "name": fauxfactory.gen_alphanumeric(),
+        "description": fauxfactory.gen_alphanumeric()
+    })
+    assert not view.add.active
