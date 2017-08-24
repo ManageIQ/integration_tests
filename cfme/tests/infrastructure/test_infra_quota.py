@@ -7,7 +7,6 @@ from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import fill, flash
@@ -114,7 +113,7 @@ def template_name(provisioning):
 @pytest.fixture(scope="function")
 def provisioner(request, setup_provider, provider):
     def _provisioner(template, provisioning_data, delayed=None):
-        vm = Vm(name=vm_name, provider=provider, template_name=template)
+        vm = provider.vm_type(name=vm_name, provider=provider, template_name=template)
         navigate_to(vm, 'ProvisionVM')
 
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)

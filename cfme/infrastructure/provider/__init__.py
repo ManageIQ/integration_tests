@@ -19,6 +19,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import Quadicon, match_location
 from utils import conf, version
 from utils.appliance import Navigatable
@@ -52,6 +53,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         myprov.create()
 
     """
+    vm_class = Vm
     provider_types = {}
     category = "infra"
     pretty_attrs = ['name', 'key', 'zone']

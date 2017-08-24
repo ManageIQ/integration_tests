@@ -2,6 +2,8 @@ from wrapanapi.azure import AzureSystem
 
 from . import CloudProvider
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
+from cfme.cloud.instance.azure import AzureInstance
+
 from utils.version import pick
 
 
@@ -28,6 +30,7 @@ class AzureProvider(CloudProvider):
     """
     type_name = "azure"
     mgmt_class = AzureSystem
+    vm_type = AzureInstance
     db_types = ["Azure::CloudManager"]
     endpoints_form = AzureEndpointForm
     discover_name = "Azure"
