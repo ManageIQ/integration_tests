@@ -296,7 +296,7 @@ class Stack(Pretty, Navigatable):
         self.quad_name = quad_name or 'stack'
         self.provider = provider
         self.collection = collection or StackCollection()
-        Navigatable.__init__(self, appliance=collection.appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
 
     @property
     def exists(self):
