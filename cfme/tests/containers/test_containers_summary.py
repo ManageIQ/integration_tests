@@ -18,7 +18,8 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider_with_ansible'),
+    # pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
