@@ -12,7 +12,6 @@ from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.control.explorer.actions import Action
 from cfme.control.explorer.alerts import Alert, AlertDetailsView
 from cfme.control.explorer.conditions import VMCondition
-from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
 from utils.generators import random_vm_name
@@ -25,23 +24,6 @@ pytestmark = [
     test_requirements.control,
     pytest.mark.tier(3)
 ]
-
-
-def create_policy_profile(request):
-    random_string = fauxfactory.gen_alpha()
-    policy = VMControlPolicy(random_string)
-    policy.create()
-    policy_profile = PolicyProfile(random_string, [policy])
-    policy_profile.create()
-
-    @request.addfinalizer
-    def _delete():
-        while policy_profile.exists:
-            policy_profile.delete()
-        if policy.exists:
-            policy.delete()
-
-    return policy_profile
 
 
 def create_policy(request):
@@ -87,19 +69,6 @@ def create_action(request):
     return action
 
 
-def create_alert_profile(request):
-    alert = Alert("VM CD Drive or Floppy Connected")
-    alert_profile = VMInstanceAlertProfile(fauxfactory.gen_alpha(), [alert])
-    alert_profile.create()
-
-    @request.addfinalizer
-    def _delete():
-        while alert_profile.exists:
-            alert_profile.delete()
-
-    return alert_profile
-
-
 def create_alert(request):
     random_string = fauxfactory.gen_alpha()
     alert = Alert(
@@ -118,11 +87,9 @@ def create_alert(request):
 ProfileCreateFunction = namedtuple('ProfileCreateFunction', ['name', 'fn'])
 
 items = [
-    ProfileCreateFunction("Policy profiles", create_policy_profile),
     ProfileCreateFunction("Policies", create_policy),
     ProfileCreateFunction("Conditions", create_condition),
     ProfileCreateFunction("Actions", create_action),
-    ProfileCreateFunction("Alert profiles", create_alert_profile),
     ProfileCreateFunction("Alerts", create_alert)
 ]
 
@@ -261,9 +228,6 @@ def test_delete_all_actions_from_compliance_policy(request):
 
 
 @pytest.mark.parametrize("create_function", items, ids=[item.name for item in items])
-@pytest.mark.uncollectif(
-    lambda create_function: create_function.name in ["Policy profiles", "Alert profiles"] and
-    BZ(1304396, forced_streams=["5.6", "5.7", "5.8"]).blocks)
 def test_control_identical_descriptions(request, create_function):
     """CFME should not allow to create policy, alerts, profiles, actions and others to be created
     if the item with the same description already exists.
