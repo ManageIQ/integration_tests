@@ -232,8 +232,7 @@ class Cluster(Pretty, Navigatable):
     def wait_for_disappear(self, timeout=300):
         self.provider.refresh_provider_relationships()
         try:
-            return wait_for(lambda: self.exists,
-                            fail_condition=True,
+            return wait_for(lambda: not self.exists,
                             timeout=timeout,
                             message='Wait for cluster to disappear',
                             delay=10,
@@ -243,7 +242,7 @@ class Cluster(Pretty, Navigatable):
 
     def wait_for_exists(self):
         """Wait for the cluster to be refreshed"""
-        view = navigate_to(ClusterCollection, 'All')
+        view = navigate_to(self.collection, 'All')
 
         def refresh():
             if self.provider:
@@ -268,7 +267,7 @@ class Cluster(Pretty, Navigatable):
 
     @property
     def exists(self):
-        view = navigate_to(ClusterCollection, 'All')
+        view = navigate_to(self.collection, 'All')
         try:
             view.paginator.find_row_on_pages(view.entities.table, name=self.name)
             return True
