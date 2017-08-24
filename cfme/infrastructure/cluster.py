@@ -4,7 +4,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Cluster pages.
 """
-from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
+from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
@@ -136,6 +136,9 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
 class ClusterCollection(Navigatable):
     """Collection object for the :py:class:`cfme.infrastructure.cluster.Cluster`."""
 
+    def instantiate(self, name, provider):
+        return Cluster(name, provider, collection=self)
+
     def delete(self, *clusters):
         """Delete one or more Clusters from the list of the Clusters
 
@@ -162,9 +165,8 @@ class ClusterCollection(Navigatable):
             raise ValueError('Some Clusters were not found in the UI')
         view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
         view.entities.flash.assert_no_error()
-        flash_msg = \
-            'Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.format(
-                len(clusters))
+        flash_msg = ('Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.
+            format(len(clusters)))
         view.flash.assert_message(flash_msg)
         for cluster in clusters:
             cluster.wait_for_disappear()
@@ -183,12 +185,13 @@ class Cluster(Pretty, Navigatable):
     """
     pretty_attrs = ['name', 'provider']
 
-    def __init__(self, name, provider, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, name, provider, collection=None):
         self.name = name
-        self._short_name = self.name.split('in')[0].strip()
         self.provider = provider
+        self.collection = collection or ClusterCollection()
+        self._short_name = self.name.split('in')[0].strip()
         self.quad_name = 'cluster'
+        Navigatable.__init__(self, appliance=self.collection.appliance)
 
         col = self.appliance.rest_api.collections
         self._id = [
@@ -309,7 +312,7 @@ class All(CFMENavigateStep):
 @navigator.register(Cluster, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ClusterDetailsView
-    prerequisite = NavigateToObject(ClusterCollection, 'All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
