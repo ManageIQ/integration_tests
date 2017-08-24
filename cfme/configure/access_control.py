@@ -449,15 +449,16 @@ class AllGroupView(ConfigurationView):
 
 class EditGroupSequenceView(ConfigurationView):
     """ Edit Groups Sequence View in CFME UI """
-    #group_order_selector = UpDownSelect(
-    #    '#seq_fields',
-    #    './/a[@title="Move selected fields up"]/img',
-    #    './/a[@title="Move selected fields down"]/img')
 
-    group_order_selector = UpDownSelect(
-        '#seq_fields',
-        '//button[@title="Move selected fields up"]/i',
-        '//button[@title="Move selected fields down"]/i')
+    group_order_selector = VersionPick({
+        Version.lowest(): UpDownSelect(
+            '#seq_fields',
+            './/a[@title="Move selected fields up"]/img',
+            './/a[@title="Move selected fields down"]/img'),
+        '5.8': UpDownSelect(
+            '#seq_fields',
+            '//button[@title="Move selected fields up"]/i',
+            '//button[@title="Move selected fields down"]/i'), })
 
     save_button = Button('Save')
     reset_button = Button('Reset')
