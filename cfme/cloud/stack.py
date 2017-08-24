@@ -1,4 +1,4 @@
-from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
+from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages, BootstrapNav
@@ -254,6 +254,9 @@ class StackResourcesView(StackView):
 class StackCollection(Navigatable):
     """Collection class for cfme.cloud.stack.Stack"""
 
+    def instantiate(self, name, provider, quad_name=None):
+        return Stack(name, provider, quad_name=quad_name, collection=self)
+
     def delete(self, *stacks):
         stacks = list(stacks)
         checked_stacks = list()
@@ -288,11 +291,12 @@ class Stack(Pretty, Navigatable):
     _param_name = "Stack"
     pretty_attrs = ['name']
 
-    def __init__(self, name, provider, quad_name=None, appliance=None):
+    def __init__(self, name, provider, quad_name=None, collection=None):
         self.name = name
         self.quad_name = quad_name or 'stack'
         self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+        self.collection = collection or StackCollection()
+        Navigatable.__init__(self, appliance=collection.appliance)
 
     @property
     def exists(self):
@@ -308,7 +312,6 @@ class Stack(Pretty, Navigatable):
         """Delete the stack from detail view"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Remove this Orchestration Stack', handle_alert=True)
-        view.entities.flash.assert_no_error()
         view.entities.flash.assert_success_message('The selected Orchestration Stacks was deleted')
 
         def refresh():
@@ -391,7 +394,7 @@ class All(CFMENavigateStep):
 @navigator.register(Stack, 'Details')
 class Details(CFMENavigateStep):
     VIEW = StackDetailsView
-    prerequisite = NavigateToObject(StackCollection, 'All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         """Go to the details page"""
