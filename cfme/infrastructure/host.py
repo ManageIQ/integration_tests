@@ -189,22 +189,9 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             view.browser.refresh()
             view.flush_widget_cache()
 
-    def execute_button(self, button_group, button, cancel=True):
-        # TODO this method should be converted to widgetastic. A toolbar with parametrized view will
-        # be probably required.
-        from cfme.web_ui import form_buttons
-        import cfme.fixtures.pytest_selenium as sel
-        import cfme.web_ui.flash as flash
-        import cfme.web_ui.toolbar as tb
-
-        navigate_to(self, 'Details')
-        host_btn = partial(tb.select, button_group)
-        host_btn(button, invokes_alert=True)
-        sel.click(form_buttons.submit)
-        flash.assert_success_message("Order Request was Submitted")
-        host_btn(button, invokes_alert=True)
-        sel.click(form_buttons.cancel)
-        flash.assert_success_message("Service Order was cancelled by the user")
+    def execute_button(self, button_group, button, handle_alert=False):
+        view = navigate_to(self, "Details")
+        view.toolbar.custom_button(button_group).item_select(button, handle_alert=handle_alert)
 
     def power_on(self):
         view = navigate_to(self, "Details")
