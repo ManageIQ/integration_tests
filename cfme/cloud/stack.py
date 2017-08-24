@@ -300,7 +300,7 @@ class Stack(Pretty, Navigatable):
 
     @property
     def exists(self):
-        view = navigate_to(StackCollection, 'All')
+        view = navigate_to(self.collection, 'All')
         view.toolbar.view_selector.select('List View')
         try:
             view.paginator.find_row_on_pages(view.entities.table, name=self.name)
@@ -342,7 +342,7 @@ class Stack(Pretty, Navigatable):
 
     def wait_for_exists(self):
         """Wait for the row to show up"""
-        view = navigate_to(StackCollection, 'All')
+        view = navigate_to(self.collection, 'All')
 
         def refresh():
             """Refresh the view"""
@@ -355,7 +355,7 @@ class Stack(Pretty, Navigatable):
                  delay=30, message='Wait for stack to exist')
 
     def retire_stack(self, wait=True):
-        view = navigate_to(StackCollection, 'All')
+        view = navigate_to(self.collection, 'All')
         view.toolbar.view_selector.select('List View')
         row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
         row[0].check()
