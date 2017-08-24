@@ -351,7 +351,7 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
         ["Prevent current event from proceeding"])
     request.addfinalizer(policy_for_testing.assign_events)
     # Request VM's start (through UI)
-    vm.crud.power_control_from_cfme(vm.crud.POWER_ON, cancel=False)
+    vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False)
     try:
         wait_for(vm.is_vm_running, num_sec=600, delay=5)
     except TimedOutError:
