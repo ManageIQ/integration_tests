@@ -1,9 +1,8 @@
-
 import tempfile
 from os import listdir, mkdir, makedirs, path
 from shutil import copy, copyfile, rmtree
 from subprocess import check_output, CalledProcessError, STDOUT
-
+import sys
 from fauxfactory import gen_alphanumeric
 from utils import conf
 from utils.providers import providers_data
@@ -267,7 +266,14 @@ def setup_ansible_script(provider, script, script_type=None, values_to_update=No
 
 
 def run_ansible(script):
-    cmd = "ansible-playbook " + path.join(basic_yml_path, script + yml)
+    ansible_playbook_cmd = "ansible-playbook -e ansible_python_interpreter="
+    interpreter_path = sys.executable
+    script_path = path.join(basic_yml_path, script + ".yml")
+    cmd = '{}{} {}'.format(ansible_playbook_cmd, interpreter_path, script_path)
+    return run_cmd(cmd)
+
+
+def run_cmd(cmd):
     try:
         response = check_output(cmd, shell=True, stderr=STDOUT)
     except CalledProcessError as exc:
