@@ -42,6 +42,7 @@ pytest_plugins = (
 
     'markers.manual',
     'markers.polarion',  # before artifactor
+    'markers.env',
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',
 

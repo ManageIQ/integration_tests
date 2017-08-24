@@ -2,6 +2,7 @@
 # than the docker-py 1.10 we hard depend on
 import subprocess
 from utils import path
+from markers.env import ALL
 import pytest
 
 
@@ -34,6 +35,8 @@ def yamls_volume():
     return volume
 
 
+@pytest.mark.tcpstack(ALL)
+@pytest.mark.browser(ALL)
 @pytest.mark.parametrize('image, python', IMAGE_SPEC)
 @pytest.mark.long_running
 def test_quickstart_run(image, python, root_volume, yamls_volume):
