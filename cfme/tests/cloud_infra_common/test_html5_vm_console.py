@@ -171,9 +171,7 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
             time.sleep(15)
 
         # create file on system
-        vm_console.send_keys("touch blather\n")
-        logger.info("Wait 5 sec for file creation")
-        time.sleep(5)  # Wait for file creation
+        vm_console.send_keys("touch blather")
 
         # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
         vm_console.send_ctrl_alt_delete()
@@ -191,7 +189,7 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
             # we will get instance of SSHResult
             # Sometimes Openstack drops characters from word 'blather' hence try to remove
             # file using partial file name. Known issue, being worked on.
-            command_result = ssh_client.run_command("rm bla*", ensure_user=True)
+            command_result = ssh_client.run_command("rm blather", ensure_user=True)
             assert command_result
     finally:
         vm_console.close_console_window()
