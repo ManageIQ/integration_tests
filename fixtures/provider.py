@@ -50,6 +50,7 @@ from utils.providers import ProviderFilter, list_providers
 from utils.log import logger
 from collections import Mapping
 
+
 # List of problematic providers that will be ignored
 _problematic_providers = set()
 # Stores number of setup failures per provider
@@ -251,6 +252,13 @@ def setup_perf_provider(request, use_global_filters=True):
 def setup_provider(request, provider):
     """Function-scoped fixture to set up a provider"""
     return setup_or_skip(request, provider)
+
+
+@pytest.fixture(scope='function')
+def setup_provider_with_ansible(request, provider):
+    provider.create_ansible()
+    yield
+    provider.remove_ansible()
 
 
 @pytest.fixture(scope='module')

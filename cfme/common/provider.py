@@ -32,6 +32,8 @@ from utils.update import Updateable
 from utils.varmeth import variable
 from utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
+from utils.ansible import create_tmp_directory, fetch_miq_ansible_module, setup_ansible_script, \
+    run_ansible
 
 cfg_btn = partial(tb.select, 'Configuration')
 
@@ -276,6 +278,22 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             return self.appliance.rest_api.response.status_code == 200
         except APIException:
             return None
+
+    def create_ansible(self):
+        if not self.exists:
+            logger.info('Setting up provider: %s via Ansible', self.key)
+            create_tmp_directory()
+            fetch_miq_ansible_module()
+            setup_ansible_script(self, script_type='providers', script='add_provider')
+            run_ansible('add_provider')
+
+    def remove_ansible(self):
+        if self.exists:
+            logger.info('Removing a provider: %s via Ansible', self.key)
+            create_tmp_directory()
+            fetch_miq_ansible_module()
+            setup_ansible_script(self, script_type='providers', script='remove_provider')
+            run_ansible('remove_provider')
 
     def update(self, updates, cancel=False, validate_credentials=True):
         """

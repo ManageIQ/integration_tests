@@ -5,7 +5,6 @@ from subprocess import check_output, CalledProcessError, STDOUT
 import sys
 from fauxfactory import gen_alphanumeric
 from utils import conf
-from utils.providers import providers_data
 
 
 from git import Repo
@@ -51,6 +50,7 @@ def fetch_miq_ansible_module():
 
 
 def get_values_for_providers_test(provider):
+    from utils.providers import providers_data
     return {
         'name': provider.name,
         'state': 'present',
