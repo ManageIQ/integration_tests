@@ -8,8 +8,8 @@ from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_manageiq import (
-    BootstrapSelect, Button, Table, Accordion, ManageIQTree, PaginationPane)
+from widgetastic_manageiq import (BootstrapSelect, Button, Table, Accordion, ManageIQTree,
+                                  PaginationPane, BaseNonInteractiveEntitiesView)
 
 from cfme.common import Taggable, SummaryMixin
 from cfme.containers.provider import ContainersProvider, Labelable,\
@@ -175,6 +175,7 @@ class NodeEditTagsForm(NodeView):
     tag = BootstrapSelect('tag_add')
     # TODO: table for added tags with removal support
     # less than ideal button duplication between classes
+    entities = View.nested(BaseNonInteractiveEntitiesView)
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
@@ -200,6 +201,7 @@ class EditTags(CFMENavigateStep):
 class NodeManagePoliciesForm(NodeView):
     policy_profiles = BootstrapSelect('protectbox')
     # less than ideal button duplication between classes
+    entities = View.nested(BaseNonInteractiveEntitiesView)
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')

@@ -11,7 +11,7 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, SummaryTable, Text, Table, PaginationPane, Accordion, ManageIQTree,
-    Search, BreadCrumb)
+    Search, BreadCrumb, BaseNonInteractiveEntitiesView)
 
 
 class FlavorView(BaseLoggedInPage):
@@ -91,12 +91,13 @@ class FlavorEditTagsView(FlavorView):
     def is_displayed(self):
         return (
             self.in_availability_zones and
-            self.entities.title.text == 'Tag Assignment' and
-            '{} (Summary)'.format(self.context['object'].name) in self.entities.breadcrumb.locations
+            self.title.text == 'Tag Assignment' and
+            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations
         )
 
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h3')
+    entities = View.nested(BaseNonInteractiveEntitiesView)
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')

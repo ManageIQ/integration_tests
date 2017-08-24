@@ -12,7 +12,7 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     TimelinesView, ItemsToolBarViewSelector, Text, Table, Search, PaginationPane, BreadCrumb,
-    SummaryTable, Accordion, ManageIQTree)
+    SummaryTable, Accordion, ManageIQTree, BaseNonInteractiveEntitiesView)
 
 
 class AvailabilityZoneToolBar(View):
@@ -101,7 +101,8 @@ class AvailabilityZoneEditTagsView(AvailabilityZoneView):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h3')
     # TODO Add tag table support when rowspan is supported in SummaryTable
-    # TODO Add quadicon area
+    entities = View.nested(BaseNonInteractiveEntitiesView)
+
     save = Button('Save')
     reset = Button('Reset')
     cancel = Button('Cancel')

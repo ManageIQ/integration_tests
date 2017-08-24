@@ -11,7 +11,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav, Button, Dropdown, FlashMessages, Input
 from widgetastic_manageiq import (
     Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
-    SummaryTable, Table, Text)
+    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import TenantNotFound, DestinationNotFound, OptionNotAvailable
@@ -82,6 +82,7 @@ class TenantEditTagEntities(View):
     """The entities on the edit tags page"""
     breadcrumb = BreadCrumb()
     title = Text('#explorer_title_text')
+    included_widgets = View.include(BaseNonInteractiveEntitiesView, use_parent=True)
 
 
 class TenantView(BaseLoggedInPage):

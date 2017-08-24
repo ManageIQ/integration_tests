@@ -241,7 +241,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_first_entity(by_name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(Datastore, 'DetailsFromProvider')

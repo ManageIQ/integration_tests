@@ -2092,9 +2092,11 @@ class BaseQuadIconEntity(ParametrizedView, ClickableMixin):
 
     """
     PARAMETERS = ('name',)
-    ROOT = ParametrizedLocator('.//table[./tbody/tr/td/a[contains(@title, {name|quote})]]')
+    ROOT = ParametrizedLocator('.//table[./tbody/tr/td/*[(self::a or self::span) and '
+                               'contains(@title, {name|quote})]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
-    label = Text(locator=ParametrizedLocator('./tbody/tr/td/a[contains(@title, {name|quote})]'))
+    label = Text(locator=ParametrizedLocator('./tbody/tr/td/*[(self::a or self::span) and '
+                                             'contains(@title, {name|quote})]'))
     checkbox = Checkbox(locator='./tbody/tr/td/input[@type="checkbox"]')
     QUADRANT = './/div[@class="flobj {pos}72"]/*[self::p or self::img or self::div]'
 
@@ -2137,8 +2139,8 @@ class BaseTileIconEntity(ParametrizedView):
 
     """
     PARAMETERS = ('name',)
-    ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/a[contains(@title, '
-                               '{name|quote})]]]')
+    ROOT = ParametrizedLocator('.//table[.//table[./tbody/tr/td/*[(self::a or self::span) and '
+                               'contains(@title, {name|quote})]]]')
     LIST = '//dl[contains(@class, "tile")]/*[self::dt or self::dd]'
     quad_icon = ParametrizedView.nested(BaseQuadIconEntity)
 
@@ -2317,13 +2319,7 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
 
         Returns: all current page entities
         """
-        current_version = VersionPick({
-            Version.lowest(): 'old',
-            '5.9': 'new',
-            'upstream': 'new'
-        }).pick(self.browser.product_version)
-
-        if current_version == 'old':
+        if self.browser.product_version < '5.9':
             br = self.browser
             return [br.get_attribute('title', el) for el in br.elements(self.elements)]
         else:
@@ -2346,10 +2342,10 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
                                 for name in self.entity_names])
             return entities
 
-    def get_entities(self, by_name=None, surf_pages=False):
+    def get_entities(self, by_partial_name, surf_pages=False):
         """ obtains all matched entities like QuadIcon displayed by view
         Args:
-            by_name (str): only entities which match to by_name will be returned
+            by_partial_name (str): only entities which match to by_name will be returned
             surf_pages (bool): current page entities if False, all entities otherwise
 
         Returns: all matched entities (QuadIcon/etc.) displayed by view
@@ -2357,42 +2353,45 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
         entities = self.get_all(surf_pages)
         remaining_entities = []
         for entity in entities:
-            if by_name and by_name in entity.name:
+            if by_partial_name in entity.name:
                 remaining_entities.append(entity)
             # todo: by_type and by_regexp will be implemented later if needed
+        if not remaining_entities:
+            raise ItemNotFound("Entities matching to {name} "
+                               "aren't found on this page".format(name=by_partial_name))
         return remaining_entities
 
-    def get_entity(self, by_name=None, surf_pages=False):
-        """ obtains one entity matched to by_name
-        raises exception if no entities or several entities were found
+    def get_entity(self, by_name, surf_pages=False):
+        """ obtains one entity matched to by_name and stops on that page
         Args:
             by_name (str): only entity which match to by_name will be returned
             surf_pages (bool): current page entity if False, all entities otherwise
-
-        Returns: matched entities (QuadIcon/etc.)
-        """
-        entities = self.get_entities(by_name=by_name, surf_pages=surf_pages)
-        if len(entities) == 0:
-            raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
-        elif len(entities) > 1:
-            raise ManyEntitiesFound("Several entities with {name} were found".format(name=by_name))
-        return entities[0]
-
-    def get_first_entity(self, by_name=None):
-        """ obtains one entity matched to by_name and stops on that page
-        raises exception if no entity or several entities were found
-        Args:
-            by_name (str): only entity which match to by_name will be returned
 
         Returns: matched entity (QuadIcon/etc.)
         """
         for _ in self.paginator.pages():
             found_entities = [self.parent.entity_class(parent=self, name=name)
                               for name in self.entity_names if by_name == name]
-            if found_entities:
+            if len(found_entities) == 1:
                 return found_entities[0]
+            elif len(found_entities) > 1:
+                raise ManyEntitiesFound("Several entities with "
+                                        "{name} were found".format(name=by_name))
+            if not surf_pages:
+                raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
+        else:
+            raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
 
-        raise ItemNotFound("Entity {name} isn't found on this page".format(name=by_name))
+    def get_first_entity(self):
+        """ obtains first entity on page and returns it
+        raises exception if no entities were found
+
+        Returns: matched entity (QuadIcon/etc.)
+        """
+        for entity_name in self.entity_names:
+            return self.parent.entity_class(parent=self, name=entity_name)
+
+        raise ItemNotFound("No Entities found on this page")
 
 
 class BaseEntitiesView(View):
@@ -2401,10 +2400,10 @@ class BaseEntitiesView(View):
     """
     @property
     def entity_class(self):
-        return VersionPick({
-            Version.lowest(): NonJSBaseEntity,
-            '5.9': JSBaseEntity
-        }).pick(self.browser.product_version)
+        if self.browser.product_version < '5.9':
+            return NonJSBaseEntity
+        else:
+            return JSBaseEntity
 
     entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
                                          ignore_bad_reference=True)
@@ -2820,3 +2819,80 @@ class ViewButtonGroup(Widget):
             return False
         self.select_button(value)
         return True
+
+
+class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
+    """Represents Quadicons appearing in views like Edit Tags, etc.
+
+    """
+    elements = ('//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/*[self::a or '
+                'self::span]')
+
+    @property
+    def entity_class(self):
+        if self.browser.product_version < '5.9':
+            return NonJSBaseEntity
+        else:
+            return JSBaseEntity
+
+    @property
+    def entity_names(self):
+        """ looks for entities and extracts their names
+
+        Returns: all current page entities
+        """
+        if self.browser.product_version < '5.9':
+            br = self.browser
+            return [br.get_attribute('title', el) for el in br.elements(self.elements)]
+        else:
+            entities = self._invoke_cmd('get_all_items')
+            return [entity['item']['cells']['Name'] for entity in entities]
+
+    def get_all(self):
+        """ obtains all entities like QuadIcon displayed by view
+
+        Returns: all entities (QuadIcon/etc.) displayed by view
+        """
+        return [self.entity_class(parent=self, name=name) for name in self.entity_names]
+
+    def get_entities(self, by_partial_name):
+        """ obtains all matched entities like QuadIcon displayed by view
+        raises exception if no entities found
+        Args:
+            by_partial_name (str): only entities which match to by_name will be returned
+
+        Returns: all matched entities (QuadIcon/etc.) displayed by view
+        """
+        remaining_entities = []
+        for entity in self.get_all():
+            if by_partial_name in entity.name:
+                remaining_entities.append(entity)
+                # todo: by_type and by_regexp will be implemented later if needed
+        if not remaining_entities:
+            raise ItemNotFound("Entities matching to {name} "
+                               "aren't found on this page".format(name=by_partial_name))
+        return remaining_entities
+
+    def get_entity(self, by_partial_name):
+        """ obtains one entity matched to by_name
+        raises exception several entities were found
+        Args:
+            by_partial_name (str): only entity which match to by_name will be returned
+
+        Returns: matched entities (QuadIcon/etc.)
+        """
+        entities = self.get_entities(by_partial_name=by_partial_name)
+        if len(entities) > 1:
+            raise ManyEntitiesFound("Several entities with "
+                                    "{name} were found".format(name=by_partial_name))
+        return entities[0]
+
+    def get_first_entity(self):
+        """ obtains first entity
+
+        Returns: matched entity (QuadIcon/etc.)
+        """
+        for name in self.entity_names:
+            return self.entity_class(parent=self, name=name)
+
+        raise ItemNotFound("No Entities found on this page")
