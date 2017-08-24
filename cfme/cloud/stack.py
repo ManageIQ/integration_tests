@@ -254,6 +254,9 @@ class StackResourcesView(StackView):
 class StackCollection(Navigatable):
     """Collection class for cfme.cloud.stack.Stack"""
 
+    def __init__(self, appliance=None):
+        self.appliance = appliance
+
     def instantiate(self, name, provider, quad_name=None):
         return Stack(name, provider, quad_name=quad_name, collection=self)
 

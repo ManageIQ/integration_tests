@@ -6,7 +6,7 @@ from cfme import test_requirements
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.stack import Stack, StackCollection
+from cfme.cloud.stack import StackCollection
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
@@ -24,8 +24,9 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.yield_fixture(scope="module")
-def stack(setup_provider_modscope, provider):
-    stack = Stack(provider.data['provisioning']['stacks'][0], provider=provider)
+def stack(setup_provider_modscope, provider, appliance):
+    collection = StackCollection(appliance=appliance)
+    stack = collection.instantiate(provider.data['provisioning']['stacks'][0], provider=provider)
     stack.wait_for_exists()
     yield stack
 
@@ -119,13 +120,13 @@ def test_delete(stack, provider, request):
 
 
 @pytest.mark.tier(3)
-def test_collection_delete(provider, setup_provider_modscope):
-    stack1 = Stack(provider.data['provisioning']['stacks'][0], provider=provider)
-    stack2 = Stack(provider.data['provisioning']['stacks'][1], provider=provider)
+def test_collection_delete(provider, setup_provider_modscope, appliance):
+    collection = StackCollection(appliance=appliance)
+
+    stack1 = collection.instantiate(provider.data['provisioning']['stacks'][0], provider=provider)
+    stack2 = collection.instantiate(provider.data['provisioning']['stacks'][1], provider=provider)
 
     stack1.wait_for_exists()
     stack2.wait_for_exists()
-
-    collection = StackCollection()
 
     collection.delete(stack1, stack2)
