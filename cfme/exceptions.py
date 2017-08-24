@@ -406,11 +406,6 @@ class DbAllocatorConfigNotFound(CFMEException):
     """Raised when cdme_data.yaml file does not contain configuration of 'db_allocator'."""
 
 
-class SetLabelException(Exception):
-    "Raised when failed to set label to an object via cli"
-    pass
-
-
 class LabelNotFoundException(Exception):
     "Raises when failed to remove label from object via cli"
     pass

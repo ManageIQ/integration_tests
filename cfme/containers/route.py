@@ -3,6 +3,8 @@ import random
 import itertools
 from functools import partial
 
+from cached_property import cached_property
+
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, match_location,\
@@ -13,6 +15,8 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
 from utils.appliance import Navigatable
+from wrapanapi.containers.route import Route as ApiRoute
+
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -29,6 +33,10 @@ class Route(Taggable, Labelable, SummaryMixin, Navigatable):
         self.project_name = project_name
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
+
+    @cached_property
+    def mgmt(self):
+        return ApiRoute(self.provider.mgmt, self.name, self.project_name)
 
     def load_details(self, refresh=False):
         navigate_to(self, 'Details')

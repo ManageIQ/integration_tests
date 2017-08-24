@@ -3,6 +3,8 @@ from functools import partial
 import random
 import itertools
 
+from cached_property import cached_property
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import Table
 
@@ -14,6 +16,7 @@ from cfme.web_ui import toolbar as tb, match_location, InfoBlock,\
     PagedTable, CheckboxTable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
+from wrapanapi.containers.volume import Volume as ApiVolume
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -32,6 +35,10 @@ class Volume(Taggable, SummaryMixin, Navigatable):
         self.name = name
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
+
+    @cached_property
+    def mgmt(self):
+        return ApiVolume(self.provider.mgmt, self.name)
 
     # TODO: remove load_details and dynamic usage from cfme.common.Summary when nav is more complete
     def load_details(self, refresh=False):
