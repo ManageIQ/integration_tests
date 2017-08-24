@@ -5,6 +5,8 @@ import pytest
 from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
 from cfme.ansible.credentials import CredentialsCollection
+from cfme.control.explorer.actions import Action
+from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.version import current_version
@@ -56,7 +58,6 @@ CREDENTIALS = [
     )
 ]
 
-
 REPOSITORIES = [
     "https://github.com/quarckster/ansible_playbooks",
     "https://github.com/patchkez/ansible_playbooks"
@@ -68,12 +69,42 @@ def wait_for_ansible(appliance):
     appliance.wait_for_embedded_ansible()
 
 
+@pytest.yield_fixture(scope="module")
+def repository(wait_for_ansible):
+    repositories = RepositoryCollection()
+    repository = repositories.create(
+        fauxfactory.gen_alpha(),
+        REPOSITORIES[0],
+        description=fauxfactory.gen_alpha()
+    )
+    yield repository
+    repository.delete()
+
+
+@pytest.yield_fixture(scope="module")
+def catalog_item(repository):
+    cat_item = AnsiblePlaybookCatalogItem(
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        provisioning={
+            "repository": repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
+        }
+    )
+    cat_item.create()
+    yield cat_item
+    cat_item.delete()
+
+
 @pytest.mark.tier(1)
 def test_embedded_ansible_repository_crud(request, wait_for_ansible):
     repositories = RepositoryCollection()
     repository = repositories.create(
         fauxfactory.gen_alpha(),
-        "https://github.com/quarckster/ansible_playbooks",
+        REPOSITORIES[0],
         description=fauxfactory.gen_alpha()
     )
 
@@ -139,3 +170,59 @@ def test_embed_tower_playbooks_list_changed(wait_for_ansible):
         playbooks.append(repository.playbooks.all())
         repository.delete()
     assert not set(playbooks[1]).issuperset(set(playbooks[0]))
+
+
+@pytest.mark.tier(2)
+def test_control_crud_ansible_playbook_action(request, catalog_item):
+    action = Action(
+        fauxfactory.gen_alphanumeric(),
+        action_type="Run Ansible Playbook",
+        action_values={
+            "run_ansible_playbook":
+            {
+                "playbook_catalog_item": catalog_item.name,
+                "inventory": {
+                    "target_machine": True
+                }
+            }
+        }
+    )
+    action.create()
+    request.addfinalizer(action.delete_if_exists)
+    with update(action):
+        ipaddr = fauxfactory.gen_ipaddr()
+        new_descr = "edited_{}".format(fauxfactory.gen_alphanumeric())
+        action.description = new_descr
+        action.run_ansible_playbook = {
+            "inventory": {
+                "specific_hosts": True,
+                "hosts": ipaddr
+            }
+        }
+    view = navigate_to(action, "Edit")
+    assert view.description.value == new_descr
+    assert view.run_ansible_playbook.inventory.hosts.value == ipaddr
+    action.delete()
+
+
+@pytest.mark.tier(2)
+def test_control_add_ansible_playbook_action_invalid_address(request, catalog_item):
+    action = Action(
+        fauxfactory.gen_alphanumeric(),
+        action_type="Run Ansible Playbook",
+        action_values={
+            "run_ansible_playbook":
+            {
+                "playbook_catalog_item": catalog_item.name,
+                "inventory": {
+                    "specific_hosts": True,
+                    "hosts": "invalid_address_!@#$%^&*"
+                }
+            }
+        }
+    )
+    action.create()
+    request.addfinalizer(action.delete_if_exists)
+    assert action.exists
+    view = navigate_to(action, "Edit")
+    assert view.run_ansible_playbook.inventory.hosts.value == "invalid_address_!@#$%^&*"

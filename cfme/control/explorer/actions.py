@@ -6,7 +6,7 @@ from navmazing import NavigateToAttribute
 from widgetastic_manageiq import CheckboxSelect, ManageIQTree, MultiBoxSelect, SummaryFormItem
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
-from widgetastic.widget import Text
+from widgetastic.widget import Checkbox, Text, View
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
@@ -27,6 +27,17 @@ class ActionsAllView(ControlExplorerView):
         )
 
 
+class RunAnsiblePlaybookFromView(View):
+    playbook_catalog_item = BootstrapSelect("service_template_id")
+
+    @View.nested
+    class inventory(View):  # noqa
+        localhost = Checkbox(id="inventory_localhost")
+        target_machine = Checkbox(id="inventory_event_target")
+        specific_hosts = Checkbox(id="inventory_manual")
+        hosts = Input(name="hosts")
+
+
 class ActionFormCommon(ControlExplorerView):
 
     description = Input("description")
@@ -44,7 +55,8 @@ class ActionFormCommon(ControlExplorerView):
     vcenter_attr_value = Input("value")
     tag = ManageIQTree("action_tags_treebox")
     remove_tag = CheckboxSelect("action_options_div")
-    cancel_button = Button('Cancel')
+    run_ansible_playbook = View.nested(RunAnsiblePlaybookFromView)
+    cancel_button = Button("Cancel")
 
 
 class NewActionView(ActionFormCommon):
@@ -135,6 +147,7 @@ class Action(Updateable, Navigatable, Pretty):
         self.vcenter_attr_value = action_values.get("vcenter_attr_value")
         self.tag = action_values.get("tag")
         self.remove_tag = action_values.get("remove_tag")
+        self.run_ansible_playbook = action_values.get("run_ansible_playbook")
 
     def __str__(self):
         return self.description
@@ -165,7 +178,8 @@ class Action(Updateable, Navigatable, Pretty):
             "vcenter_attr_name": self.vcenter_attr_name,
             "vcenter_attr_value": self.vcenter_attr_value,
             "tag": self.tag,
-            "remove_tag": self.remove_tag
+            "remove_tag": self.remove_tag,
+            "run_ansible_playbook": self.run_ansible_playbook
         })
         view.add_button.click()
         view = self.create_view(ActionDetailsView)
@@ -186,9 +200,7 @@ class Action(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
-        view = self.create_view(ActionDetailsView)
+        view = self.create_view(ActionDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -226,6 +238,10 @@ class Action(Updateable, Navigatable, Pretty):
             .query(actions.description)\
             .filter(actions.description == self.description)\
             .count() > 0
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 
 @navigator.register(Action, "Add")
