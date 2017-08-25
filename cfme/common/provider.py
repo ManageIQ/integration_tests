@@ -4,6 +4,7 @@ from functools import partial
 
 from manageiq_client.api import APIException
 from widgetastic.widget import View, Text
+from widgetastic.utils import ParametrizedString
 from widgetastic_patternfly import Input, Button
 
 import cfme.fixtures.pytest_selenium as sel
@@ -74,11 +75,16 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     save_button = None
     db_types = ["Providers"]
     # Flash message strings, have to format self.string_name and self.name into them on use
-    FLASH_ADD_CANCEL = 'Add of {} Provider was cancelled by the user'
-    FLASH_ADD_VALID = '{} Providers "{}" was saved'
-    FLASH_EDIT_CANCEL = 'Edit of {} Provider "{}" was cancelled by the user'
-    FLASH_EDIT_VALID = FLASH_ADD_VALID
-    FLASH_DEL_VALID = 'Delete initiated for 1 {} Provider from the {} Database'
+    flash_msg = {
+        'add_cancel': ParametrizedString('Add of {@name} Provider was cancelled by the user'),
+        'add_valid': ParametrizedString('{@string_name} Providers "{@name}" was saved'),
+        'edit_cancel': ParametrizedString('Edit of {@string_name} Provider "{@name}" was cancelled '
+                                          'by the user'),
+        'edit_valid': ParametrizedString('{@string_name} Providers "{@name}" was saved'),
+        # have to use product_name here, can't get 2nd level attribute through ParametrizedString
+        'delete_valid': ParametrizedString('Delete initiated for 1 {@string_name} Provider from '
+                                           'the {} Database')
+    }
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -225,14 +231,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 if cancel:
                     created = False
                     add_view.cancel.click()
-                    main_view.entities.flash.assert_success_message(self.FLASH_ADD_CANCEL
-                                                                    .format(self.string_name))
+                    main_view.entities.flash.assert_success_message(self.flash_msg['add_cancel'])
                 else:
                     add_view.add.click()
                     if main_view.is_displayed:
                         flash_widget = main_view.entities.flash
-                        flash_widget.assert_success_message(self.FLASH_ADD_VALID
-                                                            .format(self.string_name, self.name))
+                        flash_widget.assert_success_message(self.flash_msg['add_valid'])
                     else:
                         add_view.flash.assert_no_error()
                         raise AssertionError("Provider wasn't added. It seems form isn't accurately"
@@ -257,8 +261,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                          validate=validate_credentials)
                 self._submit(cancel, self.add_provider_button)
                 if not cancel:
-                    flash.assert_message_match(self.FLASH_ADD_VALID
-                                               .format(self.string_name, self.name))
+                    flash.assert_message_match(self.flash_msg['add_valid'])
             if validate_inventory:
                 self.validate()
             return created
@@ -359,8 +362,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
             if cancel:
                 edit_view.cancel.click()
-                main_view.entities.flash.assert_success_message(
-                    self.FLASH_EDIT_CANCEL.format(type=self.string_name, name=self.name))
+                main_view.entities.flash.assert_success_message(self.flash_msg['edit_cancel'])
             else:
                 edit_view.save.click()
                 if endpoints:
@@ -373,13 +375,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
 
-                success_text = self.FLASH_EDIT_VALID.format(self.string_name, self.name)
+                success_text = self.flash_msg['edit_valid']
                 if main_view.is_displayed:
                     # since 5.8.1 main view is displayed when edit starts from main view
-                    main_view.flash.assert_message(success_text)
+                    main_view.flash.assert_success_message(success_text)
                 elif details_view.is_displayed:
                     # details view is always displayed up to 5.8.1
-                    details_view.flash.assert_message(success_text)
+                    details_view.flash.assert_success_message(success_text)
                 else:
                     edit_view.flash.assert_no_error()
                     raise AssertionError("Provider wasn't updated. It seems form isn't accurately"
@@ -392,12 +394,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred),
                      validate=validate_credentials)
             self._submit(cancel, self.save_button)
-            name = updates.get('name', self.name)
             if not cancel:
                 if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
-                flash.assert_message_match(self.FLASH_EDIT_VALID.format(self.string_name, name))
+                flash.assert_message_match(self.flash_msg['edit_valid'])
 
     def delete(self, cancel=True):
         """
@@ -411,8 +412,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         if not cancel:
-            flash.assert_message_match(self.FLASH_DEL_VALID.format(self.string_name,
-                                                                   self.appliance.product_name))
+            flash.assert_message_match(self.flash_msg['delete_valid']
+                                       .format(self.appliance.product_name))
 
     def setup(self, rest=False):
         """
