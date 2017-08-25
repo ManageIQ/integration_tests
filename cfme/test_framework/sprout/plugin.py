@@ -91,6 +91,8 @@ def pytest_configure(config):
         template_file.write('export appliance_template="{}"'.format(template_name))
     log.info("Sprout setup finished.")
 
+    config.pluginmanager.register(ShutdownPlugin())
+
 
 @attr.s
 class SproutProvisioningRequest(object):
@@ -258,27 +260,32 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.add_hookspecs(NewHooks)
 
 
-def pytest_miq_node_shutdown(config, nodeinfo):
-    if config.getoption('ui_coverage'):
-        # TODO: Ensure this gets called after pytest_sessionfinish
-        # This disables the appliance deletion when ui coverage is on. ^
-        # This is because we need one of the appliances to do the collection for us
-        return
-    if nodeinfo:
-        netloc = urlparse(nodeinfo).netloc
-        ip_address = netloc.split(":")[0]
-        log.debug("Trying to end appliance {}".format(ip_address))
-        if config.getoption('use_sprout'):
-            try:
-                log.debug(config._sprout_mgr.client.call_method('appliance_data', ip_address))
-                log.debug(config._sprout_mgr.client.call_method('destroy_appliance', ip_address))
-            except Exception as e:
-                log.debug('Error trying to end sprout appliance %s', ip_address)
-                log.debug(e)
+class ShutdownPlugin(object):
+
+    def pytest_miq_node_shutdown(self, config, nodeinfo):
+        if config.getoption('ui_coverage'):
+            # TODO: Ensure this gets called after pytest_sessionfinish
+            # This disables the appliance deletion when ui coverage is on. ^
+            # This is because we need one of the appliances to do the collection for us
+            return
+        if nodeinfo:
+            netloc = urlparse(nodeinfo).netloc
+            ip_address = netloc.split(":")[0]
+            log.debug("Trying to end appliance {}".format(ip_address))
+            if config.getoption('--use-sprout'):
+                try:
+                    call_method = config._sprout_mgr.client.call_method
+                    log.debug("appliance data %r", call_method('appliance_data', ip_address))
+                    log.debug(
+                        "destroy appliance result: %r",
+                        call_method('destroy_appliance', ip_address))
+                except Exception as e:
+                    log.debug('Error trying to end sprout appliance %s', ip_address)
+                    log.debug(e)
+            else:
+                log.debug('Not a sprout run so not doing anything for %s', ip_address)
         else:
-            log.debug('Not a sprout run so not doing anything')
-    else:
-        log.debug('The IP address was not present - not terminating any appliance')
+            log.debug('The IP address was not present - not terminating any appliance')
 
 
 class NewHooks(object):

@@ -166,9 +166,9 @@ def _init_config(slave_options, slave_args):
     config.option['resultlog'] = None
     # Unset appliances to prevent the slaves from starting distributes tests :)
     config.option.appliances = []
+    config.pluginmanager.set_blocked('fixtures.parallelizer')
     for pluginarg in config.option.plugins:
         config.pluginmanager.consider_pluginarg(pluginarg)
-    config.pluginmanager.consider_pluginarg('no:fixtures.parallelizer')
     return config
 
 
