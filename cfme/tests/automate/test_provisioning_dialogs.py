@@ -11,8 +11,8 @@ from utils.appliance.implementations.ui import navigate_to
 @pytest.yield_fixture(scope="function")
 def dialog():
     dlg = ProvisioningDialog(
-        name=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
+        name='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
+        description='test-{}'.format(fauxfactory.gen_alphanumeric(length=5)),
         diag_type=ProvisioningDialog.VM_PROVISION)
     yield dlg
 
@@ -23,14 +23,26 @@ def dialog():
 @test_requirements.automate
 @pytest.mark.tier(3)
 def test_provisioning_dialog_crud(dialog):
+    # CREATE
     dialog.create()
     assert dialog.exists
+
+    # UPDATE
     with update(dialog):
         dialog.name = fauxfactory.gen_alphanumeric()
         dialog.description = fauxfactory.gen_alphanumeric()
     assert dialog.exists
+
     with update(dialog):
         dialog.diag_type = ProvisioningDialog.HOST_PROVISION
+    assert dialog.exists
+    # Update with cancel
+    dialog.update(updates={'description': 'not saved'}, cancel=True)
+    view = navigate_to(dialog, 'Details')
+    assert view.entities
+
+    # DELETE
+    dialog.delete(cancel=True)
     assert dialog.exists
     dialog.delete()
     assert not dialog.exists

@@ -2,7 +2,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View, Text, TextInput
 from widgetastic_patternfly import Dropdown, BootstrapSelect, CandidateNotFound
-from widgetastic_manageiq import Button, Table, PaginationPane, SummaryFormItem, ScriptBox
+from widgetastic_manageiq import Button, Table, PaginationPane, SummaryForm, ScriptBox
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import automate_menu_name
@@ -30,8 +30,7 @@ class ProvDiagAllEntities(View):
 class ProvDiagDetailsEntities(View):
     """Entities for details page"""
     title = Text('#explorer_title_text')
-    info_name = SummaryFormItem(group_title=group_title, item_name='Name')
-    info_description = SummaryFormItem(group_title=group_title, item_name='Description')
+    basic_info = SummaryForm(group_title=group_title)
     content = ScriptBox('//textarea[contains(@id, "script_data")]')
 
 
@@ -74,11 +73,12 @@ class ProvDiagDetailsView(ProvDiagView):
         # FIXME https://github.com/ManageIQ/manageiq-ui-classic/issues/1983
         # 'Editing' should NOT be in the title here
         expected_title = 'Editing Dialog "{}"'.format(self.context['object'].description)
+        basic_info_widget = self.entities.basic_info
         return (
             self.in_customization and
             self.entities.title.text == expected_title and
-            self.entities.info_name.text == self.context['object'].name and
-            self.entities.info_description.text == self.context['object'].description)
+            basic_info_widget.get_text_of('Name') == self.context['object'].name and
+            basic_info_widget.get_text_of('Description') == self.context['object'].description)
 
     toolbar = View.nested(ProvDiagAllToolbar)
     entities = View.nested(ProvDiagDetailsEntities)
@@ -164,7 +164,6 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
         btn.click()
         view = self.create_view(ProvDiagAllView if cancel else ProvDiagDetailsView)
         assert view.is_displayed
-        view.flash.assert_no_error()
         view.flash.assert_success_message(flash_msg)
 
     def update(self, updates, cancel=False, reset=False):
@@ -175,23 +174,21 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
             view.form.reset.click()
             view.flash.assert_message('All changes have been reset')
         if cancel:
-            flash_msg = 'Edit of Dialog "TEST COPY" was cancelled by the user'
+            flash_msg = 'Edit of Dialog "{}" was cancelled by the user'.format(self.name)
             btn = view.form.cancel
         else:
-            flash_msg = ('Dialog "{}" was saved'
-                         .format(updates.get('name') or self.name))
+            flash_msg = ('Dialog "{}" was saved'.format(updates.get('name') or self.name))
             btn = view.form.save
 
         btn.click()
         view = self.create_view(ProvDiagDetailsView)
-        # self hasn't been updated yet, can't assert is_displayed
-        view.flash.assert_no_error()
+        # TODO use override in create_view in order to assert view.is_displayed
+        # Saw inconsistent UI behavior when trying to use it, where UI was jumping to 'All' view
         view.flash.assert_success_message(flash_msg)
 
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
-        option = 'Remove Dialog' if self.appliance.version >= '5.7' else 'Remove from the VMDB'
-        view.toolbar.configuration.item_select(option, handle_alert=(not cancel))  # True is confirm
+        view.toolbar.configuration.item_select('Remove Dialog', handle_alert=(not cancel))
 
         view = self.create_view(ProvDiagDetailsView if cancel else ProvDiagAllView)
         if cancel:
