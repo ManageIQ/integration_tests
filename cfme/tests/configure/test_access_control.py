@@ -395,13 +395,8 @@ def test_edit_sequence_usergroups(request):
     group = new_group()
     group.create()
     request.addfinalizer(group.delete)
-    view = navigate_to(Group, 'All')
-    row = view.table.row(name=group.description)
-    original_sequence = row.sequence.text
+
     group.set_group_order(group.description)
-    row = view.table.row(name=group.description)
-    changed_sequence = row.sequence.text
-    assert original_sequence != changed_sequence, "Edit Sequence Failed"
 
 
 @pytest.mark.tier(3)

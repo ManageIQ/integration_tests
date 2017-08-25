@@ -1,5 +1,5 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import UpDownSelect, SummaryFormItem
+from widgetastic_manageiq import PaginationPane, SummaryFormItem, UpDownSelect
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
@@ -437,6 +437,7 @@ class AllGroupView(ConfigurationView):
     policy = Dropdown('Policy')
 
     table = Table("//div[@id='main_div']//table")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -448,10 +449,16 @@ class AllGroupView(ConfigurationView):
 
 class EditGroupSequenceView(ConfigurationView):
     """ Edit Groups Sequence View in CFME UI """
-    group_order_selector = UpDownSelect(
-        '#seq_fields',
-        './/a[@title="Move selected fields up"]/img',
-        './/a[@title="Move selected fields down"]/img')
+
+    group_order_selector = VersionPick({
+        Version.lowest(): UpDownSelect(
+            '#seq_fields',
+            './/a[@title="Move selected fields up"]/img',
+            './/a[@title="Move selected fields down"]/img'),
+        '5.8': UpDownSelect(
+            '#seq_fields',
+            '//button[@title="Move selected fields up"]/i',
+            '//button[@title="Move selected fields down"]/i'), })
 
     save_button = Button('Save')
     reset_button = Button('Reset')
@@ -661,14 +668,29 @@ class Group(Updateable, Pretty, Navigatable):
             Args:
                 updated_order: group order list
         """
+        name_column = "Name"
+        find_row_kwargs = {name_column: self.description}
+        view = navigate_to(self, 'All')
+        row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+        original_sequence = row.sequence.text
+
         original_order = self.group_order[:len(updated_order)]
         view = self.create_view(EditGroupSequenceView)
         assert view.is_displayed
+
         # We pick only the same amount of items for comparing
         if updated_order == original_order:
             return  # Ignore that, would cause error on Save click
         view.group_order_selector.fill(updated_order)
         view.save_button.click()
+
+        view = self.create_view(AllGroupView)
+        assert view.is_displayed
+
+        row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
+        changed_sequence = row.sequence.text
+        assert original_sequence != changed_sequence, "{} Group Edit Sequence Failed".format(
+            self.description)
 
     def _set_group_restriction(self, tab_view, item, update=False):
         """ Sets tag/host/template restriction for the group
