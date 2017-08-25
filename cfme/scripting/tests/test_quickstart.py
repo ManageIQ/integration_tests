@@ -2,7 +2,7 @@
 # than the docker-py 1.10 we hard depend on
 import subprocess
 from utils import path
-from markers.env import ALL
+from markers.env import ALL, ONE
 import pytest
 
 
@@ -53,3 +53,7 @@ def test_quickstart_run(image, python, root_volume, yamls_volume):
 
         .format(**locals()),
         shell=True)
+
+@pytest.mark.tcpstack(ONE)
+def test_boogie():
+    pass

@@ -14,27 +14,51 @@ from utils import testgen
 
 ALL = 'all'
 NONE = 'none'
-
-BROWSERS = ['firefox', 'chrome', 'ie']
-TCPSTACKS = ['ipv4', 'ipv6']
+ONE = 'one'
 
 
-def process_env_mark(metafunc, mark_name, choices):
-    if hasattr(metafunc.function, mark_name):
-        if getattr(metafunc.function, mark_name).args:
-            mark_param = getattr(metafunc.function, mark_name).args[0]
+class EnvironmentMarker(object):
+    """Base Environment Marker"""
+    PARAM_BY_DEFAULT = False
+
+    def process_env_mark(self, metafunc):
+        if hasattr(metafunc.function, self.NAME):
+            if getattr(metafunc.function, self.NAME).args:
+                mark_param = getattr(metafunc.function, self.NAME).args[0]
+            else:
+                raise Exception('No keyword given to mark')
+            if mark_param == ALL:
+                metafunc.fixturenames.append(self.NAME)
+                testgen.parametrize(metafunc, self.NAME, self.CHOICES)
+            elif mark_param == ONE:
+                metafunc.fixturenames.append(self.NAME)
+                testgen.parametrize(metafunc, self.NAME, [self.CHOICES[0]])
+            elif mark_param == NONE:
+                return
+        elif self.PARAM_BY_DEFAULT:
+            metafunc.fixturenames.append(self.NAME)
+            testgen.parametrize(metafunc, self.NAME, [self.CHOICES[0]])
         else:
-            raise Exception('No keyword given to mark')
-        if mark_param == ALL:
-            metafunc.fixturenames.append(mark_name)
-            testgen.parametrize(metafunc, mark_name, choices)
-        elif mark_param == NONE:
             return
-    else:
-        metafunc.fixturenames.append(mark_name)
-        testgen.parametrize(metafunc, mark_name, [choices[0]])
+
+
+class BrowserEnvironmentMarker(EnvironmentMarker):
+    """Browser Envrionment Marker"""
+    NAME = 'browser'
+    CHOICES = ['firefox', 'chrome', 'ie']
+
+
+class TCPEnvironmentMarker(EnvironmentMarker):
+    """TCP Environment Marker"""
+    NAME = 'tcpstack'
+    CHOICES = ['ipv4', 'ipv6']
 
 
 def pytest_generate_tests(metafunc):
-    process_env_mark(metafunc, 'browser', BROWSERS)
-    process_env_mark(metafunc, 'tcpstack', TCPSTACKS)
+    markers = [
+        BrowserEnvironmentMarker(),
+        TCPEnvironmentMarker()
+    ]
+    for marker in markers:
+        marker.process_env_mark(metafunc)
+    print metafunc
