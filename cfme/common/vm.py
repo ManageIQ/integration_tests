@@ -374,7 +374,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         view = navigate_to(self, 'Details')
 
         # Click console button given by type
-        view.toolbar.access.item_select(console)
+        view.toolbar.access.item_select(console, handle_alert=None
+            if invokes_alert is False else True)
 
         # Get the consoles window handle, and then create a VMConsole object, and store
         # the VMConsole object aside.

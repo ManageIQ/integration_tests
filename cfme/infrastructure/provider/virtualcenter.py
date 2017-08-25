@@ -25,7 +25,7 @@ class VMwareProvider(InfraProvider):
     discover_dict = {"vmware": True}
     # xpath locators for elements, to be used by selenium
     _console_connection_status_element = '//*[@id="connection-status"]'
-    _canvas_element = '//*[@id="remote-console"]/canvas'
+    _canvas_element = '//*[@id="remote-console" or @id="wmksContainer"]/canvas'
     _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
 
