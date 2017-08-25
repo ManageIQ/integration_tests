@@ -10,13 +10,13 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.automate.explorer import AutomateExplorer  # NOQA
 from cfme.base import Server
-from cfme.control.explorer import ControlExplorer  # NOQA
-from cfme.exceptions import OptionNotAvailable
+from cfme.control.explorer import ControlExplorer # NOQA
+from cfme.exceptions import OptionNotAvailable, RBACOperationBlocked
 from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
-from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
+from cfme.web_ui import Table, InfoBlock, toolbar as tb
 from cfme.configure import tasks
 from fixtures.provider import setup_one_or_skip
 from utils.appliance.implementations.ui import navigate_to
@@ -29,7 +29,6 @@ from utils import version
 
 records_table = Table("//div[@id='main_div']//table")
 usergrp = Group(description='EvmGroup-user')
-group_table = Table("//div[@id='main_div']//table")
 
 
 pytestmark = test_requirements.rbac
@@ -110,14 +109,9 @@ def test_user_login():
 
 @pytest.mark.tier(3)
 def test_user_duplicate_name(appliance):
-    region = appliance.server_region
     nu = new_user()
     nu.create()
-    msg = version.pick({
-        version.LOWEST: "Userid has already been taken",
-        '5.8': "Userid is not unique within region {}".format(region)
-    })
-    with error.expected(msg):
+    with pytest.raises(RBACOperationBlocked):
         nu.create()
 
 
@@ -145,6 +139,10 @@ def test_userid_required_error_validation():
     with error.expected("Userid can't be blank"):
         user.create()
 
+    # Navigating away from this page will create an "Abandon Changes" alert
+    # Since group creation failed we need to reset the state of the page
+    navigate_to(user.appliance.server, 'Dashboard')
+
 
 @pytest.mark.tier(3)
 def test_user_password_required_error_validation():
@@ -153,12 +151,15 @@ def test_user_password_required_error_validation():
         credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
         email='xyz@redhat.com',
         group=group_user)
-    if version.current_version() < "5.5":
-        check = "Password_digest can't be blank"
-    else:
-        check = "Password can't be blank"
+
+    check = "Password can't be blank"
+
     with error.expected(check):
         user.create()
+
+    # Navigating away from this page will create an "Abandon Changes" alert
+    # Since group creation failed we need to reset the state of the page
+    navigate_to(user.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
@@ -212,12 +213,21 @@ def test_delete_default_user():
         * Try deleting the user
     """
     user = User(name='Administrator')
-    navigate_to(User, 'All')
-    row = records_table.find_row_by_cells({'Full Name': user.name})
-    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    tb.select('Configuration', 'Delete selected Users', invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_match('Default EVM User "{}" cannot be deleted' .format(user.name))
+    with pytest.raises(RBACOperationBlocked):
+        user.delete()
+
+
+@pytest.mark.tier(3)
+def test_delete_default_user_all_selection():
+    """Test for deleting default user Administrator.
+
+    Steps:
+        * Login as Administrator user
+        * Try deleting the user
+    """
+    user = User(name='Administrator')
+    with pytest.raises(RBACOperationBlocked):
+        user.delete(all_selection=True)
 
 
 @pytest.mark.tier(3)
@@ -307,14 +317,9 @@ def test_group_crud_with_tag(a_provider, category, tag):
 
 @pytest.mark.tier(3)
 def test_group_duplicate_name(appliance):
-    region = appliance.server_region
     group = new_group()
     group.create()
-    msg = version.pick({
-        version.LOWEST: "Description has already been taken",
-        '5.8': "Description is not unique within region {}".format(region)
-    })
-    with error.expected(msg):
+    with pytest.raises(RBACOperationBlocked):
         group.create()
 
 
@@ -344,25 +349,53 @@ def test_group_description_required_error_validation():
     group = Group(description=None, role='EvmRole-approver')
     with error.expected(error_text):
         group.create()
-    flash.dismiss()
+
+    # Navigating away from this page will create an "Abandon Changes" alert
+    # Since group creation failed we need to reset the state of the page
+    navigate_to(group.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
-def test_delete_default_group():
-    flash_msg = "EVM Group \"{}\": Error during delete: A read only group cannot be deleted."
-    group = Group(description='EvmGroup-administrator')
-    view = navigate_to(Group, 'All')
-    row = group_table.find_row_by_cells({'Name': group.description})
-    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    view.configuration.item_select('Delete selected Groups', handle_alert=True)
-    view.flash.assert_message(flash_msg.format(group.description))
+@pytest.mark.parametrize("default_group_name", Group().get_default_group_names())
+def test_delete_default_group(default_group_name):
+    """Test for deleting a default group.
+
+    Steps:
+        * Login as Administrator user
+        * Try deleting the group specified by group name
+    """
+    group = Group(description=default_group_name)
+
+    with pytest.raises(RBACOperationBlocked):
+        group.delete()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[BZ(1473828, forced_streams=['5.8'])])
+@pytest.mark.parametrize("default_group_name", Group().get_default_group_names())
+def test_delete_default_group_all_selection(default_group_name):
+    """Test for deleting a default group using the checklist displayed
+    by selecting Configuration->Group
+
+    Steps:
+        * Login as Administrator user
+        * Navigate to Configuration -> Group
+        * Try deleting the group
+    """
+    group = Group(description=default_group_name)
+
+    with pytest.raises(RBACOperationBlocked):
+        group.delete(all_selection=True)
 
 
 @pytest.mark.tier(3)
 def test_delete_group_with_assigned_user():
-    flash_msg = version.pick({
-        '5.6': ("EVM Group \"{}\": Error during delete: Still has users assigned"),
-        '5.5': ("EVM Group \"{}\": Error during \'destroy\': Still has users assigned")})
+    """Test that CFME prevents deletion of a group that has users assigned
+    """
+    flash_msg = ("EVM Group \"{}\": Error during delete: "
+                "The group has users assigned that do not "
+                "belong to any other group")
+
     group = new_group()
     group.create()
     user = new_user(group=group)
@@ -372,14 +405,40 @@ def test_delete_group_with_assigned_user():
 
 
 @pytest.mark.tier(3)
-def test_edit_default_group():
-    flash_msg = 'Read Only EVM Group "{}" can not be edited'
+@pytest.mark.parametrize("default_group_name", Group().get_default_group_names())
+def test_edit_default_group(default_group_name):
+    """Test that CFME prevents a user from editing a default group
+
+    Steps:
+        * Login as Administrator user
+        * Try editing the group EvmGroup-adminstrator
+    """
+    group = Group(default_group_name)
+
+    group_updates = {}
+    with pytest.raises(RBACOperationBlocked):
+        group.update(group_updates)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: version.current_version() >= "5.8")
+def test_edit_default_group_all_selection():
+    """Test that CFME prevents a user from editting a default group
+    when selecting it from the Access Control EVM Groups checklist
+
+    Steps:
+        * Login as Administrator user
+        * Navigate to Configuration -> Group
+        * Try editing the group EvmGroup-adminstrator
+    """
     group = Group(description='EvmGroup-approver')
-    navigate_to(Group, 'All')
-    row = group_table.find_row_by_cells({'Name': group.description})
-    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    tb.select('Configuration', 'Edit the selected Group')
-    flash.assert_message_match(flash_msg.format(group.description))
+
+    group_updates = {}
+
+    all_selection = True
+
+    with pytest.raises(RBACOperationBlocked):
+        group.update(group_updates, all_selection)
 
 
 @pytest.mark.tier(3)
@@ -444,41 +503,95 @@ def test_rolename_required_error_validation():
 def test_rolename_duplicate_validation():
     role = new_role()
     role.create()
-    with error.expected("Name has already been taken"):
+    with pytest.raises(RBACOperationBlocked):
         role.create()
+
+    # Navigating away from this page will create an "Abandon Changes" alert
+    # Since group creation failed we need to reset the state of the page
+    navigate_to(role.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
-def test_delete_default_roles():
-    flash_msg = version.pick({
-        '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-                "because of dependent entitlements"),
-        '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-                "because of dependent miq_groups")})
-    role = Role(name='EvmRole-approver')
-    with error.expected(flash_msg.format(role.name)):
+@pytest.mark.parametrize("default_role_name", Role().get_default_role_names())
+def test_delete_default_roles(default_role_name):
+    """Test that CFME prevents a user from deleting a default role
+    when selecting it from the Access Control EVM Role checklist
+
+    Steps:
+        * Login as Administrator user
+        * Navigate to Configuration -> Role
+        * Try editing the group EvmRole-approver
+    """
+    role = Role(name=default_role_name)
+    with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 
 @pytest.mark.tier(3)
-def test_edit_default_roles():
-    role = Role(name='EvmRole-auditor')
-    navigate_to(role, 'Edit')
-    flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
+@pytest.mark.parametrize("default_role_name", Role().get_default_role_names())
+def test_delete_default_roles_all_selection(default_role_name):
+    """Test that CFME prevents a user from deleting a default role
+    when selecting it from the Access Control EVM role checklist
+
+    Steps:
+        * Login as Administrator user
+        * Navigate to Configuration -> Role
+        * Try deleting the group EvmRole-approver
+    """
+    role = Role(name=default_role_name)
+    with pytest.raises(RBACOperationBlocked):
+        role.delete(all_selection=True)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("default_role_name", Role().get_default_role_names())
+def test_edit_default_roles(default_role_name):
+    """Test that CFME prevents a user from editing a default role
+    when selecting it from the Access Control EVM Role checklist
+
+    Steps:
+        * Login as Administrator user
+        * Navigate to Configuration -> Role
+        * Try editing the group EvmRole-auditor
+    """
+    role = Role(name=default_role_name)
+    newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
+    role_updates = {'name': newrole_name}
+
+    with pytest.raises(RBACOperationBlocked):
+        role.update(role_updates)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("default_role_name", Role().get_default_role_names())
+def test_edit_default_roles_all_selection(default_role_name):
+    """Test that CFME prevents a user from editing a default role
+    when selecting it from the Access Control EVM Role checklist
+
+    Steps:
+        * Login as Administrator user
+        * Navigate to Configuration -> Role
+        * Try editing the group EvmRole-auditor
+    """
+    role = Role(name=default_role_name)
+    newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
+    role_updates = {'name': newrole_name}
+
+    with pytest.raises(RBACOperationBlocked):
+        role.update(role_updates, all_selection=True)
+
+    # When the role update is blocked the screen will leave the current role checked
+    # which causes the next edit role test to have all previous role messages selected
+    navigate_to(role.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
 def test_delete_roles_with_assigned_group():
-    flash_msg = version.pick({
-        '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
-                "because of dependent entitlements"),
-        '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
-                "because of dependent miq_groups")})
     role = new_role()
     role.create()
     group = new_group(role=role.name)
     group.create()
-    with error.expected(flash_msg.format(role.name)):
+    with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 
@@ -520,10 +633,7 @@ def _test_vm_removal():
     [(
         {version.LOWEST: [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
             ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-             'Provision VMs']],
-         '5.6': [['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-             'Provision VMs']]},
+             'Provision VMs']], },
         _test_vm_provision)])
 def test_permission_edit(appliance, request, product_features, action):
     """
@@ -658,17 +768,12 @@ def test_permissions_role_crud(appliance):
 
 @pytest.mark.tier(3)
 def test_permissions_vm_provisioning(appliance):
-    features = version.pick({
-        version.LOWEST: [
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ],
-        '5.6': [
-            ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ]})
+    features = [
+        ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+            'Provision VMs']
+    ]
+
     single_task_permission_test(
         appliance,
         features,
@@ -738,9 +843,10 @@ def test_user_change_password(appliance, request):
         email="test@test.test",
         group=usergrp,
     )
+
     user.create()
     request.addfinalizer(user.delete)
-    request.addfinalizer(appliance.server.login_admin())
+    request.addfinalizer(appliance.server.login_admin)
     with user:
         appliance.server.logout()
         appliance.server.login(user)
