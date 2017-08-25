@@ -131,7 +131,6 @@ COLLECTIONS_BUGGY_ATTRS = {"results", "service_catalogs", "automate", "categorie
 @pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
 @pytest.mark.uncollectif(
     lambda collection_name:
-        (collection_name in COLLECTIONS_OMMITED) or
         (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
         (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
 )
@@ -148,7 +147,7 @@ def test_select_attributes(appliance, collection_name):
     response = appliance.rest_api.get(
         '{}{}'.format(collection._href, '?expand=resources&attributes=id'))
     assert_response(appliance)
-    for resource in response['resources']:
+    for resource in response.get('resources', []):
         assert 'id' in resource
         expected_len = 2 if 'href' in resource else 1
         assert len(resource) == expected_len
@@ -423,6 +422,41 @@ def test_sorting_by_attributes(appliance):
     for resource in response_desc['resources']:
         assert resource['id'] < id_last
         id_last = resource['id']
+
+
+COLLECTIONS_BUGGY_HREF_SLUG = {'policy_actions', 'automate_domains'}
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
+@pytest.mark.uncollectif(
+    lambda collection_name:
+        collection_name == 'automate' or  # doesn't have 'href'
+        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < '5.8') or
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= '5.9')
+)
+@pytest.mark.meta(blockers=[BZ(
+    1485310,
+    forced_streams=['5.8', 'upstream'],
+    unblock=lambda collection_name: collection_name not in COLLECTIONS_BUGGY_HREF_SLUG)])
+def test_attributes_present(appliance, collection_name):
+    """Tests that the expected attributes are present in all collections.
+
+    Metadata:
+        test_flag: rest
+    """
+    attrs = 'href,id,href_slug'
+    collection = getattr(appliance.rest_api.collections, collection_name)
+    response = appliance.rest_api.get(
+        '{0}{1}{2}'.format(collection._href, '?expand=resources&attributes=', attrs))
+    assert_response(appliance)
+    for resource in response.get('resources', []):
+        assert 'id' in resource
+        assert 'href' in resource
+        assert resource['href'] == '{}/{}'.format(collection._href, resource['id'])
+        if current_version() >= '5.8':
+            assert 'href_slug' in resource
+            assert resource['href_slug'] == '{}/{}'.format(collection.name, resource['id'])
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
