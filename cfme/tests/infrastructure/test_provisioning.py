@@ -173,7 +173,7 @@ def test_provision_approval(
             lambda: cleanup_vm(new_vm_name, provider))
     else:
         # Manual approval
-        provision_request.approve_request("Approved")
+        provision_request.approve_request(method='ui', reason="Approved")
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
             lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])

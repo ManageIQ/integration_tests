@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Table, Checkbox
-from widgetastic_manageiq import BreadCrumb, SummaryFormItem, PaginationPane
+from widgetastic_manageiq import BreadCrumb, SummaryForm, SummaryFormItem, PaginationPane, Button
 from widgetastic_patternfly import View, Input, Tab, BootstrapTreeview, FlashMessages
-from widgetastic_manageiq import Button
+
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
-from cfme.exceptions import RequestException
+from cfme.exceptions import RequestException, ItemNotFound
 from utils.log import logger
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -31,10 +31,11 @@ class Request(Navigatable):
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.partial_check = partial_check
-        self.cells = {'Description': self.description} if cells is None else cells
+        self.cells = cells or {'Description': self.description}
         self.rest = self._get_request_from_rest(self.partial_check)
         self.row = None
 
+    # TODO Replace varmeth with Sentaku one day
     @variable(alias='rest')
     def wait_for_request(self):
         def _finished():
@@ -66,7 +67,7 @@ class Request(Navigatable):
                 'found - be more specific!'.format(
                     self.description))
         elif len(matching_requests) == 0:
-            raise RequestException(
+            raise ItemNotFound(
                 'Nothing matching \"{}\" with partial_check={} was found'.format(
                     self.cells['Description'], self.partial_check))
         else:
@@ -82,7 +83,7 @@ class Request(Navigatable):
     def get_request_id(self):
         return self.rest.request_id
 
-    @property
+    @variable(alias='rest')
     def exists(self):
         """If our Request exists in CFME"""
         return self.rest.exists
@@ -97,7 +98,8 @@ class Request(Navigatable):
         self.update()
         return self.rest.request_state
 
-    def is_shown(self):
+    @exists.variant('ui')
+    def exists_ui(self):
         """
         Checks if Request if shown in CFME UI.
         Request might be removed from CFME UI but present in DB
@@ -134,9 +136,9 @@ class Request(Navigatable):
         view = navigate_to(self, 'Approve')
         view.reason.fill(reason)
         if not cancel:
-            view.submit.click(handle_alert=not cancel)
+            view.submit.click()
         else:
-            view.breadcrumb.click_location(view.breadcrumb.locations[0], handle_alert=True)
+            view.breadcrumb.click_location(view.breadcrumb.locations[1], handle_alert=True)
         view.flash.assert_no_error()
 
     @variable(alias='rest')
@@ -153,9 +155,9 @@ class Request(Navigatable):
         view = navigate_to(self, 'Deny')
         view.reason.fill(reason)
         if not cancel:
-            view.submit.click(handle_alert=not cancel)
+            view.submit.click()
         else:
-            view.breadcrumb.click_location(view.breadcrumb.locations[0], handle_alert=True)
+            view.breadcrumb.click_location(view.breadcrumb.locations[1], handle_alert=True)
         view.flash.assert_no_error()
 
     def remove_request(self, cancel=False):
@@ -192,7 +194,7 @@ class Request(Navigatable):
         view = navigate_to(self, 'Copy')
         view.form.fill(values)
         if not cancel:
-            view.submit_button.click()
+            view.form.submit_button.click()
         else:
             view.cancel_button.click()
         view.flash.assert_no_error()
@@ -207,7 +209,7 @@ class Request(Navigatable):
         view = navigate_to(self, 'Edit')
         if view.form.fill(values):
             if not cancel:
-                view.submit_button.click()
+                view.form.submit_button.click()
                 self.update()
             else:
                 view.cancel_button.click()
@@ -239,7 +241,6 @@ class RequestsView(RequestBasicView):
             partial_check: If to use the ``__contains`` operator
         Returns: row
         """
-        cells = dict(cells)
         contains = '' if not partial_check else '__contains'
         column_list = self.table.attributized_headers
         for key in cells.keys():
@@ -258,8 +259,7 @@ class RequestsView(RequestBasicView):
                 continue
             elif len(rows) > 1:
                 raise RequestException(
-                    'Multiple requests with matching content found - be more specific!'
-                )
+                    'Multiple requests with matching content found - be more specific!')
             else:
                 # found the row!
                 row = rows[0]
@@ -282,23 +282,10 @@ class RequestDetailsToolBar(RequestsView):
 
 
 class RequestDetailsView(RequestsView):
+
     @View.nested
     class details(View):  # noqa
-        request_id = SummaryFormItem('Request Details', 'Request ID')
-        status = SummaryFormItem('Request Details', 'Status')
-        request_state = SummaryFormItem('Request Details', 'Request State')
-        requester = SummaryFormItem('Request Details', 'Requester')
-        request_type = SummaryFormItem('Request Details', 'Request Type')
-        description = SummaryFormItem('Request Details', 'Description')
-        last_message = SummaryFormItem('Request Details', 'Last Message')
-        created_on = SummaryFormItem('Request Details', 'Created On')
-        last_update = SummaryFormItem('Request Details', 'Last Update')
-        completed = SummaryFormItem('Request Details', 'Completed')
-        approval_state = SummaryFormItem('Request Details', 'Approval State')
-        approved_by = SummaryFormItem('Request Details', 'Approved/Denied by')
-        approved_on = SummaryFormItem('Request Details', 'Approved/Denied on')
-        reason = SummaryFormItem('Request Details', 'Reason')
-        provisioned_vms = SummaryFormItem('Request Details', 'Provisioned VMs')
+        request_details = SummaryForm('Request Details')
 
     @View.nested
     class request(Tab):  # noqa
@@ -390,21 +377,84 @@ class RequestDetailsView(RequestsView):
         retirement = SummaryFormItem('Lifespan', 'Time until Retirement')
         retirement_warning = SummaryFormItem('Lifespan', 'Retirement Warning')
 
+    @property
+    def is_displayed(self):
+        return (self.in_requests and
+                self.title.text == self.context['object'].rest.description)
+
     breadcrumb = BreadCrumb()
     toolbar = RequestDetailsToolBar()
 
 
 class RequestApprovalView(RequestDetailsView):
+
     reason = Input(name='reason')
     submit = Button(title='Submit')
     cancel = Button(title="Cancel this provisioning request")
 
+    @property
+    def is_displayed(self):
+        try:
+            return (
+                self.breadcrumb.locations[1] == self.context['object'].rest.description and
+                self.breadcrumb.locations[2] == 'Request Approval')
+        except Exception:
+            return False
+
+
+class RequestDenialView(RequestDetailsView):
+
+    reason = Input(name='reason')
+    submit = Button(title='Submit')
+    cancel = Button(title="Cancel this provisioning request")
+
+    @property
+    def is_displayed(self):
+        try:
+            return (
+                self.breadcrumb.locations[1] == self.context['object'].rest.description and
+                self.breadcrumb.locations[2] == 'Request Denial')
+        except Exception:
+            return False
+
 
 class RequestProvisionView(ProvisionView):
+
     @View.nested
     class form(BasicProvisionFormView):  # noqa
         submit_button = Button('Submit')  # Submit for 2nd page, tabular form
         cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        try:
+            return self.breadcrumb.locations[1] == self.context['object'].rest.description
+        except Exception:
+            return False
+
+
+class RequestEditView(RequestProvisionView):
+
+    @property
+    def is_displayed(self):
+        try:
+            return (
+                self.breadcrumb.locations[1] == self.context['object'].rest.description and
+                self.breadcrumb.locations[2] == 'Edit VM Provision')
+        except Exception:
+            return False
+
+
+class RequestCopyView(RequestProvisionView):
+
+    @property
+    def is_displayed(self):
+        try:
+            return (
+                self.breadcrumb.locations[1] == self.context['object'].rest.description and
+                self.breadcrumb.locations[2] == 'Copy of VM Provision Request')
+        except Exception:
+            return False
 
 
 @navigator.register(Request, 'All')
@@ -421,10 +471,6 @@ class RequestDetails(CFMENavigateStep):
     VIEW = RequestDetailsView
     prerequisite = NavigateToSibling('All')
 
-    def am_i_here(self, *args, **kwargs):
-        return (self.view.in_requests and
-                self.view.title.text == self.obj.rest.description)
-
     def step(self, *args, **kwargs):
         try:
             return self.prerequisite_view.table.row(description=self.obj.rest.description).click()
@@ -434,15 +480,8 @@ class RequestDetails(CFMENavigateStep):
 
 @navigator.register(Request, 'Edit')
 class EditRequest(CFMENavigateStep):
-    VIEW = RequestProvisionView
+    VIEW = RequestEditView
     prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self, *args, **kwarks):
-        try:
-            return (self.view.breadcrumb.locations[1] == self.obj.rest.description and
-                    self.view.breadcrumb.locations[2] == "Edit VM Provision")
-        except Exception:
-            return False
 
     def step(self):
         return self.prerequisite_view.toolbar.edit.click()
@@ -450,15 +489,8 @@ class EditRequest(CFMENavigateStep):
 
 @navigator.register(Request, 'Copy')
 class CopyRequest(CFMENavigateStep):
-    VIEW = RequestProvisionView
+    VIEW = RequestCopyView
     prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self, *args, **kwarks):
-        try:
-            return (self.view.breadcrumb.locations[1] == self.obj.rest.description and
-                    self.view.breadcrumb.locations[2] == "Copy of VM Provision Request")
-        except Exception:
-            return False
 
     def step(self):
         return self.prerequisite_view.toolbar.copy.click()
@@ -469,28 +501,14 @@ class ApproveRequest(CFMENavigateStep):
     VIEW = RequestApprovalView
     prerequisite = NavigateToSibling('Details')
 
-    def am_i_here(self):
-        try:
-            return (self.view.breadcrumb.locations[1] == self.obj.rest.description and
-                    self.view.breadcrumb.locations[2] == "Request Approval")
-        except Exception:
-            return False
-
     def step(self):
         return self.prerequisite_view.toolbar.approve.click()
 
 
 @navigator.register(Request, 'Deny')
 class DenyRequest(CFMENavigateStep):
-    VIEW = RequestApprovalView
+    VIEW = RequestDenialView
     prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self):
-        try:
-            return (self.view.breadcrumb.locations[1] == self.obj.rest.description and
-                    self.view.breadcrumb.locations[2] == "Request Denial")
-        except Exception:
-            return False
 
     def step(self):
         return self.prerequisite_view.toolbar.deny.click()

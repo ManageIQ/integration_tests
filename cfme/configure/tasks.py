@@ -165,7 +165,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
 def wait_analysis_finished(task_name, task_type, delay=5, timeout='5M'):
     """ Wait until analysis is finished (or timeout exceeded)"""
     wait_for(lambda: is_analysis_finished(task_name, task_type),
-             delay=delay, timeout=timeout, fail_func=tb.refresh())
+             delay=delay, timeout=timeout, fail_func=tb.refresh)
 
 
 class TasksView(BaseLoggedInPage):

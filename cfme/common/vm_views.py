@@ -124,14 +124,11 @@ class BasicProvisionFormView(View):
     @View.nested
     class purpose(Tab):  # noqa
         TAB_NAME = 'Purpose'
-        apply_tags = VersionPick({
-            Version.lowest(): CheckboxSelect('//div[@id="all_tags_treebox"]//ul'),
-            '5.7': BootstrapTreeview('all_tags_treebox')})
+        apply_tags = BootstrapTreeview('all_tags_treebox')
 
     @View.nested
     class catalog(Tab):  # noqa
         TAB_NAME = 'Catalog'
-        num_instances = BootstrapSelect('service__number_of_vms')
         vm_name = Input(name='service__vm_name')
         vm_description = Input(name='service__vm_description')
         vm_filter = BootstrapSelect('service__vm_filter')
@@ -193,8 +190,7 @@ class BasicProvisionFormView(View):
         hardware_monitoring = BootstrapSelect('hardware__monitoring')
         boot_disk_size = BootstrapSelect('hardware__boot_disk_size')
         # GCE
-        is_preemtible = VersionPick({
-            Version.lowest(): None, '5.7': Input(name='hardware__is_preemptible')})
+        is_preemtible = Input(name='hardware__is_preemptible')
 
     @View.nested
     class customize(Tab):  # noqa

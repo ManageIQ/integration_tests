@@ -693,7 +693,7 @@ def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_test
         cleanup_vm(clone_vm_name, provider)
 
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
-    request_desciption = clone_vm_name
-    clone_request = Request(decrption=request_desciption, partial_check=True)
+    request_description = clone_vm_name
+    clone_request = Request(description=request_description, partial_check=True)
     clone_request.wait_for_request(method='ui')
     assert clone_request.status == "Error"
