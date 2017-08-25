@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
+import re
+
 import fauxfactory
 import pytest
 import requests
-from collections import namedtuple
 from random import sample
 
-from cfme import dashboard
-from cfme.base import Server
-from cfme.dashboard import Widget
-from cfme.intelligence.reports.dashboards import Dashboard, DefaultDashboard
-from utils.blockers import BZ
 from cfme import test_requirements
-from utils.appliance.implementations.ui import navigate_to
+from cfme.intelligence.reports.dashboards import Dashboard
+from utils.blockers import BZ
+from utils.wait import wait_for
 
 
 pytestmark = [
@@ -28,48 +26,43 @@ AVAILABLE_WIDGETS = [
 ]
 
 
-@pytest.yield_fixture
-def widgets():
-    all_widgets = Widget.all()
-    Widgets = namedtuple('Widgets', ('all_widgets', 'all_widgets_ids'))
-    yield Widgets(
-        all_widgets=all_widgets,
-        all_widgets_ids=[widget._div_id for widget in all_widgets]
-    )
-    DefaultDashboard.reset_widgets()
+@pytest.yield_fixture(scope='function')
+def widgets(dashboards):
+    yield dashboards.default.widgets.all()
+    dashboards.close_zoom()
+    dashboards.default.widgets.reset()
 
 
-@pytest.mark.meta(blockers=[1202394])
-def test_widgets_operation(request):
-    navigate_to(Server, 'Dashboard')
-    request.addfinalizer(lambda: Widget.close_zoom())
-    for widget in Widget.all():
+@pytest.mark.meta(blockers=[1476305])
+def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
+    # We need to make sure the widgets have some data.
+    wait_for(
+        lambda: all(not widget.blank for widget in widgets),
+        timeout='5m', delay=10,
+        fail_func=lambda: dashboards.refresh())
+    # Then we can check the operations
+    for widget in widgets:
         widget.minimize()
-        assert widget.is_minimized
+        soft_assert(widget.minimized, 'Widget {} could not be minimized'.format(widget.name))
         widget.restore()
-        assert not widget.is_minimized
-        if widget.can_zoom:
-            widget.zoom()
-            assert Widget.is_zoomed()
-            assert Widget.get_zoomed_name() in widget.name
-            Widget.close_zoom()
-            assert not Widget.is_zoomed()
+        soft_assert(not widget.minimized, 'Widget {} could not be maximized'.format(widget.name))
+        # TODO: Once modal problems resolved, uncomment
+        # if widget.can_zoom:
+        #     widget.zoom()
+        #     assert widget.is_zoomed
+        #     widget.close_zoom()
+        #     assert not widget.is_zoomed
         widget.footer
-        widget.content
+        widget.contents
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(1110171, unblock=lambda number_dashboards: number_dashboards != 1)
-    ]
-)
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
-def test_custom_dashboards(request, soft_assert, number_dashboards):
+def test_custom_dashboards(request, soft_assert, number_dashboards, dashboards):
     """Create some custom dashboards and check their presence. Then check their contents."""
     # Very useful construct. List is mutable, so we can prepare the generic delete finalizer.
     # Then we add everything that succeeded with creation. Simple as that :)
-    dashboards = []
-    request.addfinalizer(lambda: map(lambda item: item.delete(), dashboards))
+    dashboards_to_delete = []
+    request.addfinalizer(lambda: map(lambda item: item.delete(), dashboards_to_delete))
 
     def _create_dashboard(widgets):
         return Dashboard(
@@ -83,23 +76,23 @@ def test_custom_dashboards(request, soft_assert, number_dashboards):
     for i in range(number_dashboards):
         d = _create_dashboard(sample(AVAILABLE_WIDGETS, 3))
         d.create()
-        dashboards.append(d)
-    dash_dict = {d.title: d for d in dashboards}
+        dashboards_to_delete.append(d)
+    dash_dict = {d.title: d for d in dashboards_to_delete}
     try:
-        for dash_name in dashboard.dashboards():
-            soft_assert(dash_name in dash_dict, "Dashboard {} not found!".format(dash_name))
-            if dash_name in dash_dict:
-                for widget in Widget.all():
-                    soft_assert(widget.name in dash_dict[dash_name].widgets,
-                                "Widget {} not found in {}!".format(widget.name, dash_name))
-                del dash_dict[dash_name]
+        for dash in dashboards.all():
+            soft_assert(dash.name in dash_dict, "Dashboard {} not found!".format(dash.name))
+            if dash.name in dash_dict:
+                for widget in dash.widgets.all():
+                    soft_assert(widget.name in dash_dict[dash.name].widgets,
+                                "Widget {} not found in {}!".format(widget.name, dash.name))
+                del dash_dict[dash.name]
         soft_assert(not dash_dict, "Some of the dashboards were not found! ({})".format(
             ", ".join(dash_dict.keys())))
     except IndexError:
         pytest.fail("No dashboard selection tabs present on dashboard!")
 
 
-def test_verify_rss_links(widgets_generated):
+def test_verify_rss_links(dashboards):
     """This test verifies that RSS links on dashboard are working.
 
     Prerequisities:
@@ -110,16 +103,20 @@ def test_verify_rss_links(widgets_generated):
         * Loop through all the links in a widget
         * Try making a request on the provided URLs, should make sense
     """
-    navigate_to(Dashboard, 'All')
-    for widget in Widget.by_type("rss_widget"):
-        for desc, date, url in widget.content.data:
-            assert url is not None, "Widget {}, line {} - no URL!".format(
-                repr(widget.name), repr(desc))
+    wait_for(
+        lambda: not any(widget.blank for widget in dashboards.default.widgets.all()),
+        delay=2,
+        timeout=120,
+        fail_func=dashboards.refresh)
+    for widget in dashboards.default.widgets.all(content_type="rss"):
+        for row in widget.contents:
+            onclick = row.browser.get_attribute('onclick', row)
+            url = re.sub(r'^window.location="([^"]+)";$', '\\1', onclick.strip())
             req = requests.get(url, verify=False)
             assert 200 <= req.status_code < 400, "The url {} seems malformed".format(repr(url))
 
 
-def test_widgets_reorder(widgets, soft_assert):
+def test_widgets_reorder(dashboards, soft_assert, request):
     """In this test we try to reorder first two widgets in the first column of a
        default dashboard.
 
@@ -131,18 +128,21 @@ def test_widgets_reorder(widgets, soft_assert):
         * Reorder first two widgets in the first column using drag&drop
         * Assert that the widgets order is changed
     """
-    first_widget = widgets.all_widgets[0]
-    second_widget = widgets.all_widgets[1]
-    old_widgets_ids_list = widgets.all_widgets_ids
-    first_widget.drag_and_drop(second_widget)
-    new_widgets_ids_list = [widget._div_id for widget in Widget.all()]
-    (old_widgets_ids_list[0],
-     old_widgets_ids_list[1]) = old_widgets_ids_list[1], old_widgets_ids_list[0]
-    soft_assert(old_widgets_ids_list == new_widgets_ids_list, "Drag and drop failed.")
+    request.addfinalizer(dashboards.default.widgets.reset)
+    previous_state = dashboards.default.widgets.all()
+    previous_names = [w.name for w in previous_state]
+    first_widget = previous_state[0]
+    second_widget = previous_state[1]
+    dashboards.default.drag_and_drop(first_widget, second_widget)
+    new_state = dashboards.default.widgets.all()
+    new_names = [w.name for w in new_state]
+    assert previous_names[2:] == new_names[2:]
+    assert previous_names[0] == new_names[1]
+    assert previous_names[1] == new_names[0]
 
 
-@pytest.mark.meta(blockers=[BZ(1316134)])
-def test_drag_and_drop_widget_to_the_bottom_of_another_column(widgets, soft_assert):
+@pytest.mark.meta(blockers=[BZ(1316134, forced_streams=['5.7', '5.8', 'upstream'])])
+def test_drag_and_drop_widget_to_the_bottom_of_another_column(dashboards, request):
     """In this test we try to drag and drop a left upper widget to
        the bottom of the middle column.
 
@@ -154,10 +154,12 @@ def test_drag_and_drop_widget_to_the_bottom_of_another_column(widgets, soft_asse
         * Drag a left upper widget and drop it under the bottom widget of the near column
         * Assert that the widgets order is changed
     """
-    first_widget = widgets.all_widgets[0]
-    second_widget = widgets.all_widgets[1]
-    old_widgets_ids_list = widgets.all_widgets_ids
-    first_widget.drag_and_drop(second_widget)
-    new_widgets_ids_list = [widget._div_id for widget in Widget.all()]
-    soft_assert(old_widgets_ids_list.index(first_widget._div_id) ==
-                new_widgets_ids_list.index(second_widget._div_id), "Drag and drop failed.")
+    request.addfinalizer(dashboards.default.widgets.reset)
+    first_column = dashboards.default.dashboard_view.column_widget_names(1)
+    second_column = dashboards.default.dashboard_view.column_widget_names(2)
+
+    first_widget_name = first_column[0]
+    second_widget_name = second_column[-1]
+    dashboards.default.drag_and_drop(first_widget_name, second_widget_name)
+
+    assert dashboards.default.dashboard_view.column_widget_names(2)[-1] == first_widget_name

@@ -1,38 +1,207 @@
-"""Provides functions to manipulate the dashboard landing page.
-
-:var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
-"""
+# -*- coding: utf-8 -*-
 import re
-from widgetastic_patternfly import Button
 
-import cfme.fixtures.pytest_selenium as sel
-from cfme.base import Server
-from cfme.web_ui import Region, Table, tabstrip, toolbar
+from cached_property import cached_property
+from navmazing import NavigateToAttribute
+from utils.appliance import Navigatable
 from utils.timeutil import parsetime
-from utils.pretty import Pretty
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.wait import wait_for
-from utils.appliance.implementations.ui import navigate_to
+
+from widgetastic.utils import ParametrizedLocator, ParametrizedString, Parameter
+from widgetastic.widget import ParametrizedView, Text, View, Widget, ConditionalSwitchableView
+from widgetastic.xpath import quote
+from widgetastic_patternfly import Button, Dropdown, Tab
+from widgetastic_manageiq import Table
 
 from .base.login import BaseLoggedInPage
 
-page = Region(
-    title="Dashboard",
-    locators={
-        'reset_widgets_button': toolbar.root_loc('Reset Dashboard Widgets to the defaults'),
-        'csrf_token': "//meta[@name='csrf-token']",
-        'user_dropdown': '//nav//a[@id="dropdownMenu2"]',
-        'help_dropdown': '//nav//a[@id="dropdownMenu1"]'
-    },
-    identifying_loc='reset_widgets_button')
+
+# TODO: Move this into widgetastic_patternfly
+class Kebab(Widget):
+    """The so-called "kebab" widget of Patternfly.
+
+    <http://www.patternfly.org/pattern-library/widgets/#kebabs>
+
+    Args:
+        button_id: id of the button tag inside the kebab. If not specified, first kebab available
+            will be used
+
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+    UL = './ul[contains(@class, "dropdown-menu")]'
+    BUTTON = './button'
+    ITEM = './ul/li/a[normalize-space(.)={}]'
+    ITEMS = './ul/li/a'
+
+    def __init__(self, parent, button_id=None, logger=None):
+        super(Kebab, self).__init__(parent, logger=logger)
+        if button_id is not None:
+            self.locator = (
+                './/div[contains(@class, "dropdown-kebab-pf") and ./button[@id={}]]'.format(
+                    quote(button_id)))
+        else:
+            self.locator = './/div[contains(@class, "dropdown-kebab-pf") and ./button][1]'
+
+    @property
+    def is_opened(self):
+        """Returns opened state of the kebab."""
+        return self.browser.is_displayed(self.UL)
+
+    @property
+    def items(self):
+        """Lists all items in the kebab.
+
+        Returns:
+            :py:class:`list` of :py:class:`str`
+        """
+        return [self.browser.text(item) for item in self.browser.elements(self.ITEMS)]
+
+    def open(self):
+        """Open the kebab"""
+        if not self.is_opened:
+            self.browser.click(self.BUTTON)
+
+    def close(self):
+        """Close the kebab"""
+        if self.is_opened:
+            self.browser.click(self.BUTTON)
+
+    def select(self, item, close=True):
+        """Select a specific item from the kebab.
+
+        Args:
+            item: Item to be selected.
+            close: Whether to close the kebab after selection. If the item is a link, you may want
+                to set this to ``False``
+        """
+        try:
+            self.open()
+            self.browser.click(self.ITEM.format(quote(item)))
+        finally:
+            if close:
+                self.close()
 
 
 class DashboardView(BaseLoggedInPage):
+    """View that represents the Intelligence/Dashboard."""
     reset_button = Button(title="Reset Dashboard Widgets to the defaults")
 
     def reset_widgets(self, cancel=False):
-        self.reset_button.click()
+        """Clicks the reset button to reset widgets and handles the alert."""
+        self.browser.click(self.reset_button, ignore_ajax=True)
         self.browser.handle_alert(cancel=cancel, wait=10.0)
         self.browser.plugin.ensure_page_safe()
+
+    add_widget = Dropdown('Add a widget')
+
+    @View.nested
+    class zoomed(View):  # noqa
+        """Represents the zoomed modal panel"""
+        title = Text('.//div[@id="lightbox-panel"]//h2[contains(@class, "card-pf-title")]')
+        close = Text('.//div[@id="lightbox-panel"]//a[normalize-space(@title)="Close"]')
+
+    def ensure_zoom_closed(self):
+        if self.zoomed.title.is_displayed:
+            self.zoomed.close.click()
+
+    @ParametrizedView.nested
+    class dashboards(Tab, ParametrizedView):    # noqa
+        PARAMETERS = ('title', )
+        ALL_LOCATOR = './/ul[contains(@class, "nav-tabs-pf")]/li/a'
+        COLUMN_LOCATOR = '//div[@id="col{}"]//h2'
+
+        tab_name = Parameter('title')
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_LOCATOR)]
+
+        def column_widget_names(self, column_index):
+            """Returns names of widgets in column specified.
+
+            Args:
+                column_index: Position of the column. Numbered from 1!
+
+            Returns:
+                :py:class:`list` of :py:class:`str`
+            """
+            return [
+                self.browser.text(e)
+                for e
+                in self.browser.elements(self.COLUMN_LOCATOR.format(column_index))]
+
+        @ParametrizedView.nested
+        class widgets(ParametrizedView):  # noqa
+            PARAMETERS = ('title', )
+            ALL_LOCATOR = '//div[starts-with(@id, "w_")]//h2[contains(@class, "card-pf-title")]'
+            BLANK_SLATE = './/div[contains(@class, "blank-slate-pf")]//h1'
+            CHART = './div/div/div[starts-with(@id, "miq_widgetchart_")]'
+            RSS = './div/div[contains(@class, "rss_widget")]'
+            RSS_TABLE = './div[./div[contains(@class, "rss_widget")]]/div/table'
+            TABLE = './div/table|./div/div/table'
+            MC = (
+                './div/div[contains(@class, "mc")]/*[1]|./div/div[starts-with(@id, "dd_w") '
+                'and contains(@id, "_box")]/*[1]')
+            ROOT = ParametrizedLocator(
+                './/div[starts-with(@id, "w_") and .//h2[contains(@class, "card-pf-title")'
+                ' and normalize-space(.)={title|quote}]]')
+
+            title = Text('.//h2[contains(@class, "card-pf-title")]')
+            menu = Kebab(button_id=ParametrizedString('btn_{@widget_id}'))
+
+            contents = ConditionalSwitchableView(reference='content_type')
+
+            # Unsupported reading yet
+            contents.register(None, default=True, widget=Widget())
+            contents.register('chart', widget=Widget())
+
+            # Reading supported
+            contents.register('table', widget=Table(TABLE))
+            contents.register('rss', widget=Table(RSS_TABLE))
+
+            footer = Text('.//div[contains(@class, "card-pf-footer")]')
+
+            @property
+            def column(self):
+                """Returns the column position of this widget. Numbered from 1!"""
+                parent = self.browser.element('..')
+                try:
+                    parent_id = self.browser.get_attribute('id', parent).strip()
+                    return int(re.sub(r'^col(\d+)$', '\\1', parent_id))
+                except (ValueError, TypeError, AttributeError):
+                    raise ValueError('Could not get the column index of widget')
+
+            @property
+            def minimized(self):
+                return not self.browser.is_displayed(self.MC)
+
+            @cached_property
+            def widget_id(self):
+                id_attr = self.browser.get_attribute('id', self)
+                return int(id_attr.rsplit('_', 1)[-1])
+
+            @cached_property
+            def content_type(self):
+                if self.browser.elements(self.BLANK_SLATE):
+                    # No data yet
+                    return None
+                elif self.browser.elements(self.RSS):
+                    return 'rss'
+                elif self.browser.is_displayed(self.CHART):
+                    return 'chart'
+                elif self.browser.is_displayed(self.TABLE):
+                    return 'table'
+                else:
+                    return None
+
+            @property
+            def blank(self):
+                return bool(self.browser.elements(self.BLANK_SLATE))
+
+            @classmethod
+            def all(cls, browser):
+                return [(browser.text(e), ) for e in browser.elements(cls.ALL_LOCATOR)]
 
     @property
     def is_displayed(self):
@@ -41,90 +210,169 @@ class DashboardView(BaseLoggedInPage):
             self.navigation.currently_selected == ['Cloud Intel', 'Dashboard'])
 
 
-def click_top_right(item):
-    base_locator = '//nav//a[@id="dropdownMenu2"]/../ul//a[normalize-space(.)="{}"]'
-    sel.click(page.user_dropdown)
-    sel.click(base_locator.format(item), wait_ajax=False)
-    sel.handle_alert(wait=False)
+class ParticularDashboardView(DashboardView):
+    @property
+    def is_displayed(self):
+        return (
+            super(ParticularDashboardView, self).is_displayed and
+            self.dashboards(title=self.obj.name).is_active)
 
 
-def click_help(item):
-    base_locator = '//nav//a[@id="dropdownMenu1"]/../ul//a[normalize-space(.)="{}"]'
-    sel.click(page.help_dropdown)
-    sel.click(base_locator.format(item), wait_ajax=False)
-    sel.handle_alert(wait=False)
+class DashboardCollection(Navigatable):
+    """Represents the Dashboard page and can jump around various dashboards present."""
+    @property
+    def default(self):
+        """Returns an instance of the ``Default Dashboard``"""
+        return self.instantiate('Default Dashboard')
+
+    def instantiate(self, name):
+        return Dashboard(name, collection=self)
+
+    def all(self):
+        view = navigate_to(self.appliance.server, 'Dashboard')
+        result = []
+        # TODO: Idiomatize the following line
+        for (dashboard_name, ) in view.dashboards.view_class.all(view.browser):
+            result.append(self.instantiate(dashboard_name))
+        return result
+
+    def refresh(self):
+        """Refreshes the dashboard view by forcibly clicking the navigation again."""
+        view = navigate_to(self.appliance.server, 'Dashboard')
+        view.navigation.select('Cloud Intel', 'Dashboard')
+
+    @property
+    def zoomed_name(self):
+        """Grabs the name of the currently zoomed widget."""
+        view = navigate_to(self.appliance.server, 'Dashboard')
+        if not view.zoomed.is_displayed:
+            return None
+        return view.zoomed.title.text
+
+    def close_zoom(self):
+        """Closes any zoomed widget."""
+        navigate_to(self.appliance.server, 'Dashboard').ensure_zoom_closed()
 
 
-def reset_widgets(cancel=False):
-    """Resets the widgets on the dashboard page.
+class Dashboard(Navigatable):
+    def __init__(self, name, collection=None, appliance=None):
+        if collection is None:
+            collection = DashboardCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=collection.appliance)
+        self.name = name
+
+    @property
+    def dashboard_view(self):
+        """Returns a view pointed at a particular dashboard."""
+        return navigate_to(self, 'Details').dashboards(title=self.name)
+
+    @cached_property
+    def widgets(self):
+        return DashboardWidgetCollection(self)
+
+    def drag_and_drop(self, dragged_widget_or_name, dropped_widget_or_name):
+        """Drags and drops widgets onto each other."""
+        if isinstance(dragged_widget_or_name, DashboardWidget):
+            dragged_widget_or_name = dragged_widget_or_name.name
+        if isinstance(dropped_widget_or_name, DashboardWidget):
+            dropped_widget_object = dropped_widget_or_name
+            dropped_widget_or_name = dropped_widget_or_name.name
+        else:
+            dropped_widget_object = self.widgets.instantiate(dropped_widget_or_name)
+        view = self.dashboard_view
+        first_widget = view.widgets(title=dragged_widget_or_name).title
+        if dropped_widget_object.last_in_column:
+            # Different behaviour
+            dropped_widget = view.widgets(title=dropped_widget_or_name)
+            middle = view.browser.middle_of(dropped_widget)
+            position = view.browser.location_of(dropped_widget)
+            size = view.browser.size_of(dropped_widget)
+
+            drop_x = middle.x
+            drop_y = position.x + size.height + 10
+            view.browser.drag_and_drop_to(first_widget, to_x=drop_x, to_y=drop_y)
+        else:
+            second_widget = view.widgets(title=dropped_widget_or_name).footer
+            view.browser.drag_and_drop(first_widget, second_widget)
+        view.browser.plugin.ensure_page_safe()
+
+
+@navigator.register(Dashboard, 'Details')
+class DashboardDetails(CFMENavigateStep):
+    VIEW = ParticularDashboardView
+    prerequisite = NavigateToAttribute('appliance.server', 'Dashboard')
+
+    def step(self):
+        self.prerequisite_view.dashboards(title=self.obj.name).select()
+
+
+class DashboardWidgetCollection(Navigatable):
+    def __init__(self, dashboard):
+        super(DashboardWidgetCollection, self).__init__(appliance=dashboard.appliance)
+        self.dashboard = dashboard
+
+    @property
+    def dashboard_view(self):
+        return self.dashboard.dashboard_view
+
+    def instantiate(self, name):
+        return DashboardWidget(name, self)
+
+    def all(self, content_type=None):  # widgets
+        view = self.dashboard_view
+        result = []
+        # TODO: Idiomatize the following line
+        for (widget_name, ) in view.widgets.view_class.all(view.browser):
+            w = self.instantiate(widget_name)
+            if content_type is None or w.content_type == content_type:
+                result.append(self.instantiate(widget_name))
+        return result
+
+    def reset(self, cancel=False):
+        """Clicks the Reset widgets button."""
+        navigate_to(self.dashboard, 'Details').reset_widgets()
+
+
+class DashboardWidget(Navigatable):
+    """Represents a single UI dashboard widget.
 
     Args:
-        cancel: Set whether to accept the popup confirmation box. Defaults to ``False``.
+        name: Name of the widget as displayed in the title.
+        widget_collection: The widget collection linked to a dashboard
     """
-    sel.click(page.reset_widgets_button, wait_ajax=False)
-    sel.handle_alert(cancel)
-
-
-def dashboards():
-    """Returns a generator that iterates through the available dashboards"""
-    navigate_to(Server, 'Dashboard')
-    # We have to click any other of the tabs (glitch)
-    # Otherwise the first one is not displayed (O_O)
-    tabstrip.select_tab(tabstrip.get_all_tabs()[-1])
-    for dashboard_name in tabstrip.get_all_tabs():
-        tabstrip.select_tab(dashboard_name)
-        yield dashboard_name
-
-
-class Widget(Pretty):
-    _name = "//div[@id='{}']//h2[contains(@class, 'card-pf-title')]"
-    _remove = "//div[@id='{}']//a[@title='Remove from Dashboard']"
-    _minimize = "//div[@id='{}']//a[@title='Minimize']"
-    _restore = "//div[@id='{}']//a[@title='Restore']"
-    _footer = "//div[@id='{}']//div[contains(@class, 'card-pf-footer')]"
-    _zoom = "//div[@id='{}']//a[@title='Zoom in on this chart']"
-    _zoomed_name = "//div[@id='lightbox_div']//h2[contains(@class, 'card-pf-title')]"
-    _zoomed_close = "//div[@id='lightbox_div']//a[@title='Close']/i"
-    _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
-    _content = "//div[@id='{}']//div[contains(@class,'card-pf-body')]/div"
-    _content_type = "//div[@id='{}']//div[contains(@class,'card-pf-body')]"
-
-    # 5.5+ updated
-    _menu_opener = "//div[@id='{}']//button[contains(@class, 'dropdown-toggle')]"
-    _menu_container = "//div[@id='{}']//ul[contains(@class, 'dropdown-menu')]"
-    _menu_minmax = _menu_container + "/li/a[contains(@id, 'minmax')]"
-    _menu_remove = _menu_container + "/li/a[contains(@id, 'close')]"
-    _menu_zoom = _menu_container + "/li/a[contains(@id, 'zoom')]"
-
-    pretty_attrs = ['_div_id']
-
-    def __init__(self, div_id):
-        self._div_id = div_id
+    def __init__(self, name, widget_collection):
+        self.collection = widget_collection
+        Navigatable.__init__(self, appliance=widget_collection.appliance)
+        self.name = name
 
     @property
-    def name(self):
-        return sel.text(self._name.format(self._div_id)).encode("utf-8")
+    def dashboard(self):
+        return self.collection.dashboard
 
     @property
-    def content_type(self):
-        return sel.get_attribute(
-            self._content_type.format(self._div_id), "class").rsplit(" ", 1)[-1]
+    def widget_view(self):
+        """Returns a view of the particular widget."""
+        return self.dashboard.dashboard_view.widgets(title=self.name)
 
     @property
-    def content(self):
-        if self.content_type in {"rss_widget", "rssbox"}:
-            return RSSWidgetContent(self._div_id)
-        elif self.content_type in {"report_widget", "reportbox"}:
-            return ReportWidgetContent(self._div_id)
-        else:
-            return BaseWidgetContent(self._div_id)
+    def last_in_column(self):
+        """Returns whether this widget is the last in its column"""
+        try:
+            return (
+                self.widget_view.parent.column_widget_names(self.widget_view.column)[-1] ==
+                self.name)
+        except IndexError:
+            return False
 
     @property
     def footer(self):
+        """Return parsed footer value"""
+        self.close_zoom()
         cleaned = [
             x.strip()
             for x
-            in sel.text(self._footer.format(self._div_id)).encode("utf-8").strip().split("|")
+            in self.widget_view.footer.text.encode("utf-8").strip().split("|")
         ]
         result = {}
         for item in cleaned:
@@ -141,176 +389,86 @@ class Widget(Pretty):
 
     @property
     def time_updated(self):
+        """Returns a datetime when the widget was last updated."""
         return self.footer["updated"]
 
     @property
     def time_next(self):
+        """Returns a datetime when the widget will be updated."""
         return self.footer["next"]
 
     @property
-    def is_minimized(self):
+    def minimized(self):
+        """Returns whether the widget is minimized or not."""
         self.close_zoom()
-        return not sel.is_displayed(self._content.format(self._div_id))
+        return self.widget_view.minimized
+
+    @property
+    def blank(self):
+        """Returns whether the widget has not been generated before."""
+        self.close_zoom()
+        return self.widget_view.blank
+
+    @property
+    def content_type(self):
+        """Returns the type of content of this widget"""
+        self.close_zoom()
+        return self.widget_view.content_type
+
+    @property
+    def contents(self):
+        """Returns the WT widget with contents of this dashboard widget."""
+        self.close_zoom()
+        return self.widget_view.contents
+
+    def minimize(self):
+        """Minimize this widget."""
+        self.close_zoom()
+        view = self.widget_view
+        if 'Maximize' not in view.menu.items and 'Minimize' not in view.menu.items:
+            raise ValueError('The widget {} cannot be maximized or minimized'.format(self.name))
+        if 'Minimize' in view.menu.items:
+            view.menu.select('Minimize')
+
+    def restore(self):
+        """Maximize this widget."""
+        self.close_zoom()
+        view = self.widget_view
+        view.parent.parent.ensure_zoom_closed()
+        if 'Maximize' not in view.menu.items and 'Minimize' not in view.menu.items:
+            raise ValueError('The widget {} cannot be maximized or minimized'.format(self.name))
+        if 'Maximize' in view.menu.items:
+            view.menu.select('Maximize')
+
+    def remove(self):
+        """Remove this widget."""
+        self.close_zoom()
+        view = self.widget_view
+        view.menu.select('Remove Widget')
+
+    @property
+    def is_zoomed(self):
+        """Returns whether this widget is zoomed now."""
+        view = self.create_view(DashboardView)
+        return view.zoomed.title.is_displayed and view.zoomed.title == self.name
+
+    def zoom(self):
+        """Zoom this widget in."""
+        if not self.is_zoomed:
+            self.close_zoom()
+            view = self.widget_view
+            view.menu.select('Zoom in', close=False)
+            wait_for(lambda: self.is_zoomed, delay=0.2, timeout=10)
 
     @property
     def can_zoom(self):
-        """Can this Widget be zoomed?"""
+        """Returns whether this widget can be zoomed."""
         self.close_zoom()
-        self.open_dropdown_menu()
-        zoomable = sel.is_displayed(self._menu_zoom.format(self._div_id))
-        self.close_dropdown_menu()
-        return zoomable
+        view = self.widget_view
+        return 'Zoom in' in view.menu.items
 
-    def _click_menu_button_by_loc(self, loc):
-        self.close_zoom()
-        self.open_dropdown_menu()
-        sel.click(loc.format(self._div_id))
-
-    def remove(self, cancel=False):
-        """Remove this Widget."""
-        self.close_zoom()
-        self._click_menu_button_by_loc(self._menu_remove)
-
-    def minimize(self):
-        """Minimize this Widget."""
-        self.close_zoom()
-        if not self.is_minimized:
-            self._click_menu_button_by_loc(self._menu_minmax)
-
-    def restore(self):
-        """Return the Widget back from minimalization."""
-        self.close_zoom()
-        if self.is_minimized:
-            self._click_menu_button_by_loc(self._menu_minmax)
-
-    def zoom(self):
-        """Zoom this Widget."""
-        self.close_zoom()
-        if not self.is_zoomed():
-            self._click_menu_button_by_loc(self._menu_zoom)
-
-    @classmethod
-    def is_zoomed(cls):
-        return sel.is_displayed(cls._zoomed_name)
-
-    @classmethod
-    def get_zoomed_name(cls):
-        return sel.text(cls._zoomed_name).encode("utf-8").strip()
-
-    @classmethod
-    def close_zoom(cls):
-        if cls.is_zoomed():
-            sel.click(cls._zoomed_close)
-            # Here no ajax, so we have to check it manually
-            wait_for(lambda: not cls.is_zoomed(), delay=0.1, num_sec=5, message="cancel zoom")
-
-    @classmethod
-    def all(cls):
-        """Returns objects with all Widgets currently present."""
-        navigate_to(Server, 'Dashboard')
-        result = []
-        for el in sel.elements(cls._all):
-            result.append(cls(sel.get_attribute(el, "id")))
-        return result
-
-    @classmethod
-    def by_name(cls, name):
-        """Returns Widget with specified name."""
-        for widget in cls.all():
-            if widget.name == name:
-                return widget
-        else:
-            raise NameError("Could not find widget with name {} on current dashboard!".format(name))
-
-    @classmethod
-    def by_type(cls, content_type):
-        """Returns Widget with specified content_type."""
-        return filter(lambda w: w.content_type == content_type, cls.all())
-
-    # 5.5+ specific methods
-    @property
-    def is_dropdown_menu_opened(self):
-        return sel.is_displayed(self._menu_container.format(self._div_id))
-
-    @property
-    def drag_element(self):
-        return sel.element(self._name.format(self._div_id))
-
-    @property
-    def drop_element(self):
-        return sel.element(self._footer.format(self._div_id))
-
-    def open_dropdown_menu(self):
-        if not sel.is_displayed(self._menu_opener.format(self._div_id)):
-            return  # Not a 5.5+
-        self.close_dropdown_menu()
-        sel.click(self._menu_opener.format(self._div_id))
-        wait_for(
-            lambda: self.is_dropdown_menu_opened,
-            num_sec=10, delay=0.2, message="widget dropdown menu opend")
-
-    def close_dropdown_menu(self):
-        if not sel.is_displayed(self._menu_opener.format(self._div_id)):
-            return  # Not a 5.5+
-        if self.is_dropdown_menu_opened:
-            sel.click(self._menu_opener.format(self._div_id))
-            wait_for(
-                lambda: not self.is_dropdown_menu_opened,
-                num_sec=10, delay=0.2, message="widget dropdown menu closed")
-
-    def drag_and_drop(self, widget):
-        sel.drag_and_drop(self.drag_element, widget.drop_element)
-
-
-class BaseWidgetContent(Pretty):
-    pretty_attrs = ['widget_box_id']
-
-    def __init__(self, widget_box_id):
-        self.root = lambda: sel.element(
-            "//div[@id='{}']//div[contains(@class, 'card-pf-body')]".format(widget_box_id))
-
-    @property
-    def data(self):
-        return sel.element("./div[contains(@id, 'dd_')]", root=self.root)
-
-
-class RSSWidgetContent(BaseWidgetContent):
-    @property
-    def data(self):
-        result = []
-        for row in sel.elements("./div/table/tbody/tr/td", root=self.root):
-            # Regular expressions? Boring.
-            desc, date = sel.text(row).encode("utf-8").strip().rsplit("\n", 1)
-            date = date.split(":", 1)[-1].strip()
-            date = parsetime.from_iso_with_utc(date)
-            url_source = sel.element("./..", root=row).get_attribute("onclick")
-            getter_script = re.sub(r"^window.location\s*=\s*([^;]+;)", "return \\1", url_source)
-            try:
-                url = sel.execute_script(getter_script)
-            except sel.WebDriverException:
-                url = None
-            result.append((desc, date, url))
-        return result
-
-
-class ReportWidgetContent(BaseWidgetContent):
-    @property
-    def data(self):
-        return Table(lambda: sel.element("./div/table[thead]", root=self.root))
-
-
-def get_csrf_token():
-    """Retuns current CSRF token.
-
-    Returns: Current  CSRF token.
-    """
-    return sel.get_attribute(page.csrf_token, "content")
-
-
-def set_csrf_token(csrf_token):
-    """Changing the CSRF Token on the fly via the DOM by iterating over the meta tags
-
-    Args:
-        csrf_token: Token to set as the CSRF token.
-    """
-    return sel.set_attribute(page.csrf_token, "content", csrf_token)
+    def close_zoom(self):
+        """Close zoom. Works theoretically for any widget, it is just exposed here."""
+        view = self.create_view(DashboardView)
+        if view.is_displayed:
+            view.ensure_zoom_closed()
