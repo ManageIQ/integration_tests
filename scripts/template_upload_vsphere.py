@@ -11,11 +11,11 @@ normally be placed in main function, are located in function run(**kwargs).
 
 import argparse
 import fauxfactory
-import sys
 from threading import Lock, Thread
 
 from utils import net, trackerbot
 from utils.conf import cfme_data, credentials
+from utils.log import logger, add_stdout_handler
 from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from wrapanapi import VMWareSystem
@@ -24,6 +24,8 @@ from wrapanapi import VMWareSystem
 NUM_OF_TRIES_OVFTOOL = 5
 
 lock = Lock()
+
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -52,14 +54,6 @@ def parse_cmd_line():
     return args
 
 
-def check_template_exists(client, name, provider):
-    if name in client.list_template():
-        print("VSPHERE:{} template {} already exists".format(provider, name))
-        return True
-    else:
-        return False
-
-
 def make_ssh_client(rhevip, sshname, sshpass):
     connect_kwargs = {
         'username': sshname,
@@ -84,48 +78,42 @@ def upload_ova(hostname, username, password, name, datastore,
     cmd_args.append(url)
     cmd_args.append("'vi://{}:{}@{}/{}/host/{}'".format(username, password, hostname,
                                                       datacenter, cluster))
-    print("VSPHERE:{} Running OVFTool...".format(provider))
+    logger.info("VSPHERE:%r Running OVFTool", provider)
 
     command = ' '.join(cmd_args)
     with make_ssh_client(ovf_tool_client, default_user, default_pass) as ssh_client:
         try:
-            output = ssh_client.run_command(command)[1]
-        except Exception as e:
-            print(e)
-            print("VSPHERE:{} Upload did not complete".format(provider))
+            result = ssh_client.run_command(command)[1]
+        except Exception:
+            logger.exception("VSPHERE:%r Exception during upload", provider)
             return False
 
-    if "successfully" in output:
-        print(" VSPHERE:{} Upload completed".format(provider))
-        return 0, output
+    if "successfully" in result:
+        logger.info(" VSPHERE:%r Upload completed", provider)
+        return True
     else:
-        print("VSPHERE:{} Upload did not complete".format(provider))
-        print(output)
+        logger.error("VSPHERE:%r Upload failed: %r", provider, result)
         return False
 
 
 def add_disk(client, name, provider):
-    print("VSPHERE:{} Beginning disk add...".format(provider))
+    logger.info("VSPHERE:%r Adding disk to %r", provider, name)
 
-    # depends on wrapanapi #153
     # adding disk #1 (base disk is 0)
-    rc, result = client.add_disk_to_vm(vm_name=name,
-                                       capacity_in_kb=8388608,
-                                       provision_type='thin')
+    result = client.add_disk_to_vm(vm_name=name, capacity_in_kb=8388608, provision_type='thin')
 
-    if rc:
-        print('VSPHERE:{} Added disk to vm {}'.format(provider, name))
+    if result.success:
+        logger.info('VSPHERE:%r Added disk to vm %r', provider, name)
     else:
-        print(" VSPHERE:{} Failure adding disk, result: {}".format(provider, result))
+        logger.error(" VSPHERE:%r Failure adding disk: %r", provider, result)
 
-    return rc
+    return result.success
 
 
 def check_kwargs(**kwargs):
     for key, val in kwargs.iteritems():
         if val is None:
-            print("VSPHERE:{} please supply required parameter '{}'.".format(
-                kwargs['provider'], key))
+            logger.error("VSPHERE:%r Supply required parameter '%r'", kwargs['provider'], key)
             return False
     return True
 
@@ -204,58 +192,60 @@ def upload_template(client, hostname, username, password,
         if name is None:
             name = cfme_data['basic_info']['appliance_template']
 
-        print("VSPHERE:{} Start uploading Template: {}".format(provider, name))
+        logger.info("VSPHERE:%r Start uploading Template: %r", provider, name)
         if not check_kwargs(**kwargs):
             return False
-        if not check_template_exists(client, name, provider):
+        if name in client.list_template():
             if kwargs.get('upload'):
                 # Wrapper for ovftool - sometimes it just won't work
-                ova_ret, ova_out = (1, 'no output yet')
                 for i in range(0, NUM_OF_TRIES_OVFTOOL):
-                    print("VSPHERE:{} Trying ovftool {}...".format(provider, i))
-                    ova_ret, ova_out = upload_ova(hostname,
-                                                  username,
-                                                  password,
-                                                  name,
-                                                  kwargs.get('datastore'),
-                                                  kwargs.get('cluster'),
-                                                  kwargs.get('datacenter'),
-                                                  url,
-                                                  provider,
-                                                  kwargs.get('proxy'),
-                                                  kwargs.get('ovf_tool_client'),
-                                                  kwargs['ovf_tool_username'],
-                                                  kwargs['ovf_tool_password'])
-                    if ova_ret is 0:
+                    logger.info("VSPHERE:%r ovftool try #%r", provider, i)
+                    upload_result = upload_ova(hostname,
+                                               username,
+                                               password,
+                                               name,
+                                               kwargs.get('datastore'),
+                                               kwargs.get('cluster'),
+                                               kwargs.get('datacenter'),
+                                               url,
+                                               provider,
+                                               kwargs.get('proxy'),
+                                               kwargs.get('ovf_tool_client'),
+                                               kwargs['ovf_tool_username'],
+                                               kwargs['ovf_tool_password'])
+                    if upload_result:
                         break
-                if ova_ret is -1:
-                    print("VSPHERE:{} Ovftool failed to upload file.".format(provider))
-                    print(ova_out)
+                else:
+                    logger.error("VSPHERE:%r Ovftool failed upload after multiple tries", provider)
                     return
 
             if kwargs.get('disk'):
-                add_disk(client, name, provider)
+                if not add_disk(client, name, provider):
+                    logger.error('"VSPHERE:%r FAILED adding disk to VM, exiting', provider)
+                    return False
             if kwargs.get('template'):
                 try:
                     client.mark_as_template(vm_name=name)
-                    print(" VSPHERE:{} Successfully templatized machine".format(provider))
+                    logger.info("VSPHERE:%r Successfully templatized machine", provider)
                 except Exception:
-                    print(" VSPHERE:{} Failed to templatize machine".format(provider))
-                    sys.exit(127)
+                    logger.exception("VSPHERE:%r FAILED to templatize machine", provider)
+                    return False
             if not provider_data:
-                print("RHEVM:{} Adding template {} to trackerbot...".format(provider, name))
+                logger.info("VSPHERE:%r Adding template %r to trackerbot", provider, name)
                 trackerbot.trackerbot_add_provider_template(stream, provider, name)
-        if provider_data and check_template_exists(client, name, provider):
-            print("VSPHERE:{} Deploying {}....".format(provider, name))
+        else:
+            logger.info("VSPHERE:%r template %r already exists", provider, name)
+        if provider_data and name in client.list_template():
+            logger.info("VSPHERE:%r Template and provider_data exist, Deploy %r", provider, name)
             vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
             deploy_args = {'provider': provider, 'vm_name': vm_name,
                            'template': name, 'deploy': True}
             getattr(__import__('clone_template'), "main")(**deploy_args)
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception('VSPHERE:%r Exception during upload_template', provider)
         return False
     finally:
-        print("VSPHERE:{} End uploading Template: {}".format(provider, name))
+        logger.info("VSPHERE:%r End uploading Template: %r", provider, name)
 
 
 def run(**kwargs):
@@ -292,8 +282,8 @@ def run(**kwargs):
 
         for thread in thread_queue:
             thread.join()
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception('Exception during run method')
         return False
 
 

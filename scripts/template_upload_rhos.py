@@ -15,13 +15,15 @@ import sys
 from threading import Lock, Thread
 
 from utils import net, ports, trackerbot
-from utils.conf import cfme_data
-from utils.conf import credentials
+from utils.conf import cfme_data, credentials
+from utils.log import logger, add_stdout_handler
 from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 lock = Lock()
+
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -69,15 +71,14 @@ def upload_qc2_file(ssh_client, image_url, template_name, export, provider):
 
         res_command = ' '.join(command)
         res = '{} && {}'.format(export, res_command)
-        exit_status, output = ssh_client.run_command(res)
+        result = ssh_client.run_command(res)
 
-        if exit_status != 0:
-            print("RHOS:{} There was an error while uploading qc2 file.".format(provider))
-            print(output)
+        if result.failed:
+            logger.error("RHOS:%r ERROR while uploading qc2 file: %r", provider, result)
             return False
-        return output
-    except Exception as e:
-        print(e)
+        return str(result)
+    except Exception:
+        logger.exception()
         return False
 
 
@@ -102,18 +103,17 @@ def check_image_status(image_id, export, ssh_client):
 
         res = ' '.join(command)
 
-        exit_status, output = ssh_client.run_command('{} && {}'.format(export, res))
+        result = ssh_client.run_command('{} && {}'.format(export, res))
 
-        if exit_status != 0:
-            print("RHOS: There was an error while checking status of image.")
-            print(output)
+        if result.failed:
+            logger.error("RHOS: There was an error while checking status of image: %r", result)
             return False
 
-        if get_image_status(output) != 'active':
+        if get_image_status(str(result)) != 'active':
             return False
         return True
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception()
         return False
 
 
@@ -126,13 +126,13 @@ def check_image_exists(image_name, export, ssh_client):
 
         res_command = ' '.join(command)
         res = '{} && {}'.format(export, res_command)
-        exit_status, output = ssh_client.run_command(res)
+        result = ssh_client.run_command(res)
 
-        if output:
+        if result.success:
             return True
         return False
-    except Exception as e:
-        print(e)
+    except Exception:
+        logger.exception()
         return False
 
 
@@ -160,7 +160,7 @@ def make_kwargs(args, **kwargs):
 
     for key, val in kwargs.iteritems():
         if val is None:
-            print("ERROR: please supply required parameter '{}'.".format(key))
+            logger.error("ERROR: please supply required parameter '%r'.", key)
             sys.exit(127)
 
     return kwargs
@@ -183,13 +183,12 @@ def make_kwargs_rhos(cfme_data, provider):
 def upload_template(rhosip, sshname, sshpass, username, password, auth_url, provider, image_url,
                     template_name, provider_data, stream):
     try:
-        print("RHOS:{} Starting template {} upload...".format(provider, template_name))
+        logger.info("RHOS:%r Starting template %r upload", provider, template_name)
 
         if provider_data:
             kwargs = make_kwargs_rhos(provider_data, provider)
         else:
             kwargs = make_kwargs_rhos(cfme_data, provider)
-        ssh_client = make_ssh_client(rhosip, sshname, sshpass)
 
         kwargs['image_url'] = image_url
         if template_name is None:
@@ -197,35 +196,39 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
 
         export = make_export(username, password, kwargs.get('tenant_id'), auth_url)
 
-        if not check_image_exists(template_name, export, ssh_client):
-            output = upload_qc2_file(ssh_client, kwargs.get('image_url'), template_name, export,
-                                     provider)
-            if not output:
-                print("RHOS:{} Error occurred in upload_qc2_file".format(provider, template_name))
+        with make_ssh_client(rhosip, sshname, sshpass) as ssh_client:
+            if not check_image_exists(template_name, export, ssh_client):
+                output = upload_qc2_file(ssh_client,
+                                         kwargs.get('image_url'),
+                                         template_name,
+                                         export,
+                                         provider)
+                if not output:
+                    logger.error("RHOS:%r upload_qc2_file returned None: %r",
+                                 provider, template_name)
+                else:
+                    image_id = get_image_id(output)
+                    wait_for(check_image_status, [image_id, export, ssh_client],
+                             fail_condition=False, delay=5, num_sec=300)
+                    logger.info("RHOS:%r Successfully uploaded the template.", provider)
+
+                    if not provider_data:
+                        logger.info("RHOS:%r Adding template %r to trackerbot",
+                                    provider, template_name)
+                        trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
             else:
-                image_id = get_image_id(output)
-                wait_for(check_image_status, [image_id, export, ssh_client],
-                         fail_condition=False, delay=5, num_sec=300)
-                print("RHOS:{} Successfully uploaded the template.".format(provider))
-                if not provider_data:
-                    print("RHOS:{} Adding template {} to trackerbot...".format(provider,
-                                                                               template_name))
-                    trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
-        else:
-            print("RHOS:{} Found image with name {}. Exiting...".format(provider, template_name))
-        if provider_data and check_image_exists(template_name, export, ssh_client):
-            print("RHOS:{} Deploying Template {}....".format(provider, template_name))
-            vm_name = 'test_{}_{}'.format(template_name, fauxfactory.gen_alphanumeric(8))
-            deploy_args = {'provider': provider, 'vm_name': vm_name,
-                           'template': template_name, 'deploy': True}
-            getattr(__import__('clone_template'), "main")(**deploy_args)
-        ssh_client.close()
-    except Exception as e:
-        print(e)
-        print("RHOS:{} Error occurred in upload_qc2_file".format(provider, template_name))
+                logger.info("RHOS:%r Found image with name %r. Exiting", provider, template_name)
+            if provider_data and check_image_exists(template_name, export, ssh_client):
+                logger.info("RHOS:%r Deploying Template %r....", provider, template_name)
+                vm_name = 'test_{}_{}'.format(template_name, fauxfactory.gen_alphanumeric(8))
+                deploy_args = {'provider': provider, 'vm_name': vm_name,
+                               'template': template_name, 'deploy': True}
+                getattr(__import__('clone_template'), "main")(**deploy_args)
+    except Exception:
+        logger.exception("RHOS:%r Exception while uploading template", provider)
         return False
     finally:
-        print("RHOS:{} End template {} upload...".format(provider, template_name))
+        logger.info("RHOS:%r End template %r upload", provider, template_name)
 
 
 def run(**kwargs):
@@ -256,8 +259,7 @@ def run(**kwargs):
         if not net.is_pingable(rhosip):
             continue
         if not net.net_check(ports.SSH, rhosip):
-            print("SSH connection to {}:{} failed, port unavailable".format(
-                provider, ports.SSH))
+            logger.error("SSH connection to %r:%r failed, port unavailable", provider, ports.SSH)
             continue
         thread = Thread(target=upload_template,
                         args=(rhosip, sshname, sshpass, username, password, auth_url, provider,

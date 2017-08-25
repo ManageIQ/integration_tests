@@ -4,7 +4,6 @@ import datetime
 from datetime import timedelta
 import re
 import sys
-import logging
 from collections import namedtuple
 from operator import attrgetter
 from multiprocessing import Manager, Pool
@@ -12,7 +11,7 @@ from multiprocessing import Manager, Pool
 import pytz
 from tabulate import tabulate
 
-from utils.log import logger
+from utils.log import logger, add_stdout_handler
 from utils.conf import cfme_data
 from utils.path import log_path
 from utils.providers import list_provider_keys, get_mgmt
@@ -27,7 +26,7 @@ VmData = namedtuple('VmData', 'provider_key, name, age')
 VmReport = namedtuple('VmReport', 'provider_key, name, age, status, result')
 
 # log to stdout too
-logger.addHandler(logging.StreamHandler(sys.stdout))
+add_stdout_handler(logger)
 
 # manager for queues that can be shared
 manager = Manager()
@@ -103,7 +102,7 @@ def pool_manager(func, arg_list):
             result = ex
         finally:
             if isinstance(result, Exception):
-                logger.exception('Exception during function call %s', func.__name__)
+                logger.exception('Exception during function call %r', func.__name__)
             results.append(result)
 
     return results
@@ -122,12 +121,12 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
     Returns:
         None: Uses the Queues to 'return' data
     """
-    logger.info('%s: Start scan for vm text matches', provider_key)
+    logger.info('%r: Start scan for vm text matches', provider_key)
     try:
         vm_list = get_mgmt(provider_key).list_vm()
     except Exception:  # noqa
         scan_failure_queue.put(VmReport(provider_key, FAIL, NULL, NULL, NULL))
-        logger.exception('%s: Exception listing vms', provider_key)
+        logger.exception('%r: Exception listing vms', provider_key)
         return
 
     text_matched_vms = [name for name in vm_list if match(matchers, name)]
@@ -135,8 +134,8 @@ def scan_provider(provider_key, matchers, match_queue, scan_failure_queue):
         match_queue.put(VmProvider(provider_key, name))
 
     non_text_matching = set(vm_list) - set(text_matched_vms)
-    logger.info('%s: NOT matching text filters: %s', provider_key, non_text_matching)
-    logger.info('%s: MATCHED text filters: %s', provider_key, text_matched_vms)
+    logger.info('%r: NOT matching text filters: %r', provider_key, non_text_matching)
+    logger.info('%r: MATCHED text filters: %r', provider_key, text_matched_vms)
 
 
 def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
@@ -157,19 +156,19 @@ def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
     # Nested exceptions to try and be safe about the scanned values and to get complete results
     failure = False
     status = NULL
-    logger.info('%s: Scan VM %s...', provider_key, vm_name)
+    logger.info('%r: Scan VM %r...', provider_key, vm_name)
     try:
         # Localize to UTC
         vm_creation_time = provider_mgmt.vm_creation_time(vm_name)
     except Exception:  # noqa
         failure = True
-        logger.exception('%s: Exception getting creation time for %s', provider_key, vm_name)
+        logger.exception('%r: Exception getting creation time for %r', provider_key, vm_name)
         # This VM must have some problem, include in report even though we can't delete
         try:
             status = provider_mgmt.vm_status(vm_name)
         except Exception:  # noqa
             failure = True
-            logger.exception('%s: Exception getting status for %s', provider_key, vm_name)
+            logger.exception('%r: Exception getting status for %r', provider_key, vm_name)
             status = NULL
     finally:
         if failure:
@@ -177,14 +176,14 @@ def scan_vm(provider_key, vm_name, delta, match_queue, scan_failure_queue):
             return
 
     vm_delta = now - vm_creation_time
-    logger.info('%s: VM %s age: %s', provider_key, vm_name, vm_delta)
+    logger.info('%r: VM %r age: %r', provider_key, vm_name, vm_delta)
     data = VmData(provider_key, vm_name, str(vm_delta))
 
     # test age to determine which queue it goes in
     if delta < vm_delta:
         match_queue.put(data)
     else:
-        logger.info('%s: VM %s did not match age requirement', provider_key, vm_name)
+        logger.info('%r: VM %r did not match age requirement', provider_key, vm_name)
 
 
 def delete_vm(provider_key, vm_name, age, result_queue):
@@ -204,17 +203,17 @@ def delete_vm(provider_key, vm_name, age, result_queue):
         status = provider_mgmt.vm_status(vm_name)
     except Exception:  # noqa
         status = FAIL
-        logger.exception('%s: Exception getting status for %s', provider_key, vm_name)
+        logger.exception('%r: Exception getting status for %r', provider_key, vm_name)
 
-    logger.info("%s: Deleting %s, age: %s, status: %s", provider_key, vm_name, age, status)
+    logger.info("%r: Deleting %r, age: %r, status: %r", provider_key, vm_name, age, status)
     try:
         # delete_vm returns boolean based on success
         if provider_mgmt.delete_vm(vm_name):
             result = PASS
-            logger.info('%s: Delete success: %s', provider_key, vm_name)
+            logger.info('%r: Delete success: %r', provider_key, vm_name)
         else:
             result = FAIL
-            logger.error('%s: Delete failed: %s', provider_key, vm_name)
+            logger.error('%r: Delete failed: %r', provider_key, vm_name)
     except Exception:  # noqa
         # TODO vsphere delete failures, workaround for wrapanapi issue #154
         if vm_name not in provider_mgmt.list_vm():
@@ -222,7 +221,7 @@ def delete_vm(provider_key, vm_name, age, result_queue):
             result = PASS
         else:
             result = FAIL  # set this here to cover anywhere the exception could happen
-        logger.exception('%s: Exception during delete: %s, double check result: %s',
+        logger.exception('%r: Exception during delete: %r, double check result: %r',
                          provider_key, vm_name, result)
     finally:
         result_queue.put(VmReport(provider_key, vm_name, age, status, result))
@@ -246,7 +245,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     Returns:
         int: return code, 0 on success, otherwise raises exception
     """
-    logger.info('Matching VM names against the following case-insensitive strings: %s', texts)
+    logger.info('Matching VM names against the following case-insensitive strings: %r', texts)
     # Compile regex, strip leading/trailing single quotes from cli arg
     matchers = [re.compile(text.strip("'"), re.IGNORECASE) for text in texts]
 
@@ -254,9 +253,9 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     for provider_key in providers or list_provider_keys():
         # check for cleanup boolean
         if not cfme_data['management_systems'][provider_key].get('cleanup', False):
-            logger.info('SKIPPING %s, cleanup set to false or missing in yaml', provider_key)
+            logger.info('SKIPPING %r, cleanup set to false or missing in yaml', provider_key)
             continue
-        logger.info('SCANNING %s', provider_key)
+        logger.info('SCANNING %r', provider_key)
         providers_to_scan.append(provider_key)
 
     # scan providers for vms with name matches

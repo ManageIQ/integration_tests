@@ -27,9 +27,12 @@ from urllib2 import urlopen, HTTPError
 
 from utils import path, trackerbot
 from utils.conf import cfme_data
+from utils.log import logger, add_stdout_handler
 
 CFME_BREW_ID = "cfme"
 NIGHTLY_MIQ_ID = "manageiq"
+
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -244,9 +247,8 @@ def browse_directory(dir_url):
     try:
         with closing(urlopen(dir_url)) as urlpath:
             string_from_url = urlpath.read()
-    except HTTPError as e:
-        print(str(e))
-        print("Skipping: {}".format(dir_url))
+    except HTTPError:
+        logger.exception("Skipping: %r", dir_url)
         return None
 
     rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm\.ova|ovirt)[^"\'>]*)')
@@ -331,10 +333,11 @@ def main():
         try:
             urlopen(checksum_url)
         except Exception:
-            print("No valid checksum file for {}. Skipping...".format(key))
+            logger.exception("No valid checksum file for %r, Skipping", key)
             continue
 
         kwargs = {}
+        module = None
         if not provider_type:
             sys.exit('specify the provider_type')
         if provider_type == 'openstack':
@@ -361,6 +364,9 @@ def main():
             module = 'template_upload_ec2'
             if module not in dir_files.iterkeys():
                 continue
+        if not module:
+            logger.error('Could not match module to given provider type')
+            return 1
         kwargs['stream'] = stream
         kwargs['image_url'] = dir_files[module]
         if args.provider_data is not None:
@@ -381,14 +387,14 @@ def main():
                 if template_parser.stream:
                     kwargs['stream'] = template_parser.group_name
 
-        print("TEMPLATE_UPLOAD_ALL:-----Start of {} upload on: {}--------".format(
-            kwargs['template_name'], provider_type))
+        logger.info("TEMPLATE_UPLOAD_ALL:-----Start of %r upload on: %r--------",
+            kwargs['template_name'], provider_type)
 
-        print("Executing {} with the following kwargs: {}".format(module, kwargs))
+        logger.info("Executing %r with the following kwargs: %r", module, kwargs)
         getattr(__import__(module), "run")(**kwargs)
 
-        print("TEMPLATE_UPLOAD_ALL:------End of {} upload on: {}--------".format(
-            kwargs['template_name'], provider_type))
+        logger.info("TEMPLATE_UPLOAD_ALL:------End of %r upload on: %r--------",
+            kwargs['template_name'], provider_type)
 
 
 if __name__ == "__main__":
