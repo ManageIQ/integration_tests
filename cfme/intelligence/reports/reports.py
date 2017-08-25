@@ -353,7 +353,7 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
         Returns: :py:class:`SavedReportData`.
         """
         view = navigate_to(self, "Details")
-        view.paginator.set_items_per_page("1000 items")
+        view.paginator.set_items_per_page(1000)
         try:
             headers = tuple([hdr.encode("utf-8") for hdr in view.table.headers])
             body = []

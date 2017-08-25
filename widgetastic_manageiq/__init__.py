@@ -1316,13 +1316,17 @@ class NonJSPaginationPane(View):
         """Selects number of items to be displayed on page.
 
         Args:
-            value: Ideally a str of the format 'x items', x could be {10,20,50,..,1000}
-                   but if value is a number, 'items' is added to it as suffix
+            value: Ideally value is a positive int
         """
-        if not isinstance(value, (int, six.string_types)):
-            raise TypeError("Value should either be of format either e.g. 10 or a string"
-                " e.g. '10 items' not {}".format(value))
-        items_text = value if 'items' in str(value) else '{} items'.format(value)
+        try:
+            int(value)
+        except ValueError:
+            raise ValueError("Value should be integer and not {}".format(value))
+
+        items_text = VersionPick({
+            Version.lowest(): '{} items'.format(value),
+            '5.8.2': str(value),
+        }).pick(self.browser.product_version)
         self.items_on_page.select_by_visible_text(items_text)
 
     def _parse_pages(self):
