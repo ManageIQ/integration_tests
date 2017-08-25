@@ -37,6 +37,8 @@ def pytest_generate_tests(metafunc):
         metafunc, PROVIDER_TYPES, required_fields=['datastores'])
     argnames += ['datastore']
 
+    datastore_collection = datastore.DatastoreCollection()
+
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
         datastores = args['provider'].data.get('datastores', {})
@@ -49,8 +51,8 @@ def pytest_generate_tests(metafunc):
                 'datastore type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(DATASTORE_TYPES))
             argvs = argvalues[i][:]
-            new_argvalues.append(argvs + [datastore.Datastore(ds['name'], args['provider'].key,
-                ds['type'])])
+            new_argvalues.append(argvs + [datastore_collection.instantiate(
+                ds['name'], args['provider'].key, ds['type'])])
             test_id = '{}-{}'.format(args['provider'].key, ds['type'])
             new_idlist.append(test_id)
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")

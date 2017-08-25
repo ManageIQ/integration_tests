@@ -95,8 +95,9 @@ def test_delete_datastore_appear_after_refresh(setup_provider, provider):
     Metadata:
         test_flag: delete_object
     """
+    datastore_collection = datastore.DatastoreCollection()
     data_store = provider.data['remove_test']['datastore']
-    test_datastore = datastore.Datastore(name=data_store, provider=provider)
+    test_datastore = datastore_collection.instantiate(name=data_store, provider=provider)
     details_view = navigate_to(test_datastore, 'Details')
 
     host_count = int(details_view.contents.relationships.get_text_of('Hosts'))

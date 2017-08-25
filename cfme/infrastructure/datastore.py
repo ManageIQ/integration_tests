@@ -2,6 +2,7 @@
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View, Text
+from cfme.exceptions import ItemNotFound
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
                                   BaseEntitiesView)
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
@@ -12,7 +13,6 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
 from utils.wait import wait_for
-
 
 class DatastoreToolBar(View):
     """
@@ -114,6 +114,60 @@ class RegisteredHostsView(HostsView):
         return False
 
 
+class DatastoreCollection(Navigatable):
+    """Collection class for `cfme.infrastructure.datastore.Datastore`"""
+
+    def __init__(self, appliance=None):
+        self.appliance = appliance
+
+    def instantiate(self, name, provider, type=None):
+        return Datastore(name, provider, type=type, collection=self)
+
+    def delete(self, *datastores):
+        """
+        Note:
+            Datastores must have 0 hosts and 0 VMs for this to work.
+        """
+        datastores = list(datastores)
+        checked_datastores = list()
+        view = navigate_to(self, 'All')
+
+        for datastore in datastores:
+            try:
+                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
+                checked_datastores.append(datastore)
+            except ItemNotFound:
+                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
+
+        if set(datastores) == set(checked_datastores):
+            view.toolbar.configuration.item_select('Remove Datastores', handle_alert=True)
+            view.entities.flash.assert_success_message(
+                'Delete initiated for Datastore from the CFME Database')
+
+            for datastore in datastores:
+                wait_for(lambda: not datastore.exists, num_sec=600, delay=30,
+                         message='Wait for Datastore to be deleted')
+
+    def run_smartstate_analysis(self, *datastores):
+        datastores = list(datastores)
+
+        checked_datastores = list()
+
+        view = navigate_to(self, 'All')
+
+        for datastore in datastores:
+            try:
+                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
+                checked_datastores.append(datastore)
+            except ItemNotFound:
+                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
+
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        for datastore in datastores:
+            view.flash.assert_success_message(
+                '"{}": scan successfully initiated'.format(datastore.name))
+
+
 class Datastore(Pretty, Navigatable):
     """ Model of an infrastructure datastore in cfme
 
@@ -123,11 +177,12 @@ class Datastore(Pretty, Navigatable):
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name, provider, type=None, appliance=None):
-        Navigatable.__init__(self, appliance)
+    def __init__(self, name, provider, type=None, collection=None):
         self.name = name
         self.type = type
         self.provider = provider
+        self.collection = collection or DatastoreCollection()
+        Navigatable.__init__(self, appliance=self.collection.appliance)
 
     def delete(self, cancel=True):
         """
@@ -195,8 +250,11 @@ class Datastore(Pretty, Navigatable):
 
     @property
     def exists(self):
-        view = navigate_to(self, 'Details')
-        return view.is_displayed
+        try:
+            view = navigate_to(self, 'Details')
+            return view.is_displayed
+        except ItemNotFound:
+            return False
 
     def run_smartstate_analysis(self):
         """ Runs smartstate analysis on this host
@@ -212,7 +270,7 @@ class Datastore(Pretty, Navigatable):
                                            'initiated'.format(self.name)))
 
 
-@navigator.register(Datastore, 'All')
+@navigator.register(DatastoreCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = DatastoresView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -238,7 +296,7 @@ class All(CFMENavigateStep):
 @navigator.register(Datastore, 'Details')
 class Details(CFMENavigateStep):
     VIEW = DatastoreDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
