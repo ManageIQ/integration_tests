@@ -174,6 +174,7 @@ def test_embed_tower_playbooks_list_changed(wait_for_ansible):
 
 @pytest.mark.tier(2)
 def test_control_crud_ansible_playbook_action(request, catalog_item):
+    """CRUD test for ansible playbook action."""
     action = Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
@@ -207,6 +208,7 @@ def test_control_crud_ansible_playbook_action(request, catalog_item):
 
 @pytest.mark.tier(2)
 def test_control_add_ansible_playbook_action_invalid_address(request, catalog_item):
+    """Tests if invalid address can be submitted in ansible playbook action."""
     action = Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
