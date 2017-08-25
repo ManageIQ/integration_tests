@@ -76,9 +76,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # Flash message strings, have to format self.string_name and self.name into them on use
     flash_msg = {
         'add_cancel': 'Add of {} Provider was cancelled by the user',
-        'add_valid': '{} Providers "{}" was saved',
+        'add_valid': '{} Provider "{}" was saved',
         'edit_cancel': 'Edit of {} Provider "{}" was cancelled by the user',
-        'edit_valid': '{} Providers "{}" was saved',
+        'edit_valid': '{} Provider "{}" was saved',
         'delete_valid': 'Delete initiated for 1 {} Provider from the {} Database'
     }
 
