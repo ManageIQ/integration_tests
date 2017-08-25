@@ -523,9 +523,14 @@ def _test_vm_removal():
 def test_permission_edit(appliance, request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
+    Args:
+        appliance - cfme appliance fixture
+        request - pytest request fixture
+        product_features - product features to set for test role
+        action - reference to a function to execute under the test user context
     """
     product_features = version.pick(product_features)
-    request.addfinalizer(appliance.server.login_admin())
+    request.addfinalizer(appliance.server.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
     role = Role(name=role_name,
                 vm_restriction=None,
@@ -569,14 +574,11 @@ def _go_to(cls, dest='All'):
     return lambda: navigate_to(cls, dest)
 
 
-cat_name = "Settings"
-
-
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'role,allowed_actions,disallowed_actions',
     [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
-                                 [['Everything', cat_name, 'Tasks'], True]]),
+                                 [['Everything', 'Settings', 'Tasks'], True]]),
       {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
       {
           'my services': _go_to(MyService),
@@ -596,6 +598,20 @@ cat_name = "Settings"
       {}]])
 @pytest.mark.meta(blockers=[1262759])
 def test_permissions(appliance, role, allowed_actions, disallowed_actions):
+    """ Test that that under the specified role the allowed acctions succeed
+        and the disallowed actions fail
+
+        Args:
+            appliance - cfme_test appliance fixture
+            role - reference to a function that will create a role object
+            allowed_actions - Action(s) that should succeed under given roles
+                permission
+            disallowed_actions - Action(s) that should fail under given roles
+                permission
+
+        *_actions are a list of actions with each item consisting of a dictionary
+            object: [ { "Action Name": function_reference_action }, ...]
+    """
     # create a user and role
     role = role()  # call function to get role
     role.create()
@@ -606,18 +622,19 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     fails = {}
     try:
         with user:
-            appliance.server.login_admin()
             for name, action_thunk in allowed_actions.items():
                 try:
                     action_thunk()
                 except Exception:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
+
             for name, action_thunk in disallowed_actions.items():
                 try:
                     with error.expected(Exception):
                         action_thunk()
                 except error.UnexpectedSuccessException:
                     fails[name] = "{}: {}".format(name, traceback.format_exc())
+
             if fails:
                 message = ''
                 for failure in fails.values():
@@ -630,40 +647,40 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
 def single_task_permission_test(appliance, product_features, actions):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
+    # Enable only specified product features
+    test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=[(['Everything'], False)] +
-                              [(f, True) for f in product_features]),
-                     actions,
-                     {})
+                              product_features=test_prod_features), actions, {})
+
+    # Enable everything but specified product features
+    test_prod_features = [(['Everything'], True)]
+    # CFME 5.7 - New roles have the checkbox for 'Everything' checked but the
+    # only child item checked is 'Access Rules for all Virtual Machines' so
+    # clear 'Everything' so all child items can be enabled to start
+    if appliance.version < "5.8":
+        test_prod_features = [(['Everything'], False)] + test_prod_features
+
+    test_prod_features += [(f, False) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=[(['Everything'], True)] +
-                              [(f, False) for f in product_features]),
-                     {},
-                     actions)
+                              product_features=test_prod_features), {}, actions)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1262764])
 def test_permissions_role_crud(appliance):
     single_task_permission_test(appliance,
-                                [['Everything', cat_name, 'Configuration'],
+                                [['Everything', 'Settings', 'Configuration'],
                                  ['Everything', 'Services', 'Catalogs Explorer']],
                                 {'Role CRUD': test_role_crud})
 
 
 @pytest.mark.tier(3)
 def test_permissions_vm_provisioning(appliance):
-    features = version.pick({
-        version.LOWEST: [
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ],
-        '5.6': [
-            ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ]})
+    features = [
+        ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+        ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+            'Provision VMs']
+    ]
     single_task_permission_test(
         appliance,
         features,
