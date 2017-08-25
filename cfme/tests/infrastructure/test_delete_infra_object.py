@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool
+from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -114,3 +115,15 @@ def test_delete_datastore_appear_after_refresh(setup_provider, provider):
     wait_for(lambda: test_datastore.exists, fail_condition=False,
              message="Wait datastore to appear", num_sec=1000,
              fail_func=test_datastore.browser.refresh)
+
+
+def test_delete_cluster_from_table(setup_provider, provider):
+    """ Tests delete cluster from table
+
+    Metadata:
+        test_flag: delete_object
+    """
+    cluster_name = provider.data['remove_test']['cluster']
+    cluster1 = cluster.Cluster(name=cluster_name, provider=provider)
+    collection = ClusterCollection()
+    collection.delete(cluster1)
