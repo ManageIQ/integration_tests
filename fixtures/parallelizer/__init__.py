@@ -187,7 +187,7 @@ class ParallelSession(object):
         # write out the slave config
         conf.runtime['slave_config'] = {
             'args': self.config.args,
-            'options': dict( # copy to avoid aliasing
+            'options': dict(  # copy to avoid aliasing
                 self.config.option.__dict__,
                 use_sprout=False,   # Slaves don't use sprout
             ),

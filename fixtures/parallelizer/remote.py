@@ -170,7 +170,7 @@ def _init_config(slave_options, slave_args):
     for pluginarg in config.option.plugins:
         config.pluginmanager.consider_pluginarg(pluginarg)
     return config
-    
+
 
 if __name__ == '__main__':
     import argparse
