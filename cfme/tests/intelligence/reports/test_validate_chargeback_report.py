@@ -125,7 +125,7 @@ def assign_default_rate(provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            "Enterprise": "Default"
+            'Enterprise': {'Rate': 'Default'}
         })
     enterprise.computeassign()
     enterprise.storageassign()
@@ -137,7 +137,7 @@ def assign_default_rate(provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            "Enterprise": "<Nothing>"
+            'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()
     enterprise.storageassign()
@@ -150,7 +150,7 @@ def assign_custom_rate(new_compute_rate, provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            "Enterprise": description
+            'Enterprise': {'Rate': description}
         })
     enterprise.computeassign()
     enterprise.storageassign()
@@ -162,7 +162,7 @@ def assign_custom_rate(new_compute_rate, provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            "Enterprise": "<Nothing>"
+            'Enterprise': {'Rate': '<Nothing>'}
         })
     enterprise.computeassign()
     enterprise.storageassign()
@@ -389,7 +389,7 @@ def chargeback_report_default(vm_ownership, assign_default_rate, provider):
     logger.info('Queuing chargeback report with default rate for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
-    yield list(report.get_saved_reports()[0].data[0].rows)
+    yield list(report.get_saved_reports()[0].data.rows)
     report.delete()
 
 
@@ -418,7 +418,7 @@ def chargeback_report_custom(vm_ownership, assign_custom_rate, provider):
     logger.info('Queuing chargeback report with custom rate for {} provider'.format(provider.name))
     report.queue(wait_for_finish=True)
 
-    yield list(report.get_saved_reports()[0].data[0].rows)
+    yield list(report.get_saved_reports()[0].data.rows)
     report.delete()
 
 
