@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.infrastructure.cluster import ClusterCollection
+from cfme.infrastructure.resource_pool import ResourcePoolCollection
 from cfme.infrastructure.provider import InfraProvider
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -127,3 +128,15 @@ def test_delete_cluster_from_table(setup_provider, provider):
     cluster1 = cluster.Cluster(name=cluster_name, provider=provider)
     collection = ClusterCollection()
     collection.delete(cluster1)
+
+
+def test_delete_resource_pool_from_table(setup_provider, provider):
+    """ Tests delete resource pool from table
+
+    Metadata:
+        test_flag: delete_object
+    """
+    resourcepool_name = provider.data['remove_test']['resource_pool']
+    resourcepool1 = resource_pool.ResourcePool(name=resourcepool_name)
+    collection = ResourcePoolCollection()
+    collection.delete(resourcepool1)

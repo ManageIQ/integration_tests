@@ -4,7 +4,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Resource pool pages.
 """
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
@@ -109,6 +109,45 @@ class ResourcePoolDetailsView(ResourcePoolView):
     entities = View.nested(ResourcePoolDetailsEntities)
 
 
+class ResourcePoolCollection(Navigatable):
+    """Collection object for the :py:class:`cfme.infrastructure.resource_pool.ResourcePool`."""
+
+    def instantiate(self, name, provider):
+        return ResourcePoolCollection(name, provider, collection=self)
+
+    def delete(self, *resource_pools):
+        """Delete one or more  Resource pools from the list of the resource pools
+
+        Args:
+            list of the `cfme.infrastructure.resource_pool.ResourcePool` objects
+        """
+        resource_pools = list(resource_pools)
+        checked_resource_pools = []
+        view = navigate_to(self, 'All')
+        # double check we're in List View
+        view.toolbar.view_selector.select('List View')
+        if not view.entities.table.is_displayed:
+            raise ValueError('No Resource Pool found')
+        for row in view.entities.table:
+            for resource_pool in resource_pools:
+                if resource_pool.name == row.name.text:
+                    checked_resource_pools.append(resource_pool)
+                    row[0].check()
+                    break
+            if set(resource_pools) == set(checked_resource_pools):
+                break
+        if set(resource_pools) != set(checked_resource_pools):
+            raise ValueError('Some Resource pools were not found in the UI')
+        view.toolbar.configuration.item_select('Remove Resource Pools', handle_alert=True)
+        view.entities.flash.assert_no_error()
+        flash_msg = ('Delete initiated for {} Resource Pools from the CFME Database'.
+            format(len(resource_pools)))
+        view.flash.assert_message(flash_msg)
+        for resource_pool in resource_pools:
+            wait_for(lambda: not resource_pool.exists, num_sec=15 * 60,
+                    delay=30, message='Wait for resource_pool to be deleted')
+
+
 class ResourcePool(Pretty, Navigatable):
     """ Model of an infrastructure Resource pool in cfme
 
@@ -122,14 +161,15 @@ class ResourcePool(Pretty, Navigatable):
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name=None, provider_key=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, name=None, provider_key=None, collection=None):
         self.quad_name = 'resource_pool'
         self.name = name
         if provider_key:
-            self.provider = get_crud(provider_key, appliance=appliance)
+            self.provider = get_crud(provider_key, appliance=self.collection.appliance)
         else:
             self.provider = None
+        self.collection = collection or ResourcePoolCollection()
+        Navigatable.__init__(self, appliance=self.collection.appliance)
 
     def _get_context(self):
         context = {'resource_pool': self}
@@ -172,7 +212,7 @@ class ResourcePool(Pretty, Navigatable):
 
     def wait_for_exists(self):
         """Wait for the resource pool to be created"""
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
 
         def refresh():
             if self.provider:
@@ -205,7 +245,7 @@ class ResourcePool(Pretty, Navigatable):
 
     @property
     def exists(self):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
         try:
             view.toolbar.view_selector.select('List View')
             view.paginator.find_row_on_pages(view.entities.table, name=self.name)
@@ -214,7 +254,7 @@ class ResourcePool(Pretty, Navigatable):
             return False
 
 
-@navigator.register(ResourcePool, 'All')
+@navigator.register(ResourcePoolCollection, 'All')
 class All(CFMENavigateStep):
     """A navigation step for the All page"""
     VIEW = ResourcePoolAllView
@@ -234,7 +274,7 @@ class All(CFMENavigateStep):
 class Details(CFMENavigateStep):
     """A navigation step for the Details page"""
     VIEW = ResourcePoolDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the item"""
