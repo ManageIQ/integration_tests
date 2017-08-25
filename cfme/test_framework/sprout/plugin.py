@@ -90,6 +90,7 @@ def pytest_configure(config):
     with project_path.join('.appliance_template').open('w') as template_file:
         template_file.write('export appliance_template="{}"'.format(template_name))
     log.info("Sprout setup finished.")
+
     config.pluginmanager.register(ShutdownPlugin())
 
 
@@ -256,7 +257,7 @@ class SproutManager(object):
 
 
 def pytest_addhooks(pluginmanager):
-    pluginmanager.addhooks(NewHooks)
+    pluginmanager.add_hookspecs(NewHooks)
 
 
 class ShutdownPlugin(object):
@@ -271,15 +272,18 @@ class ShutdownPlugin(object):
             netloc = urlparse(nodeinfo).netloc
             ip_address = netloc.split(":")[0]
             log.debug("Trying to end appliance {}".format(ip_address))
-            if config.getoption('use_sprout'):
+            if config.getoption('--use-sprout'):
                 try:
-                    log.debug(config._sprout_mgr.client.call_method('appliance_data', ip_address))
-                    log.debug(config._sprout_mgr.client.call_method('destroy_appliance', ip_address))
+                    call_method = config._sprout_mgr.client.call_method
+                    log.debug("appliance data %r", call_method('appliance_data', ip_address))
+                    log.debug(
+                        "destroy appliance result: %r",
+                        call_method('destroy_appliance', ip_address))
                 except Exception as e:
                     log.debug('Error trying to end sprout appliance %s', ip_address)
                     log.debug(e)
             else:
-                log.debug('Not a sprout run so not doing anything')
+                log.debug('Not a sprout run so not doing anything for %s', ip_address)
         else:
             log.debug('The IP address was not present - not terminating any appliance')
 
