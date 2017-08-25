@@ -220,7 +220,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                                 'Validating credentials flash message for endpoint %s',
                                 endpoint_name)
                             add_view.flash.assert_no_error()
-                            add_view.flash.assert_success_message(Credential.VALID_FLASH)
+                            add_view.flash.assert_success_message(
+                                Credential.flash_msg['validate_pass'])
                 if self.one_of(InfraProvider):
                     main_view_obj = InfraProvidersView
                 elif self.one_of(CloudProvider):

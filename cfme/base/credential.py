@@ -64,7 +64,8 @@ class Credential(Pretty, Updateable, FromConfigMixin):
         domain: concatenated with principal if defined
     """
     pretty_attrs = ['principal', 'secret']
-    FLASH_VALID = 'Credential validation was successful'
+    flash_msg = {
+        'validate_pass': 'Credential validation was successful'}
 
     def __init__(self, principal, secret, verify_secret=None, domain=None, **ignore):
         self.principal = principal
