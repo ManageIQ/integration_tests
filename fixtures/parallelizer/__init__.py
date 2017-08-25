@@ -187,12 +187,14 @@ class ParallelSession(object):
         # write out the slave config
         conf.runtime['slave_config'] = {
             'args': self.config.args,
-            'options': self.config.option.__dict__,
+            'options': dict( # copy to avoid aliasing
+                self.config.option.__dict__,
+                use_sprout=False,   # Slaves don't use sprout
+            ),
             'zmq_endpoint': zmq_endpoint,
         }
         if hasattr(self, "slave_appliances_data"):
             conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
-        conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
         conf.save('slave_config')
 
         for appliance in self.appliances:
