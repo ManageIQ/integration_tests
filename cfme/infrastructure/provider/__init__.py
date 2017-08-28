@@ -20,7 +20,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProviderNodesView)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
-from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import Host, HostCollection
 from cfme.utils import conf, version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -174,6 +174,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         provider according to the YAML
         """
         result = []
+        host_collection = self.appliance.get(HostCollection)
         for host in self.get_yaml_data().get("hosts", []):
             creds = conf.credentials.get(host["credentials"], {})
             cred = Host.Credential(
@@ -181,9 +182,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
                 secret=creds["password"],
                 verify_secret=creds["password"],
             )
-            result.append(Host(name=host["name"],
-                               credentials=cred,
-                               provider=self))
+
+            result.append(host_collection.instantiate(name=host["name"], credentials=cred,
+                                                      provider=self))
         return result
 
     def get_clusters(self):

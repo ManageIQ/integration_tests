@@ -1,10 +1,8 @@
 import pytest
-from navmazing import NavigationDestinationNotFound
 
-from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils import testgen
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
@@ -14,15 +12,17 @@ pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
               pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-@pytest.fixture(scope='module')
-def host_on(provider):
-    try:
-        view = navigate_to(provider, 'ProviderNodes')
-    except NavigationDestinationNotFound:
-        assert False, "Missing nodes in provider's details"
+@pytest.fixture(scope="module")
+def host_collection(appliance):
+    return appliance.get(HostCollection)
 
-    first_host = view.entities.get_first_entity()
-    my_host_on = Host(name=first_host.name, provider=provider)
+
+@pytest.fixture(scope='module')
+def host_on(host_collection, provider):
+    try:
+        my_host_on = host_collection.all(provider)[0]
+    except IndexError:
+        assert False, "Missing nodes in provider's details"
 
     if my_host_on.get_power_state() == 'off':
         my_host_on.power_on()
@@ -31,14 +31,11 @@ def host_on(provider):
 
 
 @pytest.fixture(scope='module')
-def host_off(provider):
+def host_off(host_collection, provider):
     try:
-        view = navigate_to(provider, 'ProviderNodes')
-    except NavigationDestinationNotFound:
+        my_host_off = host_collection.all(provider)[0]
+    except IndexError:
         assert False, "Missing nodes in provider's details"
-
-    first_host = view.entities.get_first_entity()
-    my_host_off = Host(name=first_host.name, provider=provider)
 
     if my_host_off.get_power_state() == 'on':
         my_host_off.power_off()

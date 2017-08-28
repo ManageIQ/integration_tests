@@ -41,14 +41,14 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.meta(blockers=[1242655])
-def test_host_drift_analysis(request, setup_provider, provider, host, soft_assert):
+def test_host_drift_analysis(appliance, request, setup_provider, provider, host, soft_assert):
     """Tests host drift analysis
 
     Metadata:
         test_flag: host_drift_analysis
     """
-    test_host = host_obj.Host(name=host['name'], provider=provider)
-
+    host_collection = appliance.get(host_obj.HostCollection)
+    test_host = host_collection.instantiate(name=host['name'], provider=provider)
     wait_for(lambda: test_host.exists, delay=20, num_sec=120, fail_func=sel.refresh,
              message="hosts_exists")
 

@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.exceptions import HostNotFound
-from cfme.infrastructure.host import get_all_hosts
+from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.openstack_node import OpenstackNode
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils import testgen
@@ -53,7 +53,7 @@ def test_scale_provider_down(provider, host, has_mistral_service):
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
-def test_delete_host(host, provider, has_mistral_service):
+def test_delete_host(appliance, host, provider, has_mistral_service):
     """Remove host from appliance and Ironic service
     Metadata:
         test_flag: openstack_scale"""
@@ -64,7 +64,8 @@ def test_delete_host(host, provider, has_mistral_service):
     wait_for(is_host_disappeared, timeout=300, delay=5)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.browser.refresh()
-    assert host.name not in get_all_hosts()
+    host_collection = appliance.get(HostCollection)
+    assert host.name not in host_collection.all(provider)
 
 
 def test_register_host(provider, host, has_mistral_service):

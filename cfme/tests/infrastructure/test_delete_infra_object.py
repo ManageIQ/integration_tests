@@ -32,18 +32,19 @@ def test_delete_cluster_appear_after_refresh(setup_provider, provider, appliance
     test_cluster.wait_for_exists()
 
 
-def test_delete_host_appear_after_refresh(setup_provider, provider):
+def test_delete_host_appear_after_refresh(appliance, setup_provider, provider):
     """ Tests delete host
 
     Metadata:
         test_flag: delete_object
     """
+    host_collection = appliance.get(host.HostCollection)
     host_name = provider.data['remove_test']['host']
-    test_host = host.Host(name=host_name, provider=provider)
+    test_host = host_collection.instantiate(name=host_name, provider=provider)
     test_host.delete(cancel=False)
-    host.wait_for_host_delete(test_host)
+    test_host.wait_for_delete()
     provider.refresh_provider_relationships()
-    host.wait_for_host_to_appear(test_host)
+    test_host.wait_to_appear()
 
 
 def test_delete_vm_appear_after_refresh(setup_provider, provider):

@@ -10,7 +10,7 @@ from cfme.cloud.instance import Instance
 from cfme.infrastructure import virtual_machines as vms
 from cfme.services import workloads
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import HostCollection
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -33,11 +33,12 @@ def test_cloudinstance_defaultfilters():
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
-def test_infrastructurehost_defaultfilters():
+def test_infrastructurehost_defaultfilters(appliance):
     filters = [['Infrastructure', 'Hosts', 'Platform / HyperV']]
     df = st.DefaultFilter(name='Platform / HyperV')
     df.update({'filters': [(k, True) for k in filters]})
-    navigate_to(Host, 'All')
+    host_collecton = appliance.get(HostCollection)
+    navigate_to(host_collecton, 'All')
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
