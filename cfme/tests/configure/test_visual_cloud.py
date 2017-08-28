@@ -8,9 +8,9 @@ from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
-from cfme.cloud.keypairs import KeyPair
-from cfme.cloud.stack import Stack
-from cfme.cloud.tenant import Tenant
+from cfme.cloud.keypairs import KeyPairCollection
+from cfme.cloud.stack import StackCollection
+from cfme.cloud.tenant import TenantCollection
 from cfme.web_ui import toolbar as tb, match_location
 from utils.appliance.implementations.ui import navigate_to
 
@@ -22,11 +22,11 @@ pytestmark = [pytest.mark.tier(3),
 # TODO When all of these classes have widgets and views use them in the tests
 grid_pages = [CloudProvider,
               AvailabilityZone,
-              Tenant,
+              TenantCollection,
               Flavor,
               Instance,
-              Stack,
-              KeyPair]
+              StackCollection,
+              KeyPairCollection]
 
 # Dict values are kwargs for cfme.web_ui.match_location
 landing_pages = {
