@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
 
@@ -7,6 +8,7 @@ from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogIt
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.myservice import MyService
 from cfme.services.requests import Request
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
@@ -19,6 +21,13 @@ pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < "5.8"),
     pytest.mark.ignore_stream("upstream"),
     test_requirements.ansible
+]
+
+
+SERVICE_CATALOG_VALUES = [
+    ("default", None, "localhost"),
+    ("blank", "", "localhost"),
+    ("unavailable_host", "unavailable_host", "unavailable_host")
 ]
 
 
@@ -70,6 +79,21 @@ def catalog(ansible_catalog_item):
 def service_catalog(ansible_catalog_item, catalog):
     service_catalog_ = ServiceCatalogs(catalog, ansible_catalog_item.name)
     return service_catalog_
+
+
+@pytest.yield_fixture
+def service_request(ansible_catalog_item):
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
+    service_request_ = Request(request_descr)
+    yield service_request_
+    service_request_.remove_request()
+
+
+@pytest.yield_fixture
+def service(ansible_catalog_item):
+    service_ = MyService(ansible_catalog_item.name)
+    yield service_
+    service_.delete()
 
 
 @pytest.mark.tier(1)
@@ -153,3 +177,18 @@ def test_service_ansible_playbook_confirm():
     assert view.retirement.hosts.value == "localhost"
     assert view.retirement.verbosity.selected_option == "0 (Normal)"
     assert view.retirement.remove_resources.selected_option == "Yes"
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("host_type,order_value,result", SERVICE_CATALOG_VALUES, ids=[
+    value[0] for value in SERVICE_CATALOG_VALUES])
+def test_service_ansible_playbook_order(ansible_catalog_item, service_catalog, service_request,
+        service, host_type, order_value, result):
+    """Test ordering ansible playbook service against default host, blank field and
+    unavailable host.
+    """
+    service_catalog.ansible_dialog_values = {"hosts": order_value}
+    service_catalog.order()
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    assert result == view.provisioning.details.get_text_of("Hosts")

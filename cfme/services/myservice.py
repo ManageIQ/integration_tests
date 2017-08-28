@@ -1,6 +1,6 @@
 from widgetastic.widget import Text, View
 from widgetastic_manageiq import Accordion, ManageIQTree, Calendar, SummaryTable
-from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound
+from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 from cfme.web_ui import toolbar as tb, Quadicon
 from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -66,11 +66,21 @@ class EditTagsForm(MyServicesView):
 class MyServiceDetailView(MyServicesView):
     title = Text("#explorer_title_text")
 
-    properties_detail = SummaryTable(title='Properties')
-    lifecycle_detail = SummaryTable(title='Lifecycle')
-    relationships_detail = SummaryTable(title='Relationships')
-    vm_detail = SummaryTable(title='Totals for Service VMs ')
-    smart_mgmt_detail = SummaryTable(title='Smart Management')
+    @View.nested
+    class details(Tab):  # noqa
+        properties = SummaryTable(title='Properties')
+        lifecycle = SummaryTable(title='Lifecycle')
+        relationships = SummaryTable(title='Relationships')
+        vm = SummaryTable(title='Totals for Service VMs ')
+        smart_mgmt = SummaryTable(title='Smart Management')
+
+    @View.nested
+    class provisioning(Tab):  # noqa
+        results = SummaryTable(title='Results')
+        plays = SummaryTable(title='Plays')
+        details = SummaryTable(title='Details')
+        credentials = SummaryTable(title='Credentials')
+        standart_output = Text('.//div[@id="provisioning"]//pre')
 
     @property
     def is_displayed(self):
