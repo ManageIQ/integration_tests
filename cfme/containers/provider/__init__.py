@@ -23,8 +23,7 @@ from cfme.common.provider_views import BeforeFillMixin,\
     ContainersProviderEditView, ProvidersView
 from cfme.base.credential import TokenCredential
 from cfme.web_ui import (
-    Quadicon, toolbar as tb,
-    InfoBlock, Region, match_location, PagedTable, CheckboxTable)
+    Quadicon, toolbar as tb, InfoBlock, Region, match_location, PagedTable)
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -551,8 +550,7 @@ class Labelable(object):
             raise exceptions.LabelNotFoundException(failure_signature)
 
 
-def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
-                          silent_failure=False):
+def navigate_and_get_rows(provider, obj, count, silent_failure=False):
     """Get <count> random rows from the obj list table,
     if <count> is greater that the number of rows, return number of rows.
 
@@ -566,14 +564,12 @@ def navigate_and_get_rows(provider, obj, count, table_class=CheckboxTable,
 
     return: list of rows"""
 
-    navigate_to(obj, 'All')
-    tb.select('List View')
+    view = navigate_to(obj, 'All')
+    view.toolbar.view_selector.list_button.click()
     if sel.is_displayed_text("No Records Found.") and silent_failure:
         return []
-    from cfme.web_ui import paginator
-    paginator.results_per_page('1000 items')
-    table = table_class(table_locator="//div[@id='list_grid']//table")
-    rows = table.rows_as_list()
+    view.entities.paginator.set_items_per_page(1000)
+    rows = list(view.table.rows())
     if not rows:
         return []
 

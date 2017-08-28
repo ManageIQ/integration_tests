@@ -60,7 +60,7 @@ def test_breadcrumbs(provider, soft_assert):
                         .format(dataset.obj.__name__))
         row = rows[-1]
         instance_name = row[2].text
-        sel.click(row)
+        row.click()
 
         breadcrumb_elements = breadcrumbs()
         soft_assert(breadcrumb_elements,
