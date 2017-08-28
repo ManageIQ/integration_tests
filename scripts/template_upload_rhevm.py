@@ -13,7 +13,6 @@ import argparse
 import fauxfactory
 import re
 import sys
-import traceback as tb
 from threading import Lock, Thread
 
 from ovirtsdk.xml import params
@@ -88,25 +87,24 @@ def change_edomain_state(api, state, edomain, provider):
             if export_domain:
                 if state == 'maintenance' and export_domain.get_status().state == 'active':
                     # may be tasks on the storage, try multiple times
-                    logger.info('RHEVM:{} {} in active, waiting for deactivate...',
+                    logger.info('RHEVM:%s %s in active, waiting for deactivate...',
                                 provider, edomain)
                     wait_for(lambda: dc.storagedomains.get(edomain).deactivate(), delay=5,
                              num_sec=600, handle_exception=True)
                 elif state == 'active' and export_domain.get_status().state != 'active':
-                    logger.info('RHEVM:{} {} not active, waiting for active...',
+                    logger.info('RHEVM:%s %s not active, waiting for active...',
                                 provider, edomain)
                     wait_for(lambda: dc.storagedomains.get(edomain).activate(), delay=5,
                              num_sec=600, handle_exception=True)
 
                 wait_for(is_edomain_in_state, [api, state, edomain],
                          fail_condition=False, delay=5, num_sec=240)
-                logger.info('RHEVM:{} {} successfully set to {} state', provider, edomain, state)
+                logger.info('RHEVM:%s %s successfully set to %s state', provider, edomain, state)
                 return True
         return False
     except Exception:
-        logger.exception("RHEVM:{} Exception occurred while changing {} state to {}",
+        logger.exception("RHEVM:%s Exception occurred while changing %s state to %s",
                          provider, edomain, state)
-        tb.print_exc()
         return False
 
 
