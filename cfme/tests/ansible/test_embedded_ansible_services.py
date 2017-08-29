@@ -3,8 +3,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
+from cfme.services import requests
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
+from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
+from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.version import current_version
@@ -41,6 +44,7 @@ def ansible_catalog_item(ansible_repository):
     cat_item = AnsiblePlaybookCatalogItem(
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
+        display_in_catalog=True,
         provisioning={
             "repository": ansible_repository.name,
             "playbook": "dump_all_variables.yml",
@@ -52,6 +56,20 @@ def ansible_catalog_item(ansible_repository):
     cat_item.create()
     yield cat_item
     cat_item.delete()
+
+
+@pytest.yield_fixture(scope="module")
+def catalog(ansible_catalog_item):
+    catalog_ = Catalog(fauxfactory.gen_alphanumeric(), items=[ansible_catalog_item.name])
+    catalog_.create()
+    yield catalog_
+    catalog_.delete()
+
+
+@pytest.fixture(scope="module")
+def service_catalog(ansible_catalog_item, catalog):
+    service_catalog_ = ServiceCatalogs(catalog, ansible_catalog_item.name)
+    return service_catalog_
 
 
 @pytest.mark.tier(1)
@@ -104,3 +122,12 @@ def test_service_ansible_playbook_bundle(ansible_catalog_item):
     view = navigate_to(CatalogBundle(), "BundleAdd")
     options = view.resources.select_resource.all_options
     assert ansible_catalog_item.name not in [o.text for o in options]
+
+
+@pytest.mark.tier(2)
+def test_service_ansible_playbook_provision_in_requests(ansible_catalog_item, service_catalog):
+    """Tests if ansible playbook service provisioning is shown in service requests."""
+    service_catalog.order()
+    cat_item_name = ansible_catalog_item.name
+    cells = {"Description": "Provisioning Service [{0}] from [{0}]".format(cat_item_name)}
+    assert requests.find_request(cells)
