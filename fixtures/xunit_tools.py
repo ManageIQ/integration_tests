@@ -35,9 +35,10 @@ blacklist = [
     'cfme/tests/containers/',
     'cfme/tests/middleware/',
     'cfme/tests/openstack/',
-    'rhos',
-    'rhev',
     'hawkular',
+    r'\[.*rhos',
+    r'\[.*rhev',
+    r'\[.*rhv',
 ]
 compiled_blacklist = re.compile('(' + ')|('.join(blacklist) + ')')
 
