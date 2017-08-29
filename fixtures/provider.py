@@ -61,7 +61,7 @@ SETUP_FAIL_LIMIT = 3
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme')
-    parser.addoption("--provider-limit", action="store", default=0, type=int,
+    parser.addoption("--provider-limit", action="store", default=1, type=int,
         help=(
             "Number of providers allowed to coexist on appliance. 0 means no limit. "
             "Use 1 or 2 when running on a single appliance, depending on HW configuration."))
