@@ -269,7 +269,8 @@ class LoggedIn(CFMENavigateStep):
 
 
 class ConfigurationView(BaseLoggedInPage):
-    flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
+    flash = FlashMessages(
+        './/div[starts-with(@id, "flash_text_div") or starts-with(@class, "flash_text_div")]')
     title = Text('#explorer_title_text')
 
     @View.nested

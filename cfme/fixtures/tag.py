@@ -88,7 +88,7 @@ def new_credential():
     """
         Returns credentials object used for new user in test module
     """
-    # Todo remove .lover() for principal after 1486041 fix
+    # Todo remove .lower() for principal after 1486041 fix
     return Credential(
         principal='uid{}'.format(fauxfactory.gen_alphanumeric().lower()), secret='redhat')
 
