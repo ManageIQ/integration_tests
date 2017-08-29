@@ -1,10 +1,10 @@
 import pytest
-from utils import testgen
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from utils.appliance.implementations.ui import navigate_to
 from cfme.networks.provider import NetworkProvider
+from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytest_generate_tests = testgen.generate(
@@ -20,11 +20,11 @@ def test_sdn_crud(provider):
     '''
 
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.contents.relationships.get_text_of("Network Manager")
+    net_prov_name = view.entities.relationships.get_text_of("Network Manager")
     network_provider = NetworkProvider(name=net_prov_name, provider=provider)
 
     view = navigate_to(network_provider, 'Details')
-    parent_name = view.contents.relationships.get_text_of("Parent Cloud Provider")
+    parent_name = view.entities.relationships.get_text_of("Parent Cloud Provider")
 
     assert parent_name == provider.name
 
@@ -32,7 +32,7 @@ def test_sdn_crud(provider):
                     "Security Groups", "Floating IPs", "Network Ports", "Load Balancers"]
     for testing_name in testing_list:
         view = navigate_to(network_provider, 'Details')
-        view.contents.relationships.click_at(testing_name)
+        view.entities.relationships.click_at(testing_name)
 
     provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()

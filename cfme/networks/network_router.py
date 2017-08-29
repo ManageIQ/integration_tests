@@ -1,17 +1,17 @@
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.update import Updateable
-from cfme.common import Taggable, SummaryMixin
-from cfme.networks.views import NetworkRouterView
+
+from cfme.common import WidgetasticTaggable
 from cfme.networks.views import NetworkRouterDetailsView
+from cfme.networks.views import NetworkRouterView
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class NetworkRouterCollection(Navigatable):
-    ''' Collection object for NetworkRouter object
+    """ Collection object for NetworkRouter object
         Note: Network providers object are not implemented in mgmt
-    '''
+    """
     def __init__(self, appliance=None, parent_provider=None):
         self.appliance = appliance
         self.parent = parent_provider
@@ -25,7 +25,8 @@ class NetworkRouterCollection(Navigatable):
         return [self.instantiate(name=r.name) for r in list_networks_obj]
 
 
-class NetworkRouter(Taggable, Updateable, SummaryMixin, Navigatable):
+class NetworkRouter(WidgetasticTaggable, Navigatable):
+    """ Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
     page_name = 'NetworkRouter'

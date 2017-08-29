@@ -1,16 +1,15 @@
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.update import Updateable
-from cfme.common import Taggable, SummaryMixin
-from cfme.networks.views import BalancerView
+
+from cfme.common import WidgetasticTaggable
 from cfme.networks.views import BalancerDetailsView
+from cfme.networks.views import BalancerView
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class BalancerCollection(Navigatable):
-    ''' Collection object for Balancer object
-    '''
+    """Collection object for Balancer object"""
     def __init__(self, appliance=None, parent_provider=None):
         self.appliance = appliance
         self.parent = parent_provider
@@ -24,8 +23,8 @@ class BalancerCollection(Navigatable):
         return [self.instantiate(name=b.name) for b in list_networks_obj]
 
 
-class Balancer(Taggable, Updateable, SummaryMixin, Navigatable):
-    ''' Class representing balancers in sdn '''
+class Balancer(WidgetasticTaggable, Navigatable):
+    """Class representing balancers in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
     page_name = 'network_balancer'
@@ -45,15 +44,15 @@ class Balancer(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def health_checks(self):
-        ''' Returns health check state '''
+        """ Returns health check state """
         view = navigate_to(self, 'Details')
-        return view.contents.properties.get_text_of('Health checks')
+        return view.entities.properties.get_text_of('Health checks')
 
     @property
     def listeners(self):
-        ''' Returns listeners of balancer '''
+        """ Returns listeners of balancer """
         view = navigate_to(self, 'Details')
-        return view.contents.properties.get_text_of('Listeners')
+        return view.entities.properties.get_text_of('Listeners')
 
 
 @navigator.register(Balancer, 'All')

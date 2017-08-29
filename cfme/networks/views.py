@@ -1,12 +1,13 @@
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView)
+                                 BaseEntitiesView)
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, Button
 from widgetastic.widget import View, Text
+
 from cfme.base.login import BaseLoggedInPage
 
 
 class NetworkProviderToolBar(View):
-    ''' Represents provider toolbar and its controls '''
+    """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -14,18 +15,18 @@ class NetworkProviderToolBar(View):
 
 
 class NetworkProviderDetailsToolBar(NetworkProviderToolBar):
-    ''' Represents provider details toolbar '''
+    """ Represents provider details toolbar """
     monitoring = Dropdown(text='Monitoring')
     download = Button(title='Download summary in PDF format')
 
 
 class NetworkProviderSideBar(View):
-    ''' Represents left side bar, usually contains navigation, filters, etc '''
+    """ Represents left side bar, usually contains navigation, filters, etc """
     pass
 
 
 class NetworkProviderDetailsSideBar(View):
-    ''' Represents left side bar of network providers details '''
+    """ Represents left side bar of network providers details """
     @View.nested
     class properties(Accordion):  # noqa
         ACCORDION_NAME = "Properties"
@@ -38,12 +39,12 @@ class NetworkProviderDetailsSideBar(View):
 
 
 class NetworkProviderEntities(BaseEntitiesView):
-    ''' Represents central view where all QuadIcons, etc are displayed '''
+    """ Represents central view where all QuadIcons, etc are displayed """
     pass
 
 
 class NetworkProviderView(BaseLoggedInPage):
-    ''' Represents whole All NetworkProviders page '''
+    """ Represents whole All NetworkProviders page """
     flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkProviderToolBar)
@@ -58,7 +59,7 @@ class NetworkProviderView(BaseLoggedInPage):
 
 
 class NetworkProviderDetailsView(BaseLoggedInPage):
-    ''' Represents detail view of network provider '''
+    """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -66,8 +67,8 @@ class NetworkProviderDetailsView(BaseLoggedInPage):
     sidebar = View.nested(NetworkProviderDetailsSideBar)
 
     @View.nested
-    class contents(View):  # noqa
-        ''' Represents details page when it's switched to Summary/Table view '''
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         status = SummaryTable(title="Status")
@@ -82,24 +83,24 @@ class NetworkProviderDetailsView(BaseLoggedInPage):
 
 
 class BalancerToolBar(View):
-    ''' Represents balancers toolbar and its controls '''
+    """ Represents balancers toolbar and its controls """
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class BalancerDetailsToolBar(BalancerToolBar):
-    ''' Represents details toolbar of balancer summary '''
+    """ Represents details toolbar of balancer summary """
     download = Button(title='Download summary in PDF format')
 
 
 class BalancerSideBar(View):
-    ''' Represents left side bar, usually contains navigation, filters, etc '''
+    """ Represents left side bar, usually contains navigation, filters, etc """
     pass
 
 
 class BalancerDetailsSideBar(View):
-    ''' Represents left side bar of balancer details '''
+    """ Represents left side bar of balancer details """
     @View.nested
     class properties(Accordion):  # noqa
         ACCORDION_NAME = "Properties"
@@ -112,12 +113,12 @@ class BalancerDetailsSideBar(View):
 
 
 class BalancerEntities(BaseEntitiesView):
-    ''' Represents central view where all QuadIcons, etc are displayed '''
+    """ Represents central view where all QuadIcons, etc are displayed """
     pass
 
 
 class BalancerView(BaseLoggedInPage):
-    ''' Represents whole All NetworkProviders page '''
+    """ Represents whole All NetworkProviders page """
     flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(BalancerToolBar)
@@ -132,7 +133,7 @@ class BalancerView(BaseLoggedInPage):
 
 
 class BalancerDetailsView(BaseLoggedInPage):
-    ''' Represents detail view of network provider '''
+    """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -140,8 +141,8 @@ class BalancerDetailsView(BaseLoggedInPage):
     sidebar = View.nested(BalancerDetailsSideBar)
 
     @View.nested
-    class contents(View):  # noqa
-        ''' Represents details page when it's switched to Summary/Table view '''
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")
@@ -154,7 +155,7 @@ class BalancerDetailsView(BaseLoggedInPage):
 
 
 class CloudNetworkToolBar(View):
-    ''' Represents cloud networks toolbar and its controls '''
+    """ Represents cloud networks toolbar and its controls """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -162,18 +163,18 @@ class CloudNetworkToolBar(View):
 
 
 class CloudNetworkDetailsToolBar(View):
-    ''' Represents provider details toolbar '''
+    """ Represents provider details toolbar """
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
 
 
 class CloudNetworkSideBar(View):
-    ''' Represents left side bar, usually contains navigation, filters, etc '''
+    """ Represents left side bar, usually contains navigation, filters, etc """
     pass
 
 
 class CloudNetworkDetailsSideBar(View):
-    ''' Represents left side bar of network providers details '''
+    """ Represents left side bar of network providers details """
     @View.nested
     class properties(Accordion):  # noqa
         ACCORDION_NAME = "Properties"
@@ -186,12 +187,12 @@ class CloudNetworkDetailsSideBar(View):
 
 
 class CloudNetworkEntities(BaseEntitiesView):
-    ''' Represents central view where all QuadIcons, etc are displayed '''
+    """ Represents central view where all QuadIcons, etc are displayed """
     pass
 
 
 class CloudNetworkView(BaseLoggedInPage):
-    ''' Represents whole All Cloud network page '''
+    """ Represents whole All Cloud network page """
     flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(CloudNetworkToolBar)
@@ -206,7 +207,7 @@ class CloudNetworkView(BaseLoggedInPage):
 
 
 class CloudNetworkDetailsView(BaseLoggedInPage):
-    ''' Represents detail view of cloud network '''
+    """ Represents detail view of cloud network """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -214,8 +215,8 @@ class CloudNetworkDetailsView(BaseLoggedInPage):
     sidebar = View.nested(NetworkProviderDetailsSideBar)
 
     @View.nested
-    class contents(View):  # noqa
-        ''' Represents details page when it's switched to Summary/Table view '''
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")
@@ -228,24 +229,24 @@ class CloudNetworkDetailsView(BaseLoggedInPage):
 
 
 class NetworkPortToolBar(View):
-    ''' Represents provider toolbar and its controls '''
+    """ Represents provider toolbar and its controls """
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class NetworkPortDetailsToolBar(NetworkPortToolBar):
-    ''' Represents toolbar of summary of port '''
+    """ Represents toolbar of summary of port """
     download = Button(title='Download summary in PDF format')
 
 
 class NetworkPortSideBar(View):
-    ''' Represents left side bar, usually contains navigation, filters, etc '''
+    """ Represents left side bar, usually contains navigation, filters, etc """
     pass
 
 
 class NetworkPortDetailsSideBar(View):
-    ''' Represents left side bar of network providers details '''
+    """ Represents left side bar of network providers details """
     @View.nested
     class properties(Accordion):  # noqa
         ACCORDION_NAME = "Properties"
@@ -258,12 +259,12 @@ class NetworkPortDetailsSideBar(View):
 
 
 class NetworkPortEntities(BaseEntitiesView):
-    ''' Represents central view where all QuadIcons, etc are displayed '''
+    """ Represents central view where all QuadIcons, etc are displayed """
     pass
 
 
 class NetworkPortView(BaseLoggedInPage):
-    ''' Represents whole All NetworkPorts page '''
+    """ Represents whole All NetworkPorts page """
     flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkPortToolBar)
@@ -278,7 +279,7 @@ class NetworkPortView(BaseLoggedInPage):
 
 
 class NetworkPortDetailsView(BaseLoggedInPage):
-    ''' Represents detail view of network provider '''
+    """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -286,8 +287,8 @@ class NetworkPortDetailsView(BaseLoggedInPage):
     sidebar = View.nested(NetworkPortDetailsSideBar)
 
     @View.nested
-    class contents(View):  # noqa
-        ''' Represents details page when it's switched to Summary/Table view '''
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")
@@ -300,7 +301,7 @@ class NetworkPortDetailsView(BaseLoggedInPage):
 
 
 class NetworkRouterToolBar(View):
-    ''' Represents provider toolbar and its controls '''
+    """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -308,18 +309,18 @@ class NetworkRouterToolBar(View):
 
 
 class NetworkRouterDetailsToolBar(View):
-    ''' Represents provider toolbar and its controls '''
+    """ Represents provider toolbar and its controls """
     policy = Dropdown(text='Policy')
     download = Button(title='Download')
 
 
 class NetworkRouterSideBar(View):
-    ''' Represents left side bar, usually contains navigation, filters, etc '''
+    """ Represents left side bar, usually contains navigation, filters, etc """
     pass
 
 
 class NetworkRouterDetailsSideBar(View):
-    ''' Represents left side bar of network providers details '''
+    """ Represents left side bar of network providers details """
     @View.nested
     class properties(Accordion):  # noqa
         ACCORDION_NAME = "Properties"
@@ -332,12 +333,12 @@ class NetworkRouterDetailsSideBar(View):
 
 
 class NetworkRouterEntities(BaseEntitiesView):
-    ''' Represents central view where all QuadIcons, etc are displayed '''
+    """ Represents central view where all QuadIcons, etc are displayed """
     pass
 
 
 class NetworkRouterView(BaseLoggedInPage):
-    ''' Represents whole All NetworkRouters page '''
+    """ Represents whole All NetworkRouters page """
     flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkRouterToolBar)
@@ -352,7 +353,7 @@ class NetworkRouterView(BaseLoggedInPage):
 
 
 class NetworkRouterDetailsView(BaseLoggedInPage):
-    ''' Represents detail view of network provider '''
+    """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -360,8 +361,8 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
     sidebar = View.nested(NetworkRouterDetailsSideBar)
 
     @View.nested
-    class contents(View):  # noqa
-        ''' Represents details page when it's switched to Summary/Table view '''
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")
@@ -374,7 +375,7 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
 
 
 class SecurityGroupToolBar(View):
-    ''' Represents provider toolbar and its controls '''
+    """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -382,19 +383,19 @@ class SecurityGroupToolBar(View):
 
 
 class SecurityGroupDetailsToolBar(View):
-    ''' Represents provider details toolbar '''
+    """ Represents provider details toolbar """
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class SecurityGroupSideBar(View):
-    ''' Represents left side bar, usually contains navigation, filters, etc '''
+    """ Represents left side bar, usually contains navigation, filters, etc """
     pass
 
 
 class SecurityGroupDetailsSideBar(View):
-    ''' Represents left side bar of network providers details '''
+    """ Represents left side bar of network providers details """
     @View.nested
     class properties(Accordion):  # noqa
         ACCORDION_NAME = "Properties"
@@ -407,12 +408,12 @@ class SecurityGroupDetailsSideBar(View):
 
 
 class SecurityGroupEntities(BaseEntitiesView):
-    ''' Represents central view where all QuadIcons, etc are displayed '''
+    """ Represents central view where all QuadIcons, etc are displayed """
     pass
 
 
 class SecurityGroupView(BaseLoggedInPage):
-    ''' Represents whole All SecurityGroups page '''
+    """ Represents whole All SecurityGroups page """
     flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(SecurityGroupToolBar)
@@ -427,7 +428,7 @@ class SecurityGroupView(BaseLoggedInPage):
 
 
 class SecurityGroupDetailsView(BaseLoggedInPage):
-    ''' Represents detail view of network provider '''
+    """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -435,8 +436,8 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
     sidebar = View.nested(SecurityGroupDetailsSideBar)
 
     @View.nested
-    class contents(View):  # noqa
-        ''' Represents details page when it's switched to Summary/Table view '''
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")
@@ -449,7 +450,7 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
 
 
 class SubnetToolBar(View):
-    ''' Represents provider toolbar and its controls '''
+    """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -457,18 +458,18 @@ class SubnetToolBar(View):
 
 
 class SubnetDetailsToolBar(View):
-    ''' Represents provider details toolbar '''
+    """ Represents provider details toolbar """
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
 
 
 class SubnetSideBar(View):
-    ''' Represents left side bar, usually contains navigation, filters, etc '''
+    """ Represents left side bar, usually contains navigation, filters, etc """
     pass
 
 
 class SubnetDetailsSideBar(View):
-    ''' Represents left side bar of network providers details '''
+    """ Represents left side bar of network providers details """
     @View.nested
     class properties(Accordion):  # noqa
         ACCORDION_NAME = "Properties"
@@ -481,12 +482,12 @@ class SubnetDetailsSideBar(View):
 
 
 class SubnetEntities(BaseEntitiesView):
-    ''' Represents central view where all QuadIcons, etc are displayed '''
+    """ Represents central view where all QuadIcons, etc are displayed """
     pass
 
 
 class SubnetView(BaseLoggedInPage):
-    ''' Represents whole All Subnets page '''
+    """ Represents whole All Subnets page """
     flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(SubnetToolBar)
@@ -501,7 +502,7 @@ class SubnetView(BaseLoggedInPage):
 
 
 class SubnetDetailsView(BaseLoggedInPage):
-    ''' Represents detail view of network provider '''
+    """ Represents detail view of network provider """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -509,8 +510,8 @@ class SubnetDetailsView(BaseLoggedInPage):
     sidebar = View.nested(SubnetDetailsSideBar)
 
     @View.nested
-    class contents(View):  # noqa
-        ''' Represents details page when it's switched to Summary/Table view '''
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
         properties = SummaryTable(title="Properties")
         relationships = SummaryTable(title="Relationships")
         smart_management = SummaryTable(title="Smart Management")

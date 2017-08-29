@@ -1,16 +1,16 @@
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.update import Updateable
-from cfme.common import Taggable, SummaryMixin
-from utils import providers
-from cfme.networks.views import CloudNetworkView
+
+from cfme.common import WidgetasticTaggable
 from cfme.networks.views import CloudNetworkDetailsView
+from cfme.networks.views import CloudNetworkView
+from utils import providers
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class CloudNetworkCollection(Navigatable):
-    ''' Collection object for Cloud Network object '''
+    """Collection object for Cloud Network object"""
     def __init__(self, appliance=None, parent_provider=None):
         self.appliance = appliance
         self.parent = parent_provider
@@ -24,8 +24,8 @@ class CloudNetworkCollection(Navigatable):
         return [self.instantiate(name=n.name) for n in list_networks_obj]
 
 
-class CloudNetwork(Taggable, Updateable, SummaryMixin, Navigatable):
-    ''' Class representing cloud networks in cfme database '''
+class CloudNetwork(WidgetasticTaggable, Navigatable):
+    """Class representing cloud networks in cfme database"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
     page_name = 'cloud_network'
@@ -43,23 +43,23 @@ class CloudNetwork(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def parent_provider(self):
-        ''' Return object of parent cloud provider '''
+        """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        provider_name = view.contents.relationships.get_text_of('Parent ems cloud')
+        provider_name = view.entities.relationships.get_text_of('Parent ems cloud')
         return providers.get_crud_by_name(provider_name)
 
     @property
     def network_provider(self):
-        ''' Return object of network manager '''
+        """ Return object of network manager """
         view = navigate_to(self, 'Details')
-        provider_name = view.contents.relationships.get_text_of('Network Manager')
+        provider_name = view.entities.relationships.get_text_of('Network Manager')
         return providers.get_crud_by_name(provider_name)
 
     @property
     def network_type(self):
-        ''' Return type of network '''
+        """ Return type of network """
         view = navigate_to(self, 'Details')
-        return view.contents.properties.get_text_of('Type')
+        return view.entities.properties.get_text_of('Type')
 
 
 @navigator.register(CloudNetwork, 'All')

@@ -1,17 +1,17 @@
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.update import Updateable
-from cfme.common import Taggable, SummaryMixin
-from cfme.networks.views import NetworkPortView
+
+from cfme.common import WidgetasticTaggable
 from cfme.networks.views import NetworkPortDetailsView
+from cfme.networks.views import NetworkPortView
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class NetworkPortCollection(Navigatable):
-    ''' Collection object for NetworkPort object
+    """ Collection object for NetworkPort object
         Note: Network providers object are not implemented in mgmt
-    '''
+    """
     def __init__(self, appliance=None, parent_provider=None):
         self.appliance = appliance
         self.parent = parent_provider
@@ -25,8 +25,8 @@ class NetworkPortCollection(Navigatable):
         return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 
-class NetworkPort(Taggable, Updateable, SummaryMixin, Navigatable):
-    ''' Class representing network ports in sdn '''
+class NetworkPort(WidgetasticTaggable, Navigatable):
+    """Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
     category = "networks"
     page_name = 'network_port'
@@ -44,26 +44,26 @@ class NetworkPort(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def mac_address(self):
-        ''' Returns mac adress (string) of the port '''
+        """ Returns mac adress (string) of the port """
         view = navigate_to(self, 'Details')
-        return view.contents.properties.get_text_of('Mac address')
+        return view.entities.properties.get_text_of('Mac address')
 
     @property
     def network_type(self):
         view = navigate_to(self, 'Details')
-        return view.contents.properties.get_text_of('Type')
+        return view.entities.properties.get_text_of('Type')
 
     @property
     def floating_ips(self):
-        ''' Returns floating ips (string) of the port '''
+        """ Returns floating ips (string) of the port """
         view = navigate_to(self, 'Details')
-        return view.contents.properties.get_text_of('Floating ip addresses')
+        return view.entities.properties.get_text_of('Floating ip addresses')
 
     @property
     def fixed_ips(self):
-        ''' Returns fixed ips (string) of the port '''
+        """ Returns fixed ips (string) of the port """
         view = navigate_to(self, 'Details')
-        return view.contents.properties.get_text_of('Fixed ip addresses')
+        return view.entities.properties.get_text_of('Fixed ip addresses')
 
 
 @navigator.register(NetworkPort, 'All')

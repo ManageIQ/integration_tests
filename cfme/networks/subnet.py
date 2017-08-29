@@ -1,18 +1,18 @@
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.update import Updateable
-from cfme.common import Taggable, SummaryMixin
-from utils import providers
-from cfme.networks.views import SubnetView
+
+from cfme.common import WidgetasticTaggable
 from cfme.networks.views import SubnetDetailsView
+from cfme.networks.views import SubnetView
+from utils import providers
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class SubnetCollection(Navigatable):
-    ''' Collection object for Subnet object
+    """ Collection object for Subnet object
         Note: Network providers object are not implemented in mgmt
-    '''
+    """
     def __init__(self, appliance=None, parent_provider=None):
         self.appliance = appliance
         self.parent = parent_provider
@@ -26,7 +26,8 @@ class SubnetCollection(Navigatable):
         return [self.instantiate(name=s.name) for s in list_networks_obj]
 
 
-class Subnet(Taggable, Updateable, SummaryMixin, Navigatable):
+class Subnet(WidgetasticTaggable, Navigatable):
+    """Class representing subnets in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
     page_name = 'network_subnet'
@@ -44,21 +45,21 @@ class Subnet(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def parent_provider(self):
-        ''' Return object of parent cloud provider '''
+        """ Return object of parent cloud provider """
         view = navigate_to(self, 'Details')
-        provider_name = view.contents.relationships.get_text_of('Parent ems cloud')
+        provider_name = view.entities.relationships.get_text_of('Parent ems cloud')
         return providers.get_crud_by_name(provider_name)
 
     @property
     def network_provider(self):
-        ''' Return name of network manager '''
+        """ Return name of network manager """
         view = navigate_to(self, 'Details')
-        return view.contents.relationships.get_text_of('Network Manager')
+        return view.entities.relationships.get_text_of('Network Manager')
 
     @property
     def zone(self):
         view = navigate_to(self, 'Details')
-        return view.contents.relationships.get_text_of('Zone')
+        return view.entities.relationships.get_text_of('Zone')
 
 
 @navigator.register(Subnet, 'All')

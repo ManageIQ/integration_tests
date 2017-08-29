@@ -1,10 +1,10 @@
 import pytest
-from utils import testgen
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.networks.balancer import BalancerCollection
 from cfme.networks.provider import NetworkProviderCollection
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -26,7 +26,7 @@ def test_prov_balances_number(provider):
     providers = prov_collection.all()
     for prov in providers:
         view = navigate_to(prov, 'Details')
-        balancers_number = view.contents.relationships.get_text_of('Load Balancers')
+        balancers_number = view.entities.relationships.get_text_of('Load Balancers')
         sum_manual += int(balancers_number)
     assert sum_manual == sum_all
 

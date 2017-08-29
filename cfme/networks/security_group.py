@@ -1,17 +1,17 @@
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.update import Updateable
-from cfme.common import Taggable, SummaryMixin
-from cfme.networks.views import SecurityGroupView
+
+from cfme.common import WidgetasticTaggable
 from cfme.networks.views import SecurityGroupDetailsView
+from cfme.networks.views import SecurityGroupView
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class SecurityGroupCollection(Navigatable):
-    ''' Collection object for SecurityGroup object
+    """ Collection object for SecurityGroup object
         Note: Network providers object are not implemented in mgmt
-    '''
+    """
     def __init__(self, appliance=None, parent_provider=None):
         self.appliance = appliance
         self.parent = parent_provider
@@ -25,7 +25,8 @@ class SecurityGroupCollection(Navigatable):
         return [self.instantiate(name=s.name) for s in list_networks_obj]
 
 
-class SecurityGroup(Taggable, Updateable, SummaryMixin, Navigatable):
+class SecurityGroup(WidgetasticTaggable, Navigatable):
+    """Class representing security group in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
     page_name = 'security_group'

@@ -1,23 +1,24 @@
-from utils import version
-from cfme.common.provider import BaseProvider
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.wait import wait_for
-from cfme.networks.views import NetworkProviderView
-from cfme.networks.views import NetworkProviderDetailsView
+
+from cfme.common.provider import BaseProvider
 from cfme.networks.balancer import BalancerCollection
 from cfme.networks.cloud_network import CloudNetworkCollection
 from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.network_router import NetworkRouterCollection
-from cfme.networks.subnet import SubnetCollection
 from cfme.networks.security_group import SecurityGroupCollection
+from cfme.networks.subnet import SubnetCollection
+from cfme.networks.views import NetworkProviderDetailsView
+from cfme.networks.views import NetworkProviderView
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.wait import wait_for
 
 
 class NetworkProviderCollection(Navigatable):
-    ''' Collection object for NetworkProvider object
-        Note: Network providers object are not implemented in mgmt
-    '''
+    """Collection object for NetworkProvider object
+       Note: Network providers object are not implemented in mgmt
+    """
     def __init__(self, appliance=None):
         self.appliance = appliance
 
@@ -55,10 +56,10 @@ class NetworkProviderCollection(Navigatable):
 
 
 class NetworkProvider(BaseProvider):
-    ''' Class representing network provider in sdn
+    """ Class representing network provider in sdn
         Note: Network provider can be added to cfme database
               only automaticaly with cloud provider
-    '''
+    """
     STATS_TO_MATCH = []
     string_name = 'Networks'
     in_version = ('5.8', version.LATEST)
@@ -82,13 +83,13 @@ class NetworkProvider(BaseProvider):
         self.provider = provider
 
     def refresh_provider_relationships(self, cancel=True):
-        ''' Refresh relationships of network provider '''
+        """ Refresh relationships of network provider """
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Refresh Relationships and Power States',
                                                handle_alert=not cancel)
 
     def delete(self, cancel=True):
-        ''' Deltes a network provider from CFME '''
+        """ Deltes a network provider from CFME """
         view = navigate_to(self, 'Details')
         wait_for(lambda: view.toolbar.configuration.item_enabled('Remove this Network Provider'),
                  num_sec=10)
@@ -97,9 +98,9 @@ class NetworkProvider(BaseProvider):
 
     @property
     def valid_credentials_state(self):
-        ''' Checks whether credentials are valid '''
+        """ Checks whether credentials are valid """
         view = navigate_to(self, 'Details')
-        cred_state = view.contents.status.get_text_of('Default Credentials')
+        cred_state = view.entities.status.get_text_of('Default Credentials')
         return cred_state == "Valid"
 
     @property
@@ -132,7 +133,7 @@ class OpenCloudSubnets(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Cloud Subnets')
+        self.prerequisite_view.entities.relationships.click_at('Cloud Subnets')
 
 
 @navigator.register(NetworkProvider, 'CloudNetworks')
@@ -141,7 +142,7 @@ class OpenCloudNetworks(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Cloud Networks')
+        self.prerequisite_view.entities.relationships.click_at('Cloud Networks')
 
 
 @navigator.register(NetworkProvider, 'NetworkRouters')
@@ -150,7 +151,7 @@ class OpenNetworkRouters(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Cloud Routers')
+        self.prerequisite_view.entities.relationships.click_at('Cloud Routers')
 
 
 @navigator.register(NetworkProvider, 'SecurityGroups')
@@ -159,7 +160,7 @@ class OpenSecurityGroups(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Security Groups')
+        self.prerequisite_view.entities.relationships.click_at('Security Groups')
 
 
 @navigator.register(NetworkProvider, 'FloatingIPs')
@@ -168,7 +169,7 @@ class OpenFloatingIPs(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Floating IPs')
+        self.prerequisite_view.entities.relationships.click_at('Floating IPs')
 
 
 @navigator.register(NetworkProvider, 'NetworkPorts')
@@ -177,7 +178,7 @@ class OpenNetworkPorts(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Network Ports')
+        self.prerequisite_view.entities.relationships.click_at('Network Ports')
 
 
 @navigator.register(NetworkProvider, 'LoadBalancers')
@@ -186,7 +187,7 @@ class OpenNetworkBalancers(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Load Balancers')
+        self.prerequisite_view.entities.relationships.click_at('Load Balancers')
 
 
 @navigator.register(NetworkProvider, 'TopologyFromDetails')
@@ -195,7 +196,7 @@ class OpenTopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.overview.click_at('Topology')
+        self.prerequisite_view.entities.overview.click_at('Topology')
 
 
 @navigator.register(NetworkProvider, 'EditTags')

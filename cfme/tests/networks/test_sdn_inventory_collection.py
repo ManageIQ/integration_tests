@@ -1,9 +1,9 @@
 import pytest
-from utils import testgen
-from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.networks.cloud_network import CloudNetwork
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -22,7 +22,7 @@ def test_sdn_inventory_subnets(provider):
     for network_name in network_names:
         temp_network = CloudNetwork(name=network_name)
         view = navigate_to(temp_network, 'Details')
-        net_name = view.contents.properties.get_text_of('Name')
+        net_name = view.entities.properties.get_text_of('Name')
         assert net_name == network_name
 
     provider.delete_if_exists(cancel=False)

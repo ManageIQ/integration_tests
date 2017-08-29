@@ -1,16 +1,16 @@
 import pytest
-from utils import testgen
-from utils import version
-from utils.version import current_version
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.networks.provider import (NetworkProvider, NetworkProviderCollection)
 from cfme.networks.balancer import (Balancer, BalancerCollection)
 from cfme.networks.cloud_network import (CloudNetwork, CloudNetworkCollection)
 from cfme.networks.network_port import (NetworkPort, NetworkPortCollection)
+from cfme.networks.network_router import (NetworkRouter, NetworkRouterCollection)
+from cfme.networks.provider import (NetworkProvider, NetworkProviderCollection)
 from cfme.networks.security_group import (SecurityGroup, SecurityGroupCollection)
 from cfme.networks.subnet import (Subnet, SubnetCollection)
-from cfme.networks.network_router import (NetworkRouter, NetworkRouterCollection)
+from utils import testgen
+from utils import version
 from utils.appliance.implementations.ui import navigate_to
+from utils.version import current_version
 
 
 pytest_generate_tests = testgen.generate([AzureProvider], scope="module")
