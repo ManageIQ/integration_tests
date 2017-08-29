@@ -8,6 +8,7 @@ import pytest
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import (
     _creating_skeleton,
@@ -28,6 +29,7 @@ from utils import error, version
 from utils.blockers import BZ
 from utils.providers import ProviderFilter
 from utils.rest import assert_response
+from utils.update import update
 from utils.wait import wait_for
 
 
@@ -731,7 +733,7 @@ class TestServiceCatalogsRESTAPI(object):
         template = catalog.service_templates[0]
 
         # this doesn't return resource in the "service_requests" collection
-        # using workarount with `response.json()`
+        # using workaround with `response.json()`
         template.action.order()
         results = appliance.rest_api.response.json()
         assert_response(appliance)
@@ -770,7 +772,7 @@ class TestServiceCatalogsRESTAPI(object):
             template.reload()
 
         # this doesn't return resource in the "service_requests" collection
-        # using workarount with `response.json()`
+        # using workaround with `response.json()`
         catalog.service_templates.action.order(*service_templates)
         results = appliance.rest_api.response.json()
         results = results['results']
@@ -808,7 +810,7 @@ class TestServiceCatalogsRESTAPI(object):
             test_flag: rest
         """
         # this doesn't return resource in the "service_requests" collection
-        # using workarount with `response.json()`
+        # using workaround with `response.json()`
         catalog_bundle.action.order()
         results = appliance.rest_api.response.json()
         assert_response(appliance)
@@ -884,6 +886,166 @@ class TestServiceCatalogsRESTAPI(object):
         with error.expected('ActiveRecord::RecordNotFound'):
             appliance.rest_api.collections.service_catalogs.action.delete.POST(*service_catalogs)
         assert_response(appliance, http_status=404)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+class TestPendingRequestsRESTAPI(object):
+    @pytest.fixture(scope='class')
+    def new_domain(self, request):
+        """Creates new domain and copy instance from ManageIQ to this domain."""
+        dc = DomainCollection()
+        domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+        request.addfinalizer(domain.delete_if_exists)
+        instance = (dc
+            .instantiate(name='ManageIQ')
+            .namespaces.instantiate(name='Service')
+            .namespaces.instantiate(name='Provisioning')
+            .namespaces.instantiate(name='StateMachines')
+            .classes.instantiate(name='ServiceProvisionRequestApproval')
+            .instances.instantiate(name='Default'))
+        instance.copy_to(domain)
+
+        return domain
+
+    @pytest.fixture(scope='class')
+    def modified_instance(self, new_domain):
+        """Modifies the instance in new domain to change it to manual approval instead of auto."""
+        instance = (new_domain
+            .namespaces.instantiate(name='Service')
+            .namespaces.instantiate(name='Provisioning')
+            .namespaces.instantiate(name='StateMachines')
+            .classes.instantiate(name='ServiceProvisionRequestApproval')
+            .instances.instantiate(name='Default'))
+        with update(instance):
+            instance.fields = {'approval_type ': {'value': 'manual'}}
+
+    @pytest.fixture(scope='function')
+    def pending_request(
+            self, request, appliance, service_catalogs, service_templates, modified_instance):
+        catalog = service_catalogs[0]
+        unassign_templates(service_templates)
+
+        for template in service_templates:
+            catalog.service_templates.action.assign(template)
+
+        catalog.service_templates.reload()
+        template = catalog.service_templates[0]
+
+        # this doesn't return resource in the "service_requests" collection
+        # using workaround with `response.json()`
+        template.action.order()
+        results = appliance.rest_api.response.json()
+        assert_response(appliance)
+
+        service_request = appliance.rest_api.get_entity('service_requests', results['id'])
+
+        @request.addfinalizer
+        def _delete_if_exists():
+            try:
+                service_request.action.delete()
+            except Exception:
+                # can be already deleted
+                pass
+
+        def _order_pending():
+            service_request.reload()
+            return (
+                service_request.request_state.lower() == 'pending' and
+                service_request.approval_state.lower() == 'pending_approval')
+
+        wait_for(_order_pending, num_sec=30, delay=2)
+
+        return service_request
+
+    def test_create_pending_request(self, pending_request):
+        """Tests creating pending service request using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        # Wait a bit to check that it will not get auto-approved
+        # This `wait_for` is expected to fail.
+        wait_for(
+            lambda: pending_request.approval_state.lower() != 'pending_approval',
+            fail_func=pending_request.reload,
+            silent_failure=True,
+            num_sec=10,
+            delay=2)
+        assert pending_request.approval_state.lower() == 'pending_approval'
+
+    @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
+    def test_delete_pending_request_from_detail(self, appliance, pending_request, method):
+        """Tests deleting pending service request from detail using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        if method == 'delete':
+            del_action = pending_request.action.delete.DELETE
+        else:
+            del_action = pending_request.action.delete.POST
+
+        del_action()
+        assert_response(appliance)
+        with error.expected('ActiveRecord::RecordNotFound'):
+            del_action()
+        assert_response(appliance, http_status=404)
+
+    def test_delete_pending_request_from_collection(self, appliance, pending_request):
+        """Tests deleting pending service request from detail using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.service_requests
+        collection.action.delete(pending_request)
+        assert_response(appliance)
+        with error.expected('ActiveRecord::RecordNotFound'):
+            collection.action.delete(pending_request)
+        assert_response(appliance, http_status=404)
+
+    def test_order_manual_approval(self, request, appliance, pending_request):
+        """Tests ordering single catalog item with manual approval using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        pending_request.action.approve(reason='I said so.')
+        assert_response(appliance)
+
+        def _order_approved():
+            pending_request.reload()
+            return (
+                pending_request.request_state.lower() == 'finished' and
+                pending_request.approval_state.lower() == 'approved' and
+                pending_request.status.lower() == 'ok')
+
+        wait_for(_order_approved, num_sec=180, delay=10)
+
+        service_name = re.search(
+            r' \[([^\]]+)\] ', pending_request.message).group(1)
+        # this fails if the service with the `service_name` doesn't exist
+        new_service = appliance.rest_api.collections.services.get(name=service_name)
+
+        request.addfinalizer(new_service.action.delete)
+
+    def test_order_manual_denial(self, appliance, pending_request):
+        """Tests ordering single catalog item with manual denial using the REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        pending_request.action.deny(reason='I said so.')
+        assert_response(appliance)
+
+        def _order_denied():
+            pending_request.reload()
+            return (
+                pending_request.request_state.lower() == 'finished' and
+                pending_request.approval_state.lower() == 'denied' and
+                pending_request.status.lower() == 'denied')
+
+        wait_for(_order_denied, num_sec=30, delay=2)
 
 
 class TestServiceRequests(object):
