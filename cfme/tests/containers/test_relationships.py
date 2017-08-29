@@ -61,7 +61,7 @@ def check_relationships(instance):
     attr.click()
     if type(link_value) is int:
         from cfme.web_ui import paginator
-        rec_total = paginator.rec_total()
+        rec_total = int(paginator.rec_total())
         if rec_total != link_value:
             raise Exception('Difference between the value({}) in the relationships table in {}'
                             'to number of records ({}) in the target'
