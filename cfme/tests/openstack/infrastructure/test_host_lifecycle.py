@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.common.host_views import HostDetailsView
 from cfme.exceptions import HostNotFound
 from cfme.infrastructure.host import get_all_hosts
 from cfme.infrastructure.openstack_node import OpenstackNode
@@ -83,7 +82,6 @@ def test_introspect_host(host, provider):
     Metadata:
         test_flag: openstack_scale"""
     host.run_introspection()
-    flash.assert_success()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).inspection_finished_at, delay=15,
              timeout=600)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
@@ -96,7 +94,6 @@ def test_provide_host(host, provider):
     Metadata:
         test_flag: openstack_scale"""
     host.provide_node()
-    flash.assert_success()
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'available', delay=5,
              timeout=300)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=20), timeout=600)
@@ -113,7 +110,6 @@ def test_scale_provider_out(host, provider):
                'op': 'replace'}]
     provider.mgmt.iapi.node.update(host.name, params)
     provider.scale_out(1)
-    flash.assert_success()
     # This action takes usually a lot of time, so big delay and timeout are set
     wait_for(lambda: provider.mgmt.iapi.node.get(host.name).provision_state == 'active', delay=120,
              timeout=1800)

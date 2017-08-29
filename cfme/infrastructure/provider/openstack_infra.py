@@ -136,6 +136,7 @@ class OpenstackInfraProvider(InfraProvider):
         curr_compute_count = int(view.compute_count.value)
         view.compute_count.fill(curr_compute_count + increase_by)
         view.scale.click()
+        self.create_view(ProviderNodesView).flash.assert_no_error()
 
     def node_exist(self, name='my_node'):
         """" registered imported host exist
