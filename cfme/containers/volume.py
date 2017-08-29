@@ -6,11 +6,10 @@ import itertools
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import Table
 
-from cfme.base.ui import BaseLoggedInPage
 from cfme.common import SummaryMixin, Taggable
-from cfme.containers.provider import navigate_and_get_rows
+from cfme.containers.provider import navigate_and_get_rows,\
+    ContainerObjectAllBaseView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, match_location, InfoBlock,\
     PagedTable, CheckboxTable
@@ -65,13 +64,8 @@ class Volume(Taggable, SummaryMixin, Navigatable):
                 for row in itertools.islice(rows, count)]
 
 
-class VolumeAllView(BaseLoggedInPage):
-
-    table = Table(locator="//div[@id='list_grid']//table")
-
-    @property
-    def is_displayed(self):
-        return match_page(summary='Persistent Volumes')
+class VolumeAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Persistent Volumes'
 
 
 @navigator.register(Volume, 'All')

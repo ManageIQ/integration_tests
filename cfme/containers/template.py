@@ -6,11 +6,9 @@ from functools import partial
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic_manageiq import Table
 
-from cfme.base.ui import BaseLoggedInPage
 from cfme.common import SummaryMixin, Taggable
-from cfme.containers.provider import Labelable
+from cfme.containers.provider import Labelable, ContainerObjectAllBaseView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, match_location,\
     PagedTable, CheckboxTable
@@ -69,13 +67,8 @@ class Template(Taggable, Labelable, SummaryMixin, Navigatable):
                 for obj in itertools.islice(template_list, count)]
 
 
-class TemplateAllView(BaseLoggedInPage):
-
-    table = Table(locator="//div[@id='list_grid']//table")
-
-    @property
-    def is_displayed(self):
-        return match_page(summary='Container Templates')
+class TemplateAllView(ContainerObjectAllBaseView):
+    TITLE_TEXT = 'Container Templates'
 
 
 @navigator.register(Template, 'All')
