@@ -118,7 +118,7 @@ class OpenstackInfraProvider(InfraProvider):
         view.fill({'file': file_path})
         view.register.click()
         exp_msg = 'Nodes were added successfully. Refresh queued.'
-        self.create_view(ProviderNodesView).flash.assert_succes_messages(exp_msg)
+        self.create_view(ProviderNodesView).flash.assert_success_message(exp_msg)
 
     def scale_down(self):
         """Scales down provider"""
