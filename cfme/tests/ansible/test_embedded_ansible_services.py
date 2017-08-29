@@ -4,6 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
+from cfme.services.catalogs.catalog_item import CatalogBundle
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.version import current_version
@@ -33,6 +34,24 @@ def ansible_repository(wait_for_ansible):
     )
     yield repository
     repository.delete()
+
+
+@pytest.yield_fixture(scope="module")
+def ansible_catalog_item(ansible_repository):
+    cat_item = AnsiblePlaybookCatalogItem(
+        fauxfactory.gen_alphanumeric(),
+        fauxfactory.gen_alphanumeric(),
+        provisioning={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "create_new": True,
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
+        }
+    )
+    cat_item.create()
+    yield cat_item
+    cat_item.delete()
 
 
 @pytest.mark.tier(1)
@@ -77,3 +96,11 @@ def test_service_ansible_playbook_negative():
         "description": fauxfactory.gen_alphanumeric()
     })
     assert not view.add.active
+
+
+@pytest.mark.tier(2)
+def test_service_ansible_playbook_bundle(ansible_catalog_item):
+    """Ansible playbooks are not designed to be part of a cloudforms service bundle."""
+    view = navigate_to(CatalogBundle(), "BundleAdd")
+    options = view.resources.select_resource.all_options
+    assert ansible_catalog_item.name not in [o.text for o in options]
