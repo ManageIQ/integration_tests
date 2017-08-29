@@ -16,6 +16,8 @@ class OpenstackNode(Host):
         """Initiate maintenance mode"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Toggle Maintenance Mode', handle_alert=True)
+        exp_msg = '"{}": Toggle Maintenance successfully initiated'.format(self.name)
+        view.flash.assert_success_message(exp_msg)
 
     def provide_node(self):
         """Provide node - make it available"""
@@ -26,3 +28,5 @@ class OpenstackNode(Host):
         """Run introspection"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Introspect Node', handle_alert=True)
+        # exp_msg = '"{}": Toggle Maintenance successfully initiated'.format(self.name)
+        view.flash.assert_success_message(exp_msg)

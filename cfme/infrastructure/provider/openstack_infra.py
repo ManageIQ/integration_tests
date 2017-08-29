@@ -117,12 +117,15 @@ class OpenstackInfraProvider(InfraProvider):
         view = navigate_to(self, 'RegisterNodes')
         view.fill({'file': file_path})
         view.register.click()
+        exp_msg = 'Nodes were added successfully. Refresh queued.'
+        self.create_view(ProviderNodesView).flash.assert_succes_messages(exp_msg)
 
     def scale_down(self):
         """Scales down provider"""
         view = navigate_to(self, 'ScaleDown')
         view.checkbox.click()
         view.scale_down.click()
+        self.create_view(ProviderNodesView).flash.assert_no_error()
 
     def scale_out(self, increase_by=1):
         """Scale out Openstack Infra provider
