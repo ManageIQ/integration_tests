@@ -16,7 +16,7 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
                          "Security Groups", "Floating IPs", "Network Ports", "Load Balancers"])
 def test_provider_relationships_navigation(provider, tested_part):
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.relationships.get_text_of('Network Manager')
+    net_prov_name = view.contents.relationships.get_text_of('Network Manager')
 
     network_provider = NetworkProvider(name=net_prov_name)
 
@@ -29,7 +29,7 @@ def test_provider_relationships_navigation(provider, tested_part):
 
 def test_provider_topology_navigation(provider):
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.relationships.get_text_of('Network Manager')
+    net_prov_name = view.contents.relationships.get_text_of('Network Manager')
     network_provider = NetworkProvider(name=net_prov_name)
     navigate_to(network_provider, "TopologyFromDetails")
 

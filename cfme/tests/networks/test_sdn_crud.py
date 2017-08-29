@@ -20,7 +20,7 @@ def test_sdn_crud(provider):
     '''
 
     view = navigate_to(provider, 'Details')
-    net_prov_name = view.entities.relationships.get_text_of("Network Manager")
+    net_prov_name = view.contents.relationships.get_text_of("Network Manager")
     network_provider = NetworkProvider(name=net_prov_name, provider=provider)
 
     view = navigate_to(network_provider, 'Details')
