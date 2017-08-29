@@ -890,32 +890,30 @@ class TestServiceCatalogsRESTAPI(object):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 class TestPendingRequestsRESTAPI(object):
+    def _get_instance(self, miq_domain):
+        instance = (miq_domain
+            .namespaces.instantiate(name='Service')
+            .namespaces.instantiate(name='Provisioning')
+            .namespaces.instantiate(name='StateMachines')
+            .classes.instantiate(name='ServiceProvisionRequestApproval')
+            .instances.instantiate(name='Default'))
+        return instance
+
     @pytest.fixture(scope='class')
     def new_domain(self, request):
         """Creates new domain and copy instance from ManageIQ to this domain."""
         dc = DomainCollection()
         domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
         request.addfinalizer(domain.delete_if_exists)
-        instance = (dc
-            .instantiate(name='ManageIQ')
-            .namespaces.instantiate(name='Service')
-            .namespaces.instantiate(name='Provisioning')
-            .namespaces.instantiate(name='StateMachines')
-            .classes.instantiate(name='ServiceProvisionRequestApproval')
-            .instances.instantiate(name='Default'))
+        miq_domain = dc.instantiate(name='ManageIQ')
+        instance = self._get_instance(miq_domain)
         instance.copy_to(domain)
-
         return domain
 
     @pytest.fixture(scope='class')
     def modified_instance(self, new_domain):
         """Modifies the instance in new domain to change it to manual approval instead of auto."""
-        instance = (new_domain
-            .namespaces.instantiate(name='Service')
-            .namespaces.instantiate(name='Provisioning')
-            .namespaces.instantiate(name='StateMachines')
-            .classes.instantiate(name='ServiceProvisionRequestApproval')
-            .instances.instantiate(name='Default'))
+        instance = self._get_instance(new_domain)
         with update(instance):
             instance.fields = {'approval_type ': {'value': 'manual'}}
 
