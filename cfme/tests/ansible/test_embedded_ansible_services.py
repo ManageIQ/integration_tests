@@ -3,11 +3,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
-from cfme.services import requests
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.requests import Request
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.version import current_version
@@ -129,5 +129,27 @@ def test_service_ansible_playbook_provision_in_requests(ansible_catalog_item, se
     """Tests if ansible playbook service provisioning is shown in service requests."""
     service_catalog.order()
     cat_item_name = ansible_catalog_item.name
-    cells = {"Description": "Provisioning Service [{0}] from [{0}]".format(cat_item_name)}
-    assert requests.find_request(cells)
+    request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
+    service_request = Request(request_descr)
+    assert service_request.exists()
+
+
+@pytest.mark.tier(2)
+def test_service_ansible_playbook_confirm():
+    """Tests after selecting playbook additional widgets appear and are pre-populated where
+    possible.
+    """
+    view = navigate_to(AnsiblePlaybookCatalogItem, "Add")
+    assert view.provisioning.is_displayed
+    assert view.retirement.is_displayed
+    assert view.provisioning.repository.is_displayed
+    assert view.provisioning.hosts.is_displayed
+    assert view.provisioning.verbosity.is_displayed
+    assert view.retirement.repository.is_displayed
+    assert view.retirement.hosts.is_displayed
+    assert view.retirement.verbosity.is_displayed
+    assert view.retirement.remove_resources.is_displayed
+    assert view.provisioning.hosts.value == "localhost"
+    assert view.retirement.hosts.value == "localhost"
+    assert view.retirement.verbosity.selected_option == "0 (Normal)"
+    assert view.retirement.remove_resources.selected_option == "Yes"
