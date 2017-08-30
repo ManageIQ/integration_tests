@@ -9,6 +9,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.containers.provider.openshift import OpenshiftProvider
 from cfme.configure.configuration import get_server_roles, set_server_roles
 from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.common.provider import BaseProvider
@@ -27,9 +28,13 @@ from utils.version import current_version
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.providers_by_class(
         metafunc,
-        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider, GCEProvider],
+        [
+            VMwareProvider, RHEVMProvider, EC2Provider,
+            OpenStackProvider, AzureProvider, GCEProvider, OpenshiftProvider
+        ],
         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist,
+                        scope="module")
 
 
 pytestmark = [
@@ -83,25 +88,56 @@ def metrics_collection(clean_setup_provider, provider, enable_candu):
 
     logger.info("ID fetched; testing metrics collection now")
     start_time = time.time()
+
     host_count = 0
     vm_count = 0
+    container_count = 0
+    container_group_count = 0
+    container_node_count = 0
+
     host_rising = False
     vm_rising = False
+    container_rising = False
+    container_node_rising = False
+    container_group_rising = False
+
     timeout = 900.0  # 15 min
     while time.time() < start_time + timeout:
         last_host_count = host_count
         last_vm_count = vm_count
-        logger.info("name: %s, id: %s, vms: %s, hosts: %s",
-            provider.key, mgmt_system_id, vm_count, host_count)
+
+        last_container_count = container_count
+        last_container_node_count = container_node_count
+        last_container_group_count = container_group_count
+
         # Count host and vm metrics for the provider we're testing
-        host_count = store.current_appliance.db.client.session.query(metrics_tbl).filter(
+        query = store.current_appliance.db.client.session.query(metrics_tbl)
+        host_count = query.filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "Host"
         ).count()
-        vm_count = store.current_appliance.db.client.session.query(metrics_tbl).filter(
+        vm_count = query.filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "VmOrTemplate"
         ).count()
+        container_count = query.filter(
+            metrics_tbl.parent_ems_id == mgmt_system_id).filter(
+            metrics_tbl.resource_type == "Container"
+        ).count()
+        container_node_count = query.filter(
+            metrics_tbl.parent_ems_id == mgmt_system_id).filter(
+            metrics_tbl.resource_type == "ContainerNode"
+        ).count()
+        container_group_count = query.filter(
+            metrics_tbl.parent_ems_id == mgmt_system_id).filter(
+            metrics_tbl.resource_type == "ContainerGroup"
+        ).count()
+
+        logger.info("name: %s, id: %s, vms: %d, hosts: %d, "
+                    " conts: %d, cont. nodes: %d, container groups: %d",
+                    provider.key, mgmt_system_id, vm_count, host_count,
+                    container_count, container_node_count,
+                    container_group_count)
 
         if host_rising is not True:
             if host_count > last_host_count:
@@ -109,6 +145,15 @@ def metrics_collection(clean_setup_provider, provider, enable_candu):
         if vm_rising is not True:
             if vm_count > last_vm_count:
                 vm_rising = True
+        if container_rising is not True:
+            if container_count > last_container_count:
+                container_rising = True
+        if container_node_rising is not True:
+            if container_node_count > last_container_node_count:
+                container_node_rising = True
+        if container_group_rising is not True:
+            if container_group_count > last_container_group_count:
+                container_group_rising = True
 
         # only vms are collected for cloud
         if provider.category == "cloud" and vm_rising:
@@ -116,11 +161,15 @@ def metrics_collection(clean_setup_provider, provider, enable_candu):
         # both vms and hosts must be collected for infra
         elif provider.category == "infra" and vm_rising and host_rising:
             return
-        else:
-            time.sleep(15)
+        elif all((provider.category == "container",
+                  container_rising,
+                  container_node_rising,
+                  container_group_rising)):
+            return
 
-    if time.time() > start_time + timeout:
-        raise Exception("Timed out waiting for metrics to be collected")
+        time.sleep(15)
+    else:
+        pytest.fail("Timed out waiting for metrics to be collected.")
 
 
 def get_host_name(provider):
@@ -157,7 +206,7 @@ def test_raw_metric_vm_cpu(metrics_collection, appliance, provider):
         query = query_metric_db(appliance, provider, 'cpu_usagemhz_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usagemhz_rate_average')
-    elif provider.category == "cloud":
+    elif provider.category in ("cloud", "container"):
         query = query_metric_db(appliance, provider, 'cpu_usage_rate_average',
             vm_name)
         average_rate = attrgetter('cpu_usage_rate_average')
@@ -262,7 +311,7 @@ def test_raw_metric_host_network(metrics_collection, appliance, provider):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud')
+    lambda provider: provider.category in ('cloud', 'container'))
 @pytest.mark.meta(
     blockers=[BZ(1424589, forced_streams=["5.7", "5.8", "upstream"],
         unblock=lambda provider: provider.type != 'rhevm')]
