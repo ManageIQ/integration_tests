@@ -569,17 +569,6 @@ class IPAppliance(object):
         return known_ems_list
 
     def _query_endpoints(self):
-        if "endpoints" in self.db.client:
-            return self._query_post_endpoints()
-        else:
-            return self._query_pre_endpoints()
-
-    def _query_pre_endpoints(self):
-        ems_table = self.db.client["ext_management_systems"]
-        for ems in self.db.client.session.query(ems_table):
-            yield ems.ipaddress, ems.hostname
-
-    def _query_post_endpoints(self):
         """After Oct 5th, 2015, the ipaddresses and stuff was separated in a separate table."""
         ems_table = self.db.client["ext_management_systems"]
         ep = self.db.client["endpoints"]
