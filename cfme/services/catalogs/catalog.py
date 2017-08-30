@@ -1,4 +1,6 @@
+from widgetastic.utils import Parameter
 from widgetastic.widget import Text
+from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 from navmazing import NavigateToAttribute, NavigateToSibling
 from utils.update import Updateable
@@ -7,8 +9,12 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils import version
 
-
 from . import ServicesCatalogView
+
+
+class CatalogsMultiBoxSelect(MultiBoxSelect):
+    move_into_button = Button(title=Parameter("@move_into"))
+    move_from_button = Button(title=Parameter("@move_from"))
 
 
 class CatalogForm(ServicesCatalogView):
@@ -16,6 +22,12 @@ class CatalogForm(ServicesCatalogView):
 
     name = Input(name='name')
     description = Input(name="description")
+    assign_catalog_items = CatalogsMultiBoxSelect(
+        move_into="Move Selected buttons right",
+        move_from="Move Selected buttons left",
+        available_items="available_fields",
+        chosen_items="selected_fields"
+    )
 
     save_button = Button('Save')
     cancel_button = Button('Cancel')
@@ -79,8 +91,11 @@ class Catalog(Updateable, Pretty, Navigatable):
 
     def create(self):
         view = navigate_to(self, 'Add')
-        view.fill({'name': self.name,
-                   'description': self.description})
+        view.fill({
+            'name': self.name,
+            'description': self.description,
+            'assign_catalog_items': self.items
+        })
         view.add_button.click()
         view.flash.assert_success_message('Catalog "{}" was saved'.format(self.name))
         view = self.create_view(CatalogsView)
