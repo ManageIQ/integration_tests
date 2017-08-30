@@ -544,32 +544,13 @@ class IPAppliance(object):
             Unlike ``managed_known_providers``, this will also return names of providers that were
             not recognized, but are present.
         """
-        try:
-            known_ems_list = []
-            for ems in self.rest_api.collections.providers.all:
-                if not any(
-                        p_type in ems['type'] for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
-                    continue
-                known_ems_list.append(ems['name'])
-            return known_ems_list
-        except (AttributeError, KeyError, IOError):
-            self.log.exception(
-                'appliance.managed_provider_names could not be retrieved from REST, falling back')
-            self.db.client.session.expire_all()
-            ems_table = self.db.client["ext_management_systems"]
-            # Fetch all providers at once, return empty list otherwise
-            try:
-                ems_list = list(self.db.client.session.query(ems_table))
-            except Exception as ex:
-                self.log.warning("Unable to query DB for managed providers: %s", str(ex))
-                return []
-            known_ems_list = []
-            for ems in ems_list:
-                # Skip any EMS types that we don't care about / can't recognize safely
-                if not any(p_type in ems.type for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
-                    continue
-                known_ems_list.append(ems.name)
-            return known_ems_list
+        known_ems_list = []
+        for ems in self.rest_api.collections.providers.all:
+            if not any(
+                    p_type in ems['type'] for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
+                continue
+            known_ems_list.append(ems['name'])
+        return known_ems_list
 
     @property
     def managed_known_providers(self):
