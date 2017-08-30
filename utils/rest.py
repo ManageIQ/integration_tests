@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """Helper functions for tests using REST API."""
 
-from manageiq_client.api import ManageIQClient as MiqApi
-from utils import conf
-
 
 def assert_response(rest_obj, success=None, http_status=None, results_num=None):
     """Asserts that the response HTTP status code and content is as expected."""
@@ -52,15 +49,3 @@ def get_vms_in_service(rest_api, service):
     # return entities under /api/vms, not under /api/services/:id/vms subcollection
     # where "actions" are not available
     return [rest_api.get_entity('vms', vm['id']) for vm in service.vms.all]
-
-
-def get_rest_api(appliance, entry_point=None, auth=None, logger=None):
-    entry_point = entry_point or appliance.rest_api._entry_point
-    auth = auth or (conf.credentials['default']['username'],
-                    conf.credentials['default']['password'])
-    logger = logger or appliance.rest_logger
-    return MiqApi(
-        entry_point,
-        auth,
-        logger=logger,
-        verify_ssl=False)

@@ -17,7 +17,7 @@ from fixtures.provider import setup_one_or_skip
 from utils import error
 from utils.blockers import BZ
 from utils.providers import ProviderFilter
-from utils.rest import assert_response, get_rest_api
+from utils.rest import assert_response
 from utils.version import current_version
 from utils.wait import wait_for, wait_for_decorator
 
@@ -34,7 +34,7 @@ def a_provider(request):
 @pytest.fixture(scope='module')
 def api_version(appliance):
     entry_point = appliance.rest_api._versions.values()[0]
-    return get_rest_api(appliance, entry_point=entry_point)
+    return appliance.new_rest_api_instance(entry_point=entry_point)
 
 
 @pytest.fixture(scope="function")

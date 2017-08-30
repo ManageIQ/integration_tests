@@ -630,13 +630,20 @@ class IPAppliance(object):
     def from_url(cls, url):
         return cls(urlparse(url))
 
+    def new_rest_api_instance(
+            self, entry_point=None, auth=None, logger="default", verify_ssl=False):
+        """Returns new REST API instance."""
+        return MiqApi(
+            entry_point=entry_point or "{}://{}:{}/api".format(
+                self.scheme, self.address, self.ui_port),
+            auth=auth or (conf.credentials["default"]["username"],
+                          conf.credentials["default"]["password"]),
+            logger=self.rest_logger if logger == "default" else logger,
+            verify_ssl=verify_ssl)
+
     @cached_property
     def rest_api(self):
-        return MiqApi(
-            "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
-            (conf.credentials['default']['username'], conf.credentials['default']['password']),
-            logger=self.rest_logger,
-            verify_ssl=False)
+        return self.new_rest_api_instance()
 
     @cached_property
     def miqqe_version(self):
