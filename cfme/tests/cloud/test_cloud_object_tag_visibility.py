@@ -20,7 +20,7 @@ pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 @pytest.fixture(scope='module')
 def a_provider(request):
     prov_filter = ProviderFilter(classes=[CloudProvider],
-                                 required_fields=[['provisioning', 'stack']])
+                                 required_fields=[['provisioning', 'stacks']])
     return setup_one_or_skip(request, filters=[prov_filter])
 
 
