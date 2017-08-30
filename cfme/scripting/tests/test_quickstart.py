@@ -57,3 +57,17 @@ def test_quickstart_run(image, python, root_volume, yamls_volume):
 @pytest.mark.tcpstack(ONE)
 def test_boogie():
     pass
+
+
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+
+
+@pytest.mark.provider([VMwareProvider])
+def test_prov(provider):
+    print provider
+
+
+#@pytest.mark.provider(prov_class=[SCVMMProvider])
+def test_smoe(provider):
+    print "smoe"
