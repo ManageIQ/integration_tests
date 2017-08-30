@@ -1,7 +1,7 @@
 from types import NoneType
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox
-from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound
+from widgetastic.widget import Text, Checkbox, View
+from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
 from widgetastic_manageiq import Table, ManageIQTree
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.fixtures import pytest_selenium as sel
@@ -148,7 +148,31 @@ class EditTagsView(EditTagsForm):
             self.title.text == 'Editing My Company Tags for "Service Catalog Items"'
 
 
-class AddCatalogBundleView(BasicInfoForm):
+class CatalogBundleFormView(ServicesCatalogView):
+    title = Text('#explorer_title_text')
+
+    @View.nested
+    class basic_info(Tab):  # noqa
+        TAB_NAME = "Basic Info"
+        name = Input(name='name')
+        description = Input(name='description')
+        display = Checkbox(name='display')
+        select_catalog = BootstrapSelect('catalog_id')
+        select_dialog = BootstrapSelect('dialog_id')
+        select_orch_template = BootstrapSelect('template_id')
+        select_provider = BootstrapSelect('manager_id')
+        select_config_template = BootstrapSelect('template_id')
+        field_entry_point = Input(name='fqname')
+        retirement_entry_point = Input(name='retire_fqname')
+        tree = ManageIQTree('automate_treebox')
+
+    @View.nested
+    class resources(Tab):  # noqa
+        select_resource = BootstrapSelect('resource_id')
+
+
+class AddCatalogBundleView(CatalogBundleFormView):
+    cancel_button = Button('Cancel')
     apply_button = Button('Apply')
     add_button = Button("Add")
 
@@ -158,8 +182,7 @@ class AddCatalogBundleView(BasicInfoForm):
             self.title.text == "Adding a new Catalog Bundle"
 
 
-class EditCatalogBundleView(BasicInfoForm):
-
+class EditCatalogBundleView(CatalogBundleFormView):
     save_button = Button('Save')
     reset_button = Button('Reset')
 
@@ -315,20 +338,21 @@ class CatalogBundle(CatalogItem, Navigatable):
     def create(self):
         view = navigate_to(self, 'BundleAdd')
         domain = "ManageIQ (Locked)"
-        view.fill({'name': self.name,
-                   'description': self.description,
-                   'display': self.display_in,
-                   'select_catalog': self.catalog.name,
-                   'select_dialog': self.dialog})
-        if view.field_entry_point.value == "":
-            view.fill({'field_entry_point': ''})
-            view.tree.click_path(
+        view.basic_info.fill({
+            'name': self.name,
+            'description': self.description,
+            'display': self.display_in,
+            'select_catalog': self.catalog.name,
+            'select_dialog': self.dialog
+        })
+        if view.basic_info.field_entry_point.value == "":
+            view.basic_info.fill({'field_entry_point': ''})
+            view.basic_info.tree.click_path(
                 "Datastore", domain, "Service", "Provisioning",
                 "StateMachines", "ServiceProvision_Template", "CatalogItemInitialization")
             view.apply_button.click()
-        tabstrip.select_tab("Resources")
         for cat_item in self.catalog_items:
-            view.fill({'select_resource': cat_item})
+            view.resources.fill({'select_resource': cat_item})
         view.add_button.click()
         view.flash.assert_success_message('Catalog Bundle "{}" was added'.format(self.name))
         view = self.create_view(AllCatalogItemView)
@@ -337,8 +361,7 @@ class CatalogBundle(CatalogItem, Navigatable):
 
     def update(self, updates):
         view = navigate_to(self, 'BundleEdit')
-        tabstrip.select_tab("Resources")
-        changed = view.fill({'select_resource': updates.get('catalog_items')})
+        changed = view.resources.fill({'select_resource': updates.get('catalog_items')})
         if changed:
             view.save_button.click()
         else:
