@@ -536,21 +536,6 @@ class IPAppliance(object):
         finally:
             logging.disable(logging.NOTSET)
 
-    def _get_ems_ips(self, ems):
-        ep_table = self.db.client["endpoints"]
-        ip_addresses = set()
-        for ep in self.db.client.session.query(ep_table).filter(ep_table.resource_id == ems.id):
-            if ep.ipaddress is not None:
-                ip_addresses.add(ep.ipaddress)
-            elif ep.hostname is not None:
-                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ep.hostname) is not None:
-                    ip_addresses.add(ep.hostname)
-                else:
-                    ip_address = resolve_hostname(ep.hostname)
-                    if ip_address is not None:
-                        ip_addresses.add(ip_address)
-        return list(ip_addresses)
-
     def _list_ems(self):
         self.db.client.session.expire_all()
         ems_table = self.db.client["ext_management_systems"]
