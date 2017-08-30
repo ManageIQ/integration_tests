@@ -366,6 +366,8 @@ class Vm(VM):
                 return False
             except NoSuchElementException:
                 return False
+            except NameError:
+                return False
 
         def _click_tree_path(self, prop):
             """Find and click the given property in a snapshot tree path.
@@ -436,6 +438,10 @@ class Vm(VM):
             sel.handle_alert(cancel=cancel)
             flash.assert_message_match('Revert To Snapshot initiated for 1 VM and Instance from '
                                        'the CFME Database')
+
+        def refresh(self):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Reload current display')
 
     # POWER CONTROL OPTIONS
     SUSPEND = "Suspend"
