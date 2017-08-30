@@ -340,14 +340,13 @@ class EventListener(Thread):
         callback function will be called when event arrived in event_streams.
         callback will receive expected event and got event as params.
 
-        *evts - list of events which EventListener should listen to
+        Args:
+            evts: list of events which EventListener should listen to
+            callback: callback function that will be called if event is received
+            first_event: EventListener waits for only first event of such type.
+              it ignores such event in future if first matching event is found.
 
-        kwargs:
-            callback - callback function that will be called if event is received
-
-            first_event - EventListener waits for only first event of such type.
-            it ignores such event in future if first matching event is found.
-            By default EventListener collects and receives all matching events.
+        By default EventListener collects and receives all matching events.
         """
         if 'callback' in kwargs:
             callback = kwargs['callback']

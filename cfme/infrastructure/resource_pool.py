@@ -188,8 +188,10 @@ class ResourcePool(Pretty, Navigatable):
 
         The function first ensures that we are on the detail page for the specific resource pool.
 
-        :param *ident: An InfoBlock title, followed by the Key name, e.g. "Properties"
-        :returns: A string representing the contents of the InfoBlock's value.
+        Args:
+            ident: An InfoBlock title, followed by the Key name, e.g. "Properties"
+        Returns:
+            returns: A string representing the contents of the InfoBlock's value.
         """
         view = navigate_to(self, 'Details')
         table = None

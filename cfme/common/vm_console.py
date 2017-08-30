@@ -208,7 +208,7 @@ class VMConsole(Pretty):
         the text on the screen and then tries to match it against the 'text_to_find'.
 
         Args:
-            text_to_find   - This is what re.search will try to search for on screen.
+            text_to_find: This is what re.search will try to search for on screen.
         Returns:
             If the match is found returns True else False.
         """
@@ -220,9 +220,9 @@ class VMConsole(Pretty):
         """Wait for as long as the specified/default timeout for the 'text' to show up on screen.
 
         Args:
-            timeout         - Wait Time before wait_for function times out.
-            text_to_find    - value passed to find_text_on_screen function
-            to_disappear    - if set to True, function will wait for text_to_find to disappear
+            timeout: Wait Time before wait_for function times out.
+            text_to_find: value passed to find_text_on_screen function
+            to_disappear: if set to True, function will wait for text_to_find to disappear
                           from screen.
         """
         if not text_to_find:

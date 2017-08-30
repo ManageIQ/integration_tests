@@ -201,7 +201,7 @@ class Instance(VM, Navigatable):
         Args:
             values: Dictionary of form key/value pairs
             cancel: Boolean, cancel the form submission
-            reset Boolean, reset form after fill - returns immediately after reset
+            reset: Boolean, reset form after fill - returns immediately after reset
         Note:
             The edit form contains a 'Reset' button - if this is c
         """

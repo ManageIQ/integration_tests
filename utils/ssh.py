@@ -30,7 +30,7 @@ RUNCMD_TIMEOUT = 1200.0
 class SSHResult(namedtuple("SSHResult", ["rc", "output"])):
     """Allows rich comparison for more convenient testing.
 
-    Given you have ``result`` which is an instance of :py:class:`SSHResult`, you can do as follows:
+    Given you have ``result`` which is an instance of :py:class:`SSHResult`, you can do as follows
 
     .. code-block:: python
 
@@ -39,15 +39,15 @@ class SSHResult(namedtuple("SSHResult", ["rc", "output"])):
         assert 'something' in result  # like before but uses the ``in`` matching for a partial match
         assert result == 5  # assert that the $?=5 (you can use <, >, ...)
 
-    Therefore this class can act like 3 kinds of values:
+    Therefore this class can act like 3 kinds of values
 
-    * Like a string (with the output of the command) when compared with or cast to one
-    * Like a number (with the return code) when compared with or cast to one
-    * Like a bool, giving truthy value if the return code was zero. That is related to the
+    - Like a string (with the output of the command) when compared with or cast to one
+    - Like a number (with the return code) when compared with or cast to one
+    - Like a bool, giving truthy value if the return code was zero. That is related to the
       preceeding bullet.
 
-      But it still subclasses the original class therefore all old behaviour is kept. But you don't
-      have to expand the tuple or pull the value out if you are checking only one of them.
+    But it still subclasses the original class therefore all old behaviour is kept. But you don't
+    have to expand the tuple or pull the value out if you are checking only one of them.
     """
     def __str__(self):
         return self.output
@@ -96,7 +96,7 @@ class SSHClient(paramiko.SSHClient):
     Allows copying/overriding and use as a context manager
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
 
-    Keywords:
+    Args:
         container: If specified, then it is assumed that the VM hosts a container of CFME. The
             param then contains the name of the container.
         is_pod: If specified and True, then it is assumed that the target is a podified openshift

@@ -362,10 +362,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         Console is not supported as well.
 
         Args:
-            console       - one of the supported console types given by the Access button.
-            invokes_alert - If the particular console will invoke a CFME popup/alert
-                            setting this to true will handle this.
-            cancel        - Allows one to cancel the operation if the popup/alert occurs.
+            console: one of the supported console types given by the Access button.
+            invokes_alert: If the particular console will invoke a CFME popup/alert
+                           setting this to true will handle this.
+            cancel: Allows one to cancel the operation if the popup/alert occurs.
         """
         # TODO: implement vmrc vm console
         if console not in ['VM Console']:

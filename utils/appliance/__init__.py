@@ -2605,11 +2605,6 @@ class CurrentAppliance(object):
         return get_or_create_current_appliance()
 
 
-class Parent(object):
-    def __get__(self, instance, owner):
-        return instance.appliance.context
-
-
 class Navigatable(object):
 
     appliance = CurrentAppliance()

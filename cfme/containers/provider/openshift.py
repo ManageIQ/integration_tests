@@ -10,7 +10,6 @@ from cfme.containers.provider import ContainersProviderDefaultEndpoint,\
     ContainersProviderEndpointsForm
 from cfme.common.provider import DefaultEndpoint
 from utils.version import current_version
-from cfme.exceptions import ProviderHasNoKey
 
 
 class CustomAttribute(object):
@@ -187,10 +186,11 @@ class OpenshiftProvider(ContainersProvider):
 
     def delete_custom_attributes(self, *custom_attributes):
         """Deleting static custom attributes from provider.
+
         Args:
             custom_attributes: The custom attributes to delete.
                                (Could be also names (str))
-        returns: response.
+        Returns: response.
         """
         names = []
         for attr in custom_attributes:

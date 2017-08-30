@@ -1,6 +1,6 @@
 import sentaku
 
-from utils.appliance import Navigatable, Parent
+from utils.appliance import Navigatable
 from utils.pretty import Pretty
 
 
@@ -12,8 +12,6 @@ class Server(Navigatable, sentaku.modeling.ElementMixin):
         self.sid = sid
         self.zone.servers.add(self)
         self.parent = self.appliance.context
-
-    parent = Parent()
 
     address = sentaku.ContextualMethod()
     login = sentaku.ContextualMethod()

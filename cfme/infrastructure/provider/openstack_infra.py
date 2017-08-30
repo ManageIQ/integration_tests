@@ -110,9 +110,10 @@ class OpenstackInfraProvider(InfraProvider):
         """Register new nodes (Openstack)
         Fill a form for new host with json file format
         This function is valid only for RHOS10 and above
+
         Args:
-            file_path - file path of json file with new node details, navigation
-             MUST be from a specific self
+            file_path: file path of json file with new node details, navigation
+                       MUST be from a specific self
         """
         view = navigate_to(self, 'RegisterNodes')
         view.fill({'file': file_path})
@@ -121,10 +122,12 @@ class OpenstackInfraProvider(InfraProvider):
     def node_exist(self, name='my_node'):
         """" registered imported host exist
         This function is valid only for RHOS10 and above
+
         Args:
-            name - by default name is my_name Input self, name of the new node,
-             looking for the host in Ironic clients, compare the record found with
-              hosts list in CFME DB
+            name: by default name is my_name Input self, name of the new node,
+                  looking for the host in Ironic clients, compare the record found with
+                  hosts list in CFME DB
+
         Returns: boolean value if host found
         """
         nodes = self.mgmt.list_node()
