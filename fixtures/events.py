@@ -8,9 +8,14 @@ at the test end.
 register_event fixture accepts attributes for one expected event
 
 simple example:
+
+.. code-block:: python
+
     register_event(target_type='VmOrTemplate', target_name=vm_crud.name, event_type='vm_create')
 
 more complex example:
+
+.. code-block:: python
 
     def add_cmp(_, y):
         data = yaml.load(y)

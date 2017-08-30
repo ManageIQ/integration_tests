@@ -109,14 +109,15 @@ class EditTagsUserView(ConfigurationView):
 
 class User(Updateable, Pretty, Navigatable):
     """ Class represents an user in CFME UI
-        Args:
-            name: Name of the user
-            credential: User's credentials
-            email: User's email
-            group: User's group for assigment
-            cost_center: User's cost center
-            value_assign: user's value to assign
-            appliance: appliance under test
+
+    Args:
+        name: Name of the user
+        credential: User's credentials
+        email: User's email
+        group: User's group for assigment
+        cost_center: User's cost center
+        value_assign: user's value to assign
+        appliance: appliance under test
     """
     pretty_attrs = ['name', 'group']
 
@@ -147,6 +148,7 @@ class User(Updateable, Pretty, Navigatable):
 
     def create(self, cancel=False):
         """ User creation method
+
         Args:
             cancel: True - if you want to cancel user creation,
                     by defaul user will be created
@@ -172,8 +174,10 @@ class User(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         """ Update user method
-            Args:
-                updates: user data that should be changed
+
+        Args:
+            updates: user data that should be changed
+
         Note: In case updates is the same as original user data, update will be canceled,
         as 'Save' button will not be active
         """
@@ -234,9 +238,10 @@ class User(Updateable, Pretty, Navigatable):
 
     def delete(self, cancel=True):
         """ Delete existing user
-            Args:
-                cancel: Default value 'True', user will be deleted
-                        'False' - deletion of user will be canceled
+
+        Args:
+            cancel: Default value 'True', user will be deleted
+                    'False' - deletion of user will be canceled
         """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this User', handle_alert=cancel)
@@ -249,9 +254,10 @@ class User(Updateable, Pretty, Navigatable):
 
     def edit_tags(self, tag, value):
         """ Edits tag for existing user
-            Args:
-                tag: Tag category
-                value: Tag name
+
+        Args:
+            tag: Tag category
+            value: Tag name
         """
         view = navigate_to(self, 'EditTags')
         view.fill({'select_tag': tag,
@@ -263,9 +269,10 @@ class User(Updateable, Pretty, Navigatable):
 
     def remove_tag(self, tag, value):
         """ Remove tag from existing user
-            Args:
-                tag: Tag category
-                value: Tag name
+
+        Args:
+            tag: Tag category
+            value: Tag name
         """
         view = navigate_to(self, 'EditTags')
         row = view.tag_table.row(category=tag, assigned_value=value)
@@ -275,9 +282,10 @@ class User(Updateable, Pretty, Navigatable):
         view.flash.assert_success_message('Tag edits were successfully saved')
         assert view.is_displayed
 
-# TODO update elements, after 1469035 fix
+    # TODO update elements, after 1469035 fix
     def change_stored_password(self, changes=None, cancel=False):
         """ Changes user password
+
          Args:
              changes: dict with fields to be changes,
                       if None, passwords fields only be anabled
@@ -493,16 +501,17 @@ class GroupEditTagsView(ConfigurationView):
 
 class Group(Updateable, Pretty, Navigatable):
     """Represents a group in CFME UI
-        Args:
-            description: group description
-            role: group role
-            tenant: group tenant
-            user_to_lookup: ldap user to lookup
-            ldap_credentials: ldap user credentials
-            tag: tag for group restriction
-            host_cluster: host/cluster for group restriction
-            vm_template: vm/template for group restriction
-            appliance: appliance under test
+
+    Args:
+        description: group description
+        role: group role
+        tenant: group tenant
+        user_to_lookup: ldap user to lookup
+        ldap_credentials: ldap user credentials
+        tag: tag for group restriction
+        host_cluster: host/cluster for group restriction
+        vm_template: vm/template for group restriction
+        appliance: appliance under test
     """
     pretty_attrs = ['description', 'role']
 
@@ -521,9 +530,10 @@ class Group(Updateable, Pretty, Navigatable):
 
     def create(self, cancel=False):
         """ Create group method
-            Args:
-                cancel: True - if you want to cancel group creation,
-                        by defaul group will be created
+
+        Args:
+            cancel: True - if you want to cancel group creation,
+                    by defaul group will be created
         """
         view = navigate_to(self, 'Add')
         view.fill({
@@ -568,7 +578,8 @@ class Group(Updateable, Pretty, Navigatable):
 
     def _fill_ldap_group_lookup(self, view):
         """ Fills ldap info for group lookup
-            Args: view: view for group creation(AddGroupView)
+
+        Args: view: view for group creation(AddGroupView)
         """
         view.fill({'ldap_groups_for_user': self.description,
                    'description_txt': self.description,
@@ -591,8 +602,10 @@ class Group(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         """ Update group method
-            Args:
-                updates: group data that should be changed
+
+        Args:
+            updates: group data that should be changed
+
         Note: In case updates is the same as original group data, update will be canceled,
         as 'Save' button will not be active
         """
@@ -621,9 +634,10 @@ class Group(Updateable, Pretty, Navigatable):
 
     def delete(self, cancel=True):
         """ Delete existing group
-            Args:
-                cancel: Default value 'True', group will be deleted
-                        'False' - deletion of group will be canceled
+
+        Args:
+            cancel: Default value 'True', group will be deleted
+                    'False' - deletion of group will be canceled
         """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Group', handle_alert=cancel)
@@ -637,9 +651,10 @@ class Group(Updateable, Pretty, Navigatable):
 
     def edit_tags(self, tag, value):
         """ Edits tag for existing group
-            Args:
-                tag: Tag category
-                value: Tag name
+
+        Args:
+            tag: Tag category
+            value: Tag name
         """
         view = navigate_to(self, 'EditTags')
         view.fill({'select_tag': tag,
@@ -651,9 +666,10 @@ class Group(Updateable, Pretty, Navigatable):
 
     def remove_tag(self, tag, value):
         """ Delete tag for existing group
-            Args:
-                tag: Tag category
-                value: Tag name
+
+        Args:
+            tag: Tag category
+            value: Tag name
         """
         view = navigate_to(self, 'EditTags')
         row = view.tag_table.row(category=tag, assigned_value=value)
@@ -665,8 +681,9 @@ class Group(Updateable, Pretty, Navigatable):
 
     def set_group_order(self, updated_order):
         """ Sets group order for group lookup
-            Args:
-                updated_order: group order list
+
+        Args:
+            updated_order: group order list
         """
         name_column = "Name"
         find_row_kwargs = {name_column: self.description}
@@ -694,11 +711,13 @@ class Group(Updateable, Pretty, Navigatable):
 
     def _set_group_restriction(self, tab_view, item, update=False):
         """ Sets tag/host/template restriction for the group
-            Args:
-                tab_view: tab view
-                item: path to check box that should be selected/deselected
-                update: If True - checkbox state will be updated
-            return: True - if update is successful
+
+        Args:
+            tab_view: tab view
+            item: path to check box that should be selected/deselected
+            update: If True - checkbox state will be updated
+
+        Returns: True - if update is successful
         """
         updated_result = False
         if item is not None:
@@ -846,11 +865,12 @@ class AllRolesView(ConfigurationView):
 
 class Role(Updateable, Pretty, Navigatable):
     """ Represents a role in CFME UI
-        Args:
-            name: role name
-            vm_restriction: restriction used for role
-            product_features: product feature to select
-            appliance: appliance unter test
+
+    Args:
+        name: role name
+        vm_restriction: restriction used for role
+        product_features: product feature to select
+        appliance: appliance unter test
     """
 
     pretty_attrs = ['name', 'product_features']
@@ -863,9 +883,10 @@ class Role(Updateable, Pretty, Navigatable):
 
     def create(self, cancel=False):
         """ Create role method
-            Args:
-                cancel: True - if you want to cancel role creation,
-                        by defaul, role will be created
+
+        Args:
+            cancel: True - if you want to cancel role creation,
+                    by defaul, role will be created
         """
         view = navigate_to(self, 'Add')
         view.fill({'name_txt': self.name,
@@ -883,10 +904,12 @@ class Role(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         """ Update role method
-            Args:
-                updates: role data that should be changed
+
+        Args:
+            updates: role data that should be changed
+
         Note: In case updates is the same as original role data, update will be canceled,
-        as 'Save' button will not be active
+              as 'Save' button will not be active
         """
         view = navigate_to(self, 'Edit')
         changed = view.fill({
@@ -906,9 +929,10 @@ class Role(Updateable, Pretty, Navigatable):
 
     def delete(self, cancel=True):
         """ Delete existing role
-            Args:
-                cancel: Default value 'True', role will be deleted
-                        'False' - deletion of role will be canceled
+
+        Args:
+            cancel: Default value 'True', role will be deleted
+                    'False' - deletion of role will be canceled
         """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this Role', handle_alert=cancel)
@@ -921,7 +945,8 @@ class Role(Updateable, Pretty, Navigatable):
 
     def copy(self, name=None):
         """ Creates copy of existing role
-            return: Role object of copied role
+
+        Returns: Role object of copied role
         """
         if name is None:
             name = "{}_copy".format(self.name)
@@ -938,9 +963,10 @@ class Role(Updateable, Pretty, Navigatable):
 
     def set_role_product_features(self, view, product_features):
         """ Sets product features for role restriction
-            Args:
-                view: AddRoleView or EditRoleView
-                product_features: list of product features with options to select
+
+        Args:
+            view: AddRoleView or EditRoleView
+            product_features: list of product features with options to select
         """
         feature_update = False
         if product_features is not None and isinstance(product_features, (list, tuple, set)):
@@ -1150,9 +1176,10 @@ class Tenant(Updateable, Pretty, Navigatable):
 
     def create(self, cancel=False):
         """ Create role method
-            Args:
-                cancel: True - if you want to cancel role creation,
-                        by defaul(False), role will be created
+
+        Args:
+            cancel: True - if you want to cancel role creation,
+                    by defaul(False), role will be created
         """
         if self._default:
             raise ValueError("Cannot create the root tenant {}".format(self.name))
@@ -1181,10 +1208,12 @@ class Tenant(Updateable, Pretty, Navigatable):
 
     def update(self, updates):
         """ Update tenant/project method
-            Args:
-                updates: tenant/project data that should be changed
+
+        Args:
+            updates: tenant/project data that should be changed
+
         Note: In case updates is the same as original tenant/project data, update will be canceled,
-        as 'Save' button will not be active
+            as 'Save' button will not be active
         """
         view = navigate_to(self, 'Edit')
         changed = view.fill(updates)
@@ -1201,9 +1230,10 @@ class Tenant(Updateable, Pretty, Navigatable):
 
     def delete(self, cancel=True):
         """ Delete existing role
-            Args:
-                cancel: Default value 'True', role will be deleted
-                        'False' - deletion of role will be canceled
+
+        Args:
+            cancel: Default value 'True', role will be deleted
+                    'False' - deletion of role will be canceled
         """
         view = navigate_to(self, 'Details')
         view.configuration.item_select('Delete this item', handle_alert=cancel)

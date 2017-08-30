@@ -27,7 +27,8 @@ pol_btn = partial(toolbar.select, "Policy")
 class PolicyProfileAssignable(object):
     """This class can be inherited by anything that provider load_details method.
 
-    It provides functionality to assign and unassign Policy Profiles"""
+    It provides functionality to assign and unassign Policy Profiles
+    """
     manage_policies_tree = deferred_verpick({
         version.LOWEST: CheckboxTree("//div[@id='protect_treebox']/ul"),
         "5.7": BootstrapTreeview("protectbox")
@@ -88,14 +89,18 @@ class PolicyProfileAssignable(object):
 class Taggable(object):
     """This class can be inherited by anything that provider load_details method.
 
-    It provides functionality to assign and unassign tags."""
+    It provides functionality to assign and unassign tags.
+    """
+
     def add_tag(self, tag, single_value=False):
         self.load_details(refresh=True)
         mixins.add_tag(tag, single_value=single_value, navigate=True)
 
     def add_tags(self, tags):
         """Add list of tags
-        tags: List of `Tag`
+
+        Args:
+            tags: List of ``Tag``
         """
         for tag in tags:
             self.add_tag(tag=tag)
@@ -106,7 +111,9 @@ class Taggable(object):
 
     def remove_tags(self, tags):
         """Remove list of tags
-        tags: List of `Tag`
+
+        Args:
+            tags: List of ``Tag``
         """
         for tag in tags:
             self.remove_tag(tag=tag)
@@ -183,23 +190,24 @@ class TagPageView(BaseLoggedInPage):
 
 class WidgetasticTaggable(object):
     """
-        This class can be inherited by any class that honors tagging.
-        Class should have 'EditTags' navigate step registered,
-        also 'Details' view should be present with tag attribute(widget with tag
-            information on details page)
+    This class can be inherited by any class that honors tagging.
+    Class should have 'EditTags' navigate step registered,
+    also 'Details' view should be present with tag attribute(widget with tag
+    information on details page)
 
-        This class should be used for already converted to widgetastic classes
+    This class should be used for already converted to widgetastic classes
 
-        It provides functionality to assign and unassigned tags.
+    It provides functionality to assign and unassigned tags.
     """
 
     def add_tag(self, category=None, tag=None, cancel=False, reset=False):
         """ Add tag to tested item
-            Args:
-                category: category(str)
-                tag: tag(str) or Tag object
-                cancel: set True to cancel tag assigment
-                reset: set True to reset already set up tag
+
+        Args:
+            category: category(str)
+            tag: tag(str) or Tag object
+            cancel: set True to cancel tag assigment
+            reset: set True to reset already set up tag
         """
         view = navigate_to(self, 'EditTags')
         if isinstance(tag, Tag):
@@ -222,9 +230,10 @@ class WidgetasticTaggable(object):
 
     def add_tags(self, tags):
         """Add multiple tags
-            Args:
-                tags: pass dict with category name as key, and tag as value,
-                     or pass list with tag objects
+
+        Args:
+            tags: pass dict with category name as key, and tag as value,
+                 or pass list with tag objects
         """
         if isinstance(tags, dict):
             for category, tag in tags.items():
@@ -235,12 +244,13 @@ class WidgetasticTaggable(object):
 
     def remove_tag(self, category=None, tag=None, cancel=False, reset=False):
         """ Remove tag of tested item
-               Args:
-                   category: category(str)
-                   tag: tag(str) or Tag object
-                   cancel: set True to cancel tag deletion
-                   reset: set True to reset tag changes
-               """
+
+        Args:
+            category: category(str)
+            tag: tag(str) or Tag object
+            cancel: set True to cancel tag deletion
+            reset: set True to reset tag changes
+        """
         view = navigate_to(self, 'EditTags')
         if isinstance(tag, Tag):
             category = tag.category.display_name
@@ -254,9 +264,10 @@ class WidgetasticTaggable(object):
 
     def remove_tags(self, tags):
         """Remove multiple of tags
-            Args:
-                tags: pass dict with category name as key, and tag as value,
-                     or pass list with tag objects
+
+        Args:
+            tags: pass dict with category name as key, and tag as value,
+                 or pass list with tag objects
         """
         if isinstance(tags, dict):
             for category, tag in tags.items():
@@ -267,10 +278,12 @@ class WidgetasticTaggable(object):
 
     def get_tags(self, tenant="My Company Tags"):
         """ Get list of tags assigned to item
-            Args:
-                tenant: string, tags tenant, default is "My Company Tags"
-            Returns:
-                List of tags in format "Tag_category: Tag_name"
+
+        Args:
+            tenant: string, tags tenant, default is "My Company Tags"
+
+        Returns:
+            List of tags in format "Tag_category: Tag_name"
         """
         view = navigate_to(self, 'Details')
         tags = view.tag.read()
@@ -280,10 +293,11 @@ class WidgetasticTaggable(object):
 
     def _tags_action(self, view, cancel, reset):
         """ Actions on edit tags page
-            Args:
-                view: View to use these actions(tag view)
-                cancel: Set True to cancel all changes, will redirect to details page
-                reset: Set True to reset all changes, edit tag page should be opened
+
+        Args:
+            view: View to use these actions(tag view)
+            cancel: Set True to cancel all changes, will redirect to details page
+            reset: Set True to reset all changes, edit tag page should be opened
         """
         if reset:
             view.reset_button.click()

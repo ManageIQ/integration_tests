@@ -64,6 +64,7 @@ class CompanyCategoriesEditView(CompanyCategoriesAddView):
 
 class Category(Pretty, Navigatable, Updateable):
     """ Class represents a category in CFME UI
+
         Args:
             name: Name of the category
             display_name: Category display name
@@ -99,6 +100,7 @@ class Category(Pretty, Navigatable, Updateable):
 
     def create(self, cancel=False):
         """ Create category method
+
             Args:
                 cancel: To cancel creation pass True, cancellation message will be verified
                         By defaul user will be created
@@ -118,6 +120,7 @@ class Category(Pretty, Navigatable, Updateable):
 
     def update(self, updates, cancel=False):
         """ Update category method
+
             Args:
                 updates: category data that should be changed
         """
@@ -135,6 +138,7 @@ class Category(Pretty, Navigatable, Updateable):
 
     def delete(self, cancel=True):
         """ Delete existing category
+
             Args:
                 cancel: Default value 'True', category will be deleted
                         'False' - deletion of category will be canceled
@@ -322,6 +326,7 @@ class MapTagsEditView(MapTagsAddView):
 
 class MapTags(Navigatable, Pretty, Updateable):
     """ Class represents a category in CFME UI
+
         Args:
             entity: Name of the tag
             label: Tag display name
@@ -346,6 +351,7 @@ class MapTags(Navigatable, Pretty, Updateable):
 
     def create(self, cancel=False):
         """ Map tags creation method
+
             Args:
                 cancel: True - if you want to cancel map creation,
                         by defaul map will be created
@@ -365,6 +371,7 @@ class MapTags(Navigatable, Pretty, Updateable):
 
     def update(self, updates, cancel=False):
         """ Update tag map method
+
             Args:
                 updates: tag map data that should be changed
                 cancel: True - if you want to cancel map edition,
@@ -391,6 +398,7 @@ class MapTags(Navigatable, Pretty, Updateable):
 
     def delete(self, cancel=False):
         """ Delete existing user
+
             Args:
                 cancel: Default value 'False', map will be deleted
                         'True' - map will not be deleted

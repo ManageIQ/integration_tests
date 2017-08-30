@@ -121,7 +121,7 @@ class ReportMenu(Navigatable):
             group: User group.
             folder: Parent folder name.
             subfolder: Subfolder name to manage.
-        Returns: Context-managed :py:class: `widgetastic_manageiq.MultiBoxSelect`instance
+        Returns: Context-managed :py:class: `widgetastic_manageiq.MultiBoxSelect` instance
         """
         view = self.go_to_group(group)
         view.reports_tree.click_path("Top Level", folder, subfolder)

@@ -43,9 +43,11 @@ class DeploymentRoles(Pretty, Navigatable):
 
     def get_detail(self, *ident):
         """ Gets details from the details InfoBlock
+
         Args:
-            *ident: An InfoBlock title, followed by the Key name,
-                e.g. "Relationships", "All VMs"
+            ident: An InfoBlock title, followed by the Key name,
+                   e.g. "Relationships", "All VMs"
+
         Returns: A string representing the contents of the InfoBlock's value.
         """
         navigate_to(self, 'Details')

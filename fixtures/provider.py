@@ -9,10 +9,10 @@ There are two ways to request a setup provider depending on what kind of test we
    provider is available as the ``provider`` parameter. It doesn't set the provider up, however, as
    it will only provide you with the appropriate provider CRUD object.
    To get the provider set up, we need to add one of the following fixtures to parameters as well:
-     - ``setup_provider``
-     - ``setup_provider_modscope``
-     - ``setup_provider_clsscope``
-     - ``setup_provider_funcscope`` (same as ``setup_provider``)
+   - ``setup_provider``
+   - ``setup_provider_modscope``
+   - ``setup_provider_clsscope``
+   - ``setup_provider_funcscope`` (same as ``setup_provider``)
 
    This ensures that whatever is currently hiding under the ``provider`` parameter will be set up.
 
@@ -20,11 +20,11 @@ There are two ways to request a setup provider depending on what kind of test we
    In this case, we don't really care about what sort of a provider we have available. Usually,
    we just want something to fill the UI with data so that we can test our provider non-specific
    functionality. For that, we can leverage one of the following fixtures:
-     - ``infra_provider``
-     - ``cloud_provider``
-     - ``middleware_provider``
-     - ``containers_provider``
-     - ...and others
+   - ``infra_provider``
+   - ``cloud_provider``
+   - ``middleware_provider``
+   - ``containers_provider``
+   - ...and others
 
    If these don't really fit your needs, you can implement your own module-local ``a_provider``
    fixture using ``setup_one_by_class_or_skip`` or more adjustable ``setup_one_or_skip``.

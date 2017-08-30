@@ -182,8 +182,8 @@ class RepositoryCollection(Navigatable):
         """Delete one or more ansible repositories in the UI.
 
         Args:
-            *repositories: a list of :py:class:`cfme.ansible.repositories.Repository`
-            instances to delete
+            repositories: a list of :py:class:`cfme.ansible.repositories.Repository`
+                          instances to delete
 
         Raises:
             ValueError: if some of the repositories were not found in the UI

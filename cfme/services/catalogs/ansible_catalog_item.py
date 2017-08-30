@@ -128,6 +128,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
     Example:
 
         .. code-block:: python
+
             from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
             catalog_item = AnsiblePlaybookCatalogItem(
                 "some_catalog_name",

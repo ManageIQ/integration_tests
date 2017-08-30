@@ -531,11 +531,12 @@ class Labelable(object):
 
     def remove_label(self, name, silent_failure=False):
         """Remove label by name.
-        :var: name: name of label
-        :var: silent_failure: whether to raise an error or not in case of failure.
+        Args:
+            name: name of label
+            silent_failure: whether to raise an error or not in case of failure.
 
-        Returns:
-            :py:type:`bool` pass or fail
+        Returns: ``bool`` pass or fail
+
         Raises:
             :py:class:`LabelNotFoundException`.
         """

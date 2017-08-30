@@ -278,11 +278,19 @@ texinfo_documents = [
 autodoc_default_flags = ['members']
 
 
-MOCK_MODULES = ['pycurl', 'wrapanapi', 'ovirt-engine-sdk-python',
+MOCK_MODULES = ['pycurl', 'wrapanapi', 'ovirt-engine-sdk-python', 'wrapanapi.utils',
                 'wrapanapi.base', 'wrapanapi.exceptions',
                 'wrapanapi.ec2', 'wrapanapi.openstack', 'wrapanapi.rhevm',
                 'wrapanapi.scvmm', 'wrapanapi.virtualcenter', 'wrapanapi.kubernetes',
                 'wrapanapi.openshift', 'wrapanapi.rest_client', 'wrapanapi.openstack_infra',
                 'wrapanapi.hawkular', 'wrapanapi.azure', 'wrapanapi.google', 'ovirtsdk',
+                'wrapanapi.containers.providers.openshift', 'wrapanapi.containers',
+                'wrapanapi.containers.providers', 'wrapanapi.containers.providers.kubernetes',
+                'wrapanapi.containers.volume', 'wrapanapi.containers.template',
+                'wrapanapi.containers.service', 'wrapanapi.containers.route',
+                'wrapanapi.containers.pod', 'wrapanapi.containers.project',
+                'wrapanapi.containers.replicator', 'wrapanapi.containers.deployment_config',
+                'wrapanapi.containers.node', 'wrapanapi.containers.image',
+                'wrapanapi.containers.image_registry', 'wrapanapi.containers.container',
                 'ovirtsdk.xml', 'ovirtsdk.infrastructure', 'ovirtsdk.infrastructure.errors']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
