@@ -6,6 +6,7 @@ import socket
 import traceback
 import warnings
 from copy import copy
+from datetime import datetime
 from tempfile import NamedTemporaryFile
 from time import sleep, time
 from urlparse import ParseResult, urlparse
@@ -15,7 +16,7 @@ import fauxfactory
 import requests
 import yaml
 from cached_property import cached_property
-from manageiq_client.api import ManageIQClient as MiqApi
+from manageiq_client.api import ManageIQClient as VanillaMiqApi
 from sentaku import ImplementationContext
 from werkzeug.local import LocalStack, LocalProxy
 
@@ -62,6 +63,21 @@ def _current_miqqe_version():
 
 
 current_miqqe_version = _current_miqqe_version()
+
+
+class MiqApi(VanillaMiqApi):
+    def get_entity_by_href(self, href):
+        """Parses the collections"""
+        parsed = urlparse(href)
+        # TODO: Check the netloc, scheme
+        path = [step for step in parsed.path.split('/') if step]
+        # Drop the /api
+        path = path[1:]
+        collection = getattr(self.collections, path.pop(0))
+        entity = collection(int(path.pop(0)))
+        if path:
+            raise ValueError('Subcollections not supported! ({})'.format(parsed.path))
+        return entity
 
 
 class ApplianceException(Exception):
@@ -608,24 +624,6 @@ class IPAppliance(object):
         """
         return [ems.name for ems in self._list_ems()]
 
-    @property
-    def has_os_infra(self):
-        """If there is an OS Infra set up as a provider, some of the UI changes"""
-        ems_table = self.db.client["ext_management_systems"]
-        self.db.client.session.query(ems_table)
-        count = self.db.client.session.query(ems_table).filter(
-            ems_table.type == "EmsOpenstackInfra").count()
-        return count > 0
-
-    @property
-    def has_non_os_infra(self):
-        """If there is any non-OS-infra set up as a provider, some of the UI changes"""
-        ems_table = self.db.client["ext_management_systems"]
-        self.db.client.session.query(ems_table)
-        count = self.db.client.session.query(ems_table).filter(
-            ems_table.type != "EmsOpenstackInfra").count()
-        return count > 0
-
     @classmethod
     def from_url(cls, url):
         return cls(urlparse(url))
@@ -671,17 +669,20 @@ class IPAppliance(object):
     @cached_property
     def product_name(self):
         try:
-            # We need to print to a file here because the deprecation warnings make it hard
-            # to get robust output and they do not seem to go to stderr
-            result = self.ssh_client.run_rails_command(
-                '"File.open(\'/tmp/product_name.txt\', \'w\') '
-                '{|f| f.write(I18n.t(\'product.name\')) }"')
-            result = self.ssh_client.run_command('cat /tmp/product_name.txt')
-            return result.output
-        except:
-            logger.error(
-                "Couldn't fetch the product name from appliance, using ManageIQ as default")
-            return 'ManageIQ'
+            return self.rest_api.product_info['name']
+        except (AttributeError, KeyError, IOError):
+            try:
+                # We need to print to a file here because the deprecation warnings make it hard
+                # to get robust output and they do not seem to go to stderr
+                result = self.ssh_client.run_rails_command(
+                    '"File.open(\'/tmp/product_name.txt\', \'w\') '
+                    '{|f| f.write(I18n.t(\'product.name\')) }"')
+                result = self.ssh_client.run_command('cat /tmp/product_name.txt')
+                return result.output
+            except Exception:
+                logger.exception(
+                    "Couldn't fetch the product name from appliance, using ManageIQ as default")
+                return 'ManageIQ'
 
     @property
     def ui_port(self):
@@ -704,21 +705,33 @@ class IPAppliance(object):
         return "{}://{}/".format(self.scheme, self.address)
 
     @cached_property
+    def is_downstream(self):
+        return self.product_name == 'CFME'
+
+    @cached_property
     def version(self):
-        res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
-        if res.rc != 0:
-            raise RuntimeError('Unable to retrieve appliance VMDB version')
-        return Version(res.output)
+        try:
+            version_string = self.rest_api.server_info['version']
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.version could not be retrieved from REST, falling back')
+            res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+            if res.rc != 0:
+                raise RuntimeError('Unable to retrieve appliance VMDB version')
+            version_string = res.output
+        return Version(version_string)
 
     @cached_property
     def build(self):
-        if self.ssh_client.is_appliance_downstream():
+        if not self.is_downstream:
+            return 'master'
+        try:
+            return self.rest_api.server_info['build']
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.build could not be retrieved from REST, falling back')
             res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
             if res.rc != 0:
                 raise RuntimeError('Unable to retrieve appliance VMDB version')
             return res.output.strip("\n")
-        else:
-            return "master"
 
     @cached_property
     def os_version(self):
@@ -1653,31 +1666,34 @@ class IPAppliance(object):
 
     @cached_property
     def build_datetime(self):
-        datetime = self.ssh_client.get_build_datetime()
-        return datetime
+        build_datetime_string = self.build.split('_', 1)[0]
+        return datetime.strptime(build_datetime_string, '%Y%m%d%H%M%S')
 
     @cached_property
     def build_date(self):
-        date = self.ssh_client.get_build_date()
-        return date
-
-    @cached_property
-    def is_downstream(self):
-        return self.ssh_client.is_appliance_downstream()
+        return self.build_datetime.date()
 
     def has_netapp(self):
         return self.ssh_client.appliance_has_netapp()
 
     @cached_property
     def guid(self):
-        result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
-        return result.output
+        try:
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            return server.guid
+        except (AttributeError, KeyError, IOError):
+            result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
+            return result.output
 
     @cached_property
     def evm_id(self):
-        miq_servers = self.db.client['miq_servers']
-        return self.db.client.session.query(
-            miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
+        try:
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            return server.id
+        except (AttributeError, KeyError, IOError):
+            miq_servers = self.db.client['miq_servers']
+            return self.db.client.session.query(
+                miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
 
     @property
     def server_roles(self):
