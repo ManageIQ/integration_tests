@@ -536,32 +536,40 @@ class IPAppliance(object):
         finally:
             logging.disable(logging.NOTSET)
 
-    def _list_ems(self):
-        self.db.client.session.expire_all()
-        ems_table = self.db.client["ext_management_systems"]
-        # Fetch all providers at once, return empty list otherwise
-        try:
-            ems_list = list(self.db.client.session.query(ems_table))
-        except Exception as ex:
-            self.log.warning("Unable to query DB for managed providers: %s", str(ex))
-            return []
-        known_ems_list = []
-        for ems in ems_list:
-            # Skip any EMS types that we don't care about / can't recognize safely
-            if not any(p_type in ems.type for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
-                continue
-            known_ems_list.append(ems)
-        return known_ems_list
+    @property
+    def managed_provider_names(self):
+        """Returns a list of names for all providers configured on the appliance
 
-    def _query_endpoints(self):
-        """After Oct 5th, 2015, the ipaddresses and stuff was separated in a separate table."""
-        ems_table = self.db.client["ext_management_systems"]
-        ep = self.db.client["endpoints"]
-        for ems in self.db.client.session.query(ems_table):
-            for endpoint in self.db.client.session.query(ep).filter(ep.resource_id == ems.id):
-                ipaddress = endpoint.ipaddress
-                hostname = endpoint.hostname
-                yield ipaddress, hostname
+        Note:
+            Unlike ``managed_known_providers``, this will also return names of providers that were
+            not recognized, but are present.
+        """
+        try:
+            known_ems_list = []
+            for ems in self.rest_api.collections.providers.all:
+                if not any(
+                        p_type in ems['type'] for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
+                    continue
+                known_ems_list.append(ems['name'])
+            return known_ems_list
+        except (AttributeError, KeyError, IOError):
+            self.log.exception(
+                'appliance.managed_provider_names could not be retrieved from REST, falling back')
+            self.db.client.session.expire_all()
+            ems_table = self.db.client["ext_management_systems"]
+            # Fetch all providers at once, return empty list otherwise
+            try:
+                ems_list = list(self.db.client.session.query(ems_table))
+            except Exception as ex:
+                self.log.warning("Unable to query DB for managed providers: %s", str(ex))
+                return []
+            known_ems_list = []
+            for ems in ems_list:
+                # Skip any EMS types that we don't care about / can't recognize safely
+                if not any(p_type in ems.type for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
+                    continue
+                known_ems_list.append(ems.name)
+            return known_ems_list
 
     @property
     def managed_known_providers(self):
@@ -575,28 +583,18 @@ class IPAppliance(object):
 
         found_cruds = set()
         unrecognized_ems_names = set()
-        for ems in self._list_ems():
+        for ems_name in self.managed_provider_names:
             for prov in prov_cruds:
                 # Name check is authoritative and the only proper way to recognize a known provider
-                if ems.name == prov.name:
+                if ems_name == prov.name:
                     found_cruds.add(prov)
                     break
             else:
-                unrecognized_ems_names.add(ems.name)
+                unrecognized_ems_names.add(ems_name)
         if unrecognized_ems_names:
             self.log.warning(
                 "Unrecognized managed providers: {}".format(', '.join(unrecognized_ems_names)))
         return list(found_cruds)
-
-    @property
-    def managed_provider_names(self):
-        """Returns a list of names for all providers configured on the appliance
-
-        Note:
-            Unlike ``managed_known_providers``, this will also return names of providers that were
-            not recognized, but are present.
-        """
-        return [ems.name for ems in self._list_ems()]
 
     @classmethod
     def from_url(cls, url):
