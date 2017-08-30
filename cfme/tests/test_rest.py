@@ -153,7 +153,6 @@ def test_select_attributes(appliance, collection_name):
         assert len(resource) == expected_len
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_add_picture(appliance):
     """Tests adding picture.
 
@@ -208,7 +207,6 @@ def test_add_picture_invalid_data(appliance):
     assert collection.count == count
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_http_options(appliance):
     """Tests OPTIONS http method.
 
@@ -243,7 +241,6 @@ def test_http_options_subcollections(appliance):
     assert_response(appliance)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_server_info(appliance):
     """Check that server info is present.
 
@@ -278,7 +275,6 @@ def test_default_region(appliance):
     assert hasattr(reg, 'region')
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_product_info(appliance):
     """Check that product info is present.
 
@@ -289,7 +285,19 @@ def test_product_info(appliance):
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_settings_collection(appliance):
+    """Checks that all expected info is present in /api/settings.
+
+    Metadata:
+        test_flag: rest
+    """
+    # the "settings" collection is untypical as it doesn't have "resources" and
+    # for this reason can't be reloaded (bug in api client)
+    body = appliance.rest_api.get(appliance.rest_api.collections.settings._href)
+    assert all(item in body.keys() for item in ('product', 'prototype'))
+
+
 def test_identity(appliance):
     """Check that user's identity is present.
 
@@ -300,7 +308,6 @@ def test_identity(appliance):
                ('userid', 'name', 'group', 'role', 'tenant', 'groups'))
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_user_settings(appliance):
     """Check that user's settings are returned.
 
@@ -496,7 +503,6 @@ def test_collection_class_invalid(appliance):
 
 
 class TestBulkQueryRESTAPI(object):
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_bulk_query(self, appliance):
         """Tests bulk query referencing resources by attributes id, href and guid
 
@@ -513,7 +519,6 @@ class TestBulkQueryRESTAPI(object):
                 data1 == response[1]._data and
                 data2 == response[2]._data)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_bulk_query_users(self, appliance):
         """Tests bulk query on 'users' collection
 
@@ -527,7 +532,6 @@ class TestBulkQueryRESTAPI(object):
         assert len(response) == 2
         assert data['id'] == response[0]._data['id'] == response[1]._data['id']
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_bulk_query_roles(self, appliance):
         """Tests bulk query on 'roles' collection
 
@@ -542,7 +546,6 @@ class TestBulkQueryRESTAPI(object):
         assert len(response) == 2
         assert data0 == response[0]._data and data1 == response[1]._data
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_bulk_query_groups(self, appliance):
         """Tests bulk query on 'groups' collection
 
@@ -567,7 +570,6 @@ class TestArbitrationSettingsRESTAPI(object):
         assert len(response) == num_settings
         return response
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_create_arbitration_settings(self, appliance, arbitration_settings):
         """Tests create arbitration settings.
 
@@ -578,7 +580,6 @@ class TestArbitrationSettingsRESTAPI(object):
             record = appliance.rest_api.collections.arbitration_settings.get(id=setting.id)
             assert record._data == setting._data
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
     def test_delete_arbitration_settings_from_detail(self, appliance, arbitration_settings, method):
         """Tests delete arbitration settings from detail.
@@ -593,7 +594,6 @@ class TestArbitrationSettingsRESTAPI(object):
                 setting.action.delete(force_method=method)
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_delete_arbitration_settings_from_collection(self, appliance, arbitration_settings):
         """Tests delete arbitration settings from collection.
 
@@ -607,7 +607,6 @@ class TestArbitrationSettingsRESTAPI(object):
             collection.action.delete(*arbitration_settings)
         assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
@@ -646,7 +645,7 @@ class TestArbitrationRulesRESTAPI(object):
         assert len(response) == num_rules
         return response
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
+    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
     def test_create_arbitration_rules(self, arbitration_rules, appliance):
         """Tests create arbitration rules.
 
@@ -658,7 +657,7 @@ class TestArbitrationRulesRESTAPI(object):
             assert record.description == rule.description
 
     # there's no test for the DELETE method as it is not working and won't be fixed, see BZ 1410504
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
+    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
     def test_delete_arbitration_rules_from_detail_post(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from detail.
 
@@ -672,7 +671,7 @@ class TestArbitrationRulesRESTAPI(object):
                 entity.action.delete.POST()
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
+    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
     def test_delete_arbitration_rules_from_collection(self, arbitration_rules, appliance):
         """Tests delete arbitration rules from collection.
 
@@ -686,7 +685,7 @@ class TestArbitrationRulesRESTAPI(object):
             collection.action.delete(*arbitration_rules)
         assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7' or current_version() >= '5.9')
+    @pytest.mark.uncollectif(lambda: current_version() >= '5.9')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
@@ -723,7 +722,6 @@ class TestNotificationsRESTAPI(object):
         assert len(requests) == 2
         wait_for_requests(requests)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
@@ -748,7 +746,6 @@ class TestNotificationsRESTAPI(object):
             ent.reload()
             assert ent.seen
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
     def test_delete_notifications_from_detail(self, appliance, generate_notifications, method):
         """Tests delete notifications from detail.
@@ -769,7 +766,6 @@ class TestNotificationsRESTAPI(object):
                 entity.action.delete(force_method=method)
             assert_response(appliance, http_status=404)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_delete_notifications_from_collection(self, appliance, generate_notifications):
         """Tests delete notifications from collection.
 
