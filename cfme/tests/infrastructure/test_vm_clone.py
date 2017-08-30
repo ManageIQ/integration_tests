@@ -5,11 +5,12 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash
-from utils.wait import wait_for
 from utils import testgen
 from utils.log import logger
 from utils import version
@@ -65,15 +66,13 @@ def create_vm(provider, setup_provider, catalog_item, request):
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1400, delay=20)
-    assert row.last_message.text == 'Request complete'
+    request_description = catalog_item.name
+    request_row = Request(request_description, partial_check=True)
+    request_row.wait_for_request()
+    assert request_row.is_succeeded()
     return vm_name
 
 
-@pytest.mark.meta(blockers=[1255190])
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.uncollectif(lambda: version.appliance_is_downstream())
 @pytest.mark.long_running
@@ -82,13 +81,12 @@ def test_vm_clone(provider, clone_vm_name, request, create_vm):
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
     vm = VM.factory(vm_name, provider)
-    if provider.type == 'rhevm':
+    if provider.one_of(RHEVMProvider):
         provision_type = 'Native Clone'
-    elif provider.type == 'virtualcenter':
+    elif provider.one_of(VMwareProvider):
         provision_type = 'VMware'
     vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
-    row_description = clone_vm_name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=4000, delay=20)
-    assert row.last_message.text == 'Vm Provisioned Successfully'
+    request_description = clone_vm_name
+    request_row = Request(request_description, partial_check=True)
+    request_row.wait_for_request(method='ui')
+    assert request_row.is_succeeded(method='ui')

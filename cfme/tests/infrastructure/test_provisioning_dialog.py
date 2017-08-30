@@ -11,7 +11,7 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import provisioning_form
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import InfoBlock, fill, flash
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -84,13 +84,13 @@ def provisioner(request, setup_provider, provider, vm_name):
         flash.assert_no_errors()
 
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+        request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
+        provision_request = Request(description=request_description)
         if delayed is not None:
             total_seconds = (delayed - datetime.utcnow()).total_seconds()
-            row_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
-            cells = {'Description': row_description}
             try:
-                row, __ = wait_for(requests.wait_for_request, [cells],
-                                   fail_func=requests.reload, num_sec=total_seconds, delay=5)
+                wait_for(provision_request.is_finished,
+                         fail_func=provision_request.update, num_sec=total_seconds, delay=5)
                 pytest.fail("The provisioning was not postponed")
             except TimedOutError:
                 pass
@@ -99,11 +99,8 @@ def provisioner(request, setup_provider, provider, vm_name):
 
         # nav to requests page happens on successful provision
         logger.info('Waiting for cfme provision request for vm %s', vm_name)
-        row_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
-        cells = {'Description': row_description}
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=900, delay=20)
-        assert 'Successfully' in row.last_message.text and row.status.text != 'Error'
+        provision_request.wait_for_request()
+        assert provision_request.is_succeeded(method='ui')
         return vm
 
     return _provisioner

@@ -4,7 +4,7 @@ from cfme.infrastructure import host
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.infrastructure.provider import InfraProvider
 from cfme.provisioning import provisioning_form
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import flash, fill
 from utils.conf import cfme_data
 from utils.log import logger
@@ -164,13 +164,11 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
     flash.assert_success_message(
         "Host Request was Submitted, you will be notified when your Hosts are ready")
 
-    row_description = 'PXE install on [{}] from image [{}]'.format(prov_host_name, pxe_image)
-    cells = {'Description': row_description}
-
-    row, __ = wait_for(requests.wait_for_request, [cells],
-                       fail_func=requests.reload, num_sec=1500, delay=20)
-    assert row.last_message.text == 'Host Provisioned Successfully'
-    assert row.status.text != 'Error'
+    request_description = 'PXE install on [{}] from image [{}]'.format(prov_host_name, pxe_image)
+    host_request = Request(request_description)
+    host_request.wait_for_request(method='ui')
+    assert host_request.row.last_message.text == 'Host Provisioned Successfully'
+    assert host_request.row.status.text != 'Error'
 
     # Navigate to host details page and verify Provider and cluster names
     assert test_host.get_detail('Relationships', 'Infrastructure Provider') ==\

@@ -4,10 +4,9 @@ from collections import OrderedDict
 from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip
 from utils import version
-from utils import normalize_text
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from utils.wait import wait_for
@@ -188,18 +187,11 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
 
     # Provision Re important in this test
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
-    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
-    try:
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=num_sec, delay=20)
-    except Exception as e:
-        requests.debug_requests()
-        raise e
-    assert normalize_text(row.status.text) == 'ok' \
-                                              and normalize_text(
-        row.request_state.text) == 'finished', \
-        "Provisioning failed with the message {}".format(row.last_message.text)
+    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    provision_request = Request(request_description)
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.is_succeeded(method='ui'), \
+        "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
@@ -216,20 +208,3 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
             )
 
         wait_for(verify, message="email receive check", delay=30)
-
-
-def copy_request(cells, modifications):
-    with requests.copy_request(cells):
-        fill(provisioning_form, modifications)
-
-
-def copy_request_by_vm_and_template_name(vm_name, template_name, modifications, multi=False):
-    multistr = "###" if multi else ""
-    row_description = "Provision from [{}] to [{}{}]".format(template_name, vm_name, multistr)
-    return copy_request({'Description': row_description}, modifications)
-
-
-def go_to_request_by_vm_and_template_name(vm_name, template_name, multi=False):
-    multistr = "###" if multi else ""
-    row_description = "Provision from [{}] to [{}{}]".format(template_name, vm_name, multistr)
-    return requests.go_to_request({'Description': row_description})

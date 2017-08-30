@@ -7,11 +7,10 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
-from utils.wait import wait_for
 from utils.conf import cfme_data
 
 pytestmark = [
@@ -118,8 +117,7 @@ def test_pxe_servicecatalog(setup_provider, provider, catalog_item, request):
     service_catalogs.order()
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=3100, delay=20)
-    assert row.request_state.text == 'Finished'
+    request_description = catalog_item.name
+    provision_request = Request(request_description, partial_check=True)
+    provision_request.wait_for_request()
+    assert provision_request.is_succeeded()

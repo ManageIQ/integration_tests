@@ -6,7 +6,7 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from utils import testgen
@@ -47,11 +47,10 @@ def myservice(setup_provider, provider, catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=900, delay=20)
-    assert row.request_state.text == 'Finished'
+    request_description = catalog_item.name
+    provision_request = Request(request_description, partial_check=True)
+    provision_request.wait_for_request()
+    assert provision_request.is_finished()
     service = MyService(catalog_item.name, vm_name)
     yield service
 

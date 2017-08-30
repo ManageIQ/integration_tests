@@ -6,13 +6,14 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
-from cfme.services import requests
-from cfme.web_ui import fill
+from cfme.services.requests import Request
 from utils import normalize_text, testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.wait import wait_for
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -160,20 +161,19 @@ def test_provision_approval(
         num_sec=90, delay=5)
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
-    wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
+    provision_request = Request(cells=cells)
+    navigate_to(provision_request, 'Details')
     if edit:
         # Automatic approval after editing the request to conform
-        with requests.edit_request(cells) as form:
-            fill(form.num_vms, "1")
-            new_vm_name = vm_name + "-xx"
-            fill(form.vm_name, new_vm_name)
+        new_vm_name = vm_name + "-xx"
+        modifications = {'catalog': {'num_vms': "1", 'vm_name': new_vm_name}}
+        provision_request.edit_request(values=modifications)
         vm_names = [new_vm_name]  # Will be just one now
-        cells = {'Description': 'Provision from [{}] to [{}]'.format(template, new_vm_name)}
         request.addfinalizer(
             lambda: cleanup_vm(new_vm_name, provider))
     else:
         # Manual approval
-        requests.approve_request(cells, "Approved")
+        provision_request.approve_request(method='ui', reason="Approved")
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
             lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
@@ -191,10 +191,8 @@ def test_provision_approval(
         lambda: all(map(provider.mgmt.does_vm_exist, vm_names)),
         handle_exception=True, num_sec=600)
 
-    row, __ = wait_for(requests.wait_for_request, [cells],
-                       fail_func=requests.reload, num_sec=1500, delay=20)
-    assert normalize_text(row.status.text) == 'ok' \
-        and normalize_text(row.request_state.text) == 'finished'
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.is_succeeded(method='ui')
 
     # Wait for e-mails to appear
     def verify():

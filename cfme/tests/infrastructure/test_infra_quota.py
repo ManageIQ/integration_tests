@@ -9,7 +9,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
@@ -150,12 +150,12 @@ def test_group_quota_max_memory_check_by_tagging(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                    fail_func=requests.reload, num_sec=300, delay=20)
-    assert row.last_message.text == 'Request denied due to the following quota limits:'\
-        '(Group Allocated Memory 0.00GB + Requested 4.00GB > Quota 2.00GB)'
+    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    provision_request = Request(request_description)
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.last_message.text == \
+        'Request denied due to the following quota limits:(Group Allocated Memory 0.00GB + ' \
+        'Requested 4.00GB > Quota 2.00GB)'
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
@@ -185,11 +185,11 @@ def test_group_quota_max_cpu_check_by_tagging(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
-                    fail_func=sel.refresh, num_sec=300, delay=20)
-    assert row.last_message.text == 'Request denied due to the following quota limits:'\
+    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    provision_request = Request(request_description)
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.last_message.text == \
+        'Request denied due to the following quota limits:' \
         '(Group Allocated vCPUs 0 + Requested 8 > Quota 2)'
 
 
@@ -219,15 +219,14 @@ def test_tenant_quota_max_cpu_check(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
-                    fail_func=sel.refresh, num_sec=500, delay=20)
+    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    provision_request = Request(request_description)
+    provision_request.wait_for_request(method='ui')
     # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1364381
     # TODO: update assert message once the above bug is fixed.
     # assert row.last_message.text == 'Request exceeds maximum allowed for the following: \
     # (cpu - Used: 526 plus requested: 8 exceeds quota: 3))'
-    assert row.reason.text == "Quota Exceeded"
+    assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 @pytest.mark.tier(2)
@@ -256,11 +255,10 @@ def test_tenant_quota_max_memory_check(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                    fail_func=requests.reload, num_sec=500, delay=20)
-    assert row.reason.text == "Quota Exceeded"
+    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    provision_request = Request(request_description)
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 @pytest.mark.tier(2)
@@ -288,11 +286,10 @@ def test_tenant_quota_max_storage_check(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                    fail_func=requests.reload, num_sec=500, delay=20)
-    assert row.reason.text == "Quota Exceeded"
+    request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    provision_request = Request(request_description)
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 @pytest.mark.tier(2)
@@ -322,10 +319,8 @@ def test_tenant_quota_max_num_vms_check(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [{}] to [{}###]'.format(template_name, vm_name)
-    cells = {'Description': row_description}
-    wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
-    requests.approve_request(cells, "Approved")
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-                    fail_func=requests.reload, num_sec=500, delay=20)
-    assert row.reason.text == "Quota Exceeded"
+    request_description = 'Provision from [{}] to [{}###]'.format(template_name, vm_name)
+    provision_request = Request(request_description)
+    provision_request.approve_request(method='ui', reason="Approved")
+    provision_request.wait_for_request(method='ui')
+    assert provision_request.row.reason.text == "Quota Exceeded"
