@@ -671,6 +671,8 @@ class IPAppliance(object):
         try:
             return self.rest_api.product_info['name']
         except (AttributeError, KeyError, IOError):
+            self.log.exception(
+                'appliance.product_name could not be retrieved from REST, falling back')
             try:
                 # We need to print to a file here because the deprecation warnings make it hard
                 # to get robust output and they do not seem to go to stderr
@@ -827,13 +829,18 @@ class IPAppliance(object):
         Raises:
             :py:class:`paramiko.ssh_exception.SSHException` or :py:class:`socket.error`
         """
-        value = self.ssh_client.run_command(
-            'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15)
         try:
-            value = int(value.output.strip())
-        except (TypeError, ValueError):
-            value = None
-        return value
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            return server.system_swap_used / 1024 / 1024
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.swap could not be retrieved from REST, falling back')
+            value = self.ssh_client.run_command(
+                'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15)
+            try:
+                value = int(value.output.strip())
+            except (TypeError, ValueError):
+                value = None
+            return value
 
     def event_listener(self):
         """Returns an instance of the event listening class pointed to this appliance."""
@@ -1682,6 +1689,7 @@ class IPAppliance(object):
             server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
             return server.guid
         except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.guid could not be retrieved from REST, falling back')
             result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
             return result.output
 
@@ -1691,6 +1699,7 @@ class IPAppliance(object):
             server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
             return server.id
         except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.evm_id could not be retrieved from REST, falling back')
             miq_servers = self.db.client['miq_servers']
             return self.db.client.session.query(
                 miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
