@@ -6,6 +6,7 @@ from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.provider import NetworkProviderCollection
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 
 
 pytest_generate_tests = testgen.generate(
@@ -13,6 +14,7 @@ pytest_generate_tests = testgen.generate(
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
+@pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
 def test_port_detail_name(provider):
     ''' Test equality of quadicon and detail names '''
     port_collection = NetworkPortCollection()
@@ -25,6 +27,7 @@ def test_port_detail_name(provider):
         assert port.name == det_name
 
 
+@pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
 def test_port_net_prov(provider):
     ''' Test functionality of quadicon and detail network providers'''
     prov_collection = NetworkProviderCollection()

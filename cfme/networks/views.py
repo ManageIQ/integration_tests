@@ -235,8 +235,9 @@ class NetworkPortToolBar(View):
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class NetworkPortDetailsToolBar(NetworkPortToolBar):
+class NetworkPortDetailsToolBar(View):
     """ Represents toolbar of summary of port """
+    policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
 
 
