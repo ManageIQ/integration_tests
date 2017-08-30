@@ -88,7 +88,9 @@ def new_credential():
     """
         Returns credentials object used for new user in test module
     """
-    return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
+    # Todo remove .lower() for principal after 1486041 fix
+    return Credential(
+        principal='uid{}'.format(fauxfactory.gen_alphanumeric().lower()), secret='redhat')
 
 
 # TODO should be updated(add_tag/remove_tag), after all used classes will support Taggable class
