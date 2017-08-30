@@ -697,3 +697,11 @@ def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_test
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=4000, delay=20)
     assert row.status.text == "Error"
+
+
+def test_action_mark_as_noncompliant(request, vm, vm_off, assign_policy_for_testing):
+    assign_policy_for_testing.assign_events("VM Power On")
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Mark as Non-Compliant"])
+    request.addfinalizer(assign_policy_for_testing.assign_events)
+    vm.start_vm()
+    assert not vm.crud.check_compliance()
