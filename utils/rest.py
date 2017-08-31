@@ -2,10 +2,13 @@
 """Helper functions for tests using REST API."""
 
 
-def assert_response(appliance, success=None, http_status=None, results_num=None):
+def assert_response(rest_obj, success=None, http_status=None, results_num=None):
     """Asserts that the response HTTP status code and content is as expected."""
 
-    last_response = appliance.rest_api.response
+    # check if `rest_obj` is an object with attribute referencing rest_api instance
+    rest_api = rest_obj.rest_api if hasattr(rest_obj, 'rest_api') else rest_obj
+
+    last_response = rest_api.response
 
     if http_status:
         assert last_response.status_code == http_status

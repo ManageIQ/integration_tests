@@ -31,6 +31,12 @@ def a_provider(request):
     return setup_one_or_skip(request, filters=[pf])
 
 
+@pytest.fixture(scope='module')
+def api_version(appliance):
+    entry_point = appliance.rest_api._versions.values()[0]
+    return appliance.new_rest_api_instance(entry_point=entry_point)
+
+
 @pytest.fixture(scope="function")
 def vm(request, a_provider, appliance):
     return _vm(request, a_provider, appliance.rest_api)
@@ -119,6 +125,28 @@ def test_query_simple_collections(appliance, collection_name):
     """
     collection = getattr(appliance.rest_api.collections, collection_name)
     assert_response(appliance)
+    collection.reload()
+    list(collection)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.parametrize("collection_name", COLLECTIONS_ALL)
+@pytest.mark.uncollectif(
+    lambda collection_name:
+        (collection_name in COLLECTIONS_OMMITED) or
+        (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < "5.8") or
+        (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= "5.9")
+)
+def test_query_with_api_version(api_version, collection_name):
+    """Loads each of the listed collections using /api/<version>/<collection>.
+
+    Steps:
+        * GET /api/<version>/<collection_name>
+    Metadata:
+        test_flag: rest
+    """
+    collection = getattr(api_version.collections, collection_name)
+    assert_response(api_version)
     collection.reload()
     list(collection)
 
