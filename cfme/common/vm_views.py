@@ -64,15 +64,15 @@ def InstanceEntity():  # noqa
     })
 
 
-class NonEditableTable(Table):
+class SelectTable(Table):
     """Wigdet for non-editable table. used for selecting value"""
     def fill(self, values):
         """Clicks on item - fill by selecting required value"""
         value = values.get('name', '<None>')
         changed = False
-        if value != self.read():
+        if value != self.currently_selected:
             changed = True
-        self.row(name=value).click()
+            self.row(name=value).click()
         return changed
 
     @property
@@ -93,34 +93,7 @@ class NonEditableTable(Table):
 
     def read_content(self):
         """This is a default Table.read() method for those who will need table content"""
-        rows = list(self)
-        # Cut the unwanted rows if necessary
-        if self.rows_ignore_top is not None:
-            rows = rows[self.rows_ignore_top:]
-        if self.rows_ignore_bottom is not None and self.rows_ignore_bottom > 0:
-            rows = rows[:-self.rows_ignore_bottom]
-        if self.assoc_column_position is None:
-            return [row.read() for row in rows]
-        else:
-            result = {}
-            for row in rows:
-                row_read = row.read()
-                try:
-                    key = row_read.pop(self.header_index_mapping[self.assoc_column_position])
-                except KeyError:
-                    try:
-                        key = row_read.pop(self.assoc_column_position)
-                    except KeyError:
-                        try:
-                            key = row_read.pop(self.assoc_column)
-                        except KeyError:
-                            raise ValueError(
-                                'The assoc_column={!r} could not be retrieved'.format(
-                                    self.assoc_column))
-                if key in result:
-                    raise ValueError('Duplicate value for {}={!r}'.format(key, result[key]))
-                result[key] = row_read
-            return result
+        return super(SelectTable, self).read()
 
 
 class VMToolbar(View):
@@ -192,12 +165,12 @@ class BasicProvisionFormView(View):
         vm_description = Input(name='service__vm_description')
         vm_filter = BootstrapSelect('service__vm_filter')
         num_vms = BootstrapSelect('service__number_of_vms')
-        catalog_name = NonEditableTable('//div[@id="prov_vm_div"]/table')
+        catalog_name = SelectTable('//div[@id="prov_vm_div"]/table')
         provision_type = BootstrapSelect('service__provision_type')
         linked_clone = Input(name='service__linked_clone')
         pxe_server = BootstrapSelect('service__pxe_server_id')
-        pxe_image = NonEditableTable('//div[@id="prov_pxe_img_div"]/table')
-        iso_file = NonEditableTable('//div[@id="prov_iso_img_div"]/table')
+        pxe_image = SelectTable('//div[@id="prov_pxe_img_div"]/table')
+        iso_file = SelectTable('//div[@id="prov_iso_img_div"]/table')
 
     @View.nested
     class environment(Tab):  # noqa
@@ -217,10 +190,10 @@ class BasicProvisionFormView(View):
         resource_pool = BootstrapSelect('environment__placement_rp_name')
         folder = BootstrapSelect('environment__placement_folder_name')
         host_filter = BootstrapSelect('environment__host_filter')
-        host_name = NonEditableTable('//div[@id="prov_host_div"]/table')
+        host_name = SelectTable('//div[@id="prov_host_div"]/table')
         datastore_create = Input('environment__new_datastore_create')
         datastore_filter = BootstrapSelect('environment__ds_filter')
-        datastore_name = NonEditableTable('//div[@id="prov_ds_div"]/table')
+        datastore_name = SelectTable('//div[@id="prov_ds_div"]/table')
 
     @View.nested
     class hardware(Tab):  # noqa
@@ -266,7 +239,7 @@ class BasicProvisionFormView(View):
             ip_address = Input(name='customize__ip_addr')
             subnet_mask = Input(name='customize__subnet_mask')
             gateway = Input(name='customize__gateway')
-            custom_template = NonEditableTable('//div[@id="prov_template_div"]/table')
+            custom_template = SelectTable('//div[@id="prov_template_div"]/table')
             hostname = Input(name='customize__hostname')
 
     @View.nested

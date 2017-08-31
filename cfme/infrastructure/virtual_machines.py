@@ -93,7 +93,7 @@ match_page = partial(match_location, controller='vm_infra', title='Virtual Machi
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
-class InfraVmTemplatesGenericDetailsToolbar(View):
+class InfraGenericDetailsToolbar(View):
     reload = Button(title='Reload current display')
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
@@ -102,7 +102,7 @@ class InfraVmTemplatesGenericDetailsToolbar(View):
     lifecycle = Dropdown('Lifecycle')
 
 
-class InfraVmDetailsToolbar(InfraVmTemplatesGenericDetailsToolbar):
+class InfraVmDetailsToolbar(InfraGenericDetailsToolbar):
     """Toolbar for VM details differs from All VMs&TemplatesView
     """
     access = Dropdown("Access")
@@ -129,7 +129,7 @@ class VmsTemplatesAccordion(View):
         tree = ManageIQTree()
 
 
-class InfraVMView(BaseLoggedInPage):
+class InfraVmView(BaseLoggedInPage):
     """Base view for header/nav check, inherit for navigatable views"""
 
     @property
@@ -141,7 +141,7 @@ class InfraVMView(BaseLoggedInPage):
             match_location(controller='vm_infra', title='Virtual Machines'))
 
 
-class VmsTemplatesAllView(InfraVMView):
+class VmsTemplatesAllView(InfraVmView):
     """
     The collection page for instances
     """
@@ -160,7 +160,7 @@ class VmsTemplatesAllView(InfraVMView):
         self.entities.search.clear_search()
 
 
-class VmTemplatesAllForProviderView(InfraVMView):
+class VmTemplatesAllForProviderView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
@@ -176,7 +176,7 @@ class VmTemplatesAllForProviderView(InfraVMView):
         self.entities.search.clear_search()
 
 
-class VmsOnlyAllView(InfraVMView):
+class VmsOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
@@ -192,7 +192,7 @@ class VmsOnlyAllView(InfraVMView):
         self.entities.search.clear_search()
 
 
-class TemplatesOnlyAllView(InfraVMView):
+class TemplatesOnlyAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
@@ -211,7 +211,7 @@ class InfraVmSummaryView(VMDetailsEntities):
     datastore_usage = SummaryTable(title="Datastore Actual Usage Summary")
 
 
-class InfraVmDetailsView(InfraVMView):
+class InfraVmDetailsView(InfraVmView):
     title = Text('#explorer_title_text')
     toolbar = ConditionalSwitchableView(reference='entities.title')
 
@@ -220,7 +220,7 @@ class InfraVmDetailsView(InfraVMView):
         pass
 
     @toolbar.register(lambda title: "VM Template and Image" in title)
-    class TemplatesToolbar(InfraVmTemplatesGenericDetailsToolbar):
+    class TemplatesToolbar(InfraGenericDetailsToolbar):
         pass
 
     sidebar = View.nested(VmsTemplatesAccordion)
