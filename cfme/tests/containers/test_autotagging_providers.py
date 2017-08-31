@@ -41,7 +41,7 @@ def set_label(test_obj, instance, label_name, value):
     try:
         status_code, json_content = test_obj.set_label(instance, label_name, value)
         # temp debugging, remove later
-        print('setting label status code is: ' + status_code)
+        print('setting label status code is: ' + str(status_code))
     except:
         status_code, json_content = None, format_exc()
     return status_code, json_content
