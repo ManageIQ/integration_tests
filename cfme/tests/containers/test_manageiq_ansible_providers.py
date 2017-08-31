@@ -135,7 +135,7 @@ def test_manageiq_ansible_remove_provider(ansible_providers, provider, soft_asse
         wait_for(
             lambda: not get_yml_value(script_name, 'name') in view.entities.entity_names,
             num_sec=180, delay=10,
-            fail_func=view.browser.refresh(),
+            fail_func=view.browser.refresh,
             message='Provider was not deleted successfully',
             silent_failure=True)
     )
