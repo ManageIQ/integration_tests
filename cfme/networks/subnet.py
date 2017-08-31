@@ -1,10 +1,8 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
-from cfme.networks.views import SubnetDetailsView
-from cfme.networks.views import SubnetView
-from utils import providers
-from utils import version
+from cfme.networks.views import SubnetDetailsView, SubnetView
+from utils import providers, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
@@ -36,10 +34,8 @@ class Subnet(WidgetasticTaggable, Navigatable):
     db_types = ['NetworkSubnet']
 
     def __init__(self, name, provider=None, collection=None, appliance=None):
-        if collection is None:
-            collection = SubnetCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection or SubnetCollection(appliance=appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.provider = provider
 

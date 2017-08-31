@@ -16,7 +16,7 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
 def test_port_detail_name(provider):
-    ''' Test equality of quadicon and detail names '''
+    """ Test equality of quadicon and detail names """
     port_collection = NetworkPortCollection()
     ports = port_collection.all()
     if len(ports) > 5:
@@ -29,7 +29,7 @@ def test_port_detail_name(provider):
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
 def test_port_net_prov(provider):
-    ''' Test functionality of quadicon and detail network providers'''
+    """ Test functionality of quadicon and detail network providers"""
     prov_collection = NetworkProviderCollection()
     port_collection = prov_collection.ports
     providers = [entity.name for entity in prov_collection.all()]

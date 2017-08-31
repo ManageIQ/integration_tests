@@ -15,9 +15,9 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 @pytest.mark.tier(1)
 @pytest.mark.uncollect
 def test_sdn_inventory_subnets(provider):
-    ''' Test to compare mgmt system and ui list of networks
+    """ Test to compare mgmt system and ui list of networks
     Note: Those providers don't have list_network() method implemented yet
-    '''
+    """
     network_names = provider.mgmt.list_network()
     for network_name in network_names:
         temp_network = CloudNetwork(name=network_name)

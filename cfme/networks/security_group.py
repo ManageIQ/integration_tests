@@ -1,8 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
-from cfme.networks.views import SecurityGroupDetailsView
-from cfme.networks.views import SecurityGroupView
+from cfme.networks.views import SecurityGroupDetailsView, SecurityGroupView
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -35,10 +34,8 @@ class SecurityGroup(WidgetasticTaggable, Navigatable):
     db_types = ['SecurityGroup']
 
     def __init__(self, name, provider=None, collection=None, appliance=None):
-        if collection is None:
-            collection = SecurityGroupCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection or SecurityGroupCollection(appliance=appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -64,7 +61,6 @@ class Details(CFMENavigateStep):
 @navigator.register(SecurityGroup, 'EditTags')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
-    VIEW = SecurityGroupDetailsView
 
     def step(self):
         self.tb = self.view.toolbar

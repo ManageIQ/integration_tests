@@ -14,11 +14,11 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
 def test_prov_balances_number(provider):
-    '''
+    """
     Test number of balancers on 1 provider
     Prerequisites:
         Only one refreshed cloud provider in cfme database
-    '''
+    """
     prov_collection = NetworkProviderCollection()
     bal_collection = prov_collection.balancers
     sum_all = len(bal_collection.all())
@@ -32,7 +32,7 @@ def test_prov_balances_number(provider):
 
 
 def test_balances_detail(provider):
-    ''' Test of getting attribute from balancer object '''
+    """ Test of getting attribute from balancer object """
     bal_collection = BalancerCollection()
     objects = bal_collection.all()
     for name in objects:

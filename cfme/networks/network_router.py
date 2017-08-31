@@ -1,8 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
-from cfme.networks.views import NetworkRouterDetailsView
-from cfme.networks.views import NetworkRouterView
+from cfme.networks.views import NetworkRouterDetailsView, NetworkRouterView
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -35,10 +34,8 @@ class NetworkRouter(WidgetasticTaggable, Navigatable):
     db_types = ['NetworkRouter']
 
     def __init__(self, name, provider=None, collection=None, appliance=None):
-        if collection is None:
-            collection = NetworkRouterCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection or NetworkRouterCollection(appliance=appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -64,7 +61,6 @@ class Details(CFMENavigateStep):
 @navigator.register(NetworkRouter, 'EditTags')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
-    VIEW = NetworkRouterDetailsView
 
     def step(self):
         self.tb = self.view.toolbar

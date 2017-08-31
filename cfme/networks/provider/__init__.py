@@ -7,8 +7,15 @@ from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
-from cfme.networks.views import NetworkProviderDetailsView
-from cfme.networks.views import NetworkProviderView
+from cfme.networks.views import (
+    NetworkProviderDetailsView,
+    NetworkProviderView,
+    BalancerDetailsView,
+    CloudNetworkDetailsView,
+    NetworkPortDetailsView,
+    NetworkRouterDetailsView,
+    SecurityGroupDetailsView,
+    SubnetDetailsView)
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -75,10 +82,8 @@ class NetworkProvider(BaseProvider):
     db_types = ['NetworksManager']
 
     def __init__(self, name, provider=None, collection=None, appliance=None):
-        if collection is None:
-            collection = NetworkProviderCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection or NetworkProviderCollection(appliance=appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -89,7 +94,7 @@ class NetworkProvider(BaseProvider):
                                                handle_alert=not cancel)
 
     def delete(self, cancel=True):
-        """ Deltes a network provider from CFME """
+        """ Deletes a network provider from CFME """
         view = navigate_to(self, 'Details')
         wait_for(lambda: view.toolbar.configuration.item_enabled('Remove this Network Provider'),
                  num_sec=10)
@@ -105,8 +110,12 @@ class NetworkProvider(BaseProvider):
 
     @property
     def exists(self):
-        view = navigate_to(self, 'Details')
-        return view.is_displayed
+        try:
+            navigate_to(self, 'Details')
+        except Exception:
+            return False
+        else:
+            return True
 
 
 @navigator.register(NetworkProvider, 'All')
@@ -129,7 +138,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'CloudSubnets')
 class OpenCloudSubnets(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
+    VIEW = SubnetDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -138,7 +147,7 @@ class OpenCloudSubnets(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'CloudNetworks')
 class OpenCloudNetworks(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
+    VIEW = CloudNetworkDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -147,7 +156,7 @@ class OpenCloudNetworks(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'NetworkRouters')
 class OpenNetworkRouters(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
+    VIEW = NetworkRouterDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -156,7 +165,7 @@ class OpenNetworkRouters(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'SecurityGroups')
 class OpenSecurityGroups(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
+    VIEW = SecurityGroupDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -165,7 +174,6 @@ class OpenSecurityGroups(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'FloatingIPs')
 class OpenFloatingIPs(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -174,7 +182,7 @@ class OpenFloatingIPs(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'NetworkPorts')
 class OpenNetworkPorts(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
+    VIEW = NetworkPortDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -183,7 +191,7 @@ class OpenNetworkPorts(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'LoadBalancers')
 class OpenNetworkBalancers(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
+    VIEW = BalancerDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -192,7 +200,6 @@ class OpenNetworkBalancers(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'TopologyFromDetails')
 class OpenTopologyFromDetails(CFMENavigateStep):
-    VIEW = NetworkProviderDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -202,7 +209,6 @@ class OpenTopologyFromDetails(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
-    VIEW = NetworkProviderDetailsView
 
     def step(self):
         self.tb = self.view.toolbar

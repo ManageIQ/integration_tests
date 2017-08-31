@@ -1,8 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
-from cfme.networks.views import NetworkPortDetailsView
-from cfme.networks.views import NetworkPortView
+from cfme.networks.views import NetworkPortDetailsView, NetworkPortView
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -35,10 +34,8 @@ class NetworkPort(WidgetasticTaggable, Navigatable):
     db_types = ['CloudNetworkPort']
 
     def __init__(self, name, provider=None, collection=None, appliance=None):
-        if collection is None:
-            collection = NetworkPortCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection or NetworkPortCollection(appliance=appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -87,7 +84,6 @@ class Details(CFMENavigateStep):
 @navigator.register(NetworkPort, 'EditTags')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
-    VIEW = NetworkPortDetailsView
 
     def step(self):
         self.tb = self.view.toolbar

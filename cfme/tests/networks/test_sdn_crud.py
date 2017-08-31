@@ -14,10 +14,10 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 
 @pytest.mark.tier(1)
 def test_sdn_crud(provider):
-    ''' Test for functional addition of network manager with cloud provider
+    """ Test for functional addition of network manager with cloud provider
         and functional references to components on detail page
     Prerequisites: Cloud provider in cfme
-    '''
+    """
 
     view = navigate_to(provider, 'Details')
     net_prov_name = view.contents.relationships.get_text_of("Network Manager")
@@ -37,5 +37,4 @@ def test_sdn_crud(provider):
     provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()
 
-    with pytest.raises(Exception):
-        navigate_to(network_provider, "Details")
+    assert not network_provider.exists

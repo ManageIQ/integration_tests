@@ -1,10 +1,8 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
-from cfme.networks.views import CloudNetworkDetailsView
-from cfme.networks.views import CloudNetworkView
-from utils import providers
-from utils import version
+from cfme.networks.views import CloudNetworkDetailsView, CloudNetworkView
+from utils import providers, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
@@ -34,10 +32,8 @@ class CloudNetwork(WidgetasticTaggable, Navigatable):
     db_types = ['CloudNetwork']
 
     def __init__(self, name, provider=None, collection=None, appliance=None):
-        if collection is None:
-            collection = CloudNetworkCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.collection = collection or CloudNetworkCollection(appliance=appliance)
+        Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.provider = provider
 
@@ -83,7 +79,6 @@ class Details(CFMENavigateStep):
 @navigator.register(CloudNetwork, 'EditTags')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
-    VIEW = CloudNetworkDetailsView
 
     def step(self):
         self.tb = self.view.toolbar
