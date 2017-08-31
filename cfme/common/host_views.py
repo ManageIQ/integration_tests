@@ -46,9 +46,12 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
 
     @property
     def in_compute_infrastructure_hosts(self):
+        def _host_page(title):
+            return self.navigation.currently_selected == ["Compute", "Infrastructure", title]
+
         return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ["Compute", "Infrastructure", "Hosts"]
+            self.logged_in_as_current_user and (_host_page("Hosts") or _host_page("Nodes") or
+                                                _host_page("Hosts / Nodes"))
         )
 
 
@@ -120,6 +123,7 @@ class HostDetailsEntities(View):
     configuration = SummaryTable(title="Configuration")
     smart_management = SummaryTable(title="Smart Management")
     authentication_status = SummaryTable(title="Authentication Status")
+    openstack_hardware = SummaryTable(title="Openstack Hardware")
 
 
 class HostDetailsView(ComputeInfrastructureHostsView):
@@ -266,7 +270,7 @@ class HostsView(ComputeInfrastructureHostsView):
 
     @property
     def is_displayed(self):
-        return self.in_compute_infrastructure_hosts and self.title.text == "Hosts"
+        return self.in_compute_infrastructure_hosts and self.title.text in "Hosts / Nodes"
 
 
 class HostFormView(ComputeInfrastructureHostsView):

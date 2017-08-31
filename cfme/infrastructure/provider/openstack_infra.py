@@ -1,12 +1,12 @@
 from navmazing import NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSelect, Button
-from widgetastic_manageiq import RadioGroup, FileInput
+from widgetastic_manageiq import Checkbox, RadioGroup, FileInput, Table
 from wrapanapi.openstack_infra import OpenstackInfraSystem
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
-from cfme.common.provider_views import ProviderNodesView, ProviderRegisterNodesView, BeforeFillMixin
+from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView
 from cfme.exceptions import DestinationNotFound
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
@@ -118,6 +118,26 @@ class OpenstackInfraProvider(InfraProvider):
         view = navigate_to(self, 'RegisterNodes')
         view.fill({'file': file_path})
         view.register.click()
+        exp_msg = 'Nodes were added successfully. Refresh queued.'
+        self.create_view(ProviderNodesView).flash.assert_success_message(exp_msg)
+
+    def scale_down(self):
+        """Scales down provider"""
+        view = navigate_to(self, 'ScaleDown')
+        view.checkbox.click()
+        view.scale_down.click()
+        self.create_view(ProviderNodesView).flash.assert_no_error()
+
+    def scale_out(self, increase_by=1):
+        """Scale out Openstack Infra provider
+        Args:
+            increase_by - count of nodes to be added to infra provider
+        """
+        view = navigate_to(self, 'ScaleOut')
+        curr_compute_count = int(view.compute_count.value)
+        view.compute_count.fill(curr_compute_count + increase_by)
+        view.scale.click()
+        self.create_view(ProviderNodesView).flash.assert_no_error()
 
     def node_exist(self, name='my_node'):
         """" registered imported host exist
@@ -152,6 +172,47 @@ class ProviderNodes(CFMENavigateStep):
             raise DestinationNotFound("Nodes aren't present on details page of this provider")
 
 
+class ProviderRegisterNodesView(View):
+    """
+     represents Register Nodes view
+    """
+    file = FileInput(locator='//input[@id="nodes_json_file"]')
+    register = Button(value='Register')
+    cancel = Button(value='Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class ProviderScaleDownView(View):
+    """
+     represents Scale down view
+    """
+    table = Table(locator='//div[contains(@class, "form-horizontal")]//table')
+    checkbox = Checkbox(name='host_ids[]')
+    scale_down = Button('Scale Down')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class ProviderScaleOutView(View):
+    """
+     represents Scale view
+    """
+
+    compute_count = Input(name='ComputeCount')
+    scale = Button('Scale')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
 @navigator.register(OpenstackInfraProvider, 'RegisterNodes')
 class ProviderRegisterNodes(CFMENavigateStep):
     VIEW = ProviderRegisterNodesView
@@ -159,3 +220,23 @@ class ProviderRegisterNodes(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Register Nodes')
+
+
+@navigator.register(OpenstackInfraProvider, 'ScaleDown')
+class ProviderScaleDown(CFMENavigateStep):
+    VIEW = ProviderScaleDownView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item_title = 'Scale this Infrastructure Provider down'
+        self.prerequisite_view.toolbar.configuration.item_select(item_title)
+
+
+@navigator.register(OpenstackInfraProvider, 'ScaleOut')
+class ProviderScaleOut(CFMENavigateStep):
+    VIEW = ProviderScaleOutView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        item_title = 'Scale this Infrastructure Provider'
+        self.prerequisite_view.toolbar.configuration.item_select(item_title)

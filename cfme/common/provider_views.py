@@ -13,7 +13,6 @@ from widgetastic_manageiq import (BreadCrumb,
                                   Checkbox,
                                   Input,
                                   Table,
-                                  FileInput,
                                   BaseEntitiesView,
                                   DynaTree,
                                   BootstrapTreeview,
@@ -225,19 +224,6 @@ class NodesToolBar(View):
     power = Dropdown(text='Power')
     download = Dropdown(text='Download')
     view_selector = View.nested(ItemsToolBarViewSelector)
-
-
-class ProviderRegisterNodesView(View):
-    """
-     represents Register Nodes view (exists for Infra OpenStack provider)
-    """
-    file = FileInput(locator='//input[@id="nodes_json_file"]')
-    register = Button('Register')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return False
 
 
 class ProviderNodesView(BaseLoggedInPage):
