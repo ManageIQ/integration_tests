@@ -1352,7 +1352,7 @@ class IPAppliance(object):
         self._evm_service_command('start', expected_exit_code=0, log_callback=log_callback)
 
     @logger_wrap("Restart EVM Service: {}")
-    def restart_evm_service(self, rude=False, log_callback=None):
+    def restart_evm_service(self, rude=False, wait_for_web_ui=False, log_callback=None):
         """Restarts the ``evmserverd`` service on this appliance
         """
         store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
@@ -1366,6 +1366,10 @@ class IPAppliance(object):
             else:
                 self._evm_service_command(
                     "restart", expected_exit_code=0, log_callback=log_callback)
+
+        if wait_for_web_ui:
+            self.wait_for_web_ui()
+
         self.server_details_changed()
 
     @logger_wrap("Waiting for EVM service: {}")
@@ -1887,6 +1891,27 @@ class IPAppliance(object):
             self.server_details_changed()
         else:
             raise Exception('Unable to set config: {!r}:{!r}'.format(result.rc, result.output))
+
+    def set_yaml_settings_local(self, data_dict):
+        """Configures the local settings file using documentation method
+
+        Args:
+            data_dict: This is the yaml dictionary to load.
+        """        
+        temp_yaml = NamedTemporaryFile()
+        dest_yaml = '/var/www/miq/vmdb/config/settings.local.yml'
+        yaml.dump(data_dict, temp_yaml, default_flow_style=False)
+        self.ssh_client.put_file(temp_yaml.name, dest_yaml)
+
+
+    def remove_yaml_settings_local(self):
+        """Removes the local settings file using documentation method and restarts
+
+        Args:
+            None
+        """        
+        self.ssh_client.run_command("rm -f /var/www/miq/vmdb/config/settings.local.yml")
+        self.restart_evm_service(wait_for_web_ui=True)
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.
