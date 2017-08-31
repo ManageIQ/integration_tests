@@ -10,7 +10,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 class CloudNetworkCollection(Navigatable):
     """Collection object for Cloud Network object"""
     def __init__(self, appliance=None, parent_provider=None):
-        self.appliance = appliance
+        Navigatable.__init__(self, appliance=appliance)
         self.parent = parent_provider
 
     def instantiate(self, name):

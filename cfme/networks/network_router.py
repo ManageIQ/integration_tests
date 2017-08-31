@@ -12,7 +12,7 @@ class NetworkRouterCollection(Navigatable):
         Note: Network providers object are not implemented in mgmt
     """
     def __init__(self, appliance=None, parent_provider=None):
-        self.appliance = appliance
+        Navigatable.__init__(self, appliance=appliance)
         self.parent = parent_provider
 
     def instantiate(self, name):

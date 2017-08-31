@@ -19,7 +19,7 @@ class NetworkProviderCollection(Navigatable):
        Note: Network providers object are not implemented in mgmt
     """
     def __init__(self, appliance=None):
-        self.appliance = appliance
+        Navigatable.__init__(self, appliance=appliance)
 
     def instantiate(self, name):
         return NetworkProvider(name=name, appliance=self.appliance)
