@@ -429,3 +429,7 @@ class ItemNotFound(CFMEException):
 
 class ManyEntitiesFound(CFMEException):
     """Raised when one or no items were expected but several/many items were obtained instead."""
+
+
+class RoleNotFound(CFMEException):
+    """Raised when Deployment role not found"""
