@@ -73,8 +73,8 @@ def test_manageiq_ansible_update_provider(ansible_providers, provider):
                          values_to_update=providers_values_to_update, script=script_name)
     run_ansible(script_name)
     view = navigate_to(provider, 'Details')
-    assert get_yml_value(script_name, 'provider_api_hostname') in \
-           view.context['object'].summary.properties.host_name._el.text
+    assert get_yml_value(script_name, 'provider_api_hostname') in view.context['object'].\
+        summary.properties.host_name._el.text
 
 
 @pytest.mark.polarion('CMP-10292')
