@@ -93,7 +93,7 @@ def new_credential():
         principal='uid{}'.format(fauxfactory.gen_alphanumeric().lower()), secret='redhat')
 
 
-# TODO should be updated(add_tag/remove_tag), after all used classes will support Taggable class
+# TODO Remove once widgetastic fixture replaces completely
 @pytest.fixture(scope='function')
 def check_item_visibility(tag, user_restricted):
     def _check_item_visibility(vis_object, visibility_result):
@@ -118,4 +118,28 @@ def check_item_visibility(tag, user_restricted):
             except Exception:
                 logger.debug('Tagged item is not visible')
         assert actual_visibility == visibility_result
+    return _check_item_visibility
+
+
+@pytest.fixture(scope='function')
+def widgetastic_check_tag_visibility(tag, user_restricted):
+    def _check_item_visibility(vis_object, vis_expect):
+        """
+        Args:
+            vis_object: the object with a tag to check
+            vis_expect: bool, True if tag should be visible
+
+        Returns: None
+        """
+        view = navigate_to(vis_object, 'Details')
+        if vis_expect:
+            vis_object.add_tag(tag)
+        elif tag.name in vis_object.get_tags(tenant=tag.category):
+            vis_object.remove_tag(tag)
+        with user_restricted:
+            view = navigate_to(vis_object, 'Details')
+            test_vis = tag.name in view.entities.smart_management.get_text_of(tag.category.name)
+
+        assert test_vis == vis_expect
+
     return _check_item_visibility

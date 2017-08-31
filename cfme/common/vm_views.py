@@ -9,7 +9,7 @@ from widgetastic_manageiq import BreadCrumb
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (
-    Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, CheckboxSelect,
+    Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect,
     CheckableManageIQTree, VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity,
     BaseQuadIconEntity, BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
 
@@ -338,7 +338,7 @@ class EditView(BaseLoggedInPage):
         parent_vm = BootstrapSelect(id='chosen_parent')
         # MultiBoxSelect element only has table ID in CFME 5.8+
         # https://bugzilla.redhat.com/show_bug.cgi?id=1463265
-        chile_vms = MultiBoxSelect(id='child-vm-select')
+        child_vms = MultiBoxSelect(id='child-vm-select')
         save_button = Button('Save')
         reset_button = Button('Reset')
         cancel_button = Button('Cancel')
@@ -387,7 +387,7 @@ class SetOwnershipView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # TODO match quadicon
+        # TODO match quadicon using entities, no provider match through icon asset yet
         return False
 
 
@@ -423,7 +423,7 @@ class ManagePoliciesView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # TODO match quadicon
+        # TODO match quadicon using entities, no provider match through icon asset yet
         return False
 
 
