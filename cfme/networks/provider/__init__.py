@@ -7,15 +7,7 @@ from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
-from cfme.networks.views import (
-    NetworkProviderDetailsView,
-    NetworkProviderView,
-    BalancerDetailsView,
-    CloudNetworkDetailsView,
-    NetworkPortDetailsView,
-    NetworkRouterDetailsView,
-    SecurityGroupDetailsView,
-    SubnetDetailsView)
+from cfme.networks.views import NetworkProviderDetailsView, NetworkProviderView
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -138,7 +130,6 @@ class Details(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'CloudSubnets')
 class OpenCloudSubnets(CFMENavigateStep):
-    VIEW = SubnetDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -147,7 +138,6 @@ class OpenCloudSubnets(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'CloudNetworks')
 class OpenCloudNetworks(CFMENavigateStep):
-    VIEW = CloudNetworkDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -156,16 +146,14 @@ class OpenCloudNetworks(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'NetworkRouters')
 class OpenNetworkRouters(CFMENavigateStep):
-    VIEW = NetworkRouterDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.entities.relationships.click_at('Cloud Routers')
+        self.prerequisite_view.entities.relationships.click_at('Network Routers')
 
 
 @navigator.register(NetworkProvider, 'SecurityGroups')
 class OpenSecurityGroups(CFMENavigateStep):
-    VIEW = SecurityGroupDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -182,7 +170,6 @@ class OpenFloatingIPs(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'NetworkPorts')
 class OpenNetworkPorts(CFMENavigateStep):
-    VIEW = NetworkPortDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -191,7 +178,6 @@ class OpenNetworkPorts(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'LoadBalancers')
 class OpenNetworkBalancers(CFMENavigateStep):
-    VIEW = BalancerDetailsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
