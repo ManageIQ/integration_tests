@@ -1147,7 +1147,10 @@ class ReportDataControllerMixin(object):
         js_cmd = 'sendDataWithRx({data}); return ManageIQ.qe.gtl.result'.format(data=json_data)
         self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
         # command result is always stored in this global variable
-        return self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        result = self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        return result
 
     def _call_item_method(self, method):
         raw_data = {'controller': 'reportDataController',
@@ -1157,7 +1160,10 @@ class ReportDataControllerMixin(object):
         js_cmd = ('sendDataWithRx({data}); '
                   'return ManageIQ.qe.gtl.result.{method}()').format(data=js_data, method=method)
         self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
-        return self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        result = self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        return result
 
 
 class JSPaginationPane(View, ReportDataControllerMixin):
