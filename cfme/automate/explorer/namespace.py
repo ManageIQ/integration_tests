@@ -93,7 +93,11 @@ class NamespaceCollection(Navigatable):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Automate Namespace "{}" was added'.format(name))
+            if self.appliance.version >= '5.8.2':
+                add_page.flash.assert_message(
+                    'Automate Namespace "{}" was added'.format(description or name))
+            else:
+                add_page.flash.assert_message('Automate Namespace "{}" was added'.format(name))
             return self.instantiate(name=name, description=description)
 
     def delete(self, *namespaces):
@@ -130,7 +134,8 @@ class NamespaceCollection(Navigatable):
         all_page.flash.assert_no_error()
         for namespace in checked_namespaces:
             all_page.flash.assert_message(
-                'Automate Namespace "{}": Delete successful'.format(namespace.description))
+                'Automate Namespace "{}": Delete successful'.format(
+                    namespace.description or namespace.name))
 
 
 @navigator.register(NamespaceCollection)
@@ -225,8 +230,15 @@ class Namespace(Navigatable):
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            view.flash.assert_message(
-                'Automate Namespace "{}" was saved'.format(updates.get('name', self.name)))
+            if self.appliance.version >= '5.8.2':
+                text = (
+                    updates.get('description', self.description) or
+                    updates.get('name', self.name))
+                view.flash.assert_message(
+                    'Automate Namespace "{}" was saved'.format(text))
+            else:
+                view.flash.assert_message(
+                    'Automate Namespace "{}" was saved'.format(updates.get('name', self.name)))
         else:
             view.flash.assert_message(
                 'Edit of Automate Namespace "{}" was cancelled by the user'.format(self.name))
