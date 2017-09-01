@@ -37,6 +37,9 @@ class OrderForm(ServicesCatalogView):
     private_network = Input(name="param_private_network")
     default_select_value = BootstrapSelect('service_level')
 
+    machine_credential = BootstrapSelect("credential")
+    hosts = Input(name="hosts")
+
 
 class ServiceCatalogsView(ServicesCatalogView):
     title = Text("#explorer_title_text")
@@ -88,12 +91,13 @@ class OrderServiceCatalogView(OrderForm):
 class ServiceCatalogs(Updateable, Pretty, Navigatable):
 
     def __init__(self, catalog=None, name=None, stack_data=None,
-                 dialog_values=None, appliance=None):
+                 dialog_values=None, ansible_dialog_values=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.catalog = catalog
         self.name = name
         self.stack_data = stack_data
         self.dialog_values = dialog_values
+        self.ansible_dialog_values = ansible_dialog_values
 
     def order(self):
         view = navigate_to(self, 'Order')
@@ -101,6 +105,8 @@ class ServiceCatalogs(Updateable, Pretty, Navigatable):
             view.fill(self.stack_data)
         if self.dialog_values:
             view.fill(self.dialog_values)
+        if self.ansible_dialog_values:
+            view.fill(self.ansible_dialog_values)
         view.submit_button.click()
         # Request page is displayed after this hence not asserting for view
         view.flash.assert_success_message("Order Request was Submitted")

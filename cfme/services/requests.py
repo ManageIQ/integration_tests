@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Table, Checkbox
+from widgetastic.widget import Text, Table, Checkbox, View
 from widgetastic_manageiq import BreadCrumb, SummaryForm, SummaryFormItem, PaginationPane, Button
-from widgetastic_patternfly import View, Input, Tab, BootstrapTreeview, FlashMessages
+from widgetastic_patternfly import Input, Tab, BootstrapTreeview, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
@@ -32,7 +32,6 @@ class Request(Navigatable):
         self.description = description
         self.partial_check = partial_check
         self.cells = cells or {'Description': self.description}
-        self.rest = self._get_request_from_rest(self.partial_check)
         self.row = None
 
     # TODO Replace varmeth with Sentaku one day
@@ -40,9 +39,7 @@ class Request(Navigatable):
     def wait_for_request(self):
         def _finished():
             self.rest.reload()
-            if self.rest.request_state.title() not in self.REQUEST_FINISHED_STATES:
-                return False
-            return True
+            return self.rest.request_state.title() in self.REQUEST_FINISHED_STATES
 
         wait_for(_finished, num_sec=800, delay=20, message="Request finished")
 
@@ -50,17 +47,18 @@ class Request(Navigatable):
     def wait_for_request_ui(self):
         def _finished():
             self.update(method='ui')
-            if self.row.request_state.text not in self.REQUEST_FINISHED_STATES:
-                return False
-            return True
+            return self.row.request_state.text in self.REQUEST_FINISHED_STATES
 
         wait_for(_finished, num_sec=800, delay=20, message="Request finished")
 
-    def _get_request_from_rest(self, partial_check):
-        matching_requests = (self.appliance.rest_api.collections.requests.find_by(
-            description=self.cells['Description']) if partial_check is False else
-            self.appliance.rest_api.collections.requests.find_by(
-            description='%{}%'.format(self.cells['Description'])))
+    @property
+    def rest(self):
+        if self.partial_check:
+            matching_requests = self.appliance.rest_api.collections.requests.find_by(
+                description='%{}%'.format(self.cells['Description']))
+        else:
+            matching_requests = self.appliance.rest_api.collections.requests.find_by(
+                description=self.cells['Description'])
         if len(matching_requests) > 1:
             raise RequestException(
                 'Multiple requests with matching \"{}\" '
@@ -68,7 +66,7 @@ class Request(Navigatable):
                     self.description))
         elif len(matching_requests) == 0:
             raise ItemNotFound(
-                'Nothing matching \"{}\" with partial_check={} was found'.format(
+                'Nothing matching "{}" with partial_check={} was found'.format(
                     self.cells['Description'], self.partial_check))
         else:
             self.description = matching_requests[0].description
@@ -86,7 +84,10 @@ class Request(Navigatable):
     @variable(alias='rest')
     def exists(self):
         """If our Request exists in CFME"""
-        return self.rest.exists
+        try:
+            return self.rest.exists
+        except ItemNotFound:
+            return False
 
     @property
     def status(self):
@@ -166,7 +167,9 @@ class Request(Navigatable):
             cancel: Whether to cancel the deletion.
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.delete.click(cancel)
+        view.toolbar.delete.click()
+        view.browser.handle_alert(cancel=cancel, wait=10.0)
+        view.browser.plugin.ensure_page_safe()
 
     @variable(alias='rest')
     def is_finished(self):
