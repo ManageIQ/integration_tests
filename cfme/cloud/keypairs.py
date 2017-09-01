@@ -41,7 +41,7 @@ class KeyPairDetailsAccordion(View):
 
 class KeyPairEntities(View):
     title = Text('//div[@id="main-content"]//h1')
-    table = Table("//div[@id='list_grid']//table")
+    table = Table("//div[@id='gtl_div']//table")
     search = View.nested(Search)
     # element attributes changed from id to class in upstream-fine+, capture both with locator
     flash = FlashMessages('.//div[@id="flash_msg_div"]'

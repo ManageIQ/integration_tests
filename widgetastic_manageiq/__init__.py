@@ -2418,7 +2418,7 @@ class BaseEntitiesView(View):
 
     @entities.register('List View')
     class ListView(EntitiesConditionalView):
-        elements = Table(locator='//div[@id="list_grid"]/table')
+        elements = Table(locator='//div[@id="gtl_div"]//table')
 
         @property
         def entity_names(self):
