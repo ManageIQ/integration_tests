@@ -47,3 +47,15 @@ class DisksTable(VanillaTable):
         """Clicks the Cancel Add button to cancel adding a new row
         """
         self.cancel_add_btn.click()
+
+
+class RHVDisksTable(DisksTable):
+    """Table to add and remove Disks (in VM Reconfigure form) for RHV
+    """
+    column_widgets = {
+        'Type': BootstrapSelect(id='hdType'),
+        'Size': Input(id='dvcSize'),
+        3: BootstrapSelect(id='hdUnit'),
+        'Delete Backing': BootstrapSwitch(name='cb_deletebacking'),
+        'Actions': Button()
+    }

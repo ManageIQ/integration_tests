@@ -74,23 +74,30 @@ def test_vm_reconfig_add_remove_hw_cold(
 
 @pytest.mark.parametrize('disk_type', ['thin', 'thick'])
 @pytest.mark.parametrize(
-    'disk_mode', ['persistent', 'independent_persistent', 'independent_nonpersistent'])
-@pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
+    'disk_mode', [None, 'persistent', 'independent_persistent', 'independent_nonpersistent'])
+@pytest.mark.uncollectif(lambda provider, disk_mode:
+    provider.one_of(RHEVMProvider) and disk_mode is not None or
+    not provider.one_of(RHEVMProvider) and disk_mode is None)
 def test_vm_reconfig_add_remove_disk_cold(
         provider, small_vm, ensure_vm_stopped, disk_type, disk_mode):
 
     orig_config = small_vm.configuration.copy()
     new_config = orig_config.copy()
-    new_config.add_disk(
-        size=5, size_unit='GB', type=disk_type, mode=disk_mode)
+    new_config.add_disk(size=5, type=disk_type, mode=disk_mode)
 
-    small_vm.reconfigure(new_config)
+    if provider.one_of(RHEVMProvider):
+        small_vm.reconfigure_rhv_disks(new_config)
+    else:
+        small_vm.reconfigure(new_config)
     wait_for(
         lambda: small_vm.configuration == new_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,
         message="confirm that disk was added")
 
-    small_vm.reconfigure(orig_config)
+    if provider.one_of(RHEVMProvider):
+        small_vm.reconfigure_rhv_disks(orig_config)
+    else:
+        small_vm.reconfigure(orig_config)
     wait_for(
         lambda: small_vm.configuration == orig_config, timeout=360, delay=45,
         fail_func=small_vm.refresh_relationships,

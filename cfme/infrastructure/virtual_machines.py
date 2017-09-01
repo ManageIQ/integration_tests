@@ -37,7 +37,7 @@ from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput
 )
 from widgetastic_manageiq import TimelinesView
-from widgetastic_manageiq.vm_reconfigure import DisksTable
+from widgetastic_manageiq.vm_reconfigure import DisksTable, RHVDisksTable
 
 # for provider specific vm/template page
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
@@ -143,6 +143,7 @@ class InfraVmReconfigureView(BaseLoggedInPage):
     cpu_total = WInput()  # read-only, TODO widgetastic
 
     disks_table = DisksTable()
+    rhv_disks_table = RHVDisksTable()
 
     submit_button = Button('Submit', classes=[Button.PRIMARY])
     cancel_button = Button('Cancel', classes=[Button.DEFAULT])
@@ -166,6 +167,11 @@ class VMDisk(
             return self.filename == other.filename
         # If one of filenames is None (before disk is created), compare the rest
         for attr in self.EQUAL_ATTRS:
+            # For RHV. In UI we can't select disk mode and in DB mode for this disk stores as
+            # persistent. So it makes no sense to compare None with 'persistent' so just skip it.
+            if attr == 'mode':
+                if getattr(other, attr) is None:
+                    continue
             if getattr(self, attr) != getattr(other, attr):
                 return False
         return True
@@ -216,8 +222,11 @@ class VMConfiguration(Pretty):
         self._load()
 
     def __eq__(self, other):
-        return (self.hw == other.hw) and (self.num_disks == other.num_disks) and \
+        return (
+            (self.hw == other.hw) and
+            (self.num_disks == other.num_disks) and
             all(disk in other.disks for disk in self.disks)
+        )
 
     def _load(self):
         """Loads the configuration from the VM object's appliance (through DB)
@@ -246,7 +255,7 @@ class VMConfiguration(Pretty):
         ).all()
         for disk_data in disks_data:
             # In DB stored in bytes, but UI default is GB
-            size_gb = disk_data.size / (1024 ** 3)
+            size_gb = int(disk_data.size) / (1024 ** 3)
             self.disks.append(
                 VMDisk(
                     filename=disk_data.filename,
@@ -261,9 +270,8 @@ class VMConfiguration(Pretty):
         """
         config = VMConfiguration.__new__(VMConfiguration)
         config.hw = copy(self.hw)
-        # We can just make shallow copy here because disks can be only added or deleted, not edited
-        config.disks = self.disks[:]
-        config.vm = self.vm
+        config.disks = copy(self.disks)
+        config.vm = copy(self.vm)
         return config
 
     def add_disk(self, size, size_unit='GB', type='thin', mode='persistent'):
@@ -703,6 +711,45 @@ class Vm(VM):
             vm_recfg.flash.assert_message("VM Reconfigure Request was saved")
 
         # TODO This should (one day) return a VM reconfigure request obj that we can further use
+
+    def reconfigure_rhv_disks(self, new_configuration=None):
+        """Reconfigures RHV VM's disks based on given configuration or set of changes
+
+        Args:
+           new_configuration (VMConfiguration): Object with desired configuration.
+        """
+        if not new_configuration:
+            raise TypeError(
+                "You must provide either new configuration or changes to apply.")
+
+        if new_configuration:
+            changes = self.configuration.get_changes_to_fill(new_configuration)
+
+        any_changes = any(v not in [None, []] for v in changes.values())
+        if not any_changes:
+            raise ValueError("No changes specified - cannot reconfigure VM.")
+
+        vm_recfg = navigate_to(self, "Reconfigure")
+
+        for disk_change in changes["disks"]:
+            action, disk = disk_change["action"], disk_change["disk"]
+            if action == "add":
+                row = vm_recfg.rhv_disks_table.click_add_disk()
+
+                row.type.fill(disk.type)
+                row[3].fill(disk.size_unit)
+                row.size.fill(disk.size)
+
+                row.actions.widget.click()
+            elif action == "delete":
+                row = vm_recfg.rhv_disks_table.row(name=disk.filename)
+                row.delete_backing.fill(disk_change["delete_backing"])
+                row.actions.widget.click()
+            else:
+                raise ValueError("Unknown disk change action; must be one of: add, delete")
+        vm_recfg.submit_button.click()
+        vm_recfg.flash.assert_no_error()
+        vm_recfg.flash.assert_message("VM Reconfigure Request was saved")
 
 
 class Template(BaseTemplate):
