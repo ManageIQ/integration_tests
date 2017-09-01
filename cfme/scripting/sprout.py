@@ -1,20 +1,21 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-"""Script to encrypt config files.
+"""Script to checkout a sprout appliance
 
 Usage:
 
-   scripts/encrypt_conf.py confname1 confname2 ... confnameN
-   scripts/encrypt_conf.py credentials
+   sprout.py checkout
 """
 import click
+
+import os
 import signal
-import time
 import sys
-# import yaml
+import time
+import yaml
 
 from cfme.test_framework.sprout.plugin import SproutManager, SproutProvisioningRequest
-# from utils.path import conf_path
+from utils.path import conf_path
 
 
 @click.group(help='Functions for interacting with sprout')
@@ -34,7 +35,8 @@ def main():
 @click.option('--override-ram', default=0, help='Override RAM (MB). 0 means no override')
 @click.option('--override-cpu', default=0,
               help='Override CPU core count. 0 means no override')
-@click.option('--populate-yaml', default=False, help="Populate the yaml with the appliance")
+@click.option('--populate-yaml', is_flag=True, default=False,
+              help="Populate the yaml with the appliance")
 def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
              override_ram, override_cpu, populate_yaml):
     """Function to show the given credentials, takes either a provider key or a credential key"""
@@ -52,12 +54,35 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
     signal.signal(signal.SIGINT, exit_gracefully)
     signal.signal(signal.SIGTERM, exit_gracefully)
     try:
-        sm.request_appliances(sr)
+        appliance_data = sm.request_appliances(sr)
+        for app in appliance_data:
+            print "{}: {}".format(app['name'], app['ip_address'])
         while not sm.check_fullfilled():
             print("waiting...")
             time.sleep(10)
+        if populate_yaml:
+            file_name = conf_path.join('env.local.yaml').strpath
+            if os.path.exists(file_name):
+                with open(file_name) as f:
+                    y_data = yaml.load(f)
+                if not y_data:
+                    y_data = {}
+            else:
+                y_data = {}
+            if y_data:
+                with open(conf_path.join('env.local.backup').strpath, 'w') as f:
+                    yaml.dump(y_data, f)
 
-        # TODO - populate yaml
+            y_data['appliances'] = []
+            for app in appliance_data:
+                y_data['appliances'].append({'base_url': 'https://{}/'.format(app['ip_address'])})
+            with open(file_name, 'w') as f:
+                try:
+                    del y_data['base_url']
+                except:
+                    pass
+                yaml.dump(y_data, f)
+
         print("Appliance checked out, hit ctrl+c to checkin")
 
         while True:
