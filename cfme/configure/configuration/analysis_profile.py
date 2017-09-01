@@ -112,6 +112,7 @@ class AnalysisProfileAddView(BaseLoggedInPage):
         return (
             self.title.text == 'Adding a new Analysis Profile' and
             self.profile_type.text == self.context['object'].profile_type)
+
     title = Text('//div[@id="main-content"]//h1[@id="explorer_title"]'
                  '/span[@id="explorer_title_text"]')
     # This is a ALMOST a SummaryFormItem, but there's no div to wrap the items so it doesn't work
@@ -235,7 +236,6 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         view = self.create_view(AnalysisProfileAllView)
         view.flush_widget_cache()
         assert view.is_displayed
-        view.flash.assert_no_error()
         view.flash.assert_success_message(
             'Add of new Analysis Profile was cancelled by the user'
             if cancel
@@ -276,13 +276,10 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         else:
             view.cancel.click()
 
-        view = self.create_view(AnalysisProfileDetailsView)  # edited through details
-        view.flush_widget_cache()
-        # Can't assert view.is_displayed because the name may have changed and object hasn't
-        # been updated yet
-        assert (view.entities.title.text == 'Settings Analysis Profile "{}"'
-                                            .format(updates.get('name', self.name)))
-        view.flash.assert_no_error()
+        # redirects to details if edited from there
+        view = self.create_view(AnalysisProfileDetailsView, override=updates)
+        assert view.is_displayed
+
         view.flash.assert_success_message(
             'Edit of Analysis Profile "{}" was cancelled by the user'.format(self.name)
             if cancel or not changed
@@ -326,7 +323,6 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
             AnalysisProfileDetailsView if cancel else AnalysisProfileAllView)
         view.flush_widget_cache()
         assert view.is_displayed
-        view.flash.assert_no_error()
         view.flash.assert_success_message(
             'Add of new Analysis Profile was cancelled by the user'  # yep, not copy specific
             if cancel
