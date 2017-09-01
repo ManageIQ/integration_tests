@@ -4,7 +4,6 @@ from Crypto.PublicKey import RSA
 
 from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.exceptions import KeyPairNotFound
 from cfme.web_ui import mixins
 from utils import testgen
 from utils.blockers import BZ
@@ -21,15 +20,19 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
+@pytest.fixture(scope='function')
+def keypairs(appliance):
+    return KeyPairCollection(appliance=appliance)
+
+
 @pytest.mark.tier(3)
-def test_keypair_crud(openstack_provider):
+def test_keypair_crud(openstack_provider, keypairs):
     """ This will test whether it will create new Keypair and then deletes it.
     Steps:
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypairs = KeyPairCollection()
     try:
         keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
     except TimedOutError:
@@ -39,17 +42,12 @@ def test_keypair_crud(openstack_provider):
             pytest.fail('Timed out creating keypair')
     assert keypair.exists
 
-    try:
-        keypair.delete(wait=True)
-    except TimedOutError:
-        openstack_provider.mgmt.api.keypairs.delete(keypair.name)
-        pytest.fail('Timed out deleting keypair')
-
+    keypair.delete(wait=True)
     assert not keypair.exists
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud_with_key(openstack_provider):
+def test_keypair_crud_with_key(openstack_provider, keypairs):
     """ This will test whether it will create new Keypair and then deletes it.
 
     Steps:
@@ -59,7 +57,6 @@ def test_keypair_crud_with_key(openstack_provider):
     """
     key = RSA.generate(1024)
     public_key = key.publickey().exportKey('OpenSSH')
-    keypairs = KeyPairCollection()
     try:
         keypair = keypairs.create(fauxfactory.gen_alphanumeric(), openstack_provider, public_key)
     except TimedOutError:
@@ -69,17 +66,12 @@ def test_keypair_crud_with_key(openstack_provider):
             pytest.fail('Timed out creating keypair')
     assert keypair.exists
 
-    try:
-        keypair.delete(wait=True)
-    except TimedOutError:
-        openstack_provider.mgmt.api.keypairs.delete(keypair.name)
-        pytest.fail('Timed out deleting keypair')
-
+    keypair.delete(wait=True)
     assert not keypair.exists
 
 
 @pytest.mark.tier(3)
-def test_keypair_create_cancel(openstack_provider):
+def test_keypair_create_cancel(openstack_provider, keypairs):
     """ This will test cancelling on adding a keypair
 
     Steps:
@@ -87,13 +79,12 @@ def test_keypair_create_cancel(openstack_provider):
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypairs = KeyPairCollection()
     keypair = keypairs.create(name="", provider=openstack_provider, cancel=True)
 
     assert not keypair.exists
 
 
-def test_keypair_add_and_remove_tag(openstack_provider):
+def test_keypair_add_and_remove_tag(openstack_provider, keypairs):
     """ This will test whether it will add and remove tag for newly created Keypair or not
     and then deletes it.
 
@@ -105,7 +96,6 @@ def test_keypair_add_and_remove_tag(openstack_provider):
         * Also delete it.
     """
     tag = ('Department', 'Accounting')
-    keypairs = KeyPairCollection()
     try:
         keypair = keypairs.create(fauxfactory.gen_alphanumeric(), openstack_provider)
     except TimedOutError:
@@ -125,10 +115,6 @@ def test_keypair_add_and_remove_tag(openstack_provider):
     # Above small conversion in assert statement convert 'tagged_value' in tuple("a","b") and then
     # compare with tag which is tuple. As get_tags will return assigned tag in list format["a: b"].
 
-    try:
-        keypair.delete(wait=True)
-    except TimedOutError:
-        openstack_provider.mgmt.api.keypairs.delete(keypair.name)
-        pytest.fail('Timed out deleting keypair')
+    keypair.delete(wait=True)
 
     assert not keypair.exists

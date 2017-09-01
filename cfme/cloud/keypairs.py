@@ -2,17 +2,19 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic.utils import VersionPick, Version
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button, FlashMessages
-from cfme.exceptions import KeyPairNotFound
+from widgetastic_manageiq import (
+    ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
+    SummaryTable, BootstrapSelect, ItemNotFound)
+
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common.vm_views import VMEntities
+from cfme.exceptions import KeyPairNotFound
+
 from cfme.web_ui import match_location, mixins
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
 from utils.wait import wait_for
-from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, Text, TextInput, Table, Search, PaginationPane, Accordion,
-    ManageIQTree, BreadCrumb, SummaryTable, BootstrapSelect)
 
 
 class KeyPairToolbar(View):
@@ -39,19 +41,11 @@ class KeyPairDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class KeyPairEntities(View):
-    title = Text('//div[@id="main-content"]//h1')
-    table = Table("//div[@id='gtl_div']//table")
-    search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
-
-
 class KeyPairDetailsEntities(View):
     breadcrumb = BreadCrumb()
     title = Text('//div[@id="main-content"]//h1')
-    table = Table("//div[@id='list_grid']//table")
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
     properties = SummaryTable(title='Properties')
     relationships = SummaryTable(title='Relationships')
     smart_management = SummaryTable(title='Smart Management')
@@ -88,8 +82,7 @@ class KeyPairAllView(KeyPairView):
             self.entities.title.text == 'Key Pairs')
 
     toolbar = View.nested(KeyPairToolbar)
-    entities = View.nested(KeyPairEntities)
-    paginator = PaginationPane()
+    including_entities = View.include(VMEntities, use_parent=True)
 
 
 class KeyPairDetailsView(KeyPairView):
@@ -104,7 +97,6 @@ class KeyPairDetailsView(KeyPairView):
     toolbar = View.nested(KeyPairDetailsToolbar)
     sidebar = View.nested(KeyPairDetailsAccordion)
     entities = View.nested(KeyPairDetailsEntities)
-    paginator = View.nested(PaginationPane)
 
 
 class KeyPairAddView(KeyPairView):
@@ -122,8 +114,11 @@ class KeyPairAddView(KeyPairView):
 class KeyPairCollection(Navigatable):
     """ Collection object for the :py:class: `cfme.cloud.KeyPair`. """
 
-    def instantiate(self, name, provider, public_key=None):
-        return KeyPair(name, provider, public_key=public_key or "", collection=self)
+    def instantiate(self, name, provider, public_key=None, appliance=None):
+        return KeyPair(name, provider,
+                       public_key=public_key or "",
+                       appliance=appliance or self.appliance,
+                       collection=self)
 
     def create(self, name, provider, public_key=None, cancel=False):
         """Create new keyPair.
@@ -152,9 +147,8 @@ class KeyPairCollection(Navigatable):
         # add/cancel should redirect, new view
         view = self.create_view(KeyPairAllView)
         # TODO BZ 1444520 causing ridiculous redirection times after submitting the form
-        wait_for(lambda: view.is_displayed, num_sec=120, delay=3,
+        wait_for(lambda: view.is_displayed, num_sec=240, delay=2,
                  fail_func=view.flush_widget_cache, handle_exception=True)
-        view = self.create_view(KeyPairAllView)
         assert view.is_displayed
         view.entities.flash.assert_success_message(flash_message)
         keypair = self.instantiate(name, provider, public_key=public_key)
@@ -199,15 +193,14 @@ class KeyPair(Navigatable):
                 view.browser.refresh()
                 view.flush_widget_cache()
 
-                # look for the row, call is_displayed on it to get boolean
-                # find_row_on_pages is going to raise NoSuchElement when the row disappears
+            view = navigate_to(self.collection, 'All')
+
             wait_for(
-                lambda: not self.exists,
+                lambda: self.name in view.entities.all_entity_names,
                 message="Wait keypairs to disappear",
-                fail_condition=False,
+                fail_condition=True,
                 num_sec=300,
-                timeout=1000,
-                delay=20,
+                delay=5,
                 fail_func=refresh
             )
 
@@ -246,16 +239,13 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=self.obj.name
-            )
-        except NoSuchElementException:
+            item = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                              surf_pages=True)
+        except ItemNotFound:
             raise KeyPairNotFound
 
-        row.click()
+        item.click()
 
 
 @navigator.register(KeyPairCollection, 'Add')
