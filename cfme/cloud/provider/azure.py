@@ -1,4 +1,4 @@
-from wrapanapi.azure import AzureSystem
+from wrapanapi.msazure import AzureSystem
 
 from . import CloudProvider
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm

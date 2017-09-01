@@ -283,7 +283,7 @@ MOCK_MODULES = ['pycurl', 'wrapanapi', 'ovirt-engine-sdk-python', 'wrapanapi.uti
                 'wrapanapi.ec2', 'wrapanapi.openstack', 'wrapanapi.rhevm',
                 'wrapanapi.scvmm', 'wrapanapi.virtualcenter', 'wrapanapi.kubernetes',
                 'wrapanapi.openshift', 'wrapanapi.rest_client', 'wrapanapi.openstack_infra',
-                'wrapanapi.hawkular', 'wrapanapi.azure', 'wrapanapi.google', 'ovirtsdk',
+                'wrapanapi.hawkular', 'wrapanapi.msazure', 'wrapanapi.google', 'ovirtsdk',
                 'wrapanapi.containers.providers.openshift', 'wrapanapi.containers',
                 'wrapanapi.containers.providers', 'wrapanapi.containers.providers.kubernetes',
                 'wrapanapi.containers.volume', 'wrapanapi.containers.template',
