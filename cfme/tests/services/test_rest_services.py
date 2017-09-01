@@ -22,6 +22,7 @@ from cfme.rest.gen_data import (
     service_data as _service_data,
     service_templates as _service_templates,
     service_templates_ui,
+    vm as _vm,
 )
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from fixtures.provider import setup_one_or_skip
@@ -135,9 +136,9 @@ def service_catalog_obj(request, appliance):
 
 
 @pytest.fixture(scope="function")
-def services(request, appliance, a_provider):
+def services(request, appliance, num=3):
     # create simple service using REST API
-    bodies = [service_body() for _ in range(3)]
+    bodies = [service_body() for _ in range(num)]
     collection = appliance.rest_api.collections.services
     new_services = collection.action.create(*bodies)
     assert_response(appliance)
@@ -163,6 +164,11 @@ def service_templates(request, appliance):
 @pytest.fixture(scope="function")
 def service_data(request, appliance, a_provider):
     return _service_data(request, appliance.rest_api, a_provider)
+
+
+@pytest.fixture(scope="function")
+def vm(request, a_provider, appliance):
+    return _vm(request, a_provider, appliance.rest_api)
 
 
 def unassign_templates(templates):
@@ -394,6 +400,60 @@ class TestServiceRESTAPI(object):
         service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
         vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
         assert service.vms[0].id == vm.id
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_service_add_resource(self, request, appliance, vm):
+        """Tests adding resource to service.
+
+        Metadata:
+            test_flag: rest
+        """
+        service = services(request, appliance, num=1).pop()
+        rest_vm = appliance.rest_api.collections.vms.get(name=vm)
+
+        assert not service.vms
+        service.action.add_resource(resource=rest_vm._ref_repr())
+        assert_response(appliance)
+        assert len(service.vms) == 1
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_service_remove_resource(self, request, appliance, service_data):
+        """Tests removing resource from service.
+
+        Metadata:
+            test_flag: rest
+        """
+        service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
+        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        request.addfinalizer(vm.action.delete)
+
+        vms_num = len(service.vms)
+        assert vms_num >= 1
+        service.action.remove_resource(resource=vm._ref_repr())
+        assert_response(appliance)
+        assert len(service.vms) == vms_num - 1
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_service_remove_all_resources(self, request, appliance, vm, service_data):
+        """Tests removing all resources from service.
+
+        Metadata:
+            test_flag: rest
+        """
+        service = appliance.rest_api.collections.services.get(name=service_data['service_name'])
+        vm_assigned = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
+        vm_added = appliance.rest_api.collections.vms.get(name=vm)
+
+        @request.addfinalizer
+        def _delete_vms():
+            vm_assigned.action.delete()
+            vm_added.action.delete()
+
+        service.action.add_resource(resource=vm_added._ref_repr())
+        assert len(service.vms) >= 2
+        service.action.remove_all_resources()
+        assert_response(appliance)
+        assert not service.vms
 
     def test_create_service_from_parent(self, request, appliance):
         """Tests creation of new service that reference existing service.
