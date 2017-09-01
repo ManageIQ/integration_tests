@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
-from navmazing import (NavigateToAttribute,
-                       NavigateToSibling,
-                       NavigateToObject,
-                       NavigationDestinationNotFound)
-from widgetastic_patternfly import CandidateNotFound
+from navmazing import NavigateToAttribute, NavigateToSibling, NavigateToObject
 
 from contextlib import contextmanager
 from fixtures.pytest_store import store
 from functools import partial
 
-from cfme.base.ui import Server, Region, ConfigurationView, Zone
+from cfme.base.ui import Server, Region, Zone
 from cfme.exceptions import (
     AuthModeUnknown,
     ConsoleNotSupported,
@@ -19,7 +15,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
-    AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
+    AngularSelect, Calendar, CFMECheckbox, Form, InfoBlock, Input,
     Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.form_buttons import change_stored_password, FormButton
 from utils import version, conf
@@ -148,164 +144,6 @@ tag_form = Form(
 records_table = Table("//div[@id='records_div']/table")
 category_table = Table("//div[@id='settings_co_categories']/table")
 classification_table = Table("//div[@id='classification_entries_div']/table")
-
-
-class AnalysisProfile(Pretty, Updateable, Navigatable):
-    """Analysis profiles. Do not use this class but the derived one.
-
-    Example:
-
-        .. code-block:: python
-
-            p = AnalysisProfile(name, description, profile_type='VM')
-            p.files = [
-                "/somefile",
-                {"Name": "/some/anotherfile", "Collect Contents?": True}
-            ]
-            p.categories = ["check_system"]
-            p.create()
-            p.delete()
-
-    """
-    CREATE_LOC = None
-    pretty_attrs = "name", "description", "files", "events"
-
-    form = tabs.TabStripForm(
-        fields=[
-            ("name", "input#name"),
-            ("description", "input#description")],
-        tab_fields={
-            "Category": [
-                ("categories", CheckboxSelect({
-                    version.LOWEST: "table#formtest",
-                    "5.5":
-                    "//h3[normalize-space(.)='Category Selection']/.."
-                    "//div[contains(@class, 'col-md-8')]"})),
-            ],
-            "File": [
-                ("files", {
-                    "5.6": DynamicTable("//div[@id='file']/fieldset/table",
-                                        default_row_item="Name"),
-                    "5.7": DynamicTable("//div[@id='file']/table",
-                                        default_row_item="Name")}),
-            ],
-            "Registry": [
-                ("registry", {"5.6": DynamicTable("//div[@id='registry']/fieldset/table"),
-                              "5.7": DynamicTable("//div[@id='registry']/table")}),
-            ],
-
-            "Event Log": [
-                ("events", {"5.6": DynamicTable("//div[@id='event_log']/fieldset/table"),
-                            "5.7": DynamicTable("//div[@id='event_log']/table")}),
-            ],
-        })
-
-    def __init__(self, name, description, profile_type, files=None, events=None, categories=None,
-                 registry=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.description = description
-        self.files = files
-        self.events = events
-        self.categories = categories
-        self.registry = registry
-        if profile_type in ('Host', 'VM'):
-            self.profile_type = profile_type
-        else:
-            raise ValueError("Profile Type is incorrect")
-
-    def create(self):
-        navigate_to(self, 'Add')
-        fill(self.form, self, action=FormButton("Add", classes=[FormButton.PRIMARY]))
-        flash.assert_no_errors()
-
-    def update(self, updates=None):
-        navigate_to(self, 'Edit')
-        if updates is None:
-            fill(self.form, self, action=form_buttons.save)
-        else:
-            fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
-
-    def delete(self):
-        navigate_to(self, 'Details')
-        tb.select("Configuration", "Delete this Analysis Profile", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
-
-    def copy(self, name=None):
-        if not name:
-            name = self.name + "copy"
-        navigate_to(self, 'Copy')
-        new_profile = AnalysisProfile(name=name, description=self.description,
-                                      profile_type=self.profile_type, files=self.files)
-        fill(self.form, {'name': new_profile.name},
-             action=form_buttons.add)
-        flash.assert_success_message('Analysis Profile "{}" was saved'.format(new_profile.name))
-        return new_profile
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except (NavigationDestinationNotFound, CandidateNotFound):
-            return False
-        else:
-            return True
-
-    def __str__(self):
-        return self.name
-
-    def __enter__(self):
-        self.create()
-
-    def __exit__(self, type, value, traceback):
-        self.delete()
-
-
-@navigator.register(AnalysisProfile, 'All')
-class AnalysisProfileAll(CFMENavigateStep):
-    VIEW = ConfigurationView
-    prerequisite = NavigateToObject(Server, 'Configuration')
-
-    def step(self):
-        server_region = self.obj.appliance.server_region_string()
-        self.prerequisite_view.accordions.settings.tree.click_path(
-            server_region, "Analysis Profiles")
-
-
-@navigator.register(AnalysisProfile, 'Add')
-class AnalysisProfileAdd(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        tb.select("Configuration", "Add {type} Analysis Profile".format(type=self.obj.profile_type))
-
-
-@navigator.register(AnalysisProfile, 'Details')
-class AnalysisProfileDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        server_region = self.obj.appliance.server_region_string()
-        self.prerequisite_view.accordions.settings.tree.click_path(
-            server_region, "Analysis Profiles", str(self.obj))
-
-
-@navigator.register(AnalysisProfile, 'Edit')
-class AnalysisProfileEdit(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        tb.select("Configuration", "Edit this Analysis Profile")
-
-
-@navigator.register(AnalysisProfile, 'Copy')
-class AnalysisProfileCopy(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        tb.select('Configuration', 'Copy this selected Analysis Profile')
 
 
 class ServerLogDepot(Pretty, Navigatable):
