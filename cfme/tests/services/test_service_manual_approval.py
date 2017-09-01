@@ -6,7 +6,7 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer.domain import DomainCollection
-from cfme.services import requests
+from cfme.services.requests import Request
 from cfme import test_requirements
 from utils.log import logger
 from utils.update import update
@@ -72,7 +72,7 @@ def test_service_manual_approval(provider, setup_provider, modify_instance, cata
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row = requests.find_request(cells, True)
-    assert row.approval_state.text == 'Pending Approval'
+    request_description = catalog_item.name
+    service_request = Request(description=request_description, partial_check=True)
+    service_request.update(method='ui')
+    assert service_request.row.approval_state.text == 'Pending Approval'
