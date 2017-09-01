@@ -119,6 +119,7 @@ class DatastoreCollection(Navigatable):
 
     def __init__(self, appliance=None):
         self.appliance = appliance
+        Navigatable.__init__(self, appliance=self.appliance)
 
     def instantiate(self, name, provider, type=None):
         return Datastore(name, provider, type=type, collection=self)
