@@ -82,6 +82,14 @@ class MyServiceDetailView(MyServicesView):
         credentials = SummaryTable(title='Credentials')
         standart_output = Text('.//div[@id="provisioning"]//pre')
 
+    @View.nested
+    class retirement(Tab):  # noqa
+        results = SummaryTable(title='Results')
+        plays = SummaryTable(title='Plays')
+        details = SummaryTable(title='Details')
+        credentials = SummaryTable(title='Credentials')
+        standart_output = Text('.//div[@id="provisioning"]//pre')
+
     @property
     def is_displayed(self):
         return (
@@ -175,7 +183,7 @@ class MyService(Updateable, Navigatable):
                     current_appliance.product_name))
         # wait for service to retire
         wait_for(
-            lambda: view.lifecycle_detail.get_text_of("Retirement State") == 'Retiring',
+            lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
             fail_func=tb.refresh,
             num_sec=10 * 60,
             delay=3,
@@ -188,7 +196,7 @@ class MyService(Updateable, Navigatable):
         view.save_button.click()
         view = navigate_to(self, 'Details')
         wait_for(
-            lambda: view.lifecycle_detail.get_text_of("Retirement State") == 'Retiring',
+            lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
             fail_func=tb.refresh,
             num_sec=5 * 60,
             delay=5,

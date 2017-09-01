@@ -54,11 +54,11 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         # TODO Somehow need to handle a modal window
         copy_from_provisioning = Button("Copy from provisioning")
         repository = BootstrapSelect("retirement_repository_id")
-        playbook = BootstrapSelect("provisioning_playbook_id")
-        machine_credential = BootstrapSelect("provisioning_machine_credential_id")
-        cloud_type = BootstrapSelect("provisioning_cloud_type")
+        playbook = BootstrapSelect("retirement_playbook_id")
+        machine_credential = BootstrapSelect("retirement_machine_credential_id")
+        cloud_type = BootstrapSelect("retirement_cloud_type")
         hosts = Input("retirement_inventory")
-        escalate_privilege = BootstrapSwitch(name="provisioning_become_enabled")
+        escalate_privilege = BootstrapSwitch("retirement_become_enabled")
         verbosity = BootstrapSelect("retirement_verbosity")
         remove_resources = BootstrapSelect("vm.catalogItemModel.retirement_remove_resources")
 
@@ -159,7 +159,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
         self.name = name
         self.description = description
         self.display_in_catalog = display_in_catalog
-        self.catalog = getattr(catalog, "name", None)
+        self.catalog = catalog
         self.provisioning = provisioning
         self.retirement = retirement
 
@@ -169,7 +169,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
             "name": self.name,
             "description": self.description,
             "display_in_catalog": self.display_in_catalog,
-            "catalog": self.catalog,
+            "catalog": getattr(self.catalog, "name", None),
         })
         view.provisioning.fill({
             "repository": self.provisioning["repository"]
@@ -208,8 +208,29 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
-        if changed:
+        general_changed = view.fill({
+            "name": updates.get("name"),
+            "description": updates.get("description"),
+            "display_in_catalog": updates.get("display_in_catalog"),
+            "catalog": getattr(updates.get("catalog"), "name", None),
+            "provisioning": updates.get("provisioning")
+        })
+        retirement_changed = False
+        if "retirement" in updates:
+            view.retirement.fill({
+                "repository": updates["retirement"]["repository"]
+            })
+            wait_for(lambda: view.retirement.playbook.is_displayed, delay=0.5, num_sec=2)
+            view.retirement.fill({
+                "playbook": updates["retirement"]["playbook"],
+                "machine_credential": updates["retirement"]["machine_credential"],
+                "cloud_type": updates["retirement"].get("cloud_type"),
+                "hosts": updates["retirement"].get("hosts"),
+                "escalate_privilege": updates["retirement"].get("escalate_privilege"),
+                "verbosity": updates["retirement"].get("verbosity")
+            })
+            retirement_changed = True
+        if general_changed or retirement_changed:
             view.save.click()
             msg = "Catalog Item {} was saved".format(updates.get("name", self.name))
         else:
