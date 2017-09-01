@@ -78,7 +78,7 @@ def provisioner(request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
         vm = Vm(name=vm_name, provider=provider, template_name=template)
-        navigate_to(vm, 'ProvisionVM')
+        navigate_to(vm, 'Provision')
 
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()

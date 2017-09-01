@@ -23,7 +23,8 @@ def pytest_generate_tests(metafunc):
             ['provisioning', 'ci-template'],
             ['provisioning', 'ci-username'],
             ['provisioning', 'ci-pass'],
-            ['provisioning', 'image']
+            ['provisioning', 'image'],
+            ['provisioning', 'vlan']
     ])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
@@ -52,26 +53,24 @@ def test_provision_cloud_init(setup_provider, provider, setup_ci_template,
     """
     # generate_tests makes sure these have values
     template = provisioning.get('ci-image') or provisioning['image']['name']
-    host, datastore = map(provisioning.get, ('host', 'datastore'))
+    host, datastore, vlan = map(provisioning.get, ('host', 'datastore', 'vlan'))
 
     mgmt_system = provider.get_mgmt_system()
 
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
-        'provision_type': 'Native Clone',
-        'custom_template': {'name': [provisioning['ci-template']]},
+        'catalog': {
+            'provision_type': 'Native Clone',
+            'vm_name': vm_name},
+        'environment': {
+            'host_name': {'name': host},
+            'datastore_name': {'name': datastore}},
+        'network': {
+            'vlan': vlan},
+        'customize': {
+            'custom_template': {'name': [provisioning['ci-template']]}}
     }
-
-    try:
-        provisioning_data['vlan'] = provisioning['vlan']
-    except KeyError:
-        # provisioning['vlan'] is required for rhevm provisioning
-        if provider.type == 'rhevm':
-            raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
     do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
                        num_sec=900)

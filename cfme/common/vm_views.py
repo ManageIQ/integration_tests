@@ -64,6 +64,38 @@ def InstanceEntity():  # noqa
     })
 
 
+class SelectTable(Table):
+    """Wigdet for non-editable table. used for selecting value"""
+    def fill(self, values):
+        """Clicks on item - fill by selecting required value"""
+        value = values.get('name', '<None>')
+        changed = False
+        if value != self.currently_selected:
+            changed = True
+            self.row(name=value).click()
+        return changed
+
+    @property
+    def currently_selected(self):
+        """Return Name of the selected row"""
+        selected = self.browser.elements(
+            ".//tr[@class='selected']/td[1]",
+            parent=self)
+        result = map(self.browser.text, selected)
+        if len(result) == 0:
+            self.logger.info('Nothing is currently selected')
+            return None
+        else:
+            return result[0]
+
+    def read(self):
+        return self.currently_selected
+
+    def read_content(self):
+        """This is a default Table.read() method for those who will need table content"""
+        return super(SelectTable, self).read()
+
+
 class VMToolbar(View):
     """
     Toolbar view for vms/instances collection destinations
@@ -133,12 +165,12 @@ class BasicProvisionFormView(View):
         vm_description = Input(name='service__vm_description')
         vm_filter = BootstrapSelect('service__vm_filter')
         num_vms = BootstrapSelect('service__number_of_vms')
-        catalog_name = Table('//div[@id="prov_vm_div"]/table')
+        catalog_name = SelectTable('//div[@id="prov_vm_div"]/table')
         provision_type = BootstrapSelect('service__provision_type')
         linked_clone = Input(name='service__linked_clone')
         pxe_server = BootstrapSelect('service__pxe_server_id')
-        pxe_image = Table('//div[@id="prov_pxe_img_div"]/table')
-        iso_file = Table('//div[@id="prov_iso_img_div"]/table')
+        pxe_image = SelectTable('//div[@id="prov_pxe_img_div"]/table')
+        iso_file = SelectTable('//div[@id="prov_iso_img_div"]/table')
 
     @View.nested
     class environment(Tab):  # noqa
@@ -158,10 +190,10 @@ class BasicProvisionFormView(View):
         resource_pool = BootstrapSelect('environment__placement_rp_name')
         folder = BootstrapSelect('environment__placement_folder_name')
         host_filter = BootstrapSelect('environment__host_filter')
-        host_name = Table('//div[@id="prov_host_div"]/table')
+        host_name = SelectTable('//div[@id="prov_host_div"]/table')
         datastore_create = Input('environment__new_datastore_create')
         datastore_filter = BootstrapSelect('environment__ds_filter')
-        datastore_name = Table('//div[@id="prov_ds_div"]/table')
+        datastore_name = SelectTable('//div[@id="prov_ds_div"]/table')
 
     @View.nested
     class hardware(Tab):  # noqa
@@ -192,23 +224,23 @@ class BasicProvisionFormView(View):
         # GCE
         is_preemtible = Input(name='hardware__is_preemptible')
 
-    @View.nested
-    class customize(Tab):  # noqa
-        TAB_NAME = 'Customize'
-        # Common
-        dns_servers = Input(name='customize__dns_servers')
-        dns_suffixes = Input(name='customize__dns_suffixes')
-        customize_type = BootstrapSelect('customize__sysprep_enabled')
-        specification_name = Table('//div[@id="prov_vc_div"]/table')
-        admin_username = Input(name='customize__root_username')
-        admin_password = Input(name='customize__root_password')
-        linux_host_name = Input(name='customize__linux_host_name')
-        linux_domain_name = Input(name='customize__linux_domain_name')
-        ip_address = Input(name='customize__ip_addr')
-        subnet_mask = Input(name='customize__subnet_mask')
-        gateway = Input(name='customize__gateway')
-        custom_template = Table('//div[@id="prov_template_div"]/table')
-        hostname = Input(name='customize__hostname')
+        @View.nested
+        class customize(Tab):  # noqa
+            TAB_NAME = 'Customize'
+            # Common
+            dns_servers = Input(name='customize__dns_servers')
+            dns_suffixes = Input(name='customize__dns_suffixes')
+            customize_type = BootstrapSelect('customize__sysprep_enabled')
+            specification_name = Table('//div[@id="prov_vc_div"]/table')
+            admin_username = Input(name='customize__root_username')
+            root_password = Input(name='customize__root_password')
+            linux_host_name = Input(name='customize__linux_host_name')
+            linux_domain_name = Input(name='customize__linux_domain_name')
+            ip_address = Input(name='customize__ip_addr')
+            subnet_mask = Input(name='customize__subnet_mask')
+            gateway = Input(name='customize__gateway')
+            custom_template = SelectTable('//div[@id="prov_template_div"]/table')
+            hostname = Input(name='customize__hostname')
 
     @View.nested
     class schedule(Tab):  # noqa
