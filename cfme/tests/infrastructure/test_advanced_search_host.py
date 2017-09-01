@@ -23,8 +23,11 @@ def hosts(infra_provider):
 def hosts_with_vm_count(hosts):
     """Returns a list of tuples (hostname, vm_count)"""
     hosts_with_vm_count = []
-    for host_name in hosts:
-        hosts_with_vm_count.append((host_name, int(host.find_quadicon(host_name).no_vm)))
+    view = navigate_to(Host, 'All')
+    view.toolbar.view_selector.select("Grid View")
+    for hostname in hosts:
+        entity = view.entities.get_entity(by_name=hostname)
+        hosts_with_vm_count.append((hostname, entity.data['no_vm']))
     return sorted(hosts_with_vm_count, key=lambda tup: tup[1])
 
 

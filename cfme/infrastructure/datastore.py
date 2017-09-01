@@ -118,8 +118,7 @@ class DatastoreCollection(Navigatable):
     """Collection class for `cfme.infrastructure.datastore.Datastore`"""
 
     def __init__(self, appliance=None):
-        self.appliance = appliance
-        Navigatable.__init__(self, appliance=self.appliance)
+        Navigatable.__init__(self, appliance=appliance)
 
     def instantiate(self, name, provider, type=None):
         return Datastore(name, provider, type=type, collection=self)
@@ -210,7 +209,7 @@ class Datastore(Pretty, Navigatable):
         view = navigate_to(self, 'Details')
         view.contents.relationships.click_at('Hosts')
         hosts_view = view.browser.create_view(RegisteredHostsView)
-        return [h.name for h in hosts_view.entities.get_all()]
+        return hosts_view.entities.get_all()
 
     def get_vms(self):
         """ Returns names of VMs (from quadicons) that use this datastore

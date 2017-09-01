@@ -82,22 +82,21 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore, so
     """
 
     # Check if there is a host with valid credentials
-    host_names = datastore.get_hosts()
-    assert len(host_names) != 0, "No hosts attached to this datastore found"
-    for host_name in host_names:
-        host_qi = Quadicon(host_name, 'host')
-        if 'checkmark' in host_qi.creds:
+    host_entities = datastore.get_hosts()
+    assert len(host_entities) != 0, "No hosts attached to this datastore found"
+    for host_entity in host_entities:
+        if 'checkmark' in host_entity.data['creds']:
             break
     else:
         # If not, get credentials for one of the present hosts
         found_host = False
-        for host_name in host_names:
-            host_data = get_host_data_by_name(provider.key, host_name)
+        for host_entity in host_entities:
+            host_data = get_host_data_by_name(provider.key, host_entity.name)
             if host_data is None:
                 continue
 
             found_host = True
-            test_host = host.Host(name=host_name, provider=provider)
+            test_host = host.Host(name=host_entity.name, provider=provider)
 
             # Add them to the host
             wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)
