@@ -71,7 +71,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
                 y_data = {}
             if y_data:
                 with open(conf_path.join('env.local.backup').strpath, 'w') as f:
-                    yaml.dump(y_data, f)
+                    yaml.dump(y_data, f, default_flow_style=False)
 
             y_data['appliances'] = []
             for app in appliance_data:
@@ -81,7 +81,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
                     del y_data['base_url']
                 except:
                     pass
-                yaml.dump(y_data, f)
+                yaml.dump(y_data, f, default_flow_style=False)
 
         print("Appliance checked out, hit ctrl+c to checkin")
 
