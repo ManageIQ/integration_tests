@@ -65,7 +65,7 @@ def get_values_for_providers_test(provider):
     }
 
 
-def get_values_for_users_test(provider):
+def get_values_for_users_test():
     return {
         'fullname': 'MIQUser',
         'name': 'MIQU',
@@ -160,6 +160,10 @@ def setup_ansible_script(provider, script, script_type=None, values_to_update=No
     setup_basic_script(provider, script_type)
     doc = open_yml(script, script_type)
     if script == 'add_provider':
+        write_yml(script, doc)
+
+    if script == 'add_provider_ssl':
+        doc[0]['tasks'][0]['manageiq_provider']['provider_verify_ssl'] = 'True'
         write_yml(script, doc)
 
     elif script == 'update_provider':
