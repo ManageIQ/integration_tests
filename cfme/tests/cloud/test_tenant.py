@@ -1,10 +1,12 @@
 import fauxfactory
 import pytest
+from cfme.infrastructure.provider import InfraProvider
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils.update import update
 from cfme.cloud.tenant import TenantCollection
 from utils.log import logger
-from utils.testgen import ONE
+from markers.env_markers.provider import ONE, ALL, LATEST
 from utils.version import current_version
 
 
@@ -27,7 +29,7 @@ def tenant(provider, setup_provider, appliance):
             provider.mgmt.remove_tenant(tenant.name)
 
 
-@pytest.mark.provider([OpenStackProvider], scope='module', limit=ONE)
+@pytest.mark.provider([InfraProvider], scope='module', selector=LATEST)
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_tenant_crud(tenant):
     """ Tests tenant create and delete

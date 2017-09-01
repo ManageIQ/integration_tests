@@ -95,11 +95,6 @@ from utils.log import logger
 from utils.providers import ProviderFilter, list_providers
 
 
-ALL = 'all'
-NONE = 'none'
-ONE = 'one'
-
-
 def _param_check(metafunc, argnames, argvalues):
     """Helper function to check if parametrizing is necessary
 
@@ -239,7 +234,7 @@ def generate(*args, **kwargs):
     return pytest_generate_tests
 
 
-def providers(metafunc, filters=None, limit=ALL):
+def providers(metafunc, filters=None):
     """ Gets providers based on given (+ global) filters
 
     Note:
@@ -273,13 +268,13 @@ def providers(metafunc, filters=None, limit=ALL):
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
             argnames.append('provider')
-        if metafunc.config.getoption('sauce') or limit == ONE:
+        if metafunc.config.getoption('sauce'):
             break
 
     return argnames, argvalues, idlist
 
 
-def providers_by_class(metafunc, classes, required_fields=None, limit=ALL):
+def providers_by_class(metafunc, classes, required_fields=None):
     """ Gets providers by their class
 
     Args:
@@ -299,7 +294,7 @@ def providers_by_class(metafunc, classes, required_fields=None, limit=ALL):
         pytest_generate_tests = testgen.parametrize([GCEProvider], scope='module')
     """
     pf = ProviderFilter(classes=classes, required_fields=required_fields)
-    return providers(metafunc, filters=[pf], limit=limit)
+    return providers(metafunc, filters=[pf])
 
 
 def all_providers(metafunc, **options):
