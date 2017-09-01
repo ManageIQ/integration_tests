@@ -8,7 +8,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen
+from utils import error, testgen
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.rest import assert_response
@@ -114,9 +114,9 @@ class TestRESTSnapshots(object):
         assert_response(appliance)
         wait_for(lambda: not vm.snapshots.find_by(name=snapshot.name), num_sec=300, delay=5)
 
-        # this will fail once BZ1466225 is fixed
-        del_action()
-        assert_response(appliance, success=False)
+        with error.expected('ActiveRecord::RecordNotFound'):
+            del_action()
+        assert_response(appliance, http_status=404)
 
     def test_delete_snapshot_from_collection(self, appliance, vm_snapshot):
         """Deletes VM/instance snapshot from collection using REST API
@@ -130,9 +130,9 @@ class TestRESTSnapshots(object):
         assert_response(appliance)
         wait_for(lambda: not vm.snapshots.find_by(name=snapshot.name), num_sec=300, delay=5)
 
-        # this will fail once BZ1466225 is fixed
-        vm.snapshots.action.delete.POST(snapshot)
-        assert_response(appliance, success=False)
+        with error.expected('ActiveRecord::RecordNotFound'):
+            vm.snapshots.action.delete.POST(snapshot)
+        assert_response(appliance, http_status=404)
 
     @pytest.mark.uncollectif(lambda provider:
             not provider.one_of(InfraProvider) or current_version() < '5.8')
