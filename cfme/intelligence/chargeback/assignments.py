@@ -89,15 +89,17 @@ class Assign(Updateable, Pretty, Navigatable):
 
     def storageassign(self):
         view = navigate_to(self, 'Storage')
-        self._fill(view)
-        view.save_button.click()
+        was_change = self._fill(view)
+        if was_change:
+            view.save_button.click()
         view.flash.assert_no_error()
         view.flash.assert_message('Rate Assignments saved')
 
     def computeassign(self):
         view = navigate_to(self, 'Compute')
-        self._fill(view)
-        view.save_button.click()
+        was_change = self._fill(view)
+        if was_change:
+            view.save_button.click()
         view.flash.assert_no_error()
         view.flash.assert_message('Rate Assignments saved')
 
