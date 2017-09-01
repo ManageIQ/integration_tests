@@ -35,7 +35,7 @@ class AvailabilityZoneDetailsToolBar(View):
 class AvailabilityZoneEntities(View):
     """View containing the widgets for the main content pane"""
     title = Text('//div[@id="main-content"]//h1')
-    table = Table("//div[@id='list_grid']//table")
+    table = Table("//div[@id='gtl_div']//table")
     search = View.nested(Search)
 
 
