@@ -102,7 +102,7 @@ def get_values_from_conf(provider, script_type):
     if script_type == 'providers':
         return get_values_for_providers_test(provider)
     if script_type == 'users':
-        return get_values_for_users_test(provider)
+        return get_values_for_users_test()
     if script_type == 'custom_attributes':
         return get_values_for_custom_attributes_test(provider)
     if script_type == 'tags':
