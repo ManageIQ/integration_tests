@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
-from widgetastic.exceptions import NoSuchElementException
 
+from cfme.exceptions import ItemNotFound
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.storage.volume import Volume
+from cfme.storage.volume import VolumeCollection
 
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -20,19 +20,35 @@ pytestmark = [pytest.mark.tier(3),
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_volume_navigation(openstack_provider):
+def test_volume_navigation(openstack_provider,appliance):
     # grab a volume name, the table returns a generator so use next
-    view = navigate_to(Volume, 'All')
+
+    collection = VolumeCollection(appliance=appliance)
+    view = navigate_to(collection, 'All')
+
     try:
-        volume_name = view.entities.table[0].name.text
-    except (StopIteration, NoSuchElementException):
+        volume_name = view.entities.get_first_entity().name
+    except(StopIteration, ItemNotFound):
         pytest.skip('Skipping volume navigation for details, no volumes present')
-    volume = Volume(name=volume_name, provider=openstack_provider)
+
+    volume = collection.instantiate(name=volume_name, provider=openstack_provider)
 
     assert view.is_displayed
 
     view = navigate_to(volume, 'Details')
     assert view.is_displayed
 
-    view = navigate_to(Volume, 'Add')
+    view = navigate_to(collection, 'Add')
     assert view.is_displayed
+
+
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+def test_volume_collective_crud(openstack_provider,appliance):
+    collection = VolumeCollection(appliance=appliance)
+    view = navigate_to(collection, 'All')
+
+    volumes =[collection.instantiate(name=item.name, provider=openstack_provider)
+              for item in view.entities.get_all()]
+
+    if volumes:
+        collection.delete(*volumes)
