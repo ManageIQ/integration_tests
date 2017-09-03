@@ -20,7 +20,7 @@ pytestmark = [pytest.mark.tier(3),
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_volume_navigation(openstack_provider,appliance):
+def test_volume_navigation(openstack_provider, appliance):
     # grab a volume name, the table returns a generator so use next
 
     collection = VolumeCollection(appliance=appliance)
@@ -43,11 +43,11 @@ def test_volume_navigation(openstack_provider,appliance):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_volume_collective_crud(openstack_provider,appliance):
+def test_volume_collective_crud(openstack_provider, appliance):
     collection = VolumeCollection(appliance=appliance)
     view = navigate_to(collection, 'All')
 
-    volumes =[collection.instantiate(name=item.name, provider=openstack_provider)
+    volumes = [collection.instantiate(name=item.name, provider=openstack_provider)
               for item in view.entities.get_all()]
 
     if volumes:

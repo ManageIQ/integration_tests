@@ -172,7 +172,7 @@ class VolumeCollection(Navigatable):
     def __init__(self, appliance=None):
         self.appliance = appliance
 
-    def instantiate(self,name, provider):
+    def instantiate(self, name, provider):
         return Volume(name, provider, collection=self)
 
     def delete(self, *volumes):
@@ -266,7 +266,7 @@ class VolumeAll(CFMENavigateStep):
 @navigator.register(Volume, 'Details')
 class VolumeDetails(CFMENavigateStep):
     VIEW = VolumeDetailsView
-    prerequisite = NavigateToAttribute('collection','All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
 
