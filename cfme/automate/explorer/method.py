@@ -51,9 +51,9 @@ class MethodDetailsView(AutomateExplorerView):
 class MethodAddView(AutomateExplorerView):
     title = Text('#explorer_title_text')
 
+    location = BootstrapSelect('cls_method_location', can_hide_on_select=True)
     name = Input(name='cls_method_name')
     display_name = Input(name='cls_method_display_name')
-    location = BootstrapSelect('cls_method_location')
 
     script = ScriptBox()
     data = Input(name='cls_method_data')
@@ -123,7 +123,7 @@ class MethodCollection(Navigatable):
             data=data)
 
     def create(
-            self, name=None, display_name=None, location=None, script=None, data=None,
+            self, name=None, display_name=None, location='inline', script=None, data=None,
             cancel=False, validate=True):
         add_page = navigate_to(self, 'Add')
         fill_dict = {
