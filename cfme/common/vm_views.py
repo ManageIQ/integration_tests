@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from time import sleep
 
 from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
@@ -21,13 +22,22 @@ class InstanceQuadIconEntity(BaseQuadIconEntity):
     @property
     def data(self):
         br = self.browser
+        state = br.get_attribute('style', self.QUADRANT.format(pos='b'))
+        state = state.split('"')[1]
+        state = os.path.split(state)[1]
+        state = os.path.splitext(state)[0]
+
+        if br.is_displayed(self.QUADRANT.format(pos='g')):
+            policy = br.get_attribute('src', self.QUADRANT.format(pos='g'))
+        else:
+            policy = None
 
         return {
             "os": br.get_attribute('src', self.QUADRANT.format(pos='a')),
-            "state": br.get_attribute('src', self.QUADRANT.format(pos='b')),
+            "state": state,
             "vendor": br.get_attribute('src', self.QUADRANT.format(pos='c')),
             "no_snapshot": br.text(self.QUADRANT.format(pos='d')),
-            "policy": br.get_attribute('src', self.QUADRANT.format(pos='g')),
+            "policy": policy,
         }
 
 
