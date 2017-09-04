@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.ansible.credentials import CredentialsCollection
 from cfme.ansible.repositories import RepositoryCollection
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.catalogs.catalog import Catalog
@@ -46,6 +47,18 @@ def ansible_repository(wait_for_ansible):
     )
     yield repository
     repository.delete()
+
+
+@pytest.yield_fixture(scope="module")
+def ansible_credential():
+    credential = CredentialsCollection().create(
+        fauxfactory.gen_alpha(),
+        "Machine",
+        username=fauxfactory.gen_alpha(),
+        password=fauxfactory.gen_alpha()
+    )
+    yield credential
+    credential.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -211,3 +224,18 @@ def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_cata
     soft_assert(len(view.provisioning.plays.fields) > 1, "Plays table in provisioning tab is empty")
     service.retire()
     soft_assert(len(view.retirement.plays.fields) > 1, "Plays table in retirement tab is empty")
+
+
+@pytest.mark.tier(3)
+def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansible_credential,
+        service_catalog):
+    """Test if credentials avaialable in the dropdown in ordering ansible playbook service
+    screen.
+    """
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
+            "machine_credential": ansible_credential.name
+        }
+    view = navigate_to(service_catalog, "Order")
+    options = [o.text for o in view.machine_credential.all_options]
+    assert ["<Default>", "CFME Default Credential", ansible_credential.name] == options
