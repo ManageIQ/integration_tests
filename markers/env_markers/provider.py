@@ -115,8 +115,40 @@ def providers(metafunc, filters=None, selector=ALL):
         allowed_providers = [potential_providers[0]]
     elif selector == LATEST:
         allowed_providers = [sorted(
-            potential_providers, key=lambda k:LooseVersion(str(k.data.get('version', 0))), reverse=True
+            potential_providers, key=lambda k:LooseVersion(
+                str(k.data.get('version', 0))), reverse=True
         )[0]]
+    elif selector == ONE_PER_TYPE:
+        types = set()
+
+        def add_prov(prov):
+            types.add(prov.type)
+            return prov
+
+        allowed_providers = [
+            add_prov(prov) for prov in potential_providers if prov.type not in types
+        ]
+    elif selector == ONE_PER_CATEGORY:
+        categories = set()
+
+        def add_prov(prov):
+            categories.add(prov.category)
+            return prov
+
+        allowed_providers = [
+            add_prov(prov) for prov in potential_providers if prov.category not in categories
+        ]
+    elif selector == ONE_PER_VERSION:
+        versions = set()
+
+        def add_prov(prov):
+            versions.add(prov.data.get('version', 0))
+            return prov
+
+        allowed_providers = [
+            add_prov(prov) for prov in potential_providers if prov.data.get(
+                'version', 0) not in versions
+        ]
 
     for provider in allowed_providers:
         argvalues.append([provider])
