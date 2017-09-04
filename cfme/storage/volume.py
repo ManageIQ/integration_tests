@@ -171,7 +171,6 @@ class VolumeCollection(Navigatable):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     def __init__(self, appliance=None):
         self.appliance = appliance
-        Navigatable.__init__(self, appliance=appliance)
 
     def instantiate(self, name, provider):
         return Volume(name, provider, collection=self)
@@ -222,11 +221,11 @@ class Volume(Navigatable):
             self.browser.refresh()
 
         try:
-            return wait_for(lambda: not self.exists,
-                            timeout=timeout,
-                            message='Wait for cloud Volume to disappear',
-                            delay=20,
-                            fail_func=refresh)
+            wait_for(lambda: not self.exists,
+                     timeout=timeout,
+                     message='Wait for cloud Volume to disappear',
+                     delay=20,
+                     fail_func=refresh)
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
