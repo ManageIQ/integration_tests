@@ -109,7 +109,12 @@ class DomainCollection(Navigatable):
         else:
             add_page.add_button.click()
             add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Automate Domain "{}" was added'.format(name))
+            if self.appliance.version >= '5.8.2':
+                add_page.flash.assert_message(
+                    'Automate Domain "{}" was added'.format(description or name))
+            else:
+                add_page.flash.assert_message(
+                    'Automate Domain "{}" was added'.format(name))
             if enabled is None:
                 # Assume
                 enabled = False
@@ -413,8 +418,13 @@ class Domain(Navigatable, Fillable):
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            view.flash.assert_message(
-                'Automate Domain "{}" was saved'.format(updates.get('name', self.name)))
+            if self.appliance.version >= '5.8.2':
+                text = (
+                    updates.get('description', self.description) or
+                    updates.get('name', self.name))
+            else:
+                text = updates.get('name', self.name)
+            view.flash.assert_message('Automate Domain "{}" was saved'.format(text))
         else:
             view.flash.assert_message(
                 'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
