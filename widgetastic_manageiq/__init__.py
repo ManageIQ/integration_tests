@@ -1210,7 +1210,8 @@ class JSPaginationPane(View, ReportDataControllerMixin):
 
     @property
     def pages_amount(self):
-        return self._invoke_cmd('get_pages_amount')
+        # this js call returns None from time to time. this is workaround until it is fixed in js
+        return wait_for(self._invoke_cmd, ['get_pages_amount'], num_sec=10, fail_condition=None)[0]
 
     def next_page(self):
         self._invoke_cmd('next_page')
