@@ -37,7 +37,7 @@ pytest_plugins = (
     'fixtures.pytest_store',
     'cfme.test_framework.sprout.plugin',
     'cfme.test_framework.appliance_police',
-
+    'cfme.test_framework.appliance',
     'fixtures.portset',
 
     'markers.manual',

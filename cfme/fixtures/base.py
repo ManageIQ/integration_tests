@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.utils.appliance import get_or_create_current_appliance
 
 from fixtures.artifactor_plugin import fire_art_hook
 
@@ -8,14 +7,6 @@ from cfme.utils.log import logger
 from cfme.utils.path import data_path
 
 
-@pytest.fixture(scope="session")
-def appliance():
-    return get_or_create_current_appliance()
-
-
-@pytest.fixture(scope="session", autouse=True)
-def set_session_timeout(appliance):
-    appliance.set_session_timeout(86400)
 
 
 @pytest.fixture(scope="session", autouse=True)
