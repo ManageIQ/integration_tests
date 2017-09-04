@@ -522,3 +522,106 @@ class SubnetDetailsView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Subnets'] and
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+
+
+class OneProviderComponentsToolbar(View):
+    policy = Dropdown(text='Policy')
+    download = Dropdown(text='Download')
+    back = Button(name='show_summary')
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class OneProviderSubnetView(BaseLoggedInPage):
+    """ Represents whole All Subnets page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(SubnetSideBar)
+    including_entities = View.include(SubnetEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Cloud Subnets)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.title.text == title)
+
+
+class OneProviderBalancerView(BaseLoggedInPage):
+    """ Represents whole All Subnets page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(BalancerSideBar)
+    including_entities = View.include(BalancerEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Balancers)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.title.text == title)
+
+
+class OneProviderNetworkPortView(BaseLoggedInPage):
+    """ Represents whole All Subnets page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(NetworkPortSideBar)
+    including_entities = View.include(NetworkPortEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Network Ports)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.title.text == title)
+
+
+class OneProviderCloudNetworkView(BaseLoggedInPage):
+    """ Represents whole All Subnets page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(CloudNetworkSideBar)
+    including_entities = View.include(CloudNetworkEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Cloud Networks)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.title.text == title)
+
+
+class OneProviderNetworkRouterView(BaseLoggedInPage):
+    """ Represents whole All Subnets page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(NetworkRouterSideBar)
+    including_entities = View.include(NetworkRouterEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Network Routers)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.title.text == title)
+
+
+class OneProviderSecurityGroupView(BaseLoggedInPage):
+    """ Represents whole All Subnets page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(SecurityGroupSideBar)
+    including_entities = View.include(SecurityGroupEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        title = '{name} (All Security Groups)'.format(name=self.context['object'].name)
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Providers'] and
+                self.title.text == title)

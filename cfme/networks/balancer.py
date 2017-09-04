@@ -14,10 +14,13 @@ class BalancerCollection(Navigatable):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return Balancer(name=name, appliance=self.appliance)
+        return Balancer(name=name, appliance=self.appliance, collection=self)
 
     def all(self):
-        view = navigate_to(Balancer, 'All')
+        if self.parent:
+            view = navigate_to(self.parent, 'LoadBalancers')
+        else:
+            view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=b.name) for b in list_networks_obj]
 
@@ -52,7 +55,7 @@ class Balancer(WidgetasticTaggable, Navigatable):
         return view.entities.properties.get_text_of('Listeners')
 
 
-@navigator.register(Balancer, 'All')
+@navigator.register(BalancerCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = BalancerView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -63,7 +66,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Balancer, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
     VIEW = BalancerDetailsView
 
     def step(self):
@@ -75,5 +78,4 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.tb = self.view.toolbar
-        self.tb.policy.item_select('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -16,11 +16,17 @@ class NetworkPortCollection(Navigatable):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return NetworkPort(name=name, appliance=self.appliance)
+        return NetworkPort(name=name, appliance=self.appliance, collection=self)
 
     def all(self):
-        view = navigate_to(NetworkPort, 'All')
+        if self.parent:
+            view = navigate_to(self.parent, 'NetworkPorts')
+        else:
+            view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all()
+        if self.parent:
+            return [self.instantiate(name=p.name) for p in list_networks_obj
+                    if p.__getattr__(name='data')['Network Manager'] == self.parent.name]
         return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 
@@ -86,5 +92,4 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.tb = self.view.toolbar
-        self.tb.policy.item_select('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -16,12 +16,15 @@ class SubnetCollection(Navigatable):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return Subnet(name=name, appliance=self.appliance)
+        return Subnet(name=name, appliance=self.appliance, collection=self)
 
     def all(self):
-        view = navigate_to(Subnet, 'All')
-        list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=s.name) for s in list_networks_obj]
+        if self.parent:
+            view = navigate_to(self.parent, 'CloudSubnets')
+        else:
+            view = navigate_to(self, 'All')
+        list_networks_obj = view.entities.get_all()
+        return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 
 class Subnet(WidgetasticTaggable, Navigatable):
@@ -58,7 +61,7 @@ class Subnet(WidgetasticTaggable, Navigatable):
         return view.entities.relationships.get_text_of('Zone')
 
 
-@navigator.register(Subnet, 'All')
+@navigator.register(SubnetCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = SubnetView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -70,7 +73,7 @@ class All(CFMENavigateStep):
 @navigator.register(Subnet, 'Details')
 class OpenCloudNetworks(CFMENavigateStep):
     VIEW = SubnetDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
@@ -82,5 +85,4 @@ class EditTags(CFMENavigateStep):
     VIEW = SubnetDetailsView
 
     def step(self):
-        self.tb = self.view.toolbar
-        self.tb.policy.item_select('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

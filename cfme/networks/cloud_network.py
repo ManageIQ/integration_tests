@@ -14,10 +14,13 @@ class CloudNetworkCollection(Navigatable):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return CloudNetwork(name=name, appliance=self.appliance)
+        return CloudNetwork(name=name, appliance=self.appliance, collection=self)
 
     def all(self):
-        view = navigate_to(CloudNetwork, 'All')
+        if self.parent:
+            view = navigate_to(self.parent, 'CloudNetworks')
+        else:
+            view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=n.name) for n in list_networks_obj]
 
@@ -58,7 +61,7 @@ class CloudNetwork(WidgetasticTaggable, Navigatable):
         return view.entities.properties.get_text_of('Type')
 
 
-@navigator.register(CloudNetwork, 'All')
+@navigator.register(CloudNetworkCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = CloudNetworkView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -69,7 +72,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(CloudNetwork, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
     VIEW = CloudNetworkDetailsView
 
     def step(self):
@@ -81,5 +84,4 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.tb = self.view.toolbar
-        self.tb.policy.item_select('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

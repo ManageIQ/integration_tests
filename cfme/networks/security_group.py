@@ -16,10 +16,13 @@ class SecurityGroupCollection(Navigatable):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return SecurityGroup(name=name, appliance=self.appliance)
+        return SecurityGroup(name=name, appliance=self.appliance, collection=self)
 
     def all(self):
-        view = navigate_to(SecurityGroup, 'All')
+        if self.parent:
+            view = navigate_to(self.parent, 'SecurityGroups')
+        else:
+            view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=s.name) for s in list_networks_obj]
 
@@ -40,7 +43,7 @@ class SecurityGroup(WidgetasticTaggable, Navigatable):
         self.provider = provider
 
 
-@navigator.register(SecurityGroup, 'All')
+@navigator.register(SecurityGroupCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = SecurityGroupView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -51,7 +54,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(SecurityGroup, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
     VIEW = SecurityGroupDetailsView
 
     def step(self):
@@ -63,5 +66,4 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.tb = self.view.toolbar
-        self.tb.policy.item_select('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

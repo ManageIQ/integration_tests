@@ -1,13 +1,24 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
+from cached_property import cached_property
 
 from cfme.common.provider import BaseProvider
+from cfme.exceptions import ItemNotFound
 from cfme.networks.balancer import BalancerCollection
 from cfme.networks.cloud_network import CloudNetworkCollection
 from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
-from cfme.networks.views import NetworkProviderDetailsView, NetworkProviderView
+from cfme.networks.views import (
+    NetworkProviderDetailsView,
+    NetworkProviderView,
+    OneProviderBalancerView,
+    OneProviderCloudNetworkView,
+    OneProviderNetworkPortView,
+    OneProviderNetworkRouterView,
+    OneProviderSecurityGroupView,
+    OneProviderSubnetView
+)
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -22,36 +33,12 @@ class NetworkProviderCollection(Navigatable):
         Navigatable.__init__(self, appliance=appliance)
 
     def instantiate(self, name):
-        return NetworkProvider(name=name, appliance=self.appliance)
+        return NetworkProvider(name=name, appliance=self.appliance, collection=self)
 
     def all(self):
-        view = navigate_to(NetworkProvider, 'All')
+        view = navigate_to(self, 'All')
         list_networks = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=p.name) for p in list_networks]
-
-    @property
-    def balancers(self):
-        return BalancerCollection(parent_provider=self)
-
-    @property
-    def subnets(self):
-        return SubnetCollection(parent_provider=self)
-
-    @property
-    def networks(self):
-        return CloudNetworkCollection(parent_provider=self)
-
-    @property
-    def ports(self):
-        return NetworkPortCollection(parent_provider=self)
-
-    @property
-    def routers(self):
-        return NetworkRouterCollection(parent_provider=self)
-
-    @property
-    def security_groups(self):
-        return SecurityGroupCollection(parent_provider=self)
 
 
 class NetworkProvider(BaseProvider):
@@ -104,13 +91,37 @@ class NetworkProvider(BaseProvider):
     def exists(self):
         try:
             navigate_to(self, 'Details')
-        except Exception:
+        except ItemNotFound:
             return False
         else:
             return True
 
+    @cached_property
+    def balancers(self):
+        return BalancerCollection(parent_provider=self)
 
-@navigator.register(NetworkProvider, 'All')
+    @cached_property
+    def subnets(self):
+        return SubnetCollection(parent_provider=self)
+
+    @cached_property
+    def networks(self):
+        return CloudNetworkCollection(parent_provider=self)
+
+    @cached_property
+    def ports(self):
+        return NetworkPortCollection(parent_provider=self)
+
+    @cached_property
+    def routers(self):
+        return NetworkRouterCollection(parent_provider=self)
+
+    @cached_property
+    def security_groups(self):
+        return SecurityGroupCollection(parent_provider=self)
+
+
+@navigator.register(NetworkProviderCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = NetworkProviderView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -121,7 +132,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
     VIEW = NetworkProviderDetailsView
 
     def step(self):
@@ -131,6 +142,7 @@ class Details(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'CloudSubnets')
 class OpenCloudSubnets(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderSubnetView
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Cloud Subnets')
@@ -139,6 +151,7 @@ class OpenCloudSubnets(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'CloudNetworks')
 class OpenCloudNetworks(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderCloudNetworkView
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Cloud Networks')
@@ -147,6 +160,7 @@ class OpenCloudNetworks(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'NetworkRouters')
 class OpenNetworkRouters(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderNetworkRouterView
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Network Routers')
@@ -155,6 +169,7 @@ class OpenNetworkRouters(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'SecurityGroups')
 class OpenSecurityGroups(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderSecurityGroupView
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Security Groups')
@@ -171,6 +186,7 @@ class OpenFloatingIPs(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'NetworkPorts')
 class OpenNetworkPorts(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderNetworkPortView
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Network Ports')
@@ -179,6 +195,7 @@ class OpenNetworkPorts(CFMENavigateStep):
 @navigator.register(NetworkProvider, 'LoadBalancers')
 class OpenNetworkBalancers(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = OneProviderBalancerView
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Load Balancers')
@@ -197,5 +214,4 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.tb = self.view.toolbar
-        self.tb.policy.item_select('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

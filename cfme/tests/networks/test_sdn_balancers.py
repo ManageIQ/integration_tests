@@ -20,15 +20,12 @@ def test_prov_balances_number(provider):
         Only one refreshed cloud provider in cfme database
     """
     prov_collection = NetworkProviderCollection()
-    bal_collection = prov_collection.balancers
-    sum_all = len(bal_collection.all())
-    sum_manual = 0
     providers = prov_collection.all()
     for prov in providers:
         view = navigate_to(prov, 'Details')
         balancers_number = view.entities.relationships.get_text_of('Load Balancers')
-        sum_manual += int(balancers_number)
-    assert sum_manual == sum_all
+        sum_all = len(prov.balancers.all())
+        assert int(balancers_number) == sum_all
 
 
 def test_balances_detail(provider):
