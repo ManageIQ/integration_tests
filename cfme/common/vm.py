@@ -8,7 +8,7 @@ from wrapanapi import exceptions
 from cfme import js
 from cfme.common.vm_console import VMConsole
 from cfme.exceptions import (
-    VmOrInstanceNotFound, TemplateNotFound, OptionNotAvailable, UnknownProviderType)
+    VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable, UnknownProviderType)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
@@ -253,7 +253,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             self.load_details(refresh=True)
             cfg_btn(self.REMOVE_SINGLE, invokes_alert=True)
         else:
-            self.find_quadicon(mark=True)
+            self.find_quadicon().check()
             cfg_btn(self.REMOVE_SELECTED, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
@@ -283,56 +283,30 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         else:
             return False
 
-    def find_quadicon(
-            self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False,
-            use_search=True):
+    def find_quadicon(self, from_any_provider=False, use_search=True):
         """Find and return a quadicon belonging to a specific vm
 
         Args:
             from_any_provider: Whether to look for it anywhere (root of the tree). Useful when
                 looking up archived or orphaned VMs
 
-        Returns: :py:class:`cfme.web_ui.Quadicon` instance
+        Returns: entity of appropriate type
         Raises: VmOrInstanceNotFound
         """
-        from cfme.web_ui import paginator
-        quadicon = Quadicon(self.name, self.quadicon_type)
-        if not do_not_navigate:
-            if from_any_provider:
-                # TODO implement as navigate_to when cfme.infra.virtual_machines has destination
-                navigate_to(self, 'All')
-            else:
-                navigate_to(self, 'AllForProvider', use_resetter=False)
-            toolbar.select('Grid View')
+        # todo :refactor this method replace it with vm methods like get_state
+        if from_any_provider:
+            view = navigate_to(self, 'All')
         else:
-            # Search requires navigation, we shouldn't use it then
-            use_search = False
-            if refresh:
-                sel.refresh()
-        if not paginator.page_controls_exist():
-            if self.is_vm:
-                raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
-            else:
-                raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
+            view = navigate_to(self, 'AllForProvider', use_resetter=False)
 
-        paginator.results_per_page(1000)
+        view.toolbar.view_selector.select('Grid View')
+
         if use_search:
-            try:
-                if not search.has_quick_search_box():
-                    # TODO rework search for archived/orphaned VMs
-                    if from_any_provider:
-                        navigate_to(self, 'All')
-                    else:
-                        navigate_to(self, 'AllForProvider', use_resetter=False)
-                search.normal_search(self.name)
-            except Exception as e:
-                logger.warning("Failed to use search: %s", str(e))
-        for page in paginator.pages():
-            if sel.is_displayed(quadicon, move_to=True):
-                if mark:
-                    sel.check(quadicon.checkbox())
-                return quadicon
-        else:
+            search.normal_search(self.name)
+
+        try:
+            return view.entities.get_entity(by_name=self.name, surf_pages=True)
+        except ItemNotFound:
             raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
 
     def get_detail(self, properties=None, icon_href=False):
@@ -471,7 +445,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         if from_details:
             self.load_details()
         else:
-            self.find_quadicon(mark=True, from_any_provider=from_any_provider)
+            self.find_quadicon(from_any_provider=from_any_provider).check()
         cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
@@ -494,7 +468,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         if from_details:
             self.load_details(refresh=True)
         else:
-            self.find_quadicon(mark=True)
+            self.find_quadicon().check()
         cfg_btn('Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
@@ -527,7 +501,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
 
     def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
         """Set ownership of the VM/Instance or Template/Image"""
-        sel.click(self.find_quadicon(False, False, False, use_search=False))
+        self.find_quadicon(use_search=False).click()
         cfg_btn('Set Ownership')
         if click_reset:
             action = form_buttons.reset
@@ -554,7 +528,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     def unset_ownership(self):
         """Unset ownership of the VM/Instance or Template/Image"""
         # choose the vm code comes here
-        sel.click(self.find_quadicon(False, False, False))
+        self.find_quadicon(use_search=False).click()
         cfg_btn('Set Ownership')
         fill(set_ownership_form, {'user_name': '<No Owner>',
             'group_name': 'EvmGroup-administrator'},
@@ -656,7 +630,7 @@ class VM(BaseVM):
                 return self.get_detail(properties=detail_t) == desired_state
             else:
                 return 'currentstate-' + desired_state in self.find_quadicon(
-                    from_any_provider=from_any_provider).state
+                    from_any_provider=from_any_provider).data['state']
 
         return wait_for(
             _looking_for_state_change,
@@ -677,7 +651,8 @@ class VM(BaseVM):
         if from_details:
             self.load_details(refresh=True)
         else:
-            self.find_quadicon(mark=True)
+            entity = self.find_quadicon()
+            entity.check()
         try:
             return not toolbar.is_greyed('Power', option)
         except sel.NoSuchElementException:

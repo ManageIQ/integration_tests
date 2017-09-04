@@ -38,11 +38,11 @@ def wait_for_vm_state_changes(vm, timeout=600):
     count = 0
     while count < timeout:
         try:
-            quadicon = vm.find_quadicon(refresh=True, from_any_provider=True)
-            logger.info("Quadicon state for %s is %s", vm.name, repr(quadicon.state))
-            if "archived" in quadicon.state.lower():
+            vm_state = vm.find_quadicon(from_any_provider=True).data['state'].lower()
+            logger.info("Quadicon state for %s is %s", vm.name, repr(vm_state))
+            if "archived" in vm_state:
                 return True
-            elif "orphaned" in quadicon.state.lower():
+            elif "orphaned" in vm_state:
                 raise CFMEException("VM should be Archived but it is Orphaned now.")
         except Exception as e:
             logger.exception(e)

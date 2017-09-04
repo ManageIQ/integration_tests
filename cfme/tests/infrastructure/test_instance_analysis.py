@@ -372,7 +372,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
              delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
-    quadicon_os_icon = template.find_quadicon().os
+    quadicon_os_icon = template.find_quadicon().data['os']
     details_os_icon = template.get_detail(
         properties=('Properties', 'Operating System'), icon_href=True)
     logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
@@ -441,7 +441,7 @@ def test_ssa_vm(provider, instance, soft_assert):
              delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
-    quadicon_os_icon = instance.find_quadicon().os
+    quadicon_os_icon = instance.find_quadicon().data['os']
     details_os_icon = instance.get_detail(
         properties=('Properties', 'Operating System'), icon_href=True)
     logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
