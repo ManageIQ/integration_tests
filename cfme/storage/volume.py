@@ -241,7 +241,6 @@ class Volume(Navigatable):
         if wait:
             self.wait_for_disappear(500)
 
-
     @property
     def exists(self):
         view = navigate_to(self.collection, 'All')
