@@ -77,7 +77,7 @@ def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_asse
             lambda: get_yml_value(script_name, 'provider_api_hostname') in
             provider.summary.properties.host_name.text_value,
             num_sec=180, delay=10,
-            fail_func=provider.browser.refresh(),
+            fail_func=provider.browser.refresh,
             message='Provider was not updated successfully',
             silent_failure=True)
     )
