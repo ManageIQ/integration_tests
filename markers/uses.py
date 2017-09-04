@@ -21,44 +21,57 @@ import pytest
 
 # List of fixture marks to create and use for test marking
 # these are exposed as globals and individually documented
-_marks_to_make = [
-    'uses_db',
-    'uses_event_listener',
-    'uses_providers',
-    'uses_pxe',
-    'uses_ssh',
-    'uses_blockers',
-]
-
-#: List of fixtures that, when used, indicate an appliance is being tested
-#: by applying the ``is_appliance`` mark.
-appliance_marks = {
-    'uses_db',
-    'uses_ssh'
-}
+USES_FIXTURENAMES = set()
 
 ##
 # Create the fixtures that will trigger test marking
 ##
-markdoc = "Fixture which marks a test with the ``{}`` mark"
-for mark in _marks_to_make:
-    def _markfunc():
-        return None
-    # Put on a nice docstring...
-    _markfunc.__doc__ = markdoc.format(mark)
-    globals()[mark] = pytest.fixture(scope="session")(_markfunc)
 
 
-###
-# Add fixtures with dependencies here
-###
-@pytest.fixture(scope="session")
+def _markfixture(func):
+    if func.__doc__ is None:
+        func.__doc__ = "Fixture which marks a test with the ``{}`` mark".format(func.__name__)
+    USES_FIXTURENAMES.add(func.__name__)
+    return pytest.fixture(scope="session")(func)
+
+
+@_markfixture
+def uses_event_listener():
+    pass
+
+
+@_markfixture
+def uses_pxe():
+    pass
+
+
+@_markfixture
+def uses_providers():
+    pass
+
+
+@_markfixture
+def is_appliance():
+    pass
+
+
+@_markfixture
+def uses_db(is_appliance):
+    """fixture that marks tests with a ``uses_db`` and a ``is_appliance`` mark"""
+
+
+@_markfixture
+def uses_ssh(is_appliance):
+    """fixture that marks tests with a ``uses_ssh`` and a ``is_appliance`` mark"""
+
+
+@_markfixture
 def uses_cloud_providers(uses_providers):
     """Fixture which marks a test with the ``uses_cloud_providers`` and ``uses_providers`` marks"""
     pass
 
 
-@pytest.fixture(scope="session")
+@_markfixture
 def uses_infra_providers(uses_providers):
     """Fixture which marks a test with the ``uses_infra_providers`` and ``uses_providers`` marks"""
     pass
@@ -75,32 +88,11 @@ def pytest_itemcollected(item):
     """
     try:
         # Intersect 'uses_' fixture set with the fixtures being used by a test
-        mark_fixtures = _uses_fixturenames().intersection(set(item.fixturenames))
+        mark_fixtures = USES_FIXTURENAMES.intersection(item.fixturenames)
     except AttributeError:
         # Test doesn't have fixturenames, make no changes
         return
 
-    for mark in mark_fixtures:
-        _add_mark(item, mark)
-
-    # Slap on the is_appliance mark if there's a match
-    if appliance_marks.intersection(mark_fixtures):
-        _add_mark(item, 'is_appliance')
-
-
-###
-# Helpers
-###
-# DRY
-def _add_mark(item, mark):
-    # Add the mark directly to the item so test introspection is sane
-    item.add_marker(mark)
-    # Add the mark to extra_keyword_matches so the builtin item collector
-    # is able to filter based on this mark
-    item.extra_keyword_matches.add(mark)
-
-
-def _uses_fixturenames():
-    # A set of all the names defined in this module named 'uses_*'
-    # These should all be fixtures.
-    return {mark for mark in globals().keys() if mark.startswith('uses_')}
+    for name in mark_fixtures:
+        item.add_marker(name)
+        item.extra_keyword_matches.add(name)
