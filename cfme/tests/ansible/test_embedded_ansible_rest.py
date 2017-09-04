@@ -152,3 +152,37 @@ class TestReposRESTAPI(object):
         # this will fail once BZ 1477520 is fixed
         appliance.rest_api.collections.configuration_script_sources.action.delete.POST(repository)
         assert_response(appliance, success=False)
+
+
+class TestPayloadsRESTAPI(object):
+    def test_payloads_collection(self, appliance, repository):
+        """Checks the configuration_script_payloads collection using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.configuration_script_payloads
+        collection.reload()
+        assert collection.all
+        for payload in collection.all:
+            assert 'AutomationManager::Playbook' in payload.type
+
+    def test_authentications_subcollection(self, appliance, repository):
+        """Checks the authentications subcollection using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        script_payloads = appliance.rest_api.collections.configuration_script_payloads
+        script_payloads.reload()
+        assert script_payloads[-1].authentications.name
+
+    def test_payloads_subcollection(self, appliance, repository):
+        """Checks the configuration_script_payloads subcollection using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        script_sources = appliance.rest_api.collections.configuration_script_sources
+        script_sources.reload()
+        assert script_sources[-1].configuration_script_payloads
