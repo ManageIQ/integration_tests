@@ -1,6 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
+from cfme.exceptions import ItemNotFound
 from cfme.networks.views import SubnetDetailsView, SubnetView
 from utils import providers, version
 from utils.appliance import Navigatable
@@ -51,9 +52,19 @@ class Subnet(WidgetasticTaggable, Navigatable):
 
     @property
     def network_provider(self):
-        """ Return name of network manager """
+        """ Returns network provider """
+        from cfme.networks.provider import NetworkProviderCollection
+        # subnet collection contains reference to provider
+        if self.collection.parent:
+            return self.collection.parent
+        # otherwise get provider name from ui
         view = navigate_to(self, 'Details')
-        return view.entities.relationships.get_text_of('Network Manager')
+        try:
+            prov_name = view.entities.relationships.get_text_of("Network Manager")
+            collection = NetworkProviderCollection(appliance=self.appliance)
+            return collection.instantiate(name=prov_name)
+        except ItemNotFound:  # BZ 1480577
+            return None
 
     @property
     def zone(self):

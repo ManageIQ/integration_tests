@@ -1,6 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
+from cfme.exceptions import ItemNotFound
 from cfme.networks.views import CloudNetworkDetailsView, CloudNetworkView
 from utils import providers, version
 from utils.appliance import Navigatable
@@ -48,17 +49,26 @@ class CloudNetwork(WidgetasticTaggable, Navigatable):
         return providers.get_crud_by_name(provider_name)
 
     @property
-    def network_provider(self):
-        """ Return object of network manager """
-        view = navigate_to(self, 'Details')
-        provider_name = view.entities.relationships.get_text_of('Network Manager')
-        return providers.get_crud_by_name(provider_name)
-
-    @property
     def network_type(self):
         """ Return type of network """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Type')
+
+    @property
+    def network_provider(self):
+        """ Returns network provider """
+        from cfme.networks.provider import NetworkProviderCollection
+        # cloud network collection contains reference to provider
+        if self.collection.parent:
+            return self.collection.parent
+        # otherwise get provider name from ui
+        view = navigate_to(self, 'Details')
+        try:
+            prov_name = view.entities.relationships.get_text_of("Network Manager")
+            collection = NetworkProviderCollection(appliance=self.appliance)
+            return collection.instantiate(name=prov_name)
+        except ItemNotFound:  # BZ 1480577
+            return None
 
 
 @navigator.register(CloudNetworkCollection, 'All')

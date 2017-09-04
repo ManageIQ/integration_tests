@@ -1,6 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
+from cfme.exceptions import ItemNotFound
 from cfme.networks.views import NetworkPortDetailsView, NetworkPortView
 from utils import version
 from utils.appliance import Navigatable
@@ -28,6 +29,22 @@ class NetworkPortCollection(Navigatable):
             return [self.instantiate(name=p.name) for p in list_networks_obj
                     if p.__getattr__(name='data')['Network Manager'] == self.parent.name]
         return [self.instantiate(name=p.name) for p in list_networks_obj]
+
+    @property
+    def network_provider(self):
+        """ Returns network provider """
+        from cfme.networks.provider import NetworkProviderCollection
+        # port collection contains reference to provider
+        if self.collection.parent:
+            return self.collection.parent
+        # otherwise get provider name from ui
+        view = navigate_to(self, 'Details')
+        try:
+            prov_name = view.entities.relationships.get_text_of("Network Manager")
+            collection = NetworkProviderCollection(appliance=self.appliance)
+            return collection.instantiate(name=prov_name)
+        except ItemNotFound:  # BZ 1480577
+            return None
 
 
 class NetworkPort(WidgetasticTaggable, Navigatable):

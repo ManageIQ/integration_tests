@@ -2,7 +2,6 @@ import pytest
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.networks.balancer import BalancerCollection
 from cfme.networks.provider import NetworkProviderCollection
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -30,11 +29,12 @@ def test_prov_balances_number(provider):
 
 def test_balances_detail(provider):
     """ Test of getting attribute from balancer object """
-    bal_collection = BalancerCollection()
-    objects = bal_collection.all()
-    for name in objects:
-        check = name.health_checks
-        assert check is not None
+    collection = NetworkProviderCollection()
+    providers = collection.all()
+    for prov in providers:
+        for balancer in prov.balancers.all():
+            check = balancer.health_checks
+            assert check is not None
 
     provider.delete_if_exists(cancel=False)
     provider.wait_for_delete()
