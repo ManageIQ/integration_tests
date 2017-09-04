@@ -171,6 +171,7 @@ class VolumeCollection(Navigatable):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     def __init__(self, appliance=None):
         self.appliance = appliance
+        Navigatable.__init__(self, appliance=appliance)
 
     def instantiate(self, name, provider):
         return Volume(name, provider, collection=self)
@@ -179,7 +180,7 @@ class VolumeCollection(Navigatable):
         """Delete one or more Volumes from list of Volumes
 
         Args:
-            list of the 'cfme.storage.volume.Volume' objects
+            One or Multiple 'cfme.storage.volume.Volume' objects
         """
 
         view = navigate_to(self, 'All')
@@ -188,7 +189,7 @@ class VolumeCollection(Navigatable):
             for volume in volumes:
                 try:
                     view.entities.get_entity(volume.name).check()
-                except:
+                except ItemNotFound:
                     raise VolumeNotFound("Volume {} not found".format(volume.name))
 
             view.toolbar.configuration.item_select('Delete selected Cloud Volumes',
@@ -206,13 +207,13 @@ class Volume(Navigatable):
         Version.lowest(): ['Storage', 'Volumes'],
         '5.8': ['Storage', 'Block Storage', 'Volumes']})
 
-    def __init__(self, name, provider, collection=None):
+    def __init__(self, name, provider, collection=None, appliance=None):
         self.name = name
         # TODO add storage provider parameter, needed for accurate details nav
         # the storage providers have different names then cloud providers
         # https://bugzilla.redhat.com/show_bug.cgi?id=1455270
         self.provider = provider
-        self.collection = collection or VolumeCollection()
+        self.collection = collection or VolumeCollection(appliance=appliance)
         Navigatable.__init__(self, appliance=self.collection.appliance)
 
     def wait_for_disappear(self, timeout=300):
@@ -221,8 +222,7 @@ class Volume(Navigatable):
             self.browser.refresh()
 
         try:
-            return wait_for(lambda: self.exists,
-                            fail_condition=True,
+            return wait_for(lambda: not self.exists,
                             timeout=timeout,
                             message='Wait for cloud Volume to disappear',
                             delay=20,
@@ -236,11 +236,11 @@ class Volume(Navigatable):
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Cloud Volume', handle_alert=True)
 
-        result = view.entities.flash.assert_success_message(
-            'Delete initiated for 1 Cloud Volume.')
+        view.entities.flash.assert_success_message('Delete initiated for 1 Cloud Volume.')
+
         if wait:
-            result = self.wait_for_disappear(500)
-        return result
+            self.wait_for_disappear(500)
+
 
     @property
     def exists(self):
@@ -260,7 +260,6 @@ class VolumeAll(CFMENavigateStep):
     def step(self, *args, **kwargs):
         nav = Volume.nav.pick(self.obj.appliance.version)
         self.prerequisite_view.navigation.select(*nav)
-        self.view.toolbar.view_selector.select('Grid View')
 
 
 @navigator.register(Volume, 'Details')
