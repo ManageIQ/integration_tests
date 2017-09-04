@@ -42,6 +42,8 @@ def pytest_addoption(parser):
         default=0, help="Override RAM (MB). 0 means no override.")
     group._addoption('--sprout-override-cpu', dest='sprout_override_cpu', type=int,
         default=0, help="Override CPU core count. 0 means no override.")
+    group._addoption(
+        '--sprout-provider', dest='sprout_provider', default=None, help="Which provider to use.")
 
 
 def dump_pool_info(log, pool_data):
@@ -101,6 +103,7 @@ class SproutProvisioningRequest(object):
     group = attr.ib()
     count = attr.ib()
     version = attr.ib()
+    provider = attr.ib()
     date = attr.ib()
     lease_time = attr.ib()
     desc = attr.ib()
@@ -115,6 +118,7 @@ class SproutProvisioningRequest(object):
             group=config.option.sprout_group,
             count=config.option.sprout_appliances,
             version=config.option.sprout_version,
+            provider=config.option.sprout_provider,
             date=config.option.sprout_date,
             lease_time=config.option.sprout_timeout,
             desc=config.option.sprout_desc,
@@ -168,6 +172,7 @@ class SproutManager(object):
             provision_request.group,
             count=provision_request.count,
             version=provision_request.version,
+            provider=provision_request.provider,
             date=provision_request.date,
             lease_time=provision_request.lease_time,
             cpu=provision_request.cpu,
