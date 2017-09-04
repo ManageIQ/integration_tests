@@ -169,8 +169,6 @@ class VolumeAddView(VolumeView):
 
 class VolumeCollection(Navigatable):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
-    def __init__(self, appliance=None):
-        self.appliance = appliance
 
     def instantiate(self, name, provider):
         return Volume(name, provider, collection=self)
