@@ -55,11 +55,11 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
     signal.signal(signal.SIGTERM, exit_gracefully)
     try:
         appliance_data = sm.request_appliances(sr)
-        for app in appliance_data:
-            print "{}: {}".format(app['name'], app['ip_address'])
         while not sm.check_fullfilled():
             print("waiting...")
             time.sleep(10)
+        for app in appliance_data:
+            print "{}: {}".format(app['name'], app['ip_address'])
         if populate_yaml:
             file_name = conf_path.join('env.local.yaml').strpath
             if os.path.exists(file_name):
@@ -79,7 +79,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
             with open(file_name, 'w') as f:
                 try:
                     del y_data['base_url']
-                except:
+                except KeyError:
                     pass
                 yaml.dump(y_data, f, default_flow_style=False)
 
