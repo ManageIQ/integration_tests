@@ -569,7 +569,7 @@ class Vm(VM):
             except CandidateNotFound:
                 return False
 
-        def create(self):
+        def create(self, force_check_memory=False):
             snapshot_dict = {
                 'description': self.description
             }
@@ -579,7 +579,7 @@ class Vm(VM):
             if self.name is not None:
                 snapshot_dict['name'] = self.name
 
-            if self.vm.provider.mgmt.is_vm_running(self.vm.name):
+            if force_check_memory or self.vm.provider.mgmt.is_vm_running(self.vm.name):
                 snapshot_dict["snapshot_memory"] = self.memory
 
             fill(snapshot_form, snapshot_dict, action=snapshot_form.create_button)
