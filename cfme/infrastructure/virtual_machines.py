@@ -1179,7 +1179,8 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
         try:
-            entity_item = self.prerequisite_view.entities.get_entity(by_name=self.obj.name)
+            entity_item = self.prerequisite_view.entities.get_entity(
+                by_name=self.obj.name, surf_pages=True)
         except ItemNotFound:
             raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
                                        format(self.obj.name))
