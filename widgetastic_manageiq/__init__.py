@@ -1147,7 +1147,10 @@ class ReportDataControllerMixin(object):
         js_cmd = 'sendDataWithRx({data}); return ManageIQ.qe.gtl.result'.format(data=json_data)
         self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
         # command result is always stored in this global variable
-        return self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        result = self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        return result
 
     def _call_item_method(self, method):
         raw_data = {'controller': 'reportDataController',
@@ -1157,7 +1160,10 @@ class ReportDataControllerMixin(object):
         js_cmd = ('sendDataWithRx({data}); '
                   'return ManageIQ.qe.gtl.result.{method}()').format(data=js_data, method=method)
         self.logger.info("executed command: {cmd}".format(cmd=js_cmd))
-        return self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        result = self.browser.execute_script(js_cmd)
+        self.browser.plugin.ensure_page_safe()
+        return result
 
 
 class JSPaginationPane(View, ReportDataControllerMixin):
@@ -1204,7 +1210,8 @@ class JSPaginationPane(View, ReportDataControllerMixin):
 
     @property
     def pages_amount(self):
-        return self._invoke_cmd('get_pages_amount')
+        # this js call returns None from time to time. this is workaround until it is fixed in js
+        return wait_for(self._invoke_cmd, ['get_pages_amount'], num_sec=10, fail_condition=None)[0]
 
     def next_page(self):
         self._invoke_cmd('next_page')
