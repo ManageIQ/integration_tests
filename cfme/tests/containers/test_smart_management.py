@@ -67,9 +67,11 @@ def set_random_tag(instance):
 
 def wait_for_tag(obj_inst):
     # Waiting for some tag to appear at "My Company Tags" and return pop'ed last tag
-    last_tag = wait_for(lambda: getattr(obj_inst.summary.smart_management,
-                                    'my_company_tags', []), fail_condition=[],
-                    num_sec=30, delay=5, fail_func=obj_inst.summary.reload).out
+    last_tag = wait_for(
+        lambda: getattr(obj_inst.summary.smart_management, 'my_company_tags', []),
+        fail_condition=[],
+        num_sec=30, delay=5,
+        fail_func=obj_inst.summary.reload).out
     logger.info("Last tag type: {t}".format(t=type(last_tag)))
     return last_tag.pop() if isinstance(last_tag, list) else last_tag
 
@@ -92,20 +94,20 @@ def test_smart_management_add_tag(provider, test_item):
     regex = r"([\w\s|\-|\*]+:([\w\s|\-|\*])+)|(No.*assigned)"
     try:
         # Remove all previous configured tags for given object
-        logger.info("Starting cleaning old tags from "
-                 "object \"{obj_name}\"".format(obj_name=obj_inst.name))
+        logger.info('Starting cleaning old tags from '
+                    'object "{obj_name}"'.format(obj_name=obj_inst.name))
         obj_inst.remove_tags(obj_inst.get_tags())
         logger.info("All smart management tags was removed successfully")
     except RuntimeError:
         logger.info("Fail to remove tags, checking if no tag set")
 
         # Validate old tags formatting
-        assert re.match(regex, wait_for_tag(obj_inst).text_value), \
-            "Tag formatting is invalid! "
+        assert re.match(regex, wait_for_tag(obj_inst).text_value), (
+            "Tag formatting is invalid! ")
         logger.info("No tag was set, continuing to main test")
 
     # Config random tag for object\
-    random_tag_setted = set_random_tag(obj_inst)
+    random_tag_set = set_random_tag(obj_inst)
 
     logger.info("Fetching tag info for selected object")
     # validate new tag format
@@ -123,5 +125,5 @@ def test_smart_management_add_tag(provider, test_item):
     actual_tags_on_instance = actual_tags_on_instance.pop()
 
     # Validate tag value
-    assert actual_tags_on_instance.display_name == random_tag_setted.display_name, \
+    assert actual_tags_on_instance.display_name == random_tag_set.display_name, \
         "Tag value not correctly configured"
