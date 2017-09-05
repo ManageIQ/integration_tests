@@ -403,6 +403,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         navigate_to(self, 'Details', use_resetter=False)
         if refresh:
             toolbar.refresh()
+            self.browser.ensure_page_safe()
 
     def open_edit(self):
         """Loads up the edit page of the object."""
