@@ -6,6 +6,7 @@ import pytest
 
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import testgen, ssh
 from utils.log import logger
@@ -27,7 +28,7 @@ pytest_generate_tests = testgen.generate(
 def setup_ci_template(provider):
     cloud_init_template_name = provider.data['provisioning']['ci-template']
     cloud_init_template = get_template_from_config(cloud_init_template_name)
-    if not cloud_init_template.exists:
+    if not cloud_init_template.exists():
         cloud_init_template.create()
 
 
@@ -55,23 +56,24 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     instance = Instance.factory(vm_name, provider, image)
 
     request.addfinalizer(instance.delete_from_provider)
-
+    # TODO: extend inst_args for other providers except EC2 if needed
     inst_args = {
-        'email': 'image_provisioner@example.com',
-        'first_name': 'Image',
-        'last_name': 'Provisioner',
-        'notes': note,
-        'instance_type': provisioning['instance_type'],
-        'availability_zone': provisioning['availability_zone'],
-        'security_groups': [provisioning['security_group']],
-        'guest_keypair': provisioning['guest_keypair'],
-        'custom_template': {'name': [provisioning['ci-template']]},
+        'request': {'email': 'image_provisioner@example.com',
+                    'first_name': 'Image',
+                    'last_name': 'Provisioner',
+                    'notes': note},
+        'catalog': {'vm_name': vm_name},
+        'properties': {'instance_type': provisioning['instance_type'],
+                       'guest_keypair': provisioning['guest_keypair']},
+        'environment': {'availability_zone': provisioning['availability_zone'],
+                        'cloud_network': provisioning['cloud_network'],
+                        'security_groups': [provisioning['security_group']]},
+        'customize': {'custom_template': {'name': provisioning['ci-template']}}
     }
 
-    if provider.type == "openstack":
+    if provider.one_of(OpenStackProvider):
         floating_ip = mgmt_system.get_first_floating_ip()
-        inst_args['cloud_network'] = provisioning['cloud_network']
-        inst_args['public_ip_address'] = floating_ip
+        inst_args['environment']['public_ip_address'] = floating_ip
 
     logger.info('Instance args: {}'.format(inst_args))
 
