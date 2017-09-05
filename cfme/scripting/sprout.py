@@ -58,6 +58,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
         while not sm.check_fullfilled():
             print("waiting...")
             time.sleep(10)
+        sm.reset_timer()
         for app in appliance_data:
             print "{}: {}".format(app['name'], app['ip_address'])
         if populate_yaml:
