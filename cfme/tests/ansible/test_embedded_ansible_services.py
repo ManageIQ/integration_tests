@@ -71,8 +71,10 @@ def ansible_catalog_item(ansible_repository):
 def catalog(ansible_catalog_item):
     catalog_ = Catalog(fauxfactory.gen_alphanumeric(), items=[ansible_catalog_item.name])
     catalog_.create()
+    ansible_catalog_item.catalog = catalog_
     yield catalog_
     catalog_.delete()
+    ansible_catalog_item.catalog = None
 
 
 @pytest.fixture(scope="module")
@@ -192,3 +194,20 @@ def test_service_ansible_playbook_order(ansible_catalog_item, service_catalog, s
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
     assert result == view.provisioning.details.get_text_of("Hosts")
+
+
+def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_catalog,
+        service_request, service, soft_assert):
+    """Plays table in provisioned and retired service should contain at least one row."""
+    with update(ansible_catalog_item):
+        ansible_catalog_item.retirement = {
+            "repository": ansible_catalog_item.provisioning["repository"],
+            "playbook": ansible_catalog_item.provisioning["playbook"],
+            "machine_credential": ansible_catalog_item.provisioning["machine_credential"]
+        }
+    service_catalog.order()
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    soft_assert(len(view.provisioning.plays.fields) > 1, "Plays table in provisioning tab is empty")
+    service.retire()
+    soft_assert(len(view.retirement.plays.fields) > 1, "Plays table in retirement tab is empty")
