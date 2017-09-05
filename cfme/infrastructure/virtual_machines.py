@@ -1207,7 +1207,8 @@ class VmDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name)
+            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                             surf_pages=True)
         except ItemNotFound:
             raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
                                        format(self.obj.name))
