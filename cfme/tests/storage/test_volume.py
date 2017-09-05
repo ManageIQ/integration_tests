@@ -52,3 +52,5 @@ def test_volume_collective_crud(openstack_provider, appliance):
 
     if volumes:
         collection.delete(*volumes)
+    else:
+        pytest.skip("Skipping volume collective deletion, no volumes present")
