@@ -13,7 +13,8 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class AutomateExplorerView(BaseLoggedInPage):
-    flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
+    flash = FlashMessages(
+        './/div[starts-with(@id, "flash_text_div") or starts-with(@class, "flash_text_div")]')
 
     @property
     def in_explorer(self):
