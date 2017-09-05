@@ -61,7 +61,7 @@ def test_manageiq_ansible_add_provider(ansible_providers, provider):
 
 
 @pytest.mark.polarion('CMP-10295')
-def test_manageiq_ansible_update_provider(ansible_providers, provider):
+def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_assert):
     """This test checks updating a Containers Provider using Ansible script via Manage IQ module
         Steps:
         1. 'update_provider.yaml script runs against the appliance and updates
@@ -72,9 +72,15 @@ def test_manageiq_ansible_update_provider(ansible_providers, provider):
     setup_ansible_script(provider, script_type='providers',
                          values_to_update=providers_values_to_update, script=script_name)
     run_ansible(script_name)
-    view = navigate_to(provider, 'Details')
-    assert get_yml_value(script_name, 'provider_api_hostname') in view.context['object'].\
-        summary.properties.host_name._el.text
+    soft_assert(
+        wait_for(
+            lambda: get_yml_value(script_name, 'provider_api_hostname') in
+            provider.summary.properties.host_name.text_value,
+            num_sec=180, delay=10,
+            fail_func=provider.browser.refresh,
+            message='Provider was not updated successfully',
+            silent_failure=True)
+    )
 
 
 @pytest.mark.polarion('CMP-10292')
