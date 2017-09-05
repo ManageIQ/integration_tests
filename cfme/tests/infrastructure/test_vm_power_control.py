@@ -96,7 +96,7 @@ def check_power_options(provider, soft_assert, vm, power_state):
                            }
     # VMware and RHEVM have extended power options
     if not provider.one_of(SCVMMProvider):
-        must_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
+        mustnt_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
         mustnt_be_available['off'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
     if provider.one_of(RHEVMProvider):
         must_be_available['on'].remove(vm.RESET)
@@ -113,13 +113,6 @@ def check_power_options(provider, soft_assert, vm, power_state):
             not toolbar.exists('Power', pwr_option),
             "'{}' must not be available in current power state - '{}' ".format(
                 pwr_option, power_state))
-    # check if Guest OS power operations exist and greyed from "on"
-    if power_state == vm.STATE_ON and (not provider.one_of(SCVMMProvider, RHEVMProvider)):
-        for pwr_option in [vm.GUEST_RESTART, vm.GUEST_SHUTDOWN]:
-            soft_assert(-
-                toolbar.is_greyed('Power', pwr_option),
-                "'{}' must be greyed/disabled in current power state - '{}' ".format(
-                    pwr_option, power_state))
 
 
 def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
@@ -132,6 +125,19 @@ def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
 
     try:
         wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30)
+    except TimedOutError:
+        return False
+
+
+def wait_for_vm_tools(vm, timeout=300):
+    """Sometimes test opens VM details before it gets loaded and can't verify if vmtools are
+    installed"""
+
+    def _wait_for_tools_ok():
+        vm.load_details(refresh=True)
+        return vm.get_detail(properties=("Properties", "Platform Tools")) == 'toolsOk'
+    try:
+        wait_for(_wait_for_tools_ok, num_sec=timeout, delay=10)
     except TimedOutError:
         return False
 
@@ -371,8 +377,7 @@ def test_power_options_from_off(provider, soft_assert, testing_vm, verify_vm_sto
 def test_guest_os_reset(testing_vm_tools, verify_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
-    tools_state = testing_vm_tools.get_detail(properties=("Properties", "Platform Tools"))
-    soft_assert(tools_state == "toolsOk", "vmtools are not OK")
+    wait_for_vm_tools(testing_vm_tools)
     last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
@@ -388,8 +393,7 @@ def test_guest_os_reset(testing_vm_tools, verify_vm_running, soft_assert):
 def test_guest_os_shutdown(testing_vm_tools, verify_vm_running, soft_assert):
     testing_vm_tools.wait_for_vm_state_change(
         desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
-    tools_state = testing_vm_tools.get_detail(properties=("Properties", "Platform Tools"))
-    soft_assert(tools_state == "toolsOk", "vmtools are not OK")
+    wait_for_vm_tools(testing_vm_tools)
     last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
     testing_vm_tools.power_control_from_cfme(
         option=testing_vm_tools.GUEST_SHUTDOWN, cancel=False, from_details=True)
