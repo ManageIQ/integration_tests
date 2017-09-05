@@ -20,7 +20,7 @@ pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 @pytest.fixture(scope='module')
 def a_provider(request):
     prov_filter = ProviderFilter(classes=[CloudProvider],
-                                 required_fields=[['provisioning', 'stack']])
+                                 required_fields=[['provisioning', 'stacks']])
     return setup_one_or_skip(request, filters=[prov_filter])
 
 
@@ -42,7 +42,7 @@ def testing_vis_object(request, a_provider, appliance):
     """
     collection_name, param_class = request.param
     if collection_name == 'stacks':
-        return param_class(a_provider.data['provisioning']['stacks'][0], provider=a_provider)
+        return param_class(name=a_provider.data['provisioning']['stacks'][0], provider=a_provider)
     test_items = getattr(appliance.rest_api.collections, collection_name)
     if not test_items:
         pytest.skip('No content found for test!')

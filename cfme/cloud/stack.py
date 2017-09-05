@@ -56,7 +56,7 @@ class StackDetailsAccordion(View):
 class StackEntities(View):
     """The entties on the main list page"""
     title = Text('//div[@id="main-content"]//h1')
-    table = Table("//div[@id='list_grid']//table")
+    table = Table("//div[@id='gtl_div']//table")
     search = View.nested(Search)
     # element attributes changed from id to class in upstream-fine+, capture both with locator
     flash = FlashMessages('.//div[@id="flash_msg_div"]'
@@ -257,6 +257,7 @@ class StackCollection(Navigatable):
 
     def __init__(self, appliance=None):
         self.appliance = appliance
+        Navigatable.__init__(self, appliance=self.appliance)
 
     def instantiate(self, name, provider, quad_name=None):
         return Stack(name, provider, quad_name=quad_name, collection=self)
