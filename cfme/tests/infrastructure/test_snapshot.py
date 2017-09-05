@@ -173,6 +173,40 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
     ssh_client.close()
 
 
+def setup_snapshot_env(test_vm, memory):
+    logger.info("Starting snapshot setup")
+    snapshot1 = new_snapshot(test_vm, memory=memory)
+    snapshot1.create()
+    snapshot2 = new_snapshot(test_vm, memory=memory)
+    snapshot2.create()
+    snapshot1.revert_to()
+    wait_for(lambda: snapshot1.active,
+             num_sec=300, delay=20, fail_func=sel.refresh)
+
+
+@pytest.mark.parametrize("parent_vm", ["on_with_memory", "on_without_memory", "off"])
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_verify_vm_state_revert_snapshot(provider, parent_vm, request, small_test_vm):
+    """
+    test vm state after revert snapshot with parent vm:
+     - powered on and includes memory
+     - powered on without memory
+     - powered off
+
+    vm state after revert should be:
+     - powered on
+     - powered off
+     - powered off
+    """
+    power = small_test_vm.POWER_ON if parent_vm.startswith('on') else small_test_vm.POWER_OFF
+    memory = 'with_memory' in parent_vm
+
+    small_test_vm.power_control_from_cfme(option=power, cancel=False)
+    provider.mgmt.wait_vm_steady(small_test_vm.name)
+    setup_snapshot_env(small_test_vm, memory)
+    assert bool(small_test_vm.provider.mgmt.is_vm_running(small_test_vm.name)) == memory
+
+
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
 def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
     """Tests snapshot operations on suspended vm
