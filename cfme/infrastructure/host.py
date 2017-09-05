@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
 
-from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 from manageiq_client.api import APIException
 from selenium.common.exceptions import NoSuchElementException
@@ -19,7 +18,7 @@ from cfme.common.host_views import (
     HostsView,
     HostTimelinesView
 )
-from cfme.exceptions import HostNotFound, ItemNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.web_ui import mixins
 from utils import conf
@@ -275,7 +274,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         """
         view = navigate_to(self, "All")
         entity = view.entities.get_entity(by_name=self.name, surf_pages=True)
-        return entity.creds.strip().lower() == "checkmark"
+        return entity.data['creds'].strip().lower() == "checkmark"
 
     def update_credentials_rest(self, credentials):
         """ Updates host's credentials via rest api
@@ -575,21 +574,3 @@ def get_all_hosts():
     view = navigate_to(Host, "All")
     return [entity.name for entity in view.entities.get_all(surf_pages=True)]
 
-
-def find_quadicon(host_name):
-    """Find and return a quadicon belonging to a specific host.
-
-    Args:
-        host_name (str): A host name as displayed at the quadicon
-
-    Returns: :py:class:`cfme.common.host_views.HostQuadIconItem` instance
-    """
-    view = navigate_to(Host, "All")
-    if view.toolbar.view_selector.selected != "Grid View":
-        view.toolbar.view_selector.select("Grid View")
-    try:
-        quad_icon = view.entities.get_entity(by_name=host_name, surf_pages=True)
-    except ItemNotFound:
-        raise HostNotFound("Host '{}' not found in UI!".format(host_name))
-    else:
-        return quad_icon

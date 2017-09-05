@@ -56,23 +56,14 @@ class ComputeInfrastructureHostsView(BaseLoggedInPage):
 
 
 class HostQuadIconEntity(BaseQuadIconEntity):
-
-    # TODO Move these properties to one 'data' property
     @property
-    def no_vm(self):
-        return int(self.browser.text(self.QUADRANT.format(pos="a")))
-
-    @property
-    def status(self):
-        return self.browser.get_attribute("style", self.QUADRANT.format(pos="b"))
-
-    @property
-    def vendor(self):
-        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="c"))
-
-    @property
-    def creds(self):
-        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
+    def data(self):
+        return {
+            'no_vm': int(self.browser.text(self.QUADRANT.format(pos="a"))),
+            'state': self.browser.get_attribute("style", self.QUADRANT.format(pos="b")),
+            'vendor': self.browser.get_attribute("alt", self.QUADRANT.format(pos="c")),
+            'creds': self.browser.get_attribute("alt", self.QUADRANT.format(pos="d"))
+        }
 
 
 class HostTileIconEntity(BaseTileIconEntity):

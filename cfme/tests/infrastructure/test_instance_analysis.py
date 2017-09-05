@@ -353,7 +353,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
         datastore_collection = datastore.DatastoreCollection()
         test_datastore = datastore_collection.instantiate(name=datastore_name, provider=provider)
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
-        host_names = test_datastore.get_hosts()
+        host_names = [h.name for h in test_datastore.get_hosts()]
         for host_name in host_names:
             test_host = host.Host(name=host_name, provider=provider)
             hosts_data = [x for x in host_list if x.name == host_name]

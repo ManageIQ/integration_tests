@@ -2433,7 +2433,10 @@ class BaseEntitiesView(View):
 
             Returns: all current page entities
             """
-            return [row.name.text for row in self.elements.rows()]
+            try:
+                return [row.name.text for row in self.elements.rows()]
+            except NoSuchElementException:
+                return []
 
     @entities.register('Tile View')
     class TileView(EntitiesConditionalView):

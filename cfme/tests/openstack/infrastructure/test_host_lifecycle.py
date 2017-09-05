@@ -21,7 +21,7 @@ def host(provider):
     hosts = view.entities.get_all()
     # Find a compute host with no instances on it
     for h in hosts:
-        if 'Compute' in h.name and h.quad_entity(h.name).no_vm == 0:
+        if 'Compute' in h.name and h.data['no_vm'] == 0:
             return OpenstackNode(h.name, provider=provider)
     raise HostNotFound('There is no proper host for tests')
 
