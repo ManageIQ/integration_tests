@@ -441,7 +441,7 @@ def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create
             "Action `{}` for {} is not implemented in this version".format(col_action, col_name))
 
     entities = action(*col_data)
-    action_status = rest_api.response.status_code
+    action_response = rest_api.response
     search_str = '%{}%' if substr_search else '{}'
     for entity in col_data:
         if entity.get('name'):
@@ -454,16 +454,19 @@ def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create
         else:
             raise NotImplementedError
 
+    # make sure the original list of `entities` is preserved for cleanup
+    original_entities = list(entities)
+
     @request.addfinalizer
     def _finished():
         collection.reload()
-        ids = [e.id for e in entities]
+        ids = [e.id for e in original_entities]
         delete_entities = [e for e in collection if e.id in ids]
         if delete_entities:
             collection.action.delete(*delete_entities)
 
-    # make sure action status code is preserved
-    rest_api.response.status_code = action_status
+    # make sure action response is preserved
+    rest_api.response = action_response
     return entities
 
 
