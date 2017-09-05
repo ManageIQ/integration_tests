@@ -14,7 +14,8 @@ from widgetastic.widget import Text, View
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
 from widgetastic_manageiq import (
-    TimelinesView, Accordion, ManageIQTree, SummaryTable, ConditionalSwitchableView)
+    NonJSPaginationPane, TimelinesView, Accordion,
+    ManageIQTree, SummaryTable, ConditionalSwitchableView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 from cfme.base.login import BaseLoggedInPage
@@ -28,7 +29,6 @@ from cfme.exceptions import (
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.requests import Request
-import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, fill, flash, form_buttons,
     match_location, Table, toolbar, Calendar, Select, Input, CheckboxTable,
@@ -148,6 +148,7 @@ class VmsTemplatesAllView(InfraVmView):
     toolbar = View.nested(VMToolbar)
     sidebar = View.nested(VmsTemplatesAccordion)
     including_entities = View.include(VMEntities, use_parent=True)
+    pagination = View.nested(NonJSPaginationPane)
 
     @property
     def is_displayed(self):
@@ -1146,6 +1147,7 @@ class VmAllWithTemplates(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Virtual Machines')
         self.view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
+        self.view.pagination.set_items_per_page(1000)
 
     def resetter(self, *args, **kwargs):
         self.view.reset_page()
