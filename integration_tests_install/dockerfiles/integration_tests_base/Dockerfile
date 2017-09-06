@@ -1,6 +1,7 @@
 # integration_tests_base
 
-FROM fedora:23
+# FROM fedora:23
+FROM fedora:26
 
 MAINTAINER <RH>
 
