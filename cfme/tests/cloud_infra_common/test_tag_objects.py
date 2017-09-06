@@ -7,9 +7,9 @@ from cfme.cloud.provider import CloudProvider
 # from cfme.cloud.flavor import Flavor # Replace when all targets support widgets
 # from cfme.cloud.availability_zone import AvailabilityZone # Replace all targets support widgets
 from cfme.cloud.instance import Instance
-from cfme.cloud.tenant import Tenant
-from cfme.infrastructure.cluster import Cluster
-from cfme.infrastructure.datastore import Datastore
+from cfme.cloud.tenant import TenantCollection
+from cfme.infrastructure.cluster import ClusterCollection
+from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
@@ -22,14 +22,14 @@ param_classes = {
     'Infra VMs': Vm,
     'Infra Templates': Template,
     'Infra Hosts': Host,
-    'Infra Clusters': Cluster,
-    'Infra Stores': Datastore,
+    'Infra Clusters': ClusterCollection,
+    'Infra Stores': DatastoreCollection,
 
     'Cloud Providers': CloudProvider,
     'Cloud Instances': Instance,
     # 'Cloud Flavors': Flavor, # Test needs to be refactored along with tag mixin for widgets
     # 'Cloud Availabity Zones': AvailabilityZone,  # Add back when all classes support widgets
-    'Cloud Tenants': Tenant
+    'Cloud Tenants': TenantCollection
 }
 
 pytestmark = [
