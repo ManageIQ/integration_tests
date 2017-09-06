@@ -116,7 +116,7 @@ def test_ntp_server_check(request, appliance):
         appliance.wait_for_web_ui(timeout=1200)
         # Incase if ntpd service is stopped
         appliance.ssh_client.run_command("service chronyd restart")
-        # Providing two hour runtime for the test run to avoid day changing problem
+        # Providing two hour runtime for the test run to avoid day chanadding problem
         # (in case if the is triggerred in the midnight)
         wait_for(
             lambda: (orig_date - appliance_date(appliance)).total_seconds() <= 7200, num_sec=300)

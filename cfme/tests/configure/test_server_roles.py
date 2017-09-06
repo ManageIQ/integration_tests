@@ -44,8 +44,8 @@ def test_server_roles_changing(request, roles):
     """
     server_settings = ServerInformation()
     original_roles = server_settings.server_roles_db
-    request.addfinalizer(partial(
-        server_settings.update_server_roles_db, **original_roles))  # For reverting back
+    # For reverting back
+    request.addfinalizer(lambda: server_settings.update_server_roles_db(**original_roles))
     # Set roles
     server_settings.update_server_roles_ui(roles)
     # Get roles and check; use UI because the changes take a while to propagate to DB

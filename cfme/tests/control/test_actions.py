@@ -20,7 +20,6 @@ from cfme.common.vm import VM
 from cfme.control.explorer import actions, conditions, policies, policy_profiles
 from cfme.services.requests import RequestCollection
 from cfme.infrastructure.provider import InfraProvider
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -253,27 +252,6 @@ def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, comp
     compliance_policy.delete()
     control_policy.delete()
 
-
-@pytest.yield_fixture(scope="module")
-def automate_role_set(request):
-    """ Sets the Automate role that the VM can be provisioned.
-
-    Sets the Automate role state back when finished the module tests.
-    """
-    server_info = ServerInformation()
-    roles = server_info.server_roles_db
-    old_roles = dict(roles)
-    roles["automate"] = True
-    roles["smartproxy"] = True
-    roles["smartstate"] = True
-    server_info.update_server_roles_db(**roles)
-    yield
-    server_info.update_server_roles_db(**old_roles)
-
-
-@pytest.fixture(scope="module")
-def vm_crud(vm_name, provider):
-    return VM.factory(vm_name, provider)
 
 @pytest.fixture(scope="function")
 def vm_on(vm):

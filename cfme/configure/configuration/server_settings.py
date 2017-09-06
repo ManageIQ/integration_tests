@@ -233,8 +233,12 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
         """
         view = navigate_to(self, 'Details')
+        # embedded_ansible server role available from 5.8 version
         if self.appliance.version < '5.8':
             updates.pop('embedded_ansible')
+        # cockpit_ws element is not present for downstream version
+        if self.appliance.version != version.UPSTREAM:
+            updates.pop('cockpit_ws')
         view.server_roles.fill(updates)
         self._save_action(view, updates, reset)
 
@@ -475,12 +479,6 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 class Details(CFMENavigateStep):
     VIEW = ServerInformationView
     prerequisite = NavigateToAttribute('appliance.server', 'Details')
-
-    def am_i_here(self):
-        return (
-            self.prerequisite_view.is_displayed and
-            self.prerequisite_view.server.is_displayed
-        )
 
     def step(self):
         self.prerequisite_view.server.select()

@@ -107,14 +107,9 @@ def enable_candu(provider, appliance):
     candu = appliance.get(CANDUCollection)
     server_info = ServerInformation()
     original_roles = server_info.server_roles_db
-    new_roles = original_roles.copy()
-    new_roles.update({
-        'ems_metrics_coordinator': True,
-        'ems_metrics_collector': True,
-        'ems_metrics_processor': True,
-        'automate': False,
-        'smartstate': False})
-    server_info.update_server_roles_db(**new_roles)
+    server_info.server_roles_enabled(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+    server_info.server_roles_disabled('automate', 'smartstate')
     candu.enable_all()
 
     yield

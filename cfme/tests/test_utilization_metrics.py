@@ -41,16 +41,12 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
+    server_settings = ServerInformation()
+    original_roles = server_settings.server_roles_db
     try:
-        server_settings = ServerInformation()
-        original_roles = server_settings.server_roles_db
-        new_roles = original_roles.copy()
-        new_roles.update({'ems_metrics_coordinator': True,
-                          'ems_metrics_collector': True,
-                          'ems_metrics_processor': True,
-                          'automate': False,
-                          'smartstate': False})
-        server_settings.update_server_roles_db(**new_roles)
+        server_settings.server_roles_enabled(
+            'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+        server_settings.server_roles_disabled('automate', 'smartstate')
         candu.enable_all()
         yield
     finally:
