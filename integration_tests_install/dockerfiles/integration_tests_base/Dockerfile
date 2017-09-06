@@ -8,7 +8,7 @@ MAINTAINER <RH>
 LABEL company="Redhat" product="ManageIQ/CFME" environment="dev" tier="test"
 
 # Set root password
- echo -e "test123\ntest123" | passwd root
+RUN echo -e "test123\ntest123" | passwd root
 
 # Add Chrome repo
 RUN echo $'[google-chrome] \n\
