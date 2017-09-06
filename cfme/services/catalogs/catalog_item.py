@@ -1,8 +1,10 @@
 from types import NoneType
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
 from widgetastic_manageiq import Table, ManageIQTree
+
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form as request_form
@@ -12,8 +14,6 @@ from utils.pretty import Pretty
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils import version
-
-
 from . import ServicesCatalogView
 
 
@@ -52,14 +52,6 @@ class ButtonForm(ServicesCatalogView):
     system_process = BootstrapSelect('instance_name')
     request = Input(name='object_request')
     btn_image = BootstrapSelect('button_image')
-
-
-class EditTagsForm(ServicesCatalogView):
-    title = Text('#explorer_title_text')
-
-    tag_table = Table("//div[@id='assignments_div']//table")
-    select_tag = BootstrapSelect(id='tag_cat')
-    select_value = BootstrapSelect(id='tag_add')
 
 
 class AllCatalogItemView(ServicesCatalogView):
@@ -135,17 +127,6 @@ class AddButtonView(ButtonForm):
     def is_displayed(self):
         return self.in_explorer and self.catalog_items.is_opened and \
             self.title.text == "Adding a new Button"
-
-
-class EditTagsView(EditTagsForm):
-
-    save_button = Button('Save')
-    add_button = Button("Add")
-
-    @property
-    def is_displayed(self):
-        return self.in_explorer and self.catalog_items.is_opened and \
-            self.title.text == 'Editing My Company Tags for "Service Catalog Items"'
 
 
 class CatalogBundleFormView(ServicesCatalogView):
@@ -391,7 +372,6 @@ class All(CFMENavigateStep):
 @navigator.register(CatalogItem, 'Details')
 class Details(CFMENavigateStep):
     VIEW = DetailsCatalogItemView
-
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -402,7 +382,6 @@ class Details(CFMENavigateStep):
 @navigator.register(CatalogItem, 'Add')
 class Add(CFMENavigateStep):
     VIEW = AddCatalogItemView
-
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -412,7 +391,6 @@ class Add(CFMENavigateStep):
 @navigator.register(CatalogItem, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = EditCatalogItemView
-
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -422,7 +400,6 @@ class Edit(CFMENavigateStep):
 @navigator.register(CatalogItem, 'AddButtonGroup')
 class AddButtonGroup(CFMENavigateStep):
     VIEW = AddButtonGroupView
-
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -432,7 +409,6 @@ class AddButtonGroup(CFMENavigateStep):
 @navigator.register(CatalogItem, 'AddButton')
 class AddButton(CFMENavigateStep):
     VIEW = AddButtonView
-
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -442,7 +418,6 @@ class AddButton(CFMENavigateStep):
 @navigator.register(CatalogItem, 'EditTags')
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
-
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -452,7 +427,6 @@ class EditTags(CFMENavigateStep):
 @navigator.register(CatalogBundle, 'BundleAll')
 class BundleAll(CFMENavigateStep):
     VIEW = AllCatalogItemView
-
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -463,7 +437,6 @@ class BundleAll(CFMENavigateStep):
 @navigator.register(CatalogBundle, 'BundleDetails')
 class BundleDetails(CFMENavigateStep):
     VIEW = DetailsCatalogItemView
-
     prerequisite = NavigateToSibling('BundleAll')
 
     def step(self):
@@ -474,7 +447,6 @@ class BundleDetails(CFMENavigateStep):
 @navigator.register(CatalogBundle, 'BundleAdd')
 class BundleAdd(CFMENavigateStep):
     VIEW = AddCatalogBundleView
-
     prerequisite = NavigateToSibling('BundleAll')
 
     def step(self):
@@ -484,7 +456,6 @@ class BundleAdd(CFMENavigateStep):
 @navigator.register(CatalogBundle, 'BundleEdit')
 class BundleEdit(CFMENavigateStep):
     VIEW = EditCatalogBundleView
-
     prerequisite = NavigateToSibling('BundleDetails')
 
     def step(self):
