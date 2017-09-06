@@ -69,3 +69,11 @@ def get_ui_single_page_scenarios():
            len(cfme_performance['tests']['ui_workloads']['test_ui_single_page']['scenarios']) > 0):
             return cfme_performance['tests']['ui_workloads']['test_ui_single_page']['scenarios']
     return []
+
+
+def get_memory_leak_scenarios():
+    if 'test_memory_leak' in cfme_performance.get('tests', {}).get('workloads', []):
+        if (cfme_performance['tests']['workloads']['test_memory_leak']['scenarios'] and
+                len(cfme_performance['tests']['workloads']['test_memory_leak']['scenarios']) > 0):
+            return cfme_performance['tests']['workloads']['test_memory_leak']['scenarios']
+    return []
