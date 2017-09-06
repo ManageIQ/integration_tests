@@ -175,7 +175,10 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
 
         # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
         vm_console.send_ctrl_alt_delete()
-        vm_console.wait_for_text(text_to_find="login:", timeout=200, to_disappear=True)
+        assert vm_console.wait_for_text(text_to_find="login:", timeout=200, to_disappear=True), (
+            "Text 'login:' never disappeared, indicating failure of CTRL+ALT+DEL"
+            " button functionality, please check if OS reboots on CTRL+ALT+DEL key combination"
+            " and CTRL+ALT+DEL button on HTML5 Console is working. ")
         assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
             " didn't prompt for Login")
 
