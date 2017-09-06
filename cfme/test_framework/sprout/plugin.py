@@ -241,7 +241,7 @@ class SproutManager(object):
     def ping_pool(self):
         timeout = None  # None - keep the half of the lease time
         try:
-            self.client.prolong_appliance_pool_lease(self.pool)
+            self.client.prolong_appliance_pool_lease(self.pool, self.lease_time)
         except SproutException as e:
             log.exception(
                 "Pool %s does not exist any more, disabling the timer.\n"
