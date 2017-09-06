@@ -268,7 +268,8 @@ class VolumeDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
 
         try:
-            self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
+            self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                       surf_pages=True).click()
 
         except ItemNotFound:
             raise VolumeNotFound('Volume {} not found'.format(self.obj.name))
