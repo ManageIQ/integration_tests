@@ -61,7 +61,7 @@ ENV SELENIUM_VERSION 2.53
 ENV FIREFOX_VERSION 47.0.2
 
 # Enable repo for google chrome
-ADD google-chrome.repo /etc/yum.repos.d/google-chrome.repo
+ADD google-chrome.repo /etc/yum.repos.d/
 
 RUN dnf install -y nss google-chrome-stable
 
