@@ -24,7 +24,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound, ItemNotFound
 from cfme.web_ui import match_location
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.appliance import Navigatable
+from utils.appliance import NavigatableMixin
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 
@@ -165,8 +165,11 @@ class VolumeAddView(VolumeView):
     form = View.nested(VolumeAddForm)
 
 
-class VolumeCollection(Navigatable):
+class VolumeCollection(NavigatableMixin):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
+
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def instantiate(self, name, provider):
         return Volume(name, provider, collection=self)
@@ -196,20 +199,20 @@ class VolumeCollection(Navigatable):
             raise VolumeNotFound('No Cloud Volume for Deletion')
 
 
-class Volume(Navigatable):
+class Volume(NavigatableMixin):
     # Navigation menu option
     nav = VersionPick({
         Version.lowest(): ['Storage', 'Volumes'],
         '5.8': ['Storage', 'Block Storage', 'Volumes']})
 
-    def __init__(self, name, provider, collection=None, appliance=None):
+    def __init__(self, name, provider, collection):
         self.name = name
         # TODO add storage provider parameter, needed for accurate details nav
         # the storage providers have different names then cloud providers
         # https://bugzilla.redhat.com/show_bug.cgi?id=1455270
         self.provider = provider
-        self.collection = collection or VolumeCollection(appliance=appliance)
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+        self.collection = collection
+        self.appliance = self.collection.appliance
 
     def wait_for_disappear(self, timeout=300):
         def refresh():
