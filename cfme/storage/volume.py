@@ -45,7 +45,9 @@ class VolumeDetailsToolbar(View):
 class VolumeQuadIconEntity(BaseQuadIconEntity):
     @property
     def data(self):
-        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="a"))
+        return {
+            self.browser.get_attribute("alt", self.QUADRANT.format(pos="a"))
+        }
 
 
 class VolumeTileIconEntity(BaseTileIconEntity):
@@ -53,7 +55,7 @@ class VolumeTileIconEntity(BaseTileIconEntity):
 
 
 class VolumeListEntity(BaseListEntity):
-    quad_icon = ParametrizedView.nested(VolumeQuadIconEntity)
+    pass
 
 
 class NonJSVolumeEntity(NonJSBaseEntity):
@@ -242,7 +244,7 @@ class Volume(Navigatable):
     def exists(self):
         view = navigate_to(self.collection, 'All')
         try:
-            view.entities.get_entity(by_name=self.name)
+            view.entities.get_entity(by_name=self.name, surf_pages=True)
             return True
         except ItemNotFound:
             return False
@@ -266,7 +268,7 @@ class VolumeDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
 
         try:
-            self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
+            self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
 
         except ItemNotFound:
             raise VolumeNotFound('Volume {} not found'.format(self.obj.name))
