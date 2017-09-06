@@ -2,9 +2,10 @@
 from functools import partial
 import re
 from urlparse import urlparse
-from widgetastic.exceptions import NoSuchElementException
+from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import BootstrapSelect, Button
-from widgetastic.widget import Table, Text
+from widgetastic.widget import Table, Text, View
+from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 
 from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
@@ -172,28 +173,33 @@ class TagPageView(BaseLoggedInPage):
     """Class represents common tag page in CFME UI"""
     title = Text('#explorer_title_text')
     table_title = Text('//div[@id="tab_div"]/h3')
-    tag_table = Table("//div[@id='assignments_div']//table")
-    tag_category = BootstrapSelect(id='tag_cat')
-    tag_name = BootstrapSelect(id='tag_add')
 
-    save_button = Button('Save')
-    cancel_button = Button('Cancel')
-    reset_button = Button('Reset')
+    @View.nested
+    class form(View):  # noqa
+        tags = Table("//div[@id='assignments_div']//table")
+        tag_category = BootstrapSelect(id='tag_cat')
+        tag_name = BootstrapSelect(id='tag_add')
+        entities = View.nested(BaseNonInteractiveEntitiesView)
+        save = Button('Save')
+        reset = Button('Reset')
+        cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
         return (
             self.table_title.text == 'Tag Assignment' and
-            self.tag_table.is_displayed
+            self.form.tags.is_displayed
         )
 
 
 class WidgetasticTaggable(object):
     """
     This class can be inherited by any class that honors tagging.
-    Class should have 'EditTags' navigate step registered,
-    also 'Details' view should be present with tag attribute(widget with tag
-    information on details page)
+    Class should have following:
+        - 'Details' navigation
+        - 'Details' view should have entities.smart_management SummaryTable widget
+        - 'EditTags' navigation
+        - 'EditTags' view should have nested 'form' view with 'tags' table widget (TagPageView)
 
     This class should be used for already converted to widgetastic classes
 
@@ -213,13 +219,14 @@ class WidgetasticTaggable(object):
         if isinstance(tag, Tag):
             category = tag.category.display_name
             tag = tag.display_name
+        # Handle nested view.form and where the view contains form widgets
         try:
-            updated = view.fill({
+            updated = view.form.fill({
                 "tag_category": '{} *'.format(category),
                 "tag_name": tag
             })
         except NoSuchElementException:
-            updated = view.fill({
+            updated = view.form.fill({
                 "tag_category": category,
                 "tag_name": tag
             })
@@ -256,9 +263,9 @@ class WidgetasticTaggable(object):
             category = tag.category.display_name
             tag = tag.display_name
         try:
-            row = view.tag_table.row(category="{} *".format(category), assigned_value=tag)
-        except Exception:
-            row = view.tag_table.row(category=category, assigned_value=tag)
+            row = view.form.tags.row(category="{} *".format(category), assigned_value=tag)
+        except RowNotFound:
+            row = view.form.tags.row(category=category, assigned_value=tag)
         row[0].click()
         self._tags_action(view, cancel, reset)
 
@@ -286,7 +293,9 @@ class WidgetasticTaggable(object):
             List of tags in format "Tag_category: Tag_name"
         """
         view = navigate_to(self, 'Details')
-        tags = view.tag.read()
+        # look for simple 'tag' widget first, then standard entities.smart_management
+        tag_table = getattr(view, 'tag', view.entities.smart_management)
+        tags = tag_table.read()
         if tags == 'No {} have been assigned'.format(tenant):
             return []
         return filter(None, re.split(r'(.*?):\s*\S+\s?', tags))
@@ -300,13 +309,13 @@ class WidgetasticTaggable(object):
             reset: Set True to reset all changes, edit tag page should be opened
         """
         if reset:
-            view.reset_button.click()
+            view.form.reset.click()
             view.flash.assert_message('All changes have been reset')
         if cancel:
-            view.cancel_button.click()
+            view.form.cancel.click()
             view.flash.assert_success_message('Tag Edit was cancelled by the user')
         if not reset and not cancel:
-            view.save_button.click()
+            view.form.save.click()
             view.flash.assert_success_message('Tag edits were successfully saved')
 
 
