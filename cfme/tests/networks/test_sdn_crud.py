@@ -2,7 +2,7 @@ import pytest
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.networks.provider import NetworkProvider
+from cfme.networks.provider import NetworkProviderCollection
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
@@ -21,7 +21,8 @@ def test_sdn_crud(provider):
 
     view = navigate_to(provider, 'Details')
     net_prov_name = view.contents.relationships.get_text_of("Network Manager")
-    network_provider = NetworkProvider(name=net_prov_name, provider=provider)
+    collection = NetworkProviderCollection()
+    network_provider = collection.instantiate(name=net_prov_name)
 
     view = navigate_to(network_provider, 'Details')
     parent_name = view.entities.relationships.get_text_of("Parent Cloud Provider")
