@@ -61,14 +61,7 @@ ENV SELENIUM_VERSION 2.53
 ENV FIREFOX_VERSION 47.0.2
 
 # Enable repo for google chrome
-RUN cat << EOF > /etc/yum.repos.d/google-chrome.repo \
-[google-chrome] \
-name=google-chrome - \$basearch \
-baseurl=http://dl.google.com/linux/chrome/rpm/stable/\$basearch \
-enabled=1 \
-gpgcheck=1 \
-gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub \
-EOF
+ADD google-chrome.repo /etc/yum.repos.d/google-chrome.repo
 
 RUN dnf install -y nss google-chrome-stable
 
