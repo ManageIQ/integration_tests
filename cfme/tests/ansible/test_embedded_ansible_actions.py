@@ -209,3 +209,12 @@ def test_action_run_ansible_playbook(request, full_template, ansible_catalog_ite
     elif host_type == "unavailable_address":
         assert view.provisioning.details.get_text_of("Hosts") == "unavailable_address"
         assert view.provisioning.results.get_text_of("Status") == "failed"
+
+
+@pytest.mark.tier(3)
+def test_control_action_run_ansible_playbook_in_requests(request, vmware_vm, policy_for_testing,
+        service_request):
+    """Checks if execution of the Action result in a Task/Request being created."""
+    vmware_vm.add_tag(("Service Level", "Gold"), single_value=True)
+    request.addfinalizer(lambda: vmware_vm.remove_tag(("Service Level", "Gold")))
+    assert service_request.exists
