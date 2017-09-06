@@ -24,10 +24,7 @@ class NetworkPortCollection(Navigatable):
             view = navigate_to(self.parent, 'NetworkPorts')
         else:
             view = navigate_to(self, 'All')
-        list_networks_obj = view.entities.get_all()
-        if self.parent:
-            return [self.instantiate(name=p.name) for p in list_networks_obj
-                    if p.__getattr__(name='data')['Network Manager'] == self.parent.name]
+        list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=p.name) for p in list_networks_obj]
 
     @property
