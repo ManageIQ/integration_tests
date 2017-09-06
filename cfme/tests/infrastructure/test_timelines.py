@@ -44,13 +44,13 @@ def mark_vm_as_appliance(new_vm, appliance):
     # set diagnostics vm
     relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
     server_name = "{name} ({sid})".format(name=appliance.server.name, sid=appliance.server.sid)
-    relations_view.server.select_by_visible_text(server_name)
-    relations_view.save.click()
+    relations_view.form.server.select_by_visible_text(server_name)
+    relations_view.form.save_button.click()
     yield
     # unset diagnostics vm
     relations_view = navigate_to(new_vm, 'EditManagementEngineRelationship')
-    relations_view.server.select_by_visible_text('<Not a Server>')
-    relations_view.save.click()
+    relations_view.form.server.select_by_visible_text('<Not a Server>')
+    relations_view.form.save_button.click()
 
 
 @pytest.fixture(scope="module")
