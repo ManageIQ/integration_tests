@@ -53,10 +53,12 @@ RUN source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.
 RUN find . -name \*.pyc -delete && find . -name __pycache__ -delete
 
 # ENV CHROME_DRIVER_VERSION 2.21
-ENV CHROME_DRIVER_VERSION 2.27
+#ENV CHROME_DRIVER_VERSION 2.27
+ENV CHROME_DRIVER_VERSION 2.32
 # ENV SELENIUM_VERSION 2.51
 ENV SELENIUM_VERSION 2.53
-ENV FIREFOX_VERSION 38.6
+# ENV FIREFOX_VERSION 38.6
+ENV FIREFOX_VERSION 47.0.2
 
 RUN dnf install -y nss google-chrome-stable
 
