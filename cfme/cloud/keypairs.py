@@ -5,10 +5,9 @@ from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, Button, FlashMessages
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
-    SummaryTable, BootstrapSelect, ItemNotFound)
+    SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common.vm_views import VMEntities
 from cfme.exceptions import KeyPairNotFound
 
 from cfme.web_ui import match_location, mixins
@@ -82,7 +81,7 @@ class KeyPairAllView(KeyPairView):
             self.entities.title.text == 'Key Pairs')
 
     toolbar = View.nested(KeyPairToolbar)
-    including_entities = View.include(VMEntities, use_parent=True)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
 class KeyPairDetailsView(KeyPairView):
