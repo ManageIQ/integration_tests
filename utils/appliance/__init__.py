@@ -11,6 +11,7 @@ from time import sleep, time
 from urlparse import ParseResult, urlparse
 
 import dateutil.parser
+from debtcollector import removals
 import fauxfactory
 import requests
 import yaml
@@ -2607,17 +2608,16 @@ def get_or_create_current_appliance():
 current_appliance = LocalProxy(get_or_create_current_appliance)
 
 
+@removals.removed_class(
+    "CurrentAppliance", message=("The CurrentAppliance descriptor is being phased out"
+                                 "in favour of collections.")
+)
 class CurrentAppliance(object):
     def __get__(self, instance, owner):
         return get_or_create_current_appliance()
 
 
-class Navigatable(object):
-
-    appliance = CurrentAppliance()
-
-    def __init__(self, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+class NavigatableMixin(object):
 
     @property
     def browser(self):
@@ -2632,3 +2632,15 @@ class Navigatable(object):
             new_obj = o
         return self.appliance.browser.create_view(
             view_class, additional_context={'object': new_obj})
+
+
+@removals.removed_class(
+    "Navigatable", message=("Navigatable is being deprecated in favour of using Collections "
+                            "objects with the NavigatableMixin")
+)
+class Navigatable(NavigatableMixin):
+
+    appliance = CurrentAppliance()
+
+    def __init__(self, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
