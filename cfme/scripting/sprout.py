@@ -37,14 +37,15 @@ def main():
               help='Override CPU core count. 0 means no override')
 @click.option('--populate-yaml', is_flag=True, default=False,
               help="Populate the yaml with the appliance")
+@click.option('--provider', default=None, help="Which provider to use")
 def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
-             override_ram, override_cpu, populate_yaml):
+             override_ram, override_cpu, populate_yaml, provider):
     """Function to show the given credentials, takes either a provider key or a credential key"""
     override_cpu = override_cpu or None
     override_ram = override_ram or None
     sr = SproutProvisioningRequest(group=group, count=appliances, version=version, date=date,
                                    lease_time=timeout, provision_timeout=provision_timeout,
-                                   desc=desc, cpu=override_cpu, ram=override_ram)
+                                   desc=desc, cpu=override_cpu, ram=override_ram, provider=provider)
     sm = SproutManager()
 
     def exit_gracefully(signum, frame):
