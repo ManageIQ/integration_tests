@@ -3,14 +3,13 @@ from cfme.base.ui import AutomateImportExportBaseView, AutomateImportExportView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 
-from widgetastic_manageiq.hacks import BootstrapSelectByLocator
 from widgetastic_patternfly import BootstrapSelect, Button
 
 
 class GitImportSelectorView(AutomateImportExportBaseView):
     type = BootstrapSelect('branch_or_tag')
-    branch = BootstrapSelectByLocator('.//div[contains(@class, "bootstrap-select git-branches")]')
-    tag = BootstrapSelectByLocator('.//div[contains(@class, "bootstrap-select git-tags")]')
+    branch = BootstrapSelect(locator='.//div[contains(@class, "bootstrap-select git-branches")]')
+    tag = BootstrapSelect(locator='.//div[contains(@class, "bootstrap-select git-tags")]')
 
     submit = Button('Submit')
     cancel = Button('Cancel')
