@@ -96,6 +96,7 @@ def test_add_button(catalog_item):
 def test_edit_tags(catalog_item):
     catalog_item.create()
     catalog_item.add_tag("Cost Center *", "Cost Center 001")
+    catalog_item.remove_tag("Cost Center *", "Cost Center 001")
 
 
 @pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.7", "5.8", "upstream"])])
