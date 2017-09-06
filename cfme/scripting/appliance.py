@@ -8,10 +8,11 @@ Usage:
    scripts/encrypt_conf.py credentials
 """
 
-from cached_property import cached_property
 import click
-
+from cached_property import cached_property
 from functools import partial
+
+from .setup_ansible import setup_ansible
 
 
 def get_appliance(appliance_ip):
@@ -37,6 +38,18 @@ def reboot_appliance(appliance_ip, wait_for_ui):
     """Reboots an appliance"""
     app = get_appliance(appliance_ip)
     app.reboot(wait_for_ui)
+
+
+@main.command('setup_ansible', help='Setups embedded ansible on an appliance')
+@click.argument('appliance_ip', default=None, required=False)
+@click.option('--license', required=True, type=click.Path(exists=True))
+def setup_embedded_ansible(appliance_ip, license):
+    """Setups embedded ansible on an appliance"""
+    app = get_appliance(appliance_ip)
+    if not app.is_downstream:
+        setup_ansible(app, license)
+    else:
+        print("It can be done only against upstream appliances.")
 
 
 # Useful Properties
