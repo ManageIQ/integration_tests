@@ -58,7 +58,7 @@ ENV CHROME_DRIVER_VERSION 2.27
 ENV SELENIUM_VERSION 2.53
 ENV FIREFOX_VERSION 38.6
 
-RUN dnf install -y google-chrome-stable
+RUN dnf install -y nss google-chrome-stable
 
 ADD http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip \
     /root/chrome_webdriver/chromedriver_linux64.zip
