@@ -5,11 +5,15 @@ import pytest
 from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
-from cfme.rest.gen_data import groups as _groups
-from cfme.rest.gen_data import roles as _roles
-from cfme.rest.gen_data import tenants as _tenants
-from cfme.rest.gen_data import users as _users
+from cfme.rest.gen_data import (
+    _creating_skeleton,
+    groups as _groups,
+    roles as _roles,
+    tenants as _tenants,
+    users as _users,
+)
 from utils import error
+from utils.rest import assert_response
 from utils.wait import wait_for
 
 pytestmark = [
@@ -333,6 +337,21 @@ class TestUsersViaREST(object):
         assert len(response) == 3
         return response
 
+    @pytest.fixture(scope='function')
+    def user_auth(self, request, appliance):
+        password = fauxfactory.gen_alphanumeric()
+        data = [{
+            "userid": "rest_{}".format(fauxfactory.gen_alphanumeric(3).lower()),
+            "name": "REST User {}".format(fauxfactory.gen_alphanumeric()),
+            "password": password,
+            "email": "user@example.com",
+            "group": {"description": "EvmGroup-user_self_service"}
+        }]
+
+        user = _creating_skeleton(request, appliance.rest_api, 'users', data)[0]
+        assert_response(appliance)
+        return user.userid, password
+
     @pytest.mark.tier(3)
     def test_create_users(self, appliance, users):
         """Tests creating users.
@@ -394,6 +413,44 @@ class TestUsersViaREST(object):
             )
             assert record[0].id == edited[index].id
             assert record[0].name == edited[index].name
+
+    @pytest.mark.tier(3)
+    def test_change_password_as_user(self, appliance, user_auth):
+        """Tests that users can update their own password.
+
+        Metadata:
+            test_flag: rest
+        """
+        new_password = fauxfactory.gen_alphanumeric()
+        new_user_auth = (user_auth[0], new_password)
+
+        user = appliance.rest_api.collections.users.get(userid=user_auth[0])
+        user_api = appliance.new_rest_api_instance(auth=user_auth)
+        user_api.post(user.href, action='edit', resource={'password': new_password})
+        assert_response(user_api)
+
+        # login using new password
+        assert appliance.new_rest_api_instance(auth=new_user_auth)
+        # try to login using old password
+        with error.expected('Authentication failed'):
+            appliance.new_rest_api_instance(auth=user_auth)
+
+    @pytest.mark.tier(3)
+    def test_change_email_as_user(self, appliance, user_auth):
+        """Tests that users can update their own email.
+
+        Metadata:
+            test_flag: rest
+        """
+        new_email = 'new@example.com'
+
+        user = appliance.rest_api.collections.users.get(userid=user_auth[0])
+        user_api = appliance.new_rest_api_instance(auth=user_auth)
+        user_api.post(user.href, action='edit', resource={'email': new_email})
+        assert_response(user_api)
+
+        user.reload()
+        assert user.email == new_email
 
     @pytest.mark.tier(3)
     @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
