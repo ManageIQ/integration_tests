@@ -139,7 +139,11 @@ def pytest_configure(config):
     if store.slave_manager:
         artifactor_handler.slaveid = store.slaveid
     config._art_client = art_client
-    art_client.fire_hook('setup_merkyl', ip=get_or_create_current_appliance().address)
+
+
+@pytest.fixture(scope='session')
+def merkyl_setup(request, appliance):
+    fire_art_hook(request.config, 'setup_merkyl', ip=appliance.address )
 
 
 def fire_art_hook(config, hook, **hook_args):

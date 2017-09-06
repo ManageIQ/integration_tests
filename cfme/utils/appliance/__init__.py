@@ -2550,8 +2550,9 @@ class ApplianceStack(LocalStack):
         current = self.top
         logger.info(
             "Popped appliance {} from the stack (now there is {})".format(
-                was_before.address, getattr(current, 'address', 'empty')))
-        if was_before.browser_steal:
+                getattr(was_before, 'address', 'empty'),
+                getattr(current, 'address', 'empty')))
+        if getattr(was_before, 'browser_steal', False):
             from cfme.utils import browser
             browser.start()
         return was_before
@@ -2617,6 +2618,7 @@ def load_appliances_from_config(config):
 
 
 def get_or_create_current_appliance():
+    assert stack.top is not None, "we no longer create"
     if stack.top is None:
         stack.push(load_appliances_from_config(conf.env)[0])
     return stack.top

@@ -1,14 +1,24 @@
 import attr
 import pytest
 
-from utils.appliance import get_or_create_current_appliance
+from utils import conf
+
+from utils.appliance import load_appliances_from_config, stack
 
 
+@pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    appliance = get_or_create_current_appliance()
+
+    appliance = load_appliances_from_config(conf.env)[0]
     appliance.set_session_timeout(86400)
+    stack.push(appliance)
     plugin = ApplianceHolderPlugin(appliance)
     config.pluginmanager.register(plugin, "appliance-holder")
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_unconfigure():
+    stack.pop()
 
 
 @attr.s(cmp=False)
