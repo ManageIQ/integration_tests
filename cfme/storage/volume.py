@@ -43,11 +43,7 @@ class VolumeDetailsToolbar(View):
 
 
 class VolumeQuadIconEntity(BaseQuadIconEntity):
-    @property
-    def data(self):
-        return {
-            self.browser.get_attribute("alt", self.QUADRANT.format(pos="a"))
-        }
+    pass
 
 
 class VolumeTileIconEntity(BaseTileIconEntity):
