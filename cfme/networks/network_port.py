@@ -27,22 +27,6 @@ class NetworkPortCollection(Navigatable):
         list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=p.name) for p in list_networks_obj]
 
-    @property
-    def network_provider(self):
-        """ Returns network provider """
-        from cfme.networks.provider import NetworkProviderCollection
-        # port collection contains reference to provider
-        if self.collection.parent:
-            return self.collection.parent
-        # otherwise get provider name from ui
-        view = navigate_to(self, 'Details')
-        try:
-            prov_name = view.entities.relationships.get_text_of("Network Manager")
-            collection = NetworkProviderCollection(appliance=self.appliance)
-            return collection.instantiate(name=prov_name)
-        except ItemNotFound:  # BZ 1480577
-            return None
-
 
 class NetworkPort(WidgetasticTaggable, Navigatable):
     """Class representing network ports in sdn"""
@@ -81,6 +65,22 @@ class NetworkPort(WidgetasticTaggable, Navigatable):
         """ Returns fixed ips (string) of the port """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Fixed ip addresses')
+
+    @property
+    def network_provider(self):
+        """ Returns network provider """
+        from cfme.networks.provider import NetworkProviderCollection
+        # port collection contains reference to provider
+        if self.collection.parent:
+            return self.collection.parent
+        # otherwise get provider name from ui
+        view = navigate_to(self, 'Details')
+        try:
+            prov_name = view.entities.relationships.get_text_of("Network Manager")
+            collection = NetworkProviderCollection(appliance=self.appliance)
+            return collection.instantiate(name=prov_name)
+        except ItemNotFound:  # BZ 1480577
+            return None
 
 
 @navigator.register(NetworkPort, 'All')

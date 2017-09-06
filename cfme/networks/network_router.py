@@ -27,22 +27,6 @@ class NetworkRouterCollection(Navigatable):
         list_networks_obj = view.entities.get_all(surf_pages=True)
         return [self.instantiate(name=r.name) for r in list_networks_obj]
 
-    @property
-    def network_provider(self):
-        """ Returns network provider """
-        from cfme.networks.provider import NetworkProviderCollection
-        # router collection contains reference to provider
-        if self.collection.parent:
-            return self.collection.parent
-        # otherwise get provider name from ui
-        view = navigate_to(self, 'Details')
-        try:
-            prov_name = view.entities.relationships.get_text_of("Network Manager")
-            collection = NetworkProviderCollection(appliance=self.appliance)
-            return collection.instantiate(name=prov_name)
-        except ItemNotFound:  # BZ 1480577
-            return None
-
 
 class NetworkRouter(WidgetasticTaggable, Navigatable):
     """ Class representing network ports in sdn"""
@@ -58,6 +42,22 @@ class NetworkRouter(WidgetasticTaggable, Navigatable):
         Navigatable.__init__(self, appliance=self.collection.appliance)
         self.name = name
         self.provider = provider
+
+    @property
+    def network_provider(self):
+        """ Returns network provider """
+        from cfme.networks.provider import NetworkProviderCollection
+        # router collection contains reference to provider
+        if self.collection.parent:
+            return self.collection.parent
+        # otherwise get provider name from ui
+        view = navigate_to(self, 'Details')
+        try:
+            prov_name = view.entities.relationships.get_text_of("Network Manager")
+            collection = NetworkProviderCollection(appliance=self.appliance)
+            return collection.instantiate(name=prov_name)
+        except ItemNotFound:  # BZ 1480577
+            return None
 
 
 @navigator.register(NetworkRouterCollection, 'All')
