@@ -41,7 +41,7 @@ class Request(Navigatable):
             self.rest.reload()
             return self.rest.request_state.title() in self.REQUEST_FINISHED_STATES
 
-        wait_for(_finished, num_sec=800, delay=20, message="Request finished")
+        wait_for(_finished, num_sec=1800, delay=20, message="Request finished")
 
     @wait_for_request.variant('ui')
     def wait_for_request_ui(self):
