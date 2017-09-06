@@ -4,11 +4,10 @@ from widgetastic.widget import View, Text, NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Search, Table, PaginationPane, BreadCrumb, SummaryTable, Accordion,
-    ManageIQTree, TextInput, BootstrapSelect, VersionPick, Version)
+    ManageIQTree, TextInput, BootstrapSelect, VersionPick, Version, BootstrapSwitch)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound
-from cfme.web_ui import match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from utils.log import logger
@@ -59,8 +58,8 @@ class VolumeView(BaseLoggedInPage):
         nav = Volume.nav.pick(self.context['object'].appliance.version)
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav and
-            match_location(controller='cloud_volume', title='Cloud Volumes'))
+            self.navigation.currently_selected == nav
+        )
 
 
 class VolumeAllView(VolumeView):
@@ -101,11 +100,20 @@ class VolumeAddEntities(View):
 
 
 class VolumeAddForm(View):
+    # Commented lines won't work until this issue is fixed:
+    # https://github.com/ManageIQ/integration_tests/issues/5134
+    # block_manager = BootstrapSelect(name='storage_manager_id')
     volume_name = TextInput(name='name')
     size = TextInput(name='size')
+    # tenant is for openstack block storage only
     tenant = BootstrapSelect(id='cloud_tenant_id')
     add = Button('Add')
     cancel = Button('Cancel')
+    # fields under this comment are for aws ebs only
+    # az = BootstrapSelect(name='aws_availability_zone_id')
+    # type = BootstrapSelect(name='aws_volume_type')
+    iops = TextInput(name='aws_iops')
+    encryption = BootstrapSwitch(name="aws_encryption")
 
 
 class VolumeAddView(VolumeView):
@@ -119,6 +127,114 @@ class VolumeAddView(VolumeView):
 
     entities = View.nested(VolumeAddEntities)
     form = View.nested(VolumeAddForm)
+
+
+class VolumeCreateSnapshotEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class VolumeCreateSnapshotForm(View):
+    snapshot_name = TextInput(name='snapshot_name')
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
+class VolumeCreateSnapshotView(VolumeView):
+    @property
+    def is_displayed(self):
+        expected_title = "Create Snapshot for Cloud Volume"
+        return (
+            self.in_volume and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+    entities = View.nested(VolumeCreateSnapshotEntities)
+    form = View.nested(VolumeCreateSnapshotForm)
+
+
+class VolumeAttachEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class VolumeAttachForm(View):
+    instance = BootstrapSelect('vm_id')
+    device_path = TextInput(name='device_path')
+    attach = Button('Attach')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
+class VolumeAttachView(VolumeView):
+    @property
+    def is_displayed(self):
+        expected_title = "Attach Cloud Volume"
+        return (
+            self.in_volume and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+    entities = View.nested(VolumeAttachEntities)
+    form = View.nested(VolumeAttachForm)
+
+
+class VolumeDetachEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class VolumeDetachForm(View):
+    instance = BootstrapSelect('vm_id')
+    detach = Button('Detach')
+    cancel = Button('Cancel')
+
+
+class VolumeDetachView(VolumeView):
+    @property
+    def is_displayed(self):
+        expected_title = "Detach Cloud Volume"
+        return (
+            self.in_volume and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+    entities = View.nested(VolumeDetachEntities)
+    form = View.nested(VolumeDetachForm)
+
+
+class VolumeEditEntities(View):
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h1')
+
+
+class VolumeEditForm(View):
+    # Commented lines won't work until this issue is fixed:
+    # https://github.com/ManageIQ/integration_tests/issues/5134
+    # block_manager = BootstrapSelect(name='storage_manager_id')
+    # az = BootstrapSelect(name='aws_availability_zone_id')
+    volume_name = TextInput(name='name')
+    # type = BootstrapSelect(name='aws_volume_type')
+    size = TextInput(name='size')
+    iops = TextInput(name='aws_iops')
+    encryption = BootstrapSwitch(name="aws_encryption")
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+
+class VolumeEditView(VolumeView):
+    @property
+    def is_displayed(self):
+        expected_title = "Edit Cloud Volume"
+        return (
+            self.in_volume and
+            self.entities.title.text == expected_title and
+            self.entities.breadcrumb.active_location == expected_title)
+
+    entities = View.nested(VolumeEditEntities)
+    form = View.nested(VolumeEditForm)
 
 
 class Volume(Navigatable):
@@ -174,3 +290,45 @@ class VolumeAdd(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Volume')
+
+
+@navigator.register(Volume, 'CreateSnapshot')
+class VolumeCreateSnapshot(CFMENavigateStep):
+    VIEW = VolumeCreateSnapshotView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select(
+            "Create a Snapshot of this Cloud Volume"
+        )
+
+
+@navigator.register(Volume, 'Attach')
+class VolumeAttach(CFMENavigateStep):
+    VIEW = VolumeAttachView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select(
+            "Attach this Cloud Volume to an Instance"
+        )
+
+
+@navigator.register(Volume, 'Detach')
+class VolumeDetach(CFMENavigateStep):
+    VIEW = VolumeDetachView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select(
+            "Detach this Cloud Volume from an Instance"
+        )
+
+
+@navigator.register(Volume, 'Edit')
+class VolumeEditor(CFMENavigateStep):
+    VIEW = VolumeEditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select("Edit this Cloud Volume")
