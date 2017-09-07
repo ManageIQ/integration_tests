@@ -151,7 +151,7 @@ def setup_basic_script(provider, script_type):
 
 
 def setup_basic_script_v2(provider, script_type):
-    script_header = 'manageiq'
+    script_header = 'manageiq_'
     script_path_source = path.join(yml_templates_path, basic_script_v2)
     script_path = path.join(basic_yml_path, basic_script_v2)
     copyfile(script_path_source, script_path)
@@ -159,26 +159,36 @@ def setup_basic_script_v2(provider, script_type):
         doc = load(f)
         values_dict = get_values_from_conf(provider, script_type)
         if script_type == 'provider':
-            doc[0]['tasks'][0][script_header + '_' + script_type] = doc[0]['tasks'][0].pop('script')
+            script_name = '{}{}'.format(script_header, script_type)
+            doc[0]['tasks'][0][script_name] = doc[0]['tasks'][0].pop('script')
             doc[0]['tasks'][0]['name'] = 'Create a new provider in ManageIQ'
-            doc[0]['tasks'][0][script_header + '_' + script_type]['name'] = values_dict['name']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['type'] = values_dict['provider_type']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['state'] = values_dict['state']
+            doc[0]['tasks'][0][script_name]['name'] = values_dict['name']
+            doc[0]['tasks'][0][script_name]['type'] = \
+                values_dict['provider_type']
+            doc[0]['tasks'][0][script_name]['state'] = values_dict['state']
 
-            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['auth_key'] = values_dict['provider_api_auth_token']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['hostname'] = values_dict['provider_api_hostname']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['port'] = values_dict['provider_api_port']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['verify_ssl'] = 'false'
+            doc[0]['tasks'][0][script_name]['provider']['auth_key'] = \
+                values_dict['provider_api_auth_token']
+            doc[0]['tasks'][0][script_name]['provider']['hostname'] = \
+                values_dict['provider_api_hostname']
+            doc[0]['tasks'][0][script_name]['provider']['port'] = \
+                values_dict['provider_api_port']
+            doc[0]['tasks'][0][script_name]['provider']['verify_ssl'] = 'false'
 
-            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['role'] = 'hawkular'
-            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['hostname'] = values_dict['monitoring_hostname']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['port'] = values_dict['monitoring_port']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['verify_ssl'] = 'false'
+            doc[0]['tasks'][0][script_name]['metrics']['role'] = 'hawkular'
+            doc[0]['tasks'][0][script_name]['metrics']['hostname'] = \
+                values_dict['monitoring_hostname']
+            doc[0]['tasks'][0][script_name]['metrics']['port'] = \
+                values_dict['monitoring_port']
+            doc[0]['tasks'][0][script_name]['metrics']['verify_ssl'] = 'false'
 
-            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['url'] = values_dict['miq_url']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['username'] = values_dict['miq_username']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['password'] = values_dict['miq_password']
-            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['verify_ssl'] = 'false'
+            doc[0]['tasks'][0][script_name]['manageiq_connection']['url'] = \
+                values_dict['miq_url']
+            doc[0]['tasks'][0][script_name]['manageiq_connection']['username']\
+                = values_dict['miq_username']
+            doc[0]['tasks'][0][script_name]['manageiq_connection']['password']\
+                = values_dict['miq_password']
+            doc[0]['tasks'][0][script_name]['manageiq_connection']['verify_ssl'] = 'false'
         with open(script_path, 'w') as f:
             f.write(dump(doc))
 
