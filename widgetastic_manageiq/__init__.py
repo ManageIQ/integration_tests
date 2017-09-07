@@ -674,59 +674,67 @@ class CheckboxSelect(Widget):
         return [cb for cb in self.checkboxes if cb.selected]
 
 
-class BootstrapSwitchSelect(CheckboxSelect):
+class BootstrapSwitchSelect(View):
     """BootstrapSwitchSelect view.
 
-    This view is very similar to parent CheckboxSelect view. BootstrapSwitches used instead of
-    usual Checkboxes. It can be found in the same policy's events assignment screen since
-    CFME 5.8.1.
+    This view is very similar to CheckboxSelect view. BootstrapSwitches used instead of
+    usual Checkboxes. It can be found in policy's events assignment screen since CFME 5.8.1.
 
     """
 
-    BS_TEXT = '/../../following-sibling::text()[1]'
+    ROOT = ParametrizedLocator(".//div[@id={@search_root|quote}]")
+    BS_LOCATOR = ".//text()[normalize-space(.)='{}']/preceding-sibling::div[1]//input"
 
-    def _get_bs_description(self, bs):
-        """Returns text description of the BootstrapSwitch widget.
+    def __init__(self, parent, search_root, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.search_root = search_root
 
-        We have to use such hack with the script execution, because Selenium cannot return text of a
-        text node itself.
+    def _get_attr_from_text(self, attr, text):
+        return self.browser.element(self.BS_LOCATOR.format(text)).get_attribute(attr)
 
-        Returns: str
+    @cached_property
+    def all_labels(self):
+        elements = self.browser.elements(".//div[@class='form-horizontal']")
+        labels = []
+        for el in elements:
+            labels.extend(self.browser.text(el).split(" Yes No ")[1:])
+        return labels
 
-        """
-        return bs._label or self.browser.execute_script(
-            "{script} return xpath(null, {arg}).textContent;".format(
-                script=DynaTree.XPATH,
-                arg=quote(bs.ROOT.locator + self.BS_TEXT)
-            )).strip()
+    @ParametrizedView.nested
+    class _bootstrap_switch(ParametrizedView):  # noqa
+        PARAMETERS = ("id_attr", )
+        switch = BootstrapSwitch(id=Parameter("id_attr"))
 
-    @property
-    def checkboxes(self):
-        """All bootstrap switches."""
-        return {BootstrapSwitch(self, id=el.get_attribute("id")) for el in self.browser.elements(
-            ".//input[@type='checkbox']", parent=self)}
+    def switch_by_text(self, text):
+        id_attr = self._get_attr_from_text("id", text)
+        return self._bootstrap_switch(id_attr).switch
 
-    def checkbox_by_id(self, id):
-        """Finds bootstrap switch by id."""
-        return BootstrapSwitch(self, id=id)
-
-    @property
+    @cached_property
     def selected_text(self):
-        """Only selected bootstrap switches' text descriptions."""
-        return {self._get_bs_description(bs) for bs in self.selected_checkboxes}
+        return [label for label in self.all_labels if self.switch_by_text(label).selected]
 
-    def checkbox_by_text(self, text):
-        """Returns bootstrap switch searched by its text."""
-        if self._access_func is not None:
-            for cb in self.checkboxes:
-                txt = self._access_func(cb)
-                if txt == text:
-                    return cb
-            else:
-                raise NameError("Bootstrap switch with text {} not found!".format(text))
+    def _values_to_remove(self, values):
+        return list(set(self.selected_text) - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - set(self.selected_text))
+
+    def fill(self, values):
+        if set(values) == set(self.selected_text):
+            return False
         else:
-            # Has to be only single
-            return BootstrapSwitch(self, label=text)
+            for value in self._values_to_remove(values):
+                self.switch_by_text(value).fill(False)
+            for value in self._values_to_add(values):
+                self.switch_by_text(value).fill(True)
+            try:
+                del self.selected_text
+            except AttributeError:
+                pass
+            return True
+
+    def read(self):
+        return self.selected_text
 
 
 # ManageIQ table objects definition
