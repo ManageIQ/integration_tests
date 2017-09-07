@@ -63,7 +63,9 @@ ENV FIREFOX_VERSION 47.0.2
 # Enable repo for google chrome
 ADD google-chrome.repo /etc/yum.repos.d/
 
-RUN dnf install -y google-chrome-stable
+#RUN dnf install -y google-chrome-stable
+# Workaround - above repo does not work?
+RUN dnf install -y https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
 
 ADD http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip \
     /root/chrome_webdriver/chromedriver_linux64.zip
