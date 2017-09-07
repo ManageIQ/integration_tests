@@ -199,11 +199,11 @@ class WidgetasticTaggable(object):
         - 'Details' navigation
         - 'Details' view should have entities.smart_management SummaryTable widget
         - 'EditTags' navigation
-        - 'EditTags' view should have nested 'form' view with 'tags' table widget (TagPageView)
+        - 'EditTags' view should have nested 'form' view with 'tags' table widget
+            - Suggest using class cfme.common.TagPageView as view for 'EditTags' nav
 
-    This class should be used for already converted to widgetastic classes
-
-    It provides functionality to assign and unassigned tags.
+    This class provides functionality to assign and unassigned tags for page models with
+    standardized widgetastic views
     """
 
     def add_tag(self, category=None, tag=None, cancel=False, reset=False):
