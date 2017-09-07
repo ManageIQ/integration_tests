@@ -6,7 +6,7 @@ from manageiq_client.api import APIException
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.common import PolicyProfileAssignable
+from cfme.common import PolicyProfileAssignable, WidgetasticTaggable, TagPageView
 from cfme.common.host_views import (
     HostAddView,
     HostDetailsView,
@@ -31,7 +31,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 
 
-class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
+class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, WidgetasticTaggable):
     """Model of an infrastructure host in cfme.
 
     Args:
@@ -403,16 +403,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             drift_analysis_view.toolbar.all_attributes.click()
         return drift_analysis_view.drift_analysis(drift_section).is_changed
 
-    def tag(self, tag, **kwargs):
-        """Tags the system by given tag"""
-        navigate_to(self, 'Details')
-        mixins.add_tag(tag, **kwargs)
-
-    def untag(self, tag):
-        """Removes the selected tag off the system"""
-        navigate_to(self, 'Details')
-        mixins.remove_tag(tag)
-
 
 @navigator.register(Host)
 class All(CFMENavigateStep):
@@ -486,6 +476,15 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
+
+
+@navigator.register(Host)
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling("Details")
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 def get_credentials_from_config(credential_config_name):

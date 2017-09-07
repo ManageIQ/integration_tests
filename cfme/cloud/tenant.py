@@ -14,6 +14,7 @@ from widgetastic_manageiq import (
     SummaryTable, Table, Text, BaseNonInteractiveEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import NavigatableMixin
@@ -175,26 +176,6 @@ class TenantEditView(TenantView):
             self.entities.breadcrumb.active_location == expected_title)
 
 
-class TenantEditTagsView(TenantView):
-    """The edit tags page"""
-    entities = View.nested(TenantEditTagEntities)
-    select_tag = BootstrapSelect('tag_cat')
-    select_value = BootstrapSelect('tag_add')
-    save_button = Button('Save')
-    reset_button = Button('Reset')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        """Is this page currently being displayed"""
-        return (
-            self.in_tenants and
-            self.entities.breadcrumb.locations == [
-                'Cloud Tenants', '{} (Summary)'.format(self.context['object'].name),
-                'Tag Assignment'] and
-            self.entities.breadcrumb.active_location == 'Tag Assignment')
-
-
 class TenantCollection(NavigatableMixin):
     """Collection object for the :py:class:`cfme.cloud.tenant.Tenant`."""
 
@@ -278,7 +259,7 @@ class TenantCollection(NavigatableMixin):
         # it is not shown in current UI, so not asserting
 
 
-class Tenant(NavigatableMixin):
+class Tenant(NavigatableMixin, WidgetasticTaggable):
     '''Tenant Class'''
     _param_name = 'Tenant'
 
@@ -404,9 +385,9 @@ class TenantEdit(CFMENavigateStep):
             raise DestinationNotFound('Cannot edit Cloud Tenants in CFME < 5.7')
 
 
-@navigator.register(Tenant, 'EditTags')
+@navigator.register(Tenant, 'EditTagsFromDetails')
 class TenantEditTags(CFMENavigateStep):
-    VIEW = TenantEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

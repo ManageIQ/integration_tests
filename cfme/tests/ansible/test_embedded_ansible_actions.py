@@ -192,8 +192,8 @@ def test_action_run_ansible_playbook(request, full_template, ansible_catalog_ite
             ansible_catalog_item.provisioning = {"machine_credential": ansible_credential.name}
     with update(ansible_action):
         ansible_action.run_ansible_playbook = inventory
-    vmware_vm.add_tag(("Service Level", "Gold"), single_value=True)
-    request.addfinalizer(lambda: vmware_vm.remove_tag(("Service Level", "Gold")))
+    vmware_vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
     wait_for(service_request.exists, num_sec=600)
     service_request.wait_for_request()
     view = navigate_to(service, "Details")

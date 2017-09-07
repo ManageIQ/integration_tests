@@ -415,7 +415,7 @@ class AddButton(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Add a new Button')
 
 
-@navigator.register(CatalogItem, 'EditTags')
+@navigator.register(CatalogItem, 'EditTagsFromDetails')
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')

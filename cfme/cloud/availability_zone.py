@@ -6,13 +6,14 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import AvailabilityZoneNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     TimelinesView, ItemsToolBarViewSelector, Text, Table, Search, PaginationPane, BreadCrumb,
-    SummaryTable, Accordion, ManageIQTree, BaseNonInteractiveEntitiesView)
+    SummaryTable, Accordion, ManageIQTree)
 
 
 class AvailabilityZoneToolBar(View):
@@ -97,25 +98,6 @@ class AvailabilityZoneDetailsView(AvailabilityZoneView):
     entities = View.nested(AvailabilityZoneDetailsEntities)
 
 
-class AvailabilityZoneEditTagsView(AvailabilityZoneView):
-    breadcrumb = BreadCrumb()
-    title = Text('//div[@id="main-content"]//h3')
-    # TODO Add tag table support when rowspan is supported in SummaryTable
-    entities = View.nested(BaseNonInteractiveEntitiesView)
-
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_availability_zones and
-            self.title.text == 'Tag Assignment' and
-            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations)
-        # TODO Add quadicon check to this return
-
-
 class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
     @property
     def is_displayed(self):
@@ -126,7 +108,7 @@ class CloudAvailabilityZoneTimelinesView(TimelinesView, AvailabilityZoneView):
             super(TimelinesView, self).is_displayed)
 
 
-class AvailabilityZone(Navigatable):
+class AvailabilityZone(WidgetasticTaggable, Navigatable):
     _param_name = "AvailabilityZone"
 
     def __init__(self, name, provider, appliance=None):
@@ -162,9 +144,9 @@ class AvailabilityZoneDetails(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(AvailabilityZone, 'EditTags')
+@navigator.register(AvailabilityZone, 'EditTagsFromDetails')
 class AvailabilityZoneEditTags(CFMENavigateStep):
-    VIEW = AvailabilityZoneEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

@@ -109,7 +109,7 @@ def test_resources_link(stack):
 @pytest.mark.tier(3)
 @test_requirements.tag
 def test_edit_tags(stack):
-    stack.edit_tags("Cost Center *", "Cost Center 001")
+    stack.add_tag("Cost Center *", "Cost Center 001")
 
 
 @pytest.mark.tier(3)

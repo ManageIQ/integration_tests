@@ -88,7 +88,7 @@ def test_crud_set_ownership_and_edit_tags(myservice):
         test_flag: provision
     """
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
-    myservice.edit_tags("Cost Center *", "Cost Center 001")
+    myservice.add_tag("Cost Center *", "Cost Center 001")
     with update(myservice):
         myservice.description = "my edited description"
     myservice.delete()

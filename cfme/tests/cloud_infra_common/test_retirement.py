@@ -167,8 +167,7 @@ def test_retirement_now_ec2_instance_backed(retire_ec2_s3_vm, tagged):
     """
     # Tag the VM with lifecycle for full retirement based on parameter
     if tagged:
-        retire_ec2_s3_vm.add_tag(('LifeCycle', 'Fully retire VM and remove from Provider'),
-                               single_value=True)
+        retire_ec2_s3_vm.add_tag('LifeCycle', 'Fully retire VM and remove from Provider')
         expected_power_state = ['terminated']
     else:
         # no tagging

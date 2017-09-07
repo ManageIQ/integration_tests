@@ -12,6 +12,7 @@ from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelecto
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import ClusterNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import Navigatable
@@ -172,7 +173,7 @@ class ClusterCollection(Navigatable):
             cluster.wait_for_disappear()
 
 
-class Cluster(Pretty, Navigatable):
+class Cluster(Pretty, Navigatable, WidgetasticTaggable):
     """ Model of an infrastructure cluster in cfme
 
     Args:
@@ -339,6 +340,14 @@ class Timelines(CFMENavigateStep):
         """Navigate to the correct view"""
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
+
+@navigator.register(Cluster, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 # TODO: This doesn't seem to be used, and needs to be migrated to Widgetastic
 # @navigator.register(Cluster, 'DetailsFromProvider')

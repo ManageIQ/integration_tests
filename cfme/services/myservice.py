@@ -1,6 +1,8 @@
 from widgetastic.widget import Text, View
 from widgetastic_manageiq import Accordion, ManageIQTree, Calendar, SummaryTable
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
+
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.web_ui import toolbar as tb, Quadicon
 from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -54,13 +56,6 @@ class SetOwnershipForm(MyServicesView):
 
     select_owner = BootstrapSelect('user_name')
     select_group = BootstrapSelect('group_name')
-
-
-class EditTagsForm(MyServicesView):
-    title = Text('#explorer_title_text')
-
-    select_tag = BootstrapSelect('tag_cat')
-    select_value = BootstrapSelect('tag_add')
 
 
 class MyServiceDetailView(MyServicesView):
@@ -126,19 +121,6 @@ class SetOwnershipView(SetOwnershipForm):
         )
 
 
-class EditTagsView(EditTagsForm):
-    title = Text("#explorer_title_text")
-
-    save_button = Button('Save')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_myservices and self.myservice.is_opened and
-            self.title.text == 'Edit Tags of Service "{}"'.format(self.context['object'].name)
-        )
-
-
 class ServiceRetirementView(ServiceRetirementForm):
     title = Text("#explorer_title_text")
 
@@ -165,7 +147,7 @@ class ReconfigureServiceView(SetOwnershipForm):
         )
 
 
-class MyService(Updateable, Navigatable):
+class MyService(Updateable, Navigatable, WidgetasticTaggable):
 
     def __init__(self, name, description=None, vm_name=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
@@ -247,16 +229,6 @@ class MyService(Updateable, Navigatable):
         view.flash.assert_no_error()
         view.flash.assert_success_message('Ownership saved for selected Service')
 
-    def edit_tags(self, tag, value):
-        view = navigate_to(self, 'EditTags')
-        view.fill({'select_tag': tag,
-                   'select_value': value})
-        view.save_button.click()
-        view = self.create_view(MyServiceDetailView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_success_message('Tag edits were successfully saved')
-
     def check_vm_add(self, add_vm_name):
         view = navigate_to(self, 'Details')
         # TODO - replace Quadicon later
@@ -319,10 +291,9 @@ class MyServiceSetOwnership(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Set Ownership')
 
 
-@navigator.register(MyService, 'EditTags')
+@navigator.register(MyService, 'EditTagsFromDetails')
 class MyServiceEditTags(CFMENavigateStep):
-    VIEW = EditTagsView
-
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

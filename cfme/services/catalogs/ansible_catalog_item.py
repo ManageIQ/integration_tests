@@ -399,7 +399,7 @@ class Edit(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select("Edit this Item")
 
 
-@navigator.register(AnsiblePlaybookCatalogItem, 'EditTags')
+@navigator.register(AnsiblePlaybookCatalogItem, 'EditTagsFromDetails')
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')

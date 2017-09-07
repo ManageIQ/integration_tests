@@ -217,21 +217,6 @@ class HostManagePoliciesView(BaseLoggedInPage):
         return False
 
 
-class HostEditTagsView(BaseLoggedInPage):
-    """Host's Edit Tags view."""
-    tag_category = BootstrapSelect("tag_cat")
-    tag = BootstrapSelect("tag_add")
-    chosen_tags = Table(locator='.//div[@id="assignments_div"]/table')
-    entities = View.nested(BaseNonInteractiveEntitiesView)
-    save_button = Button("Save")
-    reset_button = Button("Reset")
-    cancel_button = Button("Cancel")
-
-    @property
-    def is_displayed(self):
-        return False
-
-
 class HostsToolbar(View):
     """Represents hosts toolbar and its controls."""
     configuration = Dropdown(text="Configuration")

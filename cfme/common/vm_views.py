@@ -359,28 +359,6 @@ class EditView(BaseLoggedInPage):
         return False
 
 
-class EditTagsView(BaseLoggedInPage):
-    """
-    Edit vms/instance tags page
-    The title actually as Instance|VM.VM_TYPE string in it, otherwise the same
-    """
-    @View.nested
-    class form(View):  # noqa
-        tag_category = BootstrapSelect('tag_cat')
-        tag = BootstrapSelect('tag_add')
-        # TODO implement table element with ability to remove selected tags
-        # https://github.com/RedHatQE/widgetastic.core/issues/26
-        entities = View.nested(BaseNonInteractiveEntitiesView)
-        save_button = Button('Save')
-        reset_button = Button('Reset')
-        cancel_button = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        # TODO match quadicon
-        return False
-
-
 class SetOwnershipView(BaseLoggedInPage):
     """
     Set vms/instance ownership page

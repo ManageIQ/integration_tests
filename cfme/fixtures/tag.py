@@ -102,18 +102,18 @@ def check_item_visibility(tag, user_restricted):
             visibility_result: pass 'True' is item should be visible,
                                'False' if not
         """
-        navigate_to(vis_object, 'Details')
+        navigate_to(vis_object, 'EditTagsFromDetails')
         if visibility_result:
-            mixins.add_tag(tag)
+            mixins.add_tag(tag=tag)
         else:
             try:
-                mixins.remove_tag(tag)
+                mixins.remove_tag(tag=tag)
             except TypeError:
                 logger.debug('Tag is already removed')
         actual_visibility = False
         with user_restricted:
             try:
-                navigate_to(vis_object, 'Details')
+                navigate_to(vis_object, 'EditTagsFromDetails')
                 actual_visibility = True
             except Exception:
                 logger.debug('Tagged item is not visible')
