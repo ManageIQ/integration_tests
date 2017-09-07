@@ -10,6 +10,7 @@ class Ports(object):
 
     SSH = 22
     DB = 5432
+    TOWER = 54322
     logger = logger
 
     @property
