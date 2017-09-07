@@ -83,7 +83,7 @@ class NetworkPort(WidgetasticTaggable, Navigatable):
             return None
 
 
-@navigator.register(NetworkPort, 'All')
+@navigator.register(NetworkPortCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = NetworkPortView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -94,7 +94,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(NetworkPort, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
     VIEW = NetworkPortDetailsView
 
     def step(self):

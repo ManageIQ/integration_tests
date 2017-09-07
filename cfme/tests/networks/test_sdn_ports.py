@@ -1,8 +1,6 @@
 import pytest
-from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.exceptions import ItemNotFound
+from cfme.exceptions import ManyEntitiesFound, ItemNotFound
 from cfme.networks.network_port import NetworkPortCollection
 from cfme.networks.provider import NetworkProviderCollection
 from utils import testgen
@@ -11,7 +9,7 @@ from utils.blockers import BZ
 
 
 pytest_generate_tests = testgen.generate(
-    classes=[AzureProvider, EC2Provider, OpenStackProvider], scope='module')
+    classes=[EC2Provider], scope='module')
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
@@ -23,9 +21,12 @@ def test_port_detail_name(provider):
     if len(ports) > 5:
         ports = ports[:5]
     for port in ports:
-        view = navigate_to(port, 'Details')
-        det_name = view.entities.properties.get_text_of('Name')
-        assert port.name == det_name
+        try:
+            view = navigate_to(port, 'Details')
+            det_name = view.entities.properties.get_text_of('Name')
+            assert port.name == det_name
+        except ManyEntitiesFound:
+            pass
 
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
@@ -39,7 +40,7 @@ def test_port_net_prov(provider):
                 view = navigate_to(port, 'Details')
                 prov_name = view.entities.relationships.get_text_of('Network Manager')
                 assert prov_name == net_provider.name
-            except ItemNotFound:
+            except (ManyEntitiesFound, ItemNotFound):  # BZ
                 pass
 
     provider.delete_if_exists(cancel=False)
