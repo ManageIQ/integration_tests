@@ -15,6 +15,7 @@ local_git_repo = "manageiq_ansible_module"
 yml_path = path.join(path.dirname(__file__), local_git_repo)
 yml_templates_path = path.join(path.dirname(__file__), 'ansible_conf')
 basic_script = "basic_script.yml"
+basic_script_v2 = "basic_script_v2.yml"
 yml = ".yml"
 random_token = str(gen_alphanumeric(906))
 random_miq_user = str(gen_alphanumeric(8))
@@ -53,6 +54,7 @@ def fetch_miq_ansible_module():
 def get_values_for_providers_test(provider):
     return {
         'name': provider.name,
+        'provider_type': 'Openshift',
         'state': 'present',
         'miq_url': config_formatter(),
         'miq_username': conf.credentials['default'].username,
@@ -70,6 +72,7 @@ def get_values_for_users_test():
         'fullname': 'MIQUser',
         'name': 'MIQU',
         'password': 'smartvm',
+        'group': 'EvmGroup-user',
         'state': 'present',
         'miq_url': config_formatter(),
         'miq_username': conf.credentials['default'].username,
@@ -99,13 +102,13 @@ def get_values_for_tags_test(provider):
 
 
 def get_values_from_conf(provider, script_type):
-    if script_type == 'providers':
+    if script_type == 'provider':
         return get_values_for_providers_test(provider)
-    if script_type == 'users':
+    elif script_type == 'user':
         return get_values_for_users_test()
-    if script_type == 'custom_attributes':
+    elif script_type == 'custom_attributes':
         return get_values_for_custom_attributes_test(provider)
-    if script_type == 'tags':
+    elif script_type == 'tags':
         return get_values_for_tags_test(provider)
 
 
@@ -123,16 +126,21 @@ def get_yml_value(script, value):
 
 
 def setup_basic_script(provider, script_type):
-    script_path_source = path.join(yml_templates_path, script_type + "_" + basic_script)
-    script_path = path.join(basic_yml_path, script_type + "_" + basic_script)
+    script_header = 'manageiq'
+    script_path_source = path.join(yml_templates_path, basic_script)
+    script_path = path.join(basic_yml_path, basic_script)
     copyfile(script_path_source, script_path)
     with open(script_path, 'rw') as f:
         doc = load(f)
         values_dict = get_values_from_conf(provider, script_type)
+        if script_type == 'tags':
+            doc[0]['tasks'][0]['manageiq_tag_assignment'] = doc[0]['tasks'][0].pop('script')
+        else:
+            doc[0]['tasks'][0][script_header + "_" + script_type] = doc[0]['tasks'][0].pop('script')
     for key in values_dict:
-        if script_type == 'providers':
+        if script_type == 'provider':
             doc[0]['tasks'][0]['manageiq_provider'][key] = values_dict[key]
-        elif script_type == 'users':
+        elif script_type == 'user':
             doc[0]['tasks'][0]['manageiq_user'][key] = values_dict[key]
         elif script_type == 'custom_attributes':
             doc[0]['tasks'][0]['manageiq_custom_attributes'][key] = values_dict[key]
@@ -142,8 +150,41 @@ def setup_basic_script(provider, script_type):
             f.write(dump(doc))
 
 
+def setup_basic_script_v2(provider, script_type):
+    script_header = 'manageiq'
+    script_path_source = path.join(yml_templates_path, basic_script_v2)
+    script_path = path.join(basic_yml_path, basic_script_v2)
+    copyfile(script_path_source, script_path)
+    with open(script_path, 'rw') as f:
+        doc = load(f)
+        values_dict = get_values_from_conf(provider, script_type)
+        if script_type == 'provider':
+            doc[0]['tasks'][0][script_header + '_' + script_type] = doc[0]['tasks'][0].pop('script')
+            doc[0]['tasks'][0]['name'] = 'Create a new provider in ManageIQ'
+            doc[0]['tasks'][0][script_header + '_' + script_type]['name'] = values_dict['name']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['type'] = values_dict['provider_type']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['state'] = values_dict['state']
+
+            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['auth_key'] = values_dict['provider_api_auth_token']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['hostname'] = values_dict['provider_api_hostname']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['port'] = values_dict['provider_api_port']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['provider']['verify_ssl'] = 'false'
+
+            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['role'] = 'hawkular'
+            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['hostname'] = values_dict['monitoring_hostname']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['port'] = values_dict['monitoring_port']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['metrics']['verify_ssl'] = 'false'
+
+            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['url'] = values_dict['miq_url']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['username'] = values_dict['miq_username']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['password'] = values_dict['miq_password']
+            doc[0]['tasks'][0][script_header + '_' + script_type]['manageiq_connection']['verify_ssl'] = 'false'
+        with open(script_path, 'w') as f:
+            f.write(dump(doc))
+
+
 def open_yml(script, script_type):
-    copyfile((path.join(basic_yml_path, script_type + "_" + basic_script)),
+    copyfile((path.join(basic_yml_path, basic_script_v2)),
              path.join(basic_yml_path, script + yml))
     with open(path.join(basic_yml_path, script + yml), 'rw') as f:
         return load(f)
@@ -154,119 +195,106 @@ def write_yml(script, doc):
         f.write(dump(doc))
 
 
-def setup_ansible_script(provider, script, script_type=None, values_to_update=None):
+def setup_ansible_script(provider, script, script_type=None, ansible_ver=1, values_to_update=None):
     # This function prepares the ansible scripts to work with the correct
     # appliance configs that will be received from Jenkins
-    setup_basic_script(provider, script_type)
+    if ansible_ver == 1:
+        setup_basic_script(provider, script_type)
+    else:
+        setup_basic_script_v2(provider, script_type)
     doc = open_yml(script, script_type)
+
+    if script_type == 'custom_attributes':
+        setup_custom_attributes_script(script, doc, values_to_update)
+
+    elif script_type == 'provider':
+        setup_provider_v2_script(script, doc)
+
+    elif script_type == 'tags':
+        setup_tags_script(script, doc, values_to_update)
+
+    elif script_type == 'user':
+        setup_users_script(script, doc, values_to_update)
+
+
+def setup_custom_attributes_script(script, doc, values_to_update=None):
+    custom_attributes_list = list(values_to_update)
+    doc[0]['tasks'][0]['manageiq_custom_attributes']['custom_attributes'] = custom_attributes_list
+    if script == 'add_custom_attributes':
+        doc[0]['tasks'][0]['manageiq_custom_attributes']['state'] = 'present'
+    elif script == 'add_custom_attributes_bad_user':
+        doc[0]['tasks'][0]['manageiq_custom_attributes']['miq_username'] = str(random_miq_user)
+    elif script == 'remove_custom_attributes':
+        doc[0]['tasks'][0]['manageiq_custom_attributes']['state'] = 'absent'
+    write_yml(script, doc)
+
+
+def setup_provider_script(script, doc, values_to_update=None):
     if script == 'add_provider':
-        write_yml(script, doc)
-
-    if script == 'add_provider_ssl':
+        doc[0]['tasks'][0]['manageiq_provider']['provider_verify_ssl'] = 'False'
+    elif script == 'add_provider_ssl':
         doc[0]['tasks'][0]['manageiq_provider']['provider_verify_ssl'] = 'True'
-        write_yml(script, doc)
-
     elif script == 'update_provider':
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_provider'][key] = values_to_update[key]
-            write_yml(script, doc)
-
-    elif script == 'remove_provider':
-        doc[0]['tasks'][0]['manageiq_provider']['state'] = 'absent'
-        write_yml(script, doc)
-
-    elif script == 'remove_non_existing_provider':
-        doc[0]['tasks'][0]['manageiq_provider']['state'] = 'absent'
-        doc[0]['tasks'][0]['manageiq_provider']['name'] = random_miq_user
-        write_yml(script, doc)
-
-    elif script == 'remove_provider_bad_user':
-        doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
-        write_yml(script, doc)
-
-    elif script == 'add_provider_bad_token':
-        doc[0]['tasks'][0]['manageiq_provider']['provider_api_auth_token'] = random_token
-        write_yml(script, doc)
-
-    elif script == 'add_provider_bad_user':
-        doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
-        write_yml(script, doc)
-
-    elif script == 'update_non_existing_provider':
-        doc[0]['tasks'][0]['manageiq_provider']['provider_api_hostname'] = random_miq_user
-        write_yml(script, doc)
-
     elif script == 'update_provider_bad_user':
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_provider'][key] = values_to_update[key]
         doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
-        write_yml(script, doc)
+    elif script == 'remove_provider':
+        doc[0]['tasks'][0]['manageiq_provider']['state'] = 'absent'
+    elif script == 'remove_non_existing_provider':
+        doc[0]['tasks'][0]['manageiq_provider']['state'] = 'absent'
+        doc[0]['tasks'][0]['manageiq_provider']['name'] = random_miq_user
+    elif script == 'remove_provider_bad_user':
+        doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
+    elif script == 'add_provider_bad_token':
+        doc[0]['tasks'][0]['manageiq_provider']['provider_api_auth_token'] = random_token
+    elif script == 'add_provider_bad_user':
+        doc[0]['tasks'][0]['manageiq_provider']['miq_username'] = random_miq_user
+    elif script == 'update_non_existing_provider':
+        doc[0]['tasks'][0]['manageiq_provider']['provider_api_hostname'] = random_miq_user
+    write_yml(script, doc)
 
+
+def setup_provider_v2_script(script, doc):
+    if script == 'add_provider':
+        doc[0]['tasks'][0]['manageiq_provider']['state'] = 'present'
+    elif script == 'add_provider_ssl':
+        doc[0]['tasks'][0]['manageiq_provider']['state'] = 'present'
+        doc[0]['tasks'][0]['manageiq_provider']['manageiq_connection']['verify_ssl'] = 'true'
+    write_yml(script, doc)
+
+
+def setup_tags_script(script, doc, values_to_update=None):
+    custom_attributes_list = list(values_to_update)
+    if script == 'add_tags':
+        doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'] = custom_attributes_list
+    elif script == 'remove_tags':
+        doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'] = custom_attributes_list
+        doc[0]['tasks'][0]['manageiq_tag_assignment']['state'] = 'absent'
+    write_yml(script, doc)
+
+
+def setup_users_script(script, doc, values_to_update=None):
+    if script == 'update_provider_bad_user':
+        for key in values_to_update:
+            doc[0]['tasks'][0]['manageiq_user'][key] = values_to_update[key]
+        doc[0]['tasks'][0]['manageiq_user']['miq_username'] = random_miq_user
     elif script == 'create_user':
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_user'][key] = values_to_update[key]
-            write_yml(script, doc)
-
     elif script == 'update_user':
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_user'][key] = values_to_update[key]
-            write_yml(script, doc)
-
     elif script == 'create_user_bad_user_name':
         doc[0]['tasks'][0]['manageiq_user']['miq_username'] = random_miq_user
         for key in values_to_update:
             doc[0]['tasks'][0]['manageiq_user'][key] = values_to_update[key]
-        write_yml(script, doc)
-
     elif script == 'delete_user':
         doc[0]['tasks'][0]['manageiq_user']['name'] = values_to_update
         doc[0]['tasks'][0]['manageiq_user']['state'] = 'absent'
-        write_yml(script, doc)
-
-    elif script == 'add_custom_attributes':
-        count = 0
-        while count < len(values_to_update):
-            for key in values_to_update:
-                doc[0]['tasks'][0]['manageiq_custom_attributes']['custom_attributes'][count] = key
-                count += 1
-                write_yml(script, doc)
-
-    elif script == 'add_custom_attributes_bad_user':
-        doc[0]['tasks'][0]['manageiq_custom_attributes']['miq_username'] = str(random_miq_user)
-        write_yml(script, doc)
-
-    elif script == 'remove_custom_attributes':
-        count = 0
-        doc[0]['tasks'][0]['manageiq_custom_attributes']['state'] = 'absent'
-        while count < len(values_to_update):
-            for key in values_to_update:
-                doc[0]['tasks'][0]['manageiq_custom_attributes']['custom_attributes'][count] = key
-                count += 1
-        write_yml(script, doc)
-
-    elif script == 'add_tags':
-        count = 0
-        while count < len(values_to_update):
-            for key in values_to_update:
-                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['category'] = \
-                    values_to_update[count]['category']
-                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['name'] = \
-                    values_to_update[count]['name']
-                count += 1
-            doc[0]['tasks'][0]['manageiq_tag_assignment']['state'] = 'present'
-            write_yml(script, doc)
-
-    elif script == 'remove_tags':
-        count = 0
-        while count < len(values_to_update):
-            for key in values_to_update:
-                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['category'] = \
-                    values_to_update[count]['category']
-                doc[0]['tasks'][0]['manageiq_tag_assignment']['tags'][count]['name'] = \
-                    values_to_update[count]['name']
-                count += 1
-            doc[0]['tasks'][0]['manageiq_tag_assignment']['state'] = 'absent'
-            write_yml(script, doc)
+    write_yml(script, doc)
 
 
 def run_ansible(script):

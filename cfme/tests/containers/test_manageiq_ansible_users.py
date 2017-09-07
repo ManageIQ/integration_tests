@@ -35,6 +35,14 @@ def ansible_users():
     remove_tmp_files()
 
 
+#
+# def test_rewrite(ansible_users, provider):
+#     script = 'create_user'
+#     setup_ansible_script(provider, script=script,
+#                          values_to_update=users_values_to_create, script_type='users')
+#     run_ansible_script(script, reload=False)
+
+
 @pytest.mark.polarion('CMP-10554')
 def test_manageiq_ansible_create_user(ansible_users, provider):
     script = 'create_user'
@@ -45,7 +53,7 @@ def test_manageiq_ansible_create_user(ansible_users, provider):
 
         """
     setup_ansible_script(provider, script=script,
-                         values_to_update=users_values_to_create, script_type='users')
+                         values_to_update=users_values_to_create, script_type='user')
     run_ansible_script(script, reload=False)
     view = navigate_to(User, 'All')
     names_list = []
@@ -65,7 +73,7 @@ def test_manageiq_ansible_update_user(ansible_users, provider):
 
         """
     setup_ansible_script(provider, script=script,
-                         values_to_update=users_values_to_update, script_type='users')
+                         values_to_update=users_values_to_update, script_type='user')
     run_ansible_script(script)
     view = navigate_to(User, 'All')
     names_list = []
@@ -84,7 +92,7 @@ def test_manageiq_ansible_create_same_name_user(ansible_users, provider):
 
         """
     setup_ansible_script(provider, script='create_user',
-                         values_to_update=users_values_to_create, script_type='users')
+                         values_to_update=users_values_to_create, script_type='user')
     run_ansible_script('create_user')
     view = navigate_to(User, 'All')
     names_list = []
@@ -103,7 +111,7 @@ def test_manageiq_ansible_bad_user_name(ansible_users, provider):
 
         """
     setup_ansible_script(provider, script='create_user_bad_user_name',
-                         values_to_update=users_values_to_create, script_type='users')
+                         values_to_update=users_values_to_create, script_type='user')
     run_status = run_ansible_script('create_user_bad_user_name')
     assert 'Authentication failed' in run_status
     view = navigate_to(User, 'All')
@@ -123,7 +131,7 @@ def test_manageiq_ansible_delete_user(ansible_users, provider):
 
         """
     setup_ansible_script(provider, script='delete_user',
-                         values_to_update=user_to_delete, script_type='users')
+                         values_to_update=user_to_delete, script_type='user')
     run_ansible_script('delete_user')
     view = navigate_to(User, 'All')
     names_list = []
