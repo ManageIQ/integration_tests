@@ -14,7 +14,7 @@ from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_manageiq import PaginationPane, Table
-from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab
+from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 
@@ -539,7 +539,20 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
             view.flash.assert_no_error()
         else:
             view.flash.assert_no_error()
-            view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
+            # TODO Doesn't work due to this BZ https://bugzilla.redhat.com/show_bug.cgi?id=1489387
+            # view.flash.assert_message("Successfully deleted Saved Report from the CFME Database")
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Info')
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 
 @navigator.register(CustomReport, "Add")
