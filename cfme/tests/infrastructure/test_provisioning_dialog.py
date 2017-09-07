@@ -10,6 +10,8 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import provisioning_form
 from cfme.services.requests import Request
 from cfme.web_ui import InfoBlock, fill, flash
@@ -64,9 +66,9 @@ def prov_data(provisioning, provider):
         # "catalog_name": provisioning["catalog_item_type"],
     }
 
-    if provider.type == 'rhevm':
+    if provider.one_of(RHEVMProvider):
         data['provision_type'] = 'Native Clone'
-    elif provider.type == 'virtualcenter':
+    elif provider.one_of(VMwareProvider):
         data['provision_type'] = 'VMware'
     # Otherwise just leave it alone
 
@@ -78,7 +80,8 @@ def provisioner(request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
         vm = Vm(name=vm_name, provider=provider, template_name=template)
-        navigate_to(vm, 'Provision')
+        view = navigate_to(vm, 'Provision')
+        view.form.before_fill(provisioning_data)
 
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()
@@ -94,8 +97,13 @@ def provisioner(request, setup_provider, provider, vm_name):
                 pytest.fail("The provisioning was not postponed")
             except TimedOutError:
                 pass
+
         logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
-        wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
+        wait_for(
+            provider.mgmt.does_vm_exist, [vm_name],
+            fail_func=provider.refresh_provider_relationships,
+            handle_exception=True, num_sec=600
+        )
 
         # nav to requests page happens on successful provision
         logger.info('Waiting for cfme provision request for vm %s', vm_name)
@@ -122,11 +130,11 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
         test_flag: provision
     """
     prov_data["vm_name"] = vm_name
-    if provider.type == "scvmm" and current_version() == "5.6":
+    if provider.one_of(SCVMMProvider) and current_version() == "5.6":
         prov_data["num_cpus"] = "4"
     else:
         prov_data["num_sockets"] = "4"
-        prov_data["cores_per_socket"] = "1" if provider.type != "scvmm" else None
+        prov_data["cores_per_socket"] = "1" if not provider.one_of(SCVMMProvider) else None
     prov_data["memory"] = "4096"
     template_name = provider.data['provisioning']['template']
     vm = provisioner(template_name, prov_data)
@@ -153,11 +161,11 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
 @pytest.mark.meta(blockers=[1209847, 1380782])
 @pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
 @pytest.mark.uncollectif(lambda provider, disk_format:
-                         (provider.type == "rhevm" and disk_format == "thick") or
-                         (provider.type != "rhevm" and disk_format == "preallocated") or
+                         (provider.one_of(RHEVMProvider) and disk_format == "thick") or
+                         (not provider.one_of(RHEVMProvider) and disk_format == "preallocated") or
                          # Temporarily, our storage domain cannot handle preallocated disks
-                         (provider.type == "rhevm" and disk_format == "preallocated") or
-                         (provider.type == "scvmm") or
+                         (provider.one_of(RHEVMProvider) and disk_format == "preallocated") or
+                         (provider.one_of(SCVMMProvider)) or
                          (provider.key == "vsphere55" and disk_format == "thick"))
 def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_name):
     """ Tests disk format selection in provisioning dialog.
@@ -244,8 +252,10 @@ def test_tag(provisioner, prov_data, provider, vm_name):
     vm = provisioner(template_name, prov_data)
 
     tags = vm.get_tags()
-    assert any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
-               for tag in tags), "Service Level: Gold not in tags ({})".format(str(tags))
+    assert any(
+        tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+        for tag in tags
+    ), "Service Level: Gold not in tags ({})".format(tags)
 
 
 @pytest.mark.meta(blockers=[1204115])
