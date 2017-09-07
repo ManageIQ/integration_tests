@@ -107,9 +107,7 @@ def providers(metafunc, filters=None, selector=ALL):
         flags_filter = ProviderFilter(required_flags=test_flags)
         filters = filters + [flags_filter]
 
-    potential_providers = []
-    for provider in list_providers(filters):
-        potential_providers.append(provider)
+    potential_providers = list_providers(filters)
 
     if selector == ONE:
         allowed_providers = [potential_providers[0]]
@@ -149,6 +147,8 @@ def providers(metafunc, filters=None, selector=ALL):
             add_prov(prov) for prov in potential_providers if prov.data.get(
                 'version', 0) not in versions
         ]
+    else:
+        allowed_providers = potential_providers
 
     for provider in allowed_providers:
         argvalues.append([provider])
