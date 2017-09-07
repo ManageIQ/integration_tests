@@ -6,27 +6,17 @@ import argparse
 import subprocess
 import json
 import hashlib
-
-try:
-    import distro
-except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(
-            os.path.dirname(__file__))),
-        'requirements', 'quickstart',
-        'distro-1.0.4-py2.py3-none-any.whl'))
-    import distro
+from pipes import quote
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mk-virtualenv", default="../cfme_venv")
 parser.add_argument("--system-site-packages", action="store_true")
 parser.add_argument("--config-path", default="../cfme-qe-yamls/complete/")
 
-DISTRO_DATA = distro.linux_distribution()[:2]
 IS_SCRIPT = sys.argv[0] == __file__
 CWD = os.getcwd()  # we expect to be in the workdir
 IS_ROOT = os.getuid() == 0
-REDHAT_BASED = os.path.isfile('/etc/redhat-release')
+REDHAT_RELEASE_FILE = '/etc/redhat-release'
 CREATED = object()
 REQUIREMENT_FILE = 'requirements/frozen.txt'
 HAS_DNF = os.path.exists('/usr/bin/dnf')
@@ -57,11 +47,13 @@ REDHAT_PACKAGES_F26 = (
     " freetype-devel")
 
 
-if REDHAT_BASED:
+if os.path.exists(REDHAT_RELEASE_FILE):
     os.environ['PYCURL_SSL_LIBRARY'] = 'nss'
-    if DISTRO_DATA == ("Fedora", "25"):
+    with open(REDHAT_RELEASE_FILE) as fp:
+        release_string = fp.read()
+    if "Fedora release 25" in release_string:
         REDHAT_PACKAGES = REDHAT_PACKAGES_F25
-    elif DISTRO_DATA == ("Fedora", "26"):
+    elif "Fedora release 26" in release_string:
         REDHAT_PACKAGES = REDHAT_PACKAGES_F26
     else:
         REDHAT_PACKAGES = REDHAT_PACKAGES_OLD
@@ -72,14 +64,15 @@ if REDHAT_BASED:
         INSTALL_COMMAND = 'yum install -y'
     if not IS_ROOT:
         INSTALL_COMMAND = 'sudo ' + INSTALL_COMMAND
+else:
+    INSTALL_COMMAND = None
 
 
 def command_text(command, shell):
     if shell:
         return command
     else:
-        command = [repr(x) if ' ' in x else x for x in command]
-        return ' '.join(command)
+        return ' '.join(map(quote, command))
 
 
 def call_or_exit(command, shell=False, **kw):
@@ -105,7 +98,7 @@ def pip_json_list(venv):
 
 
 def install_system_packages():
-    if REDHAT_BASED:
+    if INSTALL_COMMAND:
         call_or_exit(INSTALL_COMMAND + REDHAT_PACKAGES, shell=True)
     else:
         print("WARNING: unknown distribution,",
@@ -219,34 +212,8 @@ def disable_bytecode(venv_path):
     venv_call(venv_path, 'python', '-m', 'cfme.scripting.disable_bytecode')
 
 
-def link_config_files(src, dest):
-    if not os.path.isdir(src):
-        print("WARNING: not linking config files,", src, "missing")
-        return
-
-    bad_elements = False
-
-    for element in os.listdir(src):
-        if element.endswith(('.yaml', '.eyaml')):
-            if element.endswith('.eyaml') and not os.path.exists('.yaml_key'):
-                print(
-                    "WARNING:", element, "is encrypted, "
-                    "please remember follow the documentation on yaml keys")
-            target = os.path.join(dest, element)
-            source = os.path.relpath(os.path.join(src, element), dest)
-            # the following is fragile
-            if os.path.islink(target):
-                if os.readlink(target) != source:
-                    print("WARNING:", target, "does not point to", source)
-                    print("         please verify this is intended")
-            elif os.path.isfile(target):
-                print('ERROR: You have', element, 'copied into your conf/ folder. Remove it.')
-                bad_elements = True
-            else:
-                os.symlink(source, target)
-
-    if bad_elements:
-        exit(1)
+def link_config_files(venv_path, src, dest):
+    venv_call(venv_path, 'python', '-m', 'cfme.scripting.link_config', src, dest)
 
 
 def ensure_pycurl_works(venv_path):
@@ -264,7 +231,7 @@ def main(args):
     install_requirements(args.mk_virtualenv, quiet=(venv_state is CREATED))
     disable_bytecode(args.mk_virtualenv)
     self_install(args.mk_virtualenv)
-    link_config_files(args.config_path, 'conf')
+    link_config_files(args.mk_virtualenv, args.config_path, 'conf')
     ensure_pycurl_works(args.mk_virtualenv)
     if not IN_VIRTUALENV:
         print("INFO: please remember to activate the virtualenv via")
