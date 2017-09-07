@@ -113,6 +113,7 @@ class HostDetailsEntities(View):
     compliance = SummaryTable(title="Compliance")
     configuration = SummaryTable(title="Configuration")
     smart_management = SummaryTable(title="Smart Management")
+    security = SummaryTable(title="Security")
     authentication_status = SummaryTable(title="Authentication Status")
     openstack_hardware = SummaryTable(title="Openstack Hardware")
 
