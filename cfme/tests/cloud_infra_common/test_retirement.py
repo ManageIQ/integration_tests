@@ -47,7 +47,7 @@ def retire_vm(small_template, provider):
         small_template: small template fixture, template on provider
         provider: provider crud object from fixture
     """
-    vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template)
+    vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     yield vm
 

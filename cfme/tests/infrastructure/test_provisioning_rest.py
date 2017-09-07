@@ -14,8 +14,8 @@ pytestmark = [test_requirements.provision]
 pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope="module")
 
 
-def get_provision_data(rest_api, provider, small_template, auto_approve=True):
-    templates = rest_api.collections.templates.find_by(name=small_template)
+def get_provision_data(rest_api, provider, template_name, auto_approve=True):
+    templates = rest_api.collections.templates.find_by(name=template_name)
     for template in templates:
         try:
             ems_id = template.ems_id
@@ -25,7 +25,7 @@ def get_provision_data(rest_api, provider, small_template, auto_approve=True):
             guid = template.guid
             break
     else:
-        raise Exception("No such template {} on provider!".format(small_template))
+        raise Exception("No such template {} on provider!".format(template_name))
 
     result = {
         "version": "1.1",
@@ -63,7 +63,7 @@ def get_provision_data(rest_api, provider, small_template, auto_approve=True):
 
 @pytest.fixture(scope="module")
 def provision_data(appliance, provider, small_template_modscope):
-    return get_provision_data(appliance.rest_api, provider, small_template_modscope)
+    return get_provision_data(appliance.rest_api, provider, small_template_modscope.name)
 
 
 # Here also available the ability to create multiple provision request, but used the save
@@ -111,7 +111,7 @@ def test_create_pending_provision_requests(appliance, provider, small_template):
         test_flag: rest, provision
     """
     provision_data = get_provision_data(
-        appliance.rest_api, provider, small_template, auto_approve=False)
+        appliance.rest_api, provider, small_template.name, auto_approve=False)
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert appliance.rest_api.response.status_code == 200
     # check that the `approval_state` is pending_approval
@@ -140,7 +140,7 @@ def test_provision_attributes(appliance, provider, small_template):
         test_flag: rest, provision
     """
     provision_data = get_provision_data(
-        appliance.rest_api, provider, small_template, auto_approve=False)
+        appliance.rest_api, provider, small_template.name, auto_approve=False)
     response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
     assert appliance.rest_api.response.status_code == 200
     provision_request = response[0]

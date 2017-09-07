@@ -36,7 +36,7 @@ def pytest_generate_tests(metafunc):
 def vm_obj(provider, setup_provider_modscope, small_template_modscope):
     """Creates new VM or instance"""
     vm_name = random_vm_name('snpsht')
-    new_vm = VM.factory(vm_name, provider, template_name=small_template_modscope)
+    new_vm = VM.factory(vm_name, provider, template_name=small_template_modscope.name)
 
     if not provider.mgmt.does_vm_exist(vm_name):
         new_vm.create_on_provider(find_in_cfme=True, allow_skip='default')

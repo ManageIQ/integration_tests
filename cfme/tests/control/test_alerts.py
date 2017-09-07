@@ -144,7 +144,7 @@ def vm_name():
 
 @pytest.yield_fixture(scope="function")
 def vm(vm_name, full_template, provider, setup_provider):
-    vm_obj = VM.factory(vm_name, provider, template_name=full_template)
+    vm_obj = VM.factory(vm_name, provider, template_name=full_template.name)
     vm_obj.create_on_provider(allow_skip="default")
     provider.mgmt.start_vm(vm_obj.name)
     provider.mgmt.wait_vm_running(vm_obj.name)
@@ -170,8 +170,8 @@ def vm(vm_name, full_template, provider, setup_provider):
 @pytest.yield_fixture(scope="function")
 def ssh(provider, full_template, vm_name):
     with SSHClient(
-            username=credentials[full_template]['username'],
-            password=credentials[full_template]['password'],
+            username=credentials[full_template.creds]['username'],
+            password=credentials[full_template.creds]['password'],
             hostname=provider.mgmt.get_ip_address(vm_name)) as ssh_client:
         yield ssh_client
 

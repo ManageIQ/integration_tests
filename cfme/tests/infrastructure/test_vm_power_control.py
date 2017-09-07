@@ -67,7 +67,7 @@ def orphaned_vm(provider, testing_vm):
 @pytest.fixture(scope="function")
 def testing_vm_tools(request, provider, vm_name, full_template):
     """Fixture to provision vm with preinstalled tools to the provider being tested"""
-    vm = VM.factory(vm_name, provider, template_name=full_template)
+    vm = VM.factory(vm_name, provider, template_name=full_template.name)
     logger.info("provider_key: %s", provider.key)
 
     @request.addfinalizer

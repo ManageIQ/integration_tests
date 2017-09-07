@@ -127,8 +127,8 @@ def _get_vm(request, provider, template_name, vm_name):
         kwargs = {"cluster": provider.data["default_cluster"]}
     elif provider.one_of(OpenStackProvider):
         kwargs = {}
-        if 'small_template' in provider.data:
-            kwargs = {"flavour_name": provider.data.get('small_template')}
+        if 'small_template' in provider.data.templates:
+            kwargs = {"flavour_name": provider.data.templates.get('small_template').name}
     elif provider.one_of(SCVMMProvider):
         kwargs = {
             "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
@@ -188,12 +188,12 @@ def _get_vm(request, provider, template_name, vm_name):
 
 @pytest.fixture(scope="module")
 def vm(request, provider, setup_provider_modscope, small_template_modscope, vm_name):
-    return _get_vm(request, provider, small_template_modscope, vm_name)
+    return _get_vm(request, provider, small_template_modscope.name, vm_name)
 
 
 @pytest.fixture(scope="module")
 def vm_big(request, provider, setup_provider_modscope, big_template_modscope, vm_name_big):
-    return _get_vm(request, provider, big_template_modscope, vm_name_big)
+    return _get_vm(request, provider, big_template_modscope.name, vm_name_big)
 
 
 @pytest.fixture(scope="module")
