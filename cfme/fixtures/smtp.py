@@ -13,7 +13,6 @@ import signal
 import subprocess
 import time
 
-from cfme.configure import configuration
 from fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.utils.conf import env
 from cfme.utils.log import setup_logger
@@ -26,7 +25,7 @@ logger = setup_logger(logging.getLogger('emails'))
 
 
 @pytest.fixture(scope="function")
-def smtp_test(request):
+def smtp_test(request, appliance):
     """Fixture, which prepares the appliance for e-mail capturing tests
 
     Returns: :py:class:`util.smtp_collector_client.SMTPCollectorClient` instance.
@@ -37,12 +36,11 @@ def smtp_test(request):
     mail_query_port = ports.get("json", False) or os.getenv('JSON', False) or random_port()
     my_ip = my_ip_address()
     logger.info("Mind that it needs ports %s and %s open", mail_query_port, mail_server_port)
-    smtp_conf = configuration.SMTPSettings(
-        host=my_ip,
-        port=mail_server_port,
-        auth="none",
-    )
-    smtp_conf.update()
+    appliance.server.settings.update_smtp_server({
+        'host': my_ip,
+        'port': mail_server_port,
+        'auth': "none"
+    })
     server_filename = scripts_path.join('smtp_collector.py').strpath
     server_command = server_filename + " --smtp-port {} --query-port {}".format(
         mail_server_port,
@@ -73,11 +71,10 @@ def smtp_test(request):
         collector.wait()
         logger.info("Collector finished")
         logger.info("Cleaning up smtp setup in CFME")
-        smtp_conf = configuration.SMTPSettings(
-            host='',
-            port='',
-        )
-        smtp_conf.update()
+        appliance.server.settings.smtp_conf.update_smtp_server({
+            'host': '',
+            'port': ''
+        })
     collector = subprocess.Popen(server_command, shell=True)
     request.addfinalizer(_finalize)
     logger.info("Collector pid %s", collector.pid)

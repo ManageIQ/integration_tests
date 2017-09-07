@@ -1,7 +1,6 @@
 from functools import partial
 
 from cfme import test_requirements
-from cfme.configure import configuration
 from datetime import datetime, timedelta
 from cfme.utils.browser import quit
 from cfme.utils.conf import cfme_data
@@ -12,7 +11,8 @@ import pytest
 
 
 pytestmark = [test_requirements.configuration]
-
+ntp_servers_keys = ['ntp_server_1', 'ntp_server_2', 'ntp_server_3']
+empty_ntp_dict = {field_key: '' for field_key in ntp_servers_keys}
 
 def appliance_date(appliance):
     status, msg = appliance.ssh_client.run_command("date --iso-8601=hours")
@@ -28,22 +28,24 @@ def check_ntp_grep(appliance, clock):
 def clear_ntp_settings(appliance):
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1]
-    configuration.set_ntp_servers()
+    appliance.server.settings.update_ntp_servers(empty_ntp_dict)
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
 
 
 @pytest.mark.tier(2)
-def test_ntp_crud(request):
+def test_ntp_crud(request, appliance):
     # Adding finalizer
-    request.addfinalizer(configuration.set_ntp_servers)
+    request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     """ Insert, Update and Delete the NTP servers """
     # set from yaml file
-    configuration.set_ntp_servers(*cfme_data['clock_servers'])
+    appliance.server.settings.update_ntp_servers(dict(zip(
+        ntp_servers_keys, [ntp_server for ntp_server in cfme_data['clock_servers']])))
     # Set from random values
-    configuration.set_ntp_servers(*(fauxfactory.gen_alphanumeric() for _ in range(3)))
+    appliance.server.settings.update_ntp_servers(dict(zip(
+        ntp_servers_keys, [fauxfactory.gen_alphanumeric() for _ in range(3)])))
     # Deleting the ntp values
-    configuration.set_ntp_servers()
+    appliance.server.settings.update_ntp_servers(empty_ntp_dict)
 
 
 @pytest.mark.tier(3)
@@ -51,18 +53,21 @@ def test_ntp_server_max_character(request, appliance):
     request.addfinalizer(partial(clear_ntp_settings, appliance))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1]
-    configuration.set_ntp_servers(*(fauxfactory.gen_alphanumeric(255) for _ in range(3)))
+    appliance.server.settings.update_ntp_servers(dict(zip(
+        ntp_servers_keys, [fauxfactory.gen_alphanumeric() for _ in range(3)])))
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
 
 
 @pytest.mark.tier(3)
 def test_ntp_conf_file_update_check(request, appliance):
-    request.addfinalizer(configuration.set_ntp_servers)
+
+    request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1]
     # Adding the ntp server values
-    configuration.set_ntp_servers(*cfme_data['clock_servers'])
+    appliance.server.settings.update_ntp_servers(dict(zip(
+        ntp_servers_keys, [ntp_server for ntp_server in cfme_data['clock_servers']])))
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
     for clock in cfme_data['clock_servers']:
@@ -73,7 +78,7 @@ def test_ntp_conf_file_update_check(request, appliance):
     # Unsetting the ntp server values
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1]
-    configuration.set_ntp_servers()
+    appliance.server.settings.update_ntp_servers(empty_ntp_dict)
     wait_for(lambda: ntp_file_date_stamp != appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1], num_sec=60, delay=10)
     for clock in cfme_data['clock_servers']:
@@ -95,7 +100,8 @@ def test_ntp_server_check(request, appliance):
         logger.info("Successfully modified the date in the appliance")
         # Configuring the ntp server and restarting the appliance
         # checking if ntp property is available, adding if it is not available
-        configuration.set_ntp_servers(*cfme_data['clock_servers'])
+        appliance.server.settings.update_ntp_servers(dict(zip(
+            ntp_servers_keys, [ntp_server for ntp_server in cfme_data['clock_servers']])))
         yaml_config = appliance.get_yaml_config()
         ntp = yaml_config.get("ntp")
         if not ntp:
@@ -108,7 +114,7 @@ def test_ntp_server_check(request, appliance):
         appliance.wait_for_web_ui(timeout=1200)
         # Incase if ntpd service is stopped
         appliance.ssh_client.run_command("service chronyd restart")
-        # Providing two hour runtime for the test run to avoid day changing problem
+        # Providing two hour runtime for the test run to avoid day chanadding problem
         # (in case if the is triggerred in the midnight)
         wait_for(
             lambda: (orig_date - appliance_date(appliance)).total_seconds() <= 7200, num_sec=300)
@@ -119,5 +125,5 @@ def test_ntp_server_check(request, appliance):
 
 
 @pytest.mark.tier(3)
-def test_clear_ntp_settings(request):
-    request.addfinalizer(configuration.set_ntp_servers)
+def test_clear_ntp_settings(request, appliance):
+    request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
