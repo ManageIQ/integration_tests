@@ -796,13 +796,19 @@ class Appliance(MetadataMixin):
 
     @property
     def serialized(self):
+        try:
+            pool_id = self.appliance_pool.id
+        except AttributeError:
+            pool_id = None
         return dict(
             id=self.id,
+            pool_id=pool_id,
             ready=self.ready,
             name=self.name,
             ip_address=self.ip_address,
             status=self.status,
             power_state=self.power_state,
+            description=self.description,
             status_changed=apply_if_not_none(self.status_changed, "isoformat"),
             datetime_leased=apply_if_not_none(self.datetime_leased, "isoformat"),
             leased_until=apply_if_not_none(self.leased_until, "isoformat"),
