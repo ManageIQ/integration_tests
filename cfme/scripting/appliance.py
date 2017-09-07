@@ -7,7 +7,7 @@ Usage:
    scripts/encrypt_conf.py confname1 confname2 ... confnameN
    scripts/encrypt_conf.py credentials
 """
-
+import sys
 import click
 from cached_property import cached_property
 from functools import partial
@@ -191,7 +191,8 @@ def setup_appliances(cfme_version, mode):
         print("Done!")
 
     else:
-        raise Exception('You must select a mode, ha/distrubuted/replication')
+        print 'You must select a mode, such as --ha / --distrubuted / --replication'
+        sys.exit(127)
 
 
 # Useful Properties
