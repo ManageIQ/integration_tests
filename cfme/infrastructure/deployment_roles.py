@@ -31,7 +31,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, RoleNotFound
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.appliance import Navigatable
+from utils.appliance import NavigatableMixin
 
 
 class DeploymentRoleToolbar(View):
@@ -238,7 +238,44 @@ class DeploymentRoleManagePoliciesView(DeploymentRoleView):
         )
 
 
-class DeploymentRoles(Navigatable):
+class DeploymentRoleCollection(NavigatableMixin):
+    """Collection object for the :py:class:'cfme.infrastructure.deployment_role.DeploymentRoles'"""
+
+    def __init__(self, appliance=None):
+        self.appliance = appliance
+
+    def instantiate(self, name, provider):
+        return DeploymentRoles(name, provider, collection=self)
+
+    def delete(self, *roles):
+        """Delete one or more Deployment Role from list of Deployment Roles
+
+        Args:
+            One or Multiple 'cfme.infrastructure.deployment_role.DeploymentRoles' objects
+        """
+
+        view = navigate_to(self, 'All')
+
+        if view.entities.get_all() and roles:
+            for role in roles:
+                try:
+                    view.entities.get_entity(role.name).check()
+                except ItemNotFound:
+                    raise RoleNotFound("Deployment role {} not found".format(role.name))
+
+            view.toolbar.configuration.item_select('Remove selected items',
+                                                   handle_alert=True)
+
+            assert view.is_displayed
+            flash_msg = "Delete initiated for {} Clusters / " \
+                        "Deployment Roles from the CFME Database".format(len(roles))
+            view.flash.assert_success_message(flash_msg)
+            view.browser.refresh()
+        else:
+            raise RoleNotFound('No Deployment Role for Deletion')
+
+
+class DeploymentRoles(NavigatableMixin):
     """ Model of an infrastructure deployment roles in cfme
 
     Args:
@@ -247,14 +284,15 @@ class DeploymentRoles(Navigatable):
             (deployment roles available only for Openstack!).
     """
 
-    def __init__(self, name, provider, appliance=None):
+    def __init__(self, name, provider, collection):
         self.name = name
         self.provider = provider
+        self.collection = collection
+        self.appliance = self.collection.appliance
 
         if not provider.one_of(OpenstackInfraProvider):
             raise NotImplementedError('Deployment roles available only '
                                       'for Openstack provider')
-        Navigatable.__init__(self, appliance=appliance)
 
     def delete(self, cancel=False):
         view = navigate_to(self, 'Details')
@@ -266,9 +304,10 @@ class DeploymentRoles(Navigatable):
             assert view.is_displayed
             view.flash.assert_success_message("The selected Clusters / "
                                               "Deployment Roles was deleted")
+            view.browser.refresh()
 
 
-@navigator.register(DeploymentRoles, 'All')
+@navigator.register(DeploymentRoleCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = DeploymentRoleAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -284,12 +323,13 @@ class All(CFMENavigateStep):
 @navigator.register(DeploymentRoles, 'Details')
 class Details(CFMENavigateStep):
     VIEW = DeploymentRoleDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection','All')
 
     def step(self, *args, **kwargs):
         """Navigate to the details page of Role"""
         try:
-            self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
+            self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                       surf_pages=True).click()
         except ItemNotFound:
             raise RoleNotFound("Deployment Role {} not found".format(self.obj.name))
 
