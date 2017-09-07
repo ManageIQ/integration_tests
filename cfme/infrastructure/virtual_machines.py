@@ -14,8 +14,8 @@ from widgetastic.widget import Text, View
 from widgetastic_patternfly import (
     Button, BootstrapSelect, BootstrapSwitch, Dropdown, Input as WInput, Tab)
 from widgetastic_manageiq import (
-    NonJSPaginationPane, TimelinesView, Accordion,
-    ManageIQTree, SummaryTable, ConditionalSwitchableView)
+    Accordion, ConditionalSwitchableView, ManageIQTree,
+    NonJSPaginationPane, SummaryTable, TimelinesView)
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 from cfme.base.login import BaseLoggedInPage
