@@ -7,8 +7,7 @@ from widgetastic.widget import View, Text
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
                                   BaseEntitiesView)
 from widgetastic_patternfly import (Dropdown, Accordion, FlashMessages,
-                                    BootstrapNav, Button, Dropdown,
-                                    FlashMessages, Input, Tab)
+                                    Button, Input, Tab)
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.credential import Credential as BaseCredential
@@ -30,12 +29,12 @@ class ConfigManagementToolbar(View):
 
 class ConfigManagementSidebar(View):
     @View.nested
-    class providers(Accordion): #noqa
+    class Providers(Accordion):  #noqa
         ACCORDION_NAME = "Providers"
         tree = ManageIQTree()
 
     @View.nested
-    class confsystems(Accordion): #noqa
+    class ConfSystems(Accordion):  #noqa
         ACCORDION_NAME = "Configured Systems"
         tree = ManageIQTree()
 
@@ -107,7 +106,7 @@ class ConfigManagementProviderDetailView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        msg =  'Configuration Profiles under Red Hat Satellite Provider'
+        msg = 'Configuration Profiles under Red Hat Satellite Provider'
         "\"{} Configuration Manager\"".format(self.obj.name)
 
         return self.entities.title.text == msg
@@ -125,14 +124,14 @@ class ConfigManagementConfProfileView(BaseLoggedInPage):
     including_entities = View.include(ConfigManagementEntities, use_parent=True)
 
     @View.nested
-    class tabs(View): #noqa
+    class Tabs(View):  #noqa
 
         @View.nested
         class Summary(Tab):
             TAB_NAME = 'Summary'
 
         @View.nested
-        class configured_system(Tab):
+        class ConfiguredSystem(Tab):
             TAB_NAME = 'Configured Systems'
 
     @property
@@ -225,6 +224,19 @@ class ConfigManagementProvider(NavigatableMixin):
         else:
             return list()
 
+    @classmethod
+    def load_from_yaml(cls, key):
+        """Returns 'ConfigManager' object loaded from yamls, based on its key"""
+        data = conf.cfme_data.configuration_managers[key]
+        creds = conf.credentials[data['credentials']]
+        return cls(
+            name=data['name'],
+            url=data['url'],
+            ssl=data['ssl'],
+            credentials=cls.Credential(
+                principal=creds['username'], secret=creds['password']),
+            key=key)
+
 
 @navigator.register(ConfigManagementCollection, 'All')
 class ConfigManagementAll(CFMENavigateStep):
@@ -288,9 +300,7 @@ class Details(CFMENavigateStep):
 
 def get_config_manager_from_config(cfg_mgr_key):
     cfg_mgr = conf.cfme_data.get('configuration_managers', {})[cfg_mgr_key]
-    if cfg_mgr['type'] == 'satellite':
-        return Satellite.load_from_yaml(cfg_mgr_key)
-    elif cfg_mgr['type'] == 'ansible':
-        return AnsibleTower.load_from_yaml(cfg_mgr_key)
+    if cfg_mgr['type'] == 'satellite' or cfg_mgr['type'] == 'ansible':
+        return ConfigManagementProvider.load_from_yaml(cfg_mgr_key)
     else:
         raise Exception("Unknown configuration manager key")
