@@ -21,7 +21,7 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
 
 
 @pytest.yield_fixture(scope="module")
-def roles(appliance,provider):
+def roles(appliance, provider):
     collection = DeploymentRoleCollection(appliance=appliance)
     view = navigate_to(collection, 'All')
     roles = [collection.instantiate(name=item.name, provider=provider)
@@ -40,7 +40,7 @@ def test_host_role_association(provider, soft_assert):
         wait_for(is_host_analysis_finished, [host.name], delay=15,
                  timeout="10m", fail_func=host.browser.refresh)
         view = navigate_to(host, 'Details')
-        role_name = str(view.title.text.split()[1]).translate(None,'()')
+        role_name = str(view.title.text.split()[1]).translate(None, '()')
         role_name = 'Compute' if role_name == 'NovaCompute' else role_name
 
         try:

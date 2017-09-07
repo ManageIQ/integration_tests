@@ -323,7 +323,7 @@ class All(CFMENavigateStep):
 @navigator.register(DeploymentRoles, 'Details')
 class Details(CFMENavigateStep):
     VIEW = DeploymentRoleDetailsView
-    prerequisite = NavigateToAttribute('collection','All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the details page of Role"""
