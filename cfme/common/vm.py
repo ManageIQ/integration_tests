@@ -330,7 +330,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
                 if mark:
-                    sel.check(quadicon.checkbox())
+                    quadicon.check()
                 return quadicon
         else:
             raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
