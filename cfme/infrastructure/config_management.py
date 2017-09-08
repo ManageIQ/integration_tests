@@ -29,12 +29,14 @@ class ConfigManagementToolbar(View):
 
 class ConfigManagementSidebar(View):
     @View.nested
-    class Providers(Accordion):  #noqa
+    class Providers(Accordion):
+        #noqa
         ACCORDION_NAME = "Providers"
         tree = ManageIQTree()
 
     @View.nested
-    class ConfSystems(Accordion):  #noqa
+    class ConfSystems(Accordion):
+        #noqa
         ACCORDION_NAME = "Configured Systems"
         tree = ManageIQTree()
 
@@ -124,7 +126,8 @@ class ConfigManagementConfProfileView(BaseLoggedInPage):
     including_entities = View.include(ConfigManagementEntities, use_parent=True)
 
     @View.nested
-    class Tabs(View):  #noqa
+    class Tabs(View):
+        #noqa
 
         @View.nested
         class Summary(Tab):
