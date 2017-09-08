@@ -3,13 +3,14 @@ import fauxfactory
 import pytest
 
 from cfme.configure.configuration.region_settings import Category, Tag
-from cfme.rest.gen_data import a_provider as _a_provider
-from cfme.rest.gen_data import categories as _categories
-from cfme.rest.gen_data import services as _services
-from cfme.rest.gen_data import service_templates as _service_templates
-from cfme.rest.gen_data import tenants as _tenants
-from cfme.rest.gen_data import tags as _tags
-from cfme.rest.gen_data import vm as _vm
+from cfme.rest.gen_data import (
+    a_provider as _a_provider,
+    categories as _categories,
+    service_templates as _service_templates,
+    tags as _tags,
+    tenants as _tenants,
+    vm as _vm,
+)
 from utils.update import update
 from utils.wait import wait_for
 from utils.rest import assert_response
@@ -43,6 +44,37 @@ class TestTagsViaREST(object):
 
     COLLECTIONS_BULK_TAGS = ("services", "vms")
 
+    def _service_body(self, **kwargs):
+        uid = fauxfactory.gen_alphanumeric(5)
+        body = {
+            'name': 'test_rest_service_{}'.format(uid),
+            'description': 'Test REST Service {}'.format(uid),
+        }
+        body.update(kwargs)
+        return body
+
+    def _create_services(self, request, rest_api, num=3):
+        # create simple service using REST API
+        bodies = [self._service_body() for __ in range(num)]
+        collection = rest_api.collections.services
+        new_services = collection.action.create(*bodies)
+        assert_response(rest_api)
+        new_services_backup = list(new_services)
+
+        @request.addfinalizer
+        def _finished():
+            collection.reload()
+            ids = [service.id for service in new_services_backup]
+            delete_entities = [service for service in collection if service.id in ids]
+            if delete_entities:
+                collection.action.delete(*delete_entities)
+
+        return new_services
+
+    @pytest.fixture(scope="function")
+    def services(self, request, appliance):
+        return self._create_services(request, appliance.rest_api)
+
     @pytest.fixture(scope="function")
     def categories(self, request, appliance, num=3):
         return _categories(request, appliance.rest_api, num)
@@ -50,6 +82,10 @@ class TestTagsViaREST(object):
     @pytest.fixture(scope="function")
     def tags(self, request, appliance, categories):
         return _tags(request, appliance.rest_api, categories)
+
+    @pytest.fixture(scope="module")
+    def services_mod(self, request, appliance):
+        return self._create_services(request, appliance.rest_api)
 
     @pytest.fixture(scope="module")
     def categories_mod(self, request, appliance, num=3):
@@ -66,37 +102,6 @@ class TestTagsViaREST(object):
     @pytest.fixture(scope="module")
     def a_provider(self, request):
         return _a_provider(request)
-
-    @pytest.fixture(scope="module")
-    def services(self, request, appliance, a_provider):
-        return _services(request, appliance.rest_api, a_provider)
-
-    def service_body(self, **kwargs):
-        uid = fauxfactory.gen_alphanumeric(5)
-        body = {
-            'name': 'test_rest_service_{}'.format(uid),
-            'description': 'Test REST Service {}'.format(uid),
-        }
-        body.update(kwargs)
-        return body
-
-    @pytest.fixture(scope="module")
-    def dummy_services(self, request, appliance):
-        # create simple service using REST API
-        bodies = [self.service_body() for _ in range(3)]
-        collection = appliance.rest_api.collections.services
-        new_services = collection.action.create(*bodies)
-        assert_response(appliance)
-
-        @request.addfinalizer
-        def _finished():
-            collection.reload()
-            ids = [service.id for service in new_services]
-            delete_entities = [service for service in collection if service.id in ids]
-            if delete_entities:
-                collection.action.delete(*delete_entities)
-
-        return new_services
 
     @pytest.fixture(scope="module")
     def service_templates(self, request, appliance):
@@ -201,7 +206,7 @@ class TestTagsViaREST(object):
     @pytest.mark.parametrize(
         "collection_name", ["clusters", "hosts", "data_stores", "providers", "resource_pools",
         "services", "service_templates", "tenants", "vms"])
-    def test_assign_and_unassign_tag(self, appliance, tags_mod, a_provider, services,
+    def test_assign_and_unassign_tag(self, appliance, tags_mod, a_provider, services_mod,
             service_templates, tenants, vm, collection_name):
         """Tests assigning and unassigning tags.
 
@@ -227,7 +232,7 @@ class TestTagsViaREST(object):
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "collection_name", COLLECTIONS_BULK_TAGS)
-    def test_bulk_assign_and_unassign_tag(self, appliance, tags_mod, dummy_services, vm,
+    def test_bulk_assign_and_unassign_tag(self, appliance, tags_mod, services_mod, vm,
             collection_name):
         """Tests bulk assigning and unassigning tags.
 
@@ -236,10 +241,7 @@ class TestTagsViaREST(object):
         """
         collection = getattr(appliance.rest_api.collections, collection_name)
         collection.reload()
-        if len(collection) > 1:
-            entities = [collection[-2], collection[-1]]  # slice notation doesn't work here
-        else:
-            entities = [collection[-1]]
+        entities = collection.all[-2:]
 
         new_tags = []
         for index, tag in enumerate(tags_mod):
@@ -273,7 +275,7 @@ class TestTagsViaREST(object):
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "collection_name", COLLECTIONS_BULK_TAGS)
-    def test_bulk_assign_and_unassign_invalid_tag(self, appliance, dummy_services, vm,
+    def test_bulk_assign_and_unassign_invalid_tag(self, appliance, services_mod, vm,
             collection_name):
         """Tests bulk assigning and unassigning invalid tags.
 
@@ -282,10 +284,7 @@ class TestTagsViaREST(object):
         """
         collection = getattr(appliance.rest_api.collections, collection_name)
         collection.reload()
-        if len(collection) > 1:
-            entities = [collection[-2], collection[-1]]  # slice notation doesn't work here
-        else:
-            entities = [collection[-1]]
+        entities = collection.all[-2:]
 
         new_tags = ['invalid_tag1', 'invalid_tag2']
         tags_count = len(new_tags) * len(entities)
@@ -306,3 +305,29 @@ class TestTagsViaREST(object):
         collection.action.unassign_tags(*entities, tags=new_tags)
         assert_response(appliance, success=False, results_num=tags_count)
         _check_tags_counts()
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.9')
+    @pytest.mark.tier(3)
+    def test_query_by_multiple_tags(self, appliance, tags, services):
+        """Tests support for multiple tag specification in query.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.services
+        collection.reload()
+        new_tags = [tag._ref_repr() for tag in tags]
+        tagged_services = services[1:]
+
+        # assign tags to selected services
+        collection.action.assign_tags(*tagged_services, tags=new_tags)
+        assert_response(appliance)
+
+        # get only services that has all the tags assigned
+        by_tag = ','.join([tag.name.replace('/managed', '') for tag in tags])
+        query_results = collection.query_string(by_tag=by_tag)
+
+        assert len(tagged_services) == len(query_results)
+        result_ids = {item.id for item in query_results}
+        tagged_ids = {item.id for item in tagged_services}
+        assert result_ids == tagged_ids
