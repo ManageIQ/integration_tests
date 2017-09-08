@@ -296,9 +296,11 @@ class WidgetasticTaggable(object):
         # look for simple 'tag' widget first, then standard entities.smart_management
         tag_table = getattr(view, 'tag', view.entities.smart_management)
         tags = tag_table.read()
+        if isinstance(tags, dict):
+            tags = tags[tenant]
         if tags == 'No {} have been assigned'.format(tenant):
             return []
-        return filter(None, re.split(r'(.*?):\s*\S+\s?', tags))
+        return filter(None, re.split(r'(.*?):\s*\s+\s?', tags))
 
     def _tags_action(self, view, cancel, reset):
         """ Actions on edit tags page
