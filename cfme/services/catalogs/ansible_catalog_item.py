@@ -201,7 +201,9 @@ class DetailsAnsibleCatalogItemView(ServicesCatalogView):
     def is_displayed(self):
         return (
             self.in_explorer() and
-            self.entities.title.text == 'Service Catalog Item "{}"'.format(self.context["object"].name)
+            self.entities.title.text == 'Service Catalog Item "{}"'.format(
+                self.context["object"].name
+            )
         )
 
 
