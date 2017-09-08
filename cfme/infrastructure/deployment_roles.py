@@ -247,6 +247,12 @@ class DeploymentRoleCollection(NavigatableMixin):
     def instantiate(self, name, provider):
         return DeploymentRoles(name, provider, collection=self)
 
+    def all(self,provider):
+        view = navigate_to(self, 'All')
+        roles = [self.instantiate(name=item.name, provider=provider)
+                 for item in view.entities.get_all()]
+        return roles
+
     def delete(self, *roles):
         """Delete one or more Deployment Role from list of Deployment Roles
 
@@ -267,8 +273,8 @@ class DeploymentRoleCollection(NavigatableMixin):
                                                    handle_alert=True)
 
             assert view.is_displayed
-            flash_msg = "Delete initiated for {} Clusters / " \
-                        "Deployment Roles from the CFME Database".format(len(roles))
+            flash_msg = ("Delete initiated for {} Clusters / Deployment Roles from the CFME "
+                         "Database".format(len(roles)))
             view.flash.assert_success_message(flash_msg)
             view.browser.refresh()
         else:
