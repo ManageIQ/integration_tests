@@ -169,7 +169,7 @@ class ConfigManagementCollection(NavigatableMixin):
         self.appliance = appliance
 
     def instantiate(self, name, url=None, ssl=None, credentials=None):
-        return ConfigManagementProvider(name, url, ssl, credentials)
+        return ConfigManagementProvider(name, self, url, ssl, credentials)
 
     def create(self, name, url, ssl, credentials):
         view = navigate_to(self, 'Add')
@@ -213,8 +213,10 @@ class ConfigManagementProvider(NavigatableMixin):
     Base class
     """
 
-    def __init__(self, name, url=None, ssl=None, credentials=None):
+    def __init__(self, name, collection, url=None, ssl=None, credentials=None):
         self.name = name
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.url = url
         self.ssl = ssl
         self.credentials = credentials
@@ -250,7 +252,8 @@ class ConfigManagementAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Configuration', 'Management')
 
     def resetter(self, *args, **kwargs):
-        self.view.sidebar.providers.tree.root_item.click()
+        self.view.sidebar.Providers.tree.root_item.click()
+        self.view.toolbar.view_selector.grid_button.click()
 
 
 @navigator.register(ConfigManagementCollection, 'Add')
@@ -274,13 +277,13 @@ class ConfigManagerEditProvider(CFMENavigateStep):
 @navigator.register(ConfigManagementProvider, 'Details')
 class ConfigManagementProviderDetails(CFMENavigateStep):
     VIEW = ConfigManagementProviderDetailView
-    prerequisite = NavigateToAttribute(ConfigManagementCollection, 'All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(self.name).click()
+        self.prerequisite_view.entities.get_entity(self.obj.name).click()
 
     def resetter(self, *args, **kwargs):
-        self.toolbar.view_selector.grid_button.click()
+        self.view.toolbar.view_selector.grid_button.click()
 
 
 @navigator.register(ConfigManagementProvider, 'EditFromDetails')
