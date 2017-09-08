@@ -30,13 +30,13 @@ class ConfigManagementToolbar(View):
 class ConfigManagementSidebar(View):
     @View.nested
     class Providers(Accordion):
-        #noqa
+        # noqa
         ACCORDION_NAME = "Providers"
         tree = ManageIQTree()
 
     @View.nested
     class ConfSystems(Accordion):
-        #noqa
+        # noqa
         ACCORDION_NAME = "Configured Systems"
         tree = ManageIQTree()
 
@@ -127,7 +127,7 @@ class ConfigManagementConfProfileView(BaseLoggedInPage):
 
     @View.nested
     class Tabs(View):
-        #noqa
+        # noqa
 
         @View.nested
         class Summary(Tab):
