@@ -18,11 +18,13 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProvidersDiscoverView)
 from cfme import test_requirements
 
-from utils import version
+from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
+
+pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
 
 
 @pytest.mark.tier(3)
@@ -81,7 +83,6 @@ def test_providers_discovery_amazon(appliance):
     wait_for_a_provider()
 
 
-@pytest.mark.provider([CloudProvider], scope="function")
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
@@ -117,7 +118,6 @@ def test_provider_add_with_bad_credentials(provider):
         provider.create(validate_credentials=True)
 
 
-@pytest.mark.provider([CloudProvider], scope="function")
 @pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 @test_requirements.discovery
