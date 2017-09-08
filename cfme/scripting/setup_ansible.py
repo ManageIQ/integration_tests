@@ -77,7 +77,6 @@ def get_ansible_password(app):
 
 def open_port(app):
     run_command(app, "firewall-cmd --zone manageiq --add-port {}/tcp".format(ports.TOWER))
-    run_command(app, "firewall-cmd --reload")
     print("Waiting until port {} will be opened".format(ports.TOWER))
     wait_for(
         net_check,
