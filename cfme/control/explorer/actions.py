@@ -160,7 +160,7 @@ class Action(Updateable, Navigatable, Pretty):
             return self._alerts_to_evaluate
 
     def create(self):
-        "Create this Action in UI."
+        """Create this Action in UI."""
         view = navigate_to(self, "Add")
         view.fill({
             "description": self.description,
@@ -181,6 +181,8 @@ class Action(Updateable, Navigatable, Pretty):
             "remove_tag": self.remove_tag,
             "run_ansible_playbook": self.run_ansible_playbook
         })
+        # todo: check whether we can remove ensure_page_safe later
+        self.browser.plugin.ensure_page_safe()
         view.add_button.click()
         view = self.create_view(ActionDetailsView)
         assert view.is_displayed
