@@ -15,20 +15,19 @@ from utils.conf import credentials, cfme_data
 from wait_for import wait_for
 
 
-def provision_appliances(count, cfme_version, provider):
+def provision_appliances(count, cfme_version, provider, lease_time):
     sprout_client = SproutClient.from_config()
     apps, request_id = sprout_client.provision_appliances(version=str(cfme_version),
-        count=count, preconfigured=False, lease_time=180, provider=provider)
+        count=count, preconfigured=False, lease_time=lease_time, provider=provider)
     return apps
 
 
-@click.group(help='Helper commands for appliances')
+@click.group(help='Used to provision and configure appliance environments')
 def main():
-    """Main appliance group"""
     pass
 
 
-@main.command('setup-env', help='Provisions and configures appliances')
+@main.command('configure', help='Provisions and configures appliances')
 @click.option('--cfme-version', required=True)
 @click.option('--lease-time', default=180)
 @click.option('--ha', 'mode', flag_value='ha')
@@ -121,6 +120,7 @@ def setup_appliances(cfme_version, lease_time, mode):
     else:
         print("You must select a mode, such as --ha / --distrubuted / --replication")
         sys.exit(127)
+    print("Appliance pool lease time is {}minutes".format(lease_time))
 
 
 if __name__ == "__main__":
