@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
+import json
 import pytest
 
 from cfme import test_requirements
@@ -72,7 +73,8 @@ def ansible_catalog_item(ansible_repository):
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
-            "provisioning_dialog_name": fauxfactory.gen_alphanumeric()
+            "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
+            "extra_vars": [("some_var", "some_value")]
         }
     )
     cat_item.create()
@@ -239,3 +241,16 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
     view = navigate_to(service_catalog, "Order")
     options = [o.text for o in view.machine_credential.all_options]
     assert ["<Default>", "CFME Default Credential", ansible_credential.name] == options
+
+
+@pytest.mark.tier(3)
+def test_service_ansible_playbook_order_pass_extra_vars(service_catalog, service_request, service):
+    """Test if extra vars passed into ansible during ansible playbook service provision."""
+    service_catalog.order()
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    pre = view.provisioning.standart_output.text
+    json_str = pre.split("--------------------------------")
+    result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
+        '\\, "', '",').split('" ] } PLAY')[0])
+    assert result_dict["some_var"] == "some_value"

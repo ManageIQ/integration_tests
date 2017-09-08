@@ -1,5 +1,5 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import Parameter, ParametrizedLocator, ParametrizedString
 from widgetastic.widget import Checkbox, Table, Text, View
 from widgetastic_manageiq import FileInput, SummaryForm, SummaryTable
 from widgetastic_patternfly import (
@@ -28,6 +28,81 @@ class BootstrapSelect(VanillaBootstrapSelect):
     ROOT = ParametrizedLocator('.//select[normalize-space(@name)={@id|quote}]/..')
 
 
+class ActionsCell(View):
+    edit = Button(
+        **{"ng-click": ParametrizedString(
+            "vm.editKeyValue('{@tab}', this.key, this.key_value, $index)")}
+    )
+    delete = Button(
+        **{"ng-click": ParametrizedString(
+            "vm.removeKeyValue('{@tab}', this.key, this.key_value, $index)")}
+    )
+
+    def __init__(self, parent, tab, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.tab = parent.parent.parent.parent.tab
+
+
+class AnsibleExtraVariables(View):
+    """Represents extra variables part of ansible service catalog edit form.
+
+    Args:
+        tab (str): tab name where this view is located. Can be "provisioning" or "retirement".
+
+    """
+
+    variable = Input(name=ParametrizedString("{@tab}_key"))
+    default_value = Input(name=ParametrizedString("{@tab}_value"))
+    add = Button(**{"ng-click": ParametrizedString("vm.addKeyValue('{@tab}')")})
+    variables_table = Table(
+        ".//div[@id='variables_div']//table",
+        column_widgets={"Actions": ActionsCell(tab=Parameter("@tab"))}
+    )
+
+    def __init__(self, parent, tab, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.tab = tab
+
+    def _values_to_remove(self, values):
+        return list(set(self.all_vars) - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - set(self.all_vars))
+
+    def fill(self, values):
+        """
+
+        Args:
+            values (list): [] to remove all vars or [("var", "value"), ...] to fill the view.
+
+        """
+        if set(values) == set(self.all_vars):
+            return False
+        else:
+            for value in self._values_to_remove(values):
+                rows = list(self.variables_table)
+                for row in rows:
+                    if row[0].text == value[0]:
+                        row["Actions"].widget.delete.click()
+                        break
+            for value in self._values_to_add(values):
+                self.variable.fill(value[0])
+                self.default_value.fill(value[1])
+                self.add.click()
+            return True
+
+    @property
+    def all_vars(self):
+        if self.variables_table.is_displayed:
+            return [(row["Variable"].text, row["Default value"].text) for
+                    row in self.variables_table]
+        else:
+            return []
+
+    def read(self):
+        return self.all_vars
+
+
 class AnsibleCatalogItemForm(ServicesCatalogView):
     title = Text(".//span[@id='explorer_title_text']")
     name = Input("name")
@@ -48,6 +123,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         create_new = Checkbox(locator=".//label[normalize-space(.)='Create New']/input")
         provisioning_dialog_id = BootstrapSelect("provisioning_dialog_id")
         provisioning_dialog_name = Input(name="vm.provisioning_dialog_name")
+        extra_vars = AnsibleExtraVariables(tab="provisioning")
 
     @View.nested
     class retirement(Tab):  # noqa
@@ -61,6 +137,7 @@ class AnsibleCatalogItemForm(ServicesCatalogView):
         escalate_privilege = BootstrapSwitch("retirement_become_enabled")
         verbosity = BootstrapSelect("retirement_verbosity")
         remove_resources = BootstrapSelect("vm.catalogItemModel.retirement_remove_resources")
+        extra_vars = AnsibleExtraVariables(tab="retirement")
 
     cancel = Button("Cancel")
 
@@ -138,7 +215,8 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
                     "playbook": "some_playbook.yml",
                     "machine_credential": "CFME Default Credential",
                     "create_new": True,
-                    "provisioning_dialog_name": "some_dialog"
+                    "provisioning_dialog_name": "some_dialog",
+                    "extra_vars": [("some_var", "some_value")]
                 }
             )
             catalog_item.create()
@@ -186,6 +264,7 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
             "use_exisiting": self.provisioning.get("use_exisiting"),
             "create_new": self.provisioning.get("create_new"),
             "provisioning_dialog_id": self.provisioning.get("provisioning_dialog_id"),
+            "extra_vars": self.provisioning.get("extra_vars"),
             "provisioning_dialog_name": self.provisioning.get("provisioning_dialog_name")
         })
         if self.retirement is not None:
@@ -199,7 +278,8 @@ class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
                 "cloud_type": self.retirement.get("cloud_type"),
                 "hosts": self.retirement.get("hosts"),
                 "escalate_privilege": self.retirement.get("escalate_privilege"),
-                "verbosity": self.retirement.get("verbosity")
+                "verbosity": self.retirement.get("verbosity"),
+                "extra_vars": self.retirement.get("extra_vars")
             })
         view.add.click()
         view = self.create_view(AllCatalogItemView)
