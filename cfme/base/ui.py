@@ -324,8 +324,40 @@ class Configuration(CFMENavigateStep):
             self.prerequisite_view.navigation.select('Settings', 'Configuration')
 
 
+class MySettingsView(BaseLoggedInPage):
+    configuration = Dropdown('Configuration')
+
+    @View.nested
+    class tabs(View):  # noqa
+
+        @View.nested
+        class visual_all(Tab):  # noqa
+            TAB_NAME = "Visual"
+
+        @View.nested
+        class default_views(Tab):  # noqa
+            TAB_NAME = "Default Views"
+
+        @View.nested
+        class default_filter(Tab):  # noqa
+            TAB_NAME = "Default Filters"
+
+        @View.nested
+        class time_profile(Tab):  # noqa
+            TAB_NAME = "Time Profiles"
+
+    @property
+    def is_displayed(self):
+        return (
+            self.tabs.visual_all.is_displayed and
+            self.tabs.default_views.is_displayed and
+            self.tabs.default_filter.is_displayed and
+            self.time_profile.is_displayed)
+
+
 @navigator.register(Server)
 class MySettings(CFMENavigateStep):
+    VIEW = MySettingsView
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):

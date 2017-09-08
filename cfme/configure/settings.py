@@ -1,47 +1,60 @@
 # -*- coding: utf-8 -*-
 
 """ Module dealing with Configure/My Setting section."""
-
 from functools import partial
-import re
 
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.tabstrip as tabs
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import (
-    AngularSelect, Form, Region, fill, form_buttons, flash, Table, ButtonGroup, Quadicon,
-    CheckboxTree, Input, CFMECheckbox, BootstrapTreeview, match_location)
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils import version, deferred_verpick
-from utils.pretty import Pretty
+from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text
+from widgetastic_patternfly import Dropdown, FlashMessages, BootstrapSwitch, Input, Button
+from widgetastic.utils import VersionPick, Version
+from widgetastic.widget import View
+
+from cfme.base.ui import MySettingsView
+from cfme.web_ui import match_location
+# from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+import re
 
 
-details_page = Region(infoblock_type='detail')
+match_page = partial(match_location, controller='configuration')
 
-cfg_btn = partial(tb.select, 'Configuration')
-timeprofile_table = Table("//div[@id='main_div']//table")
+
+class SettingToolBar(View):
+    configuration = Dropdown('Configuration')
+
+
+class TimeProfileAddForm(MySettingsView):
+    description = Input(id='description')
+    scope = BootstrapSelect('profile_type')
+    timezone = BootstrapSelect('profile_tz')
+    days = BootstrapSwitch(name='all_days')
+    hours = BootstrapSwitch(name='all_hours')
+    save_button = Button(VersionPick({Version.lowest(): 'Add',
+                                      '5.8': 'Save'}))
+    save_edit_button = Button(VersionPick({Version.lowest(): 'Save changes',
+                                           '5.8': 'Save'}))
+    cancel_button = Button('Cancel')
+
+
+class TimeProfileEntities(View):
+    table = Table("//div[@id='main_div']//table")
+
+
+class TimeprofileAddEntities(View):
+
+    breadcrumb = BreadCrumb()
+    title = Text('//div[@id="main-content"]//h3')
+
+
+class TimeProfileAddFormView(MySettingsView):
+
+    form = View.nested(TimeProfileAddForm)
+    entities = View.nested(TimeprofileAddEntities)
 
 
 class Timeprofile(Updateable, Navigatable):
-    timeprofile_form = Form(
-        fields=[
-            ("description", Input("description")),
-            ("scope", AngularSelect("profile_type")),
-            ("timezone", AngularSelect("profile_tz")),
-            ("days", CFMECheckbox("all_days")),
-            ("hours", CFMECheckbox("all_hours")),
-        ]
-    )
-    save_edit_button = deferred_verpick({'5.7': form_buttons.FormButton('Save changes'),
-                                         '5.8': form_buttons.FormButton('Save')})
-    save_button = deferred_verpick({
-        version.LOWEST: form_buttons.FormButton("Add this Time Profile"),
-        '5.7': form_buttons.FormButton('Add'),
-        '5.8': form_buttons.FormButton('Save')
-    })
 
     def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None,
             appliance=None):
@@ -53,28 +66,31 @@ class Timeprofile(Updateable, Navigatable):
         self.timezone = timezone
 
     def create(self, cancel=False):
-        navigate_to(self, 'Add')
-        fill(self.timeprofile_form, {'description': self.description,
-                                     'scope': self.scope,
-                                     'days': self.days,
-                                     'hours': self.hours,
-                                     'timezone': self.timezone,
-                                     })
+        view = navigate_to(self, 'Add')
+        view.form.fill({
+            'description': self.description,
+            'scope': self.scope,
+            'days': self.days,
+            'hours': self.hours,
+            'timezone': self.timezone,
+        })
+
         if not cancel:
-            sel.click(self.save_button)
+            view.form.save_button.click()
             end = "saved" if self.appliance.version > '5.7' else "added"
-            flash.assert_success_message('Time Profile "{}" was {}'
-                                         .format(self.description, end))
+            FlashMessages('Time Profile "{}" was {}'.format(self.description, end))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(self.timeprofile_form, {'description': updates.get('description'),
-                                     'scope': updates.get('scope'),
-                                     'timezone': updates.get('timezone')},
-             action={version.LOWEST: form_buttons.save,
-                     '5.7': self.save_edit_button})
-        flash.assert_success_message(
-            'Time Profile "{}" was saved'.format(updates.get('description', self.description)))
+        view = navigate_to(self, 'Edit')
+        row = view.form.table.row()
+        row[1].click()
+        changed = view.form.fill({
+            'scope': updates.get('scope'),
+        })
+        if changed:
+            view.form.save_edit_button.click()
+            view.flash.assert_message(
+                'Time Profile "{}" was saved'.format(updates.get('description', self.description)))
 
     def copy(self):
         navigate_to(self, 'All')
@@ -103,74 +119,88 @@ class Timeprofile(Updateable, Navigatable):
 
 @navigator.register(Timeprofile, 'All')
 class TimeprofileAll(CFMENavigateStep):
+    VIEW = MySettingsView
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
 
     def step(self):
-        tabs.select_tab("Time Profiles")
+        self.view.tabs.time_profile.select()
+
+    def am_i_here(self):
+        return match_page(title='Configuration') and self.view.tabs.time_profile.is_active()
 
 
 @navigator.register(Timeprofile, 'Add')
 class TimeprofileNew(CFMENavigateStep):
+    VIEW = TimeProfileAddFormView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a new Time Profile')
+        self.prerequisite_view.configuration.item_select("Add a new Time Profile")
 
 
 @navigator.register(Timeprofile, 'Edit')
 class TimeprofileEdit(CFMENavigateStep):
+    VIEW = TimeProfileAddFormView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        timeprofile_table.click_cell("description", self.obj.description)
+        self.prerequisite_view.configuration.item_select("Edit selected Time Profile")
+
+
+class VisualFormView(MySettingsView):
+    grid_view = BootstrapSelect('perpage_grid')
+    tile_view = BootstrapSelect('perpage_tile')
+    list_view = BootstrapSelect('perpage_list')
+    reports = BootstrapSelect('perpage_reports')
+    login_page = BootstrapSelect('start_page')
+    infra_provider_quad = BootstrapSwitch('quadicons_ems')
+    cloud_provider_quad = BootstrapSwitch('quadicons_ems_cloud')
+    host_quad = BootstrapSwitch('quadicons_host')
+    datastore_quad = BootstrapSwitch('quadicons_storage')
+    datastoreitem_quad = Input('quadicons_storageitem')
+    vm_quad = BootstrapSwitch('quadicons_vm')
+    vmitem_quad = Input('quadicons_vmitem')
+    template_quad = BootstrapSwitch('quadicons_miq_template')
+    chart_theme = BootstrapSelect('display_reporttheme')
+    time_zone = BootstrapSelect('display_timezone')
+    save_button = Button("Add this Time Profile")
 
 
 class Visual(Updateable, Navigatable):
 
     pretty_attrs = ['name']
 
-    item_form = Form(
-        fields=[
-            ('grid_view', AngularSelect('perpage_grid')),
-            ('tile_view', AngularSelect("perpage_tile")),
-            ('list_view', AngularSelect("perpage_list")),
-            ('reports', AngularSelect("perpage_reports")),
-        ])
-
-    startpage_form = Form(
-        fields=[
-            ('login_page', AngularSelect("start_page"))])
-
-    quadicons_form = Form(
-        fields=[
-            ('infra_provider_quad', CFMECheckbox("quadicons_ems")),
-            ('cloud_provider_quad', CFMECheckbox("quadicons_ems_cloud")),
-            ('host_quad', CFMECheckbox("quadicons_host")),
-            ('datastore_quad', CFMECheckbox("quadicons_storage")),
-            ('datastoreitem_quad', Input("quadicons_storageitem")),
-            ('vm_quad', CFMECheckbox("quadicons_vm")),
-            ('vmitem_quad', Input("quadicons_vmitem")),
-            ('template_quad', CFMECheckbox("quadicons_miq_template")),
-        ])
-
-    display_form = Form(
-        fields=[
-            ('chart_theme', AngularSelect("display_reporttheme")),
-            ('time_zone', AngularSelect("display_timezone")),
-        ])
-
-    save_button = form_buttons.FormButton("Add this Time Profile")
+    def __init__(self, grid_view=None, tile_view=None, list_view=None, reports=None,
+     login_page=None, infra_provider_quad=None, cloud_provider_quad=None, host_quad=None,
+     datastore_quad=None, datastoreitem_quad=None, vm_quad=None, vmitem_quad=None,
+     template_quad=None, chart_theme=None, time_zone=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
+        self.grid_view = grid_view
+        self.tile_view = tile_view
+        self.list_view = list_view
+        self.reports = reports
+        self.login_page = login_page
+        self.infra_provider_quad = infra_provider_quad
+        self.cloud_provider_quad = cloud_provider_quad
+        self.host_quad = host_quad
+        self.datastore_quad = datastore_quad
+        self.datastoreitem_quad = datastoreitem_quad
+        self.vm_quad = vm_quad
+        self.vmitem_quad = vmitem_quad
+        self.template_quad = template_quad
+        self.chart_theme = chart_theme
+        self.time_zone = time_zone
 
     @property
     def grid_view_limit(self):
-        navigate_to(self, 'All')
-        return int(re.findall("\d+", self.item_form.grid_view.first_selected_option_text)[0])
+        view = navigate_to(self, 'All')
+        return int(re.findall("\d+", view.grid_view.first_selected_option_text)[0])
 
     @grid_view_limit.setter
     def grid_view_limit(self, value):
-        navigate_to(self, 'All')
-        fill(self.item_form.grid_view, str(value))
-        sel.click(form_buttons.save)
+        view = navigate_to(self, 'All')
+        view.fill({'grid_view': str(value)})
+        view.save_button.click()
 
     @property
     def tile_view_limit(self):
@@ -304,10 +334,11 @@ visual = Visual()
 
 @navigator.register(Visual, 'All')
 class VisualAll(CFMENavigateStep):
+    VIEW = VisualFormView
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
 
     def step(self):
-        tabs.select_tab("Visual")
+        self.prerequisite_view.visual_all.select("Visual")
 
 
 class DefaultFilter(Updateable, Pretty, Navigatable):
