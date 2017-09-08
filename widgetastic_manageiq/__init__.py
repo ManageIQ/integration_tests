@@ -2345,6 +2345,12 @@ class EntitiesConditionalView(View, ReportDataControllerMixin):
             entities = self._invoke_cmd('get_all_items')
             return [entity['item']['cells']['Name'] for entity in entities]
 
+    @property
+    def all_entity_names(self):
+        """Gets all entity names from all pages by default"""
+        # get_all uses self.entity_names, which handles versioned name query
+        return [e.name for e in self.get_all(surf_pages=True)]
+
     def get_all(self, surf_pages=False):
         """ obtains all entities like QuadIcon displayed by view
         Args:
