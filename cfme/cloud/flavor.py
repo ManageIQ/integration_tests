@@ -2,8 +2,7 @@
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic_patternfly import Dropdown, Button, View, FlashMessages, BootstrapSelect
-
+from widgetastic_patternfly import Dropdown, Button, View, BootstrapSelect
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import FlavorNotFound
 from cfme.web_ui import match_location, mixins
@@ -127,7 +126,7 @@ class FlavorCollection(Navigatable):
                 break
         if set(flavors) != set(checked_flavors):
             missed_flavors = [f for f in flavors if f not in checked_flavors]
-            raise ValueError('Some flavors were not found in the UI')
+            raise ValueError('Some flavors were not found in the UI: {0}'.format(missed_flavors))
         view.toolbar.policy.item_select('Edit Tags')
 
     def add_tag(self, tag, *flavors):
