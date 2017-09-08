@@ -676,7 +676,7 @@ def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_test
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
     """
-    with update:
+    with update(policy_for_testing):
         policy_for_testing.scope = (
             "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name))
     policy_for_testing.assign_events("VM Clone Start")
@@ -687,7 +687,7 @@ def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_test
     @request.addfinalizer
     def finalize():
         policy_for_testing.assign_events()
-        with update:
+        with update(policy_for_testing):
             policy_for_testing.scope = (
                 "fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name))
         cleanup_vm(clone_vm_name, provider)
