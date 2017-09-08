@@ -158,7 +158,8 @@ def test_service_ansible_playbook_taging(request, ansible_catalog_item):
     """
     ansible_catalog_item.add_tag('Department', 'Support')
     assert ansible_catalog_item.get_tags() == ['Department', 'Support']
-    request.addfinalizer(lambda: ansible_catalog_item.remove_tag('Department', 'Support'))
+    ansible_catalog_item.remove_tag('Department', 'Support')
+    assert ansible_catalog_item.get_tags() == []
 
 
 @pytest.mark.tier(2)
