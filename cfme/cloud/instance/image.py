@@ -1,43 +1,133 @@
-from functools import partial
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.widget import View, Text
+from widgetastic_patternfly import Button, Dropdown, FlashMessages
+from widgetastic_manageiq import (
+    ItemsToolBarViewSelector, SummaryTable, ItemNotFound, BaseEntitiesView)
 
-from navmazing import NavigateToSibling, NavigateToAttribute
-from selenium.common.exceptions import NoSuchElementException
-
-from cfme.exceptions import ImageNotFound, BlockTypeUnknown
+from cfme.exceptions import ImageNotFound
+from cfme.common import WidgetasticTaggable
 from cfme.common.vm import Template
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import accordion, toolbar as tb, CheckboxTable, InfoBlock, match_location, \
-    PagedTable
-from cfme.web_ui.search import search_box
+from cfme.common.vm_views import (
+    EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, EditTagsView,
+    BasicProvisionFormView)
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
-from utils.log import logger
-
-# TODO get rid of this garbage with widgets
-cfg_btn = partial(tb.select, 'Configuration')
-life_btn = partial(tb.select, 'Lifecycle')
-pol_btn = partial(tb.select, 'Policy')
-
-list_table = PagedTable(table_locator="//div[@id='list_grid']//table")
-
-match_page = partial(match_location, controller='vm_cloud', title='Instances')
+from . import CloudInstanceView, InstanceAccordion
 
 
-def details_page_check(name, provider):
-    title_match = match_page(summary='Image "{}"'.format(name))
-    if title_match:
-        # Also check provider
-        # Limits scope of testing to images that aren't orphaned or archived, but if we don't do
-        # this and multiple providers are present we might have multiple images with the same name
-        try:
-            prov_match = InfoBlock.text('Relationships', 'Cloud Provider') == provider
-            return title_match and prov_match
-        except BlockTypeUnknown:
-            # Default to false since we can't identify which provider the image belongs to
-            return False
+class ImageToolbar(View):
+    """
+    Toolbar view for image collection
+    """
+    reload = Button(title='Reload current display')
+    configuration = Dropdown('Configuration')
+    lifecycle = Dropdown('Lifecycle')
+    policy = Dropdown('Policy')
+    download = Dropdown('Download')
+
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-class Image(Template, Navigatable):
+class ImageDetailsToolbar(View):
+    """
+        Toolbar view for image collection
+        """
+    reload = Button(title='Reload current display')
+    configuration = Dropdown('Configuration')
+    lifecycle = Dropdown('Lifecycle')
+    policy = Dropdown('Policy')
+    download = Button(title='Download summary in PDF format')
+
+
+class ImageDetailsEntities(View):
+    title = Text('//div[@id="main-content"]//h1//span[@id="explorer_title_text"]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+    properties = SummaryTable(title='Properties')
+    lifecycle = SummaryTable(title='Lifecycle')
+    relationships = SummaryTable(title='Relationships')
+    compliance = SummaryTable(title='Compliance')
+    power_management = SummaryTable(title='Power Management')
+    security = SummaryTable(title='Security')
+    configuration = SummaryTable(title='Configuration')
+    smart_management = SummaryTable(title='Smart Management')
+
+
+class ImageAllView(CloudInstanceView):
+    """View for the Image collection"""
+    toolbar = View.nested(ImageToolbar)
+    sidebar = View.nested(InstanceAccordion)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_cloud_instance and
+            self.sidebar.images.is_opened and
+            self.sidebar.images.tree.selected_item.text == 'All Images' and
+            self.entities.title.text == 'All Images')
+
+
+class ImageProviderAllView(CloudInstanceView):
+    """View for the Image collection"""
+    toolbar = View.nested(ImageToolbar)
+    sidebar = View.nested(InstanceAccordion)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        expected_title = 'Images under Provider "{}"'.format(self.context['object'].provider.name)
+        accordion = self.sidebar.images_by_provider
+        return (
+            self.in_cloud_instance and
+            accordion.is_opened and
+            accordion.tree.selected_item.text == self.context['object'].provider.name and
+            self.entities.title.text == expected_title)
+
+
+class ImageDetailsView(CloudInstanceView):
+    """View for an Image"""
+    toolbar = View.nested(ImageToolbar)
+    sidebar = View.nested(InstanceAccordion)
+    entities = View.nested(ImageDetailsEntities)
+    tag = SummaryTable(title='Smart Management')  # to satisfy WidgetasticTagable, CHANGEME
+
+    @property
+    def is_displayed(self):
+        accordion = self.sidebar.images_by_provider
+        relationships = self.entities.relationships
+        return (
+            self.in_cloud_instance and
+            accordion.is_opened and
+            accordion.tree.selected_item.text == self.context['object'].provider.name and
+            relationships.get_text_of('Cloud Provider') == self.context['object'].provider.name and
+            self.entities.title.text == 'Image "{}"'.format(self.context['object'].name))
+
+
+class ImageProvisionView(CloudInstanceView):
+    """
+    View for provisioning image, built from common provisioning form.
+    No before_fill, image already selected
+    """
+    @View.nested
+    class form(BasicProvisionFormView):  # noqa
+        """Tabs from BasicProvisionFormView, just adding buttons
+        """
+        submit = Button('Submit')  # Submit for 2nd page, tabular form
+        cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        prov_name = self.context['object'].provider.name
+        return (
+            self.in_cloud_instance and
+            self.form.is_displayed and
+            self.form.catalog.catalog_name.currently_selected == self.context['object'].name and
+            len(self.form.catalog.catalog_name.read_content()) == 1 and
+            self.form.catalog.catalog_name.read_content()[0].get('Provider', None) == prov_name)
+
+
+class Image(Template, Navigatable, WidgetasticTaggable):
     ALL_LIST_LOCATION = "clouds_images"
     TO_OPEN_EDIT = "Edit this Image"
     QUADICON_TYPE = "image"
@@ -46,127 +136,100 @@ class Image(Template, Navigatable):
         super(Image, self).__init__(name=name, provider=provider, template_name=template_name)
         Navigatable.__init__(self, appliance=appliance)
 
-    def on_details(self, force=False):
-        """A function to determine if the browser is already on the proper image details page.
-
-            An image may not be assigned to a provider if archived or orphaned
-            If no provider is listed, default to False since we may be on the details page
-            for an image on the wrong provider.
-        """
-        if details_page_check(self.name, self.provider):
-            return True
-        elif not force:
-            return False
-        elif force:
+    @property
+    def exists(self):
+        """Whether the image exists in CFME"""
+        try:
             navigate_to(self, 'Details')
-            return True
+        except ImageNotFound:
+            return False
+        return True
 
 
 @navigator.register(Image, 'All')
 class ImageAll(CFMENavigateStep):
+    VIEW = ImageAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary="All Images")
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
-
-        # use accordion
-        # If a filter was applied, it will persist through navigation and needs to be cleared
-        if sel.is_displayed(search_box.clear_advanced_search):
-            logger.debug('Clearing advanced search filter')
-            sel.click(search_box.clear_advanced_search)
-        accordion.tree('Images', 'All Images')
+        self.view.sidebar.images.tree.click_path('All Images')
 
 
 @navigator.register(Image, 'AllForProvider')
 class ImageAllForProvider(CFMENavigateStep):
+    VIEW = ImageProviderAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Images under Provider "{}"'.format(self.obj.provider.name))
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
-
-        # use accordion
-        accordion.tree('Images by Provider', 'Images by Provider', self.obj.provider.name)
+        self.view.sidebar.images_by_provider.tree.click_path('Images by Provider',
+                                                             self.obj.provider.name)
 
 
 @navigator.register(Image, 'Details')
 class ImageDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def am_i_here(self):
-        return details_page_check(name=self.obj.name, provider=self.obj.provider)
+    VIEW = ImageDetailsView
+    prerequisite = NavigateToSibling('AllForProvider')
 
     def step(self):
-        # Use list view to match name and provider
-        tb.select('List View')
-        cell = {'Name': self.obj.name, 'Provider': self.obj.provider.name}
+        self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            sel.click(list_table.find_row_by_cell_on_all_pages(cell))
-        except NoSuchElementException:
-            raise ImageNotFound('Could not find image matching {}'.format(cell))
+            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True)
+        except ItemNotFound:
+            raise ImageNotFound('Failed to locate image with name "{}"'.format(self.obj.name))
+        row.click()
 
 
 @navigator.register(Image, 'ProvisionImage')
 class ImageProvisionImage(CFMENavigateStep):
+    VIEW = ImageProvisionView
     prerequisite = NavigateToSibling('Details')
 
-    # No am_i_here, page identifiers are not unique
-
     def step(self, *args, **kwargs):
-        life_btn('Provision Instances using this Image')
+        self.prerequisite_view.toolbar.lifecycle.item_select('Provision Instances using this Image')
 
 
-@navigator.register(Image, 'EditSelected')
+@navigator.register(Image, 'Edit')
 class ImageEdit(CFMENavigateStep):
+    VIEW = EditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        cfg_btn('Edit this Image')
-
-
-@navigator.register(Image, 'EditSelected')
-class ImageEditSelected(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self, *args, **kwargs):
-        check_table = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-        check_table.select_row_by_cells({'Name': self.obj.name,
-                                         'Provider': self.obj.provider.name})
-        cfg_btn('Edit selected Image')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Image')
 
 
 @navigator.register(Image, 'SetOwnership')
 class ImageSetOwnership(CFMENavigateStep):
+    VIEW = SetOwnershipView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        cfg_btn('Set Ownership')
+        self.prerequisite_view.toolbar.configuration.item_select('Set Ownership')
 
 
 @navigator.register(Image, 'ManagePolicies')
 class ImageManagePolicies(CFMENavigateStep):
+    VIEW = ManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        pol_btn('Manage Policies')
+        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
 @navigator.register(Image, 'PolicySimulation')
 class ImagePolicySimulation(CFMENavigateStep):
+    VIEW = PolicySimulationView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        pol_btn('Policy Simulation')
+        self.prerequisite_view.toolbar.policy.item_select('Policy Simulation')
 
 
 @navigator.register(Image, 'EditTags')
 class ImageEditTags(CFMENavigateStep):
+    VIEW = EditTagsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
