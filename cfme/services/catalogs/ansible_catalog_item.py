@@ -16,6 +16,7 @@ from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavig
 from utils.update import Updateable
 from utils.wait import wait_for
 from . import ServicesCatalogView
+from cfme.common import WidgetasticTaggable, TagPageView
 
 
 class BootstrapSelect(VanillaBootstrapSelect):
@@ -174,7 +175,7 @@ class EditAnsibleCatalogItemView(AnsibleCatalogItemForm):
         return False
 
 
-class DetailsAnsibleCatalogItemView(ServicesCatalogView):
+class DetailsEntitiesAnsibleCatalogItemView(View):
     title = Text(".//span[@id='explorer_title_text']")
     basic_information = SummaryForm("Basic Information")
     custom_image = FileInput("upload_image")
@@ -191,15 +192,22 @@ class DetailsAnsibleCatalogItemView(ServicesCatalogView):
         info = SummaryForm("Retirement Info")
         variables_and_default_values = Table(".//div[@id='retirement']//table")
 
+
+class DetailsAnsibleCatalogItemView(ServicesCatalogView):
+    """Has to be in view standards, changed for WidgetasticTaggable.get_tags()"""
+    entities = View.nested(DetailsEntitiesAnsibleCatalogItemView)
+
     @property
     def is_displayed(self):
         return (
             self.in_explorer() and
-            self.title.text == 'Service Catalog Item "{}"'.format(self.context["object"].name)
+            self.entities.title.text == 'Service Catalog Item "{}"'.format(
+                self.context["object"].name
+            )
         )
 
 
-class AnsiblePlaybookCatalogItem(Updateable, Navigatable):
+class AnsiblePlaybookCatalogItem(Updateable, Navigatable, WidgetasticTaggable):
     """Represents Ansible Playbook catalog item.
 
     Example:
@@ -389,3 +397,12 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select("Edit this Item")
+
+
+@navigator.register(AnsiblePlaybookCatalogItem, 'EditTags')
+class EditTags(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.policy.item_select('Edit Tags')

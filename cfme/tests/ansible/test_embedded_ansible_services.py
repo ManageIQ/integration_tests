@@ -147,6 +147,21 @@ def test_service_ansible_playbook_crud(ansible_repository):
     assert not cat_item.exists
 
 
+def test_service_ansible_playbook_taging(request, ansible_catalog_item):
+    """ Tests ansible_playbook tag addition, check added tag and removal
+
+    Steps:
+        1. Login as a admin
+        2. Add tag for ansible_playbook
+        3. Check added tag
+        4. Remove the given tag
+    """
+    ansible_catalog_item.add_tag('Department', 'Support')
+    assert ansible_catalog_item.get_tags() == ['Department', 'Support']
+    ansible_catalog_item.remove_tag('Department', 'Support')
+    assert ansible_catalog_item.get_tags() == []
+
+
 @pytest.mark.tier(2)
 def test_service_ansible_playbook_negative():
     view = navigate_to(AnsiblePlaybookCatalogItem("", "", {}), "Add")
