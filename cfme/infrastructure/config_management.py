@@ -118,6 +118,7 @@ class ConfigManagementConfProfileToolbarView(View):
     lifecycle = Dropdown()
     policy = Dropdown()
     download = Dropdown()
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
 class ConfigManagementConfProfileView(BaseLoggedInPage):
@@ -206,6 +207,7 @@ class ConfigManagementConfProfile(object):
     def __init__(self, name, provider):
         self.name = name
         self.provider = provider
+        self.appliance = self.provider.appliance
 
 
 class ConfigManagementProvider(NavigatableMixin):
@@ -302,6 +304,9 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(self.obj.name).click()
+
+    def resetter(self, *args, **kwargs):
+        self.view.toolbar.view_selector.grid_button.click()
 
 
 def get_config_manager_from_config(cfg_mgr_key):
