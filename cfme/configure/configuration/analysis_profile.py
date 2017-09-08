@@ -185,7 +185,7 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
 
             p = AnalysisProfile(name, description, profile_type='VM')
             p.files = [
-                {"Name": "/some/anotherfile", "Collect_Contents?": True},
+                {"Name": "/some/anotherfile", "Collect Contents?": True},
             ]
             p.events = [
                 {"Name": name, "Filter Message": msg, "Level": lvl, "Source": src, "# of Days": 1},
@@ -197,7 +197,7 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
             p.create()
             p2 = p.copy(new_name="updated AP")
             with update(p):
-                p.files = [{"Name": "/changed". "Collect_Contents?": False}]
+                p.files = [{"Name": "/changed". "Collect Contents?": False}]
             p.delete()
 
     """
