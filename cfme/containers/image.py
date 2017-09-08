@@ -6,6 +6,8 @@ from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import Dropdown
+from wrapanapi.containers.image import Image as ApiImage
+
 from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
 from cfme.containers.provider import Labelable, navigate_and_get_rows,\
     ContainerObjectAllBaseView
@@ -16,7 +18,6 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator,
 from cfme.utils.appliance import Navigatable
 from cfme.configure import tasks
 from cfme.utils.wait import wait_for, TimedOutError
-from wrapanapi.containers.image import Image as ApiImage
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -129,7 +130,7 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
 
 
 class ImageAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Container Images'
+    TITLE_TEXT = "Container Images"
     configuration = Dropdown('Configuration')
 
 

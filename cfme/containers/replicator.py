@@ -2,8 +2,9 @@
 import random
 import itertools
 from functools import partial
-
 from cached_property import cached_property
+
+from wrapanapi.containers.replicator import Replicator as ApiReplicator
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -15,7 +16,6 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
-from wrapanapi.containers.replicator import Replicator as ApiReplicator
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -67,7 +67,7 @@ class Replicator(Taggable, Labelable, SummaryMixin, Navigatable):
 
 
 class ReplicatorAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Replicators'
+    TITLE_TEXT = "Replicators"
 
 
 @navigator.register(Replicator, 'All')

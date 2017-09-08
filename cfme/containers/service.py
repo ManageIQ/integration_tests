@@ -2,8 +2,9 @@
 import random
 import itertools
 from functools import partial
-
 from cached_property import cached_property
+
+from wrapanapi.containers.service import Service as ApiService
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -15,7 +16,6 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
-from wrapanapi.containers.service import Service as ApiService
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -65,7 +65,7 @@ class Service(Taggable, Labelable, SummaryMixin, Navigatable):
 
 
 class ServiceAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Container Services'
+    TITLE_TEXT = "Container Services"
 
 
 @navigator.register(Service, 'All')
