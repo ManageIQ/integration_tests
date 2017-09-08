@@ -4,7 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.availability_zone import AvailabilityZone
-from cfme.cloud.flavor import Flavor
+from cfme.cloud.flavor import FlavorCollection
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
 from cfme.configure.settings import DefaultView
@@ -18,7 +18,7 @@ pytestmark = [pytest.mark.tier(3),
 gtl_params = {
     'Cloud Providers': CloudProvider,
     'Availability Zones': AvailabilityZone,
-    'Flavors': Flavor,
+    'Flavors': FlavorCollection,
     'Instances': Instance,
     'Images': Image
 }
