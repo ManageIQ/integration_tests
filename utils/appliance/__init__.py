@@ -6,6 +6,7 @@ import socket
 import traceback
 import warnings
 from copy import copy
+from datetime import datetime
 from tempfile import NamedTemporaryFile
 from time import sleep, time
 from urlparse import ParseResult, urlparse
@@ -16,7 +17,7 @@ import fauxfactory
 import requests
 import yaml
 from cached_property import cached_property
-from manageiq_client.api import ManageIQClient as MiqApi
+from manageiq_client.api import ManageIQClient as VanillaMiqApi
 from sentaku import ImplementationContext
 from werkzeug.local import LocalStack, LocalProxy
 
@@ -63,6 +64,21 @@ def _current_miqqe_version():
 
 
 current_miqqe_version = _current_miqqe_version()
+
+
+class MiqApi(VanillaMiqApi):
+    def get_entity_by_href(self, href):
+        """Parses the collections"""
+        parsed = urlparse(href)
+        # TODO: Check the netloc, scheme
+        path = [step for step in parsed.path.split('/') if step]
+        # Drop the /api
+        path = path[1:]
+        collection = getattr(self.collections, path.pop(0))
+        entity = collection(int(path.pop(0)))
+        if path:
+            raise ValueError('Subcollections not supported! ({})'.format(parsed.path))
+        return entity
 
 
 class ApplianceException(Exception):
@@ -521,58 +537,21 @@ class IPAppliance(object):
         finally:
             logging.disable(logging.NOTSET)
 
-    def _get_ems_ips(self, ems):
-        ep_table = self.db.client["endpoints"]
-        ip_addresses = set()
-        for ep in self.db.client.session.query(ep_table).filter(ep_table.resource_id == ems.id):
-            if ep.ipaddress is not None:
-                ip_addresses.add(ep.ipaddress)
-            elif ep.hostname is not None:
-                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ep.hostname) is not None:
-                    ip_addresses.add(ep.hostname)
-                else:
-                    ip_address = resolve_hostname(ep.hostname)
-                    if ip_address is not None:
-                        ip_addresses.add(ip_address)
-        return list(ip_addresses)
+    @property
+    def managed_provider_names(self):
+        """Returns a list of names for all providers configured on the appliance
 
-    def _list_ems(self):
-        self.db.client.session.expire_all()
-        ems_table = self.db.client["ext_management_systems"]
-        # Fetch all providers at once, return empty list otherwise
-        try:
-            ems_list = list(self.db.client.session.query(ems_table))
-        except Exception as ex:
-            self.log.warning("Unable to query DB for managed providers: %s", str(ex))
-            return []
+        Note:
+            Unlike ``managed_known_providers``, this will also return names of providers that were
+            not recognized, but are present.
+        """
         known_ems_list = []
-        for ems in ems_list:
-            # Skip any EMS types that we don't care about / can't recognize safely
-            if not any(p_type in ems.type for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
+        for ems in self.rest_api.collections.providers.all:
+            if not any(
+                    p_type in ems['type'] for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
                 continue
-            known_ems_list.append(ems)
+            known_ems_list.append(ems['name'])
         return known_ems_list
-
-    def _query_endpoints(self):
-        if "endpoints" in self.db.client:
-            return self._query_post_endpoints()
-        else:
-            return self._query_pre_endpoints()
-
-    def _query_pre_endpoints(self):
-        ems_table = self.db.client["ext_management_systems"]
-        for ems in self.db.client.session.query(ems_table):
-            yield ems.ipaddress, ems.hostname
-
-    def _query_post_endpoints(self):
-        """After Oct 5th, 2015, the ipaddresses and stuff was separated in a separate table."""
-        ems_table = self.db.client["ext_management_systems"]
-        ep = self.db.client["endpoints"]
-        for ems in self.db.client.session.query(ems_table):
-            for endpoint in self.db.client.session.query(ep).filter(ep.resource_id == ems.id):
-                ipaddress = endpoint.ipaddress
-                hostname = endpoint.hostname
-                yield ipaddress, hostname
 
     @property
     def managed_known_providers(self):
@@ -586,46 +565,18 @@ class IPAppliance(object):
 
         found_cruds = set()
         unrecognized_ems_names = set()
-        for ems in self._list_ems():
+        for ems_name in self.managed_provider_names:
             for prov in prov_cruds:
                 # Name check is authoritative and the only proper way to recognize a known provider
-                if ems.name == prov.name:
+                if ems_name == prov.name:
                     found_cruds.add(prov)
                     break
             else:
-                unrecognized_ems_names.add(ems.name)
+                unrecognized_ems_names.add(ems_name)
         if unrecognized_ems_names:
             self.log.warning(
                 "Unrecognized managed providers: {}".format(', '.join(unrecognized_ems_names)))
         return list(found_cruds)
-
-    @property
-    def managed_provider_names(self):
-        """Returns a list of names for all providers configured on the appliance
-
-        Note:
-            Unlike ``managed_known_providers``, this will also return names of providers that were
-            not recognized, but are present.
-        """
-        return [ems.name for ems in self._list_ems()]
-
-    @property
-    def has_os_infra(self):
-        """If there is an OS Infra set up as a provider, some of the UI changes"""
-        ems_table = self.db.client["ext_management_systems"]
-        self.db.client.session.query(ems_table)
-        count = self.db.client.session.query(ems_table).filter(
-            ems_table.type == "EmsOpenstackInfra").count()
-        return count > 0
-
-    @property
-    def has_non_os_infra(self):
-        """If there is any non-OS-infra set up as a provider, some of the UI changes"""
-        ems_table = self.db.client["ext_management_systems"]
-        self.db.client.session.query(ems_table)
-        count = self.db.client.session.query(ems_table).filter(
-            ems_table.type != "EmsOpenstackInfra").count()
-        return count > 0
 
     @classmethod
     def from_url(cls, url):
@@ -672,17 +623,22 @@ class IPAppliance(object):
     @cached_property
     def product_name(self):
         try:
-            # We need to print to a file here because the deprecation warnings make it hard
-            # to get robust output and they do not seem to go to stderr
-            result = self.ssh_client.run_rails_command(
-                '"File.open(\'/tmp/product_name.txt\', \'w\') '
-                '{|f| f.write(I18n.t(\'product.name\')) }"')
-            result = self.ssh_client.run_command('cat /tmp/product_name.txt')
-            return result.output
-        except:
-            logger.error(
-                "Couldn't fetch the product name from appliance, using ManageIQ as default")
-            return 'ManageIQ'
+            return self.rest_api.product_info['name']
+        except (AttributeError, KeyError, IOError):
+            self.log.exception(
+                'appliance.product_name could not be retrieved from REST, falling back')
+            try:
+                # We need to print to a file here because the deprecation warnings make it hard
+                # to get robust output and they do not seem to go to stderr
+                result = self.ssh_client.run_rails_command(
+                    '"File.open(\'/tmp/product_name.txt\', \'w\') '
+                    '{|f| f.write(I18n.t(\'product.name\')) }"')
+                result = self.ssh_client.run_command('cat /tmp/product_name.txt')
+                return result.output
+            except Exception:
+                logger.exception(
+                    "Couldn't fetch the product name from appliance, using ManageIQ as default")
+                return 'ManageIQ'
 
     @property
     def ui_port(self):
@@ -705,21 +661,33 @@ class IPAppliance(object):
         return "{}://{}/".format(self.scheme, self.address)
 
     @cached_property
+    def is_downstream(self):
+        return self.product_name == 'CFME'
+
+    @cached_property
     def version(self):
-        res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
-        if res.rc != 0:
-            raise RuntimeError('Unable to retrieve appliance VMDB version')
-        return Version(res.output)
+        try:
+            version_string = self.rest_api.server_info['version']
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.version could not be retrieved from REST, falling back')
+            res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+            if res.rc != 0:
+                raise RuntimeError('Unable to retrieve appliance VMDB version')
+            version_string = res.output
+        return Version(version_string)
 
     @cached_property
     def build(self):
-        if self.ssh_client.is_appliance_downstream():
+        if not self.is_downstream:
+            return 'master'
+        try:
+            return self.rest_api.server_info['build']
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.build could not be retrieved from REST, falling back')
             res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
             if res.rc != 0:
                 raise RuntimeError('Unable to retrieve appliance VMDB version')
             return res.output.strip("\n")
-        else:
-            return "master"
 
     @cached_property
     def os_version(self):
@@ -815,13 +783,18 @@ class IPAppliance(object):
         Raises:
             :py:class:`paramiko.ssh_exception.SSHException` or :py:class:`socket.error`
         """
-        value = self.ssh_client.run_command(
-            'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15)
         try:
-            value = int(value.output.strip())
-        except (TypeError, ValueError):
-            value = None
-        return value
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            return server.system_swap_used / 1024 / 1024
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.swap could not be retrieved from REST, falling back')
+            value = self.ssh_client.run_command(
+                'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15)
+            try:
+                value = int(value.output.strip())
+            except (TypeError, ValueError):
+                value = None
+            return value
 
     def event_listener(self):
         """Returns an instance of the event listening class pointed to this appliance."""
@@ -1654,31 +1627,36 @@ class IPAppliance(object):
 
     @cached_property
     def build_datetime(self):
-        datetime = self.ssh_client.get_build_datetime()
-        return datetime
+        build_datetime_string = self.build.split('_', 1)[0]
+        return datetime.strptime(build_datetime_string, '%Y%m%d%H%M%S')
 
     @cached_property
     def build_date(self):
-        date = self.ssh_client.get_build_date()
-        return date
-
-    @cached_property
-    def is_downstream(self):
-        return self.ssh_client.is_appliance_downstream()
+        return self.build_datetime.date()
 
     def has_netapp(self):
         return self.ssh_client.appliance_has_netapp()
 
     @cached_property
     def guid(self):
-        result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
-        return result.output
+        try:
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            return server.guid
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.guid could not be retrieved from REST, falling back')
+            result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
+            return result.output
 
     @cached_property
     def evm_id(self):
-        miq_servers = self.db.client['miq_servers']
-        return self.db.client.session.query(
-            miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
+        try:
+            server = self.rest_api.get_entity_by_href(self.rest_api.server_info['server_href'])
+            return server.id
+        except (AttributeError, KeyError, IOError):
+            self.log.exception('appliance.evm_id could not be retrieved from REST, falling back')
+            miq_servers = self.db.client['miq_servers']
+            return self.db.client.session.query(
+                miq_servers.id).filter(miq_servers.guid == self.guid)[0][0]
 
     @property
     def server_roles(self):

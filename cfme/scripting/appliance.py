@@ -57,7 +57,6 @@ methods_to_install = [
     'is_db_enabled',
     'managed_provider_names',
     'miqqe_version',
-    'has_os_infra',
     'os_version',
     'swap',
     'miqqe_patch_applied']
