@@ -24,6 +24,8 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
 def roles(appliance, provider):
     collection = DeploymentRoleCollection(appliance=appliance)
     roles = collection.all(provider)
+
+    # TODO: remove test skip after introducing deployment role creation method.
     yield roles if roles else pytest.skip("No Roles Available")
 
 

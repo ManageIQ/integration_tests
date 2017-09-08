@@ -241,7 +241,7 @@ class DeploymentRoleManagePoliciesView(DeploymentRoleView):
 class DeploymentRoleCollection(NavigatableMixin):
     """Collection object for the :py:class:'cfme.infrastructure.deployment_role.DeploymentRoles'"""
 
-    def __init__(self, appliance=None):
+    def __init__(self, appliance):
         self.appliance = appliance
 
     def instantiate(self, name, provider):
@@ -289,6 +289,7 @@ class DeploymentRoles(NavigatableMixin):
         provider: provider this role is attached to
             (deployment roles available only for Openstack!).
     """
+    # TODO: add deployment role creation method with cli
 
     def __init__(self, name, provider, collection):
         self.name = name
