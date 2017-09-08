@@ -347,7 +347,7 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
         flash.assert_message_contain("Stop initiated")
         navigate_to(test_vm.provider, 'Details')
         test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
-        soft_assert(test_vm.find_quadicon().state == 'currentstate-off')
+        soft_assert(test_vm.find_quadicon().data['state'] == 'currentstate-off')
         soft_assert(
             not test_vm.provider.mgmt.is_vm_running(test_vm.name),
             "vm running")

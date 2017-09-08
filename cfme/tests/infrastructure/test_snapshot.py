@@ -185,7 +185,7 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_OFF, timeout=720)
     full_test_vm.power_control_from_cfme(option=full_test_vm.POWER_ON, cancel=False)
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=900)
-    current_state = full_test_vm.find_quadicon().state
+    current_state = full_test_vm.find_quadicon().data['state']
     soft_assert(current_state.startswith('currentstate-on'),
                 "Quadicon state is {}".format(current_state))
     soft_assert(full_test_vm.provider.mgmt.is_vm_running(full_test_vm.name), "vm not running")
@@ -250,7 +250,7 @@ def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
     # Suspend the VM
     small_test_vm.power_control_from_cfme(option=small_test_vm.SUSPEND, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_SUSPENDED)
-    current_state = small_test_vm.find_quadicon().state
+    current_state = small_test_vm.find_quadicon().data['state']
     soft_assert(current_state.startswith('currentstate-suspended'),
                 "Quadicon state is {}".format(current_state))
     # Create second snapshot when VM is suspended
@@ -261,7 +261,7 @@ def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
     snapshot1.revert_to()
     wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=snapshot1.refresh)
     # Check VM state, VM should be off
-    current_state = small_test_vm.find_quadicon().state
+    current_state = small_test_vm.find_quadicon().data['state']
     soft_assert(current_state.startswith('currentstate-off'),
                 "Quadicon state is {}".format(current_state))
     assert small_test_vm.provider.mgmt.is_vm_stopped(small_test_vm.name)
@@ -269,7 +269,7 @@ def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
     snapshot2.revert_to()
     wait_for(lambda: snapshot2.active, num_sec=300, delay=20, fail_func=snapshot2.refresh)
     # Check VM state, VM should be suspended
-    current_state = small_test_vm.find_quadicon().state
+    current_state = small_test_vm.find_quadicon().data['state']
     soft_assert(current_state.startswith('currentstate-suspended'),
                 "Quadicon state is {}".format(current_state))
     assert small_test_vm.provider.mgmt.is_vm_suspended(small_test_vm.name)

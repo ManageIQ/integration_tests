@@ -137,7 +137,7 @@ def test_quadicon_terminate_cancel(provider, testing_instance, verify_vm_running
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE,
                                              cancel=True,
                                              from_details=False)
-    soft_assert('currentstate-on' in testing_instance.find_quadicon().state)
+    soft_assert('currentstate-on' in testing_instance.find_quadicon().data['state'])
 
 
 def test_quadicon_terminate(provider, testing_instance, verify_vm_running, soft_assert):

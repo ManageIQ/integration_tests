@@ -118,9 +118,8 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
 
         # Verify that existing provider can detect new VMs on the second appliance
         vm = provision_vm(request, virtualcenter_provider_crud)
-        soft_assert(vm.find_quadicon().state == 'currentstate-on')
-        soft_assert(vm.provider.mgmt.is_vm_running(vm.name),
-            "vm running")
+        soft_assert(vm.find_quadicon().data['state'] == 'currentstate-on')
+        soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
 
         # Assert server roles on the second appliance
         for role, is_enabled in config.get_server_roles(db=False).iteritems():

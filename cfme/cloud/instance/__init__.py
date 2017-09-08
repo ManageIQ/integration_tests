@@ -11,8 +11,7 @@ from cfme.common.vm_views import (
     EditTagsView, SetOwnershipView, ManagementEngineView, ManagePoliciesView,
     PolicySimulationView)
 from cfme.exceptions import InstanceNotFound, ItemNotFound
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import flash, Quadicon, match_location
+from cfme.web_ui import flash, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from utils.log import logger
@@ -271,24 +270,14 @@ class Instance(VM, Navigatable):
         TODO: remove this method and refactor callers to use view entities instead
 
         Args:
-        Returns: :py:class:`cfme.web_ui.Quadicon` instance
+        Returns: entity of appropriate type
         """
-        if not kwargs.get('do_not_navigate', False):
-            navigate_to(self, 'All')
-
-        # Make sure we're looking at the quad grid
-        view = self.browser.create_view(InstanceAllView)
+        view = navigate_to(self, 'All')
         view.toolbar.view_selector.select('Grid View')
 
-        # Keeping paginator iteration here to create Quadicon object
-        # using entities.get_first_entity won't give the quadicon object we need for compatibility
-        for _ in view.entities.paginator.pages():
-            quadicon = Quadicon(self.name, "instance")
-            if quadicon.exists:
-                if kwargs.get('mark', False):
-                    sel.check(quadicon.checkbox())
-                return quadicon
-        else:
+        try:
+            return view.entities.get_entity(by_name=self.name, surf_pages=True)
+        except ItemNotFound:
             raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
 
     @property

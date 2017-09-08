@@ -155,7 +155,8 @@ class TestControlOnQuadicons(object):
         if_scvmm_refresh_provider(testing_vm.provider)
         # TODO: assert no event.
         time.sleep(60)
-        soft_assert('currentstate-on' in testing_vm.find_quadicon().state)
+        vm_state = testing_vm.find_quadicon().data['state']
+        soft_assert('currentstate-on' in vm_state)
         soft_assert(
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
@@ -170,7 +171,8 @@ class TestControlOnQuadicons(object):
         flash.assert_message_contain("Stop initiated")
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=900)
-        soft_assert('currentstate-off' in testing_vm.find_quadicon().state)
+        vm_state = testing_vm.find_quadicon().data['state']
+        soft_assert('currentstate-off' in vm_state)
         soft_assert(
             not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
 
@@ -184,7 +186,8 @@ class TestControlOnQuadicons(object):
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=True)
         if_scvmm_refresh_provider(testing_vm.provider)
         time.sleep(60)
-        soft_assert('currentstate-off' in testing_vm.find_quadicon().state)
+        vm_state = testing_vm.find_quadicon().data['state']
+        soft_assert('currentstate-off' in vm_state)
         soft_assert(
             not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
 
@@ -200,7 +203,8 @@ class TestControlOnQuadicons(object):
         flash.assert_message_contain("Start initiated")
         if_scvmm_refresh_provider(testing_vm.provider)
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=900)
-        soft_assert('currentstate-on' in testing_vm.find_quadicon().state)
+        vm_state = testing_vm.find_quadicon().data['state']
+        soft_assert('currentstate-on' in vm_state)
         soft_assert(
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
@@ -331,11 +335,12 @@ def test_no_template_power_control(provider, soft_assert):
     selected_template = VM.factory(template_name, provider, template=True)
 
     # Check the power button with checking the quadicon
-    quadicon = selected_template.find_quadicon(do_not_navigate=True, mark=True, refresh=False)
+    entity = selected_template.find_quadicon()
+    entity.check()
     soft_assert(not toolbar.exists("Power"), "Power displayed when template quadicon checked!")
 
     # Ensure there isn't a power button on the details page
-    pytest.sel.click(quadicon)
+    entity.click()
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
@@ -353,11 +358,13 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
 
 
 def test_archived_vm_status(testing_vm, archived_vm):
-    assert ('currentstate-archived' in testing_vm.find_quadicon(from_any_provider=True).state)
+    vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
+    assert ('currentstate-archived' in vm_state)
 
 
 def test_orphaned_vm_status(testing_vm, orphaned_vm):
-    assert ('currentstate-orphaned' in testing_vm.find_quadicon(from_any_provider=True).state)
+    vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
+    assert ('currentstate-orphaned' in vm_state)
 
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))

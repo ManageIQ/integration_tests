@@ -993,25 +993,18 @@ def _method_setup(vm_names, provider_crud=None):
         sel.check(Quadicon(vm_name, 'vm').checkbox())
 
 
-def find_quadicon(vm_name, do_not_navigate=False):
+def find_quadicon(vm_name):
     """Find and return a quadicon belonging to a specific vm
 
     Args:
         vm: vm name as displayed at the quadicon
-    Returns: :py:class:`cfme.web_ui.Quadicon` instance
+    Returns: entity of appropriate class
     """
-    if not do_not_navigate:
-        navigate_to(Vm, 'VMsOnly')
-    from cfme.web_ui import paginator
-    if not paginator.page_controls_exist():
-        raise VmNotFound("VM '{}' not found in UI!".format(vm_name))
-
-    paginator.results_per_page(1000)
-    for page in paginator.pages():
-        quadicon = Quadicon(vm_name, "vm")
-        if sel.is_displayed(quadicon):
-            return quadicon
-    else:
+    # todo: VMs have such method, so, this function is good candidate for removal
+    view = navigate_to(Vm, 'VMsOnly')
+    try:
+        return view.entites.get_entity(vm_name, surf_pages=True)
+    except ItemNotFound:
         raise VmNotFound("VM '{}' not found in UI!".format(vm_name))
 
 
@@ -1039,13 +1032,13 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout=300, provider_crud=
         timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
         provider_crud: provider object where vm resides on (optional)
     """
-    def _looking_for_state_change():
-        toolbar.refresh()
-        return 'currentstate-' + desired_state in find_quadicon(
-            vm_name, do_not_navigate=False).state
+    def _looking_for_state_change(view, entity):
+        view.toolbar.reload()
+        return 'currentstate-' + desired_state in entity.data['state']
 
-    _method_setup(vm_name, provider_crud)
-    return wait_for(_looking_for_state_change, num_sec=timeout)
+    view = navigate_to(Vm, 'VMsOnly')
+    entity = view.entites.get_entity(vm_name, surf_pages=True)
+    return wait_for(_looking_for_state_change, func_args=[view, entity], num_sec=timeout)
 
 
 def is_pwr_option_visible(vm_names, option, provider_crud=None):
@@ -1217,7 +1210,8 @@ class VmDetails(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name)
+            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                             surf_pages=True)
         except ItemNotFound:
             raise VmOrInstanceNotFound('Failed to locate VM/Template with name "{}"'.
                                        format(self.obj.name))
