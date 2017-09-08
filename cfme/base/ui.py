@@ -6,7 +6,7 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, SummaryFormItem,
-                                  TimelinesView)
+                                  TimelinesView, Table as table)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
 from widgetastic.utils import Version, VersionPick
@@ -322,6 +322,36 @@ class Configuration(CFMENavigateStep):
             self.prerequisite_view.browser.handle_alert(wait=2, cancel=False, squash=True)
         else:
             self.prerequisite_view.navigation.select('Settings', 'Configuration')
+
+
+class MySettingsView(BaseLoggedInPage):
+
+    @View.nested
+    class tabs(View):  # noqa
+
+        @View.nested
+        class visual_all(Tab):  # noqa
+            TAB_NAME = "Visual"
+
+        @View.nested
+        class default_views(Tab):  # noqa
+            TAB_NAME = "Default Views"
+
+        @View.nested
+        class default_filter(Tab):  # noqa
+            TAB_NAME = "Default Filters"
+
+        @View.nested
+        class time_profile(Tab):  # noqa
+            TAB_NAME = "Time Profiles"
+
+    @property
+    def is_displayed(self):
+        return (
+            self.tabs.visual_all.is_displayed and
+            self.tabs.default_views.is_displayed and
+            self.tabs.default_filter.is_displayed and
+            self.time_profile.is_displayed)
 
 
 @navigator.register(Server)
