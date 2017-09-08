@@ -247,7 +247,7 @@ class DeploymentRoleCollection(NavigatableMixin):
     def instantiate(self, name, provider):
         return DeploymentRoles(name, provider, collection=self)
 
-    def all(self,provider):
+    def all(self, provider):
         view = navigate_to(self, 'All')
         roles = [self.instantiate(name=item.name, provider=provider)
                  for item in view.entities.get_all()]
