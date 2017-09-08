@@ -4,12 +4,24 @@ from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.utils import testgen
 from cfme.utils.version import current_version
+from domain_methods import verify_domain_stopped, verify_domain_running
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
 pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
+
+
+@pytest.yield_fixture(scope="function")
+def domain(provider):
+    domain_list = MiddlewareDomain.domains_in_db(provider=provider, strict=False)
+    assert domain_list, "Domain was not found in DB"
+    domain = domain_list[0]
+    yield domain
+    # make sure domain is started after test execution
+    domain.start_domain()
 
 
 def test_list_domains():
@@ -71,6 +83,26 @@ def test_domain_details(provider):
              .format(dmn_ui.name, dmn_db.name, dmn_mgmt.name))
         dmn_db.validate_properties()
         dmn_mgmt.validate_properties()
+
+
+# enable when MiQ server start functionality is implemented
+@pytest.mark.uncollect
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+def test_domain_stop_start(provider, domain):
+    """Tests domain stop/start operation on UI
+
+    Steps:
+        * Invokes 'Shutdown Domain' toolbar operation
+        * Checks that all servers statuses are stopped in UI, in DB and in MGMT.
+        * Invokes 'Start Domain' toolbar operation
+        * Waits for some time
+        * Checks that domain's all servers statuses are running in UI, in DB and in MGMT.
+    """
+    verify_domain_running(provider, domain)
+    domain.stop_domain()
+    verify_domain_stopped(provider, domain)
+    domain.start_domain()
+    verify_domain_running(provider, domain)
 
 
 def get_domains_set(domains):

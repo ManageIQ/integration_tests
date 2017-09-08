@@ -481,6 +481,7 @@ class DomainToolbar(View):
 class DomainDetailsToolbar(View):
     """The toolbar on the details page"""
     policy = Dropdown('Policy')
+    power = Dropdown('Power')
     download = Button(title='Download summary in PDF format')
 
 
