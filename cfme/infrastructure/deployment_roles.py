@@ -262,7 +262,7 @@ class DeploymentRoleCollection(NavigatableMixin):
 
         view = navigate_to(self, 'All')
 
-        if view.entities.get_all() and roles:
+        if view.entities.get_all(surf_pages=True) and roles:
             for role in roles:
                 try:
                     view.entities.get_entity(role.name).check()
@@ -276,7 +276,6 @@ class DeploymentRoleCollection(NavigatableMixin):
             flash_msg = ("Delete initiated for {} Clusters / Deployment Roles from the CFME "
                          "Database".format(len(roles)))
             view.flash.assert_success_message(flash_msg)
-            view.browser.refresh()
         else:
             raise RoleNotFound('No Deployment Role for Deletion')
 
@@ -311,7 +310,6 @@ class DeploymentRoles(NavigatableMixin):
             assert view.is_displayed
             view.flash.assert_success_message("The selected Clusters / "
                                               "Deployment Roles was deleted")
-            view.browser.refresh()
 
 
 @navigator.register(DeploymentRoleCollection, 'All')
