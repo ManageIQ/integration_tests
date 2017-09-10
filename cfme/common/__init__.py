@@ -8,6 +8,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.wait import wait_for
 from widgetastic_manageiq import BaseNonInteractiveEntitiesView, BreadCrumb
 
 
@@ -84,6 +85,75 @@ class PolicyProfileAssignable(object):
         view.save.click()
         details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
         details_view.flash.assert_no_error()
+
+    def assign_policy_profiles_multiple_entities(self, entities, *policy_profile_names):
+        """ Assign Policy Profiles to selected entity's on Collection All view
+
+        Args:
+            entities: list of entity's from collection table
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        map(self.assigned_policy_profiles.add, policy_profile_names)
+        self._assign_or_unassign_policy_profiles_multiple_entities(
+            entities, True, *policy_profile_names)
+
+    def unassign_policy_profiles_multiple_entities(self, entities, *policy_profile_names):
+        """ UnAssign Policy Profiles to selected entity's on Collection All view
+
+        Args:
+            entities: list of entity's from collection table
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        for pp_name in policy_profile_names:
+            try:
+                self.assigned_policy_profiles.remove(pp_name)
+            except KeyError:
+                pass
+        self._assign_or_unassign_policy_profiles_multiple_entities(
+            entities, False, *policy_profile_names)
+
+    def _assign_or_unassign_policy_profiles_multiple_entities(
+            self, entities, assign, *policy_profile_names):
+
+        """DRY function for managing policy profiles.
+
+        See :py:func:`assign_policy_profiles_multiple_entities`
+         and :py:func:`unassign_policy_profiles_multiple_entities`
+
+        Args:
+            entities: list of entity's from collection table
+            assign: Wheter to assign or unassign.
+            policy_profile_names: :py:class:`str` with Policy Profile names.
+        """
+        view = navigate_to(self, 'All')
+
+        # set item per page for maximum value in order to avoid paging,
+        # that will cancel the already check entity's
+        view.paginator.set_items_per_page(1000)
+
+        # check the entity's on collection ALL view
+        for entity in entities:
+            view.entities.get_entity(name=entity.name, id=entity.id).check()
+
+        wait_for(lambda: view.toolbar.policy.is_enabled, num_sec=5,
+                 message='Policy drop down menu is disabled after checking some entities')
+        view.toolbar.policy.item_select('Manage Policies')
+        # get the object of the Manage Policies view
+        manage_policies_view = self.create_view(navigator.get_class(self, 'ManagePolicies').VIEW)
+
+        for policy_profile in policy_profile_names:
+            if assign:
+                manage_policies_view.policy_profiles.check_node(policy_profile)
+            else:
+                manage_policies_view.policy_profiles.uncheck_node(policy_profile)
+        if manage_policies_view.save.disabled:
+            manage_policies_view.cancel.click()
+        else:
+            manage_policies_view.save.click()
+
+        view.flash.assert_no_error()
 
 
 @navigator.register(PolicyProfileAssignable, 'ManagePoliciesFromDetails')

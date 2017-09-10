@@ -13,6 +13,7 @@ from cfme.containers.provider import (Labelable,
                                       refresh_and_navigate, ContainerObjectDetailsEntities,
                                       GetRandomInstancesMixin)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.log import logger
 from cfme.configure import tasks
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.wait import wait_for, TimedOutError
@@ -114,7 +115,7 @@ class Image(BaseEntity, WidgetasticTaggable, Labelable, LoadDetailsMixin, Policy
 
 
 @attr.s
-class ImageCollection(GetRandomInstancesMixin, BaseCollection):
+class ImageCollection(GetRandomInstancesMixin, BaseCollection, PolicyProfileAssignable):
     """Collection object for :py:class:`Image`."""
 
     ENTITY = Image
@@ -137,6 +138,88 @@ class ImageCollection(GetRandomInstancesMixin, BaseCollection):
             images.append(self.instantiate(name=name, id=image_ref,
                                            provider=provider or get_crud_by_name(ems_name)))
         return images
+
+    def check_compliance_multiple_images(self, image_entities, check_on_entity=True, timeout=240):
+        """Initiates compliance check and waits for it to finish on several Images.
+        Args:
+            image_entities: list of Image entities that need to perform compliance check on them
+            check_on_entity (bool): check the compliance status on the entity summary view if True,
+                                    only run compliance otherwise.
+            timeout (seconds): time for waiting for compliance status
+        """
+
+        # Chose Check Compliance of Last Known Configuration
+        images_view = navigate_to(self, 'All')
+        self.check_image_entities(image_entities)
+        wait_for(lambda: images_view.toolbar.policy.is_enabled, num_sec=5,
+                 message='Policy drop down menu is disabled after checking some Images')
+        images_view.toolbar.policy.item_select('Check Compliance of Last Known Configuration',
+                                  handle_alert=True)
+        images_view.flash.assert_no_error()
+
+        # Verify Image summary
+        if check_on_entity:
+            for image_instance in image_entities:
+                original_state = 'never verified'
+                try:
+                    wait_for(
+                        lambda: image_instance.compliance_status.lower() != original_state,
+                        num_sec=timeout, delay=5,
+                        message='compliance state of Image ID, "{}", still matches {}'
+                                .format(image_instance.id, original_state)
+                    )
+                except TimedOutError:
+                    logger.error('compliance state of Image ID, "{}", is {}'
+                                 .format(image_instance.id, image_instance.compliance_status))
+                    raise TimedOutError('Timeout exceeded, Waited too much'
+                                        ' time for check Compliance finish ({}).'.format(timeout))
+
+    def check_image_entities(self, image_entities):
+        """check rows on Container Images table."""
+        images_view = navigate_to(self, 'All', use_resetter=False)
+        images_view.paginator.set_items_per_page(1000)
+        for image_entity in image_entities:
+            images_view.entities.get_entity(name=image_entity.name, id=image_entity.id).check()
+
+    def perform_smartstate_analysis_multiple_images(
+            self, image_entities, wait_for_finish=False, timeout='20M'):
+        """Performing SmartState Analysis on this Image
+        """
+
+        # task_name change from str to regular expression
+        # the str compile on tasks module
+        task_name = '(?i)(Container Image.*)'
+        task_type = 'container'
+        num_of_tasks = len(image_entities)
+        images_view = navigate_to(self, 'All')
+        self.check_image_entities(image_entities)
+
+        images_view.toolbar.configuration.item_select(
+            'Perform SmartState Analysis', handle_alert=True)
+        for image_entity in image_entities:
+            images_view.flash.assert_success_message(
+                '"{}": Analysis successfully initiated'.format(image_entity.name), partial=True
+            )
+
+        if wait_for_finish:
+            try:
+                # check all tasks state finished
+                tasks.wait_analysis_finished_multiple_tasks(task_name, task_type,
+                                                            num_of_tasks, timeout=timeout)
+
+                # check all task passed successfully with no error
+                if tasks.are_all_tasks_analysis_pass(task_name, num_of_tasks, task_type,
+                                                     silent_failure=True,
+                                                     clear_tasks_after_success=False):
+                    return True
+                else:
+                    logger.error('Some Images SSA tasks finished with error message,'
+                                 ' see logger for more details.')
+                    return False
+
+            except TimedOutError:
+                raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
+                                    .format(timeout))
 
 
 @navigator.register(ImageCollection, 'All')
