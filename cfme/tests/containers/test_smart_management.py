@@ -43,25 +43,25 @@ def get_object_name(obj):
 
 
 def set_random_tag(instance):
-    logger.info("Setting random tag")
+    logger.debug("Setting random tag")
     navigate_to(instance, 'Details')
     toolbar.select('Policy', 'Edit Tags')
 
     # select random tag category
     cat_selector = AngularSelect("tag_cat")
     random_cat = random.choice(cat_selector.all_options)
-    logger.info("Selected category {cat}".format(cat=random_cat))
+    logger.debug("Selected category {cat}".format(cat=random_cat))
     cat_selector.select_by_value(random_cat.value)
 
     # select random tag tag
     tag_selector = AngularSelect("tag_add")
     random_tag = random.choice([op for op in tag_selector.all_options if op.value != "select"])
-    logger.info("Selected value {tag}".format(tag=random_tag))
+    logger.debug("Selected value {tag}".format(tag=random_tag))
     tag_selector.select_by_value(random_tag.value)
 
     # Save tag conig
     form_buttons.save()
-    logger.info("Tag configuration was saved")
+    logger.debug("Tag configuration was saved")
     return Tag(display_name=random_tag.text, category=random_cat.text)
 
 
@@ -72,7 +72,7 @@ def wait_for_tag(obj_inst):
         fail_condition=[],
         num_sec=30, delay=5,
         fail_func=obj_inst.summary.reload).out
-    logger.info("Last tag type: {t}".format(t=type(last_tag)))
+    logger.debug("Last tag type: {t}".format(t=type(last_tag)))
     return last_tag.pop() if isinstance(last_tag, list) else last_tag
 
 
@@ -82,39 +82,39 @@ def wait_for_tag(obj_inst):
                                forced_streams=['5.7'],
                                unblock=lambda test_item: test_item.obj != Container)])
 def test_smart_management_add_tag(provider, test_item):
-    logger.info("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
+    logger.debug("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
     # validate no tag set to project
     if test_item.obj is ContainersProvider:
         obj_inst = provider
     else:
         obj_inst = test_item.obj.get_random_instances(provider, count=1).pop()
 
-    logger.info("Selected object is \"{obj_name}\"".format(obj_name=obj_inst.name))
+    logger.debug('Selected object is "{obj_name}"'.format(obj_name=obj_inst.name))
 
     regex = r"([\w\s|\-|\*]+:([\w\s|\-|\*])+)|(No.*assigned)"
     try:
         # Remove all previous configured tags for given object
-        logger.info('Starting cleaning old tags from '
+        logger.debug('Starting cleaning old tags from '
                     'object "{obj_name}"'.format(obj_name=obj_inst.name))
         obj_inst.remove_tags(obj_inst.get_tags())
-        logger.info("All smart management tags was removed successfully")
+        logger.debug("All smart management tags was removed successfully")
     except RuntimeError:
-        logger.info("Fail to remove tags, checking if no tag set")
+        logger.debug("Fail to remove tags, checking if no tag set")
 
         # Validate old tags formatting
         assert re.match(regex, wait_for_tag(obj_inst).text_value), (
             "Tag formatting is invalid! ")
-        logger.info("No tag was set, continuing to main test")
+        logger.debug("No tag was set, continuing to main test")
 
     # Config random tag for object\
     random_tag_set = set_random_tag(obj_inst)
 
-    logger.info("Fetching tag info for selected object")
+    logger.debug("Fetching tag info for selected object")
     # validate new tag format
     obj_inst.summary.reload()
     tag_display_text = wait_for_tag(obj_inst)
     tag_display_text = tag_display_text.text_value
-    logger.info("Tag info: {info}".format(info=tag_display_text))
+    logger.debug("Tag info: {info}".format(info=tag_display_text))
 
     assert re.match(regex, tag_display_text), "Tag formatting is invalid! "
     actual_tags_on_instance = obj_inst.get_tags()
