@@ -459,6 +459,56 @@ def test_sorting_by_attributes(appliance):
         id_last = resource['id']
 
 
+PAGING_DATA = [
+    (0, 0),
+    (1, 0),
+    (11, 13),
+    (1, 10000),
+]
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.9')
+@pytest.mark.parametrize(
+    'paging', PAGING_DATA, ids=['{},{}'.format(d[0], d[1]) for d in PAGING_DATA])
+@pytest.mark.meta(blockers=[
+    BZ(1489885, forced_streams=['5.9', 'upstream'], unblock=lambda paging: paging[0] != 0),
+])
+def test_rest_paging(appliance, paging):
+    """Tests paging when offset and limit are specified.
+
+    Metadata:
+        test_flag: rest
+    """
+    limit, offset = paging
+    url_string = '{}{}'.format(
+        appliance.rest_api.collections.features._href,
+        '?limit={}&offset={}'.format(limit, offset))
+    response = appliance.rest_api.get(url_string)
+
+    if response['count'] <= offset:
+        expected_subcount = 0
+    elif response['count'] - offset >= limit:
+        expected_subcount = limit
+    else:
+        expected_subcount = response['count'] - offset
+    assert response['subcount'] == expected_subcount
+    assert len(response['resources']) == expected_subcount
+
+    expected_pages_num = (response['count'] / limit) + (1 if response['count'] % limit else 0)
+    assert response['pages'] == expected_pages_num
+
+    links = response['links']
+    assert 'limit={}&offset={}'.format(limit, offset) in links['self']
+    if (offset + limit) < response['count']:
+        assert 'limit={}&offset={}'.format(limit, offset + limit) in links['next']
+    if offset > 0:
+        expected_previous_offset = offset - limit if offset > limit else 0
+        assert 'limit={}&offset={}'.format(limit, expected_previous_offset) in links['previous']
+    assert 'limit={}&offset={}'.format(limit, 0) in links['first']
+    expected_last_offset = (response['pages'] - (1 if limit > 1 else 0)) * limit
+    assert 'limit={}&offset={}'.format(limit, expected_last_offset) in links['last']
+
+
 COLLECTIONS_BUGGY_HREF_SLUG = {'policy_actions', 'automate_domains'}
 
 
