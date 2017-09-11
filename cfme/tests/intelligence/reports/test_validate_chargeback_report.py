@@ -247,7 +247,11 @@ def resource_usage(vm_ownership, appliance, provider):
 
         for record in appliance.db.client.session.query(metrics).filter(
                 metrics.id.in_(result.subquery())):
-            if record.cpu_usagemhz_rate_average:
+            if (record.cpu_usagemhz_rate_average or
+               record.cpu_usage_rate_average or
+               record.derived_memory_used or
+               record.net_usage_rate_average or
+               record.disk_usage_rate_average):
                 return True
         return False
 
