@@ -92,4 +92,4 @@ def add_server_roles(server_roles, server_roles_mode="add"):
         unknown_roles = ', '.join(set(roles_with_vals) - available_roles)
         raise Exception('Unknown server role(s): {}'.format(unknown_roles))
 
-    server_settings.update_server_roles_db(**roles_with_vals)
+    server_settings.update_server_roles_db(roles_with_vals)

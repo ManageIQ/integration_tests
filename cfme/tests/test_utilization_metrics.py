@@ -51,7 +51,7 @@ def enable_candu(appliance):
         yield
     finally:
         candu.disable_all()
-        server_settings.update_server_roles_db(**original_roles)
+        server_settings.update_server_roles_db(original_roles)
 
 
 @pytest.yield_fixture(scope="module")

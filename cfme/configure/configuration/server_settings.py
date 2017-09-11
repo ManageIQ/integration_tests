@@ -233,19 +233,19 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         """
         view = navigate_to(self, 'Details')
         # embedded_ansible server role available from 5.8 version
-        if self.appliance.version < '5.8':
+        if self.appliance.version < '5.8' and 'embedded_ansible' in updates:
             updates.pop('embedded_ansible')
         # cockpit_ws element is not present for downstream version
-        if self.appliance.version != version.UPSTREAM:
+        if self.appliance.version != version.UPSTREAM and 'cockpit_ws' in updates:
             updates.pop('cockpit_ws')
         view.server_roles.fill(updates)
         self._save_action(view, updates, reset)
 
-    def update_server_roles_db(self, **roles):
+    def update_server_roles_db(self, roles):
         """ Set server roles on Configure / Configuration pages.
 
         Args:
-            **roles: Roles specified as in server_roles Form in this module. Set to True or False
+            roles: Roles specified as in server_roles dict in this module. Set to True or False
         """
         if self.server_roles_db == roles:
             logger.debug(' Roles already match, returning...')
@@ -272,11 +272,11 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
     def server_roles_enabled(self, *roles):
         """ Enables Server roles """
-        return self._change_server_roles_state(True, *roles)
+        self._change_server_roles_state(True, *roles)
 
     def server_roles_disabled(self, *roles):
         """ Disable Server roles """
-        return self._change_server_roles_state(False, *roles)
+        self._change_server_roles_state(False, *roles)
 
     def _change_server_roles_state(self, enable, *roles):
         """ Takes care of setting required roles and then restoring original roles.
@@ -286,13 +286,12 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         """
         try:
             original_roles = self.server_roles_db
-            set_roles = {}
+            set_roles = copy(original_roles)
             for role in roles:
                 set_roles[role] = enable
-            self.update_server_roles_db(**set_roles)
-            yield
-        finally:
-            self.update_server_roles_db(**original_roles)
+            self.update_server_roles_db(set_roles)
+        except Exception:
+            self.update_server_roles_db(original_roles)
 
 # ============================= VMware Console Form =================================
 

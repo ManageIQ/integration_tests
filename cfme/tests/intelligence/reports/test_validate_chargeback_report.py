@@ -114,7 +114,7 @@ def enable_candu(provider, appliance):
 
     yield
 
-    server_info.update_server_roles_db(**original_roles)
+    server_info.update_server_roles_db(original_roles)
     candu.disable_all()
 
 
