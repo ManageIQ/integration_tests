@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.base import ZoneCollection
+from fixtures.pytest_store import store
 from cfme.utils.appliance import current_appliance
 from cfme.utils.update import update
 from cfme.utils import error

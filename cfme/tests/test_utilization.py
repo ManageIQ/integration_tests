@@ -38,10 +38,10 @@ def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
     server_settings = ServerInformation()
     try:
-        with server_settings.server_roles_enabled(
-                'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor'):
-            candu.enable_all()
-            yield
+        server_settings.server_roles_enabled(
+            'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+        candu.enable_all()
+        yield
     finally:
         candu.disable_all()
 

@@ -186,7 +186,7 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
         # Replication is up and running, now disable DB sync role
         server_settings.server_roles_disabled('database_synchronization')
         navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
+        wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=True,
                  num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
                  message="get_replication_status")
         server_settings.server_roles_enabled('database_synchronization')
@@ -227,7 +227,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         virtualcenter_provider.create()
         server_settings.server_roles_disabled('database_synchronization')
         navigate_to(appliance.server.zone.region, 'Replication')
-        wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
+        wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=True,
                  num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
                  message="get_replication_status")
         server_settings.server_roles_enabled('database_synchronization')

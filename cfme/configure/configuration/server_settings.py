@@ -199,7 +199,6 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
             if att != 'embedded_ansible' and self.appliance.version > '5.7':
                 setattr(self, att, None)
 
-
 # ============================= Basic Information Form =================================
 
     def update_basic_information(self, updates, reset=False):
@@ -435,25 +434,6 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         """ Returns(dict): custom_support_url fields values"""
         view = navigate_to(self, 'Details')
         return view.custom_support_url.read()
-
-    def _save_action(self, view, updates, reset):
-        """ Take care of actions to do after updates """
-        if reset:
-            try:
-                view.reset_button.click()
-                flash_message = 'All changes have been reset'
-            except Exception:
-                logger.warning('No values was changed')
-        else:
-            view.save_button.click()
-            self.appliance.server_details_changed()
-            flash_message = (
-                'Configuration settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
-                    self.appliance.product_name,
-                    self.appliance.server_name(),
-                    self.appliance.server_id(),
-                    self.appliance.server.zone.name))
-        view.flash.assert_message(flash_message)
 
     def _save_action(self, view, updates, reset):
         """ Take care of actions to do after updates """
