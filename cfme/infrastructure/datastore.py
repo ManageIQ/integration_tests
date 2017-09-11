@@ -9,7 +9,7 @@ from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.host_views import HostsView
-from utils.appliance import Navigatable
+from utils.appliance import NavigatableMixin
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
 from utils.wait import wait_for
@@ -114,14 +114,14 @@ class RegisteredHostsView(HostsView):
         return False
 
 
-class DatastoreCollection(Navigatable):
+class DatastoreCollection(NavigatableMixin):
     """Collection class for `cfme.infrastructure.datastore.Datastore`"""
 
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def instantiate(self, name, provider, type=None):
-        return Datastore(name, provider, type=type, collection=self)
+        return Datastore(name, provider, self, type=type)
 
     def delete(self, *datastores):
         """
@@ -168,7 +168,7 @@ class DatastoreCollection(Navigatable):
                 '"{}": scan successfully initiated'.format(datastore.name))
 
 
-class Datastore(Pretty, Navigatable):
+class Datastore(Pretty, NavigatableMixin):
     """ Model of an infrastructure datastore in cfme
 
     Args:
@@ -177,12 +177,12 @@ class Datastore(Pretty, Navigatable):
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name, provider, type=None, collection=None):
+    def __init__(self, name, provider, collection, type=None):
         self.name = name
         self.type = type
         self.provider = provider
-        self.collection = collection or DatastoreCollection()
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+        self.collection = collection
+        self.appliance = self.collection.appliance
 
     def delete(self, cancel=True):
         """

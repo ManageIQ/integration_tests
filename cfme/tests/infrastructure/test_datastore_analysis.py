@@ -29,7 +29,7 @@ CONTENT_ROWS_TO_CHECK = (
 )
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc, appliance):
     new_idlist = []
     new_argvalues = []
 
@@ -37,7 +37,7 @@ def pytest_generate_tests(metafunc):
         metafunc, PROVIDER_TYPES, required_fields=['datastores'])
     argnames += ['datastore']
 
-    datastore_collection = datastore.DatastoreCollection()
+    datastore_collection = datastore.DatastoreCollection(appliance=appliance)
 
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))

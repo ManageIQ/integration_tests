@@ -16,7 +16,7 @@ from widgetastic_manageiq import (
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import TenantNotFound, DestinationNotFound, OptionNotAvailable
 from cfme.web_ui import match_location
-from utils.appliance import Navigatable
+from utils.appliance import NavigatableMixin
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
@@ -195,16 +195,16 @@ class TenantEditTagsView(TenantView):
             self.entities.breadcrumb.active_location == 'Tag Assignment')
 
 
-class TenantCollection(Navigatable):
+class TenantCollection(NavigatableMixin):
     """Collection object for the :py:class:`cfme.cloud.tenant.Tenant`."""
 
-    def __init__(self, appliance=None):
+    def __init__(self, appliance):
         self.appliance = appliance
 
     def instantiate(self, name, provider):
-        return Tenant(name, provider, collection=self)
+        return Tenant(name, provider, self)
 
-    def create(self, name, provider, appliance=None, wait=True):
+    def create(self, name, provider, wait=True):
         """Add a cloud Tenant from the UI and return the Tenant object"""
         page = navigate_to(self, 'Add')
         changed = page.form.fill({
@@ -282,12 +282,12 @@ class Tenant(Navigatable):
     '''Tenant Class'''
     _param_name = 'Tenant'
 
-    def __init__(self, name, provider, collection=None):
+    def __init__(self, name, provider, collection):
         """Base class for a Tenant"""
         self.name = name
         self.provider = provider
-        self.collection = collection or TenantCollection()
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+        self.collection = collection
+        self.appliance = self.collection.appliance
 
     def wait_for_disappear(self, timeout=300):
         self.provider.refresh_provider_relationships()
