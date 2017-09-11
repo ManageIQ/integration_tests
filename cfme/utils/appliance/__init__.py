@@ -1700,7 +1700,8 @@ class IPAppliance(object):
         yaml = self.get_yaml_config()
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
         self.set_yaml_config(yaml)
-        wait_for(lambda: self.server_roles == roles, num_sec=300, delay=15)
+        wait_for(lambda: self.server_roles == roles, num_sec=300, delay=15,
+                 fail_func=lambda: self.set_yaml_config(yaml))
 
     def enable_embedded_ansible_role(self):
         """Enables embbeded ansible role
@@ -1940,15 +1941,13 @@ class IPAppliance(object):
         self.ssh_client.run_command('service {}-postgresql restart'.format(
             self.db.postgres_version))
         self.ssh_client.run_command(
-            'cd /var/www/miq/vmdb;DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bin/rake evm:db:reset')
+            'cd /var/www/miq/vmdb; bin/rake evm:db:reset')
         self.ssh_client.run_rake_command('db:seed')
         self.ssh_client.run_command('service collectd start')
-        # Work around for https://bugzilla.redhat.com/show_bug.cgi?id=1337525
-        self.ssh_client.run_command('service httpd stop')
-        self.ssh_client.run_command('rm -rf /run/httpd/*')
         self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/*.log*')
         self.ssh_client.run_command('rm -rf /var/www/miq/vmdb/log/apache/*.log*')
         self.ssh_client.run_command('service evmserverd start')
+        self.wait_for_evm_service()
         logger.debug('Cleaned appliance in: {}'.format(round(time() - starttime, 2)))
 
     def set_full_refresh_threshold(self, threshold=100):

@@ -462,8 +462,8 @@ class ServerView(ConfigurationView):
         vm_analysis_collectors_worker_threshold = BootstrapSelect("proxy_worker_threshold")
         websocket_worker_count = BootstrapSelect("websocket_worker_count")
 
-        save = Button('Save Changes')
-        reset = Button('Reset Changes')
+        save = Button('Save')
+        reset = Button('Reset')
 
     @View.nested
     class customlogos(Tab):  # noqa

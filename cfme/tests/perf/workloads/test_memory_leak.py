@@ -1,17 +1,22 @@
-"""Runs Capacity and Utilization Workload."""
-
-from utils import conf
+from utils import conf, testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.grafana import get_scenario_dashboard_urls
 from utils.log import logger
+from utils.providers import ProviderFilter
 from utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
 from utils.workloads import get_memory_leak_scenarios
 import time
 import pytest
 
-pytestmark = [pytest.mark.meta(
-    server_roles="+automate +ems_metrics_collector +ems_metrics_coordinator +ems_metrics_processor")
-]
+roles_memory_leak = ['automate', 'database_operations', 'ems_inventory', 'ems_metrics_collector',
+    'ems_metrics_coordinator', 'ems_metrics_processor', 'ems_operations', 'event', 'notifier',
+    'reporting', 'scheduler', 'user_interface', 'web_services']
+
+pytest_generate_tests = testgen.generate(
+    gen_func=testgen.providers,
+    filters=[ProviderFilter()],
+    scope="module"
+)
 
 
 def prepare_workers(appliance):
@@ -42,7 +47,7 @@ def prepare_workers(appliance):
 
 @pytest.mark.usefixtures('generate_version_files')
 @pytest.mark.parametrize('scenario', get_memory_leak_scenarios())
-def test_workload_memory_leak(request, scenario, appliance, setup_only_one_provider):
+def test_workload_memory_leak(request, scenario, appliance, provider):
     """Runs through provider based scenarios setting one worker instance and maximum threshold and
     running for a set period of time. Memory Monitor creates graphs and summary info."""
     from_ts = int(time.time() * 1000)
@@ -55,7 +60,7 @@ def test_workload_memory_leak(request, scenario, appliance, setup_only_one_provi
         'appliance_name': conf.cfme_performance['appliance']['appliance_name'],
         'test_dir': 'workload-memory-leak',
         'test_name': 'Memory Leak',
-        'appliance_roles': ','.join(appliance.server_roles),
+        'appliance_roles': ','.join(roles_memory_leak),
         'scenario': scenario}
     monitor_thread = SmemMemoryMonitor(appliance.ssh_client, scenario_data)
 
@@ -73,11 +78,10 @@ def test_workload_memory_leak(request, scenario, appliance, setup_only_one_provi
     request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, quantifiers, scenario_data))
 
     monitor_thread.start()
-
+    appliance.update_server_roles({role: True for role in roles_memory_leak})
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
     prepare_workers(appliance)
-    logger.info('Sleeping for Refresh: {}s'.format(scenario['refresh_sleep_time']))
-    time.sleep(scenario['refresh_sleep_time'])
+    provider.create()
 
     total_time = scenario['total_time']
     starttime = time.time()
