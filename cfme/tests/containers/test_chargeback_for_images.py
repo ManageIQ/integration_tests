@@ -68,7 +68,7 @@ def assign_compute_custom_rate(new_chargeback_fixed_rate, provider):
         assign_to="Labeled Container Images",
         docker_labels="Architecture",
         selections={
-            'x86_64': new_chargeback_fixed_rate.description
+            'x86_64': {'Rate': new_chargeback_fixed_rate.description}
         })
     asignment.computeassign()
     logger.info('ASSIGNING COMPUTE RATE FOR LABELED CONTAINER IMAGES')
@@ -78,7 +78,7 @@ def assign_compute_custom_rate(new_chargeback_fixed_rate, provider):
     asignment = assignments.Assign(
         assign_to="Selected Containers Providers",
         selections={
-            provider.name: "Default"
+            provider.name: {'Rate': 'Default'}
         })
     asignment.computeassign()
 

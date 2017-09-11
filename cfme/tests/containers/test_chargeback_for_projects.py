@@ -85,7 +85,7 @@ def assign_compute_custom_rate(new_chargeback_fixed_rate, provider):
     asignment = assignments.Assign(
         assign_to="Selected Containers Providers",
         selections={
-            provider.name: new_chargeback_fixed_rate.description
+            provider.name: {'Rate': new_chargeback_fixed_rate.description}
         })
     asignment.computeassign()
     logger.info('ASSIGNING CUSTOM COMPUTE RATE')
@@ -95,7 +95,7 @@ def assign_compute_custom_rate(new_chargeback_fixed_rate, provider):
     asignment = assignments.Assign(
         assign_to="Selected Containers Providers",
         selections={
-            provider.name: "Default"
+            provider.name: {'Rate': 'Default'}
         })
     asignment.computeassign()
 
