@@ -58,5 +58,4 @@ def pytest_generate_tests(metafunc):
         ProviderEnvironmentMarker()
     ]
     for marker in markers:
-        print marker
         marker.process_env_mark(metafunc)
