@@ -41,6 +41,20 @@ def set_and_test_default_view(group_name, view, page):
     assert tb.is_active(view), "{} view setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
+
+def check_vm_visibility():
+    view = navigate_to(Vm, 'Explore')
+    value = view.sidebar.vmstemplates.tree.read_contents()
+    # Selecting the path and last Vm in the accordion to perform click
+    tree_root = value[0]
+    tree_provider = value[1][0][0]
+    tree_datacenter = value[1][0][1][0][0]
+    length = len(value[1][0][1][0][1])
+    tree_vm = value[1][0][1][0][1][length - 1]
+    view.sidebar.vmstemplates.tree.click_path(tree_root,
+                                              tree_provider, tree_datacenter, tree_vm)
+    return "Instance" in view.title.text
+
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different
 # pages in different releases
 
@@ -84,3 +98,13 @@ def test_infra_details_view():
 
 def test_infra_exists_view():
     set_and_test_view('Compare Mode', 'Exists Mode')
+
+
+def test_vm_visibility_off():
+    DefaultView.set_default_view_switch_off()
+    assert not(check_vm_visibility())
+
+
+def test_vm_visibility_on():
+    DefaultView.set_default_view_switch_on()
+    assert check_vm_visibility()

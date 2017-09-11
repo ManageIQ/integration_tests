@@ -1,4 +1,5 @@
 import re
+
 from navmazing import NavigateToAttribute
 from widgetastic_manageiq import Table, BootstrapSelect, BreadCrumb, Text, ViewButtonGroup
 from widgetastic_patternfly import (BootstrapSwitch,
@@ -382,7 +383,7 @@ class DefaultViewForm(MySettingsView):
     container_builds = ViewButtonGroup("Containers", "Builds")
     container_volumes = ViewButtonGroup("Containers", "Volumes")
     container_templates = ViewButtonGroup("Containers", "Templates")
-
+    vm_visibility = BootstrapSwitch("display_vms")
     save = Button("Save")
 
 
@@ -452,6 +453,20 @@ class DefaultView(Updateable, Navigatable):
         view = navigate_to(cls, 'All')
         value = getattr(view, cls.look_up[button_group_name])
         return value.active_button
+
+    @classmethod
+    def set_default_view_switch_on(cls):
+        view = navigate_to(cls, 'All')
+        if view.vm_visibility.fill(True):
+            view.save.click()
+        return True
+
+    @classmethod
+    def set_default_view_switch_off(cls):
+        view = navigate_to(cls, 'All')
+        if view.vm_visibility.fill(False):
+            view.save.click()
+        return True
 
 
 @navigator.register(DefaultView, 'All')
