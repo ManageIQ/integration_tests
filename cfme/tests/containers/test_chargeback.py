@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
 import fauxfactory
 from humanfriendly import parse_size, tokenize
 import pytest
@@ -8,16 +9,16 @@ from cfme.intelligence.chargeback import assignments, rates
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.fixtures import pytest_selenium as sel
 
-from utils import testgen
-from utils.log import logger
-from utils.units import CHARGEBACK_HEADER_NAMES, parse_number
+from cfme.utils import testgen
+from cfme.utils.log import logger
+from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
 
 
 obj_types = ['Image', 'Project']
-fixed_rates = ['Fixed1', 'Fixed2', 'CpuCores', 'Memory', 'Network']
-variable_rates = ['CpuCores', 'Memory', 'Network']
+fixed_rates = ['Fixed1', 'Fixed2', 'CpuCores', 'Memory']  # , 'Network']
+variable_rates = ['CpuCores', 'Memory']  # , 'Network']
 all_rates = set(fixed_rates + variable_rates)
-intervals = ['Hourly', 'Daily', 'Weekly', 'Monthly']
+intervals = ['Hourly', 'Daily', 'Weekly']  # , 'Monthly']
 rate_types = ['fixed', 'variable']
 
 
@@ -37,7 +38,8 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 # appears in a lower precision (floored). Hence we're using this accuracy coefficient:
 TEST_MATCH_ACCURACY = 0.035
 
-hours_count_lut = {'Hourly': 1., 'Daily': 24., 'Weekly': 168., 'Monthly': 5124.}
+hours_count_lut = OrderedDict([('Hourly', 1.), ('Daily', 24.),
+                               ('Weekly', 168.), ('Monthly', 5124.)])
 
 
 def gen_report_base(obj_type, provider, rate_desc, rate_interval):
@@ -217,10 +219,15 @@ def abstract_test_chargeback_cost(
         if rate_key == 'Memory':
             size_, unit_ = tokenize(row[report_headers.metric_name].upper())
             metric = round(parse_size(str(size_) + unit_, binary=True) / 1048576.0, 2)
+        elif rate_key in ('Fixed1', 'Fixed2'):
+            interval_index = hours_count_lut.keys().index(interval) - 1
+            if interval_index < 0:
+                metric = hours_count_lut[interval]
+            else:
+                metric = hours_count_lut[interval] / hours_count_lut.values()[interval_index - 1]
         else:
             metric = parse_number(row[report_headers.metric_name])
-        interval_factor = parse_number(row[CHARGEBACK_HEADER_NAMES['Fixed1'].metric_name]) /\
-            hours_count_lut[interval]
+        interval_factor = metric / hours_count_lut[interval]
 
         expected_value = round(interval_factor * variable_rate * metric +
                                interval_factor * fixed_rate, 2)
