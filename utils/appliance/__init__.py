@@ -28,7 +28,7 @@ from utils import conf, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventListener
 from utils.log import logger, create_sublogger, logger_wrap
-from utils.net import net_check, resolve_hostname
+from utils.net import net_check
 from utils.path import data_path, patches_path, scripts_path, conf_path
 from utils.ssh import SSHTail
 from utils.version import Version, get_stream, pick
@@ -546,7 +546,7 @@ class IPAppliance(object):
             not recognized, but are present.
         """
         known_ems_list = []
-        for ems in self.rest_api.collections.providers.all:
+        for ems in self.rest_api.collections.providers:
             if not any(
                     p_type in ems['type'] for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
                 continue
