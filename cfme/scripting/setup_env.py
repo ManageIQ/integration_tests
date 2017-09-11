@@ -1,12 +1,3 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""Script to encrypt config files.
-
-Usage:
-
-   scripts/encrypt_conf.py confname1 confname2 ... confnameN
-   scripts/encrypt_conf.py credentials
-"""
 import sys
 import click
 from cfme.test_framework.sprout.client import SproutClient
@@ -22,18 +13,13 @@ def provision_appliances(count, cfme_version, provider, lease_time):
     return apps
 
 
-@click.group(help='Used to provision and configure appliance environments')
-def main():
-    pass
-
-
-@main.command('configure', help='Provisions and configures appliances')
+@click.command('setup-env', help='Provisions and configures appliances')
 @click.option('--cfme-version', required=True)
 @click.option('--lease-time', default=180)
 @click.option('--ha', 'mode', flag_value='ha')
 @click.option('--distributed', 'mode', flag_value='distributed')
 @click.option('--replication', 'mode', flag_value='replication')
-def setup_appliances(cfme_version, lease_time, mode):
+def main(cfme_version, lease_time, mode):
     """setup up appliances in a desired configuration"""
     TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
     pwd = credentials['database']['password']
