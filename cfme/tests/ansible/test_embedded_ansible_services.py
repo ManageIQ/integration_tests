@@ -14,13 +14,12 @@ from cfme.services.myservice import MyService
 from cfme.services.requests import Request
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
-from cfme.utils.version import current_version
 
 
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+embedded_ansible"]),
-    pytest.mark.uncollectif(lambda: current_version() < "5.8"),
+    pytest.mark.uncollectif(lambda: current_appliance.version < "5.8"),
     pytest.mark.ignore_stream("upstream"),
     test_requirements.ansible
 ]
@@ -269,3 +268,21 @@ def test_service_ansible_playbook_order_pass_extra_vars(service_catalog, service
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
         '\\, "', '",').split('" ] } PLAY')[0])
     assert result_dict["some_var"] == "some_value"
+
+
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda host_type: host_type == "blank" or
+    current_appliance.version < "5.8")
+@pytest.mark.parametrize("host_type,host,result", SERVICE_CATALOG_VALUES, ids=[
+    value[0] for value in SERVICE_CATALOG_VALUES])
+def test_service_ansible_playbook_retire(ansible_catalog_item, service_catalog, service_request,
+        service, host_type, host, result):
+    """Test retiring ansible playbook service against default host and unavailable host.
+    """
+    with update(ansible_catalog_item):
+        ansible_catalog_item.retirement.hosts = host
+    service_catalog.order()
+    service_request.wait_for_request()
+    view = navigate_to(service, "Details")
+    service_request.retire()
+    assert result == view.retirement.details.get_text_of("Hosts")
