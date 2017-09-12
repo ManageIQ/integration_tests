@@ -10,9 +10,9 @@ from utils.providers import list_provider_keys, get_mgmt
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--nic-template',
-                        help='NIC Name template to be removed', default="test*", type=str)
+                        help='NIC Name template to be removed', default="test-", type=str)
     parser.add_argument('--pip-template',
-                        help='PIP Name template to be removed', default="test*", type=str)
+                        help='PIP Name template to be removed', default="test-", type=str)
     parser.add_argument('--days-old',
                         help='--days-old argument to find stack items older than X days ',
                         default="7", type=int)
