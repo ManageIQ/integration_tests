@@ -12,6 +12,7 @@ from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.requests import Request
+from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
@@ -211,16 +212,21 @@ def test_service_ansible_playbook_confirm():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda host_type, action: (host_type == "blank" and
+    action == "retirement") or current_appliance.version < "5.8")
 @pytest.mark.parametrize("host_type,order_value,result", SERVICE_CATALOG_VALUES, ids=[
     value[0] for value in SERVICE_CATALOG_VALUES])
-def test_service_ansible_playbook_order(ansible_catalog_item, service_catalog, service_request,
-        service, host_type, order_value, result):
-    """Test ordering ansible playbook service against default host, blank field and
+@pytest.mark.parametrize("action", ["provisioning", "retirement"])
+def test_service_ansible_playbook_order_retire(ansible_catalog_item, service_catalog,
+        service_request, service, host_type, order_value, result, action):
+    """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.
     """
     service_catalog.ansible_dialog_values = {"hosts": order_value}
     service_catalog.order()
     service_request.wait_for_request()
+    if action == "retirement":
+        service.retire()
     view = navigate_to(service, "Details")
     assert result == view.provisioning.details.get_text_of("Hosts")
 
@@ -268,21 +274,3 @@ def test_service_ansible_playbook_order_pass_extra_vars(service_catalog, service
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
         '\\, "', '",').split('" ] } PLAY')[0])
     assert result_dict["some_var"] == "some_value"
-
-
-@pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda host_type: host_type == "blank" or
-    current_appliance.version < "5.8")
-@pytest.mark.parametrize("host_type,host,result", SERVICE_CATALOG_VALUES, ids=[
-    value[0] for value in SERVICE_CATALOG_VALUES])
-def test_service_ansible_playbook_retire(ansible_catalog_item, service_catalog, service_request,
-        service, host_type, host, result):
-    """Test retiring ansible playbook service against default host and unavailable host.
-    """
-    with update(ansible_catalog_item):
-        ansible_catalog_item.retirement.hosts = host
-    service_catalog.order()
-    service_request.wait_for_request()
-    view = navigate_to(service, "Details")
-    service_request.retire()
-    assert result == view.retirement.details.get_text_of("Hosts")
