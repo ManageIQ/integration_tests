@@ -58,6 +58,10 @@ class OpenstackInfraProvider(InfraProvider):
     mgmt_class = OpenstackInfraSystem
     db_types = ["Openstack::InfraManager"]
     endpoints_form = OpenStackInfraEndpointForm
+    bad_credentials_error_msg = (
+        'Credential validation was not successful: ',
+        'Login failed due to a bad username or password.'
+    )
 
     def __init__(self, name=None, endpoints=None, key=None, hostname=None, ip_address=None,
                  start_ip=None, end_ip=None, provider_data=None, appliance=None):
