@@ -75,6 +75,12 @@ def ansible_catalog_item(ansible_repository):
             "create_new": True,
             "provisioning_dialog_name": fauxfactory.gen_alphanumeric(),
             "extra_vars": [("some_var", "some_value")]
+        },
+        retirement={
+            "repository": ansible_repository.name,
+            "playbook": "dump_all_variables.yml",
+            "machine_credential": "CFME Default Credential",
+            "extra_vars": [("some_var", "some_value")]
         }
     )
     cat_item.create()
@@ -229,12 +235,6 @@ def test_service_ansible_playbook_order(ansible_catalog_item, service_catalog, s
 def test_service_ansible_playbook_plays_table(ansible_catalog_item, service_catalog,
         service_request, service, soft_assert):
     """Plays table in provisioned and retired service should contain at least one row."""
-    with update(ansible_catalog_item):
-        ansible_catalog_item.retirement = {
-            "repository": ansible_catalog_item.provisioning["repository"],
-            "playbook": ansible_catalog_item.provisioning["playbook"],
-            "machine_credential": ansible_catalog_item.provisioning["machine_credential"]
-        }
     service_catalog.order()
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
@@ -259,12 +259,17 @@ def test_service_ansible_playbook_order_credentials(ansible_catalog_item, ansibl
 
 
 @pytest.mark.tier(3)
-def test_service_ansible_playbook_order_pass_extra_vars(service_catalog, service_request, service):
-    """Test if extra vars passed into ansible during ansible playbook service provision."""
+@pytest.mark.parametrize("action", ["provisioning", "retirement"])
+def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_request, service,
+        action):
+    """Test if extra vars passed into ansible during ansible playbook service provision and
+    retirement."""
     service_catalog.order()
     service_request.wait_for_request()
     view = navigate_to(service, "Details")
-    pre = view.provisioning.standart_output.text
+    if action == "retirement":
+        service.retire()
+    pre = getattr(view, action).standart_output.text
     json_str = pre.split("--------------------------------")
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
         '\\, "', '",').split('" ] } PLAY')[0])

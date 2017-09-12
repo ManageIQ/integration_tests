@@ -152,7 +152,7 @@ class SelectCatalogItemTypeView(ServicesCatalogView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer() and
+            self.in_explorer and
             self.title.text == "Adding a new Service Catalog Item" and
             self.catalog_item_type.is_displayed
         )
@@ -200,7 +200,7 @@ class DetailsAnsibleCatalogItemView(ServicesCatalogView):
     @property
     def is_displayed(self):
         return (
-            self.in_explorer() and
+            self.in_explorer and
             self.entities.title.text == 'Service Catalog Item "{}"'.format(
                 self.context["object"].name
             )

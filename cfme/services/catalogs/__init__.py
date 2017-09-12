@@ -9,6 +9,8 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class ServicesCatalogView(BaseLoggedInPage):
+
+    @property
     def in_explorer(self):
         return (
             self.logged_in_as_current_user and
