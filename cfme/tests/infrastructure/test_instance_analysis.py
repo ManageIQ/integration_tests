@@ -337,7 +337,8 @@ def detect_system_type(vm):
 
 @pytest.mark.tier(1)
 @pytest.mark.long_running
-def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data):
+def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data,
+                      appliance):
     """ Tests SSA can be performed on a template
 
     Metadata:
@@ -350,7 +351,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
     # Set credentials to all hosts set for this datastore
     if provider.type in ['virtualcenter', 'rhevm']:
         datastore_name = vm_analysis_data['datastore']
-        datastore_collection = datastore.DatastoreCollection()
+        datastore_collection = datastore.DatastoreCollection(appliance=appliance)
         test_datastore = datastore_collection.instantiate(name=datastore_name, provider=provider)
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
         host_names = [h.name for h in test_datastore.get_hosts()]
