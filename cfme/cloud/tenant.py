@@ -278,7 +278,7 @@ class TenantCollection(NavigatableMixin):
         # it is not shown in current UI, so not asserting
 
 
-class Tenant(Navigatable):
+class Tenant(NavigatableMixin):
     '''Tenant Class'''
     _param_name = 'Tenant'
 
