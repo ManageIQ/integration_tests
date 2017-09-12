@@ -1,10 +1,10 @@
-from utils import conf, testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.grafana import get_scenario_dashboard_urls
-from utils.log import logger
-from utils.providers import ProviderFilter
-from utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
-from utils.workloads import get_memory_leak_scenarios
+from cfme.utils import conf, testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.grafana import get_scenario_dashboard_urls
+from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
+from cfme.utils.workloads import get_memory_leak_scenarios
 import time
 import pytest
 
@@ -22,26 +22,27 @@ pytest_generate_tests = testgen.generate(
 def prepare_workers(appliance):
     """Set single instance of each worker type and maximum threshold"""
     view = navigate_to(appliance.server, 'Workers')
-    view.workers.generic_worker_count.fill('1')
-    view.workers.cu_data_collector_worker_count.fill('1')
-    view.workers.ui_worker_count.fill('1')
-    view.workers.reporting_worker_count.fill('1')
-    view.workers.web_service_worker_count.fill('1')
-    view.workers.priority_worker_count.fill('1')
-    view.workers.cu_data_processor_worker_count.fill('1')
-    view.workers.vm_analysis_collectors_worker_count.fill('1')
-    view.workers.websocket_worker_count.fill('1')
-
-    view.workers.generic_worker_threshold.fill('1.5 GB')
-    view.workers.cu_data_collector_worker_threshold.fill('1.5 GB')
-    view.workers.event_monitor_worker_threshold.fill('10 GB')
-    view.workers.connection_broker_worker_threshold.fill('10 GB')
-    view.workers.reporting_worker_threshold.fill('1.5 GB')
-    view.workers.web_service_worker_threshold.fill('1.5 GB')
-    view.workers.priority_worker_threshold.fill('1.5 GB')
-    view.workers.cu_data_processor_worker_threshold.fill('1.5 GB')
-    view.workers.refresh_worker_threshold.fill('10 GB')
-    view.workers.vm_analysis_collectors_worker_threshold.fill('1.5 GB')
+    view.workers.fill({
+        "generic_worker_count": "1",
+        "cu_data_collector_worker_count": "1",
+        "ui_worker_count": "1",
+        "reporting_worker_count": "1",
+        "web_service_worker_count": "1",
+        "priority_worker_count": "1",
+        "cu_data_processor_worker_count": "1",
+        "vm_analysis_collectors_worker_count": "1",
+        "websocket_worker_count": "1",
+        "generic_worker_threshold": "1.5 GB",
+        "cu_data_collector_worker_threshold": "1.5 GB",
+        "event_monitor_worker_threshold": "10 GB",
+        "connection_broker_worker_threshold": "10 GB",
+        "reporting_worker_threshold": "1.5 GB",
+        "web_service_worker_threshold": "1.5 GB",
+        "priority_worker_threshold": "1.5 GB",
+        "cu_data_processor_worker_threshold": "1.5 GB",
+        "refresh_worker_threshold": "10 GB",
+        "vm_analysis_collectors_worker_threshold": "1.5 GB"
+    })
     view.workers.save.click()
 
 
