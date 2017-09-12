@@ -26,7 +26,15 @@ def host(provider):
     raise HostNotFound('There is no proper host for tests')
 
 
-def test_scale_provider_down(provider, host):
+@pytest.fixture(scope='module')
+def has_mistral_service(provider):
+    """Skip test if there is no Mistral service on OSPd provider"""
+    services = provider.mgmt.kapi.services.list()
+    if 'mistral' not in [s.name for s in services]:
+        pytest.skip('Skipping because no Mistral service found on OSPD deployment')
+
+
+def test_scale_provider_down(provider, host, has_mistral_service):
     """Scale down Openstack Infrastructure provider
     Metadata:
         test_flag: openstack_scale"""
@@ -45,7 +53,7 @@ def test_scale_provider_down(provider, host):
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
-def test_delete_host(host, provider):
+def test_delete_host(host, provider, has_mistral_service):
     """Remove host from appliance and Ironic service
     Metadata:
         test_flag: openstack_scale"""
@@ -59,7 +67,7 @@ def test_delete_host(host, provider):
     assert host.name not in get_all_hosts()
 
 
-def test_register_host(provider, host):
+def test_register_host(provider, host, has_mistral_service):
     """Register new host by uploading instackenv.json file
     Metadata:
         test_flag: openstack_scale"""
@@ -77,7 +85,7 @@ def test_register_host(provider, host):
     assert host.exists
 
 
-def test_introspect_host(host, provider):
+def test_introspect_host(host, provider, has_mistral_service):
     """Introspect host
     Metadata:
         test_flag: openstack_scale"""
@@ -89,7 +97,7 @@ def test_introspect_host(host, provider):
     assert host.get_detail('Openstack Hardware', 'Introspected') == 'true'
 
 
-def test_provide_host(host, provider):
+def test_provide_host(host, provider, has_mistral_service):
     """Provide host
     Metadata:
         test_flag: openstack_scale"""
@@ -101,7 +109,7 @@ def test_provide_host(host, provider):
     assert host.get_detail('Openstack Hardware', 'Provisioning State') == 'available'
 
 
-def test_scale_provider_out(host, provider):
+def test_scale_provider_out(host, provider, has_mistral_service):
     """Scale out Infra provider
     Metadata:
         test_flag: openstack_scale"""
