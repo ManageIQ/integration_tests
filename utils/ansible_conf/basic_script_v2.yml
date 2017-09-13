@@ -1,0 +1,22 @@
+- hosts: 127.0.0.1
+  tasks:
+  - name:
+    script:
+      name:
+      type:
+      state:
+      provider:
+        auth_key:
+        hostname:
+        port: 8443
+        verify_ssl: false
+      metrics:
+        role: 'hawkular'
+        hostname:
+        port: 443
+        verify_ssl: false
+      manageiq_connection:
+        url:
+        username:
+        password:
+        verify_ssl: false

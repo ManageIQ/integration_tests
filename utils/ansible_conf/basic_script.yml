@@ -1,0 +1,8 @@
+- hosts: localhost
+  tasks:
+  - script:
+      state: present
+      miq_verify_ssl: false
+    name:
+    register: result
+  - {debug: var=result}

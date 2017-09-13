@@ -38,12 +38,10 @@ def ansible_tags():
 
 
 def get_smart_management(provider):
-    index = 0
     smart_management_tags = []
     if isinstance(provider.summary.smart_management.my_company_tags, list):
         for tag in provider.summary.smart_management.my_company_tags:
             smart_management_tags.append(tag.value)
-            index += 1
     else:
         smart_management_tags.append(provider.summary.smart_management.my_company_tags)
     return smart_management_tags
@@ -56,7 +54,7 @@ def clean_tags(provider):
     run_ansible('remove_tags')
 
 
-@pytest.mark.polarion('CMP-11111')
+@pytest.mark.polarion('CMP-10690')
 @pytest.mark.usefixtures('setup_provider')
 def test_add_tags(ansible_tags, provider):
     """This test adds tags to the Containers Provider
@@ -72,7 +70,7 @@ def test_add_tags(ansible_tags, provider):
         assert full_string in gui_tags
 
 
-@pytest.mark.polarion('CMP-11112')
+@pytest.mark.polarion('CMP-10691')
 @pytest.mark.usefixtures('setup_provider')
 def test_remove_tags(ansible_tags, provider):
     """This test removes tags from the Containers Provider
