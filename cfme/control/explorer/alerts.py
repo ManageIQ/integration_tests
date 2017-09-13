@@ -4,7 +4,7 @@ from copy import copy
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Checkbox, Text, View
-from widgetastic_manageiq import AlertEmail, SNMPForm
+from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
@@ -40,6 +40,9 @@ class AlertFormCommon(ControlExplorerView):
         performance_field_value = Input(name="value_threshold")
         performance_trend = BootstrapSelect("trend_direction")
         performance_time_threshold = BootstrapSelect("rt_time_threshold")
+        # Hardware Reconfigured Parameters
+        hardware_attribute = BootstrapSelect("select_hdw_attr")
+        operator = BootstrapSelect("select_operator")
 
         def fill(self, values):
             new_values = dict(type=values[0], **values[1])
@@ -93,6 +96,8 @@ class EditAlertView(AlertFormCommon):
 
 class AlertDetailsView(ControlExplorerView):
     title = Text("#explorer_title_text")
+    info = SummaryForm("Info")
+    hardware_reconfigured_parameters = SummaryForm("Hardware Reconfigured Parameters")
 
     @property
     def is_displayed(self):
