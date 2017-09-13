@@ -9,8 +9,11 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, match_location,\
     PagedTable, CheckboxTable
-from cfme.containers.provider import details_page, Labelable,\
-    ContainerObjectAllBaseView
+from cfme.containers.provider import (details_page,
+                                      Labelable,
+                                      ContainerObjectAllBaseView,
+                                      ProviderDetailsView,
+                                      UtilizationView)
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
@@ -90,6 +93,7 @@ class All(CFMENavigateStep):
 @navigator.register(Pod, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
+    VIEW = ProviderDetailsView
 
     def am_i_here(self):
         return match_page(summary='{} (Summary)'.format(self.obj.name))
@@ -98,3 +102,16 @@ class Details(CFMENavigateStep):
         tb.select('List View')
         sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name,
                                                            'Project Name': self.obj.project_name}))
+
+
+class PodUtilizationView(UtilizationView):
+    PLOTS_TITLES = ('Cores Used', 'Memory (MB)', 'Network I/O (KBps)')
+
+
+@navigator.register(Pod, 'Utilization')
+class Utilization(CFMENavigateStep):
+    VIEW = PodUtilizationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.monitor.item_select('Utilization')

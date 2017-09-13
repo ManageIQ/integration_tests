@@ -12,8 +12,11 @@ from widgetastic_manageiq import (BootstrapSelect, Button, Table, Accordion, Man
                                   PaginationPane, BaseNonInteractiveEntitiesView)
 
 from cfme.common import Taggable, SummaryMixin
-from cfme.containers.provider import ContainersProvider, Labelable,\
-    ContainerObjectAllBaseView, LoggingableView
+from cfme.containers.provider import (ContainersProvider,
+                                      Labelable,
+                                      ContainerObjectAllBaseView,
+                                      LoggingableView,
+                                      UtilizationView)
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
@@ -224,8 +227,10 @@ class ManagePolicies(CFMENavigateStep):
         self.prerequisite_view.policy.item_select('Manage Policies')
 
 
-class NodeUtilizationView(NodeView):
+class NodeUtilizationView(NodeView, UtilizationView):
     # TODO manageIQ/patternfly C&U view/widget?
+
+    PLOTS_TITLES = ('CPU (%)', 'Memory (MB)', 'Network I/O (KBps)')
 
     @property
     def is_displayed(self):

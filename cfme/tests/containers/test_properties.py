@@ -17,7 +17,11 @@ from cfme.containers.volume import Volume
 from utils import testgen, version
 from utils.version import current_version
 from utils.soft_get import soft_get
+from utils.wait import wait_for
+from utils.log import logger
 
+from utils.appliance.implementations.ui import navigate_to
+from navmazing import NavigationDestinationNotFound
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -133,9 +137,7 @@ TEST_ITEMS = [
     )
 ]
 
-
-@pytest.mark.parametrize('test_item', TEST_ITEMS,
-                         ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
+@pytest.mark.parametrize('test_item', TEST_ITEMS, ids=lambda x: str(x))
 def test_properties(provider, test_item, soft_assert):
 
     if current_version() < "5.7" and test_item.obj == Template:
@@ -155,6 +157,20 @@ def test_properties(provider, test_item, soft_assert):
             except AttributeError:
                 soft_assert(False, '{} "{}" properties table has missing field - "{}"'
                                    .format(test_item.obj.__name__, instance.name, field))
+        check_has_plots(instance)
+
+
+def check_has_plots(item):
+    try:
+        utilisation_view = navigate_to(item, 'Utilization')
+    except NavigationDestinationNotFound:
+        logger.warning('Tried to navigate to Utilization view but '
+                       'no such view has been registered with %s.', item)
+    else:
+        for title in utilisation_view.PLOTS_TITLES:
+            logger.debug("Waiting for plot with title '%s' to appear", title)
+            wait_for(utilisation_view.has_plot, (title,), fail_condition=False,
+                    num_sec=60)
 
 
 def test_pods_conditions(provider, appliance, soft_assert):

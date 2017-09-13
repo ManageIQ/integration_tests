@@ -438,6 +438,29 @@ class AdHocMain(CFMENavigateStep):
         self.prerequisite_view.monitor.item_select('Ad hoc Metrics')
 
 
+class UtilizationView(BaseLoggedInPage):
+    PLOTS_TITLES = ('CPU (%)', 'Memory (MB)', 'Network I/O (KBps)')
+
+    @property
+    def is_displayed(self):
+        return (match_page(summary='{} Capacity & Utilization'.format(
+            self.context['object'].name)))
+
+    def has_plot(self, title):
+        return sel.is_displayed(
+            "//*[@class='card-pf']"
+            "//*[@class='card-pf-title' and text()='{}']".format(title))
+
+
+@navigator.register(ContainersProvider, 'Utilization')
+class Utilization(CFMENavigateStep):
+    VIEW = UtilizationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.monitor.item_select('Utilization')
+
+
 class ContainerObjectAllBaseView(ProvidersView):
     """Base class for container object All view.
     TITLE_TEXT should be defined in child."""
@@ -500,6 +523,12 @@ class ContainersTestItem(object):
                 pretty_id = cls.get_pretty_id(arg)
                 if pretty_id:
                     return pretty_id
+
+    def __str__(self):
+        return self.pretty_id()
+        return "{}, {}, {!r}".format(self.__class__.__name__,
+                                     self.obj,
+                                     self.__dict__)
 
 
 class Labelable(object):

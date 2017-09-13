@@ -143,9 +143,14 @@ class ContainerTimeLines(CFMENavigateStep):
         mon_btn('Timelines')
 
 
+class ContainerUtilizationView(UtilizationView):
+    PLOTS_TITLES = ('CPU (%)', 'Memory (MB)', 'Network I/O (KBps)')
+
+
 @navigator.register(Container, 'Utilization')
-class ContainerUtilization(CFMENavigateStep):
+class Utilization(CFMENavigateStep):
+    VIEW = ContainerUtilizationView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Utilization')
+        self.prerequisite_view.monitor.item_select('Utilization')
