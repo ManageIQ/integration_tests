@@ -10,7 +10,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import DestinationNotFound, StackNotFound, CandidateNotFound
 from cfme.web_ui import match_location
 from cfme.exceptions import CFMEException
-from utils.appliance import Navigatable
+from utils.appliance import NavigatableMixin
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.wait import wait_for
@@ -252,15 +252,14 @@ class StackResourcesView(StackView):
             self.entities.breadcrumb.active_location == expected_title)
 
 
-class StackCollection(Navigatable):
+class StackCollection(NavigatableMixin):
     """Collection class for cfme.cloud.stack.Stack"""
 
-    def __init__(self, appliance=None):
+    def __init__(self, appliance):
         self.appliance = appliance
-        Navigatable.__init__(self, appliance=self.appliance)
 
     def instantiate(self, name, provider, quad_name=None):
-        return Stack(name, provider, quad_name=quad_name, collection=self)
+        return Stack(name, provider, self, quad_name=quad_name)
 
     def delete(self, *stacks):
         stacks = list(stacks)
@@ -292,16 +291,16 @@ class StackCollection(Navigatable):
             raise ValueError('Some Stacks not found in the UI')
 
 
-class Stack(Pretty, Navigatable):
+class Stack(Pretty, NavigatableMixin):
     _param_name = "Stack"
     pretty_attrs = ['name']
 
-    def __init__(self, name, provider, quad_name=None, collection=None):
+    def __init__(self, name, provider, collection, quad_name=None):
         self.name = name
         self.quad_name = quad_name or 'stack'
         self.provider = provider
-        self.collection = collection or StackCollection()
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+        self.collection = collection
+        self.appliance = self.collection.appliance
 
     @property
     def exists(self):

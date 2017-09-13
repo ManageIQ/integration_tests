@@ -89,13 +89,13 @@ def test_delete_resource_pool_appear_after_refresh(setup_provider, provider):
 
 @pytest.mark.meta(blockers=[1335961, 1467989])
 @pytest.mark.ignore_stream("upstream")
-def test_delete_datastore_appear_after_refresh(setup_provider, provider):
+def test_delete_datastore_appear_after_refresh(setup_provider, provider, appliance):
     """ Tests delete datastore
 
     Metadata:
         test_flag: delete_object
     """
-    datastore_collection = datastore.DatastoreCollection()
+    datastore_collection = datastore.DatastoreCollection(appliance=appliance)
     data_store = provider.data['remove_test']['datastore']
     test_datastore = datastore_collection.instantiate(name=data_store, provider=provider)
     details_view = navigate_to(test_datastore, 'Details')

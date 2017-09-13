@@ -12,7 +12,7 @@ from cfme.exceptions import KeyPairNotFound
 
 from cfme.web_ui import match_location, mixins
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from utils.appliance import Navigatable
+from utils.appliance import NavigatableMixin
 from utils.wait import wait_for
 
 
@@ -110,14 +110,13 @@ class KeyPairAddView(KeyPairView):
     form = View.nested(KeyPairAddForm)
 
 
-class KeyPairCollection(Navigatable):
+class KeyPairCollection(NavigatableMixin):
     """ Collection object for the :py:class: `cfme.cloud.KeyPair`. """
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def instantiate(self, name, provider, public_key=None, appliance=None):
-        return KeyPair(name, provider,
-                       public_key=public_key or "",
-                       appliance=appliance or self.appliance,
-                       collection=self)
+        return KeyPair(name=name, provider=provider, collection=self, public_key=public_key or "")
 
     def create(self, name, provider, public_key=None, cancel=False):
         """Create new keyPair.
@@ -150,11 +149,10 @@ class KeyPairCollection(Navigatable):
                  fail_func=view.flush_widget_cache, handle_exception=True)
         assert view.is_displayed
         view.entities.flash.assert_success_message(flash_message)
-        keypair = self.instantiate(name, provider, public_key=public_key)
-        return keypair
+        return self.instantiate(name, provider, public_key=public_key)
 
 
-class KeyPair(Navigatable):
+class KeyPair(NavigatableMixin):
     """ Automate Model page of KeyPairs
 
     Args:
@@ -162,9 +160,9 @@ class KeyPair(Navigatable):
     """
     _param_name = "KeyPair"
 
-    def __init__(self, name, provider, public_key=None, appliance=None, collection=None):
-        self.collection = collection or KeyPairCollection(appliance=appliance)
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+    def __init__(self, name, provider, collection, public_key=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         self.provider = provider
         self.public_key = public_key or ""
