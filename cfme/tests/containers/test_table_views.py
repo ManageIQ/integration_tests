@@ -28,7 +28,7 @@ VIEWS = ('Grid View', 'Tile View', 'List View')
 # to DefaultView and keep the order of the LUT
 objects_mapping = OrderedDict({  # <object> : <ui name>
     ContainersProvider: 'Containers Providers',
-    Image: 'Images',
+    Image: 'Container Images',
     ImageRegistry: 'Image Registries',
     Project: 'Projects',
     Route: 'Routes',
