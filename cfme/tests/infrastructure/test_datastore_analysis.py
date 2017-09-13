@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb, Quadicon, InfoBlock
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.wait import wait_for
 import pytest

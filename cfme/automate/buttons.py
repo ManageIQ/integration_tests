@@ -4,7 +4,6 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic.widget import Text, Checkbox
-from widgetastic.utils import VersionPick
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
@@ -12,7 +11,6 @@ from widgetastic_patternfly import CandidateNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.update import Updateable
-from cfme.utils import version
 
 from . import AutomateCustomizationView
 
