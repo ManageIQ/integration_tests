@@ -453,6 +453,7 @@ class IPAppliance(object):
             self.ssh_client.run_command("service auditd restart", ensure_host=True)
 
             self.deploy_merkyl(start=True, log_callback=log_callback)
+            self.add_ca_certs(('cmqe-tests-openshift-signer.crt',))
             if fix_ntp_clock:
                 self.fix_ntp_clock(log_callback=log_callback)
                 # TODO: Handle external DB setup
@@ -1074,6 +1075,19 @@ class IPAppliance(object):
             client.run_command('systemctl restart merkyl')
             log_callback("Setting it to start after reboot")
             client.run_command("chkconfig merkyl on")
+
+    @logger_wrap("Adding ca certs: {}")
+    def add_ca_certs(self, cert_filenames, log_callback=None):
+        """Deploys CA cert"""
+
+        client = self.ssh_client
+        for filename in cert_filenames:
+            log_callback('Sending {} to appliance'.format(filename))
+            client.put_file(
+                data_path.join('cert-auths', filename).strpath,
+                os.path.join('/etc/pki/ca-trust/source/anchors', filename))
+
+        client.run_command('update-ca-trust')
 
     def get_repofile_list(self):
         """Returns list of repofiles present at the appliance.
