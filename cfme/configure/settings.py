@@ -298,7 +298,7 @@ class VisualTabForm(MySettingsView):
 
     @View.nested
     class visualquadicons(View):    # noqa
-        infra_provider = BootstrapSwitch("quadicons_ems")
+        infra_provider_quad = BootstrapSwitch("quadicons_ems")
         cloud_provider_quad = BootstrapSwitch("quadicons_ems_cloud")
         host_quad = BootstrapSwitch("quadicons_host")
         datastore_quad = BootstrapSwitch("quadicons_storage")
