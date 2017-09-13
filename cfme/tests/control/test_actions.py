@@ -360,6 +360,27 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
         pytest.fail("CFME did not prevent starting of the VM {}".format(vm.name))
 
 
+@pytest.mark.meta(blockers=[1439331])
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    OpenStackProvider, AzureProvider))
+def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
+    """This test sets the policy that prevents VM retiring.
+
+    Metadata:
+        test_flag: actions, provision
+    """
+    policy_for_testing.assign_actions_to_event("VM Retire Request",
+        ["Prevent current event from proceeding"])
+    request.addfinalizer(policy_for_testing.assign_events)
+    vm.crud.retire()
+    try:
+        wait_for(lambda: vm.crud.is_retired, num_sec=600, delay=15)
+    except TimedOutError:
+        pass
+    else:
+        pytest.fail("CFME did not prevent retire of the VM {}".format(vm.name))
+
+
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
     OpenStackProvider, AzureProvider))
 def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testing):
