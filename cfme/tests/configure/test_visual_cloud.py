@@ -6,7 +6,7 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.flavor import Flavor
+from cfme.cloud.flavor import FlavorCollection
 from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
@@ -23,7 +23,7 @@ pytestmark = [pytest.mark.tier(3),
 grid_pages = [CloudProvider,
               AvailabilityZone,
               TenantCollection,
-              Flavor,
+              FlavorCollection,
               Instance,
               StackCollection,
               KeyPairCollection]

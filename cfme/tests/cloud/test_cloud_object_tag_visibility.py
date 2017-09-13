@@ -3,7 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.availability_zone import AvailabilityZone
-from cfme.cloud.flavor import Flavor
+from cfme.cloud.flavor import FlavorCollection
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
 from cfme.cloud.keypairs import KeyPair
@@ -27,7 +27,7 @@ def a_provider(request):
 test_items = [
     ('providers', CloudProvider),
     ('availability_zones', AvailabilityZone),
-    ('flavors', Flavor),
+    ('flavors', FlavorCollection),
     ('instances', Instance),
     ('templates', Image),
     ('stacks', Stack)
