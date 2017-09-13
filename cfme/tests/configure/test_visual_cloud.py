@@ -158,5 +158,5 @@ def test_cloud_start_page(request, appliance, start_page):
 
 
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):
-    navigate_to(CloudProvider, 'All')
-    assert visual.check_image_exists, "Image View Failed!"
+    view = navigate_to(CloudProvider, 'All')
+    assert view.entities.get_all()[0].data is None

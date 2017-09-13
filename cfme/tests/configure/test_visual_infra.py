@@ -213,13 +213,13 @@ def test_infra_start_page(request, appliance, start_page):
 
 
 def test_infraprovider_noquads(request, set_infra_provider_quad):
-    navigate_to(InfraProvider, 'All')
-    assert visual.check_image_exists, "Image View Failed!"
+    view = navigate_to(InfraProvider, 'All')
+    assert view.entities.get_all()[0].data is None
 
 
 def test_host_noquads(request, set_host_quad):
-    navigate_to(Host, 'All')
-    assert visual.check_image_exists, "Image View Failed!"
+    view = navigate_to(Host, 'All')
+    assert not bool(view.entities.get_all()[0].data)
 
 
 def test_datastore_noquads(request, set_datastore_quad, appliance):
