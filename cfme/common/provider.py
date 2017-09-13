@@ -102,6 +102,10 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         return self.type_name
 
     @property
+    def id(self):
+        return self.get_provider_id()
+
+    @property
     def version(self):
         return self.data['version']
 
