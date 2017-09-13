@@ -116,7 +116,7 @@ class KeyPairCollection(NavigatableMixin):
         self.appliance = appliance
 
     def instantiate(self, name, provider, public_key=None, appliance=None):
-        return KeyPair(name, provider, self, public_key=public_key or "")
+        return KeyPair(name=name, provider=provider, collection=self, public_key=public_key or "")
 
     def create(self, name, provider, public_key=None, cancel=False):
         """Create new keyPair.
