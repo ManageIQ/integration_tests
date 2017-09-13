@@ -326,7 +326,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         original_state = self.compliance_status
         view.toolbar.policy.item_select("Check Compliance of Last Known Configuration",
             handle_alert=True)
-        view.flash.assert_no_errors()
+        view.flash.assert_no_error()
         wait_for(
             lambda: self.compliance_status != original_state,
             num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
