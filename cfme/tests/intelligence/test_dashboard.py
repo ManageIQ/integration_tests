@@ -54,6 +54,9 @@ def test_widgets_operation(dashboards, widgets, soft_assert, infra_provider):
         #     assert not widget.is_zoomed
         widget.footer
         widget.contents
+        if widget.content_type in ['chart', 'table']:
+            widget.widget_view.menu.select("Download PDF")
+        assert widget.dashboard.dashboard_view.is_displayed
 
 
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
