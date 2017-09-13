@@ -36,10 +36,11 @@ def test_set_default_host_filter(request, appliance):
 def test_clear_host_filter_results():
     """ Test for clearing filter results for hosts."""
 
-    navigate_to(Host, 'All')
+    # TODO many parts of this test and others in this file need to be replaced with WT calls
+    view = navigate_to(Host, 'All')
     list_acc.select('Filters', 'Status / Stopped', by_title=False)
     pytest.sel.click(search_box.clear_advanced_search)
-    page_title = pytest.sel.text(host.page_title_loc)
+    page_title = view.title.text
     assert page_title == 'Hosts', 'Clear filter results failed'
 
 
