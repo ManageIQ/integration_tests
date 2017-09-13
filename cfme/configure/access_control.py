@@ -48,8 +48,6 @@ class AllUserView(ConfigurationView):
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     entities = View.nested(UsersEntities)
-    table = Table("//div[@id='main_div']//table")
-    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -262,19 +260,7 @@ class User(Updateable, Pretty, Navigatable):
         assert view.is_displayed
         return new_user
 
-    def _delete_using_all_selection(self):
-        """
-        Select the existing user by selecting it from the access control group list
-        """
-        name_column = "Full Name"
-        find_row_kwargs = {name_column: self.name}
-
-        view = navigate_to(User, 'All')
-        user_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
-        # Zero index is the unnamed column with the checkbox
-        user_row[0].check()
-
-    def delete(self, cancel=True, all_selection=False):
+    def delete(self, cancel=True):
         """
         Delete existing user
         Args:
@@ -289,13 +275,7 @@ class User(Updateable, Pretty, Navigatable):
         flash_blocked_msg = "Default EVM User \"{}\" cannot be deleted".format(self.name)
         delete_user_txt = 'Delete this User'
 
-        if all_selection:
-            self._delete_using_all_selection()
-            delete_user_txt = 'Delete selected Users'
-            view = self.create_view(AllUserView)
-            assert view.is_displayed, "All Users view is not displayed after selecting users"
-        else:
-            view = navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
 
         if not view.configuration.item_enabled(delete_user_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
@@ -686,36 +666,7 @@ class Group(Updateable, Pretty, Navigatable):
         view = self._retrieve_ext_auth_user_groups()
         self._fill_ldap_group_lookup(view)
 
-    def _update_using_all_selection(self):
-        """
-        Update existing group by selecting it from the access control group list
-
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR update is not allowed
-                for currently selected group
-        """
-        flash_blocked_msg = 'Read Only EVM Group "{}" can not be edited'.format(self.description)
-        name_column = "Name"
-        find_row_kwargs = {name_column: self.description}
-
-        view = navigate_to(Group, 'All')
-        try:
-            group_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
-            # Zero index is the unnamed column with the checkbox
-            group_row[0].check()
-        except NoSuchElementException:
-            raise Exception("Failed to find group row with name {}".format(self.description))
-
-        view.configuration.item_select('Edit the selected Group')
-
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
-
-    def update(self, updates, all_selection=False):
+    def update(self, updates):
         """ Update group method
 
         Args:
@@ -726,17 +677,11 @@ class Group(Updateable, Pretty, Navigatable):
         """
         edit_group_txt = 'Edit this Group'
 
-        if all_selection:
-            self._update_using_all_selection()
-            view = self.create_view(EditGroupView)
-            assert view.is_displayed, (
-                "Edit Group Details page was not displayed after all selection")
-        else:
-            view = navigate_to(self, 'Details')
-            if not view.configuration.item_enabled(edit_group_txt):
-                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                    edit_group_txt))
-            view = navigate_to(self, 'Edit')
+        view = navigate_to(self, 'Details')
+        if not view.configuration.item_enabled(edit_group_txt):
+            raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                edit_group_txt))
+        view = navigate_to(self, 'Edit')
 
         changed = view.fill({
             'description_txt': updates.get('description'),
@@ -757,35 +702,13 @@ class Group(Updateable, Pretty, Navigatable):
         else:
             view.cancel_button.click()
             flash_message = 'Edit of Group was cancelled by the user'
-        if all_selection:
-            view = self.create_view(AllGroupView, override=updates)
-        else:
-            view = self.create_view(DetailsGroupView, override=updates)
+        view = self.create_view(DetailsGroupView, override=updates)
 
         view.flash.assert_message(flash_message)
         assert view.is_displayed
 
-    def _delete_using_all_selection(self):
-        """
-        Delete existing group by selecting it from the access control group list
 
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR delete is not allowed
-                for currently selected group
-        """
-        name_column = "Name"
-        find_row_kwargs = {name_column: self.description}
-
-        view = navigate_to(Group, 'All')
-        try:
-            group_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
-            # Zero index is the unnamed column with the checkbox
-            group_row[0].check()
-        except NoSuchElementException:
-            raise Exception("Failed to find group row with name {}".format(self.description))
-
-    def delete(self, cancel=True, all_selection=False):
+    def delete(self, cancel=True):
         """
         Delete existing group
 
@@ -803,13 +726,7 @@ class Group(Updateable, Pretty, Navigatable):
             "Error during delete: A read only group cannot be deleted.".format(self.description))
         delete_group_txt = 'Delete this Group'
 
-        if all_selection:
-            self._delete_using_all_selection()
-            delete_group_txt = 'Delete selected Groups'
-            view = self.create_view(AllGroupView)
-            assert view.is_displayed, "All Groups view is not displayed after selecting groups"
-        else:
-            view = navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
 
         if not view.configuration.item_enabled(delete_group_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
@@ -1046,7 +963,6 @@ class AllRolesView(ConfigurationView):
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
     table = Table("//div[@id='main_div']//table")
-    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -1108,36 +1024,7 @@ class Role(Updateable, Pretty, Navigatable):
 
         assert view.is_displayed
 
-    def _update_using_all_selection(self):
-        """
-        Update existing role by selecting it from the access control role list
-
-        Throws:
-            RBACOperationBlocked: If operation is blocked due to current user
-                not having appropriate permissions OR update is not allowed
-                for currently selected role
-        """
-        flash_blocked_msg = 'Read Only Role "{}" can not be edited'.format(self.name)
-        name_column = "Name"
-        find_row_kwargs = {name_column: self.name}
-
-        view = navigate_to(Role, 'All')
-        try:
-            role_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
-            # Zero index is the unnamed column with the checkbox
-            role_row[0].check()
-        except NoSuchElementException:
-            raise Exception("Failed to find role row with name {}".format(self.name))
-
-        view.configuration.item_select('Edit the selected Role')
-
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
-
-    def update(self, updates, all_selection=False):
+    def update(self, updates):
         """ Update role method
 
         Args:
@@ -1149,49 +1036,34 @@ class Role(Updateable, Pretty, Navigatable):
         flash_blocked_msg = "Read Only Role \"{}\" can not be edited".format(self.name)
         edit_role_txt = 'Edit this Role'
 
-        if all_selection:
-            self._update_using_all_selection()
+        view = navigate_to(self, 'Details')
+        if not view.configuration.item_enabled(edit_role_txt):
+            raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                edit_role_txt))
+
+        view = navigate_to(self, 'Edit')
+        try:
+            view.flash.assert_message(flash_blocked_msg)
+            raise RBACOperationBlocked(flash_blocked_msg)
+        except AssertionError:
+            pass
+
+        changed = view.fill({
+            'name_txt': updates.get('name'),
+            'vm_restriction_select': updates.get('vm_restriction')
+        })
+        feature_changed = self.set_role_product_features(view, updates.get('product_features'))
+        if changed or feature_changed:
+            view.save_button.click()
+            flash_message = 'Role "{}" was saved'.format(updates.get('name', self.name))
         else:
-            view = navigate_to(self, 'Details')
-            if not view.configuration.item_enabled(edit_role_txt):
-                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                    edit_role_txt))
+            view.cancel_button.click()
+            flash_message = 'Edit of Role was cancelled by the user'
+        view = self.create_view(DetailsRoleView, override=updates)
+        view.flash.assert_message(flash_message)
+        assert view.is_displayed
 
-            view = navigate_to(self, 'Edit')
-            try:
-                view.flash.assert_message(flash_blocked_msg)
-                raise RBACOperationBlocked(flash_blocked_msg)
-            except AssertionError:
-                pass
-
-            changed = view.fill({
-                'name_txt': updates.get('name'),
-                'vm_restriction_select': updates.get('vm_restriction')
-            })
-            feature_changed = self.set_role_product_features(view, updates.get('product_features'))
-            if changed or feature_changed:
-                view.save_button.click()
-                flash_message = 'Role "{}" was saved'.format(updates.get('name', self.name))
-            else:
-                view.cancel_button.click()
-                flash_message = 'Edit of Role was cancelled by the user'
-            view = self.create_view(DetailsRoleView, override=updates)
-            view.flash.assert_message(flash_message)
-            assert view.is_displayed
-
-    def _delete_using_all_selection(self):
-        """
-        Delete existing role by selecting it from the access control role list
-        """
-        name_column = "Name"
-        find_row_kwargs = {name_column: self.name}
-
-        view = navigate_to(Role, 'All')
-        role_row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
-        # Zero index is the unnamed column with the checkbox
-        role_row[0].check()
-
-    def delete(self, cancel=True, all_selection=False):
+    def delete(self, cancel=True):
         """ Delete existing role
             Args:
                 cancel: Default value 'True', role will be deleted
@@ -1206,17 +1078,11 @@ class Role(Updateable, Pretty, Navigatable):
         flash_success_msg = 'Role "{}": Delete successful'.format(self.name)
         delete_role_txt = 'Delete this Role'
 
-        if all_selection:
-            self._delete_using_all_selection()
-            delete_role_txt = 'Delete selected Roles'
-            view = self.create_view(AllRolesView)
-            assert view.is_displayed, "All Roles view is not displayed after selecting roles"
-        else:
-            view = navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
 
-            if not view.configuration.item_enabled(delete_role_txt):
-                    raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
-                        delete_role_txt))
+        if not view.configuration.item_enabled(delete_role_txt):
+                raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
+                    delete_role_txt))
 
         view.configuration.item_select(delete_role_txt, handle_alert=cancel)
         try:

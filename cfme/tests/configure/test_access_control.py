@@ -41,7 +41,9 @@ def a_provider(request):
 
 
 def new_credential():
-    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
+    #return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
+    #DELETE LINE BELOW
+    return Credential(principal='uid' + fauxfactory.gen_alphanumeric().lower(), secret='redhat')
 
 
 def new_user(group=usergrp):
@@ -222,19 +224,6 @@ def test_delete_default_user():
 
 
 @pytest.mark.tier(3)
-def test_delete_default_user_all_selection():
-    """Test for deleting default user Administrator.
-
-    Steps:
-        * Login as Administrator user
-        * Try deleting the user
-    """
-    user = User(name='Administrator')
-    with pytest.raises(RBACOperationBlocked):
-        user.delete(all_selection=True)
-
-
-@pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1090877)])
 @pytest.mark.meta(blockers=[BZ(1408479)], forced_streams=["5.7", "upstream"])
 @pytest.mark.uncollectif(lambda: version.current_version() >= "5.7")
@@ -378,23 +367,6 @@ def test_delete_default_group():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[BZ(1473828, forced_streams=['5.8'])])
-def test_delete_default_group_all_selection():
-    """Test for deleting default group EvmGroup-administrator using
-       the checklist displayed by selecting Configuration->Group
-
-    Steps:
-        * Login as Administrator user
-        * Navigate to Configuration -> Group
-        * Try deleting the group EvmGroup-adminstrator
-    """
-    group = Group(description='EvmGroup-administrator')
-
-    with pytest.raises(RBACOperationBlocked):
-        group.delete(all_selection=True)
-
-
-@pytest.mark.tier(3)
 def test_delete_group_with_assigned_user():
     """Test that CFME prevents deletion of a group that has users assigned
     """
@@ -423,25 +395,6 @@ def test_edit_default_group():
     group_updates = {}
     with pytest.raises(RBACOperationBlocked):
         group.update(group_updates)
-
-
-@pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() >= "5.8")
-def test_edit_default_group_all_selection():
-    """Test that CFME prevents a user from editting a default group
-    when selecting it from the Access Control EVM Groups checklist
-
-    Steps:
-        * Login as Administrator user
-        * Navigate to Configuration -> Group
-        * Try editing the group EvmGroup-adminstrator
-    """
-    group = Group(description='EvmGroup-approver')
-    group_updates = {}
-    all_selection = True
-
-    with pytest.raises(RBACOperationBlocked):
-        group.update(group_updates, all_selection)
 
 
 @pytest.mark.tier(3)
@@ -525,21 +478,6 @@ def test_delete_default_roles():
 
 
 @pytest.mark.tier(3)
-def test_delete_default_roles_all_selection():
-    """Test that CFME prevents a user from deleting a default role
-    when selecting it from the Access Control EVM role checklist
-
-    Steps:
-        * Login as Administrator user
-        * Navigate to Configuration -> Role
-        * Try deleting the group EvmRole-approver
-    """
-    role = Role(name='EvmRole-approver')
-    with pytest.raises(RBACOperationBlocked):
-        role.delete(all_selection=True)
-
-
-@pytest.mark.tier(3)
 def test_edit_default_roles():
     """Test that CFME prevents a user from editing a default role
     when selecting it from the Access Control EVM Role checklist
@@ -555,24 +493,6 @@ def test_edit_default_roles():
 
     with pytest.raises(RBACOperationBlocked):
         role.update(role_updates)
-
-
-@pytest.mark.tier(3)
-def test_edit_default_roles_all_selection():
-    """Test that CFME prevents a user from editing a default role
-    when selecting it from the Access Control EVM Role checklist
-
-    Steps:
-        * Login as Administrator user
-        * Navigate to Configuration -> Role
-        * Try editing the group EvmRole-auditor
-    """
-    role = Role(name='EvmRole-auditor')
-    newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
-    role_updates = {'name': newrole_name}
-
-    with pytest.raises(RBACOperationBlocked):
-        role.update(role_updates, all_selection=True)
 
 
 @pytest.mark.tier(3)
@@ -621,7 +541,8 @@ def _test_vm_removal():
 @pytest.mark.parametrize(
     'product_features, action',
     [(
-        {version.LOWEST: [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+        {version.LOWEST: [
+            ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
             ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
              'Provision VMs']], },
         _test_vm_provision)])
@@ -849,7 +770,9 @@ def test_user_change_password(appliance, request):
     user = User(
         name="user {}".format(fauxfactory.gen_alphanumeric()),
         credential=Credential(
-            principal="user_principal_{}".format(fauxfactory.gen_alphanumeric()),
+            #principal="user_principal_{}".format(fauxfactory.gen_alphanumeric()),
+            #DELETE THE LINE BELOW
+            principal="user_principal_{}".format(fauxfactory.gen_alphanumeric().lower()),
             secret="very_secret",
             verify_secret="very_secret"
         ),
@@ -862,6 +785,10 @@ def test_user_change_password(appliance, request):
     request.addfinalizer(appliance.server.login_admin)
     with user:
         appliance.server.logout()
+        ##############################
+        # DELETE
+        pytest.set_trace()
+        ##############################
         appliance.server.login(user)
         assert appliance.server.current_full_name() == user.name
     appliance.server.login_admin()
