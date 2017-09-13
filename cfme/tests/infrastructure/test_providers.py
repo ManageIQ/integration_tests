@@ -190,11 +190,7 @@ def test_provider_add_with_bad_credentials(provider):
         verify_secret='reallybad'
     )
 
-    if isinstance(provider, VMwareProvider):
-        error_msg = 'Cannot complete login due to an incorrect user name or password.'
-    elif isinstance(provider, RHEVMProvider):
-        error_msg = 'Credential validation was not successful: Incorrect user name or password.'
-    with error.expected(error_msg):
+    with error.expected(provider.bad_credentials_error_msg):
         provider.create(validate_credentials=True)
 
 

@@ -26,6 +26,10 @@ class SCVMMProvider(InfraProvider):
     db_types = ["Microsoft::InfraManager"]
     endpoints_form = SCVMMEndpointForm
     discover_dict = {"scvmm": True}
+    bad_credentials_error_msg = (
+        'Credential validation was not successful: '
+        'Unable to connect: WinRM::WinRMAuthorizationError'
+    )
 
     def __init__(self, name=None, endpoints=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):

@@ -54,6 +54,7 @@ class RHEVMProvider(InfraProvider):
     _canvas_element = '//*[@id="remote-console"]/canvas'
     _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
+    bad_credentials_error_msg = 'Cannot complete login due to an incorrect user name or password.'
 
     def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None, appliance=None):
