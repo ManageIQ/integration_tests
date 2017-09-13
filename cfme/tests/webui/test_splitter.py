@@ -5,7 +5,7 @@ from cfme.exceptions import CannotScrollException
 from cfme.base.ui import Server
 from cfme.cloud.instance import Instance
 from cfme.infrastructure.config_management import ConfigManager
-from cfme.infrastructure.datastore import Datastore
+from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.pxe import ISODatastore
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.intelligence.chargeback.rates import ComputeRate
@@ -24,8 +24,8 @@ LOCATIONS = [
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
     (MyService, 'All'), (Server, 'ServiceCatalogsDefault'), (Server, 'WorkloadsDefault'),
     (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (Vm, 'VMsOnly'),
-    (ISODatastore, 'All'), (Server, 'Configuration'), (Datastore, 'All'), (ConfigManager, 'All'),
-    (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
+    (ISODatastore, 'All'), (Server, 'Configuration'), (DatastoreCollection, 'All'),
+    (ConfigManager, 'All'), (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
 ]
 
 
@@ -47,9 +47,11 @@ pytestmark = [
 )
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
-def test_pull_splitter_persistence(location):
+def test_pull_splitter_persistence(location, appliance):
     if location[0] == Server:
         location = (current_appliance.server, location[1])
+    elif 'Collection' in location[0].__name__:
+        location = (location[0](appliance), location[1])
     navigate_to(*location)
     # First we move splitter to hidden position by pulling it left twice
     pull_splitter_left()
