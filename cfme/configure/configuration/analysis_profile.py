@@ -10,10 +10,10 @@ from widgetastic_manageiq import (
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import Server, ConfigurationView
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 
 
 table_button_classes = [Button.DEFAULT, Button.SMALL, Button.BLOCK]

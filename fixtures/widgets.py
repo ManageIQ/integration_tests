@@ -4,7 +4,7 @@ import pytest
 from cfme.base import Server
 from cfme.dashboard import Widget
 from cfme.intelligence.reports import widgets
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.fixture(scope="session")

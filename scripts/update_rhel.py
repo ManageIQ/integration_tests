@@ -5,7 +5,7 @@
 
 import argparse
 import sys
-from utils.appliance import IPAppliance
+from cfme.utils.appliance import IPAppliance
 
 
 def main():

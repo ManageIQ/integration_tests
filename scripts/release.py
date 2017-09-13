@@ -10,7 +10,7 @@ import textwrap
 
 import click
 
-from utils.conf import docker
+from cfme.utils.conf import docker
 
 
 def clean_commit(commit_msg):

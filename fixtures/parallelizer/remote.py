@@ -2,6 +2,7 @@ import signal
 
 import zmq
 from py.path import local
+import cfme.utils
 
 SLAVEID = None
 
@@ -14,7 +15,7 @@ class SlaveManager(object):
         self.collection = None
         self.slaveid = conf.runtime['env']['slaveid'] = slaveid
         self.base_url = conf.runtime['env']['base_url'] = base_url
-        self.log = utils.log.logger
+        self.log = cfme.utils.log.logger
         conf.clear()
         # Override the logger in utils.log
 
@@ -180,18 +181,18 @@ if __name__ == '__main__':
     parser.add_argument('ts', help='The timestap to use for collections')
     args = parser.parse_args()
 
-    from utils.appliance import IPAppliance, stack
+    from cfme.utils.appliance import IPAppliance, stack
     appliance = IPAppliance.from_json(args.appliance_json)
     stack.push(appliance)
 
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
-    import utils.log
-    utils.log.setup_for_worker(args.slaveid)
+    import cfme.utils.log
+    cfme.utils.log.setup_for_worker(args.slaveid)
 
     from fixtures import terminalreporter
     from fixtures.pytest_store import store
-    from utils import conf
+    from cfme.utils import conf
 
     conf.runtime['env']['slaveid'] = args.slaveid
     conf.runtime['env']['ts'] = args.ts

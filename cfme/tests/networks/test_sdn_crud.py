@@ -3,8 +3,8 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.networks.provider import NetworkProviderCollection
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytest_generate_tests = testgen.generate(

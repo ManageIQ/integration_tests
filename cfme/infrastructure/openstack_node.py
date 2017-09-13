@@ -2,7 +2,7 @@
 """A model of an Openstack Infrastructure Node in CFME."""
 
 from cfme.infrastructure.host import Host
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 class OpenstackNode(Host):

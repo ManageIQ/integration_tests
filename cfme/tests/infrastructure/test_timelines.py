@@ -10,13 +10,13 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.web_ui import InfoBlock
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.providers import ProviderFilter
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.tier(2),

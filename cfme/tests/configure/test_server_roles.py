@@ -4,7 +4,7 @@ from functools import partial
 
 from cfme.configure import configuration
 from cfme.web_ui import flash
-from utils.conf import cfme_data
+from cfme.utils.conf import cfme_data
 
 server_roles_conf = cfme_data.get('server_roles',
                                   {'all': [], 'sets': {}})

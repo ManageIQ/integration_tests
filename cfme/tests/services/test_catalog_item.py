@@ -8,10 +8,10 @@ import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
 from cfme.services.catalogs.catalog_item import CatalogItem, CatalogBundle
 from cfme.web_ui import flash
-from utils import error
-from utils.blockers import BZ
-from utils.log import logger
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.update import update
 
 pytestmark = [test_requirements.service, pytest.mark.tier(3), pytest.mark.ignore_stream("upstream")]
 

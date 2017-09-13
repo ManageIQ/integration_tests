@@ -2,8 +2,8 @@
 import pytest
 
 from cfme.configure.configuration import VMwareConsoleSupport
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 
 
 @pytest.mark.tier(3)

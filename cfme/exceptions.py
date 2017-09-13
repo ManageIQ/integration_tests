@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Provides custom exceptions for the ``cfme`` module. """
 import pytest
-from utils.log import logger
+from cfme.utils.log import logger
 
 
 class CFMEException(Exception):

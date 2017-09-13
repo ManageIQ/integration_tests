@@ -10,7 +10,7 @@ A test can be marked with
 At the moment, lists of parameters are not supported
 
 """
-from utils import testgen
+from cfme.utils import testgen
 
 
 class EnvironmentMarker(object):

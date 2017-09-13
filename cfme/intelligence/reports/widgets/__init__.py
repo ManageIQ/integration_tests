@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets"""
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic.widget import Text, Checkbox
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_patternfly import Button, Input, BootstrapSelect

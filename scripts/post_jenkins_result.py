@@ -5,9 +5,9 @@ import os.path
 from datetime import datetime
 
 from artifactor.plugins.post_result import test_report
-from utils import read_env
-from utils.path import project_path
-from utils.trackerbot import post_jenkins_result
+from cfme.utils import read_env
+from cfme.utils.path import project_path
+from cfme.utils.trackerbot import post_jenkins_result
 
 job_name = os.environ['JOB_NAME']
 number = int(os.environ['BUILD_NUMBER'])

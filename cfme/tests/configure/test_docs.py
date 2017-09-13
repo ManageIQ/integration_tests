@@ -13,9 +13,9 @@ from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 
-from utils import version
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 
 # This is list of tested links expected to be on the documentation page
 # Keys here correspond to nested view names from configure.documentation.LinksView

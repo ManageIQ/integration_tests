@@ -3,9 +3,9 @@ import fauxfactory
 import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
-from utils import error
-from utils.blockers import BZ
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.blockers import BZ
+from cfme.utils.update import update
 
 
 pytestmark = [test_requirements.automate]

@@ -5,9 +5,9 @@ import pytest
 import cfme.configure.configuration as conf
 from cfme.base import ZoneCollection
 from fixtures.pytest_store import store
-from utils.appliance import current_appliance
-from utils.update import update
-from utils import error
+from cfme.utils.appliance import current_appliance
+from cfme.utils.update import update
+from cfme.utils import error
 
 
 @pytest.mark.tier(1)

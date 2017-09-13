@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from cfme.base.ui import AutomateImportExportBaseView, AutomateImportExportView
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 from widgetastic_patternfly import BootstrapSelect, Button
 

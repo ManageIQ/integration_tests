@@ -6,10 +6,10 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.requests import Request
 from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip
-from utils import version
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 submit_button = form_buttons.FormButton("Submit")
 

@@ -7,10 +7,10 @@ from widgetastic.widget import Text
 from widgetastic_manageiq import Table
 from widgetastic_manageiq.hacks import BootstrapSelectByLocator
 from widgetastic_patternfly import BootstrapSelect, Button, FlashMessages
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 
 
 class AssignmentsAllView(ChargebackView):

@@ -4,10 +4,10 @@ from random import choice
 
 import pytest
 
-from utils import testgen
-from utils.blockers import BZ
-from utils.wait import wait_for
-from utils.browser import WithZoom
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.wait import wait_for
+from cfme.utils.browser import WithZoom
 
 from cfme.web_ui.topology import Topology
 from cfme.containers.provider import ContainersProvider

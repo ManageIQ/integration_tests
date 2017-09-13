@@ -1,11 +1,11 @@
 """Runs Refresh Workload by adding specified providers, and refreshing a specified number of vms,
 waiting, then repeating for specified length of time."""
-from utils.conf import cfme_performance
-from utils.grafana import get_scenario_dashboard_urls
-from utils.log import logger
-from utils.providers import get_crud
-from utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
-from utils.workloads import get_refresh_vms_scenarios
+from cfme.utils.conf import cfme_performance
+from cfme.utils.grafana import get_scenario_dashboard_urls
+from cfme.utils.log import logger
+from cfme.utils.providers import get_crud
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
+from cfme.utils.workloads import get_refresh_vms_scenarios
 from itertools import cycle
 import time
 import pytest

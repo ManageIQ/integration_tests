@@ -8,11 +8,11 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.requests import Request
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from utils import browser, testgen, version
-from utils.browser import ensure_browser_open
-from utils.log import logger
-from utils.update import update
-from utils.version import appliance_is_downstream
+from cfme.utils import browser, testgen, version
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.log import logger
+from cfme.utils.update import update
+from cfme.utils.version import appliance_is_downstream
 
 
 pytestmark = [

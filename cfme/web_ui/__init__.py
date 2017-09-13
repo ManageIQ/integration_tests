@@ -73,9 +73,9 @@ from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
-from utils import attributize_string, castmap, normalize_space, version
-from utils.log import logger
-from utils.pretty import Pretty
+from cfme.utils import attributize_string, castmap, normalize_space, version
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
 from wait_for import TimedOutError, wait_for
 
 

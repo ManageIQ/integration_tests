@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Module handling report menus contents"""
 from contextlib import contextmanager
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from widgetastic.widget import Text
 from widgetastic_manageiq import ManageIQTree, FolderManager
 from widgetastic_patternfly import Button

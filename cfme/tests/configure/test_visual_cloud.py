@@ -12,7 +12,7 @@ from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
 from cfme.cloud.tenant import TenantCollection
 from cfme.web_ui import toolbar as tb, match_location
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(3),

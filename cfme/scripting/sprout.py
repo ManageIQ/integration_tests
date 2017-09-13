@@ -15,7 +15,7 @@ import time
 import yaml
 
 from cfme.test_framework.sprout.plugin import SproutManager, SproutProvisioningRequest
-from utils.path import conf_path
+from cfme.utils.path import conf_path
 
 
 @click.group(help='Functions for interacting with sprout')

@@ -4,10 +4,10 @@ import pytest
 from datetime import timedelta
 
 from cfme.optimize.bottlenecks import Bottlenecks
-from utils import conf
-from utils.appliance.implementations.ui import navigate_to
-from utils.timeutil import parsetime
-from utils.ssh import SSHClient
+from cfme.utils import conf
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.timeutil import parsetime
+from cfme.utils.ssh import SSHClient
 
 
 @pytest.fixture(scope="module")

@@ -4,8 +4,8 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
-from utils.update import update
-from utils import version, error
+from cfme.utils.update import update
+from cfme.utils import version, error
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),

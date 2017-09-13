@@ -5,10 +5,10 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
-from utils import version
-from utils.rest import assert_response
-from utils.testgen import config_managers, generate
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.rest import assert_response
+from cfme.utils.testgen import config_managers, generate
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = generate(gen_func=config_managers, scope='module')

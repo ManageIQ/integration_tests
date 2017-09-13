@@ -1,13 +1,13 @@
 import pytest
 from py.error import ENOENT
 
-import utils.browser
+import cfme.utils.browser
 from cfme.fixtures.pytest_selenium import ensure_browser_open, take_screenshot
 from fixtures.artifactor_plugin import fire_art_test_hook
-from utils.datafile import template_env
-from utils.path import log_path
-from utils import browser as browser_module, safe_string
-from utils.log import logger
+from cfme.utils.datafile import template_env
+from cfme.utils.path import log_path
+from cfme.utils import browser as browser_module, safe_string
+from cfme.utils.log import logger
 browser_fixtures = {'browser'}
 
 failed_test_tracking = {
@@ -25,7 +25,7 @@ def pytest_namespace():
 
 def pytest_runtest_setup(item):
     if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
-        utils.browser.ensure_browser_open()
+        cfme.utils.browser.ensure_browser_open()
 
 
 def pytest_exception_interact(node, call, report):
@@ -38,7 +38,7 @@ def pytest_exception_interact(node, call, report):
 
     if isinstance(call.excinfo.value, (urllib2.URLError, BadStatusLine, error)):
         logger.error("internal Exception:\n %s", str(call.excinfo))
-        from utils.browser import manager
+        from cfme.utils.browser import manager
         manager.start()  # start will quit first and cycle wharf as well
 
     short_tb = '{}\n{}'.format(

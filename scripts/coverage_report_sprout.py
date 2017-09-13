@@ -4,7 +4,7 @@ import argparse
 import diaper
 
 from cfme.test_framework.sprout.client import SproutClient
-from utils.appliance import IPAppliance
+from cfme.utils.appliance import IPAppliance
 
 from coverage_report_jenkins import main as coverage_report_jenkins
 

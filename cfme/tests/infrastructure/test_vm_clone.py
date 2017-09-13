@@ -11,9 +11,9 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.requests import Request
 from cfme.web_ui import flash
-from utils import testgen
-from utils.log import logger
-from utils import version
+from cfme.utils import testgen
+from cfme.utils.log import logger
+from cfme.utils import version
 
 pytestmark = [
     pytest.mark.meta(roles="+automate")

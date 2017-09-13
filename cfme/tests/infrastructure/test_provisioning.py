@@ -7,12 +7,12 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.requests import Request
-from utils import normalize_text, testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import normalize_text, testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

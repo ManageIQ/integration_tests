@@ -72,10 +72,10 @@ def uncollectif(item):
     if the item should be uncollected or not.
     """
 
-    from utils.pytest_shortcuts import extract_fixtures_values
+    from cfme.utils.pytest_shortcuts import extract_fixtures_values
     marker = item.get_marker('uncollectif')
     if marker:
-        from utils.log import logger
+        from cfme.utils.log import logger
         log_msg = 'Trying uncollecting {}: {}'.format(
             item.name,
             marker.kwargs.get('reason', 'No reason given'))
@@ -115,7 +115,7 @@ def pytest_collection_modifyitems(session, config, items):
 
     new_items = []
 
-    from utils.path import log_path
+    from cfme.utils.path import log_path
     with log_path.join('uncollected.log').open('w') as f:
         for item in items:
             # First filter out all items who have the uncollect mark

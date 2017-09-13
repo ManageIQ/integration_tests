@@ -6,7 +6,7 @@ import fauxfactory
 
 import pytest
 
-from utils import error
+from cfme.utils import error
 from cfme.base.credential import Credential
 from cfme.cloud.provider import discover, wait_for_a_provider, CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
@@ -18,9 +18,9 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProvidersDiscoverView)
 from cfme import test_requirements
 
-from utils import testgen, version
-from utils.appliance.implementations.ui import navigate_to
-from utils.update import update
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 

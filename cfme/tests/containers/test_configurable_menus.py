@@ -3,10 +3,10 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.base.login import BaseLoggedInPage
-from utils import testgen
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [pytest.mark.uncollectif(lambda: current_version() < "5.8")]

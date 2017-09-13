@@ -11,10 +11,10 @@ from cfme.web_ui import toolbar as tb, match_location,\
     PagedTable, CheckboxTable
 from cfme.containers.provider import details_page, Labelable,\
     ContainerObjectAllBaseView
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
-from utils.appliance import Navigatable
+from cfme.utils.appliance import Navigatable
 from wrapanapi.containers.route import Route as ApiRoute
 
 

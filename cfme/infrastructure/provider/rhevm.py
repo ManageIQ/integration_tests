@@ -2,7 +2,7 @@ from widgetastic.widget import View, Text
 from widgetastic_patternfly import Tab, Input, BootstrapSwitch, Button
 
 from cfme.common.provider_views import BeforeFillMixin
-from utils import version
+from cfme.utils import version
 from . import InfraProvider
 from cfme.common.provider import CANDUEndpoint, DefaultEndpoint, DefaultEndpointForm
 from wrapanapi.rhevm import RHEVMSystem

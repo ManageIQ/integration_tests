@@ -33,12 +33,12 @@ from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, fill, flash, form_buttons,
     match_location, Table, toolbar, Calendar, Select, Input, CheckboxTable,
     summary_title, BootstrapTreeview, AngularSelect)
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.wait import wait_for
-from utils import version, deferred_verpick
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
+from cfme.utils import version, deferred_verpick
 
 
 # for provider specific vm/template page

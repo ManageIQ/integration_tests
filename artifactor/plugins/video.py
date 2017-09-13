@@ -15,7 +15,7 @@ artifactor:
 
 from artifactor import ArtifactorBasePlugin
 import os
-from utils.video import Recorder
+from cfme.utils.video import Recorder
 
 
 class Video(ArtifactorBasePlugin):

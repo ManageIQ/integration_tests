@@ -3,9 +3,9 @@ import sys
 from datetime import datetime
 from tabulate import tabulate
 
-from utils.path import log_path
-from utils.providers import list_provider_keys, get_mgmt
-from utils.log import logger, add_stdout_handler
+from cfme.utils.path import log_path
+from cfme.utils.providers import list_provider_keys, get_mgmt
+from cfme.utils.log import logger, add_stdout_handler
 
 add_stdout_handler(logger)
 

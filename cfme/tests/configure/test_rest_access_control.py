@@ -12,9 +12,9 @@ from cfme.rest.gen_data import (
     tenants as _tenants,
     users as _users,
 )
-from utils import error
-from utils.rest import assert_response
-from utils.wait import wait_for
+from cfme.utils import error
+from cfme.utils.rest import assert_response
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.auth

@@ -1,9 +1,9 @@
-from utils.log import logger
+from cfme.utils.log import logger
 import os
 import time
-from utils.path import results_path
-from utils.ssh import SSHClient
-from utils.smem_memory_monitor import test_ts
+from cfme.utils.path import results_path
+from cfme.utils.ssh import SSHClient
+from cfme.utils.smem_memory_monitor import test_ts
 import glob
 import pytest
 

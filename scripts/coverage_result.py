@@ -4,7 +4,7 @@ from coverage import CoverageData
 try:
     from cfme.utils.path import project_path, log_path
 except ImportError:
-    from utils.path import project_path, log_path
+    from cfme.utils.path import project_path, log_path
 import sys
 import subprocess
 import re

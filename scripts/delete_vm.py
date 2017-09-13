@@ -16,9 +16,9 @@ from wrapanapi.virtualcenter import VMWareSystem
 from novaclient.v1_1 import client as novaclient
 
 # utils
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.wait import wait_for
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.wait import wait_for
 
 
 TIME_NOW = datetime.datetime.now()

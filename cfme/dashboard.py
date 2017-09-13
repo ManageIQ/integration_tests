@@ -3,10 +3,10 @@ import re
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.timeutil import parsetime
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.timeutil import parsetime
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
 
 from widgetastic.utils import ParametrizedLocator, ParametrizedString, Parameter
 from widgetastic.widget import ParametrizedView, Text, View, Widget, ConditionalSwitchableView

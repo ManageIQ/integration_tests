@@ -1,7 +1,7 @@
 # using subprocess because its a better docker api
 # than the docker-py 1.10 we hard depend on
 import subprocess
-from utils import path
+from cfme.utils import path
 import pytest
 
 

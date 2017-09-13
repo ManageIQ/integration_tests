@@ -2,15 +2,15 @@
 """This module contains control REST API specific tests."""
 import pytest
 import fauxfactory
-from utils import error
+from cfme.utils import error
 
 from cfme import test_requirements
 from cfme.rest.gen_data import conditions as _conditions
 from cfme.rest.gen_data import policies as _policies
-from utils.blockers import BZ
-from utils.rest import assert_response
-from utils.version import current_version
-from utils.wait import wait_for
+from cfme.utils.blockers import BZ
+from cfme.utils.rest import assert_response
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.rest

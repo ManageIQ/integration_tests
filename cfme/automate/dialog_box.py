@@ -2,8 +2,8 @@ from navmazing import NavigateToAttribute
 from widgetastic_patternfly import Input, Dropdown
 from cached_property import cached_property
 
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 from .dialog_tab import AddTabView

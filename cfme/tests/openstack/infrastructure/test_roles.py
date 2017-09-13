@@ -6,9 +6,9 @@ from cfme.configure.tasks import is_host_analysis_finished
 from cfme.infrastructure.deployment_roles import DeploymentRoleCollection
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],

@@ -7,11 +7,11 @@ from widgetastic_patternfly import Input, Tab, BootstrapTreeview, FlashMessages
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
 from cfme.exceptions import RequestException, ItemNotFound
-from utils.log import logger
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.varmeth import variable
-from utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for
 
 
 class Request(Navigatable):

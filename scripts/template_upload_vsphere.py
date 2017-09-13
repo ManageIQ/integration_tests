@@ -13,11 +13,11 @@ import argparse
 import fauxfactory
 from threading import Lock, Thread
 
-from utils import net, trackerbot
-from utils.conf import cfme_data, credentials
-from utils.log import logger, add_stdout_handler
-from utils.providers import list_provider_keys
-from utils.ssh import SSHClient
+from cfme.utils import net, trackerbot
+from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.providers import list_provider_keys
+from cfme.utils.ssh import SSHClient
 from wrapanapi import VMWareSystem
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.

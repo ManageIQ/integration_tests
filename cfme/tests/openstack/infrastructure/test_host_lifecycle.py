@@ -4,9 +4,9 @@ from cfme.exceptions import HostNotFound
 from cfme.infrastructure.host import get_all_hosts
 from cfme.infrastructure.openstack_node import OpenstackNode
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],

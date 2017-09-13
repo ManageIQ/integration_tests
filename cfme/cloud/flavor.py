@@ -7,8 +7,8 @@ from widgetastic_patternfly import Dropdown, Button, View
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import FlavorNotFound
 from cfme.web_ui import match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, SummaryTable, Text, Table, PaginationPane, Accordion, ManageIQTree,
     Search, BreadCrumb, BaseNonInteractiveEntitiesView)

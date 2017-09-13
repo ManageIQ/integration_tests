@@ -5,8 +5,8 @@ import yaml
 
 from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
-from utils import testgen
-from utils.generators import random_vm_name
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
 
 
 pytestmark = [

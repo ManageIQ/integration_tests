@@ -7,10 +7,10 @@ from widgetastic.widget import Text, Checkbox, TextInput
 from widgetastic_manageiq import Calendar, AlertEmail, Table, PaginationPane
 from widgetastic_patternfly import Button, BootstrapSelect
 
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.update import Updateable
-from utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
 
 from . import CloudIntelReportsView
 

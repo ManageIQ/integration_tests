@@ -5,8 +5,8 @@ from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.web_ui import flash
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from server_group_methods import (
     verify_server_group_stopped, verify_server_group_running,
     verify_server_group_suspended,

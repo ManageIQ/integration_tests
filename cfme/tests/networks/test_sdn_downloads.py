@@ -8,9 +8,9 @@ from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.provider import NetworkProviderCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytest_generate_tests = testgen.generate([AzureProvider], scope="module")

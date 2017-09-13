@@ -1,12 +1,12 @@
 """Runs Capacity and Utilization with Replication Workload."""
-from utils.appliance import IPAppliance
-from utils.conf import cfme_performance
-from utils.grafana import get_scenario_dashboard_urls
-from utils.log import logger
-from utils.providers import get_crud
-from utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
-from utils.ssh import SSHClient, SSHTail
-from utils.workloads import get_capacity_and_utilization_replication_scenarios
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.conf import cfme_performance
+from cfme.utils.grafana import get_scenario_dashboard_urls
+from cfme.utils.log import logger
+from cfme.utils.providers import get_crud
+from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
+from cfme.utils.ssh import SSHClient, SSHTail
+from cfme.utils.workloads import get_capacity_and_utilization_replication_scenarios
 import time
 import pytest
 

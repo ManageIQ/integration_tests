@@ -3,10 +3,10 @@ import pytest
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils.appliance.implementations.ui import navigate_to
-from utils.net import ip_address, resolve_hostname
-from utils.providers import get_crud_by_name
-from utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.net import ip_address, resolve_hostname
+from cfme.utils.providers import get_crud_by_name
+from cfme.utils import testgen
 from cfme import test_requirements
 
 

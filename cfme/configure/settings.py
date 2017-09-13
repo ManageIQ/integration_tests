@@ -7,10 +7,10 @@ from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
 from cfme.base.ui import MySettingsView
 from cfme.base.login import BaseLoggedInPage
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class TimeProfileAddForm(View):

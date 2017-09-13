@@ -3,9 +3,9 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import BalancerDetailsView, BalancerView
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class BalancerCollection(Navigatable):

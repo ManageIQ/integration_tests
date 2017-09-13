@@ -5,11 +5,11 @@ from cfme.web_ui import toolbar as tb, Quadicon
 from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToAttribute, NavigateToSibling
 from cfme.base.login import BaseLoggedInPage
-from utils.update import Updateable
-from utils.appliance import Navigatable, current_appliance
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.wait import wait_for
-from utils import version
+from cfme.utils.update import Updateable
+from cfme.utils.appliance import Navigatable, current_appliance
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
+from cfme.utils import version
 
 
 class MyServicesView(BaseLoggedInPage):

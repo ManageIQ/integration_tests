@@ -30,8 +30,8 @@ from widgetastic_patternfly import (BootstrapNav,
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, RoleNotFound
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.appliance import NavigatableMixin
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance import NavigatableMixin
 
 
 class DeploymentRoleToolbar(View):

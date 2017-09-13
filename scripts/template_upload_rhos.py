@@ -14,12 +14,12 @@ import fauxfactory
 import sys
 from threading import Lock, Thread
 
-from utils import net, ports, trackerbot
-from utils.conf import cfme_data, credentials
-from utils.log import logger, add_stdout_handler
-from utils.providers import list_provider_keys
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils import net, ports, trackerbot
+from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.providers import list_provider_keys
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 lock = Lock()
 

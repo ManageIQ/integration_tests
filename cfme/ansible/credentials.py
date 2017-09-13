@@ -10,9 +10,9 @@ from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessa
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.wait import wait_for
 
 
 class CredentialsBaseView(BaseLoggedInPage):

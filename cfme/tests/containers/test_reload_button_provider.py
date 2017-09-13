@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from utils import testgen, version
+from cfme.utils import testgen, version
 
 
 pytestmark = [

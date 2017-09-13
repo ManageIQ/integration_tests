@@ -5,9 +5,9 @@ from navmazing import NavigateToAttribute
 
 from cfme.containers.provider import ContainersProvider
 from cfme.web_ui import match_location, StatusBox
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
-from utils.appliance import Navigatable
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance import Navigatable
+from cfme.utils.wait import wait_for
 
 
 match_page = partial(match_location, controller='container_dashboard', title='Container Dashboards')

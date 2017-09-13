@@ -1,5 +1,5 @@
 import fauxfactory
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 from jdbc_driver_methods import DB2_105_JDBC, MSSQL_2014_JDBC, MYSQL_57_JDBC
 from jdbc_driver_methods import POSTGRESPLUS_94_JDBC, POSTGRESQL_94_JDBC
 from jdbc_driver_methods import SYBASE_157_JDBC, ORACLE_12C_JDBC, MARIADB10_JDBC

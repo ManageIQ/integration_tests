@@ -23,11 +23,11 @@ from cfme.intelligence.rss import RSSView
 from cfme.exceptions import ZoneNotFound, DestinationNotFound
 from cfme.intelligence.chargeback import ChargebackView
 
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
 from . import Server, Region, Zone, ZoneCollection
 
-from utils import conf
-from utils.log import logger
+from cfme.utils import conf
+from cfme.utils.log import logger
 
 
 @Server.address.external_implementation_for(ViaUI)
@@ -169,7 +169,7 @@ def login(self, user=None, submit_method=LOGIN_METHODS[-1]):
         if logged_in_view.logged_in:
             logged_in_view.logout()
 
-        from utils.appliance.implementations.ui import navigate_to
+        from cfme.utils.appliance.implementations.ui import navigate_to
         login_view = navigate_to(self.appliance.server, 'LoginScreen')
 
         time.sleep(1)
@@ -240,12 +240,12 @@ class LoginScreen(CFMENavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        from utils.browser import ensure_browser_open
+        from cfme.utils.browser import ensure_browser_open
         ensure_browser_open(self.obj.appliance.server.address())
 
     def step(self):
         # Can be either blank or logged in
-        from utils import browser
+        from cfme.utils import browser
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()

@@ -10,10 +10,10 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import search
 from fixtures.provider import setup_one_or_skip
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
-from utils.providers import ProviderFilter
+from cfme.utils.providers import ProviderFilter
 
 
 @pytest.fixture(scope="module")

@@ -1,10 +1,10 @@
 import pytest
 from collections import namedtuple
 from wait_for import wait_for
-from utils import os
-from utils.log_validator import LogValidator
-from utils.log import logger
-from utils.conf import hidden
+from cfme.utils import os
+from cfme.utils.log_validator import LogValidator
+from cfme.utils.log import logger
+from cfme.utils.conf import hidden
 import tempfile
 import lxml.etree
 import yaml

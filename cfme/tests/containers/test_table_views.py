@@ -1,8 +1,8 @@
 from random import choice
 import pytest
 
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui import toolbar as tb
 from cfme.configure.settings import DefaultView
 

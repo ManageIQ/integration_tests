@@ -4,10 +4,10 @@ import pytest
 
 import requests
 
-from utils import ports
-from utils.net import net_check
-from utils.wait import TimedOutError
-from utils.conf import rdb
+from cfme.utils import ports
+from cfme.utils.net import net_check
+from cfme.utils.wait import TimedOutError
+from cfme.utils.conf import rdb
 
 from fixtures.pytest_store import store
 

@@ -10,8 +10,8 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button, Tab
 
 from cfme.exceptions import ItemNotFound
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase

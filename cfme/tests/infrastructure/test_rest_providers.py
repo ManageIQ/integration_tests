@@ -4,10 +4,10 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.configuration import server_roles_disabled
 from cfme.rest.gen_data import a_provider as _a_provider
-from utils.virtual_machines import deploy_template
-from utils.wait import wait_for
-from utils.log import logger
-from utils import error
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils import error
 
 
 pytestmark = [test_requirements.rest]

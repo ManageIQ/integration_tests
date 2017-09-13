@@ -1,10 +1,10 @@
 import pytest
 
-from utils import testgen
-from utils.soft_get import soft_get
+from cfme.utils import testgen
+from cfme.utils.soft_get import soft_get
 from cfme.web_ui import breadcrumbs, summary_title
 from cfme.fixtures import pytest_selenium as sel
-from utils.version import current_version
+from cfme.utils.version import current_version
 
 from cfme.containers.service import Service
 from cfme.containers.route import Route

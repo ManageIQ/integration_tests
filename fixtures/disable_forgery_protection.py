@@ -1,6 +1,6 @@
-from utils.log import logger
+from cfme.utils.log import logger
 import pytest
-from utils.ssh import SSHClient
+from cfme.utils.ssh import SSHClient
 import time
 
 

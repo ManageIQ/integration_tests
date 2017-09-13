@@ -13,11 +13,11 @@ import argparse
 import sys
 import os
 
-from utils import trackerbot
-from utils.providers import list_provider_keys
-from utils.conf import cfme_data, credentials
-from utils.log import logger, add_stdout_handler
-from utils.wait import wait_for
+from cfme.utils import trackerbot
+from cfme.utils.providers import list_provider_keys
+from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.wait import wait_for
 from wrapanapi.scvmm import SCVMMSystem
 
 add_stdout_handler(logger)

@@ -8,8 +8,8 @@ from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
 
-from utils.generators import random_vm_name
-from utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils import testgen
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

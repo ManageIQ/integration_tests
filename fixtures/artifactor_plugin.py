@@ -30,13 +30,13 @@ from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
 from threading import RLock
-from utils.appliance import get_or_create_current_appliance
-from utils.blockers import BZ, Blocker
-from utils.conf import env, credentials
-from utils.log import logger
-from utils.net import random_port, net_check
-from utils.wait import wait_for
-from utils import version
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.blockers import BZ, Blocker
+from cfme.utils.conf import env, credentials
+from cfme.utils.log import logger
+from cfme.utils.net import random_port, net_check
+from cfme.utils.wait import wait_for
+from cfme.utils import version
 
 UNDER_TEST = False  # set to true for artifactor using tests
 
@@ -134,7 +134,7 @@ def pytest_configure(config):
         art_client.ready = True
     else:
         config._art_proc = None
-    from utils.log import artifactor_handler
+    from cfme.utils.log import artifactor_handler
     artifactor_handler.artifactor = art_client
     if store.slave_manager:
         artifactor_handler.slaveid = store.slaveid

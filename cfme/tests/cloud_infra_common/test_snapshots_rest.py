@@ -8,12 +8,12 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import error, testgen
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.rest import assert_response
-from utils.version import current_version
-from utils.wait import wait_for
+from cfme.utils import error, testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.rest import assert_response
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

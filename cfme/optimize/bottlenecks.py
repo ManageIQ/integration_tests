@@ -4,10 +4,10 @@ from widgetastic.widget import Text, Checkbox, Table, View
 from widgetastic_patternfly import Tab, BootstrapSelect
 from widgetastic_manageiq import TimelinesChart
 
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 from . import BottlenecksView
 

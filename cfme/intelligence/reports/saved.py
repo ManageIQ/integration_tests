@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import Text
 from widgetastic_manageiq import Table, PaginationPane
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from navmazing import NavigateToSibling
 
 from . import CloudIntelReportsView

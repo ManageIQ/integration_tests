@@ -9,10 +9,10 @@ import subprocess
 from requests.auth import HTTPBasicAuth
 from urlparse import urlsplit, urlunsplit
 
-from utils.appliance import IPAppliance
-from utils.path import log_path
-from utils.quote import quote
-from utils.version import Version
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.path import log_path
+from cfme.utils.quote import quote
+from cfme.utils.version import Version
 
 
 def group_list_dict_by(ld, by):

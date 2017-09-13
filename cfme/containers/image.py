@@ -12,10 +12,10 @@ from cfme.containers.provider import Labelable, navigate_and_get_rows,\
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable, match_location, InfoBlock,\
     flash, PagedTable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance import Navigatable
 from cfme.configure import tasks
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import wait_for, TimedOutError
 from wrapanapi.containers.image import Image as ApiImage
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")

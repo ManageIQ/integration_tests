@@ -6,8 +6,8 @@ import pytest
 from cfme.containers.image import Image
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 
-from utils import testgen
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.wait import wait_for
 from cfme.configure.tasks import delete_all_tasks
 
 

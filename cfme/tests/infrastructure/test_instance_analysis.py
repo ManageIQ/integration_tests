@@ -18,10 +18,10 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
-from utils import testgen, ssh, safe_string, error
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.wait import wait_for, wait_for_decorator
+from cfme.utils import testgen, ssh, safe_string, error
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, wait_for_decorator
 
 pytestmark = [pytest.mark.tier(3), test_requirements.smartstate]
 

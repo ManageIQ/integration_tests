@@ -4,9 +4,9 @@ from navmazing import NavigationDestinationNotFound
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import Quadicon
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
                                          scope='module')

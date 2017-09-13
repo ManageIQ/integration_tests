@@ -11,9 +11,9 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import KeyPairNotFound
 
 from cfme.web_ui import match_location, mixins
-from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from utils.appliance import NavigatableMixin
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.wait import wait_for
 
 
 class KeyPairToolbar(View):

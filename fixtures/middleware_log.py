@@ -1,5 +1,5 @@
 import pytest
-from utils.log_validator import LogValidator
+from cfme.utils.log_validator import LogValidator
 
 
 @pytest.yield_fixture(scope='function')

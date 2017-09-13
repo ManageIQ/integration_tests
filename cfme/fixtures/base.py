@@ -1,12 +1,12 @@
 import pytest
 
-from utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.configure import configuration
 
 from fixtures.artifactor_plugin import fire_art_hook
 
-from utils.log import logger
-from utils.path import data_path
+from cfme.utils.log import logger
+from cfme.utils.path import data_path
 
 
 @pytest.fixture(scope="session")

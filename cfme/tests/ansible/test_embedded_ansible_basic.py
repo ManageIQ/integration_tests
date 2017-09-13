@@ -7,10 +7,10 @@ from cfme.ansible.repositories import RepositoryCollection
 from cfme.ansible.credentials import CredentialsCollection
 from cfme.control.explorer.actions import Action
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
-from utils.appliance.implementations.ui import navigate_to
-from utils.update import update
-from utils.version import current_version
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,

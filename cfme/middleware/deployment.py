@@ -7,10 +7,10 @@ from cfme.middleware.provider import Deployable
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, toolbar as tb
-from utils.appliance import Navigatable, current_appliance
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.providers import get_crud_by_name, list_providers_by_class
-from utils.varmeth import variable
+from cfme.utils.appliance import Navigatable, current_appliance
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.providers import get_crud_by_name, list_providers_by_class
+from cfme.utils.varmeth import variable
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)

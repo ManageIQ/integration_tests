@@ -4,9 +4,9 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from utils.rest import assert_response
-from utils.version import current_version
-from utils.wait import wait_for
+from cfme.utils.rest import assert_response
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.long_running,

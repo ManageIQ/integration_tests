@@ -10,8 +10,8 @@ from cfme.common.vm import Template
 from cfme.common.vm_views import (
     EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, EditTagsView,
     BasicProvisionFormView)
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from . import CloudInstanceView, InstanceAccordion
 
 

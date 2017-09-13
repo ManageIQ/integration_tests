@@ -15,9 +15,9 @@ import argparse
 import subprocess
 import sys
 
-from utils.conf import credentials
-from utils.path import scripts_path
-from utils.ssh import SSHClient
+from cfme.utils.conf import credentials
+from cfme.utils.path import scripts_path
+from cfme.utils.ssh import SSHClient
 
 
 def main():

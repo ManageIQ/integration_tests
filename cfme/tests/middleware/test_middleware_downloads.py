@@ -9,9 +9,9 @@ from cfme.middleware.messaging import MiddlewareMessaging
 from random_methods import get_random_object, get_random_domain
 from random_methods import get_random_server, get_random_server_group
 import cfme.web_ui.flash as flash
-from utils import testgen
-from utils import version
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils import version
+from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
