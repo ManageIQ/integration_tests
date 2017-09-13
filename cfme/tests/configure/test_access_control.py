@@ -41,9 +41,7 @@ def a_provider(request):
 
 
 def new_credential():
-    #return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
-    #DELETE LINE BELOW
-    return Credential(principal='uid' + fauxfactory.gen_alphanumeric().lower(), secret='redhat')
+    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
 
 
 def new_user(group=usergrp):
@@ -770,9 +768,7 @@ def test_user_change_password(appliance, request):
     user = User(
         name="user {}".format(fauxfactory.gen_alphanumeric()),
         credential=Credential(
-            #principal="user_principal_{}".format(fauxfactory.gen_alphanumeric()),
-            #DELETE THE LINE BELOW
-            principal="user_principal_{}".format(fauxfactory.gen_alphanumeric().lower()),
+            principal="user_principal_{}".format(fauxfactory.gen_alphanumeric()),
             secret="very_secret",
             verify_secret="very_secret"
         ),
@@ -785,10 +781,6 @@ def test_user_change_password(appliance, request):
     request.addfinalizer(appliance.server.login_admin)
     with user:
         appliance.server.logout()
-        ##############################
-        # DELETE
-        pytest.set_trace()
-        ##############################
         appliance.server.login(user)
         assert appliance.server.current_full_name() == user.name
     appliance.server.login_admin()
