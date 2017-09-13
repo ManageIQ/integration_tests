@@ -716,7 +716,10 @@ class FloatingIPView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(FloatingIPToolbar)
     sidebar = View.nested(FloatingIPSideBar)
+<<<<<<< HEAD
     paginator = PaginationPane()
+=======
+>>>>>>> Adding Floating IP
     including_entities = View.include(FloatingIPEntities, use_parent=True)
 
     @property
@@ -748,6 +751,7 @@ class FloatingIPDetailsView(BaseLoggedInPage):
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
+<<<<<<< HEAD
 class FloatingIPAddView(BaseLoggedInPage):
     """ Represents whole All NetworkProviders page """
     title = Text('//div[@id="main-content"]//h1')
@@ -769,6 +773,8 @@ class FloatingIPAddView(BaseLoggedInPage):
                 self.title.text == 'Add New Floating IP')
 
 
+=======
+>>>>>>> Adding Floating IP
 class OneProviderComponentsToolbar(View):
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
@@ -885,7 +891,10 @@ class OneProviderFloatingIPView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(FloatingIPSideBar)
+<<<<<<< HEAD
     paginator = PaginationPane()
+=======
+>>>>>>> Adding Floating IP
     including_entities = View.include(FloatingIPEntities, use_parent=True)
 
     @property
