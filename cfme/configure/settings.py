@@ -364,6 +364,8 @@ class DefaultViewForm(MySettingsView):
     compare = ViewButtonGroup("General", "Compare")
     compare_mode = ViewButtonGroup("General", "Compare Mode")
     infrastructure_providers = ViewButtonGroup("Infrastructure", "Infrastructure Providers")
+    configuration_management_providers = ViewButtonGroup('Infrastructure',
+                                                         'Configuration Management Providers')
     my_services = ViewButtonGroup("Services", "My Services")
     catalog_items = ViewButtonGroup("Services", "Catalog Items")
     templates = ViewButtonGroup("Services", "Templates & Images")
@@ -386,7 +388,8 @@ class DefaultView(Updateable, Navigatable):
                'Catalog Items': "catalog_items",
                'Templates & Images': "templates",
                'VMs': "vms",
-               'VMs & Instances': "vms_instances"
+               'VMs & Instances': "vms_instances",
+               'Configuration Management Providers': 'configuration_management_providers'
                }
 
     def __init__(self, appliance=None):
