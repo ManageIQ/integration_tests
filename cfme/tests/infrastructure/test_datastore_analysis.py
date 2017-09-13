@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb, Quadicon, InfoBlock
 from utils import conf, testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.appliance import get_or_create_current_appliance
 from utils.blockers import BZ
 from utils.wait import wait_for
 import pytest
@@ -29,14 +30,16 @@ CONTENT_ROWS_TO_CHECK = (
 )
 
 
-def pytest_generate_tests(metafunc, appliance):
+def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
 
     argnames, argvalues, idlist = testgen.providers_by_class(
         metafunc, PROVIDER_TYPES, required_fields=['datastores'])
     argnames += ['datastore']
-
+    appliance = get_or_create_current_appliance()
+    # TODO: turn the datastore into a parameterized fixture by type,
+    #       and discuss semantics for obtaining them by type
     datastore_collection = datastore.DatastoreCollection(appliance=appliance)
 
     for i, argvalue_tuple in enumerate(argvalues):
