@@ -13,6 +13,7 @@ from cfme.configure import configuration
 from cfme.common.vm import VM
 from cfme.utils import testgen, version, ssh
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.conf import credentials
 from cfme.utils.providers import ProviderFilter
@@ -74,15 +75,10 @@ def configure_websocket():
     Currently the fixture cfme/fixtures/base.py,
     disables the websocket role to avoid intrusive popups.
     """
-    roles = configuration.get_server_roles()
-    if 'websocket' in roles and not roles['websocket']:
+    with configuration.server_roles_enabled('websocket'):
         logger.info('Enabling the websocket role to allow console connections')
-        roles['websocket'] = True
-        configuration.set_server_roles(**roles)
         yield
-    roles['websocket'] = False
     logger.info('Disabling the websocket role to avoid intrusive popups')
-    configuration.set_server_roles(**roles)
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')
@@ -172,15 +168,15 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
 
         # create file on system
         vm_console.send_keys("touch blather")
-
-        # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
-        vm_console.send_ctrl_alt_delete()
-        assert vm_console.wait_for_text(text_to_find="login:", timeout=200, to_disappear=True), (
-            "Text 'login:' never disappeared, indicating failure of CTRL+ALT+DEL"
-            " button functionality, please check if OS reboots on CTRL+ALT+DEL key combination"
-            " and CTRL+ALT+DEL button on HTML5 Console is working. ")
-        assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
-            " didn't prompt for Login")
+        if not (BZ.bugzilla.get_bug(1491387).is_opened):
+            # Test pressing ctrl-alt-delete...we should be able to get a new login prompt:
+            vm_console.send_ctrl_alt_delete()
+            assert vm_console.wait_for_text(text_to_find="login:", timeout=200,
+                to_disappear=True), ("Text 'login:' never disappeared, indicating failure"
+                " of CTRL+ALT+DEL button functionality, please check if OS reboots on "
+                "CTRL+ALT+DEL key combination and CTRL+ALT+DEL button on HTML5 Console is working.")
+            assert vm_console.wait_for_text(text_to_find="login:", timeout=200), ("VM Console"
+                " didn't prompt for Login")
 
         if not provider.one_of(OpenStackProvider):
             assert vm_console.send_fullscreen(), ("VM Console Toggle Full Screen button does"
