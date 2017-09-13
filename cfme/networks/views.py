@@ -1,5 +1,5 @@
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView)
+                                  BaseEntitiesView, PaginationPane)
 from widgetastic_patternfly import (Dropdown, Accordion, FlashMessages, Button, TextInput,
                                     BootstrapSwitch)
 from widgetastic.widget import View, Text, Select
@@ -51,6 +51,7 @@ class NetworkProviderView(BaseLoggedInPage):
     toolbar = View.nested(NetworkProviderToolBar)
     sidebar = View.nested(NetworkProviderSideBar)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -125,6 +126,7 @@ class BalancerView(BaseLoggedInPage):
     toolbar = View.nested(BalancerToolBar)
     sidebar = View.nested(BalancerSideBar)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -167,6 +169,7 @@ class CloudNetworkDetailsToolBar(View):
     """ Represents provider details toolbar """
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
+    configuration = Dropdown(text='Configuration')
 
 
 class CloudNetworkSideBar(View):
@@ -199,6 +202,7 @@ class CloudNetworkView(BaseLoggedInPage):
     toolbar = View.nested(CloudNetworkToolBar)
     sidebar = View.nested(CloudNetworkSideBar)
     including_entities = View.include(NetworkProviderEntities, use_parent=True)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -242,6 +246,7 @@ class CloudNetworkAddView(BaseLoggedInPage):
     administrative_state = BootstrapSwitch(id='cloud_network_enabled')
     shared = BootstrapSwitch(id='cloud_network_shared')
     add = Button('Add')
+    cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
@@ -307,6 +312,7 @@ class NetworkPortView(BaseLoggedInPage):
     toolbar = View.nested(NetworkPortToolBar)
     sidebar = View.nested(NetworkPortSideBar)
     including_entities = View.include(NetworkPortEntities, use_parent=True)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -350,6 +356,7 @@ class NetworkRouterDetailsToolBar(View):
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Button(title='Download')
+    configuration = Dropdown(text='Configuration')
 
 
 class NetworkRouterSideBar(View):
@@ -381,6 +388,7 @@ class NetworkRouterView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(NetworkRouterToolBar)
     sidebar = View.nested(NetworkRouterSideBar)
+    paginator = PaginationPane()
     including_entities = View.include(NetworkRouterEntities, use_parent=True)
 
     @property
@@ -423,6 +431,7 @@ class NetworkRouterAddView(BaseLoggedInPage):
     subnet_name = Select(name='cloud_subnet_id')
     cloud_tenant = Select(name='cloud_tenant_id')
     add = Button('Add')
+    cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
@@ -468,7 +477,7 @@ class SecurityGroupDetailsToolBar(View):
     """ Represents provider details toolbar """
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
-    view_selector = View.nested(ItemsToolBarViewSelector)
+    configuration = Dropdown(text='Configuration')
 
 
 class SecurityGroupSideBar(View):
@@ -501,24 +510,13 @@ class SecurityGroupView(BaseLoggedInPage):
     toolbar = View.nested(SecurityGroupToolBar)
     sidebar = View.nested(SecurityGroupSideBar)
     including_entities = View.include(SecurityGroupEntities, use_parent=True)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Security Groups'] and
                 self.entities.title.text == 'Security Groups')
-
-
-class ProviderSecurityGroupAllView(SecurityGroupView):
-
-    @property
-    def is_displayed(self):
-        return (
-            self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Providers'] and
-            self.entities.title.text == '{} (All Security Groups)'.format(
-                self.context['object'].name)
-        )
 
 
 class SecurityGroupDetailsView(BaseLoggedInPage):
@@ -543,6 +541,24 @@ class SecurityGroupDetailsView(BaseLoggedInPage):
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
+class SecurityGroupAddView(BaseLoggedInPage):
+    """ Represents whole All NetworkProviders page """
+    title = Text('//div[@id="main-content"]//h1')
+
+    network_manager = Select(id='ems_id')
+    group_name = TextInput(name='name')
+    description = TextInput(name='description')
+    cloud_tenant = Select(locator='//*[@id="form_div"]/div[4]/div/div/div/button/..')
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Security Groups'] and
+                self.title.text == 'Add New Security Group')
+
+
 class SubnetToolBar(View):
     """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
@@ -556,6 +572,7 @@ class SubnetDetailsToolBar(View):
     configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
+    configuration = Dropdown(text='Configuration')
 
 
 class SubnetAddView(BaseLoggedInPage):
@@ -566,10 +583,14 @@ class SubnetAddView(BaseLoggedInPage):
     network_manager = Select(id='ems_id')
     cloud_tenant = Select(name='cloud_tenant_id')
     network = Select(name='cloud_network_id')
+    network_new = Select(name='network_id')
     subnet_name = TextInput(name='name')
+    network_protocol = Select(id='network_protocol')
+    network_protocol_new = Select(locator='//*[@id="form_div"]/div[5]/div[4]/div/div/button/..')
     subnet_cidr = TextInput(name='cidr')
     gateway = TextInput(name='gateway_ip')
     add = Button('Add')
+    cancel = Button('Cancel')
 
     @property
     def is_displayed(self):
@@ -620,6 +641,7 @@ class SubnetView(BaseLoggedInPage):
     toolbar = View.nested(SubnetToolBar)
     sidebar = View.nested(SubnetSideBar)
     including_entities = View.include(SubnetEntities, use_parent=True)
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -650,10 +672,108 @@ class SubnetDetailsView(BaseLoggedInPage):
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
+class FloatingIPToolbar(View):
+    """ Represents toolbar of floating ip section """
+    configuration = Dropdown("Configuration")
+    policy = Dropdown("Policy")
+    download = Dropdown("Download")
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class FloatingIPDetailsToolbar(View):
+    """ Represents details toolbar of floating ip """
+    configuration = Dropdown("Configuration")
+    policy = Dropdown("Policy")
+    download = Button(title="Download summary in PDF format")
+
+
+class FloatingIPSideBar(View):
+    """ Represents left side bar, usually contains navigation, filters, etc """
+    pass
+
+
+class FloatingIPDetailsSideBar(View):
+    """ Represents left side bar of floating ip details """
+    @View.nested
+    class properties(Accordion):  # noqa
+        ACCORDION_NAME = "Properties"
+        tree = ManageIQTree()
+
+    @View.nested
+    class relationships(Accordion):  # noqa
+        ACCORDION_NAME = "Relationships"
+        tree = ManageIQTree()
+
+
+class FloatingIPEntities(BaseEntitiesView):
+    """ Represents central view where all QuadIcons, etc are displayed """
+    pass
+
+
+class FloatingIPView(BaseLoggedInPage):
+    """ Represents whole All FloatingIps page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(FloatingIPToolbar)
+    sidebar = View.nested(FloatingIPSideBar)
+    paginator = PaginationPane()
+    including_entities = View.include(FloatingIPEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
+                self.entities.title.text == 'Floating IPs')
+
+
+class FloatingIPDetailsView(BaseLoggedInPage):
+    """ Represents details view of floating IP """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(FloatingIPDetailsToolbar)
+    sidebar = View.nested(FloatingIPDetailsSideBar)
+
+    @View.nested
+    class entities(View):  # noqa
+        """ Represents details page when it's switched to Summary/Table view """
+        properties = SummaryTable(title="Properties")
+        relationships = SummaryTable(title="Relationships")
+        smart_management = SummaryTable(title="Smart Management")
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'FloatingIPs'] and
+                self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+
+
+class FloatingIPAddView(BaseLoggedInPage):
+    """ Represents whole All NetworkProviders page """
+    title = Text('//div[@id="main-content"]//h1')
+
+    network_manager = Select(id='ems_id')
+    associated_port = TextInput(name='description')
+    floating_ip = TextInput(name='name')
+    floating_ip_new = TextInput(name='floating_ip_address')
+    external_network = Select(locator='//*[@id="form_div"]/div[2]/'
+                                      'div[2]/div/div/button/..')
+    cloud_tenant = Select(locator='//*[@id="form_div"]/div[4]/div/div/div/button/..')
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
+                self.title.text == 'Add New Floating IP')
+
+
 class OneProviderComponentsToolbar(View):
     policy = Dropdown(text='Policy')
     download = Dropdown(text='Download')
     back = Button(name='show_summary')
+    paginator = PaginationPane()
     view_selector = View.nested(ItemsToolBarViewSelector)
 
 
@@ -663,6 +783,7 @@ class OneProviderSubnetView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(SubnetSideBar)
+    paginator = PaginationPane()
     including_entities = View.include(SubnetEntities, use_parent=True)
 
     @property
@@ -679,6 +800,7 @@ class OneProviderBalancerView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(BalancerSideBar)
+    paginator = PaginationPane()
     including_entities = View.include(BalancerEntities, use_parent=True)
 
     @property
@@ -695,6 +817,7 @@ class OneProviderNetworkPortView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(NetworkPortSideBar)
+    paginator = PaginationPane()
     including_entities = View.include(NetworkPortEntities, use_parent=True)
 
     @property
@@ -711,6 +834,7 @@ class OneProviderCloudNetworkView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(CloudNetworkSideBar)
+    paginator = PaginationPane()
     including_entities = View.include(CloudNetworkEntities, use_parent=True)
 
     @property
@@ -727,6 +851,7 @@ class OneProviderNetworkRouterView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(NetworkRouterSideBar)
+    paginator = PaginationPane()
     including_entities = View.include(NetworkRouterEntities, use_parent=True)
 
     @property
@@ -743,6 +868,7 @@ class OneProviderSecurityGroupView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(OneProviderComponentsToolbar)
     sidebar = View.nested(SecurityGroupSideBar)
+    paginator = PaginationPane()
     including_entities = View.include(SecurityGroupEntities, use_parent=True)
 
     @property
@@ -751,3 +877,19 @@ class OneProviderSecurityGroupView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.title.text == title)
+
+
+class OneProviderFloatingIPView(BaseLoggedInPage):
+    """ Represents whole All FloatingIps page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    toolbar = View.nested(OneProviderComponentsToolbar)
+    sidebar = View.nested(FloatingIPSideBar)
+    paginator = PaginationPane()
+    including_entities = View.include(FloatingIPEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        return (super(BaseLoggedInPage, self).is_displayed and
+                self.navigation.currently_selected == ['Networks', 'Floating IPs'] and
+                self.entities.title.text == 'Floating IPs')
