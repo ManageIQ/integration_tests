@@ -61,7 +61,7 @@ def test_monitoring_invisible(appliance):
     assert not is_menu_visible(appliance, 'Monitor')
 
 
-@pytest.mark.meta(blockers=[BZ(1444939, forced_streams=["5.8"])])
+@pytest.mark.uncollectif(lambda: current_version() < "5.9")
 @pytest.mark.polarion('CMP-10649')
 def test_monitoring_visible(appliance, config_menus_visible):
     assert is_menu_visible(appliance, 'Monitor'), \
