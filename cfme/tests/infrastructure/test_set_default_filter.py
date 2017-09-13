@@ -7,7 +7,7 @@ from utils import version
 from cfme.web_ui import listaccordion as list_acc
 from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
-from cfme.infrastructure.datastore import Datastore
+from cfme.infrastructure.datastore import DatastoreCollection
 
 
 pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("virtualcenter_provider")]
@@ -49,25 +49,28 @@ def test_set_default_datastore_filter(request, appliance):
 
     # I guess this test has to be redesigned
     # Add cleanup finalizer
+    dc = DatastoreCollection(appliance)
+
     def unset_default_datastore_filter():
-        navigate_to(Datastore, 'All')
+        navigate_to(dc, 'All')
         list_acc.select('Filters', 'ALL', by_title=False)
         pytest.sel.click(datastore.default_datastore_filter_btn)
     request.addfinalizer(unset_default_datastore_filter)
 
-    navigate_to(Datastore, 'All')
+    navigate_to(dc, 'All')
     list_acc.select('Filters', 'Store Type / NFS', by_title=False)
     pytest.sel.click(datastore.default_datastore_filter_btn)
     appliance.server.logout()
     appliance.server.login_admin()
-    navigate_to(Datastore, 'All')
+    navigate_to(dc, 'All')
     assert list_acc.is_selected('Filters', 'Store Type / NFS (Default)', by_title=False),\
         'Store Type / NFS not set as default'
 
 
-def test_clear_datastore_filter_results():
+def test_clear_datastore_filter_results(appliance):
     """ Test for clearing filter results for datastores."""
-    view = navigate_to(Datastore, 'All')
+    dc = DatastoreCollection(appliance)
+    view = navigate_to(dc, 'All')
     view.sidebar.datastores.tree.click_path('Datastores', 'All Datastores', 'Global Filters',
                                             'Store Type / VMFS')
     view.entities.search.clear_search()

@@ -11,7 +11,7 @@ from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.provider import InfraProvider
 from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
-from cfme.infrastructure.datastore import Datastore
+from cfme.infrastructure.datastore import DatastoreCollection
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -222,8 +222,9 @@ def test_host_noquads(request, set_host_quad):
     assert visual.check_image_exists, "Image View Failed!"
 
 
-def test_datastore_noquads(request, set_datastore_quad):
-    navigate_to(Datastore, 'All')
+def test_datastore_noquads(request, set_datastore_quad, appliance):
+    dc = DatastoreCollection(appliance)
+    navigate_to(dc, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 

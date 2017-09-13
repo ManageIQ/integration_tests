@@ -1,6 +1,6 @@
 """ A model of an Infrastructure Datastore in CFME
 """
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
 from widgetastic.widget import View, Text
 from cfme.exceptions import ItemNotFound
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
@@ -13,6 +13,7 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
 from utils.wait import wait_for
+
 
 class DatastoreToolBar(View):
     """
