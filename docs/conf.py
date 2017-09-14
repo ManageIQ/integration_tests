@@ -52,7 +52,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
     'fixtures.nelson',
-    'utils.apidoc'
+    'cfme.utils.apidoc'
 ]
 
 intersphinx_mapping = {
