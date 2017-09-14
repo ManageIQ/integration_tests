@@ -75,12 +75,9 @@ def vddk_url(provider):
 
 
 @pytest.yield_fixture(scope="module")
-def configure_fleecing(appliance, has_no_providers_modscope, provider, setup_provider_modscope,
-        vddk_url):
+def configure_fleecing(appliance, provider, setup_provider_modscope, vddk_url):
     setup_providers_hosts_credentials(provider.key)
-    appliance.install_vddk(reboot=True, vddk_url=vddk_url)
-    appliance.reboot()
-    appliance.browser.quit_browser()
+    appliance.install_vddk(reboot=False, vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
 
@@ -106,13 +103,7 @@ def analysis_profile():
         name="default",
         description="ap-desc",
         profile_type=AnalysisProfile.VM_TYPE,
-        categories=[
-            "check_services",
-            "check_accounts",
-            "check_software",
-            "check_vmconfig",
-            "check_system"
-        ]
+        categories=["Services", "User Accounts", "Software", "VM Configuration", "System"]
     )
     if ap.exists:
         ap.delete()
@@ -175,7 +166,7 @@ def test_check_files(request, compliance_vm, analysis_profile):
     request.addfinalizer(lambda: compliance_vm.unassign_policy_profiles(profile.description))
 
     with update(analysis_profile):
-        analysis_profile.files = [(check_file_name, True)]
+        analysis_profile.files = [{"Name": check_file_name, "Collect Contents?": True}]
 
     do_scan(compliance_vm, ("Configuration", "Files"))
     assert compliance_vm.check_compliance()
