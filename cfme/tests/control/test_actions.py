@@ -104,7 +104,7 @@ def vm_name_big(provider):
     return random_vm_name("action", max_length=16)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vddk_url(provider):
     try:
         major, minor = str(provider.version).split(".")
@@ -379,6 +379,31 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
         pass
     else:
         pytest.fail("CFME did not prevent retire of the VM {}".format(vm.name))
+
+
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, policy_for_testing):
+    """Tests preventing Smart State Analysis.
+
+    This test sets the policy that prevents VM analysis.
+    https://bugzilla.redhat.com/show_bug.cgi?id=1433084
+
+    Metadata:
+        test_flag: actions, provision
+    """
+    policy_for_testing.assign_actions_to_event("VM Analysis Request",
+        ["Prevent current event from proceeding"])
+    request.addfinalizer(policy_for_testing.assign_events)
+    vm.crud.load_details()
+    wait_for_ssa_enabled()
+    try:
+        do_scan(vm.crud)
+    except TimedOutError:
+        rc, _ = appliance.ssh_client.run_command("grep 'Prevent current event from proceeding.*"
+            "VM Analysis Request.*{}' /var/www/miq/vmdb/log/policy.log".format(vm.name))
+        assert rc == 0, "Action \"Prevent current event from proceeding\" hasn't been invoked"
+    else:
+        pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
