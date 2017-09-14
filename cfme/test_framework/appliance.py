@@ -1,9 +1,9 @@
 import attr
 import pytest
 
-from utils import conf
+from cfme.utils import conf
 
-from utils.appliance import load_appliances_from_config, stack
+from cfme.utils.appliance import load_appliances_from_config, stack
 
 
 @pytest.hookimpl(tryfirst=True)
