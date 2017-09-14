@@ -1,14 +1,11 @@
 import pytest
 
-from utils.version import current_version
+from cfme.utils.version import current_version
 
 
 @pytest.fixture(scope='module')
 def enabled_embedded_appliance(temp_appliance_preconfig):
-    roles = temp_appliance_preconfig.server_roles
-    roles['embedded_ansible'] = True
-    temp_appliance_preconfig.server_roles = roles
-    temp_appliance_preconfig.wait_for_embedded_ansible()
+    temp_appliance_preconfig.enable_embedded_ansible_role()
     assert temp_appliance_preconfig.is_embedded_ansible_running
     return temp_appliance_preconfig
 
