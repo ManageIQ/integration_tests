@@ -67,7 +67,8 @@ def get_appliances():
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(
     lambda: not store.current_appliance.is_downstream)
-def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provider_crud):
+def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provider_crud,
+                    appliance):
 
     appl1, appl2 = get_appliances()
 
@@ -79,7 +80,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         # Manage infra,cloud providers and set some roles before taking a DB backup
-        server_info = ServerInformation()
+        server_info = ServerInformation(appliance=appliance)
         server_info.server_roles_enabled('automate')
         roles = server_info.server_roles_db
         virtualcenter_provider_crud.setup()

@@ -36,7 +36,7 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
-    server_settings = ServerInformation()
+    server_settings = ServerInformation(appliance=appliance)
     try:
         server_settings.server_roles_enabled(
             'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')

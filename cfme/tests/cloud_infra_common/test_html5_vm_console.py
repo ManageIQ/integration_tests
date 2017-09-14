@@ -59,7 +59,7 @@ def configure_vmware_console_for_test(appliance, provider):
 
 
 @pytest.fixture(scope="session")
-def configure_websocket():
+def configure_websocket(appliance):
     """
     Enable websocket role if it is disabled.
 

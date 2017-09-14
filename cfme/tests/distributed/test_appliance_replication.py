@@ -70,7 +70,7 @@ def get_distributed_appliances():
     return appl1, appl2
 
 
-def configure_db_replication(db_address):
+def configure_db_replication(db_address, appliance):
     """Enables the sync role and configures the appliance to replicate to
        the db_address specified. Then, it waits for the UI to show the replication
        as active and the backlog as empty.
@@ -79,7 +79,7 @@ def configure_db_replication(db_address):
     view = current_appliance.server.browser.create_view(ServerView)
     view.flash.assert_message("Configuration settings saved for CFME Server")  # may be partial
     navigate_to(current_appliance.server, 'Server')
-    ServerInformation().server_roles_enabled('database_synchronization')
+    ServerInformation(appliance=appliance).server_roles_enabled('database_synchronization')
     navigate_to(current_appliance.server.zone.region, 'Replication')
     rep_status, _ = wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
                              fail_condition=False, num_sec=360, delay=10,
@@ -181,7 +181,7 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        server_settings = ServerInformation()
+        server_settings = ServerInformation(appliance=appliance)
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         server_settings.server_roles_disabled('database_synchronization')
@@ -221,7 +221,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        server_settings = ServerInformation()
+        server_settings = ServerInformation(appliance=appliance)
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         virtualcenter_provider.create()

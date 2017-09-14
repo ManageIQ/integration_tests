@@ -47,6 +47,7 @@ from markers.meta import plugin
 
 from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.utils.conf import cfme_data
+from cfme.utils.appliance import current_appliance
 
 available_roles = set(ServerInformation.server_roles)
 
@@ -55,7 +56,7 @@ available_roles = set(ServerInformation.server_roles)
 def add_server_roles(server_roles, server_roles_mode="add"):
     # Disable all server roles
     # and then figure out which ones should be enabled
-    server_settings = ServerInformation()
+    server_settings = ServerInformation(appliance=current_appliance)
     roles_with_vals = {k: False for k in available_roles}
     if server_roles is None:
         # Only user interface

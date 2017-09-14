@@ -41,7 +41,7 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
-    server_settings = ServerInformation()
+    server_settings = ServerInformation(appliance=appliance)
     original_roles = server_settings.server_roles_db
     try:
         server_settings.server_roles_enabled(

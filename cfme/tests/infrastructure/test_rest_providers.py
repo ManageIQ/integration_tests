@@ -70,7 +70,7 @@ def test_provider_refresh(request, a_provider, appliance):
     if "refresh" not in appliance.rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
     provider_rest = appliance.rest_api.collections.providers.get(name=a_provider.name)
-    server_settings = ServerInformation()
+    server_settings = ServerInformation(appliance=appliance)
     server_settings.server_roles_disabled("ems_inventory", "ems_operations")
     vm_name = deploy_template(
         a_provider.key,

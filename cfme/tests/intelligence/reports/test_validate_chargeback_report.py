@@ -105,7 +105,7 @@ def enable_candu(provider, appliance):
     # that are not needed for Chargeback reporting.
 
     candu = appliance.get(CANDUCollection)
-    server_info = ServerInformation()
+    server_info = ServerInformation(appliance=appliance)
     original_roles = server_info.server_roles_db
     server_info.server_roles_enabled(
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
