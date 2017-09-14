@@ -5,8 +5,8 @@ from cfme.base.credential import Credential
 from cfme.configure.access_control import Group, Role, User
 from cfme.configure.configuration import Category, Tag
 from cfme.web_ui import mixins
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 
 
 @pytest.yield_fixture(scope="session")

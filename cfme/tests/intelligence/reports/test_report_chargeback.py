@@ -4,7 +4,7 @@ import pytest
 import cfme.web_ui.flash as flash
 
 from cfme.intelligence.reports.reports import CustomReport
-from utils.log import logger
+from cfme.utils.log import logger
 
 pytestmark = [pytest.mark.tier(3)]
 

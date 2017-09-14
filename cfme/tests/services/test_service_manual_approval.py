@@ -8,9 +8,9 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.services.requests import Request
 from cfme import test_requirements
-from utils.log import logger
-from utils.update import update
-from utils import testgen
+from cfme.utils.log import logger
+from cfme.utils.update import update
+from cfme.utils import testgen
 
 
 pytestmark = [

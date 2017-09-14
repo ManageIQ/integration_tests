@@ -6,8 +6,8 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import Quadicon, match_location, mixins
-from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.appliance import Navigatable
 
 
 match_page = partial(match_location, controller='cloud_object_store_container',

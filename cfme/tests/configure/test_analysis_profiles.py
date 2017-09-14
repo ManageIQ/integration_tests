@@ -3,9 +3,9 @@ import fauxfactory
 import pytest
 
 from cfme.configure.configuration.analysis_profile import AnalysisProfile, AnalysisProfileAddView
-from utils.blockers import BZ
-from utils.appliance.implementations.ui import navigate_to
-from utils.update import update
+from cfme.utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
 
 
 pytestmark = [pytest.mark.tier(3)]

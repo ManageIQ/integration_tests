@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
-from utils.generators import random_vm_name
-from utils.log import logger
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
 
 
 # TODO This fixture needs to go way, cleanup shouldn't happen here and should happen in the

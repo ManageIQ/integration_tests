@@ -7,8 +7,8 @@ from cfme.common.vm import VM
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.control.explorer.actions import Action
-from utils import testgen
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

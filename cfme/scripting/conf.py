@@ -13,7 +13,7 @@ import click
 
 import yaycl_crypt
 
-from utils import conf
+from cfme.utils import conf
 
 
 @click.group(help='Functions affecting configuration files')

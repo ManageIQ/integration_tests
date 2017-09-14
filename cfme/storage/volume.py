@@ -23,10 +23,10 @@ from widgetastic.widget import View, Text, ParametrizedView
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound, ItemNotFound
 from cfme.web_ui import match_location
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.appliance import NavigatableMixin
-from utils.log import logger
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, TimedOutError
 
 
 class VolumeToolbar(View):

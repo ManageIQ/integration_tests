@@ -10,10 +10,10 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import DestinationNotFound, StackNotFound, CandidateNotFound
 from cfme.web_ui import match_location
 from cfme.exceptions import CFMEException
-from utils.appliance import NavigatableMixin
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.wait import wait_for
+from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
 
 
 class StackToolbar(View):

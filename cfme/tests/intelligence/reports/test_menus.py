@@ -3,8 +3,8 @@ import pytest
 import random
 
 from cfme.intelligence.reports import menus, reports
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 # EvmGroup-super_administrator -> user `admin`
 # If we add more, will need relogin + user creation

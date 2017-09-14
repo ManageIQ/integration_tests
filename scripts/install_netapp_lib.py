@@ -4,8 +4,8 @@
 """
 
 import argparse
-from utils.appliance import IPAppliance, get_or_create_current_appliance
-from utils.conf import cfme_data
+from cfme.utils.appliance import IPAppliance, get_or_create_current_appliance
+from cfme.utils.conf import cfme_data
 
 
 def log(s):

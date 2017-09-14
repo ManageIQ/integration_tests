@@ -16,11 +16,11 @@ from cfme.web_ui.timelines import Timelines
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
-from utils.appliance.implementations.ui import navigate_to
-from utils import attributize_string, version, deferred_verpick
-from utils.units import Unit
-from utils.varmeth import variable
-from utils.log import logger
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import attributize_string, version, deferred_verpick
+from cfme.utils.units import Unit
+from cfme.utils.varmeth import variable
+from cfme.utils.log import logger
 
 pol_btn = partial(toolbar.select, "Policy")
 

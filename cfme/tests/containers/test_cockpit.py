@@ -4,9 +4,9 @@ from cfme.containers.node import NodeCollection
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
-from utils import testgen, version
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [

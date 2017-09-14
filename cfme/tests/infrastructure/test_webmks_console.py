@@ -7,11 +7,11 @@ import re
 from cfme.common.vm import VM
 from cfme.configure.configuration import VMwareConsoleSupport
 from cfme.infrastructure.provider import InfraProvider
-from utils import testgen, version, ssh
-from utils.appliance.implementations.ui import navigate_to
-from utils.conf import credentials
-from utils.log import logger
-from utils.providers import ProviderFilter
+from cfme.utils import testgen, version, ssh
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
+from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
 from wait_for import wait_for
 
 pytestmark = pytest.mark.usefixtures('setup_provider')

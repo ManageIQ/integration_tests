@@ -15,7 +15,7 @@ import argparse
 import sys
 import time
 
-from utils.providers import get_mgmt
+from cfme.utils.providers import get_mgmt
 
 
 def main():

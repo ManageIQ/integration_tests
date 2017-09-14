@@ -3,8 +3,8 @@ from __future__ import print_function
 import os
 import sys
 
-from utils import safe_string
-from utils.trackerbot import post_task_result
+from cfme.utils import safe_string
+from cfme.utils.trackerbot import post_task_result
 
 with open("{}/setup.txt".format(os.environ['ARTIFACTOR_DIR'])) as f:
     data = f.read()

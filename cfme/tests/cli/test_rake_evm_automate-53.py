@@ -3,8 +3,8 @@
 import pytest
 
 from cfme.automate.explorer.domain import DomainCollection
-from utils.path import data_path
-from utils.update import update
+from cfme.utils.path import data_path
+from cfme.utils.update import update
 
 cli_path = data_path.join("cli")
 

@@ -14,9 +14,9 @@ from cfme.containers.pod import Pod
 from cfme.containers.template import Template
 from cfme.containers.volume import Volume
 
-from utils import testgen, version
-from utils.version import current_version
-from utils.soft_get import soft_get
+from cfme.utils import testgen, version
+from cfme.utils.version import current_version
+from cfme.utils.soft_get import soft_get
 
 
 pytestmark = [

@@ -6,8 +6,8 @@ from widgetastic_manageiq import CheckboxSelect, Select, Input
 
 from cfme.exceptions import OptionNotAvailable, DestinationNotFound
 from cfme.common.vm_views import RightSizeView
-from utils import version, deferred_verpick
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils import version, deferred_verpick
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import Instance, CloudInstanceView
 
 

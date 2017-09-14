@@ -51,8 +51,8 @@ match type.
 import logging
 import pytest
 
-from utils.log import setup_logger
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.log import setup_logger
+from cfme.utils.wait import wait_for, TimedOutError
 
 
 # xxx better logger name

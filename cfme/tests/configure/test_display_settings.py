@@ -5,9 +5,9 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import ColorGroup, form_buttons
-from utils.appliance import current_appliance
-from utils.appliance.implementations.ui import navigate_to
-from utils import version
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import version
 from cfme.configure import settings  # NOQA
 
 

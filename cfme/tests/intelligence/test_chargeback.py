@@ -7,10 +7,10 @@ import pytest
 import cfme.intelligence.chargeback.rates as cb
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
-from utils import error
-from utils.blockers import BZ
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils import error
+from cfme.utils.blockers import BZ
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

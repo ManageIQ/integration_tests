@@ -3,8 +3,8 @@ import pytest
 import os
 import shutil
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils.wait import wait_for
-from utils import browser
+from cfme.utils.wait import wait_for
+from cfme.utils import browser
 
 
 def clean_temp_directory():

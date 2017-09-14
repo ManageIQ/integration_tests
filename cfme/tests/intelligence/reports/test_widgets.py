@@ -9,8 +9,8 @@ from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
 from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget
 from cfme.intelligence.reports.widgets.rss_widgets import RSSFeedWidget
 from cfme.intelligence.reports.dashboards import DefaultDashboard
-from utils.appliance.implementations.ui import navigate_to
-from utils.update import update
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
 from cfme import test_requirements
 
 

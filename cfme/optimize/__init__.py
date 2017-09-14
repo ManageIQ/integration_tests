@@ -4,7 +4,7 @@ from widgetastic_manageiq import Accordion, ManageIQTree
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base import Server
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class BottlenecksView(BaseLoggedInPage):

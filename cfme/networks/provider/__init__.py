@@ -19,10 +19,10 @@ from cfme.networks.views import (
     OneProviderSecurityGroupView,
     OneProviderSubnetView
 )
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
 
 
 class NetworkProviderCollection(Navigatable):

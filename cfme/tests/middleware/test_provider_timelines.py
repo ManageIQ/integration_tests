@@ -2,8 +2,8 @@ import pytest
 from datetime import datetime
 
 from cfme.middleware.provider.hawkular import HawkularProvider
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from deployment_methods import get_resource_path
 from deployment_methods import RESOURCE_WAR_NAME
 from deployment_methods import RESOURCE_EAR_NAME
@@ -14,7 +14,7 @@ from datasource_methods import ORACLE_12C_DS
 from datasource_methods import generate_ds_name, delete_datasource_from_list
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
 from server_methods import get_eap_server
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
-from utils.conf import docker as docker_conf
-from utils.net import random_port, my_ip_address
+from cfme.utils.conf import docker as docker_conf
+from cfme.utils.net import random_port, my_ip_address
 import argparse
 import fauxfactory
 import requests

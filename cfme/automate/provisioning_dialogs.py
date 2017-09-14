@@ -6,10 +6,10 @@ from widgetastic_manageiq import Button, Table, PaginationPane, SummaryForm, Scr
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import automate_menu_name
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 from . import AutomateCustomizationView
 
 group_title = 'Basic Information'

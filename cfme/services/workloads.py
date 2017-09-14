@@ -6,9 +6,9 @@ from widgetastic.widget import View, Text
 from widgetastic_manageiq import Accordion, ManageIQTree, Search
 
 from cfme.base.login import BaseLoggedInPage
-from utils.appliance import Navigatable
+from cfme.utils.appliance import Navigatable
 from cfme.base import Server
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class WorkloadsView(BaseLoggedInPage):

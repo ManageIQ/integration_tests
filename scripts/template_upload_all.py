@@ -21,13 +21,13 @@ import argparse
 import re
 import datetime
 import sys
-import utils
+import cfme.utils
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
 
-from utils import path, trackerbot
-from utils.conf import cfme_data
-from utils.log import logger, add_stdout_handler
+from cfme.utils import path, trackerbot
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger, add_stdout_handler
 
 CFME_BREW_ID = "cfme"
 NIGHTLY_MIQ_ID = "manageiq"
@@ -302,7 +302,7 @@ def main():
         create_datafile = open(path.conf_path.strpath + '/provider_data.yaml', 'w')
         create_datafile.write(local_datafile)
         create_datafile.close()
-        provider_data = utils.conf.provider_data
+        provider_data = cfme.utils.conf.provider_data
         stream = provider_data['stream']
 
     if stream:

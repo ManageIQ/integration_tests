@@ -1,8 +1,8 @@
 import pytest
 from distutils.version import LooseVersion
 
-from utils.log import logger
-from utils.providers import ProviderFilter, list_providers
+from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter, list_providers
 
 from markers.env import EnvironmentMarker
 

@@ -10,9 +10,9 @@ from widgetastic.xpath import quote
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill
-from utils import version
-from utils.log import logger
-from utils.pretty import Pretty
+from cfme.utils import version
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
 
 
 class FormButton(Pretty):

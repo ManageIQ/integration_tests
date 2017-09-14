@@ -25,12 +25,12 @@ from django.utils import timezone
 from sprout import critical_section, redis
 from sprout.log import create_logger
 
-from utils.appliance import Appliance as CFMEAppliance, IPAppliance
-from utils.bz import Bugzilla
-from utils.conf import cfme_data
-from utils.providers import get_mgmt
-from utils.timeutil import nice_seconds
-from utils.version import Version
+from cfme.utils.appliance import Appliance as CFMEAppliance, IPAppliance
+from cfme.utils.bz import Bugzilla
+from cfme.utils.conf import cfme_data
+from cfme.utils.providers import get_mgmt
+from cfme.utils.timeutil import nice_seconds
+from cfme.utils.version import Version
 
 
 # Monkey patch the User object in order to have nicer checks

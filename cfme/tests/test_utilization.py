@@ -12,10 +12,10 @@ from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.middleware.provider import MiddlewareProvider
 from fixtures.provider import setup_or_skip
-from utils import testgen
-from utils import conf
-from utils.log import logger
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils import conf
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
 
 
 # Tests for vmware,rhev, openstack, ec2, azure, gce providers have been moved to

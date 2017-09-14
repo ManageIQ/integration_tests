@@ -6,8 +6,8 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [test_requirements.automate]

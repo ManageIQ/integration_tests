@@ -11,10 +11,10 @@ from cfme.containers.service import match_page as match_page_service
 from cfme.containers.provider import ContainersProvider, \
     match_page as match_page_containersprovider
 from cfme.web_ui import browser_title
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
-from utils.blockers import BZ
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [

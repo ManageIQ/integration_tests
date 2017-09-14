@@ -4,10 +4,10 @@ import pytest
 from cfme.test_framework.sprout.client import SproutClient, SproutException
 from fixtures.pytest_store import store
 from scripts.repo_gen import process_url, build_file
-from utils.version import Version
-from utils.log import logger
-from utils.conf import cfme_data
-from utils import os
+from cfme.utils.version import Version
+from cfme.utils.log import logger
+from cfme.utils.conf import cfme_data
+from cfme.utils import os
 
 versions = []
 

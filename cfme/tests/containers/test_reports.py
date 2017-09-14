@@ -8,9 +8,9 @@ from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.reports.reports import CannedSavedReport, CustomReport
-from utils import testgen
-from utils.blockers import BZ
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

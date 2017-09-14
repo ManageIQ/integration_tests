@@ -6,9 +6,9 @@ from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.tier(3),

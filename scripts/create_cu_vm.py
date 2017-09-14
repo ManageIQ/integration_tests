@@ -13,11 +13,11 @@ import argparse
 import sys
 
 from cfme.exceptions import CUCommandException
-from utils.conf import cfme_data, credentials
-from utils.log import logger
-from utils.providers import get_mgmt
-from utils.ssh import SSHClient
-from utils.virtual_machines import deploy_template, _vm_cleanup
+from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.log import logger
+from cfme.utils.providers import get_mgmt
+from cfme.utils.ssh import SSHClient
+from cfme.utils.virtual_machines import deploy_template, _vm_cleanup
 
 
 def command_run(ssh_client, command, message):

@@ -9,10 +9,10 @@ from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.host import Host
 from cfme.web_ui import Quadicon
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenStackProvider],
                                          scope='module')

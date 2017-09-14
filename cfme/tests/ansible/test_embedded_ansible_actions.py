@@ -13,14 +13,14 @@ from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogIt
 from cfme.services.myservice import MyService
 from cfme.services.requests import Request
 from fixtures.provider import setup_one_by_class_or_skip
-from utils import ports
-from utils.appliance.implementations.ui import navigate_to
-from utils.conf import credentials
-from utils.generators import random_vm_name
-from utils.net import net_check
-from utils.update import update
-from utils.version import current_version
-from utils.wait import wait_for
+from cfme.utils import ports
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
+from cfme.utils.generators import random_vm_name
+from cfme.utils.net import net_check
+from cfme.utils.update import update
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

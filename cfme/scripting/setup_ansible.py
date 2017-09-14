@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import requests
 
-from utils import ports
-from utils.net import net_check
-from utils.wait import wait_for
+from cfme.utils import ports
+from cfme.utils.net import net_check
+from cfme.utils.wait import wait_for
 
 
 ANSIBLE_TOWER_REPO_PATH = "/etc/yum.repos.d/ansible-tower.repo"

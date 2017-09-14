@@ -15,11 +15,11 @@ import sys
 from os.path import join
 from threading import Lock, Thread
 
-from utils import trackerbot
-from utils.conf import cfme_data, credentials
-from utils.log import logger, add_stdout_handler
-from utils.ssh import SSHClient
-from utils.providers import list_provider_keys
+from cfme.utils import trackerbot
+from cfme.utils.conf import cfme_data, credentials
+from cfme.utils.log import logger, add_stdout_handler
+from cfme.utils.ssh import SSHClient
+from cfme.utils.providers import list_provider_keys
 
 lock = Lock()
 

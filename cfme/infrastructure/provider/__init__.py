@@ -20,13 +20,13 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
 from cfme.web_ui import Quadicon, match_location
-from utils import conf, version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.varmeth import variable
-from utils.wait import wait_for
+from cfme.utils import conf, version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for
 
 # todo: get_rid of match_page and am_i_here
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')

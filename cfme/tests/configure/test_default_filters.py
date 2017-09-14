@@ -4,12 +4,12 @@ import pytest
 from cfme import test_requirements
 from cfme.configure import settings as st
 from cfme.fixtures import pytest_selenium as sel
-from utils.blockers import BZ
+from cfme.utils.blockers import BZ
 from cfme.cloud.instance.image import Image
 from cfme.cloud.instance import Instance
 from cfme.infrastructure import virtual_machines as vms
 from cfme.services import workloads
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3),

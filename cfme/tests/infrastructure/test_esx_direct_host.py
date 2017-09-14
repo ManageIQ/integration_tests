@@ -7,9 +7,9 @@ import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.common.provider import DefaultEndpoint
-from utils import testgen
-from utils.net import resolve_hostname
-from utils.version import Version
+from cfme.utils import testgen
+from cfme.utils.net import resolve_hostname
+from cfme.utils.version import Version
 
 
 def pytest_generate_tests(metafunc):

@@ -8,15 +8,15 @@ from widgetastic_manageiq import ManageIQTree, Input, ScriptBox, SummaryTable, T
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, BootstrapSelect, Button
 
 from cfme.base.login import BaseLoggedInPage
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils import conf
-from utils.datafile import load_data_file
-from utils.path import project_path
-from utils.update import Updateable
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils.varmeth import variable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import conf
+from cfme.utils.datafile import load_data_file
+from cfme.utils.path import project_path
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.varmeth import variable
 
 
 class PXEToolBar(View):

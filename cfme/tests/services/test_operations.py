@@ -9,9 +9,9 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form
 from cfme.services.requests import Request
 from cfme.web_ui import flash, fill
-from utils.appliance.implementations.ui import navigate_to
-from utils.browser import browser
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.browser import browser
+from cfme.utils.wait import wait_for
 from fixtures.pytest_store import store
 
 

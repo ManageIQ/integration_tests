@@ -6,10 +6,10 @@ from . import quickstart
 from IPython.terminal.interactiveshell import TerminalInteractiveShell
 
 IMPORTS = [
-    'from utils import conf',
+    'from cfme.utils import conf',
     'from fixtures.pytest_store import store',
-    'from utils.appliance.implementations.ui import navigate_to',
-    'from utils import providers'
+    'from cfme.utils.appliance.implementations.ui import navigate_to',
+    'from cfme.utils import providers'
 ]
 
 
@@ -22,7 +22,7 @@ def main():
     for code_import in IMPORTS:
         print('> {}'.format(code_import))
         ipython.run_cell(code_import)
-    from utils.path import conf_path
+    from cfme.utils.path import conf_path
     custom_import_path = conf_path.join('miq_python_startup.py')
     if custom_import_path.exists():
         with open(custom_import_path.strpath, 'r') as custom_import_file:

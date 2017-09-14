@@ -2,7 +2,7 @@ from random import choice
 
 import pytest
 
-from utils import testgen
+from cfme.utils import testgen
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import search, CheckboxTable
 

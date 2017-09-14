@@ -8,7 +8,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView
 from cfme.exceptions import DestinationNotFound
-from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
 
 class RHOSEndpoint(DefaultEndpoint):

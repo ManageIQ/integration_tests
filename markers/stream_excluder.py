@@ -12,7 +12,7 @@ import pytest
 
 
 def get_streams_id():
-    from utils.version import appliance_is_downstream, current_version
+    from cfme.utils.version import appliance_is_downstream, current_version
     if appliance_is_downstream():
         return {current_version().series(2), "downstream"}
     else:
@@ -71,7 +71,7 @@ def pytest_collection_modifyitems(session, config, items):
     # Just to print out the appliance's streams
     from fixtures.terminalreporter import reporter
 
-    from utils.version import current_stream
+    from cfme.utils.version import current_stream
     reporter(config).write(
         "\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
     # Bail out if the appliance stream or version do not match

@@ -16,9 +16,9 @@ import warnings
 from collections import namedtuple
 
 from manageiq_client.api import ManageIQClient as MiqApi
-from utils import conf
-from utils.appliance import get_or_create_current_appliance
-from utils.path import log_path
+from cfme.utils import conf
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.path import log_path
 
 
 Coverage = namedtuple('Coverage', 'method, action, collection, entity, subcollection, subentity')

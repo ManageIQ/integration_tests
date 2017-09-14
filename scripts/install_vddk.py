@@ -6,7 +6,7 @@
 import argparse
 import sys
 from urlparse import urlparse
-from utils.appliance import IPAppliance, get_or_create_current_appliance
+from cfme.utils.appliance import IPAppliance, get_or_create_current_appliance
 
 
 def log(message):

@@ -9,7 +9,7 @@ from widgetastic_patternfly import Dropdown, FlashMessages
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.base.ui import automate_menu_name
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class AutomateExplorerView(BaseLoggedInPage):

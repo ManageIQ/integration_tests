@@ -5,10 +5,10 @@ from widgetastic.widget import Text, Checkbox
 from widgetastic_manageiq import SummaryFormItem, DashboardWidgetsPicker
 from widgetastic_patternfly import Button, Input
 
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 from . import CloudIntelReportsView
 
 

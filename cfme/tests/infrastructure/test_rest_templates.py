@@ -5,8 +5,8 @@ from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
-from utils import error
-from utils.version import current_version
+from cfme.utils import error
+from cfme.utils.version import current_version
 
 pytestmark = [test_requirements.rest]
 

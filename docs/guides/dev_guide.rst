@@ -225,7 +225,7 @@ We also do a few things that aren't explicitly called out in PEP 8:
   `<https://docs.python.org/3/howto/logging.html#optimization>`_ use old style ``%s``,
   but without the actual ``%`` formatting operation::
 
-    from utils.log import logger
+    from cfme.utils.log import logger
 
     logger.info("Some message %s", some_string)
 
@@ -233,12 +233,12 @@ General Notes
 """""""""""""
 
 * Avoid using :py:func:`time.sleep` as much as possible to workaround quirks in the UI.
-  There is a :py:func:`utils.wait.wait_for` utility that can be used to wait for
+  There is a :py:func:`cfme.utils.wait.wait_for` utility that can be used to wait for
   arbitrary conditions. In most cases there is some DOM visible change on the page
   which can be waited for.
 * Avoid using :py:func:`time.sleep` for waiting for changes to happen outside of the UI.
   Consider using tools like mgmt_system to probe the external systems for
-  conditions for example and tie it in with a :py:func:`utils.wait.wait_for` as discussed above.
+  conditions for example and tie it in with a :py:func:`cfme.utils.wait.wait_for` as discussed above.
 * If you feel icky about something you've written but don't know how to make
   it better, ask someone. It's better to have it fixed before submitting it as
   a pull request ;)
@@ -264,6 +264,12 @@ Layout
   * ``web_ui/`` The new web framework
   * ``fixtures/`` The new fixtures
   * ``tests/`` Tests container
+  * ``utils/`` Utility functions that can be called inside our outside the
+    test context. Generally, util functions benefit from having a related test
+    fixture that exposes the utility to the tests. Modules in this directory
+    will be auto loaded.
+
+  	* ``tests/`` Unit tests for utils
 
 * ``conf/`` Place for configuration files
 * ``data/`` Test data. The structure of this directory should match the
@@ -279,12 +285,7 @@ Layout
   directory will be auto loaded.
 * ``cfme/metaplugins/`` Plugins loaded by ``@pytest.mark.meta``. Further informations in
   :py:mod:`markers.meta`
-* ``utils/`` Utility functions that can be called inside our outside the
-  test context. Generally, util functions benefit from having a related test
-  fixture that exposes the utility to the tests. Modules in this directory
-  will be auto loaded.
 
-  * ``tests/`` Unit tests for utils
 * ``scripts/`` Useful scripts for QE developers that aren't used during
   a test run
 * ``sprout/`` Here lives the Sprout appliance tool.

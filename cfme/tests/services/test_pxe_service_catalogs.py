@@ -9,9 +9,9 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services.requests import Request
 from cfme import test_requirements
-from utils import testgen
-from utils.log import logger
-from utils.conf import cfme_data
+from cfme.utils import testgen
+from cfme.utils.log import logger
+from cfme.utils.conf import cfme_data
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

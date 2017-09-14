@@ -1,7 +1,7 @@
 import pytest
 
-from utils.appliance import get_or_create_current_appliance
-from utils.appliance import ViaSSUI
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance import ViaSSUI
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])

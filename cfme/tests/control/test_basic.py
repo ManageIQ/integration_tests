@@ -14,10 +14,10 @@ import random
 from cfme.control.explorer import (actions, alert_profiles, alerts, conditions, policies,
     policy_profiles)
 
-from utils.appliance.implementations.ui import navigate_to
-from utils.update import update
-from utils.version import current_version
-from utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
+from cfme.utils.version import current_version
+from cfme.utils.blockers import BZ
 from cfme import test_requirements
 
 pytestmark = [

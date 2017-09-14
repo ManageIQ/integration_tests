@@ -4,8 +4,8 @@ from functools32 import lru_cache
 import requests
 from collections import defaultdict
 from jinja2 import Environment, FileSystemLoader
-from utils.path import template_path, log_path
-from utils.conf import jenkins
+from cfme.utils.path import template_path, log_path
+from cfme.utils.conf import jenkins
 
 
 @lru_cache()

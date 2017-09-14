@@ -6,11 +6,11 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.provisioning import provisioning_form
 from cfme.services.requests import Request
 from cfme.web_ui import flash, fill
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.wait import wait_for
-from utils import testgen, version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),

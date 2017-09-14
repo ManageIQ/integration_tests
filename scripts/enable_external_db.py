@@ -18,8 +18,8 @@ Example usage:
 import argparse
 import sys
 
-from utils.appliance import IPAppliance
-from utils.conf import credentials
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.conf import credentials
 
 
 def main():

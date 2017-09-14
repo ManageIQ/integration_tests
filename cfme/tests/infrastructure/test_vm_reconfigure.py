@@ -3,9 +3,9 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen
-from utils.wait import wait_for
-from utils.generators import random_vm_name
+from cfme.utils import testgen
+from cfme.utils.wait import wait_for
+from cfme.utils.generators import random_vm_name
 
 pytest_generate_tests = testgen.generate(
     [VMwareProvider, RHEVMProvider],

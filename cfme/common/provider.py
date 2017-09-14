@@ -20,17 +20,17 @@ from cfme.exceptions import (
 from cfme.web_ui import (
     breadcrumbs_names, summary_title, flash, Quadicon, Region, fill, Form, toolbar as tb,
     form_buttons)
-from utils import ParamClassName, version, conf
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.browser import ensure_browser_open
-from utils.log import logger
-from utils.net import resolve_hostname
-from utils.stats import tol_check
-from utils.update import Updateable
-from utils.varmeth import variable
-from utils.wait import wait_for, RefreshTimer
+from cfme.utils import ParamClassName, version, conf
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.log import logger
+from cfme.utils.net import resolve_hostname
+from cfme.utils.stats import tol_check
+from cfme.utils.update import Updateable
+from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -126,7 +126,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
         """
         # gotta stash this in here to prevent circular imports
-        from utils.providers import get_mgmt
+        from cfme.utils.providers import get_mgmt
 
         if self.key:
             return get_mgmt(self.key)
@@ -710,7 +710,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     @classmethod
     def clear_providers(cls):
         """ Clear all providers of given class on the appliance """
-        from utils.appliance import current_appliance as app
+        from cfme.utils.appliance import current_appliance as app
         app.rest_api.collections.providers.reload()
         for prov in app.rest_api.collections.providers.all:
             try:

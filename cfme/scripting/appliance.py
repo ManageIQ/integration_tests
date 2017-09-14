@@ -17,7 +17,7 @@ from .setup_ansible import setup_ansible
 
 def get_appliance(appliance_ip):
     """Checks an appliance is not None and if so, loads the appropriate things"""
-    from utils.appliance import IPAppliance, get_or_create_current_appliance
+    from cfme.utils.appliance import IPAppliance, get_or_create_current_appliance
     if not appliance_ip:
         app = get_or_create_current_appliance()
     else:
@@ -64,7 +64,7 @@ methods_to_install = [
 
 def fn(method, *args, **kwargs):
     """Helper to access the right properties"""
-    from utils.appliance import IPAppliance
+    from cfme.utils.appliance import IPAppliance
     appliance_ip = kwargs.get('appliance_ip', None)
     app = get_appliance(appliance_ip)
     descriptor = getattr(IPAppliance, method)

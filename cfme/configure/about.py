@@ -3,8 +3,8 @@ from widgetastic.widget import View
 from widgetastic_patternfly import AboutModal
 
 from cfme.exceptions import ElementOrBlockNotFound
-from utils.appliance import current_appliance
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 # MIQ/CFME about field names
 VERSION = 'Version'

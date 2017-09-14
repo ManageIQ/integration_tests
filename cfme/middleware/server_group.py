@@ -9,10 +9,10 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from wrapanapi.hawkular import CanonicalPath
-from utils import attributize_string
-from utils.varmeth import variable
-from utils.appliance import Navigatable, current_appliance
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import attributize_string
+from cfme.utils.varmeth import variable
+from cfme.utils.appliance import Navigatable, current_appliance
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, pwr_btn
 from cfme.middleware.domain import MiddlewareDomain
 from cfme.exceptions import MiddlewareDomainNotFound

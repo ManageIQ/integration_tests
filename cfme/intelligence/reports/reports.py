@@ -2,12 +2,12 @@
 """Page model for Cloud Intel / Reports / Reports"""
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils.timeutil import parsetime
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.timeutil import parsetime
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import CloudIntelReportsView, ReportsMultiBoxSelect
 
 from widgetastic.utils import ParametrizedLocator

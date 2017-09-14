@@ -7,8 +7,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import expression_editor as exp_ed
 from cfme.web_ui import Input, Region, Select, fill
 from cfme.web_ui.form_buttons import FormButton
-from utils.wait import wait_for
-from utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
 
 search_box = Region(
     locators=dict(
