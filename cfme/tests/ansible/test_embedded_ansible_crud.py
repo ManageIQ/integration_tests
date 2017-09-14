@@ -19,6 +19,3 @@ def test_embedded_ansible_enable(enabled_embedded_appliance):
     assert enabled_embedded_appliance.is_nginx_running
     assert enabled_embedded_appliance.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
-    return_code, output = enabled_embedded_appliance.ssh_client.run_rails_command(
-        "EmbeddedAnsible.alive?")
-    assert 'True' in output
