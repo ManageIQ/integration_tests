@@ -317,7 +317,10 @@ class Details(CFMENavigateStep):
         """Navigate to the correct view"""
         self.prerequisite_view.toolbar.view_selector.select('List View')
         version = self.obj.appliance.version
-        cluster_name = self.obj.short_name if version >= '5.8.1.2' else self.obj.name
+        if (version >= '5.7.4' and version < '5.8') or version >= '5.8.1.2':
+            cluster_name = self.obj.short_name
+        else:
+            cluster_name = self.obj.name
         try:
             row = self.prerequisite_view.paginator.find_row_on_pages(
                 self.prerequisite_view.entities.table,

@@ -1340,7 +1340,7 @@ class NonJSPaginationPane(View):
 
         items_text = VersionPick({
             Version.lowest(): '{} items'.format(value),
-            '5.8.2': str(value),
+            '5.7.4': str(value),
         }).pick(self.browser.product_version)
         self.items_on_page.select_by_visible_text(items_text)
 
