@@ -1548,6 +1548,16 @@ class IPAppliance(object):
         return output.success
 
     @property
+    def is_nginx_running(self):
+        output = self.ssh_client.run_command("systemctl status nginx")
+        return output.success
+
+    @property
+    def is_rabbitmq_running(self):
+        output = self.ssh_client.run_command("systemctl status rabbitmq-server")
+        return output.success
+
+    @property
     def is_embedded_ensible_role_enabled(self):
         return self.server_roles.get("embedded_ansible", False)
 
