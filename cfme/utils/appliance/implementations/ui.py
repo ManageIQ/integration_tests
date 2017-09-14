@@ -196,18 +196,7 @@ class CFMENavigateStep(NavigateStep):
         except (AttributeError, NoSuchElementException):
             return False
 
-    def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
-        if getattr(fn, '_can_skip_badness_test', False):
-            # self.log_message('Op is a Nop! ({})'.format(fn.__name__))
-            return
-
-        # TODO: Uncomment after resolving the issue in widgetastic. Shouldn't be needed though :)
-        # if self.VIEW:
-        #     self.view.flush_widget_cache()
-        go_kwargs = kwargs.copy()
-        go_kwargs.update(nav_args)
-        self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
-
+    def pre_badness_check(self, _tries, *args, **go_kwargs):
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
             self.appliance.patch_with_miqqe()
@@ -287,6 +276,20 @@ class CFMENavigateStep(NavigateStep):
             self.go(_tries, *args, **go_kwargs)
             # If there is a rails error past this point, something is really awful
 
+    def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
+        if getattr(fn, '_can_skip_badness_test', False):
+            # self.log_message('Op is a Nop! ({})'.format(fn.__name__))
+            return
+
+        # TODO: Uncomment after resolving the issue in widgetastic. Shouldn't be needed though :)
+        # if self.VIEW:
+        #     self.view.flush_widget_cache()
+        go_kwargs = kwargs.copy()
+        go_kwargs.update(nav_args)
+        self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
+
+        br = self.appliance.browser
+
         # Set this to True in the handlers below to trigger a browser restart
         recycle = False
 
@@ -295,6 +298,7 @@ class CFMENavigateStep(NavigateStep):
         restart_evmserverd = False
 
         try:
+            self.pre_badness_check(_tries, *args, **go_kwargs)
             self.log_message(
                 "Invoking {}, with {} and {}".format(fn.func_name, args, kwargs), level="debug")
             return fn(*args, **kwargs)
