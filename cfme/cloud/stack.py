@@ -7,7 +7,7 @@ from widgetastic_manageiq import (
     SummaryTable, Table, Text, BaseNonInteractiveEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.exceptions import DestinationNotFound, StackNotFound, CandidateNotFound
+from cfme.exceptions import CandidateNotFound
 from cfme.web_ui import match_location
 from cfme.exceptions import CFMEException
 from cfme.utils.appliance import NavigatableMixin

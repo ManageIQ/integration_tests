@@ -6,7 +6,7 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic_manageiq import (ManageIQTree, Checkbox, AttributeValueForm, SummaryFormItem,
-                                  TimelinesView, Table as table)
+                                  TimelinesView)
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
 from widgetastic.utils import Version, VersionPick
