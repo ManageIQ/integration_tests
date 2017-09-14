@@ -31,6 +31,7 @@ Note:
     This is very insecure, and should be used as a last resort for debugging elusive failures.
 
 """
+import os
 import signal
 import smtplib
 import socket
@@ -153,8 +154,9 @@ class Rdb(Pdb):
 
 
 def send_breakpoint_email(exctype, msg=''):
+    job_name = os.environ.get('JOB_NAME', 'Non-jenkins')
     breakpoint = _breakpoint_exceptions[exctype]
-    subject = 'RDB Breakpoint: {}'.format(breakpoint['subject'])
+    subject = 'RDB Breakpoint: {} {}'.format(job_name, breakpoint['subject'])
     rdb = Rdb(msg)
     rdb.set_trace(subject=subject, recipients=breakpoint['recipients'])
 
