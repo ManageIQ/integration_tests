@@ -17,7 +17,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     AngularSelect, Calendar, CFMECheckbox, Form, InfoBlock, Input,
     Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
-from cfme.web_ui.form_buttons import change_stored_password, FormButton
+from cfme.web_ui.form_buttons import change_stored_password
 from cfme.utils import version, conf
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to

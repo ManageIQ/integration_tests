@@ -11,7 +11,6 @@ from cfme.web_ui import flash
 from cfme import test_requirements
 from cfme.utils import testgen
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 
 
 pytestmark = [

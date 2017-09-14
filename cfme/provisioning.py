@@ -5,7 +5,7 @@ from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.requests import Request
-from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip
+from cfme.web_ui import AngularSelect, flash, form_buttons, tabstrip
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger

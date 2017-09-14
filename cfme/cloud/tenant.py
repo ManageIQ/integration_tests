@@ -14,7 +14,7 @@ from widgetastic_manageiq import (
     SummaryTable, Table, Text, BaseNonInteractiveEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.exceptions import TenantNotFound, DestinationNotFound, OptionNotAvailable
+from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -328,7 +328,7 @@ class Tenant(NavigatableMixin):
         view.toolbar.configuration.item_select('Delete Cloud Tenant')
 
         result = view.entities.flash.assert_success_message(
-                'Delete initiated for 1 Cloud Tenant.')
+            'Delete initiated for 1 Cloud Tenant.')
         if wait:
             self.provider.refresh_provider_relationships()
             result = self.wait_for_disappear(600)

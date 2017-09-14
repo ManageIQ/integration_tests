@@ -11,7 +11,7 @@ from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for, wait_for_decorator
+from cfme.utils.wait import wait_for_decorator
 from cfme.utils import testgen, error
 
 

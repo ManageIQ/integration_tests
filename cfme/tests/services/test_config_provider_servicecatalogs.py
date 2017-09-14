@@ -8,7 +8,6 @@ from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.utils import testgen, version
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 
 
 pytestmark = [

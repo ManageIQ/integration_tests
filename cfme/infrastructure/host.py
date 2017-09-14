@@ -573,4 +573,3 @@ def get_all_hosts():
     """
     view = navigate_to(Host, "All")
     return [entity.name for entity in view.entities.get_all(surf_pages=True)]
-

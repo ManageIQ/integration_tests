@@ -12,7 +12,6 @@ from cfme.common.provider import cleanup_vm
 from cfme.services.requests import Request
 from cfme.utils import testgen
 from cfme.utils.log import logger
-from cfme.utils.wait import wait_for
 from cfme.utils.blockers import BZ
 
 
