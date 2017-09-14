@@ -1678,6 +1678,150 @@ class DetailsToolBarViewSelector(View):
         return self.selected
 
 
+class CompareToolBarAttributeSelector(View):
+    """ represents toolbar's Attribute selector control
+        it is present on pages of Compare Selected items
+
+    .. code-block:: python
+
+        attribute_selector = View.nested(CompareToolBarAttributeSelector)
+
+        attribute_selector.select('Attributes with different values')
+        attribute_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
+
+    all_values_button = Button(title="All attributes")
+    diff_values_button = Button(title="Attributes with different values")
+    same_values_button = Button(title="Attributes with same values")
+
+    @property
+    def _view_buttons(self):
+        yield self.all_values_button
+        yield self.diff_values_button
+        yield self.same_values_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The Attribute with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
+
+    def read(self):
+        return self.selected
+
+    @property
+    def is_displayed(self):
+        return self.all_values_button.is_displayed
+
+
+class CompareToolBarModeSelector(View):
+    """ represents toolbar's Mode selector control
+        it is present on pages of Compare Selected items
+
+    .. code-block:: python
+
+        mode_selector = View.nested(CompareToolBarModeSelector)
+
+        mode_selector.select('Exists Mode')
+        mode_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
+
+    details_mode = Button(title="Details Mode")
+    exists_mode = Button(title="Exists Mode")
+
+    @property
+    def _view_buttons(self):
+        yield self.details_mode
+        yield self.exists_mode
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The Mode with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
+
+    def read(self):
+        return self.selected
+
+    @property
+    def is_displayed(self):
+        return self.details_mode.is_displayed
+
+
+class CompareToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present on pages of Compare Selected items
+
+    .. code-block:: python
+
+        view_selector = View.nested(CompareToolBarViewSelector)
+
+        view_selector.select('Compressed View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
+
+    Expanded_button = Button(title="Expanded View")
+    Compressed_button = Button(title="Compressed View")
+
+    @property
+    def _view_buttons(self):
+        yield self.Expanded_button
+        yield self.Compressed_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
+
+    def read(self):
+        return self.selected
+
+    @property
+    def is_displayed(self):
+        return self.Expanded_button.is_displayed
+
+
+class CompareToolbarActions(View):
+    """ represents compare toolbar's all actions
+        it is present on pages of Compare Selected items and drift
+
+    .. code-block:: python
+
+        actions = View.nested(CompareToolbarActions)
+    """
+    attribute_selector = View.nested(CompareToolBarAttributeSelector)
+    mode_selector = View.nested(CompareToolBarModeSelector)
+    view_selector = View.nested(CompareToolBarViewSelector)
+
+
 class Search(View):
     """ Represents search_text control
     # TODO Add advanced search
