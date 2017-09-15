@@ -286,10 +286,12 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
     def restart_server(self):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Restart Server', handle_alert=True)
+        view.flash.assert_success_message('Restart initiated for selected server(s)')
 
     def start_server(self):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Start Server', handle_alert=True)
+        view.assert_success_message('Start initiated for selected server(s)')
 
     def suspend_server(self, timeout=10, cancel=False):
         view = self.load_details(refresh=True)
@@ -300,22 +302,27 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         view.power_operation_form.cancel_button.click() \
             if cancel else view.power_operation_form.suspend_button.click()
         view.flash.assert_no_error()
+        view.flash.assert_success_message('Suspend initiated for selected server(s)')
 
     def resume_server(self):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Resume Server', handle_alert=True)
+        view.flash.assert_success_message('Resume initiated for selected server(s)')
 
     def reload_server(self):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Reload Server', handle_alert=True)
+        view.flash.assert_success_message('Reload initiated for selected server(s)')
 
     def stop_server(self):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Stop Server', handle_alert=True)
+        view.flash.assert_success_message('Stop initiated for selected server(s)')
 
     def kill_server(self):
         view = self.load_details(refresh=True)
         view.toolbar.power.item_select('Kill Server', handle_alert=True)
+        view.flash.assert_success_message('Kill initiated for selected server(s)')
 
     @classmethod
     def download(cls, extension, provider=None, server_group=None):
