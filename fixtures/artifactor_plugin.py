@@ -143,7 +143,7 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def merkyl_setup(request, appliance):
-    fire_art_hook(request.config, 'setup_merkyl', ip=appliance.address )
+    fire_art_hook(request.config, 'setup_merkyl', ip=appliance.address)
 
 
 def fire_art_hook(config, hook, **hook_args):
