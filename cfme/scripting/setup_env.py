@@ -57,7 +57,7 @@ def setup_distributed_env(cfme_version, lease):
     apps[1].wait_for_evm_service()
     apps[1].wait_for_web_ui()
     print("Non-VMDB appliance provisioned and configured {}".format(ip1))
-    print("Appliance pool lease time is {}minutes".format(lease_time))
+    print("Appliance pool lease time is {}".format(lease))
 
 
 @main.command('ha', help='Sets up high availability environment')
@@ -95,7 +95,7 @@ def setup_ha_env(cfme_version, lease):
     command_set4 = ('ap', '', '9', '1', '')
     apps[1].appliance_console.run_commands(command_set4)
     print("HA configuration complete")
-    print("Appliance pool lease time is {}minutes".format(lease_time))
+    print("Appliance pool lease time is {}".format(lease))
 
 
 @main.command('replicated', help='Sets up replicated environment')
@@ -128,7 +128,7 @@ def setup_replication_env(cfme_version, lease):
     apps[0].set_pglogical_replication(replication_type=':global')
     apps[0].add_pglogical_replication_subscription(apps[1].address)
     print("Done!")
-    print("Appliance pool lease time is {}minutes".format(lease_time))
+    print("Appliance pool lease time is {}".format(lease))
 
 
 if __name__ == "__main__":
