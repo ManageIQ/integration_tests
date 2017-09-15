@@ -158,7 +158,7 @@ def provision_check(request, provider):
 
 
 @pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(appliance, provider, testing_instance, soft_assert):
+def test_provision_from_template(provider, testing_instance, soft_assert, provision_check):
     """ Tests instance provision from template
 
     Metadata:
@@ -647,4 +647,3 @@ def test_cloud_provision_with_tag(testing_instance, provision_check, soft_assert
     tags = instance.get_tags()
     assert any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
                for tag in tags), "Service Level: Gold not in tags ({})".format(str(tags))
-
