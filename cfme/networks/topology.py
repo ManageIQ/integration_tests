@@ -1,4 +1,3 @@
-from widgetastic.browser import Browser
 from navmazing import NavigateToAttribute
 
 import re
@@ -6,7 +5,6 @@ import time
 from cfme.networks.topology_view import TopologyView
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.browser import manager
 from wait_for import wait_for
 
 
@@ -14,8 +12,6 @@ class Topology(Navigatable):
     LEGENDS = '//kubernetes-topology-icon'
     ELEMENTS = '//kubernetes-topology-graph//*[name()="g"]'
     LINES = '//kubernetes-topology-graph//*[name()="lines_obj"]'
-
-    browser = None
 
     def __init__(self, appliance):
         Navigatable.__init__(self, appliance=appliance)
@@ -25,9 +21,6 @@ class Topology(Navigatable):
         self.element_ref = None
         self.display_names = None
         self.view = None
-
-        url_key = self.appliance.server.address()
-        Topology.browser = Browser(manager.ensure_open(url_key))
 
         self.reload_view()
         self.refresh()
@@ -48,7 +41,7 @@ class Topology(Navigatable):
     def reload_elements_and_lines(self):
         self.elements_obj = []
         self.lines_obj = []
-        found_elements = Topology.browser.elements(self.ELEMENTS)
+        found_elements = self.browser.elements(self.ELEMENTS)
 
         if found_elements:
             self.element_ref = TopologyElement(obj=self, element=found_elements[-1])
@@ -57,22 +50,22 @@ class Topology(Navigatable):
             for element in found_elements:
                 self.elements_obj.append(TopologyElement(obj=self, element=element))
 
-            for line in Topology.browser.elements(self.LINES):
+            for line in self.browser.elements(self.LINES):
                 self.lines_obj.append(TopologyLine(element=line))
 
     def reload_legends(self):
         self.legends_obj = []
-        self.display_names = TopologyDisplayNames()
+        self.display_names = TopologyDisplayNames(self)
 
-        found_legends = Topology.browser.elements(self.LEGENDS)
+        found_legends = self.browser.elements(self.LEGENDS)
         for legend in found_legends:
-            legend_text = Topology.browser.text(legend.find_element_by_tag_name('label'))
+            legend_text = self.browser.text(legend.find_element_by_tag_name('label'))
 
             legend_object = TopologyLegend(name=legend_text, element=legend)
             self.legends_obj.append(legend_object)
 
     def movement_stopped(self):
-        element = TopologyElement(obj=self, element=Topology.browser.elements(self.ELEMENTS)[-1])
+        element = TopologyElement(obj=self, element=self.browser.elements(self.ELEMENTS)[-1])
         if element.x == self.element_ref.x and element.y == self.element_ref.y:
             return True
         self.element_ref = element
@@ -123,8 +116,8 @@ class TopologyDisplayNames(object):
         "//*[contains(@class, 'container_topology')]//label[contains(., 'Display Names')]/input",
         '//*[@id="box_display_names"]'])  # [0] is not working on containers topology
 
-    def __init__(self):
-        self.element = Topology.browser.element(self.DISPLAY_NAME)
+    def __init__(self, obj):
+        self.element = obj.browser.element(self.DISPLAY_NAME)
 
     @property
     def is_enabled(self):
@@ -146,7 +139,7 @@ class TopologyElement(object):
         self.object = obj
         element_data = re.search('Name: (.*) Type: (.*) Status: (.*)', element.text)
         if len(element_data.groups()) != 3:
-            raise RuntimeError('Unexpected element')
+            raise RuntimeError('Topology element does not contain name, type or status')
         self.name = element_data.group(1)
         self.type = element_data.group(2)
         self.status = element_data.group(3)
@@ -182,7 +175,7 @@ class TopologyElement(object):
         return elements_obj
 
     def double_click(self):
-        Topology.browser.double_click(self.element)
+        self.obj.browser.double_click(self.element)
 
     def is_displayed(self):
         try:

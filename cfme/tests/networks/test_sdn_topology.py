@@ -53,7 +53,7 @@ def test_topology_search(provider, appliance):
                 raise Exception('Element should be hidden. search: "{}", element found: "{}"'
                                 .format(search_term, element.name))
 
-        topology_object.view.toolbar.search_box.clear_search()
+    topology_object.view.toolbar.search_box.clear_search()
 
 
 def test_topology_toggle_display(provider, appliance):
