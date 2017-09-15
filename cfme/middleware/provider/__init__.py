@@ -1,38 +1,28 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
 
-from functools import partial
-from random import sample
 import os
 import re
+from random import sample
 
-from cfme.base.login import BaseLoggedInPage
+from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
+
 from cfme.common import Validatable, SummaryMixin
 from cfme.common.provider import BaseProvider
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import (
-    Region, Form, AngularSelect, InfoBlock, Input, Quadicon,
-    form_buttons, toolbar as tb, fill, FileInput,
-    CFMECheckbox, Select, flash, tabstrip
-)
+from cfme.common.provider_views import (
+    MiddlewareProviderAddView,
+    MiddlewareProviderEditView,
+    MiddlewareProvidersView,
+    ProvidersEditTagsView,
+    MiddlewareProviderDetailsView)
+from cfme.exceptions import MiddlewareProviderNotFound
+from cfme.middleware.provider.middleware_views import (ProviderMessagingAllView,
+    ProviderDeploymentAllView, ProviderDatasourceAllView,
+    ProviderServerAllView, MiddlewareProviderTimelinesView,
+    ProviderDomainsAllView)
+from cfme.web_ui import Region, tabstrip
 from cfme.utils import version
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from widgetastic_manageiq import TimelinesView
-
-
-cfg_btn = partial(tb.select, 'Configuration')
-mon_btn = partial(tb.select, 'Monitoring')
-pol_btn = partial(tb.select, 'Policy')
-pwr_btn = partial(tb.select, 'Power')
-download_btn = partial(tb.select, "Download")
-download_summary_btn = partial(tb.select, "Download summary in PDF format")
-deploy_btn = partial(tb.select, 'Deployments')
-operations_btn = partial(tb.select, 'Operations')
-auth_btn = partial(tb.select, 'Authentication')
-jdbc_btn = partial(tb.select, 'JDBC Drivers')
-datasources_btn = partial(tb.select, 'Datasources')
-
-LIST_TABLE_LOCATOR = "//div[@id='gtl_div']//table"
 
 
 details_page = Region(infoblock_type='detail')
@@ -50,44 +40,7 @@ def _db_select_query(name=None, type=None):
 
 
 def _get_providers_page():
-    navigate_to(MiddlewareProvider, 'All')
-
-
-properties_form = Form(
-    fields=[
-        ('type_select', AngularSelect('emstype')),
-        ('name_text', Input('name')),
-        ('sec_protocol', AngularSelect('default_security_protocol', exact=True)),
-        ('hostname_text', Input('default_hostname')),
-        ('port_text', Input('default_api_port'))
-    ])
-
-properties_form_57 = Form(
-    fields=[
-        ('type_select', AngularSelect('emstype')),
-        ('name_text', Input('name')),
-        ('hostname_text', Input('default_hostname')),
-        ('port_text', Input('default_api_port'))
-    ])
-
-
-prop_region = Region(
-    locators={
-        'properties_form': {
-            version.UPSTREAM: properties_form,
-            '5.8': properties_form,
-            '5.7': properties_form_57,
-        }
-    }
-)
-
-
-class MiddlewareProviderTimelinesView(TimelinesView, BaseLoggedInPage):
-    @property
-    def is_displayed(self):
-        return self.logged_in_as_current_user and \
-            self.navigation.currently_selected == ['Middleware', 'Providers'] and \
-            self.breadcrumb.active_location == 'Timelines'
+    return navigate_to(MiddlewareProvider, 'All')
 
 
 class MiddlewareProvider(BaseProvider):
@@ -101,78 +54,87 @@ class MiddlewareProvider(BaseProvider):
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
-    quad_name = 'middleware'
-    _properties_region = prop_region  # This will get resolved in common to a real form
-    add_provider_button = form_buttons.FormButton("Add")
-    save_button = form_buttons.FormButton("Save")
     taggable_type = 'ExtManagementSystem'
     db_types = ["MiddlewareManager"]
 
 
 @navigator.register(MiddlewareProvider, 'All')
 class All(CFMENavigateStep):
+    VIEW = MiddlewareProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Middleware', 'Providers')
 
     def resetter(self):
-        # Reset view and selection
-        tb.select("Grid View")
-        from cfme.web_ui import paginator
-        if paginator.page_controls_exist():
-            paginator.check_all()
-            paginator.uncheck_all()
+        # Reset view
+        self.view.toolbar.view_selector.select('List View')
 
 
 @navigator.register(MiddlewareProvider, 'Add')
 class Add(CFMENavigateStep):
+    VIEW = MiddlewareProviderAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Middleware Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a New Middleware Provider')
 
 
 @navigator.register(MiddlewareProvider, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = MiddlewareProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        try:
+            # TODO find_row_on_pages change to entities.get_entity()
+            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                self.prerequisite_view.entities.elements,
+                name=self.obj.name)
+        except NoSuchElementException:
+            raise MiddlewareProviderNotFound(
+                "Middleware Provider '{}' not found in table".format(self.name))
+        row.click()
 
 
 @navigator.register(MiddlewareProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = MiddlewareProviderEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg_btn('Edit Selected Middleware Provider')
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.configuration \
+            .item_select('Edit Selected Middleware Providers')
 
 
 @navigator.register(MiddlewareProvider, 'EditFromDetails')
 class EditFromDetails(CFMENavigateStep):
+    VIEW = MiddlewareProviderEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this Middleware Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Middleware Provider')
 
 
 @navigator.register(MiddlewareProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
+    VIEW = ProvidersEditTagsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        pol_btn('Edit Tags')
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(MiddlewareProvider, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = ProvidersEditTagsView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(MiddlewareProvider, 'Timelines')
@@ -181,55 +143,61 @@ class Timelines(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Timelines')
+        self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderServers')
 class ProviderServers(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
+    VIEW = ProviderServerAllView
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Servers'))
+        self.prerequisite_view.contents.relationships.click_at('Middleware Servers')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderDatasources')
 class ProviderDatasources(CFMENavigateStep):
+    VIEW = ProviderDatasourceAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Datasources'))
+        self.prerequisite_view.contents.relationships.click_at('Middleware Datasources')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderDeployments')
 class ProviderDeployments(CFMENavigateStep):
+    VIEW = ProviderDeploymentAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Deployments'))
+        self.prerequisite_view.contents.relationships.click_at('Middleware Deployments')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderDomains')
 class ProviderDomains(CFMENavigateStep):
+    VIEW = ProviderDomainsAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Domains'))
+        self.prerequisite_view.contents.relationships.click_at('Middleware Domains')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderMessagings')
 class ProviderMessagings(CFMENavigateStep):
+    VIEW = ProviderMessagingAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Messagings'))
+        self.prerequisite_view.contents.relationships.click_at('Middleware Messagings')
 
 
 @navigator.register(MiddlewareProvider, 'TopologyFromDetails')
 class TopologyFromDetails(CFMENavigateStep):
+    # TODO Topology should be converted to widgetastic
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock('Overview', 'Topology'))
+        self.prerequisite_view.contents.overview.click_at('Topology')
 
 
 class MiddlewareBase(Validatable):
@@ -239,68 +207,20 @@ class MiddlewareBase(Validatable):
     """
 
     def download_summary(self):
-        self.load_details(refresh=False)
-        download_summary_btn()
+        view = self.load_details(refresh=False)
+        view.toolbar.download()
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
-        Args:
-            *ident: Table name and Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the summary's value.
+
+        The function first ensures that we are on the detail page for the specific cluster.
+
+        :param *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+        :returns: A string representing the contents of the InfoBlock's value.
         """
-        return InfoBlock.text(*ident)
-
-
-import_form = Form(
-    fields=[
-        ("file_select", FileInput("upload[file]")),
-        ("enable_deployment", CFMECheckbox("enable_deployment_cb")),
-        ("runtime_name", Input("runtime_name_input", use_id=True)),
-        ("force_deployment", CFMECheckbox("force_deployment_cb")),
-        ('deploy_button', form_buttons.FormButton("Deploy", ng_click="addDeployment()")),
-        ('cancel_button', form_buttons.FormButton("Cancel"))
-    ]
-)
-
-jdbc_driver_form = Form(
-    fields=[
-        ("file_select", FileInput("jdbc_driver[file]")),
-        ("jdbc_driver_name", Input("jdbc_driver_name_input")),
-        ("jdbc_module_name", Input("jdbc_module_name_input")),
-        ("jdbc_driver_class", Input("jdbc_driver_class_input")),
-        ("driver_xa_datasource_class", Input("driver_xa_datasource_class_name_input")),
-        ("major_version", Input("major_version_input")),
-        ("minor_version", Input("minor_version_input")),
-        ('deploy_button', form_buttons.FormButton("Deploy", ng_click="addJdbcDriver()")),
-        ('cancel_button', form_buttons.FormButton("Cancel"))
-    ]
-)
-
-
-datasource_form = Form(
-    fields=[
-        ("ds_type", Select("//select[@id='chooose_datasource_input']")),
-        ("xa_ds", CFMECheckbox("xa_ds_cb")),
-        ("ds_name", Input("ds_name_input")),
-        ("jndi_name", Input("jndi_name_input")),
-        ("driver_name", Input("jdbc_ds_driver_name_input")),
-        ("driver_module_name", Input("jdbc_modoule_name_input")),
-        ("driver_class", Input("jdbc_ds_driver_input")),
-        ("existing_driver", Select("//select[@id='existing_jdbc_driver_input']")),
-        ("ds_url", Input("connection_url_input")),
-        ("username", Input("user_name_input")),
-        ("password", Input("password_input")),
-        ("sec_domain", Input("security_domain_input", use_id=True)),
-        ('next0_button', form_buttons.FormButton('Next', ng_click="addDatasourceChooseNext()")),
-        ('next1_button', form_buttons.FormButton('Next', ng_click="addDatasourceStep1Next()")),
-        ('next2_button', form_buttons.FormButton('Next', ng_click="addDatasourceStep2Next()")),
-        ('back1_button', form_buttons.FormButton('Back', ng_click="addDatasourceStep1Back()")),
-        ('back2_button', form_buttons.FormButton('Back', ng_click="addDatasourceStep2Back()")),
-        ('back3_button', form_buttons.FormButton('Back', ng_click="finishAddDatasourceBack()")),
-        ('finish_button', form_buttons.FormButton('Finish', ng_click="finishAddDatasource()")),
-        ('cancel_button', form_buttons.FormButton('Cancel', ng_click="reset()"))
-    ]
-)
+        view = self.load_details()
+        return getattr(view.contents if hasattr(view, 'contents') else view.entities,
+                       ident[0].lower().replace(' ', '_')).get_text_of(ident[1])
 
 
 def get_random_list(items, limit):
@@ -323,10 +243,10 @@ def parse_properties(props):
     return properties
 
 
-def download(extension):
+def download(view, extension):
     extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
     try:
-        download_btn("Download as {}".format(extensions_mapping[extension]))
+        view.toolbar.download.item_select("Download as {}".format(extensions_mapping[extension]))
     except:
         raise ValueError("Unknown extention. check the extentions_mapping")
 
@@ -353,17 +273,17 @@ class Container(SummaryMixin):
             enable_deploy: Whether to enable deployment archive or keep disabled.
             cancel: Whether to click Cancel instead of commit.
         """
-        self.load_details()
-        deploy_btn("Add Deployment")
-        fill(
-            import_form,
-            {"file_select": filename,
-             "runtime_name": runtime_name,
-             "enable_deployment": enable_deploy,
-             "force_deployment": overwrite}
-        )
-        sel.click(import_form.cancel_button if cancel else import_form.deploy_button)
-        flash.assert_success_message(self.deployment_message
+        view = navigate_to(self, 'AddDeployment')
+        view.form.fill({
+            "file_select": filename,
+        })
+        view.form.fill({
+            "runtime_name": runtime_name,
+            "enable_deployment": enable_deploy,
+            "force_deployment": overwrite
+        })
+        view.form.cancel_button.click() if cancel else view.form.deploy_button.click()
+        view.flash.assert_success_message(self.deployment_message
                     .format(runtime_name if runtime_name else os.path.basename(filename)))
 
     def add_jdbc_driver(self, filename, driver_name, module_name, driver_class, xa_class=None,
@@ -380,20 +300,18 @@ class Container(SummaryMixin):
             minor_version: Minor version of JDBC driver, optional.
             cancel: Whether to click Cancel instead of commit.
         """
-        self.load_details(refresh=True)
-        jdbc_btn("Add JDBC Driver")
-        fill(jdbc_driver_form,
-            {
-                "file_select": filename,
-                "jdbc_driver_name": driver_name,
-                "jdbc_module_name": module_name,
-                "jdbc_driver_class": driver_class,
-                "driver_xa_datasource_class": xa_class,
-                "major_version": major_version,
-                "minor_version": minor_version
-            })
-        sel.click(jdbc_driver_form.cancel_button if cancel else jdbc_driver_form.deploy_button)
-        flash.assert_success_message('JDBC Driver "{}" has been installed on this server.'
+        view = navigate_to(self, 'AddJDBCDriver')
+        view.form.fill({
+            "file_select": filename,
+            "jdbc_driver_name": driver_name,
+            "jdbc_module_name": module_name,
+            "jdbc_driver_class": driver_class,
+            "driver_xa_datasource_class": xa_class,
+            "major_version": major_version,
+            "minor_version": minor_version
+        })
+        view.form.cancel_button.click() if cancel else view.form.deploy_button.click()
+        view.flash.assert_success_message('JDBC Driver "{}" has been installed on this server.'
                     .format(driver_name))
 
     def add_datasource(self, ds_type, ds_name, jndi_name, ds_url,
@@ -417,47 +335,43 @@ class Container(SummaryMixin):
             sec_domain: Security Domain, optional.
             cancel: Whether to click Cancel instead of commit.
         """
-        self.load_details(refresh=True)
-        datasources_btn("Add Datasource", invokes_alert=True)
+        view = navigate_to(self, 'AddDatasource')
         if self.appliance.version >= '5.8':
-            fill(datasource_form,
-                {
-                    "xa_ds": xa_ds
-                })
-        fill(datasource_form,
-            {
-                "ds_type": ds_type,
-            })
-        sel.click(datasource_form.cancel_button if cancel else datasource_form.next0_button)
-        fill(datasource_form,
-            {
-                "ds_name": ds_name,
-                "jndi_name": jndi_name
-            })
-        sel.click(datasource_form.cancel_button if cancel else datasource_form.next1_button)
+            view.form.fill({'xa_ds': xa_ds})
+        view.form.fill({'ds_type': ds_type})
+        view.form.next_button.click()
+        view.form.fill({
+            "ds_name": ds_name,
+            "jndi_name": jndi_name
+        })
+        view.form.next_button.click()
         if existing_driver and self.appliance.version >= '5.8':
             tabstrip.select_tab("Existing Driver")
-            fill(datasource_form,
-                {
-                    "existing_driver": existing_driver
-                })
-        else:
-            fill(datasource_form,
-                {
-                    "driver_name": driver_name,
-                    "driver_module_name": driver_module_name,
-                    "driver_class": driver_class
-                })
-        sel.click(datasource_form.cancel_button if cancel else datasource_form.next2_button)
-        fill(datasource_form,
-            {
-                "ds_url": ds_url,
-                "username": username,
-                "password": password,
-                "sec_domain": sec_domain
+            view.form.fill({
+                "existing_driver": existing_driver
             })
-        sel.click(datasource_form.cancel_button if cancel else datasource_form.finish_button)
-        flash.assert_no_errors()
+        else:
+            view.form.fill({
+                "driver_name": driver_name,
+                "driver_module_name": driver_module_name,
+                "driver_class": driver_class
+            })
+        view.form.next_button.click()
+        view.form.fill({
+            "ds_url": ds_url,
+            "username": username,
+            "password": password,
+            "sec_domain": sec_domain
+        })
+        view.form.cancel_button.click() if cancel else view.form.finish_button.click()
+        view.flash.assert_no_error()
+
+    def is_immutable(self):
+        view = self.load_details()
+        return not (view.toolbar.power.is_displayed or
+                    view.toolbar.deployments.is_displayed or
+                    view.toolbar.drivers.is_displayed or
+                    view.toolbar.datasources.is_displayed)
 
 
 class Deployable(SummaryMixin):
@@ -466,34 +380,30 @@ class Deployable(SummaryMixin):
         """
         Clicks on "Undeploy" menu item and verifies message shown
         """
-        self.load_details()
-        operations_btn("Undeploy", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Undeployment initiated for selected deployment(s)')
+        view = self.load_details()
+        view.toolbar.operations.item_select("Undeploy", handle_alert=True)
+        view.flash.assert_success_message('Undeployment initiated for selected deployment(s)')
 
     def restart(self):
         """
         Clicks on "Restart" menu item and verifies message shown
         """
-        self.load_details()
-        operations_btn("Restart", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Restart initiated for selected deployment(s)')
+        view = self.load_details()
+        view.toolbar.operations.item_select("Restart", handle_alert=True)
+        view.flash.assert_success_message('Restart initiated for selected deployment(s)')
 
     def disable(self):
         """
         Clicks on "Disable" menu item and verifies message shown
         """
-        self.load_details()
-        operations_btn("Disable", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Disable initiated for selected deployment(s)')
+        view = self.load_details()
+        view.toolbar.operations.item_select("Disable", handle_alert=True)
+        view.flash.assert_success_message('Disable initiated for selected deployment(s)')
 
     def enable(self):
         """
         Clicks on "Enable" menu item and verifies message shown
         """
-        self.load_details()
-        operations_btn("Enable", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Enable initiated for selected deployment(s)')
+        view = self.load_details()
+        view.toolbar.operations.item_select("Enable", handle_alert=True)
+        view.flash.assert_success_message('Enable initiated for selected deployment(s)')

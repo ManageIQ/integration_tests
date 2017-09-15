@@ -1,24 +1,21 @@
-from navmazing import NavigateToSibling
-
 import re
-from cfme.common import Taggable
-from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware.provider import parse_properties, Container
-from cfme.web_ui import (
-    CheckboxTable, InfoBlock, toolbar as tb, Form, Input, fill
-)
-from cfme.web_ui.form_buttons import FormButton
+
+from navmazing import NavigateToSibling
+from selenium.common.exceptions import NoSuchElementException
 from wrapanapi.hawkular import CanonicalPath
+
+from cfme.common import Taggable
+from cfme.exceptions import (MiddlewareDomainNotFound,
+                             MiddlewareServerGroupNotFound)
+from cfme.middleware.domain import MiddlewareDomain
+from cfme.middleware.provider import MiddlewareBase, download
+from cfme.middleware.provider import parse_properties, Container
+from cfme.middleware.provider.middleware_views import (ServerGroupDetailsView,
+                                                       ServerGroupServerAllView)
 from cfme.utils import attributize_string
-from cfme.utils.varmeth import variable
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, pwr_btn
-from cfme.middleware.domain import MiddlewareDomain
-from cfme.exceptions import MiddlewareDomainNotFound
-
-
-list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
+from cfme.utils.varmeth import variable
 
 
 def _db_select_query(domain, name=None, feed=None):
@@ -39,17 +36,7 @@ def _db_select_query(domain, name=None, feed=None):
 
 
 def _get_server_groups_page(domain):
-    navigate_to(domain, 'DomainServerGroups')
-
-
-timeout_form = Form(
-    fields=[
-        ("timeout", Input("timeout", use_id=True)),
-        ('suspend_button', FormButton("Suspend")),
-        ('stop_button', FormButton("Stop")),
-        ('cancel_button', FormButton("Cancel"))
-    ]
-)
+    return navigate_to(domain, 'DomainServerGroups')
 
 
 class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
@@ -93,20 +80,18 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
     @classmethod
     def server_groups(cls, domain, strict=True):
         server_groups = []
-        _get_server_groups_page(domain=domain)
-        if sel.is_displayed(list_tbl):
-            _domain = domain
-            from cfme.web_ui import paginator
-            for _ in paginator.pages():
-                for row in list_tbl.rows():
-                    if strict:
-                        _domain = MiddlewareDomain(row.domain_name.text, provider=domain.provider)
-                    server_groups.append(MiddlewareServerGroup(
-                        name=row.server_group_name.text,
-                        feed=row.feed.text,
-                        profile=row.profile.text,
-                        provider=domain.provider,
-                        domain=_domain))
+        view = _get_server_groups_page(domain=domain)
+        _domain = domain
+        for _ in view.entities.paginator.pages():
+            for row in view.entities.elements:
+                if strict:
+                    _domain = MiddlewareDomain(row.domain_name.text, provider=domain.provider)
+                server_groups.append(MiddlewareServerGroup(
+                    name=row.server_group_name.text,
+                    feed=row.feed.text,
+                    profile=row.profile.text,
+                    provider=domain.provider,
+                    domain=_domain))
         return server_groups
 
     @classmethod
@@ -144,22 +129,24 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
 
     @classmethod
     def headers(cls, domain):
-        _get_server_groups_page(domain=domain)
-        headers = [sel.text(hdr).encode("utf-8")
-                   for hdr in sel.elements("//thead/tr/th") if hdr.text]
+        view = _get_server_groups_page(domain=domain)
+        headers = [hdr.encode("utf-8")
+                   for hdr in view.entities.elements.headers if hdr]
         return headers
 
     def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_sgr = self.server_group(method='db')
             self.db_id = tmp_sgr.db_id
         if refresh:
-            tb.refresh()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
+        return view
 
     @variable(alias='ui')
     def server_group(self):
-        self.load_details(refresh=True)
+        self.load_details()
         return self
 
     @server_group.variant('mgmt')
@@ -198,75 +185,72 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
 
     @classmethod
     def download(cls, extension, domain):
-        _get_server_groups_page(domain)
-        download(extension)
+        view = _get_server_groups_page(domain)
+        download(view, extension)
 
     def restart_server_group(self):
-        self.load_details(refresh=True)
-        pwr_btn("Restart Server Group", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details()
+        view.toolbar.power.item_select('Restart Server Group', handle_alert=True)
 
     def start_server_group(self):
-        self.load_details(refresh=True)
-        pwr_btn("Start Server Group", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details()
+        view.toolbar.power.item_select('Start Server Group', handle_alert=True)
 
     def suspend_server_group(self, timeout=10, cancel=False):
-        self.load_details(refresh=True)
-        pwr_btn("Suspend Server Group", invokes_alert=True)
-        fill(
-            timeout_form,
-            {"timeout": timeout},
-        )
-        sel.click(timeout_form.cancel_button if cancel else timeout_form.suspend_button)
+        view = self.load_details()
+        view.toolbar.power.item_select('Suspend Server Group')
+        view.power_operation_form.fill({
+            "timeout": timeout,
+        })
+        view.power_operation_form.cancel_button.click() \
+            if cancel else view.power_operation_form.suspend_button.click()
+        view.flash.assert_no_error()
 
     def resume_server_group(self):
-        self.load_details(refresh=True)
-        pwr_btn("Resume Server Group", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details()
+        view.toolbar.power.item_select('Resume Server Group', handle_alert=True)
 
     def reload_server_group(self):
-        self.load_details(refresh=True)
-        pwr_btn("Reload Server Group", invokes_alert=True)
-        sel.handle_alert()
+        view = self.load_details()
+        view.toolbar.power.item_select('Reload Server Group', handle_alert=True)
 
     def stop_server_group(self, timeout=10, cancel=False):
-        self.load_details(refresh=True)
-        pwr_btn("Stop Server Group", invokes_alert=True)
-        fill(
-            timeout_form,
-            {"timeout": timeout},
-        )
-        sel.click(timeout_form.cancel_button if cancel else timeout_form.stop_button)
-
-    def is_immutable(self):
-        return not (tb.exists("Power") or
-                    tb.exists("Deployments") or
-                    tb.exists("JDBC Drivers") or
-                    tb.exists("Datasources"))
+        view = self.load_details()
+        view.toolbar.power.item_select('Stop Server Group')
+        view.power_operation_form.fill({
+            "timeout": timeout,
+        })
+        view.power_operation_form.cancel_button.click() \
+            if cancel else view.power_operation_form.stop_button.click()
+        view.flash.assert_no_error()
 
 
 @navigator.register(MiddlewareServerGroup, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = ServerGroupDetailsView
+
     def prerequisite(self):
         if not self.obj.domain:
             raise MiddlewareDomainNotFound(
                 "Middleware Domain is not found in provided Server Group")
-        navigate_to(self.obj.domain, 'DomainServerGroups')
+        return navigate_to(self.obj.domain, 'DomainServerGroups')
 
     def step(self):
-        if self.obj.feed:
-            list_tbl.click_row_by_cells({'Server Group Name': self.obj.name,
-                                         'Domain Name': self.obj.domain.name,
-                                         'Feed': self.obj.feed})
-        else:
-            list_tbl.click_row_by_cells({'Server Group Name': self.obj.name,
-                                         'Domain Name': self.obj.domain.name})
+        try:
+            # TODO find_row_on_pages change to entities.get_entity()
+            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                self.prerequisite_view.entities.elements,
+                server_group_name=self.obj.name)
+        except NoSuchElementException:
+            raise MiddlewareServerGroupNotFound(
+                "Server Group '{}' not found in table".format(self.name))
+        row.click()
 
 
 @navigator.register(MiddlewareServerGroup, 'ServerGroupServers')
 class ServerGroupServers(CFMENavigateStep):
+    VIEW = ServerGroupServerAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Servers'))
+        self.prerequisite_view.entities.relationships.click_at('Middleware Servers')

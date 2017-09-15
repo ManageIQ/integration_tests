@@ -1,20 +1,21 @@
 import re
+
 from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
+from wrapanapi.hawkular import CanonicalPath
+
 from cfme.common import Taggable
 from cfme.exceptions import MiddlewareDomainNotFound
-from cfme.fixtures import pytest_selenium as sel
+from cfme.middleware.provider import MiddlewareBase, download
 from cfme.middleware.provider import parse_properties
 from cfme.middleware.provider.hawkular import HawkularProvider
-from cfme.web_ui import CheckboxTable, InfoBlock, toolbar as tb
-from wrapanapi.hawkular import CanonicalPath
+from cfme.middleware.provider.middleware_views import DomainAllView, \
+    DomainServerGroupAllView, DomainDetailsView
 from cfme.utils import attributize_string
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.providers import get_crud_by_name, list_providers_by_class
 from cfme.utils.varmeth import variable
-from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
-
-list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, feed=None, provider=None):
@@ -36,9 +37,9 @@ def _db_select_query(name=None, feed=None, provider=None):
 
 def _get_domains_page(provider):
     if provider:  # if provider instance is provided navigate through provider's domains page
-        navigate_to(provider, 'ProviderDomains')
+        return navigate_to(provider, 'ProviderDomains')
     else:  # if None(provider) given navigate through all middleware domains page
-        navigate_to(MiddlewareDomain, 'All')
+        return navigate_to(MiddlewareDomain, 'All')
 
 
 class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
@@ -81,25 +82,23 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
     @classmethod
     def domains(cls, provider=None, strict=True):
         domains = []
-        _get_domains_page(provider=provider)
-        if sel.is_displayed(list_tbl):
-            _provider = provider
-            from cfme.web_ui import paginator
-            for _ in paginator.pages():
-                for row in list_tbl.rows():
-                    if strict:
-                        _provider = get_crud_by_name(row.provider.text)
-                    domains.append(MiddlewareDomain(
-                        name=row.domain_name.text,
-                        feed=row.feed.text,
-                        provider=_provider))
+        view = _get_domains_page(provider=provider)
+        _provider = provider  # In deployment UI, we cannot get provider name on list all page
+        for _ in view.entities.paginator.pages():
+            for row in view.entities.elements:
+                if strict:
+                    _provider = get_crud_by_name(row.provider.text)
+                domains.append(MiddlewareDomain(
+                    name=row.domain_name.text,
+                    feed=row.feed.text,
+                    provider=_provider))
         return domains
 
     @classmethod
     def headers(cls):
-        navigate_to(MiddlewareDomain, 'All')
-        headers = [sel.text(hdr).encode("utf-8")
-                   for hdr in sel.elements("//thead/tr/th") if hdr.text]
+        view = navigate_to(MiddlewareDomain, 'All')
+        headers = [hdr.encode("utf-8")
+                   for hdr in view.entities.elements.headers if hdr]
         return headers
 
     @classmethod
@@ -142,12 +141,14 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
             return cls._domains_in_mgmt(provider)
 
     def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_dmn = self.domain(method='db')
             self.db_id = tmp_dmn.db_id
         if refresh:
-            tb.refresh()
+            view.browser.selenium.refresh()
+            view.flush_widget_cache()
+        return view
 
     @variable(alias='ui')
     def domain(self):
@@ -210,12 +211,13 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
 
     @classmethod
     def download(cls, extension, provider=None):
-        _get_domains_page(provider)
-        download(extension)
+        view = _get_domains_page(provider)
+        download(view, extension)
 
 
 @navigator.register(MiddlewareDomain, 'All')
 class All(CFMENavigateStep):
+    VIEW = DomainAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -223,24 +225,31 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("List View")
+        self.view.entities.paginator.check_all()
+        self.view.entities.paginator.uncheck_all()
 
 
 @navigator.register(MiddlewareDomain, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = DomainDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        if self.obj.feed:
-            list_tbl.click_row_by_cells({'Domain Name': self.obj.name,
-                                         'Feed': self.obj.feed})
-        else:
-            list_tbl.click_row_by_cells({'Domain Name': self.obj.name})
+        try:
+            # TODO find_row_on_pages change to entities.get_entity()
+            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+                self.prerequisite_view.entities.elements,
+                domain_name=self.obj.name)
+        except NoSuchElementException:
+            raise MiddlewareDomainNotFound(
+                "Domain '{}' not found in table".format(self.name))
+        row.click()
 
 
 @navigator.register(MiddlewareDomain, 'DomainServerGroups')
 class DomainServerGroups(CFMENavigateStep):
+    VIEW = DomainServerGroupAllView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock.element('Relationships', 'Middleware Server Groups'))
+        self.prerequisite_view.entities.relationships.click_at('Middleware Server Groups')
