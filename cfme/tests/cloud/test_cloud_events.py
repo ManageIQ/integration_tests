@@ -28,8 +28,10 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
 
     def add_cmp(_, y):
         data = yaml.load(y)
-        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Accepted' and \
-            data['subStatus']['value'] == 'Created'
+        return (data['resourceId'].endswith(nsg_name) and
+                (data['status']['value'] == 'Accepted' and
+                 data['subStatus']['value'] == 'Created') or
+                data['status']['value'] == 'Succeeded')
 
     fd_add_attr = {'full_data': 'will be ignored',
                    'cmp_func': add_cmp}
@@ -40,8 +42,7 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
 
     def rm_cmp(_, y):
         data = yaml.load(y)
-        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded' \
-            and len(data['subStatus']['value']) == 0
+        return data['resourceId'].endswith(nsg_name) and data['status']['value'] == 'Succeeded'
 
     fd_rm_attr = {'full_data': 'will be ignored',
                   'cmp_func': rm_cmp}
@@ -86,7 +87,7 @@ def test_vm_capture(request, provider, setup_provider, register_event):
     image_name = vm.name
     resource_group = provider.data['provisioning']['resource_group']
 
-    mgmt.capture_vm(vm.name, resource_group, 'templates', image_name)
+    mgmt.capture_vm(vm.name, 'templates', image_name, resource_group=resource_group)
 
     # delete remaining image
     container = 'system'
