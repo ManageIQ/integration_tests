@@ -1779,13 +1779,13 @@ class CompareToolBarViewSelector(View):
     """
     ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
 
-    Expanded_button = Button(title="Expanded View")
-    Compressed_button = Button(title="Compressed View")
+    expanded_button = Button(title="Expanded View")
+    compressed_button = Button(title="Compressed View")
 
     @property
     def _view_buttons(self):
-        yield self.Expanded_button
-        yield self.Compressed_button
+        yield self.expanded_button
+        yield self.compressed_button
 
     def select(self, title):
         for button in self._view_buttons:
@@ -1806,10 +1806,10 @@ class CompareToolBarViewSelector(View):
 
     @property
     def is_displayed(self):
-        return self.Expanded_button.is_displayed
+        return self.expanded_button.is_displayed
 
 
-class CompareToolbarActions(View):
+class CompareToolBarActions(View):
     """ represents compare toolbar's all actions
         it is present on pages of Compare Selected items and drift
 
