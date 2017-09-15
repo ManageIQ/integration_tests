@@ -69,25 +69,27 @@ def wait_for_ansible(appliance):
     appliance.wait_for_embedded_ansible()
 
 
-@pytest.yield_fixture(scope="module")
-def repository(wait_for_ansible):
-    repositories = RepositoryCollection()
+@pytest.yield_fixture(scope='module')
+def ansible_repository(appliance):
+    repositories = RepositoryCollection(appliance=appliance)
     repository = repositories.create(
         fauxfactory.gen_alpha(),
         REPOSITORIES[0],
-        description=fauxfactory.gen_alpha()
-    )
+        description=fauxfactory.gen_alpha())
+
     yield repository
-    repository.delete()
+
+    if repository.exists:
+        repository.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def catalog_item(repository):
+def catalog_item(ansible_repository):
     cat_item = AnsiblePlaybookCatalogItem(
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
         provisioning={
-            "repository": repository.name,
+            "repository": ansible_repository.as_fill_value,
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
@@ -96,30 +98,19 @@ def catalog_item(repository):
     )
     cat_item.create()
     yield cat_item
-    cat_item.delete()
+
+    if cat_item.exists:
+        cat_item.delete()
 
 
 @pytest.mark.tier(1)
-def test_embedded_ansible_repository_crud(request, wait_for_ansible):
-    repositories = RepositoryCollection()
-    repository = repositories.create(
-        fauxfactory.gen_alpha(),
-        REPOSITORIES[0],
-        description=fauxfactory.gen_alpha()
-    )
-
-    @request.addfinalizer
-    def _delete_if_exists():
-        if repository.exists:
-            repository.delete()
-
+def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     updated_description = "edited_{}".format(fauxfactory.gen_alpha())
-    with update(repository):
-        repository.description = updated_description
-    view = navigate_to(repository, "Edit")
+    with update(ansible_repository):
+        ansible_repository.description = updated_description
+    view = navigate_to(ansible_repository, "Edit")
     wait_for(lambda: view.description.value != "", delay=1, timeout=5)
     assert view.description.value == updated_description
-    repository.delete()
 
 
 @pytest.mark.tier(1)
@@ -157,10 +148,10 @@ def test_embedded_ansible_credential_crud(wait_for_ansible, credential_type, cre
 
 @pytest.mark.meta(blockers=[1437108])
 @pytest.mark.tier(2)
-def test_embed_tower_playbooks_list_changed(wait_for_ansible):
+def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     "Tests if playbooks list changed after playbooks repo removing"
     playbooks = []
-    repositories_collection = RepositoryCollection()
+    repositories_collection = RepositoryCollection(appliance=appliance)
     for repo_url in REPOSITORIES:
         repository = repositories_collection.create(
             fauxfactory.gen_alpha(),

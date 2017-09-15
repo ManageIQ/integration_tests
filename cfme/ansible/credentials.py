@@ -10,7 +10,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessa
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
 
@@ -119,9 +119,11 @@ class CredentialEditView(CredentialFormView):
     @ParametrizedView.nested
     class input(ParametrizedView):  # noqa
         PARAMETERS = ("title", )
-        field_enable = Text(ParametrizedLocator(".//*[(self::input or self::textarea) and "
+        field_enable = Text(ParametrizedLocator(
+            ".//*[(self::input or self::textarea) and "
             "@title={title|quote}]/../../a[text()='Update']"))
-        field_disable = Text(ParametrizedLocator(".//*[(self::input or self::textarea) and "
+        field_disable = Text(ParametrizedLocator(
+            ".//*[(self::input or self::textarea) and "
             "@title={title|quote}]/../../a[text()='Cancel']"))
 
         def toggle(self):
@@ -153,8 +155,11 @@ class CredentialEditView(CredentialFormView):
                 continue
 
 
-class CredentialsCollection(Navigatable):
+class CredentialsCollection(NavigatableMixin):
     """Collection object for the :py:class:`Credential`."""
+
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def create(self, name, credential_type, **credentials):
         add_page = navigate_to(self, "Add")
@@ -217,11 +222,11 @@ class CredentialsCollection(Navigatable):
         return Credential(name, credential_type, appliance=self.appliance, **credentials)
 
 
-class Credential(Navigatable):
+class Credential(NavigatableMixin):
     """A class representing one Embedded Ansible credential in the UI."""
-    def __init__(self, name, credential_type, collection=None, appliance=None, **credentials):
-        self.collection = collection or CredentialsCollection(appliance=appliance)
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+    def __init__(self, name, credential_type, collection, **credentials):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         self.credential_type = credential_type
         for key, value in credentials.iteritems():

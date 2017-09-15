@@ -39,27 +39,30 @@ def wait_for_ansible(appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_repository(wait_for_ansible):
-    repositories = RepositoryCollection()
+def ansible_repository(appliance, wait_for_ansible):
+    repositories = RepositoryCollection(appliance=appliance)
     repository = repositories.create(
-        fauxfactory.gen_alpha(),
-        "https://github.com/quarckster/ansible_playbooks",
-        description=fauxfactory.gen_alpha()
-    )
+        name=fauxfactory.gen_alpha(),
+        url="https://github.com/quarckster/ansible_playbooks",
+        description=fauxfactory.gen_alpha())
     yield repository
-    repository.delete()
+
+    if repository.exists:
+        repository.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_credential():
-    credential = CredentialsCollection().create(
+def ansible_credential(appliance):
+    credential = CredentialsCollection(appliance=appliance).create(
         fauxfactory.gen_alpha(),
         "Machine",
         username=fauxfactory.gen_alpha(),
         password=fauxfactory.gen_alpha()
     )
     yield credential
-    credential.delete()
+
+    if credential.exists:
+        credential.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -85,7 +88,9 @@ def ansible_catalog_item(ansible_repository):
     )
     cat_item.create()
     yield cat_item
-    cat_item.delete()
+
+    if cat_item.exists:
+        cat_item.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -94,8 +99,10 @@ def catalog(ansible_catalog_item):
     catalog_.create()
     ansible_catalog_item.catalog = catalog_
     yield catalog_
-    catalog_.delete()
-    ansible_catalog_item.catalog = None
+
+    if catalog_.exists:
+        catalog_.delete()
+        ansible_catalog_item.catalog = None
 
 
 @pytest.fixture(scope="module")
@@ -109,14 +116,18 @@ def service_request(ansible_catalog_item):
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
     service_request_ = Request(request_descr)
     yield service_request_
-    service_request_.remove_request()
+
+    if service_request_.exists:
+        service_request_.remove_request()
 
 
 @pytest.yield_fixture
 def service(ansible_catalog_item):
     service_ = MyService(ansible_catalog_item.name)
     yield service_
-    service_.delete()
+
+    if service_.exists:
+        service_.delete()
 
 
 @pytest.mark.tier(1)

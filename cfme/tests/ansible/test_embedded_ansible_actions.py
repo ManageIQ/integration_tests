@@ -12,7 +12,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.requests import Request
-from fixtures.provider import setup_one_by_class_or_skip
 from cfme.utils import ports
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -21,6 +20,7 @@ from cfme.utils.net import net_check
 from cfme.utils.update import update
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
+from fixtures.provider import setup_one_by_class_or_skip
 
 
 pytestmark = [
@@ -63,15 +63,16 @@ def wait_for_ansible(appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_repository(wait_for_ansible):
-    repositories = RepositoryCollection()
+def ansible_repository(appliance, wait_for_ansible):
+    repositories = RepositoryCollection(appliance=appliance)
     repository = repositories.create(
-        fauxfactory.gen_alpha(),
-        "https://github.com/quarckster/ansible_playbooks",
-        description=fauxfactory.gen_alpha()
-    )
+        name=fauxfactory.gen_alpha(),
+        url="https://github.com/quarckster/ansible_playbooks",
+        description=fauxfactory.gen_alpha())
     yield repository
-    repository.delete()
+
+    if repository.exists:
+        repository.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -90,7 +91,9 @@ def ansible_catalog_item(ansible_repository):
     )
     cat_item.create()
     yield cat_item
-    cat_item.delete()
+
+    if cat_item.exists:
+        cat_item.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -128,7 +131,9 @@ def ansible_action(ansible_catalog_item):
     )
     action.create()
     yield action
-    action.delete()
+
+    if action.exists:
+        action.delete()
 
 
 @pytest.yield_fixture(scope="module")
@@ -143,22 +148,26 @@ def policy_for_testing(vmware_vm, provider, ansible_action):
     policy_profile.create()
     provider.assign_policy_profiles(policy_profile.description)
     yield
-    policy.assign_events()
-    provider.unassign_policy_profiles(policy_profile.description)
-    policy_profile.delete()
-    policy.delete()
+
+    if policy.exists:
+        policy.assign_events()
+        provider.unassign_policy_profiles(policy_profile.description)
+        policy_profile.delete()
+        policy.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_credential(full_template_modscope):
-    credential = CredentialsCollection().create(
+def ansible_credential(appliance, full_template_modscope):
+    credential = CredentialsCollection(appliance=appliance).create(
         fauxfactory.gen_alpha(),
         "Machine",
         username=credentials[full_template_modscope]["username"],
         password=credentials[full_template_modscope]["password"]
     )
     yield credential
-    credential.delete()
+
+    if credential.exists:
+        credential.delete()
 
 
 @pytest.yield_fixture
@@ -166,14 +175,18 @@ def service_request(ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
     service_request_ = Request(request_desc)
     yield service_request_
-    service_request_.remove_request()
+
+    if service_request_.exists:
+        service_request_.remove_request()
 
 
 @pytest.yield_fixture
 def service(ansible_catalog_item):
     service_ = MyService(ansible_catalog_item.name)
     yield service_
-    service_.delete()
+
+    if service_.exists:
+        service_.delete()
 
 
 @pytest.mark.tier(3)

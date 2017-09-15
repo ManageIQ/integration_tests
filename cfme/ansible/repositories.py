@@ -2,13 +2,14 @@
 """Page model for Automation/Ansible/Repositories"""
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import Dropdown, Button, Input, FlashMessages
+from widgetastic_manageiq import Table, PaginationPane
 
 from cfme.base import Server
-from cfme.exceptions import ItemNotFound
 from cfme.base.login import BaseLoggedInPage
-from widgetastic_manageiq import Table, PaginationPane
-from widgetastic_patternfly import Dropdown, Button, Input, FlashMessages
-from cfme.utils.appliance import Navigatable
+from cfme.exceptions import ItemNotFound
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
 from .playbooks import PlaybooksCollection
@@ -26,10 +27,10 @@ class RepositoryBaseView(BaseLoggedInPage):
         )
 
 
-class RepositoryListView(RepositoryBaseView):
+class RepositoryAllView(RepositoryBaseView):
     configuration = Dropdown("Configuration")
-    repositories = Table(".//div[@id='list_grid']/table")
-    pagination_pane = PaginationPane()
+    entities = Table(".//div[@id='list_grid']/table")
+    paginator = PaginationPane()
 
     @property
     def is_displayed(self):
@@ -85,22 +86,24 @@ class RepositoryEditView(RepositoryFormView):
         )
 
 
-class RepositoryCollection(Navigatable):
+class RepositoryCollection(NavigatableMixin):
     """Collection object for the :py:class:`cfme.ansible.repositories.Repository`."""
 
-    def instantiate(self, name, url, description=None, scm_credentials=None, scm_branch=None,
-           clean=None, delete_on_update=None, update_on_launch=None):
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, name, url, description=None, scm_credentials=None,
+                    scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
         return Repository(
             name,
             url,
+            collection=self,
             description=description,
             scm_credentials=scm_credentials,
             scm_branch=scm_branch,
             clean=clean,
             delete_on_update=delete_on_update,
-            update_on_launch=update_on_launch,
-            collection=self
-        )
+            update_on_launch=update_on_launch)
 
     def create(self, name, url, description=None, scm_credentials=None, scm_branch=None,
                clean=None, delete_on_update=None, update_on_launch=None):
@@ -131,21 +134,13 @@ class RepositoryCollection(Navigatable):
         }
         add_page.fill(fill_dict)
         add_page.add_button.click()
-        repo_list_page = self.create_view(RepositoryListView)
+        repo_list_page = self.create_view(RepositoryAllView)
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
         repo_list_page.flash.assert_message(
             'Add of Repository "{}" was successfully initialized.'.format(name))
 
-        def _wait_until_appeared():
-            for row in repo_list_page.repositories:
-                if row["Name"].text == name:
-                    return True
-            else:
-                return False
-
-        wait_for(_wait_until_appeared, delay=10, fail_func=repo_list_page.browser.selenium.refresh)
-        return self.instantiate(
+        repository = self.instantiate(
             name,
             url,
             description=description,
@@ -153,8 +148,14 @@ class RepositoryCollection(Navigatable):
             scm_branch=scm_branch,
             clean=clean,
             delete_on_update=delete_on_update,
-            update_on_launch=update_on_launch
-        )
+            update_on_launch=update_on_launch)
+
+        wait_for(lambda: repository.exists,
+                 fail_func=repo_list_page.browser.selenium.refresh,
+                 delay=5,
+                 timeout=900)
+
+        return repository
 
     def all(self):
         """Return all repositories of the appliance.
@@ -172,9 +173,7 @@ class RepositoryCollection(Navigatable):
                     scm_branch=row.scm_branch,
                     clean=row.scm_clean,
                     delete_on_update=row.scm_delete_on_update,
-                    update_on_launch=row.scm_update_on_launch,
-                    appliance=self.appliance
-                )
+                    update_on_launch=row.scm_update_on_launch)
             )
         return result
 
@@ -190,11 +189,11 @@ class RepositoryCollection(Navigatable):
         """
         repositories = list(repositories)
         checked_repositories = []
-        all_page = navigate_to(Server, "AnsibleRepositories")
-        all_page.pagination_pane.uncheck_all()
-        if not all_page.repositories.is_displayed:
+        view = navigate_to(Server, "AnsibleRepositories")
+        view.paginator.uncheck_all()
+        if not view.entities.is_displayed:
             raise ValueError("No repository found!")
-        for row in all_page.repositories:
+        for row in view.entities:
             for repository in repositories:
                 if repository.name == row.name.text:
                     checked_repositories.append(repository)
@@ -204,23 +203,22 @@ class RepositoryCollection(Navigatable):
                 break
         if set(repositories) != set(checked_repositories):
             raise ValueError("Some of the repositories were not found in the UI.")
-        all_page.configuration.item_select("Remove selected Repositories", handle_alert=True)
-        all_page.flash.assert_no_error()
+        view.configuration.item_select("Remove selected Repositories", handle_alert=True)
+        view.flash.assert_no_error()
         for repository in checked_repositories:
-            all_page.flash.assert_message(
+            view.flash.assert_message(
                 'Delete of Repository "{}" was successfully initiated.'.format(repository.name))
 
 
-class Repository(Navigatable):
+class Repository(NavigatableMixin):
     """A class representing one Embedded Ansible repository in the UI."""
 
-    def __init__(self, name, url, description=None, scm_credentials=None, scm_branch=None,
-            clean=None, delete_on_update=None, update_on_launch=None, collection=None,
-            appliance=None):
-        self.collection = collection or RepositoryCollection(appliance=appliance)
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+    def __init__(self, name, url, collection, description=None, scm_credentials=None,
+                 scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
         self.name = name
         self.url = url
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.description = description or ""
         self.scm_credentials = scm_credentials
         self.scm_branch = scm_branch or ""
@@ -247,7 +245,7 @@ class Repository(Navigatable):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(RepositoryListView)
+        view = self.create_view(RepositoryAllView)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -276,7 +274,7 @@ class Repository(Navigatable):
         """Delete the repository in the UI."""
         view = navigate_to(self, "Details")
         view.configuration.item_select("Remove this Repository", handle_alert=True)
-        repo_list_page = self.create_view(RepositoryListView)
+        repo_list_page = self.create_view(RepositoryAllView)
         assert repo_list_page.is_displayed
         repo_list_page.flash.assert_no_error()
         repo_list_page.flash.assert_message(
@@ -296,40 +294,41 @@ class Repository(Navigatable):
         return PlaybooksCollection(self)
 
 
-@navigator.register(Server)
+@navigator.register(RepositoryCollection, 'All')
 class AnsibleRepositories(CFMENavigateStep):
-    VIEW = RepositoryListView
-    prerequisite = NavigateToSibling("LoggedIn")
+    VIEW = RepositoryAllView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.view.navigation.select("Automation", "Ansible", "Repositories")
 
 
-@navigator.register(Repository)
+@navigator.register(Repository, 'Details')
 class Details(CFMENavigateStep):
     VIEW = RepositoryDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "AnsibleRepositories")
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self):
-        repositories = self.prerequisite_view.repositories
-        for row in repositories:
-            if row["Name"].text == self.obj.name:
-                row["Name"].click()
-                break
-        else:
-            raise ItemNotFound
+        try:
+            row = self.prerequisite_view.paginator.find_row_on_pages(
+                table=self.prerequisite_view.entities,
+                name=self.obj.name)
+            row.click()
+        except NoSuchElementException:
+            raise ItemNotFound('Could not locate ansible repository table row with name {}'
+                               .format(self.obj.name))
 
 
-@navigator.register(RepositoryCollection)
+@navigator.register(RepositoryCollection, 'Add')
 class Add(CFMENavigateStep):
     VIEW = RepositoryAddView
-    prerequisite = NavigateToAttribute("appliance.server", "AnsibleRepositories")
+    prerequisite = NavigateToSibling("All")
 
     def step(self):
         self.prerequisite_view.configuration.item_select("Add New Repository")
 
 
-@navigator.register(Repository)
+@navigator.register(Repository, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = RepositoryEditView
     prerequisite = NavigateToSibling("Details")
