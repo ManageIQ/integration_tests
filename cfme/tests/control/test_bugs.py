@@ -102,6 +102,18 @@ def vmware_vm(request, virtualcenter_provider):
     return vm
 
 
+@pytest.yield_fixture
+def hardware_reconfigured_alert():
+    alert = Alert(
+        fauxfactory.gen_alpha(),
+        evaluate=("Hardware Reconfigured", {"hardware_attribute": "RAM"}),
+        timeline_event=True
+    )
+    alert.create()
+    yield alert
+    alert.delete()
+
+
 @pytest.mark.meta(blockers=[1155284])
 def test_scope_windows_registry_stuck(request, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
@@ -268,3 +280,12 @@ def test_vmware_alarm_selection_does_not_fail():
             " Management Event must be configured")
     else:
         pytest.fail("Creating this alert passed although it must fail.")
+
+
+def test_alert_ram_reconfigured(hardware_reconfigured_alert):
+    """Tests the bug when it was not possible to save an alert with RAM option in hardware
+    attributes.
+    """
+    view = navigate_to(hardware_reconfigured_alert, "Details")
+    attr = view.hardware_reconfigured_parameters.get_text_of("Hardware Attribute")
+    assert attr == "RAM Increased"
