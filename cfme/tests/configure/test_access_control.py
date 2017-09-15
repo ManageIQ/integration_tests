@@ -16,7 +16,7 @@ from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
-from cfme.web_ui import Table, InfoBlock, toolbar as tb
+from cfme.web_ui import InfoBlock, toolbar as tb
 from cfme.configure import tasks
 from fixtures.provider import setup_one_or_skip
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -27,7 +27,6 @@ from cfme.utils.update import update
 from cfme.utils import version
 
 
-records_table = Table("//div[@id='main_div']//table")
 usergrp = Group(description='EvmGroup-user')
 
 
