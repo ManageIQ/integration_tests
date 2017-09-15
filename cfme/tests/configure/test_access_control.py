@@ -45,13 +45,24 @@ def new_credential():
 
 
 def new_user(group=usergrp):
-    return User(
+    from fixtures.blockers import bug
+
+    uppercase_username_bug = bug(1487199)
+
+    user= User(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyz@redhat.com',
         group=group,
         cost_center='Workload',
         value_assign='Database')
+
+    #Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
+    if user.appliance.version == '5.8.2.0' and uppercase_username_bug:
+       user.credential.principal = user.credential.principal.lower() 
+
+    return user
+
 
 
 def new_group(role='EvmRole-approver'):
@@ -646,6 +657,8 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     fails = {}
     try:
         with user:
+            appliance.server.login(user)
+
             for name, action_thunk in allowed_actions.items():
                 try:
                     action_thunk()
