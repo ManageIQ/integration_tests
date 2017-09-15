@@ -4,7 +4,6 @@ from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import flash
 from cfme.utils import testgen
 from cfme.utils.version import current_version
 from server_methods import verify_server_running, verify_server_stopped
@@ -67,10 +66,8 @@ def test_domain_server_suspend_resume(provider, domain_server):
     """
     verify_server_running(provider, domain_server)
     domain_server.suspend_server()
-    flash.assert_success_message('Suspend initiated for selected server(s)')
     verify_server_suspended(provider, domain_server)
     domain_server.resume_server()
-    flash.assert_success_message('Resume initiated for selected server(s)')
     verify_server_running(provider, domain_server)
 
 
@@ -84,7 +81,6 @@ def test_domain_server_reload(provider, domain_server):
     """
     verify_server_running(provider, domain_server)
     domain_server.reload_server()
-    flash.assert_success_message('Reload initiated for selected server(s)')
     verify_server_starting(provider, domain_server)
     verify_server_running(provider, domain_server)
 
@@ -101,11 +97,9 @@ def test_domain_server_stop_start(provider, domain_server):
     """
     verify_server_running(provider, domain_server)
     domain_server.stop_server()
-    flash.assert_success_message('Stop initiated for selected server(s)')
     verify_server_stopping(provider, domain_server)
     verify_server_stopped(provider, domain_server)
     domain_server.start_server()
-    flash.assert_success_message('Start initiated for selected server(s)')
     verify_server_starting(provider, domain_server)
     verify_server_running(provider, domain_server)
 
@@ -120,7 +114,6 @@ def test_domain_server_restart(provider, domain_server):
     """
     verify_server_running(provider, domain_server)
     domain_server.restart_server()
-    flash.assert_success_message('Restart initiated for selected server(s)')
     verify_server_starting(provider, domain_server)
     verify_server_running(provider, domain_server)
 
@@ -134,7 +127,6 @@ def test_domain_server_kill(provider, domain_server):
     """
     verify_server_running(provider, domain_server)
     domain_server.kill_server()
-    flash.assert_success_message('Kill initiated for selected server(s)')
     verify_server_stopping(provider, domain_server)
     verify_server_stopped(provider, domain_server)
 
