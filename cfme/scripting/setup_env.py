@@ -75,6 +75,8 @@ def setup_ha_env(cfme_version, lease):
     ip1 = apps[1].address
     ip2 = apps[2].address
     opt = '5' if cfme_version >= "5.8" else '8'
+    rep = '6' if cfme_version >= "5.8" else '9'
+    mon = '9' if cfme_version >= "5.8" else '12'
     port = (ip0, '') if cfme_version >= "5.8" else (ip0,)
     command_set0 = ('ap', '', opt, '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
@@ -86,13 +88,13 @@ def setup_ha_env(cfme_version, lease):
     apps[1].wait_for_evm_service()
     apps[1].wait_for_web_ui()
     print("Non-VMDB appliance provisioned and region created {}".format(ip1))
-    command_set2 = ('ap', '', '6', '1', '1', '', '', pwd, pwd, ip0, 'y', '')
+    command_set2 = ('ap', '', rep, '1', '1', '', '', pwd, pwd, ip0, 'y', '')
     apps[0].appliance_console.run_commands(command_set2)
     print("Primary HA node configured {}".format(ip0))
-    command_set3 = ('ap', '', '6', '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y', 'y', '')
+    command_set3 = ('ap', '', rep, '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y', 'y', '')
     apps[2].appliance_console.run_commands(command_set3)
     print("Secondary HA node provision and configured {}".format(ip2))
-    command_set4 = ('ap', '', '9', '1', '')
+    command_set4 = ('ap', '', mon, '1', '')
     apps[1].appliance_console.run_commands(command_set4)
     print("HA configuration complete")
     print("Appliance pool lease time is {}".format(lease))
