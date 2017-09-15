@@ -17,7 +17,7 @@ from functools import partial
 
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
-from cfme.control.explorer import actions, policies, policy_profiles
+from cfme.control.explorer import actions, conditions, policies, policy_profiles
 from cfme.services.requests import Request
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -27,6 +27,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme import test_requirements
 from cfme.utils import conf, testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.hosts import setup_host_creds
@@ -216,21 +217,46 @@ def policy_profile_name(name_suffix):
     return "action_testing: policy profile {}".format(name_suffix)
 
 
+@pytest.fixture(scope="module")
+def compliance_condition():
+    condition = conditions.VMCondition(
+        fauxfactory.gen_alpha(),
+        expression="fill_tag(VM and Instance.My Company Tags : Service Level, Gold)"
+    )
+    condition.create()
+    return condition
+
+
+@pytest.fixture(scope="module")
+def compliance_policy(vm_name, policy_name, compliance_condition):
+    compliance_policy = policies.VMCompliancePolicy(
+        "complaince_{}".format(policy_name),
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
+    )
+    compliance_policy.create()
+    compliance_policy.assign_conditions(compliance_condition)
+    return compliance_policy
+
+
 @pytest.yield_fixture(scope="module")
-def policy_for_testing(vm_name, policy_name, policy_profile_name, provider):
-    """Takes care of setting the appliance up for testing."""
-    policy = policies.VMControlPolicy(
+def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, compliance_policy,
+        compliance_condition):
+    control_policy = policies.VMControlPolicy(
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
     )
-    policy.create()
-    policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
+    control_policy.create()
+    policy_profile = policy_profiles.PolicyProfile(policy_profile_name,
+        policies=[control_policy, compliance_policy])
     policy_profile.create()
     provider.assign_policy_profiles(policy_profile_name)
-    yield policy
+    yield control_policy
     provider.unassign_policy_profiles(policy_profile_name)
     policy_profile.delete()
-    policy.delete()
+    compliance_policy.assign_conditions()
+    compliance_condition.delete()
+    compliance_policy.delete()
+    control_policy.delete()
 
 
 @pytest.fixture(scope="function")
@@ -743,3 +769,28 @@ def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_test
     clone_request = Request(description=request_description, partial_check=True)
     clone_request.wait_for_request(method='ui')
     assert clone_request.status == "Error"
+
+
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
+    OpenStackProvider, AzureProvider))
+def test_action_check_compliance(request, provider, vm, vm_name, policy_for_testing):
+    """Tests action "Check Host or VM Compliance". Policy profile should have control and compliance
+    policies. Control policy initiates compliance check and compliance policy determines is the vm
+    compliant or not. After reloading vm details screen the compliance status should be changed.
+    """
+    if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+           for tag in vm.crud.get_tags()):
+        vm.crud.remove_tag(("Service Level", "Gold"))
+
+    @request.addfinalizer
+    def _remove_tag():
+        if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+               for tag in vm.crud.get_tags()):
+            vm.crud.remove_tag(("Service Level", "Gold"))
+
+    policy_for_testing.assign_actions_to_event("Tag Complete", ["Check Host or VM Compliance"])
+    request.addfinalizer(policy_for_testing.assign_events)
+    vm.crud.add_tag(("Service Level", "Gold"), single_value=True)
+    view = navigate_to(vm.crud, "Details")
+    view.toolbar.reload.click()
+    assert vm.crud.compliant
