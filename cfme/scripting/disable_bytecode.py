@@ -4,7 +4,7 @@ from os import path
 import distutils
 
 
-DISABLE_BYTECODE_USERCUSTOMIZE = "import sys\nsys.dont_write_bytecode = True\n"
+DISABLE_BYTECODE = "import sys\nsys.dont_write_bytecode = True\n"
 
 
 def ensure_file_contains(target, content):
@@ -22,5 +22,5 @@ def ensure_file_contains(target, content):
 
 if __name__ == '__main__':
     site_packages = distutils.sysconfig_get_python_lib()
-    target = path.join(site_packages, 'usercustomize.py')
-    ensure_file_contains(target, content=DISABLE_BYTECODE_USERCUSTOMIZE)
+    target = path.join(site_packages, 'sitecustomize.py')
+    ensure_file_contains(target, content=DISABLE_BYTECODE)
