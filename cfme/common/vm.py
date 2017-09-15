@@ -180,7 +180,12 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     # Methods
     #
     def check_compliance(self, timeout=240):
-        """Initiates compliance check and waits for it to finish."""
+        """Initiates compliance check and waits for it to finish.
+        
+        TODO This should be refactored as it's done `Host.check_compliance`. It shouldn't return
+        anything. `compliant` property should use `compliance_status`.
+
+        """
         original_state = self.compliance_status
         cfg_btn("Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert()
