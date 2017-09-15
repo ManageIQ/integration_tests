@@ -12,10 +12,9 @@ provider = None
 
 def tot_time(string):
     mtch = re.match('^((?P<days>\d+)+d)?\s?((?P<hours>\d+)+h)?\s?((?P<minutes>\d+)+m)?\s?', string)
-    print mtch.groups()
     tot = int(mtch.group('days') or 0) * 24 * 60
     tot += int(mtch.group('hours') or 0) * 60
-    tot += int(mtch.group('minutes'))
+    tot += int(mtch.group('minutes')or 0)
     return tot
 
 
@@ -34,9 +33,9 @@ def main():
 
 @main.command('distributed', help='Sets up distributed environment')
 @click.option('--cfme-version', required=True)
-@click.option('--lease-time', default=180, help='set pool lease time, example: 1d4h30m')
-def setup_distributed_env(cfme_version, lease_time):
-    lease_time = tot_time(lease_time)
+@click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
+def setup_distributed_env(cfme_version, lease):
+    lease_time = tot_time(lease)
     """multi appliance single region configuration (distributed setup, 1st appliance has
     a local database and workers, 2nd appliance has workers pointing at 1st appliance)"""
     print("Provisioning and configuring distributed environment")
@@ -63,9 +62,9 @@ def setup_distributed_env(cfme_version, lease_time):
 
 @main.command('ha', help='Sets up high availability environment')
 @click.option('--cfme-version', required=True)
-@click.option('--lease-time', default=180, help='set pool lease time, example: 1d4h30m')
-def setup_ha_env(cfme_version, lease_time):
-    lease_time = tot_time(lease_time)
+@click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
+def setup_ha_env(cfme_version, lease):
+    lease_time = tot_time(lease)
     provider = cfme_data['basic_info']['ha_provider']
     """multi appliance setup consisting of dedicated primary and standy databases with a single
     UI appliance."""
@@ -101,9 +100,9 @@ def setup_ha_env(cfme_version, lease_time):
 
 @main.command('replicated', help='Sets up replicated environment')
 @click.option('--cfme-version', required=True)
-@click.option('--lease-time', default=180, help='set pool lease time, example: 1d4h30m')
-def setup_replication_env(cfme_version, lease_time):
-    lease_time = tot_time(lease_time)
+@click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
+def setup_replication_env(cfme_version, lease):
+    lease_time = tot_time(lease)
     """Multi appliance setup with multi region and replication from remote to global"""
     print("Provisioning and configuring replicated environment")
     apps = provision_appliances(count=2, cfme_version=cfme_version, provider=provider,
