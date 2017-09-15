@@ -38,7 +38,7 @@ class FileStore(object):
 file_store = FileStore()
 
 
-def trace(scope=1):
+def trace(scope=1, file_name_limit=None):
     """ Very simple tracer for functions and tests
 
     The tracer module is a very simple tracer that prints out lines of code as they are
@@ -54,6 +54,9 @@ def trace(scope=1):
     def globaltrace(frame, why, arg):
         if frame.f_code.co_filename.endswith("tracer.py"):
             return globaltrace
+        filename = frame.f_code.co_filename
+        if file_name_limit not in filename:
+            return globaltrace
         if why == "line":
             # line execution event
             filename = frame.f_code.co_filename
@@ -64,18 +67,23 @@ def trace(scope=1):
             except IndexError:
                 line = ""
             if len(frames) <= scope:
-                logger.trace("{}:{}{} {}".format(len(frames), frame.f_lineno, padding, line))
+                logger.debug("{}:{}:{}{} {}".format(
+                    len(frames),
+                    frame.f_code.co_name, frame.f_lineno, padding, line)
+                )
         if why == "call":
             frames.append(frame)
             if len(frames) <= scope:
                 s = "-" * len(frames)
                 c = ">" * len(frames)
-                logger.trace("{}{} call".format(s, c))
+                logger.debug(
+                    "{}{} called '{}()' from {}".format(s, c, frame.f_code.co_name, filename)
+                )
         if why == "return":
             if len(frames) <= scope:
                 s = "-" * len(frames)
                 c = "<" * len(frames)
-                logger.trace("{}{} call".format(s, c))
+                logger.debug("{}{} returned".format(s, c))
             frames.pop()
         return globaltrace
 
