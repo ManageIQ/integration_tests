@@ -167,7 +167,7 @@ class CFMENavigateStep(NavigateStep):
 
     @property
     def appliance(self):
-        return self.obj.appliance
+        return getattr(self.obj, 'appliance', self.obj.collection.appliance)
 
     def create_view(self, *args, **kwargs):
         return self.appliance.browser.create_view(*args, **kwargs)
