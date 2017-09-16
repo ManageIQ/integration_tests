@@ -16,7 +16,7 @@ from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.myservice import MyService
-from cfme.web_ui import InfoBlock, toolbar as tb
+from cfme.web_ui import InfoBlock
 from cfme.configure import tasks
 from fixtures.provider import setup_one_or_skip
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -48,7 +48,7 @@ def new_user(group=usergrp):
 
     uppercase_username_bug = bug(1487199)
 
-    user= User(
+    user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyz@redhat.com',
@@ -56,12 +56,11 @@ def new_user(group=usergrp):
         cost_center='Workload',
         value_assign='Database')
 
-    #Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
+    # Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
     if user.appliance.version == '5.8.2.0' and uppercase_username_bug:
-       user.credential.principal = user.credential.principal.lower() 
+        user.credential.principal = user.credential.principal.lower()
 
     return user
-
 
 
 def new_group(role='EvmRole-approver'):
@@ -234,7 +233,6 @@ def test_delete_default_user():
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1090877)])
 @pytest.mark.meta(blockers=[BZ(1408479)], forced_streams=["5.7", "upstream"])
-@pytest.mark.uncollectif(lambda: version.current_version() >= "5.7")
 def test_current_user_login_delete(request):
     """Test for deleting current user login.
 
@@ -245,22 +243,13 @@ def test_current_user_login_delete(request):
         * Try deleting the user
     """
     group_user = Group("EvmGroup-super_administrator")
-    user = User(
-        name='user' + fauxfactory.gen_alphanumeric(),
-        credential=new_credential(),
-        email='xyz@redhat.com',
-        group=group_user)
+    user = new_user(group=group_user)
     user.create()
     request.addfinalizer(user.delete)
-    request.addfinalizer(user.appliance.server.login_admin())
+    request.addfinalizer(user.appliance.server.login_admin)
     with user:
-        if version.current_version() >= '5.7':
-            navigate_to(user, 'Details')
-            menu_item = ('Configuration', 'Delete this User')
-            assert tb.exists(*menu_item) and tb.is_greyed(*menu_item), "Delete User is not dimmed"
-        else:
-            with error.expected("Current EVM User \"{}\" cannot be deleted".format(user.name)):
-                user.delete()
+        with pytest.raises(RBACOperationBlocked):
+            user.delete()
 
 
 @pytest.mark.tier(3)
@@ -777,16 +766,7 @@ def test_permissions_vm_provisioning(appliance):
 
 @pytest.mark.tier(2)
 def test_user_change_password(appliance, request):
-    user = User(
-        name="user {}".format(fauxfactory.gen_alphanumeric()),
-        credential=Credential(
-            principal="user_principal_{}".format(fauxfactory.gen_alphanumeric()),
-            secret="very_secret",
-            verify_secret="very_secret"
-        ),
-        email="test@test.test",
-        group=usergrp,
-    )
+    user = new_user(group=usergrp)
 
     user.create()
     request.addfinalizer(user.delete)

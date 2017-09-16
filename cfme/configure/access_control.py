@@ -3,7 +3,6 @@ from widgetastic_manageiq import UpDownSelect, PaginationPane, SummaryFormItem, 
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import Checkbox, View, Text
 
@@ -16,7 +15,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
-
 
 
 def simple_user(userid, password):
@@ -701,7 +699,6 @@ class Group(Updateable, Pretty, Navigatable):
 
         view.flash.assert_message(flash_message)
         assert view.is_displayed
-
 
     def delete(self, cancel=True):
         """
