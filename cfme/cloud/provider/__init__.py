@@ -60,8 +60,6 @@ class CloudProvider(Pretty, CloudInfraProvider):
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
-    page_name = "clouds"
-    templates_destination_name = "Images"
     vm_name = "Instances"
     template_name = "Images"
     db_types = ["CloudManager"]

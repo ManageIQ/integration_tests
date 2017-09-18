@@ -76,6 +76,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     add_provider_button = None
     save_button = None
     db_types = ["Providers"]
+    # Flash message strings, have to format self.string_name and self.name into them on use
+    flash_msg = {
+        'add_cancel': 'Add of {} Provider was cancelled by the user',
+        'add_valid': '{} Provider "{}" was saved',
+        'edit_cancel': 'Edit of {} Provider "{}" was cancelled by the user',
+        'edit_valid': '{} Provider "{}" was saved',
+        'delete_valid': 'Delete initiated for 1 {} Provider from the {} Database'
+    }
 
     def __hash__(self):
         return hash(self.key) ^ hash(type(self))
@@ -213,7 +221,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                                 endpoint_name)
                             add_view.flash.assert_no_error()
                             add_view.flash.assert_success_message(
-                                'Credential validation was successful')
+                                Credential.flash_msg['validate_pass'])
                 if self.one_of(InfraProvider):
                     main_view_obj = InfraProvidersView
                 elif self.one_of(CloudProvider):
@@ -226,17 +234,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 if cancel:
                     created = False
                     add_view.cancel.click()
-                    cancel_text = ('Add of {} Provider was '
-                                   'cancelled by the user'.format(self.string_name))
-
-                    main_view.entities.flash.assert_message(cancel_text)
-                    main_view.entities.flash.assert_no_error()
+                    main_view.entities.flash.assert_success_message(
+                        self.flash_msg['add_cancel'].format(self.name))
                 else:
                     add_view.add.click()
                     if main_view.is_displayed:
-                        success_text = '{} Providers "{}" was saved'.format(self.string_name,
-                                                                            self.name)
-                        main_view.entities.flash.assert_message(success_text)
+                        flash_widget = main_view.entities.flash
+                        flash_widget.assert_success_message(
+                            self.flash_msg['add_valid'].format(self.string_name, self.name))
                     else:
                         add_view.flash.assert_no_error()
                         raise AssertionError("Provider wasn't added. It seems form isn't accurately"
@@ -261,8 +266,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                          validate=validate_credentials)
                 self._submit(cancel, self.add_provider_button)
                 if not cancel:
-                    flash.assert_message_match('{} Providers '
-                                               '"{}" was saved'.format(self.string_name, self.name))
+                    flash.assert_message_match(
+                        self.flash_msg['add_valid'].format(self.string_name, self.name))
             if validate_inventory:
                 self.validate()
             return created
@@ -367,11 +372,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
             if cancel:
                 edit_view.cancel.click()
-                cancel_text = 'Edit of {type} Provider "{name}" ' \
-                              'was cancelled by the user'.format(type=self.string_name,
-                                                                 name=self.name)
-                main_view.entities.flash.assert_message(cancel_text)
-                main_view.entities.flash.assert_no_error()
+                main_view.entities.flash.assert_success_message(
+                    self.flash_msg['edit_cancel'].format(self.string_name, self.name))
             else:
                 edit_view.save.click()
                 if endpoints:
@@ -384,13 +386,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
 
-                success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+                success_text = self.flash_msg['edit_valid'].format(self.string_name, self.name)
                 if main_view.is_displayed:
                     # since 5.8.1 main view is displayed when edit starts from main view
-                    main_view.flash.assert_message(success_text)
+                    main_view.flash.assert_success_message(success_text)
                 elif details_view.is_displayed:
                     # details view is always displayed up to 5.8.1
-                    details_view.flash.assert_message(success_text)
+                    details_view.flash.assert_success_message(success_text)
                 else:
                     edit_view.flash.assert_no_error()
                     raise AssertionError("Provider wasn't updated. It seems form isn't accurately"
@@ -403,13 +405,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred),
                      validate=validate_credentials)
             self._submit(cancel, self.save_button)
-            name = updates.get('name', self.name)
             if not cancel:
                 if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
                     logger.warning('Skipping flash message verification because of BZ 1436341')
                     return
-                flash.assert_message_match(
-                    '{} Provider "{}" was saved'.format(self.string_name, name))
+                flash.assert_message_match(self.flash_msg['edit_valid']
+                                           .format(self.string_name, self.name))
 
     def delete(self, cancel=True):
         """
@@ -423,9 +424,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         if not cancel:
-            flash.assert_message_match(
-                'Delete initiated for 1 {} Provider from the {} Database'.format(
-                    self.string_name, self.appliance.product_name))
+            flash.assert_message_match(self.flash_msg['delete_valid']
+                                       .format(self.string_name, self.appliance.product_name))
 
     def setup(self, rest=False):
         """
