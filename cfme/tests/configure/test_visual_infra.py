@@ -214,12 +214,14 @@ def test_infra_start_page(request, appliance, start_page):
 
 def test_infraprovider_noquads(request, set_infra_provider_quad):
     view = navigate_to(InfraProvider, 'All')
-    assert view.entities.get_all()[0].data is None
+    view.toolbar.view_selector.select("Grid View")
+    assert view.entities.get_first_entity().data is None
 
 
 def test_host_noquads(request, set_host_quad):
     view = navigate_to(Host, 'All')
-    assert not bool(view.entities.get_all()[0].data)
+    view.toolbar.view_selector.select("Grid View")
+    assert view.entities.get_first_entity().data is None
 
 
 def test_datastore_noquads(request, set_datastore_quad, appliance):
