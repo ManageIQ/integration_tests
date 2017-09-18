@@ -1025,8 +1025,7 @@ class TenantForm(ConfigurationView):
     cancel_button = Button('Cancel')
 
 
-class TenantQuotaView(ConfigurationView):
-    """ Tenant Quota View """
+class TenantQuotaForm(View):
     cpu_cb = BootstrapSwitch(id='cpu_allocated')
     memory_cb = BootstrapSwitch(id='mem_allocated')
     storage_cb = BootstrapSwitch(id='storage_allocated')
@@ -1038,9 +1037,21 @@ class TenantQuotaView(ConfigurationView):
     vm_txt = Input(id='id_vms_allocated')
     template_txt = Input(id='id_templates_allocated')
 
+
+class TenantQuotaView(ConfigurationView):
+    """ Tenant Quota View """
+    form = View.nested(TenantQuotaForm)
+
     save_button = Button('Save')
     reset_button = Button('Reset')
     cancel_button = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.form.template_cb.is_displayed and
+            self.title.text == 'Manage quotas for Tenant "{}"'.format(self.context['object'].name)
+        )
 
 
 class AllTenantView(ConfigurationView):
@@ -1251,7 +1262,7 @@ class Tenant(Updateable, Pretty, Navigatable):
         wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=5, delay=0.5)
         # TODO : fill happens before the page is fully loaded,
         # resolve this so the wait_for is not needed
-        view.fill({'cpu_cb': kwargs.get('cpu_cb'),
+        view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
                    'cpu_txt': kwargs.get('cpu'),
                    'memory_cb': kwargs.get('memory_cb'),
                    'memory_txt': kwargs.get('memory'),
