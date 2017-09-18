@@ -54,12 +54,6 @@ class ClusterDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class ClusterEntities(BaseEntitiesView):
-    """A list of clusters"""
-    breadcrumb = BreadCrumb()  # exists on ClusterAllFromProviderView
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-
-
 class ClusterDetailsEntities(View):
     """A cluster properties on the details page"""
     breadcrumb = BreadCrumb()
@@ -94,7 +88,7 @@ class ClusterAllView(ClusterView):
             self.entities.title.text == 'Clusters')
 
     toolbar = View.nested(ClusterToolbar)
-    entities = View.nested(ClusterEntities)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
 class ClusterAllFromProviderView(ClusterView):
@@ -107,7 +101,8 @@ class ClusterAllFromProviderView(ClusterView):
             self.entities.title.text == '{p}(All Clusters)'.format(p=self.context['object'].name))
 
     toolbar = View.nested(ClusterToolbar)
-    entities = View.nested(ClusterEntities)
+    breadcrumb = BreadCrumb()
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
 class ClusterDetailsView(ClusterView):
@@ -274,7 +269,7 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
     def exists(self):
         view = navigate_to(self.collection, 'All')
         try:
-            self.prerequisite_view.entities.get_entity(name=self.name, surf_pages=True)
+            view.entities.get_entity(by_name=self.name, surf_pages=True)
             return True
         except ItemNotFound:
             return False
@@ -325,7 +320,8 @@ class Details(CFMENavigateStep):
         else:
             cluster_name = self.obj.name
         try:
-            entity = self.prerequisite_view.entities.get_entity(name=cluster_name, surf_pages=True)
+            entity = self.prerequisite_view.entities.get_entity(by_name=cluster_name,
+                                                                surf_pages=True)
             entity.click()
         except NoSuchElementException:
             raise ClusterNotFound('Cluster {} not found'.format(cluster_name))
