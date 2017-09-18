@@ -191,10 +191,12 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
     def restart_server_group(self):
         view = self.load_details()
         view.toolbar.power.item_select('Restart Server Group', handle_alert=True)
+        view.flash.assert_success_message('Restart')
 
     def start_server_group(self):
         view = self.load_details()
         view.toolbar.power.item_select('Start Server Group', handle_alert=True)
+        view.flash.assert_success_message('Start')
 
     def suspend_server_group(self, timeout=10, cancel=False):
         view = self.load_details()
@@ -204,15 +206,17 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
         })
         view.power_operation_form.cancel_button.click() \
             if cancel else view.power_operation_form.suspend_button.click()
-        view.flash.assert_no_error()
+        view.flash.assert_success_message('Suspend initiated for given server group.')
 
     def resume_server_group(self):
         view = self.load_details()
         view.toolbar.power.item_select('Resume Server Group', handle_alert=True)
+        view.flash.assert_success_message('Resume')
 
     def reload_server_group(self):
         view = self.load_details()
         view.toolbar.power.item_select('Reload Server Group', handle_alert=True)
+        view.flash.assert_success_message('Reload')
 
     def stop_server_group(self, timeout=10, cancel=False):
         view = self.load_details()
@@ -222,7 +226,7 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
         })
         view.power_operation_form.cancel_button.click() \
             if cancel else view.power_operation_form.stop_button.click()
-        view.flash.assert_no_error()
+        view.flash.assert_success_message('Stop initiated for given server group.')
 
 
 @navigator.register(MiddlewareServerGroup, 'Details')

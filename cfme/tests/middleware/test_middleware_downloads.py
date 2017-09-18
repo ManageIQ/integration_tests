@@ -8,7 +8,6 @@ from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.middleware.messaging import MiddlewareMessaging
 from random_methods import get_random_object, get_random_domain
 from random_methods import get_random_server, get_random_server_group
-import cfme.web_ui.flash as flash
 from cfme.utils import testgen
 from cfme.utils import version
 from cfme.utils.version import current_version
@@ -80,11 +79,3 @@ def test_download_lists_from_server_group(provider, filetype, objecttype):
 def test_download_summary(provider, objecttype):
     """ Download the summary page in PDF format """
     get_random_object(provider, objecttype).download_summary()
-
-
-def verify_download(filetype):
-    """ Verifies whether download was successful and no error was shown.
-    Currently test framework does not allow to access download files.
-    So leaving file content checks later.
-    """
-    flash.assert_no_errors()

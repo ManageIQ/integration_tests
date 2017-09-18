@@ -18,13 +18,10 @@ from cfme.middleware.provider.middleware_views import (ProviderMessagingAllView,
     ProviderDeploymentAllView, ProviderDatasourceAllView,
     ProviderServerAllView, MiddlewareProviderTimelinesView,
     ProviderDomainsAllView)
-from cfme.web_ui import Region, tabstrip
 from cfme.utils import version
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-
-
-details_page = Region(infoblock_type='detail')
+from cfme.utils.wait import wait_for
 
 
 def _db_select_query(name=None, type=None):
@@ -345,7 +342,12 @@ class Container(SummaryMixin):
         })
         view.form.next_button.click()
         if existing_driver and self.appliance.version >= '5.8':
-            tabstrip.select_tab("Existing Driver")
+            view.form.tab_existing_driver.select()
+            wait_for(lambda: existing_driver in
+                     [option.text for option in view.form.existing_driver.all_options],
+                 delay=3, num_sec=6,
+                 message='JDBC Driver {} must be listed in existing drivers'
+                 .format(existing_driver))
             view.form.fill({
                 "existing_driver": existing_driver
             })

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from widgetastic.widget import View, Text, TextInput, Select
-from widgetastic_patternfly import Dropdown, FlashMessages, BootstrapSwitch, BootstrapNav
+from widgetastic_patternfly import (Dropdown,
+                                    FlashMessages,
+                                    BootstrapSwitch,
+                                    BootstrapNav,
+                                    Tab)
 
 from cfme.base.login import BaseLoggedInPage
 from widgetastic_manageiq import (Accordion,
@@ -292,6 +296,14 @@ class AddDatasourceForm(View):
     back_button = Button(title='Back')
     finish_button = Button(title='Finish')
     cancel_button = Button(title='Cancel')
+
+    @View.nested
+    class tab_specify_driver(Tab):  # noqa
+        TAB_NAME = 'Specify Driver'
+
+    @View.nested
+    class tab_existing_driver(Tab):  # noqa
+        TAB_NAME = 'Existing Driver'
 
 
 class AddDatasourceView(DatasourceView):

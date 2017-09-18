@@ -1,7 +1,6 @@
 import pytest
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import flash
 from cfme.utils import testgen
 from cfme.utils.version import current_version
 from server_methods import verify_server_running, verify_server_stopped
@@ -130,7 +129,6 @@ def test_server_reload(provider, server):
     """
     verify_server_running(provider, server)
     server.reload_server()
-    flash.assert_success_message('Reload initiated for selected server(s)')
     verify_server_running(provider, server)
 
 
@@ -145,11 +143,9 @@ def test_server_stop(provider, server):
     """
     verify_server_running(provider, server)
     server.stop_server()
-    flash.assert_success_message('Stop initiated for selected server(s)')
     verify_server_stopping(provider, server)
     verify_server_stopped(provider, server)
     server.start_server()
-    flash.assert_success_message('Start initiated for selected server(s)')
     verify_server_starting(provider, server)
     verify_server_running(provider, server)
 
@@ -165,11 +161,9 @@ def test_server_shutdown(provider, server):
     """
     verify_server_running(provider, server)
     server.shutdown_server()
-    flash.assert_success_message('Shutdown initiated for selected server(s)')
     verify_server_stopping(provider, server)
     verify_server_stopped(provider, server)
     server.start_server()
-    flash.assert_success_message('Start initiated for selected server(s)')
     verify_server_starting(provider, server)
     verify_server_running(provider, server)
 
@@ -186,7 +180,6 @@ def test_server_restart(provider, server):
     """
     verify_server_running(provider, server)
     server.restart_server()
-    flash.assert_success_message('Restart initiated for selected server(s)')
     verify_server_running(provider, server)
 
 
@@ -202,8 +195,6 @@ def test_server_suspend_resume(provider, server):
     """
     verify_server_running(provider, server)
     server.suspend_server()
-    flash.assert_success_message('Suspend initiated for selected server(s)')
     verify_server_suspended(provider, server)
     server.resume_server()
-    flash.assert_success_message('Resume initiated for selected server(s)')
     verify_server_running(provider, server)

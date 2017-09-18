@@ -4,7 +4,6 @@ from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server_group import MiddlewareServerGroup
-from cfme.web_ui import flash
 from cfme.utils import testgen
 from cfme.utils.version import current_version
 from server_group_methods import (
@@ -114,7 +113,6 @@ def test_server_group_restart(provider, main_server_group):
     """
     verify_server_group_running(provider, main_server_group)
     main_server_group.restart_server_group()
-    flash.assert_success_message('Restart')
     verify_server_group_running(provider, main_server_group)
 
 
@@ -132,10 +130,8 @@ def test_server_group_suspend_resume(provider, main_server_group):
     """
     verify_server_group_running(provider, main_server_group)
     main_server_group.suspend_server_group()
-    flash.assert_success_message('Suspend initiated for given server group.')
     verify_server_group_suspended(provider, main_server_group)
     main_server_group.resume_server_group()
-    flash.assert_success_message('Resume')
     verify_server_group_running(provider, main_server_group)
 
 
@@ -150,7 +146,6 @@ def test_server_group_reload(provider, main_server_group):
     """
     verify_server_group_running(provider, main_server_group)
     main_server_group.reload_server_group()
-    flash.assert_success_message('Reload')
     verify_server_group_running(provider, main_server_group)
 
 
@@ -167,10 +162,8 @@ def test_server_group_stop_start(provider, main_server_group):
     """
     verify_server_group_running(provider, main_server_group)
     main_server_group.stop_server_group()
-    flash.assert_success_message('Stop initiated for given server group.')
     verify_server_group_stopped(provider, main_server_group)
     main_server_group.start_server_group()
-    flash.assert_success_message('Start')
     verify_server_group_running(provider, main_server_group)
 
 

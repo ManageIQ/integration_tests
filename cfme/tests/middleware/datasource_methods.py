@@ -113,6 +113,30 @@ def verify_datasource_not_listed(provider, name, server=None):
         fail_func=lambda: refresh(provider))
 
 
+def verify_driver_listed(provider, datasource, server):
+    refresh(provider)
+    wait_for(lambda:
+        try_add_datasource_select_driver(provider, datasource, server),
+        delay=30, num_sec=120,
+        message='JDBC Driver {} must be listed in existing drivers'
+        .format(datasource.driver.driver_name),
+        fail_func=lambda: refresh(provider))
+
+
+def try_add_datasource_select_driver(provider, datasource, server):
+    try:
+        server.add_datasource(ds_type=datasource.database_type,
+                              ds_name=datasource.datasource_name,
+                              jndi_name=datasource.jndi_name,
+                              existing_driver=datasource.driver.driver_name,
+                              ds_url=datasource.connection_url.replace("\\", ""),
+                              username=datasource.username,
+                              password=datasource.password, cancel=True)
+        return True
+    except ValueError:
+        return False
+
+
 def get_datasource_from_list(provider, name, server=None):
     verify_datasource_listed(provider, name, server)
     for datasource in MiddlewareDatasource.datasources(provider=provider, server=server):
