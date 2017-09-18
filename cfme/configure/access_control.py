@@ -1260,8 +1260,6 @@ class Tenant(Updateable, Pretty, Navigatable):
         """ Sets tenant quotas """
         view = navigate_to(self, 'ManageQuotas')
         wait_for(lambda: view.is_displayed, fail_condition=False, num_sec=5, delay=0.5)
-        # TODO : fill happens before the page is fully loaded,
-        # resolve this so the wait_for is not needed
         view.form.fill({'cpu_cb': kwargs.get('cpu_cb'),
                    'cpu_txt': kwargs.get('cpu'),
                    'memory_cb': kwargs.get('memory_cb'),
