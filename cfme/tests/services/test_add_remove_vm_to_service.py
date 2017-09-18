@@ -9,6 +9,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.requests import Request
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
+
 from cfme.utils import testgen
 from cfme.utils.log import logger
 
@@ -40,7 +41,7 @@ def copy_domain(request):
 
 
 @pytest.yield_fixture(scope='function')
-def myservice(setup_provider, provider, catalog_item, request):
+def myservice(appliance, setup_provider, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
@@ -51,7 +52,7 @@ def myservice(setup_provider, provider, catalog_item, request):
     provision_request = Request(request_description, partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_finished()
-    service = MyService(catalog_item.name, vm_name)
+    service = MyService(appliance, catalog_item.name, vm_name)
     yield service
 
     try:
