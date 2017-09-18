@@ -1,6 +1,5 @@
 """ A model of an Infrastructure Provider in CFME
 """
-from functools import partial
 from widgetastic.utils import Fillable
 
 from cached_property import cached_property
@@ -17,9 +16,8 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProvidersManagePoliciesView,
                                         InfraProvidersView)
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.cluster import ClusterCollection
+from cfme.infrastructure.cluster import ClusterCollection, ClusterAllFromProviderView
 from cfme.infrastructure.host import Host
-from cfme.web_ui import Quadicon, match_location
 from cfme.utils import conf, version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -27,9 +25,6 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
-
-# todo: get_rid of match_page and am_i_here
-match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
 
 
 class InfraProvider(Pretty, CloudInfraProvider, Fillable):
@@ -184,15 +179,12 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
-        web_clusters = []
         view = navigate_to(self, 'Details')
-        # todo: create nav location + view later
         view.contents.relationships.click_at('Clusters')
-        icons = Quadicon.all(qtype='cluster')
+        cluster_view = self.create_view(ClusterAllFromProviderView)
         cluster_col = self.appliance.get(ClusterCollection)
-        for icon in icons:
-            web_clusters.append(cluster_col.instantiate(icon.name, self))
-        return web_clusters
+        # todo: to handle clusters on multiple pages
+        return [cluster_col.instantiate(e.name, self) for e in cluster_view.entities.get_all()]
 
     def as_fill_value(self):
         return self.name
@@ -315,30 +307,6 @@ class Timelines(CFMENavigateStep):
     def step(self):
         mon = self.prerequisite_view.toolbar.monitoring
         mon.item_select('Timelines')
-
-
-@navigator.register(InfraProvider, 'Instances')
-class Instances(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self):
-        return match_page(summary='{} (All VMs)'.format(self.obj.name))
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.contents.relationships.click_at('VMs and Instances')
-        # todo: add vms view when it is done
-
-
-@navigator.register(InfraProvider, 'Templates')
-class Templates(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def am_i_here(self):
-        return match_page(summary='{} (All Templates)'.format(self.obj.name))
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.contents.relationships.click_at('Templates')
-        # todo: add templates view when it is done
 
 
 def get_all_providers():

@@ -1,20 +1,16 @@
 """ A model of an Infrastructure Cluster in CFME
 
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Cluster pages.
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
-                                  PaginationPane, Search, SummaryTable, Table, Text, TimelinesView)
+                                  SummaryTable, Text, TimelinesView, BaseEntitiesView)
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
-from cfme.exceptions import ClusterNotFound
-from cfme.web_ui import match_location
+from cfme.exceptions import ClusterNotFound, ItemNotFound
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.pretty import Pretty
@@ -58,14 +54,10 @@ class ClusterDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class ClusterEntities(View):
+class ClusterEntities(BaseEntitiesView):
     """A list of clusters"""
-    title = Text('//div[@id="main-content"]//h1')
-    table = Table('//div[@id="list_grid"]//table')
-    search = View.nested(Search)
+    breadcrumb = BreadCrumb()  # exists on ClusterAllFromProviderView
     # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
 
 
 class ClusterDetailsEntities(View):
@@ -89,9 +81,7 @@ class ClusterView(BaseLoggedInPage):
         """Determine if the browser has navigated to the Cluster page"""
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Clusters'] and
-            # TODO: needs to be converted to Widgetastic once we have a replacement
-            match_location(controller='ems_cluster', title='Clusters'))
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Clusters'])
 
 
 class ClusterAllView(ClusterView):
@@ -105,7 +95,19 @@ class ClusterAllView(ClusterView):
 
     toolbar = View.nested(ClusterToolbar)
     entities = View.nested(ClusterEntities)
-    paginator = PaginationPane()
+
+
+class ClusterAllFromProviderView(ClusterView):
+    """The all view page for clusters open from provider detail page"""
+    @property
+    def is_displayed(self):
+        """Determine if this page is currently being displayed"""
+        return (
+            self.logged_in_as_current_user and
+            self.entities.title.text == '{p}(All Clusters)'.format(p=self.context['object'].name))
+
+    toolbar = View.nested(ClusterToolbar)
+    entities = View.nested(ClusterEntities)
 
 
 class ClusterDetailsView(ClusterView):
@@ -225,7 +227,6 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
 
         # flash message only displayed if it was deleted
         if not cancel:
-            view.entities.flash.assert_no_error()
             msg = 'The selected Clusters / Deployment Roles was deleted'
             view.entities.flash.assert_success_message(msg)
 
@@ -273,9 +274,9 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
     def exists(self):
         view = navigate_to(self.collection, 'All')
         try:
-            view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+            self.prerequisite_view.entities.get_entity(name=self.name, surf_pages=True)
             return True
-        except NoSuchElementException:
+        except ItemNotFound:
             return False
 
     @property
@@ -307,9 +308,8 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         """Reset the view"""
-        self.view.toolbar.view_selector.select('Grid View')
-        self.view.paginator.check_all()
-        self.view.paginator.uncheck_all()
+        self.view.entities.paginator.check_all()
+        self.view.entities.paginator.uncheck_all()
 
 
 @navigator.register(Cluster, 'Details')
@@ -319,19 +319,16 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
-        self.prerequisite_view.toolbar.view_selector.select('List View')
         version = self.obj.appliance.version
         if (version >= '5.7.4' and version < '5.8') or version >= '5.8.1.2':
             cluster_name = self.obj.short_name
         else:
             cluster_name = self.obj.name
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=cluster_name)
+            entity = self.prerequisite_view.entities.get_entity(name=cluster_name, surf_pages=True)
+            entity.click()
         except NoSuchElementException:
             raise ClusterNotFound('Cluster {} not found'.format(cluster_name))
-        row.click()
 
 
 @navigator.register(Cluster, 'Timelines')
