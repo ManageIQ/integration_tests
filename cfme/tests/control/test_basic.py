@@ -413,12 +413,12 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
 
 
 @pytest.mark.tier(2)
-def test_policy_profile_crud(random_vm_control_policy, random_host_control_policy):
-    profile = policy_profiles.PolicyProfile(
+def test_policy_profile_crud(appliance, random_vm_control_policy, random_host_control_policy):
+    profiles_collection = policy_profiles.PolicyProfileCollection(appliance)
+    profile = profiles_collection.create(
         fauxfactory.gen_alphanumeric(),
         policies=[random_vm_control_policy, random_host_control_policy]
     )
-    profile.create()
     with update(profile):
         profile.notes = "Modified!"
     profile.delete()
