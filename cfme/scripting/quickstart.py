@@ -6,16 +6,33 @@ import argparse
 import subprocess
 import json
 import hashlib
+from collections import namedtuple
+
+
+WheelHouse = namedtuple('WheelHouse', ['host', 'url'])
+
+
+def add_import_package(name):
+    """Add package to quickstart requirements file"""
+    sys.path.insert(0, os.path.join(
+        os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(__file__))),
+        'requirements', 'quickstart', name))
+
 
 try:
     import distro
 except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(
-            os.path.dirname(__file__))),
-        'requirements', 'quickstart',
-        'distro-1.0.4-py2.py3-none-any.whl'))
+    add_import_package('distro-1.0.4-py2.py3-none-any.whl')
     import distro
+
+try:
+    import yaycl
+except ImportError:
+    add_import_package('yaycl-0.2.0-cp27-none-any.whl')
+    import yaycl
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mk-virtualenv", default="../cfme_venv")
@@ -143,7 +160,21 @@ def hash_file(path):
     return content_hash.hexdigest()
 
 
-def install_requirements(venv_path, quiet=False):
+def get_wheelhouse(path):
+    """Check cfme_data.yaml in given path for a wheelhouse server config"""
+    config = yaycl.Config(config_dir=path)
+    cfme_data = config.get('cfme_data')
+    try:
+        # put all of this in try in case of AttributeError at any level of yaml access
+        wheelhouse = cfme_data.get('basic_info').get('wheelhouse')
+        if wheelhouse:
+            return WheelHouse(wheelhouse.get('host'), wheelhouse.get('url'))
+    except AttributeError:
+        print('WARNING: No ["basic_info"]["wheelhouse"] found in "%s/cfme_data.yaml"', path)
+        return None
+
+
+def install_requirements(venv_path, config_path, quiet=False):
 
     remember_file = os.path.join(venv_path, '.cfme_requirements_hash')
     current_hash = hash_file(REQUIREMENT_FILE)
@@ -163,12 +194,16 @@ def install_requirements(venv_path, quiet=False):
         current_packages = pip_json_list(venv_path)
         print("INFO:", REQUIREMENT_FILE, 'changed, updating virtualenv')
 
+    wheelhouse = get_wheelhouse(config_path)
+
     venv_call(
         venv_path,
         'pip', 'install',
         '-r', REQUIREMENT_FILE,
         '--no-binary', 'pycurl',
-        *(['-q'] if quiet else []))
+        ('-q' if quiet else ''),
+        *(['-f', wheelhouse.url] if wheelhouse else []),
+        **({'--trusted-host': wheelhouse.host} if wheelhouse else {}))
 
     with open(remember_file, 'w') as fp:
         fp.write(current_hash)
@@ -261,7 +296,9 @@ def main(args):
         print("INFO: skipping installation of system packages from inside of virtualenv")
     venv_state = setup_virtualenv(
         args.mk_virtualenv, args.system_site_packages)
-    install_requirements(args.mk_virtualenv, quiet=(venv_state is CREATED))
+    install_requirements(args.mk_virtualenv,
+                         args.config_path,
+                         quiet=(venv_state is CREATED))
     disable_bytecode(args.mk_virtualenv)
     self_install(args.mk_virtualenv)
     link_config_files(args.config_path, 'conf')
