@@ -37,8 +37,10 @@ from widgetastic.widget import (
     do_not_read_this_widget)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapSwitch, BootstrapTreeview, Button, Input,
-    BootstrapSelect, CheckableBootstrapTreeview, FlashMessages)
+    Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
+    BootstrapSelect, Button, CheckableBootstrapTreeview,
+    CandidateNotFound, Dropdown, Input, FlashMessages,
+    VerticalNavigation)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
@@ -1095,6 +1097,139 @@ class ScriptBox(Widget):
         # We need to fire off the handlers manually in some cases ...
         self.browser.execute_script(
             "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.item_name))
+
+
+class SSUIVerticalNavigation(VerticalNavigation):
+    """The Patternfly Vertical navigation."""
+    CURRENTLY_SELECTED = './/li[contains(@class, "active")]/a/span'
+
+
+class SSUIlist(Widget, ClickableMixin):
+    """Represents the list of items like Services ,
+    Orders or service catalogs in SSUI pages.
+    """
+
+    @ParametrizedView.nested
+    class list(ParametrizedView):  # noqa
+        PARAMETERS = ("list_name", "item_name",)
+        list_item = Text(ParametrizedLocator('.//div[@id={list_name|quote}]/../div'
+            '//a[normalize-space(.)={item_name|quote}]'))
+
+        def list_click(self):
+            """Clicks the list item with this name."""
+
+            return self.list_item.click()
+
+    def __init__(self, parent, list_name, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.list_name = list_name
+
+    def click_at(self, item_name):
+        """Clicks the list item with this name.
+
+        Args:
+            item_name: Name of the item
+        """
+        return self.list(self.list_name, item_name).list_click()
+
+
+class SSUIDropdown(Dropdown):
+    """Represents the SSUI dropdown."""
+
+    ROOT = ParametrizedLocator(
+        './/span[contains(@class, "dropdown") and .//button[contains(@class, "dropdown-toggle")]'
+        '/span[normalize-space(.)={@text|quote}]]')
+    BUTTON_LOCATOR = './/button'
+    ITEMS_LOCATOR = './ul/li/a'
+    ITEM_LOCATOR = './/ul/li/a[normalize-space(.)={}]'
+
+    def __init__(self, parent, text, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.text = text
+
+
+class SSUIPrimarycard(Widget, ClickableMixin):
+    """Represents a primary card on dashboard like Total Service or Total Requests."""
+
+    @ParametrizedView.nested
+    class primary_card(ParametrizedView):  # noqa
+        PARAMETERS = ("item_name",)
+        card = Text(ParametrizedLocator('.//div[@class="ss-dashboard__card-primary__count"]'
+            '/h3[normalize-space(.)={item_name|quote}]'))
+        count = Text(ParametrizedLocator('.//div[@class="ss-dashboard__card-primary__count"]/h2'
+            '[./following-sibling::h3[normalize-space(.)={item_name|quote}]]'))
+
+        def card_click(self):
+            """Clicks the primary card with this name."""
+
+            return self.card.click()
+
+        def card_count(self):
+            """Gets the count displayed on card"""
+
+            return self.browser.text(self.count)
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def click_at(self, item_name):
+        """Clicks the card item with this name.
+
+        Args:
+            item_name: Name of the card
+        """
+        return self.primary_card(item_name).card_click()
+
+    def get_count(self, item_name):
+        """
+        Returns the count displayed on UI.
+
+        Args:
+            item_name: Name of the card
+        """
+        return self.primary_card(item_name).card_count()
+
+
+class SSUIAggregatecard(Widget, ClickableMixin):
+    """Represents an aggregate card like Current Services or Retired services."""
+
+    @ParametrizedView.nested
+    class aggregate_card(ParametrizedView):  # noqa
+        PARAMETERS = ("item_name",)
+        card = Text(ParametrizedLocator('.//div[@class="card-pf-body"]'
+            '/h2[normalize-space(.)={item_name|quote}]'))
+        count = Text(ParametrizedLocator('.//div[@class="card-pf-body"]'
+            '/p[./preceding-sibling::h2[normalize-space(.)={item_name|quote}]]/span[2]'))
+
+        def card_click(self):
+            """Clicks the primary card with this name."""
+
+            return self.card.click()
+
+        def card_count(self):
+            """Gets the count displayed on card"""
+
+            return self.browser.text(self.count)
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def click_at(self, item_name):
+        """Clicks the card item with this name.
+
+        Args:
+            item_name: Name of the card
+        """
+        return self.aggregate_card(item_name).card_click()
+
+    def get_count(self, item_name):
+        """
+        Returns the count displayed on UI.
+
+        Args:
+            item_name: Name of the card
+        """
+        return self.aggregate_card(item_name).card_count()
 
 
 class Paginator(Widget):

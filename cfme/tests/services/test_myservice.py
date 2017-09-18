@@ -8,11 +8,13 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.requests import Request
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
+
 from cfme.utils import browser, testgen, version
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.version import appliance_is_downstream
+from cfme.utils.appliance import ViaUI
 
 
 pytestmark = [
@@ -39,7 +41,7 @@ pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.yield_fixture(scope='function')
-def myservice(setup_provider, provider, catalog_item, request):
+def myservice(appliance, setup_provider, provider, catalog_item, request):
     """Tests my service
 
     Metadata:
@@ -57,50 +59,67 @@ def myservice(setup_provider, provider, catalog_item, request):
     service_request.wait_for_request()
     assert service_request.is_succeeded()
 
-    yield MyService(catalog_item.name, vm_name)
+    yield catalog_item.name, vm_name
 
     cleanup_vm(vm_name, provider)
 
 
-def test_retire_service(provider, myservice):
+@pytest.mark.parametrize('context', [ViaUI])
+def test_retire_service(appliance, context, myservice):
     """Tests my service
 
     Metadata:
         test_flag: provision
     """
-    myservice.retire()
+    service_name, vm_name = myservice
+    with appliance.context.use(context):
+        myservice = MyService(appliance, name=service_name, vm_name=vm_name)
+        myservice.retire()
 
 
-def test_retire_service_on_date(myservice):
+@pytest.mark.parametrize('context', [ViaUI])
+def test_retire_service_on_date(appliance, context, myservice):
     """Tests my service retirement
 
     Metadata:
         test_flag: provision
     """
-    dt = datetime.utcnow()
-    myservice.retire_on_date(dt)
+    service_name, vm_name = myservice
+    with appliance.context.use(context):
+        myservice = MyService(appliance, name=service_name, vm_name=vm_name)
+        dt = datetime.utcnow()
+        myservice.retire_on_date(dt)
 
 
-def test_crud_set_ownership_and_edit_tags(myservice):
+@pytest.mark.parametrize('context', [ViaUI])
+def test_crud_set_ownership_and_edit_tags(appliance, context, myservice):
     """Tests my service crud , edit tags and ownership
 
     Metadata:
         test_flag: provision
     """
-    myservice.set_ownership("Administrator", "EvmGroup-administrator")
-    myservice.add_tag("Cost Center *", "Cost Center 001")
-    with update(myservice):
-        myservice.description = "my edited description"
-    myservice.delete()
+
+    service_name, vm_name = myservice
+    with appliance.context.use(context):
+        myservice = MyService(appliance, name=service_name, vm_name=vm_name)
+        myservice.set_ownership("Administrator", "EvmGroup-administrator")
+        myservice.add_tag("Cost Center *", "Cost Center 001")
+        with update(myservice):
+            myservice.description = "my edited description"
+        myservice.delete()
 
 
+@pytest.mark.parametrize('context', [ViaUI])
 @pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
 # PDF not present on upstream
 @pytest.mark.uncollectif(lambda filetype: filetype == 'PDF' and not appliance_is_downstream())
-def test_download_file(needs_firefox, myservice, filetype):
+def test_download_file(appliance, context, needs_firefox, myservice, filetype):
     """Tests my service download files
 
     Metadata:
         test_flag: provision
     """
-    myservice.download_file(filetype)
+    service_name, vm_name = myservice
+    with appliance.context.use(context):
+        myservice = MyService(appliance, name=service_name, vm_name=vm_name)
+        myservice.download_file(filetype)

@@ -6,6 +6,7 @@ from cfme.services.requests import Request
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
+
 from cfme.utils import testgen, version
 from cfme.utils.log import logger
 
@@ -85,7 +86,7 @@ def test_order_tower_catalog_item(catalog_item, request):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_retire_ansible_service(catalog_item, request):
+def test_retire_ansible_service(appliance, catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -98,5 +99,5 @@ def test_retire_ansible_service(catalog_item, request):
     order_request = Request(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
     assert order_request.is_succeeded()
-    myservice = MyService(catalog_item.name)
+    myservice = MyService(appliance, catalog_item.name)
     myservice.retire()

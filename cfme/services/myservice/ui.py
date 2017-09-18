@@ -1,17 +1,17 @@
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
 from widgetastic_manageiq import Accordion, ManageIQTree, Calendar, SummaryTable
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import TagPageView
 from cfme.web_ui import toolbar as tb, Quadicon
 from cfme.fixtures import pytest_selenium as sel
-from navmazing import NavigateToAttribute, NavigateToSibling
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils.update import Updateable
-from cfme.utils.appliance import Navigatable, current_appliance
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
-from cfme.utils import version
+
+from . import MyService
 
 
 class MyServicesView(BaseLoggedInPage):
@@ -22,7 +22,7 @@ class MyServicesView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_myservices and self.configuration.is_displayed and not\
+        return self.in_myservices and self.configuration.is_displayed and not \
             self.myservice.is_dimmed
 
     @View.nested
@@ -147,105 +147,122 @@ class ReconfigureServiceView(SetOwnershipForm):
         )
 
 
-class MyService(Updateable, Navigatable, WidgetasticTaggable):
-
-    def __init__(self, name, description=None, vm_name=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.description = description
-        self.vm_name = vm_name
-
-    def retire(self):
-        view = navigate_to(self, 'Details')
-        view.lifecycle_btn.item_select("Retire this Service", handle_alert=True)
-        view.flash.assert_no_error()
-        if self.appliance.version < '5.8':
-            view.flash.assert_success_message(
-                'Retirement initiated for 1 Service from the {} Database'.format(
-                    current_appliance.product_name))
-        # wait for service to retire
-        wait_for(
-            lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
-            fail_func=tb.refresh,
-            num_sec=10 * 60,
-            delay=3,
-            message='Service Retirement wait'
-        )
-
-    def retire_on_date(self, retirement_date):
-        view = navigate_to(self, 'SetRetirement')
-        view.retirement_date.fill(retirement_date)
-        view.save_button.click()
-        view = navigate_to(self, 'Details')
-        wait_for(
-            lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
-            fail_func=tb.refresh,
-            num_sec=5 * 60,
-            delay=5,
-            message='Service Retirement'
-        )
-
-    def update(self, updates):
-        view = navigate_to(self, 'Edit')
-        changed = view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
-        view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_success_message('Service "{}" was saved'.format
-            (updates.get('name', self.name)))
-        else:
-            view.flash.assert_success_message('Edit of Service "{}" was cancelled by the \
-                user'.format(updates.get('description', self.description)))
-        view = self.create_view(MyServiceDetailView, override=updates)
-        assert view.is_displayed
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
-    def delete(self):
-        view = navigate_to(self, 'Details')
-        view.configuration.item_select(
-            version.pick({
-                version.LOWEST: 'Remove Service from the VMDB',
-                '5.7': 'Remove Service'}),
-            handle_alert=True)
-        view = self.create_view(MyServicesView)
-        view.flash.assert_no_error()
-        assert view.is_displayed
+@MyService.retire.external_implementation_for(ViaUI)
+def retire(self):
+    view = navigate_to(self, 'Details')
+    view.lifecycle_btn.item_select("Retire this Service", handle_alert=True)
+    view.flash.assert_no_error()
+    if self.appliance.version < '5.8':
         view.flash.assert_success_message(
-            'Service "{}": Delete successful'.format(self.name))
+            'Retirement initiated for 1 Service from the {} Database'.format(
+                current_appliance.product_name))
+    # wait for service to retire
+    wait_for(
+        lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
+        fail_func=tb.refresh,
+        num_sec=10 * 60,
+        delay=3,
+        message='Service Retirement wait'
+    )
 
-    def set_ownership(self, owner, group):
-        view = navigate_to(self, 'SetOwnership')
-        view.fill({'select_owner': owner,
-                   'select_group': group})
-        view.save_button.click()
-        view = self.create_view(MyServiceDetailView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_success_message('Ownership saved for selected Service')
 
-    def check_vm_add(self, add_vm_name):
-        view = navigate_to(self, 'Details')
-        # TODO - replace Quadicon later
-        quadicon = Quadicon(add_vm_name, "vm")
-        sel.click(quadicon)
-        view.flash.assert_no_error()
+@MyService.retire_on_date.external_implementation_for(ViaUI)
+def retire_on_date(self, retirement_date):
+    view = navigate_to(self, 'SetRetirement')
+    view.retirement_date.fill(retirement_date)
+    view.save_button.click()
+    view = navigate_to(self, 'Details')
+    wait_for(
+        lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
+        fail_func=tb.refresh,
+        num_sec=5 * 60,
+        delay=5,
+        message='Service Retirement'
+    )
 
-    def download_file(self, extension):
-        view = navigate_to(self, 'All')
-        view.download_choice.item_select("Download as " + extension)
-        view.flash.assert_no_error()
 
-    def reconfigure_service(self):
-        view = navigate_to(self, 'Reconfigure')
-        view.submit_button.click()
-        # TODO - assert for request view after request widgetastic conversion
-        view.flash.assert_no_error()
+@MyService.update.external_implementation_for(ViaUI)
+def update(self, updates):
+    view = navigate_to(self, 'Edit')
+    changed = view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
+    view.flash.assert_no_error()
+    if changed:
+        view.flash.assert_success_message(
+            'Service "{}" was saved'.format(updates.get('name', self.name)))
+    else:
+        view.flash.assert_success_message(
+            'Edit of Service "{}" was cancelled by the user'.format(
+                updates.get('description', self.description)))
+    view = self.create_view(MyServiceDetailView, override=updates)
+    assert view.is_displayed
+
+
+@MyService.exists.external_implementation_for(ViaUI)
+def exists(self):
+    try:
+        navigate_to(self, 'Details')
+        return True
+    except CandidateNotFound:
+        return False
+
+
+@MyService.delete.external_implementation_for(ViaUI)
+def delete(self):
+    view = navigate_to(self, 'Details')
+    view.configuration.item_select('Remove Service', handle_alert=True)
+    view = self.create_view(MyServicesView)
+    view.flash.assert_no_error()
+    assert view.is_displayed
+    view.flash.assert_success_message(
+        'Service "{}": Delete successful'.format(self.name))
+
+
+@MyService.set_ownership.external_implementation_for(ViaUI)
+def set_ownership(self, owner, group):
+    view = navigate_to(self, 'SetOwnership')
+    view.fill({'select_owner': owner,
+               'select_group': group})
+    view.save_button.click()
+    view = self.create_view(MyServiceDetailView)
+    assert view.is_displayed
+    view.flash.assert_no_error()
+    view.flash.assert_success_message('Ownership saved for selected Service')
+
+
+@MyService.edit_tags.external_implementation_for(ViaUI)
+def edit_tags(self, tag, value):
+    view = navigate_to(self, 'EditTagsFromDetails')
+    view.fill({'select_tag': tag,
+               'select_value': value})
+    view.save_button.click()
+    view = self.create_view(MyServiceDetailView)
+    assert view.is_displayed
+    view.flash.assert_no_error()
+    view.flash.assert_success_message('Tag edits were successfully saved')
+
+
+@MyService.check_vm_add.external_implementation_for(ViaUI)
+def check_vm_add(self, add_vm_name):
+    view = navigate_to(self, 'Details')
+    # TODO - replace Quadicon later
+    quadicon = Quadicon(add_vm_name, "vm")
+    sel.click(quadicon)
+    view.flash.assert_no_error()
+
+
+@MyService.download_file.external_implementation_for(ViaUI)
+def download_file(self, extension):
+    view = navigate_to(self, 'All')
+    view.download_choice.item_select("Download as {}".format(extension))
+    view.flash.assert_no_error()
+
+
+@MyService.reconfigure_service.external_implementation_for(ViaUI)
+def reconfigure_service(self):
+    view = navigate_to(self, 'Reconfigure')
+    view.submit_button.click()
+    # TODO - assert for request view after request widgetastic conversion
+    view.flash.assert_no_error()
 
 
 @navigator.register(MyService, 'All')

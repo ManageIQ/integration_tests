@@ -1,15 +1,83 @@
 from . import Server
-from cfme.utils.appliance import ViaSSUI
-from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
+
+from navmazing import NavigateToSibling
+from widgetastic.widget import View, ParametrizedView
+from widgetastic_patternfly import NavDropdown, FlashMessages, Input, Button
+from widgetastic_manageiq import SSUIVerticalNavigation
+from widgetastic.utils import ParametrizedLocator
 
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
-from widgetastic_patternfly import Input, Button, FlashMessages
 from cfme.utils import conf
+from cfme.utils.appliance import ViaSSUI
+from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
 from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.log import logger
 
-from widgetastic.widget import View
+import time
+
+
+class SSUIBaseLoggedInPage(View):
+    """This page should be subclassed by any page that models any other page that is available as
+    logged in.
+    """
+    flash = FlashMessages('div#flash_text_div')
+    help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]')
+    navigation = SSUIVerticalNavigation('//ul[@class="list-group"]')
+    domain_switcher = Button(id="domain-switcher")
+
+    @ParametrizedView.nested
+    class settings(ParametrizedView):  # noqa
+        PARAMETERS = ("user_name",)
+        setting = NavDropdown(ParametrizedLocator('.//li[./a[@title={user_name|quote}]]'))
+
+        def text(self):
+            return self.setting.text
+
+        def is_displayed(self):
+            return self.setting.is_displayed
+
+        def select_item(self, option):
+            return self.setting.select_item(option)
+
+    @property
+    def is_displayed(self):
+        return self.logged_in_as_current_user
+
+    def logged_in_as_user(self, user):
+        if self.logged_out:
+            return False
+        return user.name == self.current_fullname
+
+    @property
+    def logged_in_as_current_user(self):
+        return self.logged_in_as_user(self.extra.appliance.user)
+
+    @property
+    def current_username(self):
+        try:
+            return self.extra.appliance.user.principal
+        except AttributeError:
+            return None
+
+    @property
+    def current_fullname(self):
+        return self.settings(self.extra.appliance.user.credential.principal).text()
+
+    @property
+    def logged_in(self):
+        return (
+            self.settings(self.extra.appliance.user.credential.principal).is_displayed() and
+            self.domain_switcher.is_displayed)
+
+    @property
+    def logged_out(self):
+        return not self.logged_in
+
+    def logout(self):
+        self.settings(self.extra.appliance.user.credential.principal).select_item('Logout')
+        self.browser.handle_alert(wait=None)
+        self.extra.appliance.user = None
 
 
 class LoginPage(View):
@@ -38,15 +106,18 @@ def login(self, user=None, **kwargs):
         'password': user.credential.secret,
     })
     login_view.login.click()
+    # Without this the login screen just exits after logging in
+    time.sleep(3)
     login_view.flash.assert_no_error()
+    self.browser.plugin.ensure_page_safe()
 
 
 @navigator.register(Server)
 class LoggedIn(SSUINavigateStep):
+    VIEW = SSUIBaseLoggedInPage
+    prerequisite = NavigateToSibling('LoginScreen')
 
     def step(self):
-        from cfme.utils.browser import browser
-        browser()
         with self.obj.appliance.context.use(ViaSSUI):
             self.obj.login()
 
@@ -56,7 +127,6 @@ class LoginScreen(SSUINavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        from cfme.utils.browser import ensure_browser_open
         ensure_browser_open(self.obj.appliance.server.address())
 
     def step(self):

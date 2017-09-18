@@ -174,7 +174,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert provision_request.is_succeeded()
 
 
-def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
+def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
@@ -195,7 +195,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
-    myservice = MyService(catalog_item.name)
+    myservice = MyService(appliance, catalog_item.name)
     myservice.reconfigure_service()
 
 
