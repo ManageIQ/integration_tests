@@ -22,6 +22,12 @@ def simple_user(userid, password):
     return User(name=userid, credential=creds)
 
 
+class AccessControlToolbar(View):
+    """ Toolbar on the Access Control page """
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
+
+
 ####################################################################################################
 # RBAC USER METHODS
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -43,8 +49,7 @@ class UsersEntities(View):
 
 class AllUserView(ConfigurationView):
     """ All Users View."""
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
     entities = View.nested(UsersEntities)
 
     @property
@@ -66,8 +71,7 @@ class AddUserView(UserForm):
 
 class DetailsUserView(ConfigurationView):
     """ User Details view."""
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
 
     @property
     def is_displayed(self):
@@ -242,7 +246,7 @@ class User(Updateable, Pretty, Navigatable):
             return: User object of copied user
         """
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Copy this User to a new User')
+        view.toolbar.configuration.item_select('Copy this User to a new User')
         view = self.create_view(AddUserView)
         new_user = User(name="{}copy".format(self.name),
                         credential=Credential(principal='redhat', secret='redhat'))
@@ -275,11 +279,11 @@ class User(Updateable, Pretty, Navigatable):
 
         view = navigate_to(self, 'Details')
 
-        if not view.configuration.item_enabled(delete_user_txt):
+        if not view.toolbar.configuration.item_enabled(delete_user_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
                 delete_user_txt))
 
-        view.configuration.item_select(delete_user_txt, handle_alert=cancel)
+        view.toolbar.configuration.item_select(delete_user_txt, handle_alert=cancel)
         try:
             view.flash.assert_message(flash_blocked_msg)
             raise RBACOperationBlocked(flash_blocked_msg)
@@ -374,7 +378,7 @@ class UserAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select("Add a new User")
+        self.prerequisite_view.toolbar.configuration.item_select("Add a new User")
 
 
 @navigator.register(User, 'Details')
@@ -393,7 +397,7 @@ class UserEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit this User')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this User')
 
 
 @navigator.register(User, 'EditTags')
@@ -402,7 +406,8 @@ class UserTagsEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.policy.item_select("Edit 'My Company' Tags for this User")
+        self.prerequisite_view.toolbar.policy.item_select(
+            "Edit 'My Company' Tags for this User")
 
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # RBAC USER METHODS
@@ -464,8 +469,7 @@ class AddGroupView(GroupForm):
 
 class DetailsGroupView(ConfigurationView):
     """ Details Group View in CFME UI """
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
 
     @property
     def is_displayed(self):
@@ -490,8 +494,7 @@ class EditGroupView(GroupForm):
 
 class AllGroupView(ConfigurationView):
     """ All Groups View in CFME UI """
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
     table = Table("//div[@id='main_div']//table")
     paginator = PaginationPane()
 
@@ -671,7 +674,7 @@ class Group(Updateable, Pretty, Navigatable):
         edit_group_txt = 'Edit this Group'
 
         view = navigate_to(self, 'Details')
-        if not view.configuration.item_enabled(edit_group_txt):
+        if not view.toolbar.configuration.item_enabled(edit_group_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
                 edit_group_txt))
         view = navigate_to(self, 'Edit')
@@ -720,11 +723,11 @@ class Group(Updateable, Pretty, Navigatable):
 
         view = navigate_to(self, 'Details')
 
-        if not view.configuration.item_enabled(delete_group_txt):
+        if not view.toolbar.configuration.item_enabled(delete_group_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
                 delete_group_txt))
 
-        view.configuration.item_select(delete_group_txt, handle_alert=cancel)
+        view.toolbar.configuration.item_select(delete_group_txt, handle_alert=cancel)
         try:
             view.flash.assert_message(flash_blocked_msg)
             raise RBACOperationBlocked(flash_blocked_msg)
@@ -854,7 +857,7 @@ class GroupAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select("Add a new Group")
+        self.prerequisite_view.toolbar.configuration.item_select("Add a new Group")
 
 
 @navigator.register(Group, 'EditGroupSequence')
@@ -863,7 +866,7 @@ class EditGroupSequence(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select(
+        self.prerequisite_view.toolbar.configuration.item_select(
             'Edit Sequence of User Groups for LDAP Look Up')
 
 
@@ -883,7 +886,7 @@ class GroupEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit this Group')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Group')
 
 
 @navigator.register(Group, 'EditTags')
@@ -893,7 +896,8 @@ class GroupTagsEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.policy.item_select("Edit 'My Company' Tags for this Group")
+        self.prerequisite_view.toolbar.policy.item_select(
+            "Edit 'My Company' Tags for this Group")
 
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # END RBAC GROUP METHODS
@@ -939,8 +943,7 @@ class EditRoleView(RoleForm):
 
 class DetailsRoleView(RoleForm):
     """ Details Role View """
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
 
     @property
     def is_displayed(self):
@@ -952,8 +955,7 @@ class DetailsRoleView(RoleForm):
 
 class AllRolesView(ConfigurationView):
     """ All Roles View """
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
     table = Table("//div[@id='main_div']//table")
 
     @property
@@ -1029,7 +1031,7 @@ class Role(Updateable, Pretty, Navigatable):
         edit_role_txt = 'Edit this Role'
 
         view = navigate_to(self, 'Details')
-        if not view.configuration.item_enabled(edit_role_txt):
+        if not view.toolbar.configuration.item_enabled(edit_role_txt):
             raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
                 edit_role_txt))
 
@@ -1072,11 +1074,11 @@ class Role(Updateable, Pretty, Navigatable):
 
         view = navigate_to(self, 'Details')
 
-        if not view.configuration.item_enabled(delete_role_txt):
+        if not view.toolbar.configuration.item_enabled(delete_role_txt):
                 raise RBACOperationBlocked("Configuration action '{}' is not enabled".format(
                     delete_role_txt))
 
-        view.configuration.item_select(delete_role_txt, handle_alert=cancel)
+        view.toolbar.configuration.item_select(delete_role_txt, handle_alert=cancel)
         try:
             view.flash.assert_message(flash_blocked_msg)
             raise RBACOperationBlocked(flash_blocked_msg)
@@ -1100,7 +1102,7 @@ class Role(Updateable, Pretty, Navigatable):
         if name is None:
             name = "{}_copy".format(self.name)
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Copy this Role to a new Role')
+        view.toolbar.configuration.item_select('Copy this Role to a new Role')
         view = self.create_view(AddRoleView)
         new_role = Role(name=name)
         view.fill({'name_txt': new_role.name})
@@ -1144,7 +1146,7 @@ class RoleAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select("Add a new Role")
+        self.prerequisite_view.toolbar.configuration.item_select("Add a new Role")
 
 
 @navigator.register(Role, 'Details')
@@ -1163,7 +1165,7 @@ class RoleEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit this Role')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Role')
 
 
 ####################################################################################################
@@ -1197,8 +1199,7 @@ class TenantQuotaView(ConfigurationView):
 
 class AllTenantView(ConfigurationView):
     """ All Tenants View """
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
 
     @property
     def is_displayed(self):
@@ -1222,8 +1223,7 @@ class AddTenantView(TenantForm):
 
 class DetailsTenantView(ConfigurationView):
     """ Details Tenant View """
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
+    toolbar = View.nested(AccessControlToolbar)
 
     @property
     def is_displayed(self):
@@ -1388,7 +1388,8 @@ class Tenant(Updateable, Pretty, Navigatable):
                     'False' - deletion of role will be canceled
         """
         view = navigate_to(self, 'Details')
-        view.configuration.item_select('Delete this item', handle_alert=cancel)
+        view.toolbar.configuration.item_select(
+            'Delete this item', handle_alert=cancel)
         if cancel:
             view = self.create_view(ParentDetailsTenantView)
             view.flash.assert_success_message(
@@ -1455,7 +1456,7 @@ class TenantAdd(CFMENavigateStep):
         else:
             raise OptionNotAvailable('Object type unsupported for Tenant Add: {}'
                                      .format(type(self.obj).__name__))
-        self.prerequisite_view.configuration.item_select(add_selector)
+        self.prerequisite_view.toolbar.configuration.item_select(add_selector)
 
 
 @navigator.register(Tenant, 'Edit')
@@ -1464,7 +1465,7 @@ class TenantEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Edit this item')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this item')
 
 
 @navigator.register(Tenant, 'ManageQuotas')
@@ -1473,7 +1474,7 @@ class TenantManageQuotas(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Manage Quotas')
+        self.prerequisite_view.toolbar.configuration.item_select('Manage Quotas')
 
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # END TENANT METHODS
