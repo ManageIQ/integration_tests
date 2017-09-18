@@ -158,5 +158,7 @@ def test_cloud_start_page(request, appliance, start_page):
 
 
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):
-    navigate_to(CloudProvider, 'All')
-    assert visual.check_image_exists, "Image View Failed!"
+    view = navigate_to(CloudProvider, 'All')
+    view.toolbar.view_selector.select("Grid View")
+    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
+    assert view.entities.get_first_entity().data is None
