@@ -77,7 +77,7 @@ def test_order_tower_catalog_item(catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    cells = {'Description': catalog_item.name}
+    cells = catalog_item.name
     order_request = Request(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
     assert order_request.is_succeeded()
@@ -95,7 +95,7 @@ def test_retire_ansible_service(appliance, catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
-    cells = {'Description': catalog_item.name}
+    cells = catalog_item.name
     order_request = Request(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
     assert order_request.is_succeeded()
