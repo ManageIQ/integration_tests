@@ -85,6 +85,13 @@ class CloudProvider(Pretty, CloudInfraProvider):
         """Returns the discovery credentials dictionary, needs overiding"""
         raise NotImplementedError("This provider doesn't support discovery")
 
+    @property
+    def id(self):
+        """
+        returns current provider id using rest api
+        """
+        return self.appliance.rest_api.collections.providers.find_by(name=self.name)[0].id
+
 
 @navigator.register(CloudProvider, 'All')
 class All(CFMENavigateStep):

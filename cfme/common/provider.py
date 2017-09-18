@@ -103,7 +103,15 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def id(self):
-        return self.get_provider_id()
+        """"
+        Return the ID associated with the specified provider name
+        """
+        # TODO: Get Provider object from ProviderCollection.find, then use Provider.id to get the id
+        logger.debug('Retrieving the ID for provider: {}'.format(self.name))
+        for provider_id in self.get_all_provider_ids():
+            details = self.get_provider_details(provider_id)
+            if details['name'] == self.name:
+                return provider_id
 
     @property
     def version(self):
@@ -894,17 +902,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         for id in self.get_all_template_ids():
             all_details[id] = self.get_template_details(id)
         return all_details
-
-    def get_provider_id(self, provider_name):
-        """"
-        Return the ID associated with the specified provider name
-        """
-        # TODO: Get Provider object from ProviderCollection.find, then use Provider.id to get the id
-        logger.debug('Retrieving the ID for provider: {}'.format(provider_name))
-        for provider_id in self.get_all_provider_ids():
-            details = self.get_provider_details(provider_id)
-            if details['name'] == provider_name:
-                return provider_id
 
     def get_vm_id(self, vm_name):
         """
