@@ -6,13 +6,12 @@ from random import sample
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme.common import Validatable, SummaryMixin
+from cfme.common import Validatable, SummaryMixin, TagPageView
 from cfme.common.provider import BaseProvider
 from cfme.common.provider_views import (
     MiddlewareProviderAddView,
     MiddlewareProviderEditView,
     MiddlewareProvidersView,
-    ProvidersEditTagsView,
     MiddlewareProviderDetailsView)
 from cfme.exceptions import MiddlewareProviderNotFound
 from cfme.middleware.provider.middleware_views import (ProviderMessagingAllView,
@@ -120,7 +119,7 @@ class EditFromDetails(CFMENavigateStep):
 
 @navigator.register(MiddlewareProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
-    VIEW = ProvidersEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -130,7 +129,7 @@ class EditTags(CFMENavigateStep):
 
 @navigator.register(MiddlewareProvider, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = ProvidersEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

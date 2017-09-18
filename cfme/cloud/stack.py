@@ -3,13 +3,13 @@ from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages, BootstrapNav
 from widgetastic_manageiq import (
-    Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
-    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView)
+    Accordion, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
+    SummaryTable, Table, Text)
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import CandidateNotFound
 from cfme.web_ui import match_location
-from cfme.exceptions import CFMEException
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
@@ -74,13 +74,6 @@ class StackDetailsEntities(View):
     # element attributes changed from id to class in upstream-fine+, capture both with locator
     flash = FlashMessages('.//div[@id="flash_msg_div"]'
                           '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
-
-
-class StackEditTagEntities(View):
-    """The entities on the edit tags page"""
-    breadcrumb = BreadCrumb()
-    title = Text('#explorer_title_text')
-    included_widgets = View.include(BaseNonInteractiveEntitiesView, use_parent=True)
 
 
 class StackSecurityGroupsEntities(View):
@@ -161,31 +154,6 @@ class StackDetailsView(StackView):
             self.in_stacks and
             self.entities.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title)
-
-
-class StackEditTagsForm(View):
-    """The form on the edit tags page"""
-    select_tag = BootstrapSelect('tag_cat')
-    select_value = BootstrapSelect('tag_add')
-    save_button = Button('Save')
-    reset_button = Button('Reset')
-    cancel = Button('Cancel')
-
-
-class StackEditTagsView(StackView):
-    """The edit tags page"""
-    entities = View.nested(StackEditTagEntities)
-    form = View.nested(StackEditTagsForm)
-
-    @property
-    def is_displayed(self):
-        """Is this page currently being displayed"""
-        return (
-            self.in_stacks and
-            self.entities.breadcrumb.locations == [
-                'Orchestration Stacks', '{} (Summary)'.format(self.context['object'].name),
-                'Tag Assignment'] and
-            self.entities.breadcrumb.active_location == 'Tag Assignment')
 
 
 class StackSecurityGroupsView(StackView):
@@ -291,7 +259,7 @@ class StackCollection(NavigatableMixin):
             raise ValueError('Some Stacks not found in the UI')
 
 
-class Stack(Pretty, NavigatableMixin):
+class Stack(Pretty, NavigatableMixin, WidgetasticTaggable):
     _param_name = "Stack"
     pretty_attrs = ['name']
 
@@ -327,22 +295,6 @@ class Stack(Pretty, NavigatableMixin):
 
         wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, num_sec=15 * 60,
                  delay=30, message='Wait for stack to be deleted')
-
-    def edit_tags(self, tag, value):
-        """Edit the tags of a particular stack"""
-        view = navigate_to(self, 'EditTags')
-        view.form.fill({'select_tag': tag, 'select_value': value})
-        view.form.save_button.click()
-        detail_view = self.create_view(StackDetailsView)
-        detail_view.entities.flash.assert_success_message('Tag edits were successfully saved')
-        company_tag = self.get_tags()
-        if company_tag != "{}: {}".format(tag.replace(" *", ""), value):
-            raise CFMEException("{} ({}) tag is not assigned!".format(tag.replace(" *", ""), value))
-
-    def get_tags(self):
-        view = navigate_to(self, 'Details')
-        company_tag = view.entities.smart_management.get_text_of('My Company Tags')
-        return company_tag
 
     def wait_for_exists(self):
         """Wait for the row to show up"""
@@ -408,9 +360,9 @@ class Details(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(Stack, 'EditTags')
+@navigator.register(Stack, 'EditTagsFromDetails')
 class EditTags(CFMENavigateStep):
-    VIEW = StackEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

@@ -5,6 +5,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button, View
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import FlavorNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import Navigatable
@@ -86,24 +87,7 @@ class FlavorDetailsView(FlavorView):
     entities = FlavorDetailsEntities()
 
 
-class FlavorEditTagsView(FlavorView):
-    @property
-    def is_displayed(self):
-        return (
-            self.in_availability_zones and
-            self.title.text == 'Tag Assignment' and
-            '{} (Summary)'.format(self.context['object'].name) in self.breadcrumb.locations
-        )
-
-    breadcrumb = BreadCrumb()
-    title = Text('//div[@id="main-content"]//h3')
-    entities = View.nested(BaseNonInteractiveEntitiesView)
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-
-class Flavor(Navigatable):
+class Flavor(WidgetasticTaggable, Navigatable):
     """
     Flavor class to support navigation
     """
@@ -126,6 +110,7 @@ class FlavorAll(CFMENavigateStep):
 
 @navigator.register(Flavor, 'Details')
 class FlavorDetails(CFMENavigateStep):
+    VIEW = FlavorDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
@@ -141,8 +126,9 @@ class FlavorDetails(CFMENavigateStep):
         row.click()
 
 
-@navigator.register(Flavor, 'EditTags')
+@navigator.register(Flavor, 'EditTagsFromDetails')
 class FlavorEditTags(CFMENavigateStep):
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

@@ -7,10 +7,11 @@ from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
     SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView)
 
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import KeyPairNotFound
 
-from cfme.web_ui import match_location, mixins
+from cfme.web_ui import match_location
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.wait import wait_for
@@ -152,7 +153,7 @@ class KeyPairCollection(NavigatableMixin):
         return self.instantiate(name, provider, public_key=public_key)
 
 
-class KeyPair(NavigatableMixin):
+class KeyPair(NavigatableMixin, WidgetasticTaggable):
     """ Automate Model page of KeyPairs
 
     Args:
@@ -201,16 +202,6 @@ class KeyPair(NavigatableMixin):
                 fail_func=refresh
             )
 
-    def add_tag(self, tag, **kwargs):
-        """Tags the Keypair by given tag"""
-        navigate_to(self, 'Details')
-        mixins.add_tag(tag, **kwargs)
-
-    def remove_tag(self, tag, **kwargs):
-        """Untag the Keypair by given tag"""
-        navigate_to(self, 'Details')
-        mixins.remove_tag(tag)
-
     @property
     def exists(self):
         try:
@@ -253,3 +244,12 @@ class Add(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Raises DropdownItemDisabled from widgetastic_patternfly if no RHOS provider present"""
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Key Pair')
+
+
+@navigator.register(KeyPair, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -119,6 +119,6 @@ def test_tag_orchestration_template(provisioning, tag, create_template):
                                     description="my template")
     template.create(create_template)
     navigate_to(template, "Details")
-    mixins.add_tag(tag)
-    mixins.remove_tag(tag)
+    template.add_tag(tag=tag)
+    template.remove_tag(tag=tag)
     template.delete()

@@ -215,7 +215,7 @@ class WidgetasticTaggable(object):
             cancel: set True to cancel tag assigment
             reset: set True to reset already set up tag
         """
-        view = navigate_to(self, 'EditTags')
+        view = navigate_to(self, 'EditTagsFromDetails')
         if isinstance(tag, Tag):
             category = tag.category.display_name
             tag = tag.display_name
@@ -258,7 +258,7 @@ class WidgetasticTaggable(object):
             cancel: set True to cancel tag deletion
             reset: set True to reset tag changes
         """
-        view = navigate_to(self, 'EditTags')
+        view = navigate_to(self, 'EditTagsFromDetails')
         if isinstance(tag, Tag):
             category = tag.category.display_name
             tag = tag.display_name
@@ -293,8 +293,9 @@ class WidgetasticTaggable(object):
             List of tags in format "Tag_category: Tag_name"
         """
         view = navigate_to(self, 'Details')
-        # look for simple 'tag' widget first, then standard entities.smart_management
-        tag_table = getattr(view, 'tag', view.entities.smart_management)
+        # look for simple 'smart_management' widget first, then standard entities.smart_management
+# TODO remove this double check after classes updates to entities.smart_management implementation
+        tag_table = getattr(view, 'smart_management', view.entities.smart_management)
         tags = tag_table.read()
         if isinstance(tags, dict):
             tags = tags[tenant]

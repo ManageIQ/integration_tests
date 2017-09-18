@@ -3,7 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.host import Host
-from cfme.infrastructure.datastore import Datastore
+from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from fixtures.provider import setup_one_or_skip
@@ -23,7 +23,7 @@ test_items = [
     ('providers', InfraProvider),
     ('clusters', Cluster),
     ('hosts', Host),
-    ('data_stores', Datastore),
+    ('data_stores', DatastoreCollection),
     ('vms', Vm),
     ('templates', Template)
 ]
@@ -41,14 +41,20 @@ def testing_vis_object(request, a_provider, appliance):
     if not test_items:
         pytest.skip('No content found for test!')
 
-    if collection_name == 'templates':
-        item_type = a_provider.data['provisioning']['catalog_item_type'].lower()
+    if collection_name in ['templates', 'vms']:
+        item_type = a_provider.data.provisioning.catalog_item_type.lower()
         for test_item_value in test_items:
             if test_item_value.vendor == item_type:
                 return param_class(name=test_item_value.name, provider=a_provider)
     elif collection_name != 'providers':
-        return param_class(name=test_items[0].name, provider=a_provider)
-    return a_provider
+        try:
+            return param_class(name=test_items[0].name, provider=a_provider)
+        except TypeError:
+            return param_class(appliance).instantiate(
+                name=test_items[0].name, provider=a_provider)
+
+    else:
+        return a_provider
 
 
 @pytest.mark.parametrize('visibility', [True, False], ids=['visible', 'notVisible'])

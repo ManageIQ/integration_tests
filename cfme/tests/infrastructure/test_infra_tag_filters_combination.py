@@ -38,7 +38,7 @@ def testing_vis_object(request, a_provider, appliance):
     if not test_items:
         pytest.skip('No content found for test!')
 
-    if collection_name == 'templates':
+    if collection_name in ['templates', 'vms']:
         item_type = a_provider.data['provisioning']['catalog_item_type'].lower()
         for resource in collection_rest:
             if resource.vendor == item_type:

@@ -1,6 +1,6 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common import WidgetasticTaggable
+from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import SubnetDetailsView, SubnetView
 from cfme.utils import providers, version
@@ -90,10 +90,10 @@ class OpenCloudNetworks(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
 
 
-@navigator.register(Subnet, 'EditTags')
+@navigator.register(Subnet, 'EditTagsFromDetails')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
-    VIEW = SubnetDetailsView
+    VIEW = TagPageView
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

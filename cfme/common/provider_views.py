@@ -203,29 +203,6 @@ class ProvidersManagePoliciesView(BaseLoggedInPage):
         return False
 
 
-class ProvidersEditTagsView(BaseLoggedInPage):
-    """
-     Provider's Edit Tags view
-    """
-    tag_category = BootstrapSelect('tag_cat')
-    tag = BootstrapSelect('tag_add')
-    chosen_tags = Table(locator='//div[@id="assignments_div"]/table')
-
-    @View.nested
-    class entities(BaseNonInteractiveEntitiesView):  # noqa
-        @property
-        def entity_class(self):
-            return ProviderEntity().pick(self.browser.product_version)
-
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return False
-
-
 class NodesToolBar(View):
     """
      represents nodes toolbar and its controls (exists for Infra OpenStack provider)

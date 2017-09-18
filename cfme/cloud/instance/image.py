@@ -5,11 +5,10 @@ from widgetastic_manageiq import (
     ItemsToolBarViewSelector, SummaryTable, ItemNotFound, BaseEntitiesView)
 
 from cfme.exceptions import ImageNotFound
-from cfme.common import WidgetasticTaggable
+from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.common.vm import Template
 from cfme.common.vm_views import (
-    EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, EditTagsView,
-    BasicProvisionFormView)
+    EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, BasicProvisionFormView)
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from . import CloudInstanceView, InstanceAccordion
@@ -226,9 +225,9 @@ class ImagePolicySimulation(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Policy Simulation')
 
 
-@navigator.register(Image, 'EditTags')
+@navigator.register(Image, 'EditTagsFromDetails')
 class ImageEditTags(CFMENavigateStep):
-    VIEW = EditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

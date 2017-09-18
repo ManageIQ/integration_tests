@@ -19,6 +19,7 @@ from widgetastic_manageiq import (
 from widgetastic_manageiq.vm_reconfigure import DisksTable
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TagPageView
 from cfme.common.vm import VM, Template as BaseTemplate
 from cfme.common.vm_views import (
     ManagementEngineView, ProvisionView, EditView, RetirementView, VMDetailsEntities, VMToolbar,
@@ -1308,3 +1309,13 @@ class VmEngineRelationship(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select(
             'Edit Management Engine Relationship')
+
+
+@navigator.register(Template, 'EditTagsFromDetails')
+@navigator.register(Vm, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -7,13 +7,14 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import TimelinesView
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TagPageView
 from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProviderEditView,
                                         CloudProviderDetailsView,
                                         CloudProvidersView,
                                         CloudProvidersDiscoverView,
-                                        ProvidersManagePoliciesView,
-                                        ProvidersEditTagsView)
+                                        ProvidersManagePoliciesView
+                                        )
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui import InfoBlock, match_location
@@ -171,7 +172,7 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
-    VIEW = ProvidersEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -181,7 +182,7 @@ class EditTags(CFMENavigateStep):
 
 @navigator.register(CloudProvider, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = ProvidersEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

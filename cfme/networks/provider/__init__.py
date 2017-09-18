@@ -1,6 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
 
+from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import ItemNotFound
 from cfme.networks.balancer import BalancerCollection
@@ -41,7 +42,7 @@ class NetworkProviderCollection(Navigatable):
         return [self.instantiate(name=p.name) for p in list_networks]
 
 
-class NetworkProvider(BaseProvider):
+class NetworkProvider(BaseProvider, WidgetasticTaggable):
     """ Class representing network provider in sdn
         Note: Network provider can be added to cfme database
               only automaticaly with cloud provider
@@ -209,8 +210,9 @@ class OpenTopologyFromDetails(CFMENavigateStep):
         self.prerequisite_view.entities.overview.click_at('Topology')
 
 
-@navigator.register(NetworkProvider, 'EditTags')
+@navigator.register(NetworkProvider, 'EditTagsFromDetails')
 class EditTags(CFMENavigateStep):
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

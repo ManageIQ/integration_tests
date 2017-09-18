@@ -7,6 +7,7 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToObject
 
 from cfme.base.ui import Server
+from cfme.common import TagPageView
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProviderEditView,
@@ -14,7 +15,6 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProviderTimelinesView,
                                         InfraProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
-                                        ProvidersEditTagsView,
                                         InfraProvidersView)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
@@ -285,7 +285,7 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
-    VIEW = ProvidersEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -295,7 +295,7 @@ class EditTags(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = ProvidersEditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

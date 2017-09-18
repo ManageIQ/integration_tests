@@ -4,7 +4,6 @@ from Crypto.PublicKey import RSA
 
 from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.web_ui import mixins
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError
@@ -95,9 +94,8 @@ def test_keypair_add_and_remove_tag(openstack_provider, keypairs):
         * Remove tag from Keypair
         * Also delete it.
     """
-    tag = ('Department', 'Accounting')
     try:
-        keypair = keypairs.create(fauxfactory.gen_alphanumeric(), openstack_provider)
+        keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')
@@ -105,12 +103,12 @@ def test_keypair_add_and_remove_tag(openstack_provider, keypairs):
             pytest.fail('Timed out creating keypair')
     assert keypair.exists
 
-    keypair.add_tag(tag)
-    tagged_value = mixins.get_tags(tag="My Company Tags")
-    assert tuple(tagged_value[0].split(": ", 1)) == tag, "Add tag failed."
+    keypair.add_tag('Department', 'Accounting')
+    tagged_value = keypair.get_tags()
+    assert tagged_value[1] == 'Accounting', "Add tag failed."
 
-    keypair.remove_tag(tag)
-    tagged_value1 = mixins.get_tags(tag="My Company Tags")
+    keypair.remove_tag('Department', 'Accounting')
+    tagged_value1 = keypair.get_tags()
     assert tagged_value1 != tagged_value, "Remove tag failed."
     # Above small conversion in assert statement convert 'tagged_value' in tuple("a","b") and then
     # compare with tag which is tuple. As get_tags will return assigned tag in list format["a: b"].

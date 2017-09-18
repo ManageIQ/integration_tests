@@ -5,10 +5,11 @@ from widgetastic_patternfly import Dropdown, Button
 from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion
 
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TagPageView
 from cfme.common.vm import VM
 from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, RetirementView, EditView,
-    EditTagsView, SetOwnershipView, ManagementEngineView, ManagePoliciesView,
+    SetOwnershipView, ManagementEngineView, ManagePoliciesView,
     PolicySimulationView)
 from cfme.exceptions import InstanceNotFound, ItemNotFound
 from cfme.web_ui import flash, match_location
@@ -445,9 +446,9 @@ class EditManagementEngineRelationship(CFMENavigateStep):
         configuration.item_select('Edit Management Engine Relationship')
 
 
-@navigator.register(Instance, 'EditTags')
+@navigator.register(Instance, 'EditTagsFromDetails')
 class EditTags(CFMENavigateStep):
-    VIEW = EditTagsView
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):

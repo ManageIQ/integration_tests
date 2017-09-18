@@ -1,6 +1,6 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common import WidgetasticTaggable
+from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import BalancerDetailsView, BalancerView
 from cfme.utils import version
@@ -90,8 +90,9 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
 
 
-@navigator.register(Balancer, 'EditTags')
+@navigator.register(Balancer, 'EditTagsFromDetails')
 class EditTags(CFMENavigateStep):
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):

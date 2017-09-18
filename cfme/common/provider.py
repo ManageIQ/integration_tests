@@ -10,6 +10,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.base.credential import (
     Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential, AzureCredential,
     ServiceAccountCredential)
+from cfme.common import WidgetasticTaggable
 from cfme.common.provider_views import (InfraProvidersView,
                                         CloudProvidersView,
                                         InfraProviderDetailsView,
@@ -951,7 +952,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         return result_list
 
 
-class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
+class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTaggable):
     vm_name = ""
     template_name = ""
     detail_page_suffix = 'provider'
