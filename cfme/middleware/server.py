@@ -279,9 +279,11 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         view.power_operation_form.fill({
             "timeout": timeout,
         })
-        view.power_operation_form.cancel_button.click() \
-            if cancel else view.power_operation_form.shutdown_button.click()
-        view.flash.assert_no_error()
+        if cancel:
+            view.power_operation_form.cancel_button.click()
+        else:
+            view.power_operation_form.shutdown_button.click()
+            view.flash.assert_success_message('Shutdown initiated for selected server(s)')
 
     def restart_server(self):
         view = self.load_details(refresh=True)
@@ -299,10 +301,11 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         view.power_operation_form.fill({
             "timeout": timeout,
         })
-        view.power_operation_form.cancel_button.click() \
-            if cancel else view.power_operation_form.suspend_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_success_message('Suspend initiated for selected server(s)')
+        if cancel:
+            view.power_operation_form.cancel_button.click()
+        else:
+            view.power_operation_form.suspend_button.click()
+            view.flash.assert_success_message('Suspend initiated for selected server(s)')
 
     def resume_server(self):
         view = self.load_details(refresh=True)

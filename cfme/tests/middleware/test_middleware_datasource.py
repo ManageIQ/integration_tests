@@ -13,7 +13,8 @@ from datasource_methods import (
     POSTGRESPLUS_94_DS, POSTGRESQL_94_DS, SYBASE_157_DS,
     ORACLE_12C_RAC_DS,
     get_datasource_from_list,
-    verify_datasource_listed
+    verify_datasource_listed,
+    verify_driver_listed
 )
 
 
@@ -167,13 +168,7 @@ def test_create_datasource_select_driver(provider, datasource):
                        major_version=datasource.driver.major_version,
                        minor_version=datasource.driver.minor_version)
     verify_server_running(provider, server)
-    server.add_datasource(ds_type=datasource.database_type,
-                          ds_name=datasource.datasource_name,
-                          jndi_name=datasource.jndi_name,
-                          existing_driver=datasource.driver.driver_name,
-                          ds_url=datasource.connection_url.replace("\\", ""),
-                          username=datasource.username,
-                          password=datasource.password, cancel=True)
+    verify_driver_listed(provider, datasource, server)
 
 
 @pytest.mark.smoke
