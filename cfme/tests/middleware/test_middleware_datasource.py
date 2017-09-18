@@ -173,9 +173,7 @@ def test_create_datasource_select_driver(provider, datasource):
                           existing_driver=datasource.driver.driver_name,
                           ds_url=datasource.connection_url.replace("\\", ""),
                           username=datasource.username,
-                          password=datasource.password)
-    datasource_name = "Datasource [{}]".format(datasource.datasource_name)
-    verify_datasource_listed(provider, datasource_name, server)
+                          password=datasource.password, cancel=True)
 
 
 @pytest.mark.smoke
