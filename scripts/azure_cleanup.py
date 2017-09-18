@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 import traceback as tb
 from datetime import datetime
@@ -20,13 +21,15 @@ def parse_cmd_line():
                                                         "'cleanup_azure.log' in "
                                                         "utils.path.log_path",
                         default=log_path.join('cleanup_azure.log').strpath)
+    parser.add_argument('--remove-unused-blobs',
+                        help='Removal of unused blobs', default=True)
     args = parser.parse_args()
     return args
 
 
 def azure_cleanup(nic_template, pip_template, days_old, output):
     with open(output, 'w') as report:
-        report.write('azure_cleanup.py, NICs, PIPs and Stack Cleanup')
+        report.write('azure_cleanup.py, NICs, PIPs, Disks and Stack Cleanup')
         report.write("\nDate: {}\n".format(datetime.now()))
         try:
             for provider_key in list_provider_keys('azure'):
@@ -60,6 +63,21 @@ def azure_cleanup(nic_template, pip_template, days_old, output):
                 else:
                     report.write("No stacks older than \'{}\' days were found\n".format(
                         days_old))
+                provider_mgmt.remove_diags_container()
+                report.write("All 'bootdiagnostics-test' containers are removed\n")
+                report.write("Removing unused blobs and disks\n")
+                removed_disks = provider_mgmt.remove_unused_blobs()
+                if len(removed_disks['Managed']) > 0:
+                    report.write('Managed disks:\n')
+                    for disk in removed_disks['Managed']:
+                        report.write('Removed disk {} from {}\n'.format(disk['disk'],
+                                                                      disk['resource_group']))
+                if len(removed_disks['Unmanaged']) > 0:
+                    report.write('Unmanaged blobs:\n')
+                    for blob in removed_disks['Unmanaged']:
+                        report.write('Removed blob {} from {}\n'.format(blob['blob'],
+                                                                        blob['container']))
+
             return 0
         except Exception:
             report.write("Something bad happened during Azure cleanup\n")
