@@ -209,6 +209,16 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
                 return mgmt_dmn.value['Domain State'] == 'running'
         raise MiddlewareDomainNotFound("Domain '{}' not found in MGMT!".format(self.name))
 
+    def shutdown_domain(self):
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Shutdown Domain', handle_alert=True)
+        view.flash.assert_no_error()
+
+    def start_domain(self):
+        view = self.load_details(refresh=True)
+        view.toolbar.power.item_select('Start Domain', handle_alert=True)
+        view.flash.assert_no_error()
+
     @classmethod
     def download(cls, extension, provider=None):
         view = _get_domains_page(provider)
