@@ -6,7 +6,8 @@ from cfme.utils import error
 from cfme.utils.update import update
 from cfme.utils import version
 from cfme import test_requirements
-from cfme.web_ui import form_buttons
+from cfme.utils.appliance.implementations.ui import navigate_to
+
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]
@@ -53,45 +54,39 @@ def test_timeprofile_name_max_character_validation():
 
 
 @pytest.mark.sauce
-def test_days_required_error_validation():
+def test_days_required_error_validation(appliance):
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
         timezone="(GMT-10:00) Hawaii",
         days=False,
         hours=True)
-    if version.current_version() > "5.7":
-        tp.create(cancel=True)
-        assert "At least one day needs to be selected" == \
-               tp.timeprofile_form.days.angular_help_block
-        if version.current_version() > "5.8":
-            assert form_buttons.save.is_dimmed
-        else:
-            assert form_buttons.add.is_dimmed
-    else:
-        with error.expected("At least one Day must be selected"):
-            tp.create()
+    view = navigate_to(st.Timeprofile, 'All')
+    tp.create(cancel=True)
+    help_blocks = appliance.browser.widgetastic.elements("//span[contains(@class,"
+                                                         " 'help-block')]", check_visibility=True)
+    for help_block in help_blocks:
+        if help_block == "At least one day needs to be selected":
+            assert view.timeprofile_form.save_button.disabled
+    view.timeprofile_form.cancel_button.click()
 
 
 @pytest.mark.sauce
-def test_hours_required_error_validation():
+def test_hours_required_error_validation(appliance):
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
         timezone="(GMT-10:00) Hawaii",
         days=True,
         hours=False)
-    if version.current_version() > "5.7":
-        tp.create(cancel=True)
-        assert "At least one hour needs to be selected" == \
-               tp.timeprofile_form.days.angular_help_block
-        if version.current_version() > "5.8":
-            assert form_buttons.save.is_dimmed
-        else:
-            assert form_buttons.add.is_dimmed
-    else:
-        with error.expected("At least one Hour must be selected"):
-            tp.create()
+    view = navigate_to(st.Timeprofile, 'All')
+    tp.create(cancel=True)
+    help_blocks = appliance.browser.widgetastic.elements("//span[contains(@class,"
+                                                         " 'help-block')]", check_visibility=True)
+    for help_block in help_blocks:
+        if help_block == "At least one hour needs to be selecte":
+            assert view.timeprofile_form.save_button.disabled
+    view.timeprofile_form.cancel_button.click()
 
 
 @pytest.mark.sauce
@@ -100,13 +95,8 @@ def test_timeprofile_description_required_error_validation():
         description=None,
         scope='Current User',
         timezone="(GMT-10:00) Hawaii")
-    if version.current_version() > "5.7":
-        tp.create(cancel=True)
-        assert tp.timeprofile_form.description.angular_help_block == "Required"
-        if version.current_version() > "5.8":
-            assert form_buttons.save.is_dimmed
-        else:
-            assert form_buttons.add.is_dimmed
-    else:
-        with error.expected("Description is required"):
-            tp.create()
+    view = navigate_to(st.Timeprofile, 'All')
+    tp.create(cancel=True)
+    if view.timeprofile_form.description.help_block == "Required":
+        assert view.timeprofile_form.save_button.disabled
+    view.timeprofile_form.cancel_button.click()
