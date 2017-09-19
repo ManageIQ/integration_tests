@@ -52,6 +52,8 @@ class MiddlewareProvider(BaseProvider):
     refresh_text = "Refresh items and relationships"
     taggable_type = 'ExtManagementSystem'
     db_types = ["MiddlewareManager"]
+    details_view = MiddlewareProviderDetailsView
+    main_view = MiddlewareProvidersView
 
 
 @navigator.register(MiddlewareProvider, 'All')

@@ -60,6 +60,8 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     page_name = "infrastructure"
     templates_destination_name = "Templates"
     db_types = ["InfraManager"]
+    main_view = InfraProvidersView
+    details_view = InfraProviderDetailsView
 
     def __init__(
             self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
@@ -115,16 +117,10 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     @num_host.variant('ui')
     def num_host_ui(self):
         try:
-            if self.appliance.version > '5.8':
-                num = self.get_detail("Relationships", 'Hosts')
-            else:
-                num = self.get_detail("Relationships", "host-", use_icon=True)
+            num = self.get_detail("Relationships", 'Hosts')
         except sel.NoSuchElementException:
             logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
-            if self.appliance.version > '5.8':
-                num = self.get_detail("Relationships", 'Nodes')
-            else:
-                num = self.get_detail("Relationships", "node-", use_icon=True)
+            num = self.get_detail("Relationships", 'Nodes')
         return int(num)
 
     @variable(alias='rest')
@@ -149,10 +145,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     @num_cluster.variant('ui')
     def num_cluster_ui(self):
-        if self.appliance.version > '5.8':
-            num = self.get_detail("Relationships", 'Clusters')
-        else:
-            num = self.get_detail("Relationships", "cluster-", use_icon=True)
+        num = self.get_detail("Relationships", 'Clusters')
         return int(num)
 
     def discover(self):  # todo: move this to provider collections

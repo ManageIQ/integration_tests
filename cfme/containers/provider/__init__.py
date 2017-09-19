@@ -20,7 +20,7 @@ from cfme import exceptions
 from cfme.fixtures import pytest_selenium as sel
 from cfme.common.provider_views import BeforeFillMixin,\
     ContainersProviderAddView, ContainersProvidersView,\
-    ContainersProviderEditView, ProvidersView
+    ContainersProviderEditView, ProvidersView, ProviderDetailsView
 from cfme.base.credential import TokenCredential
 from cfme.web_ui import (
     Quadicon, toolbar as tb, InfoBlock, Region, match_location, PagedTable)
@@ -112,6 +112,8 @@ class ContainersProvider(BaseProvider, Pretty):
     quad_name = None
     db_types = ["ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
+    main_view = ContainersProvidersView
+    details_view = ProviderDetailsView
 
     def __init__(
             self,

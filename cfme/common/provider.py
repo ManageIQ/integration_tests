@@ -1,33 +1,19 @@
 import datetime
 from collections import Iterable
-from functools import partial
 
 from manageiq_client.api import APIException
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Input, Button
 
-import cfme.fixtures.pytest_selenium as sel
 from cfme.base.credential import (
-    Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential, AzureCredential,
-    ServiceAccountCredential)
+    Credential, EventsCredential, TokenCredential, SSHCredential, CANDUCredential)
 from cfme.common import WidgetasticTaggable
-from cfme.common.provider_views import (InfraProvidersView,
-                                        CloudProvidersView,
-                                        InfraProviderDetailsView,
-                                        CloudProviderDetailsView,
-                                        ContainersProvidersView,
-                                        MiddlewareProvidersView,
-                                        MiddlewareProviderDetailsView)
 from cfme.exceptions import (
-    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException)
-from cfme.web_ui import (
-    breadcrumbs_names, summary_title, flash, Quadicon, Region, fill, Form, toolbar as tb,
-    form_buttons)
+    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, ItemNotFound)
 from cfme.utils import ParamClassName, version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
 from cfme.utils.stats import tol_check
@@ -35,10 +21,6 @@ from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, RefreshTimer
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
-
-cfg_btn = partial(tb.select, 'Configuration')
-
-details_page = Region(infoblock_type='detail')
 
 
 def base_types():
@@ -65,16 +47,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []
-    string_name = ""
-    page_name = ""
-    edit_page_suffix = ""
-    detail_page_suffix = ""
-    refresh_text = ""
-    quad_name = None
-    _properties_form = None
-    _properties_region = None
-    add_provider_button = None
-    save_button = None
     db_types = ["Providers"]
 
     def __hash__(self):
@@ -82,13 +54,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     def __eq__(self, other):
         return type(self) is type(other) and self.key == other.key
-
-    @property
-    def properties_form(self):
-        if self._properties_region:
-            return self._properties_region.properties_form
-        else:
-            return self._properties_form
 
     @property
     def data(self):
@@ -139,14 +104,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             raise ProviderHasNoKey(
                 'Provider {} has no key, so cannot get mgmt system'.format(self.name))
 
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            form_buttons.cancel()
-            # sel.wait_for_element(page.configuration_btn)
-        else:
-            submit_button()
-            flash.assert_no_errors()
-
     def create(self, cancel=False, validate_credentials=True, check_existing=False,
                validate_inventory=False):
         """
@@ -165,107 +122,75 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Returns:
             True if it was created, False if it already existed
         """
-        from cfme.infrastructure.provider import InfraProvider
-        from cfme.cloud.provider import CloudProvider
-        from cfme.containers.provider import ContainersProvider
-        from cfme.middleware.provider import MiddlewareProvider
-        if self.one_of(CloudProvider, InfraProvider, ContainersProvider, MiddlewareProvider):
-            if check_existing and self.exists:
-                created = False
-            else:
-                created = True
-
-                logger.info('Setting up Infra Provider: %s', self.key)
-                add_view = navigate_to(self, 'Add')
-
-                if not cancel or (cancel and any(self.view_value_mapping.values())):
-                    # filling main part of dialog
-                    add_view.fill(self.view_value_mapping)
-
-                if not cancel or (cancel and self.endpoints):
-                    # filling endpoints
-                    for endpoint_name, endpoint in self.endpoints.items():
-                        try:
-                            # every endpoint class has name like 'default', 'events', etc.
-                            # endpoints view can have multiple tabs, the code below tries
-                            # to find right tab by passing endpoint name to endpoints view
-                            endp_view = getattr(self.endpoints_form(parent=add_view),
-                                                endpoint_name)
-                        except AttributeError:
-                            # tabs are absent in UI when there is only single (default) endpoint
-                            endp_view = self.endpoints_form(parent=add_view)
-
-                        endp_view.fill(endpoint.view_value_mapping)
-
-                        # filling credentials
-                        if hasattr(endpoint, 'credentials'):
-                            endp_view.fill(endpoint.credentials.view_value_mapping)
-                        # sometimes we have cases that we need to validate even though
-                        # there is no credentials, such as Hawkular endpoint
-                        if (validate_credentials and hasattr(endp_view, 'validate') and
-                                endp_view.validate.is_displayed):
-                            # there are some endpoints which don't demand validation like
-                            #  RSA key pair
-                            endp_view.validate.click()
-                            # Flash message widget is in add_view, not in endpoints tab
-                            logger.info(
-                                'Validating credentials flash message for endpoint %s',
-                                endpoint_name)
-                            add_view.flash.assert_no_error()
-                            add_view.flash.assert_success_message(
-                                'Credential validation was successful')
-                if self.one_of(InfraProvider):
-                    main_view_obj = InfraProvidersView
-                elif self.one_of(CloudProvider):
-                    main_view_obj = CloudProvidersView
-                elif self.one_of(ContainersProvider):
-                    main_view_obj = ContainersProvidersView
-                elif self.one_of(MiddlewareProvider):
-                    main_view_obj = MiddlewareProvidersView
-                main_view = self.create_view(main_view_obj)
-                if cancel:
-                    created = False
-                    add_view.cancel.click()
-                    cancel_text = ('Add of {} Provider was '
-                                   'cancelled by the user'.format(self.string_name))
-
-                    main_view.entities.flash.assert_message(cancel_text)
-                    main_view.entities.flash.assert_no_error()
-                else:
-                    add_view.add.click()
-                    if main_view.is_displayed:
-                        success_text = '{} Providers "{}" was saved'.format(self.string_name,
-                                                                            self.name)
-                        main_view.entities.flash.assert_message(success_text)
-                    else:
-                        add_view.flash.assert_no_error()
-                        raise AssertionError("Provider wasn't added. It seems form isn't accurately"
-                                             " filled")
-
-            if validate_inventory:
-                self.validate()
-
-            return created
-
+        if check_existing and self.exists:
+            created = False
         else:
-            # other providers, old code
-            if check_existing and self.exists:
+            created = True
+
+            logger.info('Setting up Infra Provider: %s', self.key)
+            add_view = navigate_to(self, 'Add')
+
+            if not cancel or (cancel and any(self.view_value_mapping.values())):
+                # filling main part of dialog
+                add_view.fill(self.view_value_mapping)
+
+            if not cancel or (cancel and self.endpoints):
+                # filling endpoints
+                for endpoint_name, endpoint in self.endpoints.items():
+                    try:
+                        # every endpoint class has name like 'default', 'events', etc.
+                        # endpoints view can have multiple tabs, the code below tries
+                        # to find right tab by passing endpoint name to endpoints view
+                        endp_view = getattr(self.endpoints_form(parent=add_view),
+                                            endpoint_name)
+                    except AttributeError:
+                        # tabs are absent in UI when there is only single (default) endpoint
+                        endp_view = self.endpoints_form(parent=add_view)
+
+                    endp_view.fill(endpoint.view_value_mapping)
+
+                    # filling credentials
+                    if hasattr(endpoint, 'credentials'):
+                        endp_view.fill(endpoint.credentials.view_value_mapping)
+                    # sometimes we have cases that we need to validate even though
+                    # there is no credentials, such as Hawkular endpoint
+                    if (validate_credentials and hasattr(endp_view, 'validate') and
+                            endp_view.validate.is_displayed):
+                        # there are some endpoints which don't demand validation like
+                        #  RSA key pair
+                        endp_view.validate.click()
+                        # Flash message widget is in add_view, not in endpoints tab
+                        logger.info(
+                            'Validating credentials flash message for endpoint %s',
+                            endpoint_name)
+                        add_view.flash.assert_no_error()
+                        add_view.flash.assert_success_message(
+                            'Credential validation was successful')
+
+            main_view = self.create_view(self.main_view)
+            if cancel:
                 created = False
+                add_view.cancel.click()
+                cancel_text = ('Add of {} Provider was '
+                               'cancelled by the user'.format(self.string_name))
+
+                main_view.entities.flash.assert_message(cancel_text)
+                main_view.entities.flash.assert_no_error()
             else:
-                created = True
-                logger.info('Setting up provider: %s', self.key)
-                navigate_to(self, 'Add')
-                fill(self.properties_form, self._form_mapping(True, **self.__dict__))
-                for cred in self.credentials:
-                    fill(self.credentials[cred].form, self.credentials[cred],
-                         validate=validate_credentials)
-                self._submit(cancel, self.add_provider_button)
-                if not cancel:
-                    flash.assert_message_match('{} Providers '
-                                               '"{}" was saved'.format(self.string_name, self.name))
-            if validate_inventory:
-                self.validate()
-            return created
+                add_view.add.click()
+                if main_view.is_displayed:
+                    success_text = '{} Providers "{}" was saved'.format(self.string_name,
+                                                                        self.name)
+                    main_view.entities.flash.assert_message(success_text)
+                else:
+                    add_view.flash.assert_no_error()
+                    raise AssertionError("Provider wasn't added. It seems form isn't accurately"
+                                         " filled")
+
+        if validate_inventory:
+            self.validate()
+
+        return created
 
     def create_rest(self):
 
@@ -293,123 +218,94 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
            cancel (boolean): whether to cancel out of the update.
            validate_credentials (boolean): whether credentials have to be validated
         """
-        from cfme.infrastructure.provider import InfraProvider
-        from cfme.cloud.provider import CloudProvider
-        from cfme.containers.provider import ContainersProvider
-        from cfme.middleware.provider import MiddlewareProvider
-        if self.one_of(CloudProvider, InfraProvider, ContainersProvider, MiddlewareProvider):
-            edit_view = navigate_to(self, 'Edit')
-            # todo: to replace/merge this code with create
-            # update values:
-            # filling main part of dialog
-            endpoints = updates.pop('endpoints', None)
-            if updates:
-                edit_view.fill(updates)
+        edit_view = navigate_to(self, 'Edit')
+        # todo: to replace/merge this code with create
+        # update values:
+        # filling main part of dialog
+        endpoints = updates.pop('endpoints', None)
+        if updates:
+            edit_view.fill(updates)
 
-            # filling endpoints
-            if endpoints:
-                endpoints = self._prepare_endpoints(endpoints)
+        # filling endpoints
+        if endpoints:
+            endpoints = self._prepare_endpoints(endpoints)
 
-                for endpoint in endpoints.values():
-                    # every endpoint class has name like 'default', 'events', etc.
-                    # endpoints view can have multiple tabs, the code below tries
-                    # to find right tab by passing endpoint name to endpoints view
-                    try:
-                        endp_view = getattr(self.endpoints_form(parent=edit_view), endpoint.name)
-                    except AttributeError:
-                        # tabs are absent in UI when there is only single (default) endpoint
-                        endp_view = self.endpoints_form(parent=edit_view)
-                    endp_view.fill(endpoint.view_value_mapping)
+            for endpoint in endpoints.values():
+                # every endpoint class has name like 'default', 'events', etc.
+                # endpoints view can have multiple tabs, the code below tries
+                # to find right tab by passing endpoint name to endpoints view
+                try:
+                    endp_view = getattr(self.endpoints_form(parent=edit_view), endpoint.name)
+                except AttributeError:
+                    # tabs are absent in UI when there is only single (default) endpoint
+                    endp_view = self.endpoints_form(parent=edit_view)
+                endp_view.fill(endpoint.view_value_mapping)
 
-                    # filling credentials
-                    # the code below looks for existing endpoint equal to passed one and
-                    # compares their credentials. it fills passed credentials
-                    # if credentials are different
-                    cur_endpoint = self.endpoints[endpoint.name]
-                    if hasattr(endpoint, 'credentials'):
-                        if not hasattr(cur_endpoint, 'credentials') or \
-                                endpoint.credentials != cur_endpoint.credentials:
-                            if hasattr(endp_view, 'change_password'):
-                                endp_view.change_password.click()
-                            elif hasattr(endp_view, 'change_key'):
-                                endp_view.change_key.click()
-                            else:
-                                NotImplementedError(
-                                    "Such endpoint doesn't have change password/key button")
+                # filling credentials
+                # the code below looks for existing endpoint equal to passed one and
+                # compares their credentials. it fills passed credentials
+                # if credentials are different
+                cur_endpoint = self.endpoints[endpoint.name]
+                if hasattr(endpoint, 'credentials'):
+                    if not hasattr(cur_endpoint, 'credentials') or \
+                            endpoint.credentials != cur_endpoint.credentials:
+                        if hasattr(endp_view, 'change_password'):
+                            endp_view.change_password.click()
+                        elif hasattr(endp_view, 'change_key'):
+                            endp_view.change_key.click()
+                        else:
+                            NotImplementedError(
+                                "Such endpoint doesn't have change password/key button")
 
-                            endp_view.fill(endpoint.credentials.view_value_mapping)
-                    # sometimes we have cases that we need to validate even though
-                    # there is no credentials, such as Hawkular endpoint
-                    if (validate_credentials and hasattr(endp_view, 'validate') and
-                            endp_view.validate.is_displayed):
-                        endp_view.validate.click()
+                        endp_view.fill(endpoint.credentials.view_value_mapping)
+                # sometimes we have cases that we need to validate even though
+                # there is no credentials, such as Hawkular endpoint
+                if (validate_credentials and hasattr(endp_view, 'validate') and
+                        endp_view.validate.is_displayed):
+                    endp_view.validate.click()
 
-            # cloud rhos provider always requires validation of all endpoints
-            # there should be a bz about that
-            from cfme.cloud.provider.openstack import OpenStackProvider
-            if self.one_of(OpenStackProvider):
-                for endp in self.endpoints.values():
-                    endp_view = getattr(self.endpoints_form(parent=edit_view), endp.name)
-                    if hasattr(endp_view, 'validate') and endp_view.validate.is_displayed:
-                        endp_view.validate.click()
+        # cloud rhos provider always requires validation of all endpoints
+        # there should be a bz about that
+        from cfme.cloud.provider.openstack import OpenStackProvider
+        if self.one_of(OpenStackProvider):
+            for endp in self.endpoints.values():
+                endp_view = getattr(self.endpoints_form(parent=edit_view), endp.name)
+                if hasattr(endp_view, 'validate') and endp_view.validate.is_displayed:
+                    endp_view.validate.click()
 
-            if self.one_of(InfraProvider):
-                details_view_obj = InfraProviderDetailsView
-                main_view_obj = InfraProvidersView
-            elif self.one_of(CloudProvider):
-                details_view_obj = CloudProviderDetailsView
-                main_view_obj = CloudProvidersView
-            elif self.one_of(MiddlewareProvider):
-                details_view_obj = MiddlewareProviderDetailsView
-                main_view_obj = MiddlewareProvidersView
-            details_view = self.create_view(details_view_obj)
-            main_view = self.create_view(main_view_obj)
+        details_view = self.create_view(self.details_view)
+        main_view = self.create_view(self.main_view)
 
-            if cancel:
-                edit_view.cancel.click()
-                cancel_text = 'Edit of {type} Provider "{name}" ' \
-                              'was cancelled by the user'.format(type=self.string_name,
-                                                                 name=self.name)
-                main_view.entities.flash.assert_message(cancel_text)
-                main_view.entities.flash.assert_no_error()
-            else:
-                edit_view.save.click()
-                if endpoints:
-                    for endp_name, endp in endpoints.items():
-                        self.endpoints[endp_name] = endp
-                if updates:
-                    self.name = updates.get('name', self.name)
-
-                if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
-                    logger.warning('Skipping flash message verification because of BZ 1436341')
-                    return
-
-                success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
-                if main_view.is_displayed:
-                    # since 5.8.1 main view is displayed when edit starts from main view
-                    main_view.flash.assert_message(success_text)
-                elif details_view.is_displayed:
-                    # details view is always displayed up to 5.8.1
-                    details_view.flash.assert_message(success_text)
-                else:
-                    edit_view.flash.assert_no_error()
-                    raise AssertionError("Provider wasn't updated. It seems form isn't accurately"
-                                         " filled")
+        if cancel:
+            edit_view.cancel.click()
+            cancel_text = 'Edit of {type} Provider "{name}" ' \
+                          'was cancelled by the user'.format(type=self.string_name,
+                                                             name=self.name)
+            main_view.entities.flash.assert_message(cancel_text)
+            main_view.entities.flash.assert_no_error()
         else:
-            # other providers, old code
-            navigate_to(self, 'Edit')
-            fill(self.properties_form, self._form_mapping(**updates))
-            for cred in self.credentials:
-                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred),
-                     validate=validate_credentials)
-            self._submit(cancel, self.save_button)
-            name = updates.get('name', self.name)
-            if not cancel:
-                if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
-                    logger.warning('Skipping flash message verification because of BZ 1436341')
-                    return
-                flash.assert_message_match(
-                    '{} Provider "{}" was saved'.format(self.string_name, name))
+            edit_view.save.click()
+            if endpoints:
+                for endp_name, endp in endpoints.items():
+                    self.endpoints[endp_name] = endp
+            if updates:
+                self.name = updates.get('name', self.name)
+
+            if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
+                logger.warning('Skipping flash message verification because of BZ 1436341')
+                return
+
+            success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
+            if main_view.is_displayed:
+                # since 5.8.1 main view is displayed when edit starts from main view
+                main_view.flash.assert_message(success_text)
+            elif details_view.is_displayed:
+                # details view is always displayed up to 5.8.1
+                details_view.flash.assert_message(success_text)
+            else:
+                edit_view.flash.assert_no_error()
+                raise AssertionError("Provider wasn't updated. It seems form isn't accurately"
+                                     " filled")
 
     def delete(self, cancel=True):
         """
@@ -418,14 +314,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Args:
             cancel: Whether to cancel the deletion, defaults to True
         """
-        self.load_details()
-        cfg_btn('Remove this {} Provider'.format(self.string_name),
-            invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove this {} Provider'.format(self.string_name),
+                                               handle_alert=not cancel)
         if not cancel:
-            flash.assert_message_match(
-                'Delete initiated for 1 {} Provider from the {} Database'.format(
-                    self.string_name, self.appliance.product_name))
+            msg = ('Delete initiated for 1 {} Provider from '
+                   'the {} Database'.format(self.string_name, self.appliance.product_name))
+            view.flash.assert_success_message(msg)
 
     def setup(self, rest=False):
         """
@@ -521,12 +416,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def refresh_provider_relationships_ui(self, from_list_view=False):
         """Clicks on Refresh relationships button in provider"""
         if from_list_view:
-            navigate_to(self, 'All')
-            sel.check(Quadicon(self.name, self.quad_name).checkbox())
+            view = navigate_to(self, 'All')
+            entity = view.entities.get_entity(self.name, surf_pages=True)
+            entity.check()
+
         else:
-            navigate_to(self, 'Details')
-        tb.select("Configuration", self.refresh_text, invokes_alert=True)
-        sel.handle_alert(cancel=False)
+            view = navigate_to(self, 'Details')
+
+        view.toolbar.configuration.item_select(self.refresh_text, handle_alert=True)
 
     @variable(alias='rest')
     def last_refresh_date(self):
@@ -605,51 +502,44 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         return False
 
     def wait_for_delete(self):
-        navigate_to(self, 'All')
-        quad = Quadicon(self.name, self.quad_name)
-        logger.info('Waiting for a provider to delete...')
-        wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
-                 message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
+        view = navigate_to(self, 'All')
 
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        if not self.string_name:
-            # No point in doing that since it is probably being called from badly configured class
-            # And since it is badly configured, let's notify the user.
-            logger.warning(
-                'Hey, _on_details_page called from {} class which does not have string_name set'
-                .format(type(self).__name__))
-            return False
-        ensure_browser_open()
-        collection = '{} Providers'.format(self.string_name)
-        title = '{} (Summary)'.format(self.name)
-        return breadcrumbs_names() == [collection, title] and summary_title() == title
+        def is_entity_present():
+            try:
+                view.entities.get_entity(self.name, surf_pages=True)
+                return True
+            except ItemNotFound:
+                return False
+
+        logger.info('Waiting for a provider to delete...')
+        wait_for(is_entity_present, fail_condition=True,
+                 message="Wait provider to disappear", num_sec=1000,
+                 fail_func=self.browser.selenium.refresh)
 
     def load_details(self, refresh=False):
-        """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
-        navigate_to(self, 'Details')
-        if refresh:
-            tb.refresh()
+        """To be compatible with the Taggable and PolicyProfileAssignable mixins.
 
-    def get_detail(self, *ident, **kwargs):
+        Returns: ProviderDetails view
+        """
+        view = navigate_to(self, 'Details')
+        if refresh:
+            view.toolbar.reload()
+        return view
+
+    def get_detail(self, *ident):
         """ Gets details from the details infoblock
 
         The function first ensures that we are on the detail page for the specific provider.
 
         Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+            *ident: An SummaryTable title, followed by the Key name, e.g. "Relationships", "Images"
 
-        Keywords:
-            use_icon: Whether to use icon matching
 
-        Returns: A string representing the contents of the InfoBlock's value.
+        Returns: A string representing the contents of passed field value.
         """
-        self.load_details()
-        if kwargs.get("use_icon", False):
-            title, icon = ident
-            return details_page.infoblock(title).by_member_icon(icon).text
-        else:
-            return details_page.infoblock.text(*ident)
+        view = self.load_details()
+        block, field = ident
+        return getattr(view.contents, block.lower()).get_text_of(field)
 
     @classmethod
     def get_credentials(cls, credential_dict, cred_type=None):
@@ -984,47 +874,6 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
         else:
             logger.warn("can't set ipaddress because default endpoint is absent")
 
-    @property
-    def _assigned_policy_profiles(self):
-        result = set([])
-        for row in self._all_available_policy_profiles:
-            if self._is_policy_profile_row_checked(row):
-                result.add(row.text.encode("utf-8"))
-        return result
-
-    def get_assigned_policy_profiles(self):
-        """ Return a set of Policy Profiles which are available and assigned.
-
-        Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
-        """
-        navigate_to(self, 'ManagePolicies')
-        return self._assigned_policy_profiles
-
-    @property
-    def _unassigned_policy_profiles(self):
-        result = set([])
-        for row in self._all_available_policy_profiles:
-            if not self._is_policy_profile_row_checked(row):
-                result.add(row.text.encode("utf-8"))
-        return result
-
-    def get_unassigned_policy_profiles(self):
-        """ Return a set of Policy Profiles which are available but not assigned.
-
-        Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
-        """
-        navigate_to(self, 'ManagePolicies')
-        return self._unassigned_policy_profiles
-
-    @property
-    def _all_available_policy_profiles(self):
-        pp_rows_locator = "//table/tbody/tr/td[@class='standartTreeImage']"\
-            "/img[contains(@src, 'policy_profile')]/../../td[@class='standartTreeRow']"
-        return sel.elements(pp_rows_locator)
-
-    def _is_policy_profile_row_checked(self, row):
-        return "Check" in row.find_element_by_xpath("../td[@width='16px']/img").get_attribute("src")
-
     @variable(alias="db")
     def num_template(self):
         """ Returns the providers number of templates, as shown on the Details page."""
@@ -1061,14 +910,12 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
     def load_all_provider_vms(self):
         """ Loads the list of instances that are running under the provider.
 
-        If it could click through the link in infoblock, returns ``True``. If it sees that the
-        number of instances is 0, it returns ``False``.
         """
-        self.load_details()
-        if details_page.infoblock.text("Relationships", self.vm_name) == "0":
+        view = navigate_to(self, 'Details')
+        if view.contents.relationships.get_text_of(self.vm_name) == "0":
             return False
         else:
-            sel.click(details_page.infoblock.element("Relationships", self.vm_name))
+            view.contents.relationships.click_at(self.vm_name)
             return True
 
     def load_all_provider_images(self):
@@ -1077,85 +924,14 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
     def load_all_provider_templates(self):
         """ Loads the list of images that are available under the provider.
 
-        If it could click through the link in infoblock, returns ``True``. If it sees that the
-        number of images is 0, it returns ``False``.
         """
-        self.load_details()
-        if details_page.infoblock.text("Relationships", self.template_name) == "0":
+        # todo: replace these methods with new nav location
+        view = navigate_to(self, 'Details')
+        if view.contents.relationships.get_text_of(self.template_name) == "0":
             return False
         else:
-            sel.click(details_page.infoblock.element("Relationships", self.template_name))
+            view.contents.relationships.click_at(self.template_name)
             return True
-
-
-@fill.method((Form, Credential))  # default credential
-@fill.method((Form, EventsCredential))
-@fill.method((Form, CANDUCredential))
-@fill.method((Form, AzureCredential))
-@fill.method((Form, SSHCredential))
-@fill.method((Form, TokenCredential))
-@fill.method((Form, ServiceAccountCredential))
-def _fill_credential(form, cred, validate=None):
-    """How to fill in a credential. Validates the credential if that option is passed in.
-    """
-    if isinstance(cred, EventsCredential):
-        fill(cred.form, {
-            'event_selection': 'amqp',
-            'amqp_principal': cred.principal,
-            'amqp_secret': cred.secret,
-            'amqp_verify_secret': cred.verify_secret,
-            'validate_btn': validate})
-    elif isinstance(cred, CANDUCredential):
-        fill(cred.form, {'candu_principal': cred.principal,
-            'candu_secret': cred.secret,
-            'candu_verify_secret': cred.verify_secret,
-            'validate_btn': validate})
-        if validate:
-            # Then look up to 3 times for successful validation (THIS IS MADNESS)
-            exc = None
-            for __ in range(3):
-                try:
-                    flash.assert_success()
-                except FlashMessageException as e:
-                    # No success message, try again
-                    exc = e
-                    fill(cred.form.validate_btn, validate)
-                else:
-                    # Success, no error
-                    break
-            else:
-                # Just make it explode with the original exception.
-                # ``exc`` must have some contents by now since at least one except had to happen.
-                raise exc
-
-    elif isinstance(cred, AzureCredential):
-        fill(cred.form, {'default_username': cred.principal,
-                         'default_password': cred.secret,
-                         'default_verify': cred.secret})
-    elif isinstance(cred, SSHCredential):
-        fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
-    elif isinstance(cred, TokenCredential):
-        fill(cred.form, {
-            'token_secret': cred.token,
-            'token_verify_secret': cred.verify_token,
-            'validate_btn': validate
-        })
-        if validate:
-            # Validate default creds and move on to hawkular tab validation
-            flash.assert_no_errors()
-            fill(cred.form, {
-                'hawkular_validate_btn': validate
-            })
-    elif isinstance(cred, ServiceAccountCredential):
-        fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
-    else:
-        fill(cred.form, {'default_principal': cred.principal,
-            'default_secret': cred.secret,
-            'default_verify_secret': cred.verify_secret,
-            'validate_btn': validate})
-    if validate and not isinstance(cred, CANDUCredential):
-        # because we already validated it for the specific case
-        flash.assert_no_errors()
 
 
 def cleanup_vm(vm_name, provider):
