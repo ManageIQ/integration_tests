@@ -15,7 +15,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import ClusterNotFound
 from cfme.web_ui import match_location
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for, TimedOutError
@@ -134,8 +134,11 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
             super(TimelinesView, self).is_displayed)
 
 
-class ClusterCollection(Navigatable):
+class ClusterCollection(NavigatableMixin):
     """Collection object for the :py:class:`cfme.infrastructure.cluster.Cluster`."""
+
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def instantiate(self, name, provider):
         return Cluster(name, provider, collection=self)
@@ -173,7 +176,7 @@ class ClusterCollection(Navigatable):
             cluster.wait_for_disappear()
 
 
-class Cluster(Pretty, Navigatable, WidgetasticTaggable):
+class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
     """ Model of an infrastructure cluster in cfme
 
     Args:
@@ -186,13 +189,13 @@ class Cluster(Pretty, Navigatable, WidgetasticTaggable):
     """
     pretty_attrs = ['name', 'provider']
 
-    def __init__(self, name, provider, collection=None):
+    def __init__(self, name, provider, collection):
         self.name = name
         self.provider = provider
-        self.collection = collection or ClusterCollection()
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self._short_name = self.name.split('in')[0].strip()
         self.quad_name = 'cluster'
-        Navigatable.__init__(self, appliance=self.collection.appliance)
 
         col = self.appliance.rest_api.collections
         self._id = [

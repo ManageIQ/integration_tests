@@ -17,7 +17,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProvidersManagePoliciesView,
                                         InfraProvidersView)
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.cluster import Cluster
+from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.host import Host
 from cfme.web_ui import Quadicon, match_location
 from cfme.utils import conf, version
@@ -189,8 +189,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         # todo: create nav location + view later
         view.contents.relationships.click_at('Clusters')
         icons = Quadicon.all(qtype='cluster')
+        cluster_col = self.appliance.get(ClusterCollection)
         for icon in icons:
-            web_clusters.append(Cluster(icon.name, self))
+            web_clusters.append(cluster_col.instantiate(icon.name, self))
         return web_clusters
 
     def as_fill_value(self):

@@ -3,7 +3,7 @@
 import pytest
 from cfme import test_requirements
 from cfme.common.vm import VM
-from cfme.infrastructure import host, datastore, cluster, resource_pool
+from cfme.infrastructure import host, datastore, resource_pool
 from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils import testgen
@@ -19,14 +19,15 @@ pytest_generate_tests = testgen.generate(
     [InfraProvider], required_fields=['remove_test'], scope="module")
 
 
-def test_delete_cluster_appear_after_refresh(setup_provider, provider):
+def test_delete_cluster_appear_after_refresh(setup_provider, provider, appliance):
     """ Tests delete cluster
 
     Metadata:
         test_flag: delete_object
     """
     cluster_name = provider.data['remove_test']['cluster']
-    test_cluster = cluster.Cluster(name=cluster_name, provider=provider)
+    cluster_col = appliance.get(ClusterCollection)
+    test_cluster = cluster_col.instantiate(name=cluster_name, provider=provider)
     test_cluster.delete(cancel=False, wait=True)
     provider.refresh_provider_relationships()
     test_cluster.wait_for_exists()
@@ -118,13 +119,13 @@ def test_delete_datastore_appear_after_refresh(setup_provider, provider, applian
              fail_func=test_datastore.browser.refresh)
 
 
-def test_delete_cluster_from_table(setup_provider, provider):
+def test_delete_cluster_from_table(setup_provider, provider, appliance):
     """ Tests delete cluster from table
 
     Metadata:
         test_flag: delete_object
     """
     cluster_name = provider.data['remove_test']['cluster']
-    cluster1 = cluster.Cluster(name=cluster_name, provider=provider)
-    collection = ClusterCollection()
-    collection.delete(cluster1)
+    cluster_col = appliance.get(ClusterCollection)
+    cluster1 = cluster_col.instantiate(name=cluster_name, provider=provider)
+    cluster_col.delete(cluster1)
