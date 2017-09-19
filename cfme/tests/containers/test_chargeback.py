@@ -15,8 +15,8 @@ from cfme.utils.units import CHARGEBACK_HEADER_NAMES, parse_number
 
 
 obj_types = ['Image', 'Project']
-fixed_rates = ['Fixed1', 'Fixed2', 'CpuCores', 'Memory']  # , 'Network']
-variable_rates = ['CpuCores', 'Memory']  # , 'Network']
+fixed_rates = ['Fixed1', 'Fixed2', 'CpuCores', 'Memory', 'Network']
+variable_rates = ['CpuCores', 'Memory', 'Network']
 all_rates = set(fixed_rates + variable_rates)
 intervals = ['Hourly', 'Daily', 'Weekly']  # , 'Monthly']
 rate_types = ['fixed', 'variable']
@@ -36,10 +36,10 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 
 # We cannot calculate the accurate value because the prices in the reports
 # appears in a lower precision (floored). Hence we're using this accuracy coefficient:
-TEST_MATCH_ACCURACY = 0.035
+TEST_MATCH_ACCURACY = 0.1
 
 hours_count_lut = OrderedDict([('Hourly', 1.), ('Daily', 24.),
-                               ('Weekly', 168.), ('Monthly', 5124.)])
+                               ('Weekly', 168.), ('Monthly', 672.), ('Yearly', 8760)])
 
 
 def gen_report_base(obj_type, provider, rate_desc, rate_interval):
@@ -215,22 +215,19 @@ def abstract_test_chargeback_cost(
 
         fixed_rate = float(compute_rate.fields[report_headers.rate_name]['fixed_rate'])
         variable_rate = float(compute_rate.fields[report_headers.rate_name].get('variable_rate', 0))
-
         if rate_key == 'Memory':
             size_, unit_ = tokenize(row[report_headers.metric_name].upper())
             metric = round(parse_size(str(size_) + unit_, binary=True) / 1048576.0, 2)
-        elif rate_key in ('Fixed1', 'Fixed2'):
-            interval_index = hours_count_lut.keys().index(interval) - 1
-            if interval_index < 0:
-                metric = hours_count_lut[interval]
-            else:
-                metric = hours_count_lut[interval] / hours_count_lut.values()[interval_index - 1]
         else:
             metric = parse_number(row[report_headers.metric_name])
-        interval_factor = metric / hours_count_lut[interval]
-
-        expected_value = round(interval_factor * variable_rate * metric +
-                               interval_factor * fixed_rate, 2)
+        fixed_metric = parse_number(row[CHARGEBACK_HEADER_NAMES['Fixed1'].metric_name])
+        interval_factor = (hours_count_lut.values()[hours_count_lut.keys().index(interval) + 1] /
+                           hours_count_lut[interval])
+        fixed_product = fixed_metric / hours_count_lut[interval]
+        # Give us the number of units per the previous units. e.g.
+        #     # of hours in a day / # of days in a week
+        expected_value = round(interval_factor * metric * variable_rate +
+                               fixed_product * fixed_rate, 2)
         found_value = round(parse_number(row[report_headers.cost_name]), 2)
 
         match_threshold = TEST_MATCH_ACCURACY * expected_value
