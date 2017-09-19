@@ -1716,7 +1716,6 @@ class CompareToolBarActions(View):
         action.AttributeSelector.select.selected
     """
 
-
     ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
 
     @View.nested
@@ -1750,7 +1749,6 @@ class CompareToolBarActions(View):
         def _view_buttons(self):
             yield self.expanded_button
             yield self.compressed_button
-
 
     @property
     def is_displayed(self):
