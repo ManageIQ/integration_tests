@@ -1719,7 +1719,7 @@ class CompareToolBarViewActions(View):
     ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
 
     @View.nested
-    class attribute_selector(CompareToolBarMixin):
+    class attribute_selector(CompareToolBarMixin):  # noqa
         all_values_button = Button(title="All attributes")
         diff_values_button = Button(title="Attributes with different values")
         same_values_button = Button(title="Attributes with same values")
@@ -1731,7 +1731,7 @@ class CompareToolBarViewActions(View):
             yield self.same_values_button
 
     @View.nested
-    class modes_selector(CompareToolBarMixin):
+    class modes_selector(CompareToolBarMixin):  # noqa
         details_mode = Button(title="Details Mode")
         exists_mode = Button(title="Exists Mode")
 
@@ -1741,7 +1741,7 @@ class CompareToolBarViewActions(View):
             yield self.exists_mode
 
     @View.nested
-    class views_selector(CompareToolBarMixin):
+    class views_selector(CompareToolBarMixin):  # noqa
         expanded_button = Button(title="Expanded View")
         compressed_button = Button(title="Compressed View")
 
