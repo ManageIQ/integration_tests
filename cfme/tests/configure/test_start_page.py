@@ -42,7 +42,7 @@ def user_login(user, appliance):
 def set_landing_page(user, values, appliance):
     # This list contains the list of pages which show some error or alerts after login.
     # TODO remove all these pages when BZ is closed.
-    page_list = ['Bottlenecks', 'Automate Log']
+    page_list = ['Bottlenecks', 'Automate Log', 'Compute / Containers / Containers']
     for value in values:
         view = navigate_to(Visual, 'All')
         if (view.visualstartpage.show_at_login.fill(value.text) and
