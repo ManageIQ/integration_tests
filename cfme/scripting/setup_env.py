@@ -78,7 +78,7 @@ def setup_ha_env(cfme_version, lease):
     rep = '6' if cfme_version >= "5.8" else '9'
     mon = '9' if cfme_version >= "5.8" else '12'
     port = (ip0, '') if cfme_version >= "5.8" else (ip0,)
-    command_set0 = ('ap', '', opt, '1', '1', 'y', '1', 'y', pwd, TimedCommand(pwd, 360), '')
+    command_set0 = ('ap', '', opt, '1', '1', '1', 'y', pwd, TimedCommand(pwd, 360), '')
     apps[0].appliance_console.run_commands(command_set0)
     wait_for(lambda: apps[0].db.is_dedicated_active)
     print("Dedicated database provisioned and configured {}".format(ip0))
@@ -91,7 +91,8 @@ def setup_ha_env(cfme_version, lease):
     command_set2 = ('ap', '', rep, '1', '1', '', '', pwd, pwd, ip0, 'y', '')
     apps[0].appliance_console.run_commands(command_set2)
     print("Primary HA node configured {}".format(ip0))
-    command_set3 = ('ap', '', rep, '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y', 'y', '')
+    command_set3 = ('ap', '', rep, '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y',
+        TimedCommand('y', 15), '')
     apps[2].appliance_console.run_commands(command_set3)
     print("Secondary HA node provision and configured {}".format(ip2))
     command_set4 = ('ap', '', mon, '1', '')
