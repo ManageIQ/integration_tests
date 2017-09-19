@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput
 from widgetastic_manageiq import MultiBoxSelect
@@ -75,11 +76,11 @@ class PolicyProfileCollection(NavigatableMixin):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def instantiate(self, description, collection, policies=None, notes=None):
-        return PolicyProfile(description, self, policies=policies, notes=notes)
+    def instantiate(self, description, collection, policies_to_assign=None, notes=None):
+        return PolicyProfile(description, self, policies_to_assign=policies_to_assign, notes=notes)
 
-    def create(self, description, policies=None, notes=None):
-        policy = self.instantiate(description, self, policies=policies, notes=notes)
+    def create(self, description, policies_to_assign=None, notes=None):
+        policy = self.instantiate(description, self, policies_to_assign=policies_to_assign, notes=notes)
         view = navigate_to(self, "Add")
         view.fill({
             "description": policy.description,
@@ -96,18 +97,31 @@ class PolicyProfileCollection(NavigatableMixin):
 
 class PolicyProfile(Updateable, NavigatableMixin, Pretty):
 
-    def __init__(self, description, collection, policies=None, notes=None):
+    def __init__(self, description, collection, policies_to_assign=None, notes=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.description = description
         self.notes = notes
-        self.policies = policies
+        self.policies_to_assign = policies_to_assign
+
+    @property
+    def parent(self):
+        return self.collection
+
+    @property
+    def policy_profile(self):
+        return self
+
+    @cached_property
+    def policies(self):
+        from .policies import PolicyCollection
+        return PolicyCollection(self)
 
     @property
     def prepared_policies(self):
-        if self.policies is not None:
-            return ["{} {}: {}".format(
-                policy.PRETTY, policy.TYPE, policy.description) for policy in self.policies]
+        if self.policies_to_assign is not None:
+            return ["{} {}: {}".format(policy.PRETTY, policy.TYPE, policy.description) for
+                    policy in self.policies_to_assign]
         else:
             return None
 
@@ -124,8 +138,6 @@ class PolicyProfile(Updateable, NavigatableMixin, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
         view = self.create_view(PolicyProfileDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()

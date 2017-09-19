@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Button, Input
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import Text, Checkbox, TextInput, View
@@ -9,7 +9,7 @@ from . import ControlExplorerView
 from actions import Action
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -215,7 +215,35 @@ class EditEventView(ControlExplorerView):
         )
 
 
-class BasePolicy(Updateable, Navigatable, Pretty):
+class PolicyCollection(NavigatableMixin):
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.appliance = self.parent.appliance
+
+    def instantiate(self, description, policy_class, active=True, scope=None, notes=None):
+        return policy_class(description, self, active=active, scope=scope, notes=notes)
+
+    def create(self, description, policy_class, active=True, scope=None, notes=None):
+        policy = self.instantiate(description, policy_class, active=active, scope=scope,
+            notes=notes)
+        view = navigate_to(policy, "Add")
+        view.fill({
+            "description": policy.description,
+            "active": policy.active,
+            "scope": policy.scope,
+            "notes": policy.notes
+        })
+        view.add_button.click()
+        view = policy.create_view(PolicyDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Policy "{}" was added'.format(self.description))
+
+    def all(self):
+        pass
+
+
+class BasePolicy(Updateable, NavigatableMixin, Pretty):
     """This class represents a Policy.
 
     Example:
@@ -238,8 +266,9 @@ class BasePolicy(Updateable, Navigatable, Pretty):
     PRETTY = None
     _param_name = ParamClassName('description')
 
-    def __init__(self, description, active=True, scope=None, notes=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, description, collection, active=True, scope=None, notes=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.description = description
         self.active = active
         self.scope = scope
@@ -248,20 +277,21 @@ class BasePolicy(Updateable, Navigatable, Pretty):
     def __str__(self):
         return self.description
 
-    def create(self):
-        "Create this Policy in UI."
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": self.description,
-            "active": self.active,
-            "scope": self.scope,
-            "notes": self.notes
-        })
-        view.add_button.click()
-        view = self.create_view(PolicyDetailsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "{}" was added'.format(self.description))
+    @property
+    def parent(self):
+        return self.collection.parent
+
+    @property
+    def policy_profile(self):
+        return self.parent.policy_profile
+
+    @property
+    def conditions(self):
+        pass
+
+    @property
+    def events(self):
+        pass
 
     def update(self, updates):
         """Update this Policy in UI.
@@ -276,9 +306,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
-        view = self.create_view(PolicyDetailsView)
+        view = self.create_view(PolicyDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -316,8 +344,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             handle_alert=not cancel)
         view = self.create_view(PolicyDetailsView)
         assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "Copy of {}" was added'.format(self.description))
+        view.flash.assert_success_message('Policy "Copy of {}" was added'.format(self.description))
         return type(self)("Copy of {}".format(self.description))
 
     def assign_events(self, *events, **kwargs):
@@ -340,8 +367,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "{}" was saved'.format(self.description))
+        view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
 
     def is_event_assigned(self, event):
         return event in self.assigned_events
@@ -361,8 +387,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "{}" was saved'.format(self.description))
+        view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
 
     def is_condition_assigned(self, condition):
         self.testing_condition = condition
@@ -448,17 +473,25 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             events.id.in_(assigned_events))]
 
 
-@navigator.register(BasePolicy, "Add")
-class PolicyNew(CFMENavigateStep):
-    VIEW = NewPolicyView
+@navigator.register(PolicyCollection, "All")
+class PolicyAll(CFMENavigateStep):
+    VIEW = PoliciesAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.policies.tree.click_path(
+        self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE)
         )
+
+
+@navigator.register(PolicyCollection, "Add")
+class PolicyNew(CFMENavigateStep):
+    VIEW = NewPolicyView
+    prerequisite = NavigateToSibling("All")
+
+    def step(self):
         self.view.configuration.item_select("Add a New {} {} Policy".format(self.obj.PRETTY,
             self.obj.TYPE))
 
@@ -466,15 +499,9 @@ class PolicyNew(CFMENavigateStep):
 @navigator.register(BasePolicy, "Edit")
 class PolicyEdit(CFMENavigateStep):
     VIEW = EditPolicyView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.policies.tree.click_path(
-            "All Policies",
-            "{} Policies".format(self.obj.TYPE),
-            "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
-            self.obj.description
-        )
         self.view.configuration.item_select("Edit Basic Info, Scope, and Notes")
 
 
@@ -484,7 +511,7 @@ class PolicyDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.policies.tree.click_path(
+        self.prerequisite.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
