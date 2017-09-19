@@ -2,10 +2,10 @@
 from functools import partial
 import random
 import itertools
-
 from cached_property import cached_property
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from wrapanapi.containers.volume import Volume as ApiVolume
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.containers.provider import navigate_and_get_rows,\
@@ -15,7 +15,6 @@ from cfme.web_ui import toolbar as tb, match_location, InfoBlock,\
     PagedTable, CheckboxTable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.appliance import Navigatable
-from wrapanapi.containers.volume import Volume as ApiVolume
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -65,7 +64,7 @@ class Volume(Taggable, SummaryMixin, Navigatable):
 
 
 class VolumeAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Persistent Volumes'
+    TITLE_TEXT = "Persistent Volumes"
 
 
 @navigator.register(Volume, 'All')

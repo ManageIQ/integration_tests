@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 import random
-
 from cached_property import cached_property
+
 from navmazing import NavigateToSibling, NavigateToAttribute
+from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistry
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.containers.provider import pol_btn, navigate_and_get_rows,\
@@ -13,7 +14,6 @@ from cfme.web_ui import CheckboxTable, toolbar as tb, match_location,\
     PagedTable
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from wrapanapi.containers.image_registry import ImageRegistry as ApiImageRegistry
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -56,7 +56,7 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
 
 
 class ImageRegistryAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Image Registries'
+    TITLE_TEXT = "Image Registries"
 
 
 @navigator.register(ImageRegistry, 'All')

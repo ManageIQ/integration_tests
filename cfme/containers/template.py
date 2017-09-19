@@ -2,10 +2,10 @@
 import random
 import itertools
 from functools import partial
-
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from wrapanapi.containers.template import Template as ApiTemplate
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.containers.provider import Labelable, ContainerObjectAllBaseView
@@ -16,7 +16,6 @@ from .provider import details_page
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
-from wrapanapi.containers.template import Template as ApiTemplate
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -68,7 +67,7 @@ class Template(Taggable, Labelable, SummaryMixin, Navigatable):
 
 
 class TemplateAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Container Templates'
+    TITLE_TEXT = "Container Templates"
 
 
 @navigator.register(Template, 'All')

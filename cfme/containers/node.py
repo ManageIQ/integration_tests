@@ -3,8 +3,9 @@
 from functools import partial
 import random
 import itertools
-
 from cached_property import cached_property
+
+from wrapanapi.containers.node import Node as ApiNode
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
@@ -19,7 +20,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from wrapanapi.containers.node import Node as ApiNode
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -31,7 +31,7 @@ resource_locator = "//div[@id='records_div']/table//span[@title='{}']"
 
 
 class NodeView(ContainerObjectAllBaseView, LoggingableView):
-    TITLE_TEXT = 'Nodes'
+    TITLE_TEXT = "Nodes"
 
     nodes = Table(locator="//div[@id='list_grid']//table")
 

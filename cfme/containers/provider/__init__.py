@@ -10,7 +10,6 @@ from widgetastic_patternfly import (SelectorDropdown, Dropdown, BootstrapSelect,
                                     Input, Button, Tab)
 from widgetastic.widget import Text, View, TextInput
 from wrapanapi.utils import eval_strings
-from widgetastic.xpath import quote
 
 
 from cfme.base.login import BaseLoggedInPage
@@ -442,8 +441,9 @@ class AdHocMain(CFMENavigateStep):
 
 class ContainerObjectAllBaseView(ProvidersView):
     """Base class for container object All view.
-    TITLE_TEXT should be defined in child."""
-
+    TITLE_TEXT should be defined in child.
+    """
+    summary = Text('//div[@id="main-content"]//h1')
     policy = Dropdown('Policy')
     download = Dropdown('Download')
 
@@ -451,15 +451,9 @@ class ContainerObjectAllBaseView(ProvidersView):
     def table(self):
         return self.entities.elements
 
-    def title(self):
-        if not hasattr(self, 'TITLE_TEXT'):
-            raise Exception('TITLE_TEXT is not defined for destination {} ("All").'
-                            .format(self.__class__.__name__))
-        return Text('//h1[normalize-space(.) = {}]'.format(quote(self.TITLE_TEXT)))
-
     @property
     def is_displayed(self):
-        return self.title.is_displayed
+        return self.summary.text == self.TITLE_TEXT
 
 
 # Common methods:

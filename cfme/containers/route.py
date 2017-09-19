@@ -2,8 +2,9 @@
 import random
 import itertools
 from functools import partial
-
 from cached_property import cached_property
+
+from wrapanapi.containers.route import Route as ApiRoute
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -15,7 +16,6 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
 from cfme.utils.appliance import Navigatable
-from wrapanapi.containers.route import Route as ApiRoute
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -66,7 +66,7 @@ class Route(Taggable, Labelable, SummaryMixin, Navigatable):
 
 
 class RouteAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Routes'
+    TITLE_TEXT = "Routes"
 
 
 @navigator.register(Route, 'All')

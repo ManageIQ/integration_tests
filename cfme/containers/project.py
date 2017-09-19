@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import random
 import itertools
-
 from cached_property import cached_property
+
+from wrapanapi.containers.project import Project as ApiProject
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
@@ -15,7 +16,6 @@ from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator,
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
 from functools import partial
-from wrapanapi.containers.project import Project as ApiProject
 
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -65,7 +65,7 @@ class Project(Taggable, Labelable, SummaryMixin, Navigatable):
 
 
 class ProjectAllView(ContainerObjectAllBaseView):
-    TITLE_TEXT = 'Projects'
+    TITLE_TEXT = "Projects"
 
 
 @navigator.register(Project, 'All')
