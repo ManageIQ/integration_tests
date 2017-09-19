@@ -6,7 +6,7 @@ from widgetastic_patternfly import CandidateNotFound, Button, Input, Dropdown
 from cached_property import cached_property
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateCustomizationView
@@ -73,17 +73,16 @@ class DetailsDialogView(AutomateCustomizationView):
         )
 
 
-class DialogCollection(Navigatable):
+class DialogCollection(NavigatableMixin):
     """Collection object for the :py:class:`Dialog`."""
-
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
 
     tree_path = ['All Dialogs']
 
+    def __init__(self, appliance):
+        self.appliance = appliance
+
     def instantiate(self, label, description=None, submit=False, cancel=False):
-        return Dialog(
-            label=label, description=description, submit=submit, cancel=cancel)
+        return Dialog(label, self, description=description, submit=submit, cancel=cancel)
 
     def create(self, label=None, description=None, submit=False, cancel=False):
         """ Create dialog label method """
@@ -98,15 +97,12 @@ class DialogCollection(Navigatable):
             label=label, description=description, submit=submit, cancel=cancel)
 
 
-class Dialog(Navigatable, Fillable):
+class Dialog(NavigatableMixin, Fillable):
     """A class representing one Domain in the UI."""
     def __init__(
-            self, label, description=None, submit=False, cancel=False,
-            collection=None, appliance=None):
-        if collection is None:
-            collection = DialogCollection(appliance=appliance)
+            self, label, collection, description=None, submit=False, cancel=False):
         self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.appliance = self.collection.appliance
         self.label = label
         self.description = description
         self.submit = submit

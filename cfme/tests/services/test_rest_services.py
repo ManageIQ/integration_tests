@@ -103,7 +103,7 @@ def service_catalogs(request, appliance):
 def catalog_bundle(request, dialog, service_catalog_obj, appliance, a_provider):
     catalog_items = service_templates_ui(
         request,
-        appliance.rest_api,
+        appliance,
         service_dialog=dialog,
         service_catalog=service_catalog_obj,
         a_provider=a_provider,
@@ -156,7 +156,7 @@ def services(request, appliance, num=3):
 
 @pytest.fixture(scope="function")
 def service_templates(request, appliance):
-    response = _service_templates(request, appliance.rest_api)
+    response = _service_templates(request, appliance)
     assert_response(appliance)
     return response
 
@@ -1145,7 +1145,7 @@ class TestServiceRequests(object):
         Metadata:
             test_flag: rest
         """
-        new_template = _service_templates(request, appliance.rest_api, num=1)
+        new_template = _service_templates(request, appliance, num=1)
         new_template = new_template[0]
         catalog_id = new_template.service_template_catalog_id
         template_id = new_template.id
