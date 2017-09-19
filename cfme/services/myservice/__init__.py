@@ -2,9 +2,10 @@ import sentaku
 
 from cfme.utils.appliance import Navigatable
 from cfme.common import WidgetasticTaggable
+from cfme.utils.update import Updateable
 
 
-class MyService(Navigatable, WidgetasticTaggable, sentaku.modeling.ElementMixin):
+class MyService(Updateable, Navigatable, WidgetasticTaggable, sentaku.modeling.ElementMixin):
     """
         My Service main class to context switch between ui
         and ssui. All the below methods are implemented in both ui
