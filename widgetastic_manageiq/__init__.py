@@ -1704,7 +1704,7 @@ class CompareToolBarMixin(View):
         return self.selected
 
 
-class CompareToolBarActions(View):
+class CompareToolBarViewActions(View):
     """ represents comparison toolbar's actions control
         it is present on pages like compaire selected items, drift page
 
@@ -1719,7 +1719,7 @@ class CompareToolBarActions(View):
     ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
 
     @View.nested
-    class AttributeSelector(CompareToolBarMixin):
+    class attribute_selector(CompareToolBarMixin):
         all_values_button = Button(title="All attributes")
         diff_values_button = Button(title="Attributes with different values")
         same_values_button = Button(title="Attributes with same values")
@@ -1731,7 +1731,7 @@ class CompareToolBarActions(View):
             yield self.same_values_button
 
     @View.nested
-    class ModeSelector(CompareToolBarMixin):
+    class modes_selector(CompareToolBarMixin):
         details_mode = Button(title="Details Mode")
         exists_mode = Button(title="Exists Mode")
 
@@ -1741,7 +1741,7 @@ class CompareToolBarActions(View):
             yield self.exists_mode
 
     @View.nested
-    class ViewSelector(CompareToolBarMixin):
+    class views_selector(CompareToolBarMixin):
         expanded_button = Button(title="Expanded View")
         compressed_button = Button(title="Compressed View")
 
@@ -1749,10 +1749,6 @@ class CompareToolBarActions(View):
         def _view_buttons(self):
             yield self.expanded_button
             yield self.compressed_button
-
-    @property
-    def is_displayed(self):
-        return self.browser.is_displayed(self.ROOT)
 
 
 class Search(View):
