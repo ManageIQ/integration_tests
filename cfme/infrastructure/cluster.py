@@ -196,7 +196,7 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
         col = self.appliance.rest_api.collections
         self._id = [
             cl.id
-            for cl in col.clusters.all
+            for cl in col.clusters
             if cl.name in (self._short_name, self.name) and cl.ems_id == self.provider.id
         ][-1]
 
