@@ -5,7 +5,7 @@ from cfme.utils.version import current_version
 
 @pytest.fixture(scope='module')
 def enabled_embedded_appliance(temp_appliance_preconfig):
-    """Takes a temp appliance and enables the embedded ansible role"""
+    """Takes a preconfigured appliance and enables the embedded ansible role"""
     temp_appliance_preconfig.enable_embedded_ansible_role()
     assert temp_appliance_preconfig.is_embedded_ansible_running
     return temp_appliance_preconfig
