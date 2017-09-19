@@ -2622,3 +2622,11 @@ class Navigatable(NavigatableMixin):
 
     def __init__(self, appliance=None):
         self.appliance = appliance or get_or_create_current_appliance()
+
+
+class BaseCollection(NavigatableMixin):
+    pass
+
+
+class BaseInstance(NavigatableMixin):
+    pass
