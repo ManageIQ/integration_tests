@@ -2,7 +2,7 @@
 
 # from cfme.configure.tasks import is_cluster_analysis_finished
 from cfme import test_requirements
-from cfme.infrastructure.cluster import Cluster
+from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.utils import testgen
@@ -15,14 +15,15 @@ pytest_generate_tests = testgen.generate(
     [InfraProvider], required_fields=['remove_test'], scope="module")
 
 
-def test_run_cluster_analysis(request, setup_provider, provider, soft_assert):
+def test_run_cluster_analysis(request, setup_provider, provider, soft_assert, appliance):
     """Tests smarthost analysis
 
     Metadata:
         test_flag: cluster_analysis
     """
     cluster_name = provider.data['remove_test']['cluster']
-    test_cluster = Cluster(name=cluster_name, provider=provider)
+    cluster_col = appliance.get(ClusterCollection)
+    test_cluster = cluster_col.instantiate(name=cluster_name, provider=provider)
     # wait_for(lambda: test_cluster.exists, delay=10, num_sec=120, fail_func=sel.refresh)
     test_cluster.wait_for_exists()
 
