@@ -22,9 +22,9 @@ class FloatingIP(WidgetasticTaggable, BaseEntity):
 =======
 from cfme.networks.add_object_views import AddNewFloatingIPView
 from cfme.networks.views import FloatingIPView, FloatingIPDetailsView
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class FloatingIPCollection(Navigatable):

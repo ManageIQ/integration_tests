@@ -13,6 +13,7 @@ from cfme.networks.network_router import NetworkRouterCollection
 from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
 <<<<<<< HEAD
+<<<<<<< HEAD
 from cfme.utils import testgen, version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -144,6 +145,11 @@ def test_adding_security_group(provider, appliance):
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
+=======
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
+>>>>>>> Changing utils imports
 
 
 pytest_generate_tests = testgen.generate(classes=[OpenStackProvider], scope='function')
