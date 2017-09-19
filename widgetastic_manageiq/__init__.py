@@ -1678,27 +1678,13 @@ class DetailsToolBarViewSelector(View):
         return self.selected
 
 
-class CompareToolBarModeSelector(View):
-    """ represents toolbar's Mode selector control
-        it is present on pages of Compare Selected items
-
-    .. code-block:: python
-
-        mode_selector = View.nested(CompareToolBarModeSelector)
-
-        mode_selector.select('Details Mode')
-        mode_selector.selected
-    """
-
-    ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
-
-    button_a = Button(title="Details Mode")
-    button_b = Button(title="Exists Mode")
+class CompareToolBarMixin(View):
+    """ It represent abstract class for compare toolbar actions. """
 
     @property
     def _view_buttons(self):
-        yield self.button_a
-        yield self.button_b
+        """It should be override as per concern nested class buttons"""
+        pass
 
     def select(self, title):
         for button in self._view_buttons:
@@ -1717,61 +1703,58 @@ class CompareToolBarModeSelector(View):
     def read(self):
         return self.selected
 
-    @property
-    def is_displayed(self):
-        return self.button_a.is_displayed
-
-
-class CompareToolBarViewSelector(CompareToolBarModeSelector):
-    """ represents toolbar's View selector control
-        it is present on pages of Compare Selected items
-
-    .. code-block:: python
-
-        view_selector = View.nested(CompareToolBarViewSelector)
-
-        view_selector.select('Expanded View')
-        view_selector.selected
-    """
-
-    button_a = Button(title="Expanded View")
-    button_b = Button(title="Compressed View")
-
-
-class CompareToolBarAttributeSelector(CompareToolBarModeSelector):
-    """ represents toolbar's Attribute selector control
-        it is present on pages of Compare Selected items
-
-    .. code-block:: python
-
-        attribute_selector = View.nested(CompareToolBarAttributeSelector)
-
-        attribute_selector.select('Attributes with different values')
-        attribute_selector.selected
-    """
-
-    button_a = Button(title="All attributes")
-    button_b = Button(title="Attributes with different values")
-    button_c = Button(title="Attributes with same values")
-
-    @property
-    def _view_buttons(self):
-        yield self.button_a
-        yield self.button_b
-        yield self.button_c
-
 
 class CompareToolBarActions(View):
-    """ represents compare toolbar's all actions
-        it is present on pages of Compare Selected items and drift
+    """ represents comparison toolbar's actions control
+        it is present on pages like compaire selected items, drift page
 
     .. code-block:: python
 
-        actions = View.nested(CompareToolbarActions)
+        actions = View.nested(CompareToolBarActions)
+
+        action.AttributeSelector.select('Attributes with different values')
+        action.AttributeSelector.select.selected
     """
-    attribute_selector = View.nested(CompareToolBarAttributeSelector)
-    mode_selector = View.nested(CompareToolBarModeSelector)
-    view_selector = View.nested(CompareToolBarViewSelector)
+
+
+    ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
+
+    @View.nested
+    class AttributeSelector(CompareToolBarMixin):
+        all_values_button = Button(title="All attributes")
+        diff_values_button = Button(title="Attributes with different values")
+        same_values_button = Button(title="Attributes with same values")
+
+        @property
+        def _view_buttons(self):
+            yield self.all_values_button
+            yield self.diff_values_button
+            yield self.same_values_button
+
+    @View.nested
+    class ModeSelector(CompareToolBarMixin):
+        details_mode = Button(title="Details Mode")
+        exists_mode = Button(title="Exists Mode")
+
+        @property
+        def _view_buttons(self):
+            yield self.details_mode
+            yield self.exists_mode
+
+    @View.nested
+    class ViewSelector(CompareToolBarMixin):
+        expanded_button = Button(title="Expanded View")
+        compressed_button = Button(title="Compressed View")
+
+        @property
+        def _view_buttons(self):
+            yield self.expanded_button
+            yield self.compressed_button
+
+
+    @property
+    def is_displayed(self):
+        return self.browser.is_displayed(self.ROOT)
 
 
 class Search(View):
