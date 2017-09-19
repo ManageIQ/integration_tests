@@ -147,6 +147,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 =======
 from cfme.utils import testgen
+from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 >>>>>>> Changing utils imports
@@ -156,6 +157,7 @@ pytest_generate_tests = testgen.generate(classes=[OpenStackProvider], scope='fun
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 @pytest.mark.parametrize("ext_gateway_state", [True, False])
 @pytest.mark.parametrize("source_nat", [True, False])
 def test_adding_router(provider, ext_gateway_state, source_nat):
@@ -207,6 +209,7 @@ def test_adding_router(provider, ext_gateway_state, source_nat):
         view.cancel.click()
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 @pytest.mark.parametrize("ext_gateway_state", [True, False])
 def test_cancel_adding_router(provider, ext_gateway_state):
     """Test uncompleted adding router"""
@@ -227,6 +230,7 @@ def test_cancel_adding_router(provider, ext_gateway_state):
     assert not network_router.exists
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 @pytest.mark.parametrize("options", [False])
 def test_adding_cloud_network(provider, options):
     """Test adding cloud network in ui"""
@@ -261,6 +265,7 @@ def test_adding_cloud_network(provider, options):
              fail_func=provider.appliance.server.browser.refresh)
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 @pytest.mark.parametrize("dhcp_state", [True, False])
 @pytest.mark.parametrize("ip_version", [("4", "192.168.8.0/24"),
                                         ("6", "2001:db8::/76")])
@@ -297,6 +302,7 @@ def test_adding_subnet(provider, dhcp_state, ip_version):
              fail_func=provider.appliance.server.browser.refresh)
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_adding_security_group(provider):
     """ Test adding security group in ui"""
     test_name = "test_sec_group_" + fauxfactory.gen_alphanumeric(6)
@@ -363,6 +369,7 @@ def test_adding_floating_ip(provider, appliance):
              fail_func=provider.appliance.server.browser.refresh)
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 def test_adding_floating_ip(provider):
     """Test adding floating ip in ui"""
     testing_ip = "192.168.8.8"
