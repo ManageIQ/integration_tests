@@ -20,7 +20,7 @@ pytest_generate_tests = testgen.generate(
 
 @pytest.mark.polarion('CMP-10255')
 @pytest.mark.meta(blockers=[BZ(1406772, forced_streams=["5.7", "5.8"])])
-def test_cockpit_button_access(provider, soft_assert):
+def test_cockpit_button_access(provider, appliance, soft_assert):
     """ The test verifies the existence of cockpit "Web Console"
         button on master node, then presses on the button and
         opens up the cockpit main page in a new window. Then
@@ -29,7 +29,7 @@ def test_cockpit_button_access(provider, soft_assert):
 
     """
 
-    collection = NodeCollection()
+    collection = appliance.get(NodeCollection)
     nodes = collection.all()
     node = [node for node in nodes if 'master' in node.name][0]
     navigate_to(node, 'Details')

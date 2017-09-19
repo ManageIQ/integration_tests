@@ -18,7 +18,7 @@ from cfme.containers.provider import ContainersProvider, Labelable,\
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 
 
@@ -48,8 +48,11 @@ class NodeView(ContainerObjectAllBaseView, LoggingableView):
         )
 
 
-class NodeCollection(Navigatable):
+class NodeCollection(NavigatableMixin):
     """Collection object for :py:class:`Node`."""
+
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def instantiate(self, name, provider):
         return Node(name=name, provider=provider, appliance=self.appliance)
@@ -81,17 +84,15 @@ class NodeAllView(NodeView):
     paginator = PaginationPane()
 
 
-class Node(Taggable, Labelable, SummaryMixin, Navigatable):
+class Node(Taggable, Labelable, SummaryMixin, NavigatableMixin):
 
     PLURAL = 'Nodes'
 
     def __init__(self, name, provider, collection=None, appliance=None):
         self.name = name
         self.provider = provider
-        if not collection:
-            collection = NodeCollection(appliance=appliance)
         self.collection = collection
-        Navigatable.__init__(self, appliance=appliance)
+        self.appliance = self.collection.appliance
 
     @cached_property
     def mgmt(self):

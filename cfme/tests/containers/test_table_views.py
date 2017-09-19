@@ -66,8 +66,10 @@ def test_default_views(random_default_views):
 
 
 @pytest.mark.polarion('CMP-10570')
-def test_table_views():
+def test_table_views(appliance):
     for obj in objects_mapping.keys():
+        if "Collection" in obj.__name__:
+            obj = appliance.get(obj)
         navigate_to(obj, 'All')
         view = choice(VIEWS)
         tb.select(view)
