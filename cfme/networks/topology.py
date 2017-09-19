@@ -1,10 +1,11 @@
-from navmazing import NavigateToAttribute
-
 import re
 import time
+
+from navmazing import NavigateToAttribute
+
 from cfme.networks.topology_view import TopologyView
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from wait_for import wait_for
 
 
