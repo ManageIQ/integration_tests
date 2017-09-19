@@ -2,7 +2,6 @@
 
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
                                   SummaryTable, Text, TimelinesView, BaseEntitiesView)
@@ -10,7 +9,7 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
-from cfme.exceptions import ClusterNotFound, ItemNotFound
+from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.pretty import Pretty
@@ -198,7 +197,7 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
         self._id = [
             cl.id
             for cl in col.clusters.all
-            if cl.name == self._short_name and cl.ems_id == self.provider.id
+            if cl.name in (self._short_name, self.name) and cl.ems_id == self.provider.id
         ][-1]
 
     def delete(self, cancel=True, wait=False):
@@ -314,17 +313,14 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
-        version = self.obj.appliance.version
-        if (version >= '5.7.4' and version < '5.8') or version >= '5.8.1.2':
-            cluster_name = self.obj.short_name
-        else:
-            cluster_name = self.obj.name
+        # todo: figure out why the same cfme version shows clusters with short and long name
         try:
-            entity = self.prerequisite_view.entities.get_entity(by_name=cluster_name,
+            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.short_name,
                                                                 surf_pages=True)
-            entity.click()
-        except NoSuchElementException:
-            raise ClusterNotFound('Cluster {} not found'.format(cluster_name))
+        except ItemNotFound:
+            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                                surf_pages=True)
+        entity.click()
 
 
 @navigator.register(Cluster, 'Timelines')
