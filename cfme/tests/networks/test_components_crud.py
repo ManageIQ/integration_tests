@@ -14,6 +14,7 @@ from cfme.networks.security_group import SecurityGroupCollection
 from cfme.networks.subnet import SubnetCollection
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 from cfme.utils import testgen, version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
@@ -148,6 +149,9 @@ from utils.wait import wait_for
 =======
 from cfme.utils import testgen
 from cfme.utils import version
+=======
+from cfme.utils import testgen, version
+>>>>>>> Merging utils import
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import wait_for
 >>>>>>> Changing utils imports
