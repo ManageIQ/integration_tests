@@ -371,6 +371,21 @@ class DefaultViewForm(MySettingsView):
     templates = ViewButtonGroup("Services", "Templates & Images")
     vms = ViewButtonGroup("Infrastructure", "VMs")
     vms_instances = ViewButtonGroup("Services", "VMs & Instances")
+
+    containers_providers = ViewButtonGroup("Containers", "Containers Providers")
+    container_nodes = ViewButtonGroup("Containers", "Nodes")
+    container_pods = ViewButtonGroup("Containers", "Pods")
+    container_services = ViewButtonGroup("Containers", "Services")
+    container_routes = ViewButtonGroup("Containers", "Routes")
+    container_containers = ViewButtonGroup("Containers", "Containers")
+    container_projects = ViewButtonGroup("Containers", "Projects")
+    container_replicators = ViewButtonGroup("Containers", "Replicators")
+    container_images = ViewButtonGroup("Containers", "Images")
+    container_image_registries = ViewButtonGroup("Containers", "Image Registries")
+    container_builds = ViewButtonGroup("Containers", "Builds")
+    container_volumes = ViewButtonGroup("Containers", "Volumes")
+    container_templates = ViewButtonGroup("Containers", "Templates")
+
     save = Button("Save")
 
 
@@ -389,6 +404,19 @@ class DefaultView(Updateable, Navigatable):
                'Templates & Images': "templates",
                'VMs': "vms",
                'VMs & Instances': "vms_instances",
+               'Containers Providers': 'containers_providers',
+               'Nodes': 'container_nodes',
+               'Pods': 'container_pods',
+               'Services': 'container_services',
+               'Routes': 'container_routes',
+               'Containers': 'container_containers',
+               'Projects': 'container_projects',
+               'Replicators': 'container_replicators',
+               'Container Images': 'container_images',
+               'Image Registries': 'container_image_registries',
+               'Builds': 'container_builds',
+               'Volumes': 'container_volumes',
+               'Templates': 'container_templates',
                'Configuration Management Providers': 'configuration_management_providers'
                }
 
