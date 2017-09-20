@@ -106,12 +106,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """"
         Return the ID associated with the specified provider name
         """
-        # TODO: Get Provider object from ProviderCollection.find, then use Provider.id to get the id
-        logger.debug('Retrieving the ID for provider: {}'.format(self.name))
-        for provider_id in self.get_all_provider_ids():
-            details = self.get_provider_details(provider_id)
-            if details['name'] == self.name:
-                return provider_id
+        return self.appliance.rest_api.collections.providers.find_by(name=self.name)[0].id
 
     @property
     def version(self):

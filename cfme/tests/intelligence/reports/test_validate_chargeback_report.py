@@ -31,8 +31,8 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.meta(blockers=[BZ(1433984, forced_streams=["5.7", "5.8", "upstream"]),
                                BZ(1468729, forced_streams=["5.9"]),
-                               BZ(1486529, unblock=lambda provider: not provider.one_of(
-                                  GCEProvider))]),
+                               BZ(1486529, forced_streams=["5.7", "5.8"],
+                                  unblock=lambda provider: not provider.one_of(GCEProvider))]),
     test_requirements.chargeback
 ]
 
