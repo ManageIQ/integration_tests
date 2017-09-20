@@ -65,8 +65,6 @@ class CloudProvider(Pretty, CloudInfraProvider):
     vm_name = "Instances"
     template_name = "Images"
     db_types = ["CloudManager"]
-    main_view = CloudProvidersView
-    details_view = CloudProviderDetailsView
 
     def __init__(self, name=None, endpoints=None, zone=None, key=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)

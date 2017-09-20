@@ -60,8 +60,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     page_name = "infrastructure"
     templates_destination_name = "Templates"
     db_types = ["InfraManager"]
-    main_view = InfraProvidersView
-    details_view = InfraProviderDetailsView
 
     def __init__(
             self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
