@@ -304,7 +304,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         else:
             view = navigate_to(self, 'AllForProvider', use_resetter=False)
 
-        view.toolbar.view_selector.select('Grid View')
+        if 'Grid View' != view.toolbar.view_selector.selected:
+            view.toolbar.view_selector.select('Grid View')
 
         if use_search:
             search.normal_search(self.name)

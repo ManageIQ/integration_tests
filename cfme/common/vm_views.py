@@ -22,10 +22,17 @@ class InstanceQuadIconEntity(BaseQuadIconEntity):
     @property
     def data(self):
         br = self.browser
-        state = br.get_attribute('style', self.QUADRANT.format(pos='b'))
-        state = state.split('"')[1]
-        state = os.path.split(state)[1]
-        state = os.path.splitext(state)[0]
+        try:
+            if br.product_version > '5.8':
+                state = br.get_attribute('style', self.QUADRANT.format(pos='b'))
+                state = state.split('"')[1]
+            else:
+                state = br.get_attribute('src', self.QUADRANT.format(pos='b'))
+
+            state = os.path.split(state)[1]
+            state = os.path.splitext(state)[0]
+        except IndexError:
+            state = ''
 
         if br.is_displayed(self.QUADRANT.format(pos='g')):
             policy = br.get_attribute('src', self.QUADRANT.format(pos='g'))
