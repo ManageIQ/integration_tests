@@ -4,7 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import Vm, InfraVmDetailsView
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
@@ -43,7 +43,7 @@ def set_and_test_default_view(group_name, view, page):
 
 
 def check_vm_visibility():
-    view = navigate_to(Vm, 'Explore')
+    view = navigate_to(Vm, 'All')
     value = view.sidebar.vmstemplates.tree.read_contents()
     # Selecting the path and last Vm in the accordion to perform click
     tree_root = value[0]
@@ -53,6 +53,7 @@ def check_vm_visibility():
     tree_vm = value[1][0][1][0][1][length - 1]
     view.sidebar.vmstemplates.tree.click_path(tree_root,
                                               tree_provider, tree_datacenter, tree_vm)
+    view = view.browser.create_view(InfraVmDetailsView)
     return "Instance" in view.title.text
 
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different

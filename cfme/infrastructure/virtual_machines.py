@@ -1337,12 +1337,3 @@ class EditTagsFromDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
-
-
-@navigator.register(Vm, 'Explore')
-class VmExplore(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-    VIEW = InfraVmDetailsView
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Virtual Machines')
