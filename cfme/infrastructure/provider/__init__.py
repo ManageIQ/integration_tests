@@ -195,9 +195,8 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
         view = navigate_to(self, 'Clusters')
-        cluster_col = self.appliance.get(ClusterCollection)
-        # todo: to handle clusters on multiple pages
-        return [cluster_col.instantiate(e.name, self) for e in view.entities.get_all()]
+        col = self.appliance.get(ClusterCollection)
+        return [col.instantiate(e.name, self) for e in view.entities.get_all(surf_pages=True)]
 
     def as_fill_value(self):
         return self.name
