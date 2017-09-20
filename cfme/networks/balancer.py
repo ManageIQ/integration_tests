@@ -15,7 +15,7 @@ class BalancerCollection(BaseCollection):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return Balancer(name=name, collection=self)
+        return Balancer(collection=self, name=name)
 
     def all(self):
         if self.parent:
@@ -37,7 +37,7 @@ class Balancer(WidgetasticTaggable, BaseEntity):
     quad_name = None
     db_types = ['NetworkBalancer']
 
-    def __init__(self, name, collection, provider=None):
+    def __init__(self, collection, name, provider=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.name = name

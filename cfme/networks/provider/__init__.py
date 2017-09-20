@@ -34,7 +34,7 @@ class NetworkProviderCollection(BaseCollection):
         self.appliance = appliance
 
     def instantiate(self, name):
-        return NetworkProvider(name=name, collection=self)
+        return NetworkProvider(collection=self, name=name)
 
     def all(self):
         view = navigate_to(self, 'All')
@@ -61,7 +61,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     detail_page_suffix = 'provider_detail'
     db_types = ['NetworksManager']
 
-    def __init__(self, name, provider=None, collection=None):
+    def __init__(self, collection, name, provider=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.name = name

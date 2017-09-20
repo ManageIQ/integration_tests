@@ -29,9 +29,9 @@ def test_port_detail_name(provider, appliance):
 
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
-def test_port_net_prov(provider):
+def test_port_net_prov(provider, appliance):
     """ Test functionality of quadicon and detail network providers"""
-    prov_collection = NetworkProviderCollection()
+    prov_collection = NetworkProviderCollection(appliance)
 
     for net_provider in prov_collection.all():
         for port in net_provider.ports.all():

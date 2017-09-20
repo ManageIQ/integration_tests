@@ -17,7 +17,7 @@ class NetworkRouterCollection(BaseCollection):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return NetworkRouter(name=name, appliance=self.appliance, collection=self)
+        return NetworkRouter(collection=self, name=name)
 
     def all(self):
         if self.parent:
@@ -37,7 +37,7 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
     quad_name = None
     db_types = ['NetworkRouter']
 
-    def __init__(self, name, collection, provider=None):
+    def __init__(self, collection, name, provider=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.name = name

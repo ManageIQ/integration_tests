@@ -17,7 +17,7 @@ class SecurityGroupCollection(BaseCollection):
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return SecurityGroup(name=name, collection=self)
+        return SecurityGroup(collection=self, name=name)
 
     def all(self):
         if self.parent:
@@ -37,7 +37,7 @@ class SecurityGroup(WidgetasticTaggable, BaseEntity):
     quad_name = None
     db_types = ['SecurityGroup']
 
-    def __init__(self, name, collection, provider=None):
+    def __init__(self, collection, name, provider=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.name = name
