@@ -4,6 +4,7 @@ from widgetastic.utils import Fillable
 
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToObject
+from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View
 
 from cfme.base.ui import Server
 from cfme.common import TagPageView
@@ -16,7 +17,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProvidersManagePoliciesView,
                                         InfraProvidersView)
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.cluster import ClusterCollection, ClusterAllFromProviderView
+from cfme.infrastructure.cluster import ClusterCollection, ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
 from cfme.utils import conf, version
 from cfme.utils.appliance import Navigatable
@@ -25,6 +26,20 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
+
+
+class ProviderClustersView(ClusterView):
+    """The all view page for clusters open from provider detail page"""
+    @property
+    def is_displayed(self):
+        """Determine if this page is currently being displayed"""
+        return (
+            self.logged_in_as_current_user and
+            self.entities.title.text == '{p}(All Clusters)'.format(p=self.context['object'].name))
+
+    toolbar = View.nested(ClusterToolbar)
+    breadcrumb = BreadCrumb()
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
 class InfraProvider(Pretty, CloudInfraProvider, Fillable):
@@ -179,12 +194,10 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
 
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
-        view = navigate_to(self, 'Details')
-        view.contents.relationships.click_at('Clusters')
-        cluster_view = self.create_view(ClusterAllFromProviderView)
+        view = navigate_to(self, 'Clusters')
         cluster_col = self.appliance.get(ClusterCollection)
         # todo: to handle clusters on multiple pages
-        return [cluster_col.instantiate(e.name, self) for e in cluster_view.entities.get_all()]
+        return [cluster_col.instantiate(e.name, self) for e in view.entities.get_all()]
 
     def as_fill_value(self):
         return self.name
@@ -307,6 +320,16 @@ class Timelines(CFMENavigateStep):
     def step(self):
         mon = self.prerequisite_view.toolbar.monitoring
         mon.item_select('Timelines')
+
+
+@navigator.register(InfraProvider, 'Clusters')
+class DetailsFromProvider(CFMENavigateStep):
+    VIEW = ProviderClustersView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        """Navigate to the correct view"""
+        self.prerequisite_view.contents.relationships.click_at('Clusters')
 
 
 def get_all_providers():

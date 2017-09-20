@@ -90,20 +90,6 @@ class ClusterAllView(ClusterView):
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
-class ClusterAllFromProviderView(ClusterView):
-    """The all view page for clusters open from provider detail page"""
-    @property
-    def is_displayed(self):
-        """Determine if this page is currently being displayed"""
-        return (
-            self.logged_in_as_current_user and
-            self.entities.title.text == '{p}(All Clusters)'.format(p=self.context['object'].name))
-
-    toolbar = View.nested(ClusterToolbar)
-    breadcrumb = BreadCrumb()
-    including_entities = View.include(BaseEntitiesView, use_parent=True)
-
-
 class ClusterDetailsView(ClusterView):
     """The details page of a cluster"""
     @property
@@ -340,13 +326,3 @@ class EditTagsFromDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
-
-# TODO: This doesn't seem to be used, and needs to be migrated to Widgetastic
-# @navigator.register(Cluster, 'DetailsFromProvider')
-# class DetailsFromProvider(CFMENavigateStep):
-    # def step(self, *args, **kwargs):
-        # """Navigate to the correct view"""
-        # navigate_to(self.obj.provider, 'Details')
-        # list_acc.select('Relationships', 'Show all managed Clusters', by_title=True,
-        #                 partial=False)
-        # sel.click(Quadicon(self.obj.name, self.obj.quad_name))
