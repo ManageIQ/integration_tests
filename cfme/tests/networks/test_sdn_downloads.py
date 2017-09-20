@@ -42,9 +42,9 @@ def test_download_lists_base(filetype, objecttype):
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
 @pytest.mark.parametrize("collection", OBJECTCOLLECTIONS)
-def test_download_pdf_summary(collection, provider):
+def test_download_pdf_summary(appliance, collection, provider):
     """ Download the summary details of specific object """
-    instance = collection()
+    instance = appliance.get(collection)
     if instance.all():
         random_obj = instance.all()[0].name
         try:

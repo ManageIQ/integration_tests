@@ -4,20 +4,20 @@ from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import SubnetDetailsView, SubnetView
 from cfme.utils import providers, version
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
-class SubnetCollection(Navigatable):
+class SubnetCollection(BaseCollection):
     """ Collection object for Subnet object
         Note: Network providers object are not implemented in mgmt
     """
-    def __init__(self, appliance=None, parent_provider=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance, parent_provider=None):
+        self.appliance = appliance
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return Subnet(name=name, appliance=self.appliance, collection=self)
+        return Subnet(collection=self, name=name)
 
     def all(self):
         if self.parent:
@@ -28,7 +28,7 @@ class SubnetCollection(Navigatable):
         return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 
-class Subnet(WidgetasticTaggable, Navigatable):
+class Subnet(WidgetasticTaggable, BaseEntity):
     """Class representing subnets in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
@@ -37,9 +37,9 @@ class Subnet(WidgetasticTaggable, Navigatable):
     quad_name = None
     db_types = ['NetworkSubnet']
 
-    def __init__(self, name, provider=None, collection=None, appliance=None):
-        self.collection = collection or SubnetCollection(appliance=appliance)
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+    def __init__(self, collection, name, provider=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         self.provider = provider
 
