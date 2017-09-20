@@ -33,7 +33,7 @@ pytest_generate_tests = testgen.generate(
 
 
 @pytest.yield_fixture(scope="function")
-def testing_instance(request, setup_provider, provider, provisioning, vm_name):
+def testing_instance(request, setup_provider, provider, provisioning, vm_name, tag):
     """ Fixture to prepare instance parameters for provisioning
     """
     image = provisioning['image']['name']
@@ -55,11 +55,18 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
 
     # Check whether auto-selection of environment is passed
+    auto = False  # By default provisioning will be manual
     try:
-        auto = request.param
+        parameter = request.param
+        if parameter == 'tag':
+            inst_args['purpose'] = {
+                'apply_tags': ('{} *'.format(tag.category.display_name), tag.display_name)
+            }
+        else:
+            auto = parameter
     except AttributeError:
         # in case nothing was passed just skip
-        auto = False
+        pass
 
     # All providers other than Azure
     if not provider.one_of(AzureProvider):
@@ -125,12 +132,14 @@ def vm_name(request):
     return random_vm_name('prov')
 
 
-def provision_check(provider, instance, inst_args, image):
+@pytest.fixture(scope='function')
+def provisioned_instance(provider, testing_instance, appliance):
     """ Checks provisioning status for instance """
+    instance, inst_args, image = testing_instance
     instance.create(**inst_args)
     logger.info('Waiting for cfme provision request for vm %s', instance.name)
     request_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     try:
         provision_request.wait_for_request(method='ui')
     except Exception as e:
@@ -154,15 +163,13 @@ def provision_check(provider, instance, inst_args, image):
 
 
 @pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(provider, testing_instance, soft_assert):
+def test_provision_from_template(provider, provisioned_instance, soft_assert):
     """ Tests instance provision from template
 
     Metadata:
         test_flag: provision
     """
-    instance, inst_args, image = testing_instance
-    instance = provision_check(provider, instance, inst_args, image)
-    soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+    soft_assert(provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider) or
@@ -625,7 +632,8 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
                 provider.mgmt.delete_volume(volume_id)
 
 
-def test_cloud_provision_with_tag(provider, testing_instance, soft_assert):
+@pytest.mark.parametrize('testing_instance', ['tag'], indirect=True)
+def test_cloud_provision_with_tag(provisioned_instance, soft_assert, tag):
     """ Tests tagging instance using provisioning dialogs.
 
     Steps:
@@ -636,11 +644,9 @@ def test_cloud_provision_with_tag(provider, testing_instance, soft_assert):
     Metadata:
         test_flag: provision
     """
-    instance, inst_args, image = testing_instance
-    inst_args['purpose'] = {'apply_tags': ('Service Level *', 'Gold')}
-    instance = provision_check(provider, instance, inst_args, image)
-
-    soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
-    tags = instance.get_tags()
-    assert any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
-               for tag in tags), "Service Level: Gold not in tags ({})".format(str(tags))
+    soft_assert(provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+    tags = provisioned_instance.get_tags()
+    assert any(
+        instance_tag.category.display_name == tag.category.display_name and
+        instance_tag.display_name == tag.display_name for instance_tag in tags), (
+        "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))
