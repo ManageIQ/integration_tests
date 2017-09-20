@@ -371,6 +371,7 @@ class DefaultViewForm(MySettingsView):
     templates = ViewButtonGroup("Services", "Templates & Images")
     vms = ViewButtonGroup("Infrastructure", "VMs")
     vms_instances = ViewButtonGroup("Services", "VMs & Instances")
+    cloud_stacks = ViewButtonGroup('Clouds', 'Stacks')
 
     containers_providers = ViewButtonGroup("Containers", "Containers Providers")
     container_nodes = ViewButtonGroup("Containers", "Nodes")
@@ -417,7 +418,8 @@ class DefaultView(Updateable, Navigatable):
                'Builds': 'container_builds',
                'Volumes': 'container_volumes',
                'Templates': 'container_templates',
-               'Configuration Management Providers': 'configuration_management_providers'
+               'Configuration Management Providers': 'configuration_management_providers',
+               'Stacks': 'cloud_stacks'
                }
 
     def __init__(self, appliance=None):
