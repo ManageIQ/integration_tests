@@ -90,7 +90,7 @@ class Tab(Navigatable):
     @cached_property
     def boxes(self):
         from .dialog_box import BoxCollection
-        return BoxCollection(self)
+        return BoxCollection(self.appliance, self)
 
     @property
     def tree_path(self):
