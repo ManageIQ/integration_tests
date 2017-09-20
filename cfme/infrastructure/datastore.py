@@ -10,7 +10,7 @@ from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.common.host_views import HostsView
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
@@ -116,14 +116,14 @@ class RegisteredHostsView(HostsView):
         return False
 
 
-class DatastoreCollection(NavigatableMixin):
+class DatastoreCollection(BaseCollection):
     """Collection class for `cfme.infrastructure.datastore.Datastore`"""
 
     def __init__(self, appliance):
         self.appliance = appliance
 
     def instantiate(self, name, provider, type=None):
-        return Datastore(name, provider, self, type=type)
+        return Datastore(self, name, provider, type=type)
 
     def delete(self, *datastores):
         """
@@ -170,7 +170,7 @@ class DatastoreCollection(NavigatableMixin):
                 '"{}": scan successfully initiated'.format(datastore.name))
 
 
-class Datastore(Pretty, NavigatableMixin, WidgetasticTaggable):
+class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
     """ Model of an infrastructure datastore in cfme
 
     Args:
@@ -179,7 +179,7 @@ class Datastore(Pretty, NavigatableMixin, WidgetasticTaggable):
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name, provider, collection, type=None):
+    def __init__(self, collection, name, provider, type=None):
         self.name = name
         self.type = type
         self.provider = provider
