@@ -9,7 +9,7 @@ from widgetastic_manageiq import Table, PaginationPane
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
 from .playbooks import PlaybooksCollection
@@ -86,7 +86,7 @@ class RepositoryEditView(RepositoryFormView):
         )
 
 
-class RepositoryCollection(NavigatableMixin):
+class RepositoryCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.ansible.repositories.Repository`."""
 
     def __init__(self, appliance):
@@ -95,9 +95,9 @@ class RepositoryCollection(NavigatableMixin):
     def instantiate(self, name, url, description=None, scm_credentials=None,
                     scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
         return Repository(
+            self,
             name,
             url,
-            collection=self,
             description=description,
             scm_credentials=scm_credentials,
             scm_branch=scm_branch,
@@ -166,7 +166,7 @@ class RepositoryCollection(NavigatableMixin):
         result = []
         for row in self.appliance.db.client.session.query(table):
             result.append(
-                Repository(
+                self.instantiate(
                     row.name,
                     row.scm_url,
                     description=row.description,
@@ -210,10 +210,10 @@ class RepositoryCollection(NavigatableMixin):
                 'Delete of Repository "{}" was successfully initiated.'.format(repository.name))
 
 
-class Repository(NavigatableMixin):
+class Repository(BaseEntity):
     """A class representing one Embedded Ansible repository in the UI."""
 
-    def __init__(self, name, url, collection, description=None, scm_credentials=None,
+    def __init__(self, collection, name, url, description=None, scm_credentials=None,
                  scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
         self.name = name
         self.url = url
