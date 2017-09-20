@@ -3,7 +3,7 @@ import re
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.timeutil import parsetime
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
@@ -218,15 +218,19 @@ class ParticularDashboardView(DashboardView):
             self.dashboards(title=self.obj.name).is_active)
 
 
-class DashboardCollection(Navigatable):
+class DashboardCollection(BaseCollection):
     """Represents the Dashboard page and can jump around various dashboards present."""
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
     @property
     def default(self):
         """Returns an instance of the ``Default Dashboard``"""
         return self.instantiate('Default Dashboard')
 
     def instantiate(self, name):
-        return Dashboard(name, collection=self)
+        return Dashboard(collection=self, name=name)
 
     def all(self):
         view = navigate_to(self.appliance.server, 'Dashboard')
@@ -254,12 +258,10 @@ class DashboardCollection(Navigatable):
         navigate_to(self.appliance.server, 'Dashboard').ensure_zoom_closed()
 
 
-class Dashboard(Navigatable):
-    def __init__(self, name, collection=None, appliance=None):
-        if collection is None:
-            collection = DashboardCollection(appliance=appliance)
+class Dashboard(BaseEntity):
+    def __init__(self, collection, name):
         self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.appliance = self.collection.appliance
         self.name = name
 
     @property
@@ -269,7 +271,7 @@ class Dashboard(Navigatable):
 
     @cached_property
     def widgets(self):
-        return DashboardWidgetCollection(self)
+        return DashboardWidgetCollection(self.appliance, self)
 
     def drag_and_drop(self, dragged_widget_or_name, dropped_widget_or_name):
         """Drags and drops widgets onto each other."""
@@ -307,9 +309,9 @@ class DashboardDetails(CFMENavigateStep):
         self.prerequisite_view.dashboards(title=self.obj.name).select()
 
 
-class DashboardWidgetCollection(Navigatable):
-    def __init__(self, dashboard):
-        super(DashboardWidgetCollection, self).__init__(appliance=dashboard.appliance)
+class DashboardWidgetCollection(BaseCollection):
+    def __init__(self, appliance, dashboard):
+        self.appliance = appliance
         self.dashboard = dashboard
 
     @property
@@ -317,7 +319,7 @@ class DashboardWidgetCollection(Navigatable):
         return self.dashboard.dashboard_view
 
     def instantiate(self, name):
-        return DashboardWidget(name, self)
+        return DashboardWidget(self, name)
 
     def all(self, content_type=None):  # widgets
         view = self.dashboard_view
@@ -334,16 +336,16 @@ class DashboardWidgetCollection(Navigatable):
         navigate_to(self.dashboard, 'Details').reset_widgets()
 
 
-class DashboardWidget(Navigatable):
+class DashboardWidget(BaseEntity):
     """Represents a single UI dashboard widget.
 
     Args:
         name: Name of the widget as displayed in the title.
         widget_collection: The widget collection linked to a dashboard
     """
-    def __init__(self, name, widget_collection):
-        self.collection = widget_collection
-        Navigatable.__init__(self, appliance=widget_collection.appliance)
+    def __init__(self, collection, name):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
 
     @property
