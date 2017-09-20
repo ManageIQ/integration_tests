@@ -18,7 +18,7 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
 
@@ -97,7 +97,7 @@ class PlaybooksView(PlaybookBaseView):
         )
 
 
-class PlaybooksCollection(NavigatableMixin):
+class PlaybooksCollection(BaseCollection):
     """Collection object for the :py:class:`Playbook`."""
 
     def __init__(self, appliance, parent_repository):
@@ -105,7 +105,7 @@ class PlaybooksCollection(NavigatableMixin):
         self.parent = parent_repository
 
     def instantiate(self, name, repository):
-        return Playbook(name, repository, self)
+        return Playbook(self, name, repository)
 
     def all(self):
         view = navigate_to(Server, "AnsiblePlaybooks")
@@ -118,10 +118,10 @@ class PlaybooksCollection(NavigatableMixin):
         return playbooks
 
 
-class Playbook(NavigatableMixin):
+class Playbook(BaseEntity):
     """A class representing one Embedded Ansible playbook in the UI."""
 
-    def __init__(self, name, repository, collection):
+    def __init__(self, collection, name, repository):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.name = name
