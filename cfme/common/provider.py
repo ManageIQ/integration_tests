@@ -12,7 +12,7 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, ItemNotFound)
 from cfme.utils import ParamClassName, version, conf
 from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.net import resolve_hostname
@@ -167,7 +167,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                         add_view.flash.assert_success_message(
                             'Credential validation was successful')
 
-            main_view = self.create_view(self.main_view)
+            main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
             if cancel:
                 created = False
                 add_view.cancel.click()
@@ -273,8 +273,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 if hasattr(endp_view, 'validate') and endp_view.validate.is_displayed:
                     endp_view.validate.click()
 
-        details_view = self.create_view(self.details_view)
-        main_view = self.create_view(self.main_view)
+        details_view = self.create_view(navigator.get_class(self, 'Details').VIEW)
+        main_view = self.create_view(navigator.get_class(self, 'All').VIEW)
 
         if cancel:
             edit_view.cancel.click()
