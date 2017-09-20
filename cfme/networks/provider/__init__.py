@@ -111,7 +111,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable):
 
     @cached_property
     def ports(self):
-        return NetworkPortCollection(parent_provider=self)
+        return NetworkPortCollection(self.appliance, parent_provider=self)
 
     @cached_property
     def routers(self):
