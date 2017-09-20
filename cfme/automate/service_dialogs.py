@@ -6,7 +6,7 @@ from widgetastic_patternfly import CandidateNotFound, Button, Input, Dropdown
 from cached_property import cached_property
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateCustomizationView
@@ -73,7 +73,7 @@ class DetailsDialogView(AutomateCustomizationView):
         )
 
 
-class DialogCollection(NavigatableMixin):
+class DialogCollection(BaseCollection):
     """Collection object for the :py:class:`Dialog`."""
 
     tree_path = ['All Dialogs']
@@ -82,7 +82,7 @@ class DialogCollection(NavigatableMixin):
         self.appliance = appliance
 
     def instantiate(self, label, description=None, submit=False, cancel=False):
-        return Dialog(label, self, description=description, submit=submit, cancel=cancel)
+        return Dialog(self, label, description=description, submit=submit, cancel=cancel)
 
     def create(self, label=None, description=None, submit=False, cancel=False):
         """ Create dialog label method """
@@ -97,10 +97,10 @@ class DialogCollection(NavigatableMixin):
             label=label, description=description, submit=submit, cancel=cancel)
 
 
-class Dialog(NavigatableMixin, Fillable):
+class Dialog(BaseEntity, Fillable):
     """A class representing one Domain in the UI."""
     def __init__(
-            self, label, collection, description=None, submit=False, cancel=False):
+            self, collection, label, description=None, submit=False, cancel=False):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.label = label
