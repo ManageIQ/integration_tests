@@ -237,7 +237,7 @@ class Class(Navigatable, Copiable):
     @cached_property
     def instances(self):
         from .instance import InstanceCollection
-        return InstanceCollection(self)
+        return InstanceCollection(self.appliance, self)
 
     @cached_property
     def methods(self):
