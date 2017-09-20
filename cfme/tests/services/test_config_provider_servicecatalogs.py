@@ -80,7 +80,7 @@ def test_order_tower_catalog_item(catalog_item, request):
     cells = {'Description': catalog_item.name}
     order_request = Request(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
-    assert order_request.is_succeeded()
+    assert order_request.is_succeeded(method='ui')
     DefaultView.set_default_view("Configuration Management Providers", "List View")
 
 
@@ -98,6 +98,6 @@ def test_retire_ansible_service(appliance, catalog_item, request):
     cells = {'Description': catalog_item.name}
     order_request = Request(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
-    assert order_request.is_succeeded()
+    assert order_request.is_succeeded(method='ui')
     myservice = MyService(appliance, catalog_item.name)
     myservice.retire()
