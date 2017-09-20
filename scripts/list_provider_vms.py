@@ -97,18 +97,18 @@ def list_vms(provider_key, output_queue):
                     vm_type = provider.vm_hardware_configuration(vm_name)
                 finally:
                     vm_type = vm_type or '--'
-                    output_list.append([provider_key, vm_name, status, creation, str(vm_type)])
 
             except Exception as ex:
                 print('Exception during provider processing on {}: {}'
                       .format(provider_key, ex.message))
+                continue
+            finally:
                 # Add the VM to the list anyway, we just might not have all metadata
                 output_list.append([provider_key,
                                     vm_name,
                                     status or NULL,
                                     creation or NULL,
                                     str(vm_type) or NULL])
-                continue
 
     output_queue.put(output_list)
     return
