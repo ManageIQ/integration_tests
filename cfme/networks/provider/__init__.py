@@ -115,7 +115,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable):
 
     @cached_property
     def routers(self):
-        return NetworkRouterCollection(parent_provider=self)
+        return NetworkRouterCollection(self.appliance, parent_provider=self)
 
     @cached_property
     def security_groups(self):
