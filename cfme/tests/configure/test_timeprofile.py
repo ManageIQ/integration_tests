@@ -54,7 +54,7 @@ def test_timeprofile_name_max_character_validation():
 
 
 @pytest.mark.sauce
-def test_days_required_error_validation(appliance):
+def test_days_required_error_validation():
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
@@ -63,16 +63,13 @@ def test_days_required_error_validation(appliance):
         hours=True)
     view = navigate_to(st.Timeprofile, 'All')
     tp.create(cancel=True)
-    help_blocks = appliance.browser.widgetastic.elements("//span[contains(@class,"
-                                                         " 'help-block')]", check_visibility=True)
-    for help_block in help_blocks:
-        if help_block == "At least one day needs to be selected":
-            assert view.timeprofile_form.save_button.disabled
+    if view.timeprofile_form.help_block.read() == "At least one day needs to be selected":
+        assert view.timeprofile_form.save_button.disabled
     view.timeprofile_form.cancel_button.click()
 
 
 @pytest.mark.sauce
-def test_hours_required_error_validation(appliance):
+def test_hours_required_error_validation():
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
@@ -81,11 +78,8 @@ def test_hours_required_error_validation(appliance):
         hours=False)
     view = navigate_to(st.Timeprofile, 'All')
     tp.create(cancel=True)
-    help_blocks = appliance.browser.widgetastic.elements("//span[contains(@class,"
-                                                         " 'help-block')]", check_visibility=True)
-    for help_block in help_blocks:
-        if help_block == "At least one hour needs to be selecte":
-            assert view.timeprofile_form.save_button.disabled
+    if view.timeprofile_form.help_block.read() == "At least one hour needs to be selecte":
+        assert view.timeprofile_form.save_button.disabled
     view.timeprofile_form.cancel_button.click()
 
 

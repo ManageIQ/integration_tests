@@ -32,6 +32,7 @@ class TimeProfileAddForm(View):
     table = Table("//div[@id='main_div']//table")
     save_edit_button = Button('Save')
     cancel_button = Button('Cancel')
+    help_block = Text("//span[contains(@class, 'help-block')]")
 
 
 class TimeprofileAddEntities(View):
