@@ -80,8 +80,8 @@ def tags(request, rest_api, categories):
     return _creating_skeleton(request, rest_api, 'tags', tags, substr_search=True)
 
 
-def dialog():
-    service_dialogs = DialogCollection()
+def dialog(appliance):
+    service_dialogs = appliance.get(DialogCollection)
     dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
     element_data = dict(
         ele_label="ele_{}".format(fauxfactory.gen_alphanumeric()),
@@ -100,13 +100,13 @@ def dialog():
     return service_dialog
 
 
-def services(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
+def services(request, appliance, a_provider, service_dialog=None, service_catalog=None):
     """
     The attempt to add the service entities via web
     """
     service_template = service_templates_ui(
         request,
-        rest_api,
+        appliance,
         service_dialog=service_dialog,
         service_catalog=service_catalog,
         a_provider=a_provider,
@@ -114,17 +114,17 @@ def services(request, rest_api, a_provider, service_dialog=None, service_catalog
     )
 
     service_template = service_template[0]
-    service_catalog = rest_api.get_entity(
+    service_catalog = appliance.rest_api.get_entity(
         'service_catalogs',
         service_template.service_template_catalog_id
     )
-    template_subcollection = rest_api.get_entity(
+    template_subcollection = appliance.rest_api.get_entity(
         service_catalog.service_templates,
         service_template.id
     )
     template_subcollection.action.order()
-    results = rest_api.response.json()
-    service_request = rest_api.get_entity('service_requests', results['id'])
+    results = appliance.rest_api.response.json()
+    service_request = appliance.rest_api.get_entity('service_requests', results['id'])
 
     def _order_finished():
         service_request.reload()
@@ -136,7 +136,7 @@ def services(request, rest_api, a_provider, service_dialog=None, service_catalog
 
     service_name = re.search(
         r'\[({}[0-9-]*)\] '.format(template_subcollection.name), service_request.message).group(1)
-    provisioned_service = rest_api.collections.services.get(name=service_name)
+    provisioned_service = appliance.rest_api.collections.services.get(name=service_name)
 
     @request.addfinalizer
     def _finished():
@@ -150,9 +150,9 @@ def services(request, rest_api, a_provider, service_dialog=None, service_catalog
     return [provisioned_service]
 
 
-def service_data(request, rest_api, a_provider, service_dialog=None, service_catalog=None):
-    prov_service = services(request, rest_api, a_provider, service_dialog, service_catalog).pop()
-    prov_vm = get_vms_in_service(rest_api, prov_service).pop()
+def service_data(request, appliance, a_provider, service_dialog=None, service_catalog=None):
+    prov_service = services(request, appliance, a_provider, service_dialog, service_catalog).pop()
+    prov_vm = get_vms_in_service(appliance.rest_api, prov_service).pop()
     return {'service_name': prov_service.name, 'vm_name': prov_vm.name}
 
 
@@ -200,12 +200,12 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-def service_templates_ui(request, rest_api, service_dialog=None, service_catalog=None,
+def service_templates_ui(request, appliance, service_dialog=None, service_catalog=None,
         a_provider=None, num=4):
     if not service_dialog:
-        service_dialog = dialog()
+        service_dialog = dialog(appliance)
     if not service_catalog:
-        service_catalog = service_catalog_obj(request, rest_api)
+        service_catalog = service_catalog_obj(request, appliance.rest_api)
 
     catalog_item_type = 'Generic'
     provisioning_args = {}
@@ -256,7 +256,7 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
     for catalog_item in catalog_items:
         catalog_item.create()
 
-    collection = rest_api.collections.service_templates
+    collection = appliance.rest_api.collections.service_templates
 
     for new_name in new_names:
         wait_for(lambda: collection.find_by(name=new_name) or False, num_sec=180, delay=10)
@@ -273,14 +273,14 @@ def service_templates_ui(request, rest_api, service_dialog=None, service_catalog
     return s_tpls
 
 
-def service_templates_rest(request, rest_api, service_dialog=None, service_catalog=None, num=4):
+def service_templates_rest(request, appliance, service_dialog=None, service_catalog=None, num=4):
     if not service_dialog:
-        service_dialog = dialog()
+        service_dialog = dialog(appliance)
     if not service_catalog:
-        service_catalog = service_catalog_obj(request, rest_api)
+        service_catalog = service_catalog_obj(request, appliance.rest_api)
 
-    catalog_id = rest_api.collections.service_catalogs.get(name=service_catalog.name).id
-    dialog_id = rest_api.collections.service_dialogs.get(label=service_dialog.label).id
+    catalog_id = appliance.rest_api.collections.service_catalogs.get(name=service_catalog.name).id
+    dialog_id = appliance.rest_api.collections.service_dialogs.get(label=service_dialog.label).id
 
     data = []
     for _ in range(num):
@@ -305,13 +305,13 @@ def service_templates_rest(request, rest_api, service_dialog=None, service_catal
             }
         })
 
-    return _creating_skeleton(request, rest_api, "service_templates", data)
+    return _creating_skeleton(request, appliance.rest_api, "service_templates", data)
 
 
-def service_templates(request, rest_api, service_dialog=None, service_catalog=None, num=4):
+def service_templates(request, appliance, service_dialog=None, service_catalog=None, num=4):
     tmplt = service_templates_ui if version.current_version() < '5.8' else service_templates_rest
     return tmplt(
-        request, rest_api, service_dialog=service_dialog, service_catalog=service_catalog, num=num)
+        request, appliance, service_dialog=service_dialog, service_catalog=service_catalog, num=num)
 
 
 def automation_requests_data(vm, requests_collection=False, approve=True, num=4):

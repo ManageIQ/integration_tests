@@ -105,7 +105,7 @@ class TestTagsViaREST(object):
 
     @pytest.fixture(scope="module")
     def service_templates(self, request, appliance):
-        return _service_templates(request, appliance.rest_api)
+        return _service_templates(request, appliance)
 
     @pytest.fixture(scope="module")
     def vm(self, request, a_provider, appliance):
