@@ -1,20 +1,15 @@
 """ A model of an Infrastructure Cluster in CFME
 
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Cluster pages.
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
-                                  PaginationPane, Search, SummaryTable, Table, Text, TimelinesView)
+                                  SummaryTable, Text, TimelinesView, BaseEntitiesView)
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
-from cfme.exceptions import ClusterNotFound
-from cfme.web_ui import match_location
+from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.pretty import Pretty
@@ -58,16 +53,6 @@ class ClusterDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class ClusterEntities(View):
-    """A list of clusters"""
-    title = Text('//div[@id="main-content"]//h1')
-    table = Table('//div[@id="list_grid"]//table')
-    search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
-
-
 class ClusterDetailsEntities(View):
     """A cluster properties on the details page"""
     breadcrumb = BreadCrumb()
@@ -89,9 +74,7 @@ class ClusterView(BaseLoggedInPage):
         """Determine if the browser has navigated to the Cluster page"""
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Clusters'] and
-            # TODO: needs to be converted to Widgetastic once we have a replacement
-            match_location(controller='ems_cluster', title='Clusters'))
+            self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Clusters'])
 
 
 class ClusterAllView(ClusterView):
@@ -104,8 +87,7 @@ class ClusterAllView(ClusterView):
             self.entities.title.text == 'Clusters')
 
     toolbar = View.nested(ClusterToolbar)
-    entities = View.nested(ClusterEntities)
-    paginator = PaginationPane()
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
 
 
 class ClusterDetailsView(ClusterView):
@@ -200,8 +182,8 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
         col = self.appliance.rest_api.collections
         self._id = [
             cl.id
-            for cl in col.clusters.all
-            if cl.name == self._short_name and cl.ems_id == self.provider.id
+            for cl in col.clusters
+            if cl.name in (self._short_name, self.name) and cl.ems_id == self.provider.id
         ][-1]
 
     def delete(self, cancel=True, wait=False):
@@ -225,7 +207,6 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
 
         # flash message only displayed if it was deleted
         if not cancel:
-            view.entities.flash.assert_no_error()
             msg = 'The selected Clusters / Deployment Roles was deleted'
             view.entities.flash.assert_success_message(msg)
 
@@ -273,9 +254,9 @@ class Cluster(Pretty, NavigatableMixin, WidgetasticTaggable):
     def exists(self):
         view = navigate_to(self.collection, 'All')
         try:
-            view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+            view.entities.get_entity(by_name=self.name, surf_pages=True)
             return True
-        except NoSuchElementException:
+        except ItemNotFound:
             return False
 
     @property
@@ -307,9 +288,9 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         """Reset the view"""
-        self.view.toolbar.view_selector.select('Grid View')
-        self.view.paginator.check_all()
-        self.view.paginator.uncheck_all()
+        if self.view.entities.paginator.exists:
+            self.view.entities.paginator.check_all()
+            self.view.entities.paginator.uncheck_all()
 
 
 @navigator.register(Cluster, 'Details')
@@ -319,19 +300,14 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
-        self.prerequisite_view.toolbar.view_selector.select('List View')
-        version = self.obj.appliance.version
-        if (version >= '5.7.4' and version < '5.8') or version >= '5.8.1.2':
-            cluster_name = self.obj.short_name
-        else:
-            cluster_name = self.obj.name
+        # todo: figure out why the same cfme version shows clusters with short and long name
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=cluster_name)
-        except NoSuchElementException:
-            raise ClusterNotFound('Cluster {} not found'.format(cluster_name))
-        row.click()
+            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.short_name,
+                                                                surf_pages=True)
+        except ItemNotFound:
+            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                                surf_pages=True)
+        entity.click()
 
 
 @navigator.register(Cluster, 'Timelines')
@@ -351,13 +327,3 @@ class EditTagsFromDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
-
-# TODO: This doesn't seem to be used, and needs to be migrated to Widgetastic
-# @navigator.register(Cluster, 'DetailsFromProvider')
-# class DetailsFromProvider(CFMENavigateStep):
-    # def step(self, *args, **kwargs):
-        # """Navigate to the correct view"""
-        # navigate_to(self.obj.provider, 'Details')
-        # list_acc.select('Relationships', 'Show all managed Clusters', by_title=True,
-        #                 partial=False)
-        # sel.click(Quadicon(self.obj.name, self.obj.quad_name))
