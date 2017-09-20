@@ -10,7 +10,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessa
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
 
@@ -155,11 +155,14 @@ class CredentialEditView(CredentialFormView):
                 continue
 
 
-class CredentialsCollection(NavigatableMixin):
+class CredentialsCollection(BaseCollection):
     """Collection object for the :py:class:`Credential`."""
 
     def __init__(self, appliance):
         self.appliance = appliance
+
+    def instantiate(self, name, credential_type, **credentials):
+        return Credential(self, name, credential_type, **credentials)
 
     def create(self, name, credential_type, **credentials):
         add_page = navigate_to(self, "Add")
@@ -219,12 +222,12 @@ class CredentialsCollection(NavigatableMixin):
             fail_func=credentials_list_page.browser.selenium.refresh,
             timeout=300
         )
-        return Credential(name, credential_type, appliance=self.appliance, **credentials)
+        return self.instantiate(name, credential_type, **credentials)
 
 
-class Credential(NavigatableMixin):
+class Credential(BaseEntity):
     """A class representing one Embedded Ansible credential in the UI."""
-    def __init__(self, name, credential_type, collection, **credentials):
+    def __init__(self, collection, name, credential_type, **credentials):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.name = name
