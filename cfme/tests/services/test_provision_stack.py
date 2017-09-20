@@ -10,9 +10,11 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.requests import Request
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
 from cfme.utils import testgen
+from cfme.utils.conf import credentials
 from cfme.utils.path import orchestration_path
 from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger
@@ -110,15 +112,23 @@ def random_desc():
 
 
 def prepare_stack_data(provider, provisioning):
-    stackname = "test" + fauxfactory.gen_alphanumeric()
-    vm_name = "test" + fauxfactory.gen_alphanumeric()
+    random_base = fauxfactory.gen_alphanumeric()
+    stackname = 'test-stack-{}'.format(random_base)
+    vm_name = 'test-stk-{}'.format(random_base)
     stack_timeout = "20"
-    if provider.type == "azure":
-        vm_user, vm_password, vm_size, resource_group,\
-            user_image, os_type, mode = map(provisioning.get,
-         ('vm_user', 'vm_password', 'vm_size', 'resource_group',
-        'user_image', 'os_type', 'mode'))
+    if provider.one_of(AzureProvider):
+        size, resource_group, os_type, mode = map(provisioning.get,
+                                                  ('vm_size', 'resource_group', 'os_type', 'mode'))
 
+        try:
+            template = provider.data.templates.small_template
+            vm_user = credentials[template.creds].username
+            vm_password = credentials[template.creds].password
+        except AttributeError:
+            pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
+
+        # service order appends a type string to the template name
+        user_image = 'Windows | {}'.format(template.name)
         stack_data = {
             'stack_name': stackname,
             'vm_name': vm_name,
@@ -128,7 +138,7 @@ def prepare_stack_data(provider, provisioning):
             'vm_password': vm_password,
             'user_image': user_image,
             'os_type': os_type,
-            'vm_size': vm_size
+            'vm_size': size
         }
     elif provider.type == 'openstack':
         stack_prov = provisioning['stack_provisioning']
