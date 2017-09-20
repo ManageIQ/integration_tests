@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from functools import partial
-import re
 from urlparse import urlparse
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import BootstrapSelect, Button
@@ -207,7 +206,7 @@ class WidgetasticTaggable(object):
     standardized widgetastic views
     """
 
-    def add_tag(self, category=None, tag=None, cancel=False, reset=False):
+    def add_tag(self, category=None, tag=None, cancel=False, reset=False, details=True):
         """ Add tag to tested item
 
         Args:
@@ -215,8 +214,12 @@ class WidgetasticTaggable(object):
             tag: tag(str) or Tag object
             cancel: set True to cancel tag assigment
             reset: set True to reset already set up tag
+            details:
         """
-        view = navigate_to(self, 'EditTagsFromDetails')
+        if details:
+            view = navigate_to(self, 'EditTagsFromDetails')
+        else:
+            view = navigate_to(self, 'EditTags')
         if isinstance(tag, Tag):
             category = tag.category.display_name
             tag = tag.display_name
@@ -250,7 +253,7 @@ class WidgetasticTaggable(object):
             for tag in tags:
                 self.add_tag(tag=tag)
 
-    def remove_tag(self, category=None, tag=None, cancel=False, reset=False):
+    def remove_tag(self, category=None, tag=None, cancel=False, reset=False, details=True):
         """ Remove tag of tested item
 
         Args:
@@ -258,8 +261,12 @@ class WidgetasticTaggable(object):
             tag: tag(str) or Tag object
             cancel: set True to cancel tag deletion
             reset: set True to reset tag changes
+            details:
         """
-        view = navigate_to(self, 'EditTagsFromDetails')
+        if details:
+            view = navigate_to(self, 'EditTagsFromDetails')
+        else:
+            view = navigate_to(self, 'EditTags')
         if isinstance(tag, Tag):
             category = tag.category.display_name
             tag = tag.display_name
@@ -285,24 +292,26 @@ class WidgetasticTaggable(object):
                 self.remove_tag(tag=tag)
 
     def get_tags(self, tenant="My Company Tags"):
-        """ Get list of tags assigned to item
-
+        """ Get list of tags assigned to item.
+            Details entities should have smart_management widget
+            For vm, providers, and other like pages 'SummaryTable' widget should be used,
+            for user, group like pages(no tables on details page) use 'SummaryForm'
         Args:
             tenant: string, tags tenant, default is "My Company Tags"
 
         Returns:
-            List of tags in format "Tag_category: Tag_name"
+            :py:class:`list' List of Tag objects
         """
         view = navigate_to(self, 'Details')
-        # look for simple 'smart_management' widget first, then standard entities.smart_management
-# TODO remove this double check after classes updates to entities.smart_management implementation
-        tag_table = getattr(view, 'smart_management', view.entities.smart_management)
-        tags = tag_table.read()
-        if isinstance(tags, dict):
-            tags = tags[tenant]
-        if tags == 'No {} have been assigned'.format(tenant):
-            return []
-        return filter(None, re.split(r'(.*?):\s*\s+\s?', tags))
+        tags = []
+        tag_table = view.entities.smart_management
+        tags_text = tag_table.get_text_of(tenant)
+        if tags_text != 'No {} have been assigned'.format(tenant):
+            for tag in list(tags_text):
+                tag_category, tag_name = tag.split(':')
+                tags.append(Tag(category=Category(display_name=tag_category),
+                                display_name=tag_name.strip()))
+        return tags
 
     def _tags_action(self, view, cancel, reset):
         """ Actions on edit tags page

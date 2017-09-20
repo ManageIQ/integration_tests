@@ -231,6 +231,6 @@ def test_action_run_ansible_playbook(request, ansible_catalog_item, ansible_acti
 def test_control_action_run_ansible_playbook_in_requests(request, vmware_vm, policy_for_testing,
         service_request):
     """Checks if execution of the Action result in a Task/Request being created."""
-    vmware_vm.add_tag(("Service Level", "Gold"), single_value=True)
-    request.addfinalizer(lambda: vmware_vm.remove_tag(("Service Level", "Gold")))
+    vmware_vm.add_tag("Service Level", "Gold")
+    request.addfinalizer(lambda: vmware_vm.remove_tag("Service Level", "Gold"))
     assert service_request.exists

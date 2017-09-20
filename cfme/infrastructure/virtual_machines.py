@@ -1189,10 +1189,9 @@ class VmAllWithTemplatesForProvider(CFMENavigateStep):
 @navigator.register(Vm, 'Details')
 class VmAllWithTemplatesDetails(CFMENavigateStep):
     VIEW = InfraVmDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('AllForProvider')
 
     def step(self):
-        self.prerequisite_view.sidebar.vmstemplates.tree.click_path('All VMs & Templates')
         try:
             entity_item = self.prerequisite_view.entities.get_entity(
                 by_name=self.obj.name, surf_pages=True)

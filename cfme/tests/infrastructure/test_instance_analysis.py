@@ -653,9 +653,8 @@ def test_drift_analysis(request, provider, instance, soft_assert):
     drift_new = int(InfoBlock("Relationships", "Drift History").text)
 
     # add a tag and a finalizer to remove it
-    tag = ('Department', 'Accounting')
-    instance.add_tag(tag, single_value=False)
-    request.addfinalizer(lambda: instance.remove_tag(tag))
+    instance.add_tag('Department', 'Accounting')
+    request.addfinalizer(lambda: instance.remove_tag('Department', 'Accounting'))
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),

@@ -17,10 +17,10 @@ pytestmark = [test_requirements.tag]
 def tagged_vm(tag, setup_provider_modscope, provider):
     ownership_vm = provider.data.cap_and_util.capandu_vm
     tag_vm = VM.factory(ownership_vm, provider)
-    tag_vm.add_tag(tag)
+    tag_vm.add_tag(tag=tag)
     yield tag_vm
     tag_vm.appliance.server.login_admin()
-    tag_vm.remove_tag(tag)
+    tag_vm.remove_tag(tag=tag)
 
 
 @pytest.mark.tier(3)

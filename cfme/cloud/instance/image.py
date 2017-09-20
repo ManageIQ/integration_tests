@@ -5,7 +5,7 @@ from widgetastic_manageiq import (
     ItemsToolBarViewSelector, SummaryTable, ItemNotFound, BaseEntitiesView)
 
 from cfme.exceptions import ImageNotFound
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import TagPageView
 from cfme.common.vm import Template
 from cfme.common.vm_views import (
     EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, BasicProvisionFormView)
@@ -126,7 +126,7 @@ class ImageProvisionView(CloudInstanceView):
             self.form.catalog.catalog_name.read_content()[0].get('Provider', None) == prov_name)
 
 
-class Image(Template, Navigatable, WidgetasticTaggable):
+class Image(Template, Navigatable):
     ALL_LIST_LOCATION = "clouds_images"
     TO_OPEN_EDIT = "Edit this Image"
     QUADICON_TYPE = "image"

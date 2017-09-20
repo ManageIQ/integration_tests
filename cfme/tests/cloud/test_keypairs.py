@@ -105,7 +105,10 @@ def test_keypair_add_and_remove_tag(openstack_provider, keypairs):
 
     keypair.add_tag('Department', 'Accounting')
     tagged_value = keypair.get_tags()
-    assert tagged_value[1] == 'Accounting', "Add tag failed."
+    assert (
+        tag.category.display_name == 'Department' and tag.display_name == 'Accounting'
+        for tag in keypair.get_tags()), (
+        'Assigned tag was not found on the details page')
 
     keypair.remove_tag('Department', 'Accounting')
     tagged_value1 = keypair.get_tags()

@@ -487,9 +487,15 @@ class SummaryForm(Widget):
             item_name: Name of the item
 
         Returns:
-            :py:class:`str`
+            :py:class:`str` or
+            :py:class:`list` in case a few values present for 1 field(covers multiple tags)
         """
-        return self.browser.text(self.get_item(item_name))
+
+        multiple_lines = self.get_item(item_name).text.splitlines()
+        if len(multiple_lines) > 1:
+            return multiple_lines
+        else:
+            return multiple_lines[0]
 
     def read(self):
         return {item: self.get_text_of(item) for item in self.items}
@@ -884,21 +890,37 @@ class SummaryTable(VanillaTable):
     @property
     def fields(self):
         """Returns a list of the field names in the table (the left column)."""
-        return [row[0].text for row in self]
+        fields_names = []
+        for field in self:
+            if self.browser.get_attribute('class', field[0]):
+                fields_names.append(field[0].text)
+        return fields_names
 
     def get_field(self, field_name):
-        """Returns the table row of the field with this name.
-
+        """Returns the table row or list of elements for rowspam case
+                of the field with this name.
         Args:
             field_name: Name of the field (left column)
 
         Returns:
-            An instance of :py:class:`VanillaRow`
+            An instance of :py:class:`VanillaRow` or list of :py:class:`WebElement`
         """
+        rowspan_path = './tbody//td[contains(text(), {})]/following-sibling::td'.format(
+            quote(field_name))
         try:
-            return self.row((0, field_name))
+            rowspan_attribute = self.browser.get_attribute('rowspan', self.row((0, field_name))[0])
         except IndexError:
             raise NameError('Could not find field with name {!r}'.format(field_name))
+        if not rowspan_attribute:
+            return self.row((0, field_name))
+        else:
+            rowspan_image_element = self.browser.element('{}/*[self::i or self::img]'.format(
+                rowspan_path), self)
+            rowspan_child_class = rowspan_image_element.get_attribute(rowspan_attribute)
+            multiple_fields = self.browser.elements(
+                './tbody//*[self::i or self::img][contains(@class|@alt, {})]/parent::td'.format(
+                    quote(rowspan_child_class), self))
+            return multiple_fields
 
     def get_text_of(self, field_name):
         """Returns the text of the field with this name.
@@ -909,7 +931,11 @@ class SummaryTable(VanillaTable):
         Returns:
             :py:class:`str`
         """
-        return self.get_field(field_name)[1].text
+        fields = self.get_field(field_name)
+        if isinstance(fields, (list, tuple)):
+            return [field.text for field in fields]
+        else:
+            return fields[1].text
 
     def get_img_of(self, field_name):
         """Returns the information about the image in the field with this name.
