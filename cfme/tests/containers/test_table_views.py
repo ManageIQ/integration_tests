@@ -2,6 +2,7 @@ from random import choice
 import pytest
 
 from cfme.utils import testgen
+from cfme.utils.appliance import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui import toolbar as tb
 from cfme.configure.settings import DefaultView
@@ -66,8 +67,10 @@ def test_default_views(random_default_views):
 
 
 @pytest.mark.polarion('CMP-10570')
-def test_table_views():
+def test_table_views(appliance):
     for obj in objects_mapping.keys():
+        if isinstance(obj, BaseCollection):
+            obj = appliance.get(obj)
         navigate_to(obj, 'All')
         view = choice(VIEWS)
         tb.select(view)
