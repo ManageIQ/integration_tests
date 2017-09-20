@@ -21,20 +21,20 @@ from cfme.networks.views import (
     OneProviderSubnetView
 )
 from cfme.utils import version
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
 
 
-class NetworkProviderCollection(Navigatable):
+class NetworkProviderCollection(BaseCollection):
     """Collection object for NetworkProvider object
        Note: Network providers object are not implemented in mgmt
     """
     def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+        self.appliance = appliance
 
     def instantiate(self, name):
-        return NetworkProvider(name=name, appliance=self.appliance, collection=self)
+        return NetworkProvider(name=name, collection=self)
 
     def all(self):
         view = navigate_to(self, 'All')
@@ -42,7 +42,7 @@ class NetworkProviderCollection(Navigatable):
         return [self.instantiate(name=p.name) for p in list_networks]
 
 
-class NetworkProvider(BaseProvider, WidgetasticTaggable):
+class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     """ Class representing network provider in sdn
         Note: Network provider can be added to cfme database
               only automaticaly with cloud provider
@@ -61,9 +61,9 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable):
     detail_page_suffix = 'provider_detail'
     db_types = ['NetworksManager']
 
-    def __init__(self, name, provider=None, collection=None, appliance=None):
-        self.collection = collection or NetworkProviderCollection(appliance=appliance)
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+    def __init__(self, name, provider=None, collection=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         self.provider = provider
 
@@ -99,7 +99,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable):
 
     @cached_property
     def balancers(self):
-        return BalancerCollection(parent_provider=self)
+        return BalancerCollection(self.appliance, parent_provider=self)
 
     @cached_property
     def subnets(self):
