@@ -181,7 +181,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     #
     def check_compliance(self, timeout=240):
         """Initiates compliance check and waits for it to finish.
-        
+
         TODO This should be refactored as it's done `Host.check_compliance`. It shouldn't return
         anything. `compliant` property should use `compliance_status`.
 
@@ -499,9 +499,13 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             timeout: time (in seconds) to wait for it to appear
             load_details: when found, should it load the vm details
         """
+        def _refresh():
+            self.provider.refresh_provider_relationships()
+            self.appliance.browser.widgetastic.browser.refresh()  # strange because ViaUI
+
         wait_for(
             lambda: self.exists,
-            num_sec=timeout, delay=30, fail_func=self.provider.refresh_provider_relationships,
+            num_sec=timeout, delay=5, fail_func=_refresh,
             message="wait for vm to appear")
         if load_details:
             self.load_details()
