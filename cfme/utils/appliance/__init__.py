@@ -32,7 +32,7 @@ from cfme.utils.net import net_check
 from cfme.utils.path import data_path, patches_path, scripts_path, conf_path
 from cfme.utils.ssh import SSHTail
 from cfme.utils.version import Version, get_stream, pick
-from cfme.utils.wait import wait_for
+from cfme.utils.wait import wait_for, TimedOutError
 
 from .db import ApplianceDB
 from .implementations.ui import ViaUI
@@ -1548,6 +1548,16 @@ class IPAppliance(object):
         return output.success
 
     @property
+    def is_nginx_running(self):
+        output = self.ssh_client.run_command("systemctl status nginx")
+        return output.success
+
+    @property
+    def is_rabbitmq_running(self):
+        output = self.ssh_client.run_command("systemctl status rabbitmq-server")
+        return output.success
+
+    @property
     def is_embedded_ensible_role_enabled(self):
         return self.server_roles.get("embedded_ansible", False)
 
@@ -1696,6 +1706,19 @@ class IPAppliance(object):
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
         self.set_yaml_config(yaml)
         wait_for(lambda: self.server_roles == roles, num_sec=300, delay=15)
+
+    def enable_embedded_ansible_role(self):
+        """Enables embbeded ansible role
+
+        This is necessary because server_roles does not wait long enough"""
+
+        roles = self.server_roles
+        roles['embedded_ansible'] = True
+        try:
+            self.server_roles = roles
+        except TimedOutError:
+            wait_for(lambda: self.server_roles == roles, num_sec=600, delay=15)
+        self.wait_for_embedded_ansible()
 
     def update_server_roles(self, changed_roles):
         server_roles = self.server_roles.copy()
