@@ -1679,11 +1679,11 @@ class DetailsToolBarViewSelector(View):
 
 
 class CompareToolBarMixin(View):
-    """ It represent abstract class for compare toolbar actions. """
+    """ It represents mixin for compare toolbar actions. """
 
     @property
     def _view_buttons(self):
-        """It should be override as per concern nested class buttons"""
+        """It should be overridden as per concern nested class buttons. """
         pass
 
     def select(self, title):
@@ -1704,9 +1704,9 @@ class CompareToolBarMixin(View):
         return self.selected
 
 
-class CompareToolBarViewActions(View):
-    """ represents comparison toolbar's actions control
-        it is present on pages like compaire selected items, drift page
+class CompareToolBarActionsView(View):
+    """ represents compare toolbar's actions control
+        it is present on pages like compare selected items and drift
 
     .. code-block:: python
 
