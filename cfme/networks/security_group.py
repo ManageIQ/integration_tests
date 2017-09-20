@@ -4,20 +4,20 @@ from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import SecurityGroupDetailsView, SecurityGroupView
 from cfme.utils import version
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
-class SecurityGroupCollection(Navigatable):
+class SecurityGroupCollection(BaseCollection):
     """ Collection object for SecurityGroup object
         Note: Network providers object are not implemented in mgmt
     """
-    def __init__(self, appliance=None, parent_provider=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance, parent_provider=None):
+        self.appliance = appliance
         self.parent = parent_provider
 
     def instantiate(self, name):
-        return SecurityGroup(name=name, appliance=self.appliance, collection=self)
+        return SecurityGroup(name=name, collection=self)
 
     def all(self):
         if self.parent:
@@ -28,7 +28,7 @@ class SecurityGroupCollection(Navigatable):
         return [self.instantiate(name=s.name) for s in list_networks_obj]
 
 
-class SecurityGroup(WidgetasticTaggable, Navigatable):
+class SecurityGroup(WidgetasticTaggable, BaseEntity):
     """Class representing security group in sdn"""
     in_version = ('5.8', version.LATEST)
     category = 'networks'
@@ -37,9 +37,9 @@ class SecurityGroup(WidgetasticTaggable, Navigatable):
     quad_name = None
     db_types = ['SecurityGroup']
 
-    def __init__(self, name, provider=None, collection=None, appliance=None):
-        self.collection = collection or SecurityGroupCollection(appliance=appliance)
-        Navigatable.__init__(self, appliance=self.collection.appliance)
+    def __init__(self, name, collection, provider=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         self.provider = provider
 

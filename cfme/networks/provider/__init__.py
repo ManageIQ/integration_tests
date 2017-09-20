@@ -119,7 +119,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable):
 
     @cached_property
     def security_groups(self):
-        return SecurityGroupCollection(parent_provider=self)
+        return SecurityGroupCollection(self.appliance, parent_provider=self)
 
 
 @navigator.register(NetworkProviderCollection, 'All')
