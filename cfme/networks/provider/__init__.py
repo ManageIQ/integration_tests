@@ -103,7 +103,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable):
 
     @cached_property
     def subnets(self):
-        return SubnetCollection(parent_provider=self)
+        return SubnetCollection(self.appliance, parent_provider=self)
 
     @cached_property
     def networks(self):
