@@ -79,7 +79,7 @@ class Box(BaseEntity):
     @cached_property
     def elements(self):
         from .dialog_element import ElementCollection
-        return ElementCollection(self)
+        return ElementCollection(self.collection.appliance, self)
 
     @property
     def tree_path(self):

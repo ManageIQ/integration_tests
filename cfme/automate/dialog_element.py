@@ -4,7 +4,7 @@ from widgetastic_patternfly import Button, Input, BootstrapSelect
 from widgetastic_manageiq import ManageIQTree, Table, TextInput
 from widgetastic.xpath import quote
 
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from .dialog_box import AddBoxView
@@ -74,10 +74,10 @@ class DetailsDialogView(AutomateCustomizationView):
         )
 
 
-class ElementCollection(Navigatable):
-    def __init__(self, parent):
+class ElementCollection(BaseCollection):
+    def __init__(self, appliance, parent):
         self.parent = parent
-        Navigatable.__init__(self, appliance=parent.appliance)
+        self.appliance = appliance
 
     @property
     def tree_path(self):
@@ -127,12 +127,12 @@ class ElementCollection(Navigatable):
             view.fill({'text_area': 'Default text'})
 
 
-class Element(Navigatable):
+class Element(BaseEntity):
     """A class representing one Element of a dialog."""
     def __init__(self, collection, element_data):
-        Navigatable.__init__(self, appliance=collection.appliance)
         self.collection = collection
         self.element_data = element_data
+        self.appliance = self.collection.appliance
 
     @property
     def parent(self):
