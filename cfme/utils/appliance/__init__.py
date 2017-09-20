@@ -2628,5 +2628,5 @@ class BaseCollection(NavigatableMixin):
     pass
 
 
-class BaseInstance(NavigatableMixin):
+class BaseEntity(NavigatableMixin):
     pass
