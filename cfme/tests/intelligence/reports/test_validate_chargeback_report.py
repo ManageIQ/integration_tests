@@ -100,10 +100,10 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
 
 
 @pytest.yield_fixture(scope="module")
-def enable_candu(provider):
+def enable_candu(provider, appliance):
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
-    candu = CANDUCollection()
+    candu = appliance.get(CANDUCollection)
     original_roles = get_server_roles()
     new_roles = original_roles.copy()
     new_roles.update({

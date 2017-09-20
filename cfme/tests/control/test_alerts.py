@@ -125,8 +125,8 @@ def set_performance_capture_threshold(appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def setup_candu():
-    candu = CANDUCollection()
+def setup_candu(appliance):
+    candu = appliance.get(CANDUCollection)
     candu.enable_all()
     with server_roles_enabled('ems_metrics_coordinator', 'ems_metrics_collector',
             'ems_metrics_processor'):
