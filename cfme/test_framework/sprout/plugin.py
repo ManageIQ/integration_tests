@@ -250,8 +250,8 @@ class SproutManager(object):
                 "> The exception was: %s", self.pool, str(e))
             self.pool = None  # Will disable the timer in next reset call.
         except Exception as e:
-            self.log.error('An unexpected error happened during interaction with Sprout:')
-            self.log.exception(e)
+            log.error('An unexpected error happened during interaction with Sprout:')
+            log.exception(e)
             # Have a shorter timer now (1 min), because something is happening right now
             # WE have a reserve of half the lease time so that should be enough time to
             # solve any minor problems
