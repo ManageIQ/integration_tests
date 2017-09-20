@@ -17,7 +17,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.web_ui import match_location
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
@@ -176,14 +176,14 @@ class TenantEditView(TenantView):
             self.entities.breadcrumb.active_location == expected_title)
 
 
-class TenantCollection(NavigatableMixin):
+class TenantCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.cloud.tenant.Tenant`."""
 
     def __init__(self, appliance):
         self.appliance = appliance
 
     def instantiate(self, name, provider):
-        return Tenant(name, provider, self)
+        return Tenant(self, name, provider)
 
     def create(self, name, provider, wait=True):
         """Add a cloud Tenant from the UI and return the Tenant object"""
@@ -259,11 +259,11 @@ class TenantCollection(NavigatableMixin):
         # it is not shown in current UI, so not asserting
 
 
-class Tenant(NavigatableMixin, WidgetasticTaggable):
+class Tenant(BaseEntity, WidgetasticTaggable):
     '''Tenant Class'''
     _param_name = 'Tenant'
 
-    def __init__(self, name, provider, collection):
+    def __init__(self, collection, name, provider):
         """Base class for a Tenant"""
         self.name = name
         self.provider = provider
