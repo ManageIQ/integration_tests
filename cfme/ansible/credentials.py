@@ -209,20 +209,15 @@ class CredentialsCollection(BaseCollection):
         credentials_list_page.flash.assert_success_message(
             'Add of Credential "{}" has been successfully queued.'.format(name))
 
-        def _wait_until_appeared():
-            for row in credentials_list_page.credentials:
-                if row["Name"].text == name:
-                    return True
-            else:
-                return False
+        credential = self.instantiate(name, credential_type, **credentials)
 
         wait_for(
-            _wait_until_appeared,
-            delay=10,
+            lambda: credential.exists,
             fail_func=credentials_list_page.browser.selenium.refresh,
-            timeout=300
-        )
-        return self.instantiate(name, credential_type, **credentials)
+            delay=5,
+            timeout=300)
+
+        return credential
 
 
 class Credential(BaseEntity):
