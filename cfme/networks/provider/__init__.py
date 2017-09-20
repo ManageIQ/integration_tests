@@ -107,7 +107,7 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable):
 
     @cached_property
     def networks(self):
-        return CloudNetworkCollection(parent_provider=self)
+        return CloudNetworkCollection(self.appliance, parent_provider=self)
 
     @cached_property
     def ports(self):
