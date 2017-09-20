@@ -427,15 +427,15 @@ ONE_FIELD = """{{:volume_id => "{}", :device_name => "{}"}}"""
 
 
 @pytest.fixture(scope="module")
-def domain(request):
-    domain = DomainCollection().create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+def domain(request, appliance):
+    domain = DomainCollection(appliance).create(name=fauxfactory.gen_alphanumeric(), enabled=True)
     request.addfinalizer(domain.delete_if_exists)
     return domain
 
 
 @pytest.fixture(scope="module")
-def original_request_class():
-    return DomainCollection().instantiate(name='ManageIQ')\
+def original_request_class(appliance):
+    return DomainCollection(appliance).instantiate(name='ManageIQ')\
         .namespaces.instantiate(name='Cloud')\
         .namespaces.instantiate(name='VM')\
         .namespaces.instantiate(name='Provisioning')\

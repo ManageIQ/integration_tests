@@ -29,10 +29,10 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.fixture(scope="function")
-def create_domain(request):
+def create_domain(request, appliance):
     """Create new domain and copy instance from ManageIQ to this domain"""
 
-    dc = DomainCollection()
+    dc = DomainCollection(appliance)
     new_domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
     request.addfinalizer(new_domain.delete_if_exists)
     instance = dc.instantiate(name='ManageIQ')\

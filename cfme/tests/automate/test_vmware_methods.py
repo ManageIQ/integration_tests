@@ -30,8 +30,8 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def domain_collection():
-    return DomainCollection()
+def domain_collection(appliance):
+    return DomainCollection(appliance)
 
 
 @pytest.yield_fixture(scope="module")

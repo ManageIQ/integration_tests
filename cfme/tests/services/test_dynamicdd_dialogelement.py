@@ -69,8 +69,8 @@ def catalog():
 
 
 @pytest.fixture(scope="function")
-def copy_domain(request):
-    domain = DomainCollection().create(name="new_domain", enabled=True)
+def copy_domain(request, appliance):
+    domain = DomainCollection(appliance).create(name="new_domain", enabled=True)
     request.addfinalizer(domain.delete_if_exists)
     return domain
 
@@ -87,8 +87,8 @@ def create_method(request, copy_domain):
 
 
 @pytest.fixture(scope="function")
-def copy_instance(request, copy_domain):
-    miq_domain = DomainCollection().instantiate(name='ManageIQ')
+def copy_instance(request, copy_domain, appliance):
+    miq_domain = DomainCollection(appliance).instantiate(name='ManageIQ')
     instance = miq_domain\
         .namespaces.instantiate(name='System')\
         .classes.instantiate(name='Request')\

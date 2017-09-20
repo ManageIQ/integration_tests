@@ -24,7 +24,7 @@ def test_domain_present(domain_name, soft_assert, appliance):
         * Open the Automate Explorer.
         * Verify that all of the required domains are present.
     """
-    dc = DomainCollection()
+    dc = DomainCollection(appliance)
     domain = dc.instantiate(name=domain_name)
     soft_assert(domain.exists, "Domain {} does not exist!".format(domain_name))
     soft_assert(domain.locked, "Domain {} is not locked!".format(domain_name))

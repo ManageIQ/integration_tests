@@ -208,7 +208,7 @@ class Namespace(Navigatable):
             if self.browser.product_version < '5.7':
                 # Domain list in 5.6 and lower
                 from .domain import DomainCollection, DomainListView
-                dc = DomainCollection()
+                dc = DomainCollection(self.appliance)
                 result_view = self.create_view(DomainListView, dc)
             elif isinstance(self.parent, Domain):
                 result_view = self.create_view(DomainDetailsView, self.parent)

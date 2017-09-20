@@ -8,13 +8,12 @@ from cfme.utils.update import update
 
 from cfme.automate.explorer.domain import DomainCollection
 
-
 pytestmark = [test_requirements.automate]
 
 
 @pytest.yield_fixture(scope='module')
-def domain():
-    dc = DomainCollection()
+def domain(appliance):
+    dc = DomainCollection(appliance)
     d = dc.create(
         name='test_{}'.format(fauxfactory.gen_alpha()),
         description='desc_{}'.format(fauxfactory.gen_alpha()),

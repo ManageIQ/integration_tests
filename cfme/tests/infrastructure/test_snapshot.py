@@ -33,8 +33,8 @@ pytest_generate_tests = testgen.generate([InfraProvider], scope="module")
 
 
 @pytest.fixture(scope="module")
-def domain(request):
-    dom = DomainCollection().create(name=fauxfactory.gen_alpha(), enabled=True)
+def domain(request, appliance):
+    dom = DomainCollection(appliance).create(name=fauxfactory.gen_alpha(), enabled=True)
     request.addfinalizer(dom.delete_if_exists)
     return dom
 
@@ -307,7 +307,7 @@ def test_operations_powered_off_vm(small_test_vm, provider, soft_assert):
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_create_snapshot_via_ae(request, domain, small_test_vm):
+def test_create_snapshot_via_ae(request, domain, small_test_vm, appliance):
     """This test checks whether the vm.create_snapshot works in AE.
 
     Prerequisities:
@@ -327,7 +327,7 @@ def test_create_snapshot_via_ae(request, domain, small_test_vm):
     file = data_path.join("ui").join("automate").join("test_create_snapshot_via_ae.rb")
     with file.open("r") as f:
         method_contents = f.read()
-    miq_domain = DomainCollection().instantiate(name='ManageIQ')
+    miq_domain = DomainCollection(appliance).instantiate(name='ManageIQ')
     miq_class = miq_domain.namespaces.instantiate(name='System').classes.instantiate(name='Request')
     miq_class.copy_to(domain)
     request_cls = domain.namespaces.instantiate(name='System').classes.instantiate(name='Request')

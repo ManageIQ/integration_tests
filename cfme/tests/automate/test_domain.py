@@ -16,8 +16,8 @@ pytestmark = [test_requirements.automate]
 
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('enabled', [True, False], ids=['enabled', 'disabled'])
-def test_domain_crud(request, enabled):
-    domains = DomainCollection()
+def test_domain_crud(request, enabled, appliance):
+    domains = DomainCollection(appliance)
     domain = domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
@@ -42,8 +42,8 @@ def test_domain_crud(request, enabled):
 
 
 @pytest.mark.tier(1)
-def test_domain_delete_from_table(request):
-    domains = DomainCollection()
+def test_domain_delete_from_table(request, appliance):
+    domains = DomainCollection(appliance)
     generated = []
     for _ in range(3):
         domain = domains.create(
@@ -59,8 +59,8 @@ def test_domain_delete_from_table(request):
 
 
 @pytest.mark.tier(2)
-def test_duplicate_domain_disallowed(request):
-    domains = DomainCollection()
+def test_duplicate_domain_disallowed(request, appliance):
+    domains = DomainCollection(appliance)
     domain = domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
@@ -75,8 +75,8 @@ def test_duplicate_domain_disallowed(request):
 
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-11228')
-def test_domain_cannot_delete_builtin():
-    domains = DomainCollection()
+def test_domain_cannot_delete_builtin(appliance):
+    domains = DomainCollection(appliance)
     manageiq_domain = domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
     if domains.appliance.version < '5.7':
@@ -88,8 +88,8 @@ def test_domain_cannot_delete_builtin():
 
 @pytest.mark.tier(2)
 @pytest.mark.polarion('RHCF3-11227')
-def test_domain_cannot_edit_builtin():
-    domains = DomainCollection()
+def test_domain_cannot_edit_builtin(appliance):
+    domains = DomainCollection(appliance)
     manageiq_domain = domains.instantiate(name='ManageIQ')
     details_view = navigate_to(manageiq_domain, 'Details')
     if domains.appliance.version < '5.7':
@@ -100,15 +100,15 @@ def test_domain_cannot_edit_builtin():
 
 
 @pytest.mark.tier(2)
-def test_domain_name_wrong():
-    domains = DomainCollection()
+def test_domain_name_wrong(appliance):
+    domains = DomainCollection(appliance)
     with error.expected('Name may contain only'):
         domains.create(name='with space')
 
 
 @pytest.mark.tier(2)
-def test_domain_lock_unlock(request):
-    domains = DomainCollection()
+def test_domain_lock_unlock(request, appliance):
+    domains = DomainCollection(appliance)
     domain = domains.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha(),
