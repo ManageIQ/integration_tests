@@ -960,9 +960,9 @@ class TestPendingRequestsRESTAPI(object):
         return instance
 
     @pytest.fixture(scope='class')
-    def new_domain(self, request):
+    def new_domain(self, request, appliance):
         """Creates new domain and copy instance from ManageIQ to this domain."""
-        dc = DomainCollection()
+        dc = DomainCollection(appliance)
         domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
         request.addfinalizer(domain.delete_if_exists)
         miq_domain = dc.instantiate(name='ManageIQ')

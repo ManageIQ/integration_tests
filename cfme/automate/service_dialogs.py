@@ -122,7 +122,7 @@ class Dialog(BaseEntity, Fillable):
     @cached_property
     def tabs(self, ):
         from .dialog_tab import TabCollection
-        return TabCollection(self)
+        return TabCollection(self.appliance, self)
 
     @property
     def tree_path(self):

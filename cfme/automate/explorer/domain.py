@@ -9,7 +9,7 @@ from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
 from cfme.utils import clear_property_cache
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView
@@ -82,17 +82,20 @@ class DomainEditView(DomainForm):
             self.title.text == 'Editing Automate Domain "{}"'.format(self.obj.name))
 
 
-class DomainCollection(Navigatable):
+class DomainCollection(BaseCollection):
     """Collection object for the :py:class:`Domain`."""
     tree_path = ['Datastore']
 
+    def __init__(self, appliance):
+        self.appliance = appliance
+
     def instantiate(
             self, name, description=None, enabled=None, git_repository=None, git_checkout_type=None,
-            git_checkout_value=None, db_id=None):
-        return Domain(
+            git_checkout_value=None, db_id=None, locked=None):
+        return Domain(self,
             name=name, description=description, enabled=enabled, locked=None,
             git_repository=git_repository, git_checkout_type=git_checkout_type,
-            git_checkout_value=git_checkout_value, db_id=db_id, appliance=self.appliance)
+            git_checkout_value=git_checkout_value, db_id=db_id)
 
     def create(self, name=None, description=None, enabled=None, cancel=False):
         add_page = navigate_to(self, 'Add')
@@ -118,9 +121,8 @@ class DomainCollection(Navigatable):
             if enabled is None:
                 # Assume
                 enabled = False
-            return Domain(
-                name=name, description=description, enabled=enabled, locked=False,
-                appliance=self.appliance)
+            return self.instantiate(
+                name=name, description=description, enabled=enabled, locked=False)
 
     def all(self):
         table = self.appliance.db.client['miq_ae_namespaces']
@@ -132,12 +134,11 @@ class DomainCollection(Navigatable):
         for name, description, enabled, source, ref, ref_type, git_repository_id in query:
             if source != 'remote':
                 result.append(
-                    Domain(
+                    self.instantiate(
                         name=name,
                         description=description or '',
                         enabled=enabled,
-                        locked=source in {'user_locked', 'system'},
-                        appliance=self.appliance))
+                        locked=source in {'user_locked', 'system'}))
             else:
                 repo_table = self.appliance.db.client['git_repositories']
                 repo = self.appliance.db.client.session\
@@ -150,15 +151,14 @@ class DomainCollection(Navigatable):
                     verify_ssl=repo.verify_ssl,
                     appliance=self.appliance)
                 result.append(
-                    Domain(
+                    self.instantiate(
                         name=name,
                         description=description,
                         enabled=enabled,
                         locked=True,
                         git_repository=agr,
                         git_checkout_type=ref_type,
-                        git_checkout_value=ref,
-                        appliance=self.appliance))
+                        git_checkout_value=ref))
         return result
 
     def delete(self, *domains):
@@ -249,18 +249,15 @@ class DomainDetailsView(AutomateExplorerView):
                 self.context['object'].table_display_name))
 
 
-class Domain(Navigatable, Fillable):
+class Domain(BaseEntity, Fillable):
     """A class representing one Domain in the UI."""
     def __init__(
-            self, name, description, enabled=None, locked=None, collection=None,
-            git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None,
-            appliance=None):
+            self, collection, name, description, enabled=None, locked=None,
+            git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None):
         if db_id is not None:
             self.db_id = db_id
-        if collection is None:
-            collection = DomainCollection(appliance=appliance)
         self.collection = collection
-        Navigatable.__init__(self, appliance=collection.appliance)
+        self.appliance = self.collection.appliance
         self.name = name
         self.description = description
         if git_repository is not None:
@@ -333,7 +330,7 @@ class Domain(Navigatable, Fillable):
     @cached_property
     def namespaces(self):
         from .namespace import NamespaceCollection
-        return NamespaceCollection(self)
+        return NamespaceCollection(self.appliance, self)
 
     @property
     def tree_display_name(self):

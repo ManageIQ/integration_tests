@@ -29,8 +29,8 @@ pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.fixture(scope="function")
-def copy_domain(request):
-    dc = DomainCollection()
+def copy_domain(request, appliance):
+    dc = DomainCollection(appliance)
     domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
     request.addfinalizer(domain.delete_if_exists)
     dc.instantiate(name='ManageIQ')\

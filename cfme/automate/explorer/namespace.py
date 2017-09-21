@@ -7,7 +7,7 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
@@ -66,10 +66,10 @@ class NamespaceEditView(NamespaceForm):
             self.title.text == 'Editing Automate Namespace "{}"'.format(self.obj.name))
 
 
-class NamespaceCollection(Navigatable):
-    def __init__(self, parent):
+class NamespaceCollection(BaseCollection):
+    def __init__(self, appliance, parent):
         self.parent = parent
-        Navigatable.__init__(self, appliance=parent.appliance)
+        self.appliance = appliance
 
     @property
     def tree_path(self):
@@ -147,10 +147,10 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Add a New Namespace')
 
 
-class Namespace(Navigatable):
+class Namespace(BaseEntity):
     def __init__(self, collection, name, description):
-        Navigatable.__init__(self, appliance=collection.appliance)
         self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         if description is not None:
             self.description = description
@@ -188,12 +188,12 @@ class Namespace(Navigatable):
 
     @cached_property
     def namespaces(self):
-        return NamespaceCollection(self)
+        return NamespaceCollection(self.appliance, self)
 
     @cached_property
     def classes(self):
         from .klass import ClassCollection
-        return ClassCollection(self)
+        return ClassCollection(self.appliance, self)
 
     def delete(self, cancel=False):
         # Ensure this has correct data
@@ -208,7 +208,7 @@ class Namespace(Navigatable):
             if self.browser.product_version < '5.7':
                 # Domain list in 5.6 and lower
                 from .domain import DomainCollection, DomainListView
-                dc = DomainCollection()
+                dc = DomainCollection(self.appliance)
                 result_view = self.create_view(DomainListView, dc)
             elif isinstance(self.parent, Domain):
                 result_view = self.create_view(DomainDetailsView, self.parent)

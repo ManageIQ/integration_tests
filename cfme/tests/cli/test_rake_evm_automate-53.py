@@ -28,7 +28,7 @@ def qe_ae_data(request, appliance, rake):
         "ENABLED=true SYSTEM=false")
     assert rc == 0, stdout
     # Now we have to enable the domain to make it work.
-    qe_cli_testing = DomainCollection().instantiate(name='QECliTesting')
+    qe_cli_testing = DomainCollection(appliance).instantiate(name='QECliTesting')
     request.addfinalizer(qe_cli_testing.delete_if_exists)
     if not qe_cli_testing.enabled:
         with update(qe_cli_testing):

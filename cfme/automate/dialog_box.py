@@ -2,7 +2,7 @@ from navmazing import NavigateToAttribute
 from widgetastic_patternfly import Input, Dropdown
 from cached_property import cached_property
 
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
@@ -36,10 +36,10 @@ class EditBoxView(BoxForm):
         )
 
 
-class BoxCollection(Navigatable):
-    def __init__(self, parent, appliance=None):
+class BoxCollection(BaseCollection):
+    def __init__(self, appliance, parent):
         self.parent = parent
-        Navigatable.__init__(self, appliance=parent.appliance)
+        self.appliance = appliance
 
     @property
     def tree_path(self):
@@ -63,11 +63,11 @@ class BoxCollection(Navigatable):
         return self.instantiate(box_label=box_label, box_desc=box_desc)
 
 
-class Box(Navigatable):
+class Box(BaseEntity):
     """A class representing one Box of dialog."""
     def __init__(self, collection, box_label, box_desc):
-        Navigatable.__init__(self, appliance=collection.appliance)
         self.collection = collection
+        self.appliance = self.collection.appliance
         self.box_label = box_label
         self.box_desc = box_desc
 
@@ -79,7 +79,7 @@ class Box(Navigatable):
     @cached_property
     def elements(self):
         from .dialog_element import ElementCollection
-        return ElementCollection(self)
+        return ElementCollection(self.collection.appliance, self)
 
     @property
     def tree_path(self):

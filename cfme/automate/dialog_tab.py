@@ -3,7 +3,7 @@ from widgetastic.widget import Text
 from widgetastic_patternfly import Input, Dropdown
 from cached_property import cached_property
 
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from .service_dialogs import AddDialogView
 
@@ -46,10 +46,10 @@ class DetailsTabView(TabForm):
         )
 
 
-class TabCollection(Navigatable):
-    def __init__(self, parent):
+class TabCollection(BaseCollection):
+    def __init__(self, appliance, parent):
         self.parent = parent
-        Navigatable.__init__(self, appliance=parent.appliance)
+        self.appliance = appliance
 
     @property
     def tree_path(self):
@@ -74,11 +74,11 @@ class TabCollection(Navigatable):
         return self.instantiate(tab_label=tab_label, tab_desc=tab_desc)
 
 
-class Tab(Navigatable):
+class Tab(BaseEntity):
     """A class representing one Tab in the UI."""
     def __init__(self, collection, tab_label, tab_desc):
-        Navigatable.__init__(self, appliance=collection.appliance)
         self.collection = collection
+        self.appliance = self.collection.appliance
         self.tab_label = tab_label
         self.tab_desc = tab_desc
 
@@ -90,7 +90,7 @@ class Tab(Navigatable):
     @cached_property
     def boxes(self):
         from .dialog_box import BoxCollection
-        return BoxCollection(self)
+        return BoxCollection(self.appliance, self)
 
     @property
     def tree_path(self):

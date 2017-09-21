@@ -10,7 +10,7 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
@@ -138,10 +138,10 @@ class InstanceEditView(AutomateExplorerView):
             self.title.text == 'Editing Automate Instance "{}"'.format(self.obj.name))
 
 
-class InstanceCollection(Navigatable):
-    def __init__(self, parent_class):
+class InstanceCollection(BaseCollection):
+    def __init__(self, appliance, parent_class):
         self.parent = parent_class
-        Navigatable.__init__(self, appliance=parent_class.appliance)
+        self.appliance = appliance
 
     @property
     def tree_path(self):
@@ -229,10 +229,10 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Add a New Instance')
 
 
-class Instance(Navigatable, Copiable):
+class Instance(BaseEntity, Copiable):
     def __init__(self, collection, name, display_name, description, fields):
-        Navigatable.__init__(self, appliance=collection.appliance)
         self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         if display_name is not None:
             self.display_name = display_name

@@ -25,8 +25,8 @@ exit MIQ_OK
 
 
 @pytest.fixture(scope="module")
-def domain_collection():
-    return DomainCollection()
+def domain_collection(appliance):
+    return DomainCollection(appliance)
 
 
 @pytest.fixture(scope="function")
