@@ -13,7 +13,7 @@ from cfme.exceptions import KeyPairNotFound
 
 from cfme.web_ui import match_location
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.wait import wait_for
 
 
@@ -111,13 +111,14 @@ class KeyPairAddView(KeyPairView):
     form = View.nested(KeyPairAddForm)
 
 
-class KeyPairCollection(NavigatableMixin):
+class KeyPairCollection(BaseCollection):
     """ Collection object for the :py:class: `cfme.cloud.KeyPair`. """
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def instantiate(self, name, provider, public_key=None, appliance=None):
-        return KeyPair(name=name, provider=provider, collection=self, public_key=public_key or "")
+    def instantiate(self, name, provider, public_key=None):
+        return KeyPair(self,
+                       name=name, provider=provider, public_key=public_key or "")
 
     def create(self, name, provider, public_key=None, cancel=False):
         """Create new keyPair.
@@ -153,7 +154,7 @@ class KeyPairCollection(NavigatableMixin):
         return self.instantiate(name, provider, public_key=public_key)
 
 
-class KeyPair(NavigatableMixin, WidgetasticTaggable):
+class KeyPair(BaseEntity, WidgetasticTaggable):
     """ Automate Model page of KeyPairs
 
     Args:
@@ -161,7 +162,7 @@ class KeyPair(NavigatableMixin, WidgetasticTaggable):
     """
     _param_name = "KeyPair"
 
-    def __init__(self, name, provider, collection, public_key=None):
+    def __init__(self, collection, name, provider, public_key=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.name = name

@@ -116,8 +116,9 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
 @pytest.mark.tier(1)
 @pytest.mark.parametrize(("credential_type", "credentials"), CREDENTIALS,
     ids=[cred[0] for cred in CREDENTIALS])
-def test_embedded_ansible_credential_crud(wait_for_ansible, credential_type, credentials):
-    credentials_collection = CredentialsCollection()
+def test_embedded_ansible_credential_crud(
+        wait_for_ansible, credential_type, credentials, appliance):
+    credentials_collection = CredentialsCollection(appliance)
     credential = credentials_collection.create(
         "{}_credential_{}".format(credential_type, fauxfactory.gen_alpha()),
         credential_type,

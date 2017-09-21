@@ -24,7 +24,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound, ItemNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
 
@@ -165,14 +165,14 @@ class VolumeAddView(VolumeView):
     form = View.nested(VolumeAddForm)
 
 
-class VolumeCollection(NavigatableMixin):
+class VolumeCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
 
     def __init__(self, appliance):
         self.appliance = appliance
 
     def instantiate(self, name, provider):
-        return Volume(name, provider, collection=self)
+        return Volume(self, name, provider)
 
     def delete(self, *volumes):
         """Delete one or more Volumes from list of Volumes
@@ -199,13 +199,13 @@ class VolumeCollection(NavigatableMixin):
             raise VolumeNotFound('No Cloud Volume for Deletion')
 
 
-class Volume(NavigatableMixin):
+class Volume(BaseEntity):
     # Navigation menu option
     nav = VersionPick({
         Version.lowest(): ['Storage', 'Volumes'],
         '5.8': ['Storage', 'Block Storage', 'Volumes']})
 
-    def __init__(self, name, provider, collection):
+    def __init__(self, collection, name, provider):
         self.name = name
         # TODO add storage provider parameter, needed for accurate details nav
         # the storage providers have different names then cloud providers

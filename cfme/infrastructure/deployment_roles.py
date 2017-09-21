@@ -31,7 +31,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, RoleNotFound
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 
 
 class DeploymentRoleToolbar(View):
@@ -238,14 +238,14 @@ class DeploymentRoleManagePoliciesView(DeploymentRoleView):
         )
 
 
-class DeploymentRoleCollection(NavigatableMixin):
+class DeploymentRoleCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.infrastructure.deployment_role.DeploymentRoles'"""
 
     def __init__(self, appliance):
         self.appliance = appliance
 
     def instantiate(self, name, provider):
-        return DeploymentRoles(name, provider, collection=self)
+        return DeploymentRoles(self, name, provider)
 
     def all(self, provider):
         view = navigate_to(self, 'All')
@@ -280,7 +280,7 @@ class DeploymentRoleCollection(NavigatableMixin):
             raise RoleNotFound('No Deployment Role for Deletion')
 
 
-class DeploymentRoles(NavigatableMixin):
+class DeploymentRoles(BaseEntity):
     """ Model of an infrastructure deployment roles in cfme
 
     Args:
@@ -290,7 +290,7 @@ class DeploymentRoles(NavigatableMixin):
     """
     # TODO: add deployment role creation method with cli
 
-    def __init__(self, name, provider, collection):
+    def __init__(self, collection, name, provider):
         self.name = name
         self.provider = provider
         self.collection = collection
