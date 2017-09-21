@@ -158,8 +158,8 @@ def test_service_ansible_playbook_crud(ansible_repository):
             "playbook": "copy_file_example.yml"
         }
     view = navigate_to(cat_item, "Details")
-    assert new_name in view.title.text
-    assert view.provisioning.info.get_text_of("Playbook") == "copy_file_example.yml"
+    assert new_name in view.entities.title.text
+    assert view.entities.provisioning.info.get_text_of("Playbook") == "copy_file_example.yml"
     cat_item.delete()
     assert not cat_item.exists
 
