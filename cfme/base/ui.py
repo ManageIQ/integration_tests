@@ -37,7 +37,12 @@ def address(self):
 
 
 class LoginPage(View):
-    flash = FlashMessages('div#flash_text_div')
+    flash = FlashMessages(
+        VersionPick({
+            Version.lowest(): 'div#flash_text_div',
+            '5.8': '//div[@class="flash_text_div"]'
+        })
+    )
 
     class details(View):  # noqa
         region = Text('.//p[normalize-space(text())="Region:"]/span')
@@ -87,12 +92,13 @@ class LoginPage(View):
         })
         self.submit_login(method)
         logged_in_view = self.browser.create_view(BaseLoggedInPage)
-        if logged_in_view.logged_in and user.name is None:
-            name = logged_in_view.current_fullname
-            self.logger.info(
-                'setting the appliance.user.name to %r because it was not specified', name)
-            user.name = name
-        self.extra.appliance.user = user
+        if logged_in_view.logged_in:
+            if user.name is None:
+                name = logged_in_view.current_fullname
+                self.logger.info(
+                    'setting the appliance.user.name to %r because it was not specified', name)
+                user.name = name
+            self.extra.appliance.user = user
 
     def update_password(
             self, username, password, new_password, verify_password=None,
@@ -182,9 +188,9 @@ def login(self, user=None, submit_method=LOGIN_METHODS[-1]):
         user.name = logged_in_view.current_fullname
         try:
             assert logged_in_view.logged_in_as_user
+            self.appliance.user = user
         except AssertionError:
             login_view.flash.assert_no_error()
-        self.appliance.user = user
 
 
 @Server.login_admin.external_implementation_for(ViaUI)
