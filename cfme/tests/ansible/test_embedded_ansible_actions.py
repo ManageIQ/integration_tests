@@ -11,7 +11,7 @@ from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.utils import ports
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
@@ -171,9 +171,9 @@ def ansible_credential(appliance, full_template_modscope):
 
 
 @pytest.yield_fixture
-def service_request(ansible_catalog_item):
+def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = Request(request_desc)
+    service_request_ = RequestCollection(appliance).instantiate(request_desc)
     yield service_request_
 
     if service_request_.exists:

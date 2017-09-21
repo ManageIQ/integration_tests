@@ -9,7 +9,7 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import cleanup_vm
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.utils import testgen
 from cfme.utils.log import logger
 from cfme.utils.blockers import BZ
@@ -89,7 +89,7 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[BZ(1434990, forced_streams=["5.7", "upstream"])])
-def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request):
+def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
         test_flag: provision
@@ -105,6 +105,7 @@ def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()

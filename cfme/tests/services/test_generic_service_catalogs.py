@@ -7,7 +7,7 @@ from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import flash
 from cfme import test_requirements
 from selenium.common.exceptions import NoSuchElementException
@@ -68,7 +68,7 @@ def test_service_circular_reference(catalog_item):
         catalog_bundle.update({'catalog_items': sec_catalog_bundle.name})
 
 
-def test_service_generic_catalog_bundle(catalog_item):
+def test_service_generic_catalog_bundle(appliance, catalog_item):
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
@@ -79,12 +79,13 @@ def test_service_generic_catalog_bundle(catalog_item):
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     request_description = bundle_name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
 
-def test_bundles_in_bundle(catalog_item):
+def test_bundles_in_bundle(appliance, catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
@@ -105,7 +106,8 @@ def test_bundles_in_bundle(catalog_item):
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     request_description = third_bundle_name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 

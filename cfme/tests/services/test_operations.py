@@ -7,7 +7,7 @@ from cfme import test_requirements
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import flash, fill
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import browser
@@ -87,7 +87,7 @@ def generated_request(appliance,
     request_cells = {
         "Description": "Provision from [{}] to [{}###]".format(template_name, vm_name),
     }
-    provision_request = Request(cells=request_cells)
+    provision_request = RequestCollection(appliance).instantiate(cells=request_cells)
     yield provision_request
 
     browser().get(store.base_url)

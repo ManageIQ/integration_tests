@@ -68,8 +68,7 @@ def vm_name():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1200783, 1207209])
-def test_iso_provision_from_template(provider, vm_name, smtp_test, datastore_init,
+def test_iso_provision_from_template(appliance, provider, vm_name, smtp_test, datastore_init,
                                      request, setup_provider):
     """Tests ISO provisioning
 
@@ -99,5 +98,5 @@ def test_iso_provision_from_template(provider, vm_name, smtp_test, datastore_ini
         'network': {
             'vlan': vlan}}
 
-    do_vm_provisioning(iso_template, provider, vm_name, provisioning_data, request, smtp_test,
-                       num_sec=1500)
+    do_vm_provisioning(appliance, iso_template, provider, vm_name, provisioning_data, request,
+                       smtp_test, num_sec=1500)

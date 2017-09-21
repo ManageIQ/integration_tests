@@ -15,7 +15,7 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.utils import testgen
 from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
@@ -126,7 +126,7 @@ def vm_name(request):
 
 
 @pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(provider, testing_instance, soft_assert):
+def test_provision_from_template(appliance, provider, testing_instance, soft_assert):
     """ Tests instance provision from template
 
     Metadata:
@@ -136,7 +136,7 @@ def test_provision_from_template(provider, testing_instance, soft_assert):
     instance.create(**inst_args)
     logger.info('Waiting for cfme provision request for vm %s', instance.name)
     request_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     try:
         provision_request.wait_for_request(method='ui')
     except Exception as e:

@@ -2,7 +2,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -68,7 +68,7 @@ def catalog_item(request, config_manager, dialog, catalog):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_order_tower_catalog_item(catalog_item, request):
+def test_order_tower_catalog_item(appliance, catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -78,7 +78,7 @@ def test_order_tower_catalog_item(catalog_item, request):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
-    order_request = Request(cells=cells, partial_check=True)
+    order_request = RequestCollection(appliance).instantiate(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
     assert order_request.is_succeeded(method='ui')
     DefaultView.set_default_view("Configuration Management Providers", "List View")
@@ -96,7 +96,7 @@ def test_retire_ansible_service(appliance, catalog_item, request):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
-    order_request = Request(cells=cells, partial_check=True)
+    order_request = RequestCollection(appliance).instantiate(cells=cells, partial_check=True)
     order_request.wait_for_request(method='ui')
     assert order_request.is_succeeded(method='ui')
     myservice = MyService(appliance, catalog_item.name)

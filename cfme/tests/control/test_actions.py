@@ -18,7 +18,7 @@ from functools import partial
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.control.explorer import actions, conditions, policies, policy_profiles
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -759,7 +759,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing):
 
 @pytest.mark.meta(blockers=[1381255])
 @pytest.mark.provider([VMwareProvider], scope="module")
-def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_testing):
+def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, policy_for_testing):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
     to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
@@ -782,7 +782,8 @@ def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_test
 
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     request_description = clone_vm_name
-    clone_request = Request(description=request_description, partial_check=True)
+    clone_request = RequestCollection(appliance).instantiate(description=request_description,
+                                                             partial_check=True)
     clone_request.wait_for_request(method='ui')
     assert clone_request.status == "Error"
 

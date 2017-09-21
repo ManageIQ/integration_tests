@@ -13,7 +13,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import provisioning_form
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import InfoBlock, fill, flash
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -76,7 +76,7 @@ def prov_data(provisioning, provider):
 
 
 @pytest.fixture(scope="function")
-def provisioner(request, setup_provider, provider, vm_name):
+def provisioner(appliance, request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
         vm = Vm(name=vm_name, provider=provider, template_name=template)
@@ -88,7 +88,8 @@ def provisioner(request, setup_provider, provider, vm_name):
 
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
         request_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
-        provision_request = Request(description=request_description)
+        provision_request = RequestCollection(appliance).instantiate(
+            description=request_description)
         if delayed is not None:
             total_seconds = (delayed - datetime.utcnow()).total_seconds()
             try:

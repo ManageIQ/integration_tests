@@ -8,7 +8,7 @@ from cfme.configure.access_control import Tenant
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import fill, flash
 from cfme.utils import testgen, version
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -122,8 +122,8 @@ def provisioner(request, setup_provider, provider):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
-def test_group_quota_max_memory_check_by_tagging(
-        provisioner, prov_data, template_name, provider, request, vm_name, set_group_memory, bug):
+def test_group_quota_max_memory_check_by_tagging(appliance, provisioner, prov_data, template_name,
+                                                 provider, request, vm_name, set_group_memory, bug):
 
     """ Test group Quota-Max Memory by tagging.
 
@@ -149,7 +149,7 @@ def test_group_quota_max_memory_check_by_tagging(
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.last_message.text == \
         'Request denied due to the following quota limits:(Group Allocated Memory 0.00GB + ' \
@@ -157,8 +157,8 @@ def test_group_quota_max_memory_check_by_tagging(
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
-def test_group_quota_max_cpu_check_by_tagging(
-        provisioner, prov_data, template_name, provider, request, vm_name, set_group_cpu, bug):
+def test_group_quota_max_cpu_check_by_tagging(appliance, provisioner, prov_data, template_name,
+                                              provider, request, vm_name, set_group_cpu, bug):
 
     """ Test group Quota-Max CPU by tagging.
 
@@ -184,7 +184,7 @@ def test_group_quota_max_cpu_check_by_tagging(
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.last_message.text == \
         'Request denied due to the following quota limits:' \
@@ -192,8 +192,8 @@ def test_group_quota_max_cpu_check_by_tagging(
 
 
 @pytest.mark.tier(2)
-def test_tenant_quota_max_cpu_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_cpu, bug):
+def test_tenant_quota_max_cpu_check(appliance, provisioner, prov_data, template_name, provider,
+                                    request, vm_name, set_tenant_cpu, bug):
     """Test Tenant Quota-Max CPU by UI.
 
     Prerequisities:
@@ -218,7 +218,7 @@ def test_tenant_quota_max_cpu_check(
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1364381
     # TODO: update assert message once the above bug is fixed.
@@ -228,8 +228,8 @@ def test_tenant_quota_max_cpu_check(
 
 
 @pytest.mark.tier(2)
-def test_tenant_quota_max_memory_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_memory, bug):
+def test_tenant_quota_max_memory_check(appliance, provisioner, prov_data, template_name,
+                                       provider, request, vm_name, set_tenant_memory, bug):
     """Test Tenant Quota-Max Memory by UI.
 
     Prerequisities:
@@ -254,14 +254,14 @@ def test_tenant_quota_max_memory_check(
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 @pytest.mark.tier(2)
-def test_tenant_quota_max_storage_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_storage, bug):
+def test_tenant_quota_max_storage_check(appliance, provisioner, prov_data, template_name,
+                                        provider, request, vm_name, set_tenant_storage, bug):
     """Test Tenant Quota-Max Storage by UI.
 
     Prerequisities:
@@ -285,14 +285,14 @@ def test_tenant_quota_max_storage_check(
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"
 
 
 @pytest.mark.tier(2)
-def test_tenant_quota_max_num_vms_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_vm, bug):
+def test_tenant_quota_max_num_vms_check(appliance, provisioner, prov_data, template_name, provider,
+                                        request, vm_name, set_tenant_vm, bug):
     """Test Tenant Quota-Max number of vms by UI.
 
     Prerequisities:
@@ -318,7 +318,7 @@ def test_tenant_quota_max_num_vms_check(
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}###]'.format(template_name, vm_name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     provision_request.approve_request(method='ui', reason="Approved")
     provision_request.wait_for_request(method='ui')
     assert provision_request.row.reason.text == "Quota Exceeded"

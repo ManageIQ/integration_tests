@@ -4,7 +4,7 @@ from collections import OrderedDict
 from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import AngularSelect, flash, form_buttons, tabstrip
 from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -165,7 +165,7 @@ provisioning_form = tabstrip.TabStripForm(
 )
 
 
-def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, request,
+def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
     vm = Vm(name=vm_name, provider=provider, template_name=template_name)
@@ -185,7 +185,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     # Provision Re important in this test
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
-    provision_request = Request(request_description)
+    provision_request = RequestCollection(appliance).instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert provision_request.is_succeeded(method='ui'), \
         "Provisioning failed with the message {}".format(provision_request.row.last_message.text)

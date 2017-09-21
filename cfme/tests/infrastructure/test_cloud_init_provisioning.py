@@ -43,7 +43,7 @@ def vm_name():
     return vm_name
 
 
-def test_provision_cloud_init(setup_provider, provider, setup_ci_template,
+def test_provision_cloud_init(appliance, setup_provider, provider, setup_ci_template,
                               vm_name, smtp_test, request, provisioning):
     """Tests cloud init provisioning
 
@@ -72,8 +72,8 @@ def test_provision_cloud_init(setup_provider, provider, setup_ci_template,
             'custom_template': {'name': [provisioning['ci-template']]}}
     }
 
-    do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
-                       num_sec=900)
+    do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
+                       smtp_test, num_sec=900)
 
     connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
                               handle_exception=True)
