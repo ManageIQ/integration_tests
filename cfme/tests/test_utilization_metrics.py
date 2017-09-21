@@ -39,8 +39,8 @@ pytestmark = [
 
 
 @pytest.yield_fixture(scope="module")
-def enable_candu():
-    candu = CANDUCollection()
+def enable_candu(appliance):
+    candu = appliance.get(CANDUCollection)
     try:
         original_roles = get_server_roles()
         new_roles = original_roles.copy()

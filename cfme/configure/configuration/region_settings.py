@@ -7,7 +7,7 @@ from widgetastic_manageiq import VanillaTable, SummaryFormItem, Table
 from widgetastic.widget import Checkbox, Text
 
 from cfme.base.ui import RegionView
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -803,10 +803,10 @@ class CANDUCollectionView(RegionView):
         )
 
 
-class CANDUCollection(Navigatable):
+class CANDUCollection(BaseCollection):
     """ Class represents a C and U in CFME UI """
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def _set_state(self, enable=True, reset=False):
         """ Enable/Disable C and U
