@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 from cached_property import cached_property
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic_manageiq import CheckboxSelect, ManageIQTree, MultiBoxSelect, SummaryFormItem
 from widgetastic_patternfly import BootstrapSelect, Button, Input
@@ -9,7 +9,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic.widget import Checkbox, Text, View
 
 from . import ControlExplorerView
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -112,7 +112,50 @@ class ActionDetailsView(ControlExplorerView):
         )
 
 
-class Action(Updateable, Navigatable, Pretty):
+class ActionCollection(NavigatableMixin):
+
+    def __init__(self, parent=None, appliance=None):
+        if parent is None and appliance is None or parent and appliance:
+            raise ValueError("You should provider either parent or appliance")
+        self.parent = parent
+        self.appliance = getattr(self.parent, "appliance", appliance)
+
+    def instantiate(self, description, action_type, action_values=None):
+        return Action(description, action_type, self, action_values=action_values)
+
+    def create(self, description, action_type, action_values=None):
+        """Create this Action in UI."""
+        action = self.instantiate(description, action_type, action_values=action_values)
+        view = navigate_to(self, "Add")
+        view.fill({
+            "description": action.description,
+            "action_type": action.action_type,
+            "snapshot_name": action.snapshot_name,
+            "analysis_profile": action.analysis_profile,
+            "snapshot_age": action.snapshot_age,
+            "alerts_to_evaluate": action.alerts_to_evaluate,
+            "parent_type": action.parent_type,
+            "categories": action.categories,
+            "cpu_number": action.cpu_number,
+            "memory_amount": action.memory_amount,
+            "email_sender": action.email_sender,
+            "email_recipient": action.email_recipient,
+            "vcenter_attr_name": action.vcenter_attr_name,
+            "vcenter_attr_value": action.vcenter_attr_value,
+            "tag": action.tag,
+            "remove_tag": action.remove_tag,
+            "run_ansible_playbook": action.run_ansible_playbook
+        })
+        # todo: check whether we can remove ensure_page_safe later
+        action.browser.plugin.ensure_page_safe()
+        view.add_button.click()
+        view = action.create_view(ActionDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Action "{}" was added'.format(action.description))
+        return action
+
+
+class Action(Updateable, NavigatableMixin, Pretty):
     """This class represents one Action.
 
     Example:
@@ -128,8 +171,9 @@ class Action(Updateable, Navigatable, Pretty):
         description: Action name.
         action_type: Type of the action, value from the dropdown select.
     """
-    def __init__(self, description, action_type, action_values=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, description, action_type, collection, action_values=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         action_values = action_values or {}
         self.description = description
         self.action_type = action_type
@@ -158,36 +202,6 @@ class Action(Updateable, Navigatable, Pretty):
             return [str(alert) for alert in self._alerts_to_evaluate]
         else:
             return self._alerts_to_evaluate
-
-    def create(self):
-        """Create this Action in UI."""
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": self.description,
-            "action_type": self.action_type,
-            "snapshot_name": self.snapshot_name,
-            "analysis_profile": self.analysis_profile,
-            "snapshot_age": self.snapshot_age,
-            "alerts_to_evaluate": self.alerts_to_evaluate,
-            "parent_type": self.parent_type,
-            "categories": self.categories,
-            "cpu_number": self.cpu_number,
-            "memory_amount": self.memory_amount,
-            "email_sender": self.email_sender,
-            "email_recipient": self.email_recipient,
-            "vcenter_attr_name": self.vcenter_attr_name,
-            "vcenter_attr_value": self.vcenter_attr_value,
-            "tag": self.tag,
-            "remove_tag": self.remove_tag,
-            "run_ansible_playbook": self.run_ansible_playbook
-        })
-        # todo: check whether we can remove ensure_page_safe later
-        self.browser.plugin.ensure_page_safe()
-        view.add_button.click()
-        view = self.create_view(ActionDetailsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Action "{}" was added'.format(self.description))
 
     def update(self, updates):
         """Update this Action in UI.
@@ -226,8 +240,8 @@ class Action(Updateable, Navigatable, Pretty):
         else:
             view = self.create_view(ActionsAllView)
             assert view.is_displayed
-            view.flash.assert_no_error()
-            view.flash.assert_message('Action "{}": Delete successful'.format(self.description))
+            view.flash.assert_success_message(
+                'Action "{}": Delete successful'.format(self.description))
 
     @property
     def exists(self):
@@ -246,20 +260,28 @@ class Action(Updateable, Navigatable, Pretty):
             self.delete()
 
 
-@navigator.register(Action, "Add")
-class ActionNew(CFMENavigateStep):
-    VIEW = NewActionView
+@navigator.register(ActionCollection, "All")
+class ActionsAll(CFMENavigateStep):
+    VIEW = ActionsAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.actions.tree.click_path("All Actions")
-        self.view.configuration.item_select("Add a new Action")
+        self.prerequisite_view.actions.tree.click_path("All Actions")
+
+
+@navigator.register(ActionCollection, "Add")
+class ActionNew(CFMENavigateStep):
+    VIEW = NewActionView
+    prerequisite = NavigateToSibling("All")
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select("Add a new Action")
 
 
 @navigator.register(Action, "Edit")
 class ActionEdit(CFMENavigateStep):
     VIEW = EditActionView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
         self.view.actions.tree.click_path("All Actions", self.obj.description)
@@ -269,7 +291,7 @@ class ActionEdit(CFMENavigateStep):
 @navigator.register(Action, "Details")
 class ActionDetails(CFMENavigateStep):
     VIEW = ActionDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
-        self.view.actions.tree.click_path("All Actions", self.obj.description)
+        self.prerequisite_view.actions.tree.click_path("All Actions", self.obj.description)

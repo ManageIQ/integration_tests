@@ -217,9 +217,11 @@ class EditEventView(ControlExplorerView):
 
 class PolicyCollection(NavigatableMixin):
 
-    def __init__(self, parent):
+    def __init__(self, parent=None, appliance=None):
+        if parent is None and appliance is None or parent and appliance:
+            raise ValueError("You should provider either parent or appliance")
         self.parent = parent
-        self.appliance = self.parent.appliance
+        self.appliance = getattr(self.parent, "appliance", appliance)
 
     def instantiate(self, description, policy_class, active=True, scope=None, notes=None):
         return policy_class(description, self, active=active, scope=scope, notes=notes)
@@ -237,7 +239,8 @@ class PolicyCollection(NavigatableMixin):
         view.add_button.click()
         view = policy.create_view(PolicyDetailsView)
         assert view.is_displayed
-        view.flash.assert_success_message('Policy "{}" was added'.format(self.description))
+        view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
+        return policy
 
     def all(self):
         pass
@@ -276,6 +279,10 @@ class BasePolicy(Updateable, NavigatableMixin, Pretty):
 
     def __str__(self):
         return self.description
+
+    @property
+    def name_for_policy_profile(self):
+        return "{} {}: {}".format(self.PRETTY, self.TYPE, self.description)
 
     @property
     def parent(self):
@@ -448,8 +455,7 @@ class BasePolicy(Updateable, NavigatableMixin, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Actions for Policy Event "{}" were saved'.format(
+        view.flash.assert_success_message('Actions for Policy Event "{}" were saved'.format(
             event))
 
     @property
@@ -479,21 +485,22 @@ class PolicyAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
+        self.prerequisite_view.policies.tree.click_path("All Policies")
+
+
+@navigator.register(BasePolicy, "Add")
+class PolicyNew(CFMENavigateStep):
+    VIEW = NewPolicyView
+    prerequisite = NavigateToAttribute("collection", "All")
+
+    def step(self):
         self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE)
         )
-
-
-@navigator.register(PolicyCollection, "Add")
-class PolicyNew(CFMENavigateStep):
-    VIEW = NewPolicyView
-    prerequisite = NavigateToSibling("All")
-
-    def step(self):
-        self.view.configuration.item_select("Add a New {} {} Policy".format(self.obj.PRETTY,
-            self.obj.TYPE))
+        self.prerequisite_view.configuration.item_select("Add a New {} {} Policy".format(
+            self.obj.PRETTY, self.obj.TYPE))
 
 
 @navigator.register(BasePolicy, "Edit")
@@ -502,16 +509,16 @@ class PolicyEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.configuration.item_select("Edit Basic Info, Scope, and Notes")
+        self.prerequisite_view.configuration.item_select("Edit Basic Info, Scope, and Notes")
 
 
 @navigator.register(BasePolicy, "Details")
 class PolicyDetails(CFMENavigateStep):
     VIEW = PolicyDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
-        self.prerequisite.policies.tree.click_path(
+        self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),

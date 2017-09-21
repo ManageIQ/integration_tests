@@ -80,19 +80,21 @@ class PolicyProfileCollection(NavigatableMixin):
         return PolicyProfile(description, self, policies_to_assign=policies_to_assign, notes=notes)
 
     def create(self, description, policies_to_assign=None, notes=None):
-        policy = self.instantiate(description, self, policies_to_assign=policies_to_assign, notes=notes)
+        policy_profile = self.instantiate(description, self, policies_to_assign=policies_to_assign,
+            notes=notes)
         view = navigate_to(self, "Add")
         view.fill({
-            "description": policy.description,
-            "notes": policy.notes,
-            "policies": policy.prepared_policies
+            "description": policy_profile.description,
+            "notes": policy_profile.notes,
+            "policies": [policy.name_for_policy_profile for
+                         policy in policy_profile.policies_to_assign]
         })
         view.add_button.click()
-        view = policy.create_view(PolicyProfileDetailsView)
+        view = policy_profile.create_view(PolicyProfileDetailsView)
         assert view.is_displayed
         view.flash.assert_success_message('Policy Profile "{}" was added'.format(
-            policy.description))
-        return policy
+            policy_profile.description))
+        return policy_profile
 
 
 class PolicyProfile(Updateable, NavigatableMixin, Pretty):
@@ -116,14 +118,6 @@ class PolicyProfile(Updateable, NavigatableMixin, Pretty):
     def policies(self):
         from .policies import PolicyCollection
         return PolicyCollection(self)
-
-    @property
-    def prepared_policies(self):
-        if self.policies_to_assign is not None:
-            return ["{} {}: {}".format(policy.PRETTY, policy.TYPE, policy.description) for
-                    policy in self.policies_to_assign]
-        else:
-            return None
 
     def update(self, updates):
         """Update this Policy Profile in UI.
@@ -210,7 +204,7 @@ class PolicyProfileEdit(CFMENavigateStep):
 @navigator.register(PolicyProfile, "Details")
 class PolicyProfileDetails(CFMENavigateStep):
     VIEW = PolicyProfileDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
         self.prerequisite_view.policy_profiles.tree.click_path(
