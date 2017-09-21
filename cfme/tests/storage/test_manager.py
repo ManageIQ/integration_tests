@@ -20,7 +20,7 @@ pytestmark = [pytest.mark.tier(3),
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_block_manager_navigation(openstack_provider, appliance):
     """Simple test for navigation destinations"""
-    block_name = openstack_provider.name + ' Cinder Manager'
+    block_name = '{} Cinder Manager'.format(openstack_provider.name)
     block_manager = BlockManager(name=block_name, provider=openstack_provider, appliance=appliance)
 
     view = navigate_to(block_manager, 'All')
@@ -35,7 +35,7 @@ def test_block_manager_navigation(openstack_provider, appliance):
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_object_manager_navigation(openstack_provider, appliance):
     """Simple test for navigation destinations"""
-    object_name = openstack_provider.name + ' Swift Manager'
+    object_name = '{} Swift Manager'.format(openstack_provider.name)
     object_manager = ObjectManager(name=object_name, provider=openstack_provider,
                                   appliance=appliance)
 

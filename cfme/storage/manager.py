@@ -1,23 +1,28 @@
-from cfme.utils.appliance import NavigatableMixin
+# -*- coding: utf-8 -*-
+
 from navmazing import NavigateToAttribute, NavigateToSibling
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic.utils import Version, VersionPick
-from cfme.base.ui import BaseLoggedInPage
-from widgetastic_manageiq import (Accordion,
-                                  BootstrapSelect,
-                                  BootstrapTreeview,
-                                  BreadCrumb,
-                                  ManageIQTree,
-                                  PaginationPane,
-                                  SummaryTable,
-                                  Table
-                                  )
-from widgetastic_patternfly import (Button,
-                                    Dropdown,
-                                    FlashMessages
-                                    )
 from widgetastic.widget import View, NoSuchElementException, Text
+from widgetastic_manageiq import (
+    Accordion,
+    BootstrapSelect,
+    BootstrapTreeview,
+    BreadCrumb,
+    ManageIQTree,
+    PaginationPane,
+    SummaryTable,
+    Table
+    )
+from widgetastic_patternfly import (
+    Button,
+    Dropdown,
+    FlashMessages
+    )
+
+from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance import NavigatableMixin
 
 
 class ManagerToolbar(View):
@@ -80,7 +85,6 @@ class ManagerAllView(ManagerView):
     """The all Storage Manager or Provider page"""
     @property
     def is_displayed(self):
-        """Is this page currently being displayed"""
         return (
             self.in_manager and
             self.title.text in ('Storage Managers', self.context['object'].type))
@@ -116,7 +120,6 @@ class ManagerTagsView(ManagerView):
 
     @property
     def is_displayed(self):
-        """Is this page currently being displayed"""
         return (
             self.in_manager and
             self.breadcrumb.active_location == 'Tag Assignment')
@@ -132,7 +135,6 @@ class ManagePoliciesView(ManagerView):
 
     @property
     def is_displayed(self):
-        """Is this page currently displayed"""
         return (
             self.in_manager and
             self.breadcrumb.active_location == "'Storage Manager' Policy Assignment")
