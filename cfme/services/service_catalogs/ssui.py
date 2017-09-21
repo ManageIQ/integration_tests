@@ -1,6 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_manageiq import SSUIlist, SSUIDropdown
+from widgetastic_manageiq import SSUIlist, SSUIDropdown, SSUIServiceCatalogcard
 from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
@@ -14,6 +14,7 @@ from cfme.utils.appliance.implementations.ssui import (
 
 class ServiceCatalogsView(SSUIBaseLoggedInPage):
     title = Text(locator='//li[@class="active"]')
+    service = SSUIServiceCatalogcard()
 
     @property
     def in_service_catalogs(self):

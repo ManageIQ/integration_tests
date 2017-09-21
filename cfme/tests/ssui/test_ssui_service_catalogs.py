@@ -29,6 +29,6 @@ def test_service_catalog_crud(context):
     # service_name = order_catalog_item_in_ops_ui
     with appliance.context.use(context):
         appliance.server.login()
-        service = ServiceCatalogs(appliance, "20S3liTPYj")
+        service = ServiceCatalogs(appliance, name="20S3liTPYj")
         service.add_to_shopping_cart()
         # TODO - add rest of myservice crud like delete in next phase.

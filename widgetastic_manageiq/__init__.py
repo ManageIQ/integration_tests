@@ -1232,6 +1232,36 @@ class SSUIAggregatecard(Widget, ClickableMixin):
         return self.aggregate_card(item_name).card_count()
 
 
+class SSUIServiceCatalogcard(Widget, ClickableMixin):
+    """Represents an service catalog card in SSUI."""
+
+    @ParametrizedView.nested
+    class catalog_card(ParametrizedView):  # noqa
+        PARAMETERS = ("item_name",)
+        card = Text(ParametrizedLocator('.//div/ss-card/h3[contains(normalize-space(.)={item_name|quote})]'))
+
+        def card_click(self):
+            """Clicks the primary card with this name."""
+
+            return self.card.click()
+
+        def card_count(self):
+            """Gets the count displayed on card"""
+
+            return self.browser.text(self.count)
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def click_at(self, item_name):
+        """Clicks the card item with this name.
+
+        Args:
+            item_name: Name of the card
+        """
+        return self.catalog_card(item_name).card_click()
+
+
 class Paginator(Widget):
     """ Represents Paginator control that includes First/Last/Next/Prev buttons
     and a control displaying amount of items on current page vs overall amount.
