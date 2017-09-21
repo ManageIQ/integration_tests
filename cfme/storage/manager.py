@@ -190,7 +190,7 @@ class BlockManager(Manager):
         self.name = name
 
         super(BlockManager, self).__init__(name=self.name, provider=self.provider,
-                                            appliance=self.appliance,nav=self.nav, type=self.type)
+                                           appliance=self.appliance, nav=self.nav, type=self.type)
 
 
 class ObjectManager(Manager):
@@ -212,7 +212,7 @@ class ObjectManager(Manager):
         self.name = name
 
         super(ObjectManager, self).__init__(name=self.name, provider=self.provider,
-                                            appliance=self.appliance,nav=self.nav, type=self.type)
+                                            appliance=self.appliance, nav=self.nav, type=self.type)
 
 
 @navigator.register(Manager, 'All')
