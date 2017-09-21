@@ -247,6 +247,7 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         Note the updates dict should take the structure below if called directly
 
             .. code-block:: python
+
                 updates = {
                     'name': self.name,
                     'description': self.description,

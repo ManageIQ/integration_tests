@@ -44,8 +44,9 @@ class NetworkProviderCollection(BaseCollection):
 
 class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     """ Class representing network provider in sdn
-        Note: Network provider can be added to cfme database
-              only automaticaly with cloud provider
+
+    Note: Network provider can be added to cfme database
+          only automaticaly with cloud provider
     """
     STATS_TO_MATCH = []
     string_name = 'Networks'
