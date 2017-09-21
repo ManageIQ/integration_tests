@@ -68,8 +68,8 @@ def test_custom_report_crud(custom_report):
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
 @test_requirements.report
-def test_schedule_crud(schedule_data):
-    schedules = ScheduleCollection()
+def test_schedule_crud(schedule_data, appliance):
+    schedules = ScheduleCollection(appliance)
     schedule = schedules.create(**schedule_data)
     with update(schedule):
         schedule.description = "badger badger badger"

@@ -7,7 +7,7 @@ from widgetastic.widget import Text, Checkbox, TextInput
 from widgetastic_manageiq import Calendar, AlertEmail, Table, PaginationPane
 from widgetastic_patternfly import Button, BootstrapSelect
 
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
@@ -95,15 +95,18 @@ class ScheduleDetailsView(CloudIntelReportsView):
         )
 
 
-class ScheduleCollection(Navigatable):
+class ScheduleCollection(BaseCollection):
 
-    def instantiate(self, name, description, filter, active=None, timer=None, emails=None,
-                    email_options=None):
-        return Schedule(name, description, filter, active=active, timer=timer,
-            emails=emails, email_options=email_options, appliance=self.appliance)
+    def __init__(self, appliance):
+        self.appliance = appliance
 
-    def create(self, name=None, description=None, filter=None, active=None, timer=None,
-               emails=None, email_options=None):
+    def instantiate(self, name, description, filter, active=None, timer=None,
+                    emails=None, email_options=None):
+        return Schedule(self, name, description, filter, active=active, timer=timer,
+            emails=emails, email_options=email_options)
+
+    def create(self, name=None, description=None, filter=None, active=None,
+               timer=None, emails=None, email_options=None):
         schedule = self.instantiate(name, description, filter, active=active, timer=timer,
             emails=emails, email_options=email_options)
         view = navigate_to(self, "Add")
@@ -210,7 +213,7 @@ class ScheduleCollection(Navigatable):
         )
 
 
-class Schedule(Updateable, Pretty, Navigatable):
+class Schedule(Updateable, Pretty, BaseEntity):
     """Represents a schedule in Cloud Intel/Reports/Schedules.
 
     Args:
@@ -230,12 +233,10 @@ class Schedule(Updateable, Pretty, Navigatable):
     def __str__(self):
         return self.name
 
-    def __init__(self, name, description, filter, active=None, timer=None, emails=None,
-                 email_options=None, collection=None, appliance=None):
-        if collection is None:
-            collection = ScheduleCollection(appliance=appliance)
+    def __init__(self, collection, name, description, filter, active=None, timer=None, emails=None,
+                 email_options=None):
         self.collection = collection
-        Navigatable.__init__(self, appliance)
+        self.appliance = self.collection.appliance
         self.name = name
         self.description = description
         self.filter = filter
