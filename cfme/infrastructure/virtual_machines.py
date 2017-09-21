@@ -570,6 +570,7 @@ class Vm(VM):
                     return True
             except CandidateNotFound:
                 return False
+            return False
 
         def create(self, force_check_memory=False):
             snapshot_dict = {
