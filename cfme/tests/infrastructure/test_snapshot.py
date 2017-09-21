@@ -117,6 +117,9 @@ def test_snapshot_crud(small_test_vm, provider):
     else:
         snapshot = new_snapshot(small_test_vm)
     snapshot.create()
+    if provider.one_of(RHEVMProvider):
+        # Workaround to select the snapshot
+        snapshot.active
     snapshot.delete()
 
 
