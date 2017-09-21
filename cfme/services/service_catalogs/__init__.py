@@ -14,10 +14,11 @@ class ServiceCatalogs(Navigatable, WidgetasticTaggable, Updateable, sentaku.mode
     """
 
     order = sentaku.ContextualMethod()
+    add_to_shopping_cart = sentaku.ContextualMethod()
 
     def __init__(self, appliance, catalog=None, name=None, stack_data=None,
                  dialog_values=None, ansible_dialog_values=None):
-        self.appliance = appliance
+        Navigatable.__init__(self, appliance=appliance)
         self.catalog = catalog
         self.name = name
         self.stack_data = stack_data
