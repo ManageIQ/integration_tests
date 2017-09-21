@@ -11,7 +11,7 @@ from cfme.services.myservice import MyService
 from cfme.services.requests import Request
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.stack import Stack
+from cfme.cloud.stack import StackCollection
 from cfme import test_requirements
 from cfme.utils import testgen
 from cfme.utils.conf import credentials
@@ -229,7 +229,7 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
             provision_request.row.status.text == "Error")
 
 
-def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
+def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
@@ -246,7 +246,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     provision_request = Request(request_description, partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
-    stack = Stack(stack_data['stack_name'], provider=provider)
+    stack = StackCollection(appliance).instantiate(stack_data['stack_name'], provider=provider)
     stack.wait_for_exists()
     stack.retire_stack()
 
