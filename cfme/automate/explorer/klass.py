@@ -10,7 +10,7 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button, Tab
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity, Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
@@ -92,10 +92,10 @@ class ClassEditView(ClassForm):
             self.title.text == 'Editing Class "{}"'.format(self.obj.name))
 
 
-class ClassCollection(Navigatable):
-    def __init__(self, parent_namespace):
+class ClassCollection(BaseCollection):
+    def __init__(self, appliance, parent_namespace):
         self.parent = parent_namespace
-        Navigatable.__init__(self, appliance=parent_namespace.appliance)
+        self.appliance = appliance
 
     @property
     def tree_path(self):
@@ -170,10 +170,10 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.configuration.item_select('Add a New Class')
 
 
-class Class(Navigatable, Copiable):
+class Class(BaseEntity, Copiable):
     def __init__(self, collection, name, display_name, description):
-        Navigatable.__init__(self, appliance=collection.appliance)
         self.collection = collection
+        self.appliance = self.collection.appliance
         self.name = name
         if display_name is not None:
             self.display_name = display_name
@@ -242,7 +242,7 @@ class Class(Navigatable, Copiable):
     @cached_property
     def methods(self):
         from .method import MethodCollection
-        return MethodCollection(self)
+        return MethodCollection(self.appliance, self)
 
     @cached_property
     def schema(self):

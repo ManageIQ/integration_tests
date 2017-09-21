@@ -330,7 +330,7 @@ class Domain(BaseEntity, Fillable):
     @cached_property
     def namespaces(self):
         from .namespace import NamespaceCollection
-        return NamespaceCollection(self)
+        return NamespaceCollection(self.appliance, self)
 
     @property
     def tree_display_name(self):
