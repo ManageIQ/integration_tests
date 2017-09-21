@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput
 from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -71,23 +70,21 @@ class PolicyProfilesAllView(ControlExplorerView):
         )
 
 
-class PolicyProfileCollection(NavigatableMixin):
+class PolicyProfileCollection(BaseCollection):
 
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def instantiate(self, description, collection, policies_to_assign=None, notes=None):
-        return PolicyProfile(description, self, policies_to_assign=policies_to_assign, notes=notes)
+    def instantiate(self, collection, description, policies, notes=None):
+        return PolicyProfile(self, description, policies, notes=notes)
 
-    def create(self, description, policies_to_assign=None, notes=None):
-        policy_profile = self.instantiate(description, self, policies_to_assign=policies_to_assign,
-            notes=notes)
+    def create(self, description, policies, notes=None):
+        policy_profile = self.instantiate(self, description, policies, notes=notes)
         view = navigate_to(self, "Add")
         view.fill({
             "description": policy_profile.description,
             "notes": policy_profile.notes,
-            "policies": [policy.name_for_policy_profile for
-                         policy in policy_profile.policies_to_assign]
+            "policies": [policy.name_for_policy_profile for policy in policy_profile.policies]
         })
         view.add_button.click()
         view = policy_profile.create_view(PolicyProfileDetailsView)
@@ -97,27 +94,14 @@ class PolicyProfileCollection(NavigatableMixin):
         return policy_profile
 
 
-class PolicyProfile(Updateable, NavigatableMixin, Pretty):
+class PolicyProfile(BaseEntity, Updateable, Pretty):
 
-    def __init__(self, description, collection, policies_to_assign=None, notes=None):
+    def __init__(self, collection, description, policies, notes=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.description = description
         self.notes = notes
-        self.policies_to_assign = policies_to_assign
-
-    @property
-    def parent(self):
-        return self.collection
-
-    @property
-    def policy_profile(self):
-        return self
-
-    @cached_property
-    def policies(self):
-        from .policies import PolicyCollection
-        return PolicyCollection(self)
+        self.policies = policies
 
     def update(self, updates):
         """Update this Policy Profile in UI.

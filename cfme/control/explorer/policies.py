@@ -9,7 +9,7 @@ from . import ControlExplorerView
 from actions import Action
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -170,8 +170,8 @@ class ConditionDetailsView(ControlExplorerView):
 
 
 class EventDetailsToolbar(View):
-    """Toolbar widets on the event details page"""
-    configuration = Dropdown('Configuration')
+    """Toolbar widgets on the event details page"""
+    configuration = Dropdown("Configuration")
 
 
 class EventDetailsView(ControlExplorerView):
@@ -182,7 +182,7 @@ class EventDetailsView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == 'Event "{}"'.format(self.context["object"].testing_event)
+            self.title.text == 'Event "{}"'.format(self.context["object"].context_event)
         )
 
 
@@ -211,23 +211,20 @@ class EditEventView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == 'Editing Event "{}"'.format(self.context["object"].testing_event)
+            self.title.text == 'Editing Event "{}"'.format(self.context["object"].context_event)
         )
 
 
-class PolicyCollection(NavigatableMixin):
+class PolicyCollection(BaseCollection):
 
-    def __init__(self, parent=None, appliance=None):
-        if parent is None and appliance is None or parent and appliance:
-            raise ValueError("You should provider either parent or appliance")
-        self.parent = parent
-        self.appliance = getattr(self.parent, "appliance", appliance)
+    def __init__(self, appliance):
+        self.appliance = appliance
 
-    def instantiate(self, description, policy_class, active=True, scope=None, notes=None):
-        return policy_class(description, self, active=active, scope=scope, notes=notes)
+    def instantiate(self, policy_class, description, active=True, scope=None, notes=None):
+        return policy_class(self, description, active=active, scope=scope, notes=notes)
 
-    def create(self, description, policy_class, active=True, scope=None, notes=None):
-        policy = self.instantiate(description, policy_class, active=active, scope=scope,
+    def create(self, policy_class, description, active=True, scope=None, notes=None):
+        policy = self.instantiate(policy_class, description, active=active, scope=scope,
             notes=notes)
         view = navigate_to(policy, "Add")
         view.fill({
@@ -243,10 +240,15 @@ class PolicyCollection(NavigatableMixin):
         return policy
 
     def all(self):
-        pass
+        raise NotImplementedError
+
+    def delete(self, *policies):
+        for policy in policies:
+            if policy.exists:
+                policy.delete()
 
 
-class BasePolicy(Updateable, NavigatableMixin, Pretty):
+class BasePolicy(BaseEntity, Updateable, Pretty):
     """This class represents a Policy.
 
     Example:
@@ -269,7 +271,7 @@ class BasePolicy(Updateable, NavigatableMixin, Pretty):
     PRETTY = None
     _param_name = ParamClassName('description')
 
-    def __init__(self, description, collection, active=True, scope=None, notes=None):
+    def __init__(self, collection, description, active=True, scope=None, notes=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.description = description
@@ -283,22 +285,6 @@ class BasePolicy(Updateable, NavigatableMixin, Pretty):
     @property
     def name_for_policy_profile(self):
         return "{} {}: {}".format(self.PRETTY, self.TYPE, self.description)
-
-    @property
-    def parent(self):
-        return self.collection.parent
-
-    @property
-    def policy_profile(self):
-        return self.parent.policy_profile
-
-    @property
-    def conditions(self):
-        pass
-
-    @property
-    def events(self):
-        pass
 
     def update(self, updates):
         """Update this Policy in UI.
@@ -392,13 +378,15 @@ class BasePolicy(Updateable, NavigatableMixin, Pretty):
         changed = view.fill({"conditions": [condition.description for condition in conditions]})
         if changed:
             view.save_button.click()
+            flash_message = 'Policy "{}" was saved'.format(self.description)
         else:
             view.cancel_button.click()
-        view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
+            flash_message = 'Edit of Policy "{}" was cancelled by the user'.format(self.description)
+        view.flash.assert_success_message(flash_message)
 
     def is_condition_assigned(self, condition):
-        self.testing_condition = condition
-        view = navigate_to(self, "Condition Details")
+        condition.context_policy = self
+        view = navigate_to(condition, "Details in policy")
         return view.is_displayed
 
     def assign_actions_to_event(self, event, actions):
@@ -441,7 +429,7 @@ class BasePolicy(Updateable, NavigatableMixin, Pretty):
             self.assign_events(event, extend=True)
             assert self.is_event_assigned(event), "Could not assign event {}!".format(event)
         # And now we can assign actions
-        self.testing_event = event
+        self.context_event = event
         view = navigate_to(self, "Event Details")
         assert view.is_displayed
         view.toolbar.configuration.item_select("Edit Actions for this Policy Event")
@@ -526,21 +514,6 @@ class PolicyDetails(CFMENavigateStep):
         )
 
 
-@navigator.register(BasePolicy, "Condition Details")
-class PolicyConditionDetails(CFMENavigateStep):
-    VIEW = ConditionDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
-
-    def step(self):
-        self.view.policies.tree.click_path(
-            "All Policies",
-            "{} Policies".format(self.obj.TYPE),
-            "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
-            self.obj.description,
-            self.obj.testing_condition.description
-        )
-
-
 @navigator.register(BasePolicy, "Event Details")
 class PolicyEventDetails(CFMENavigateStep):
     VIEW = EventDetailsView
@@ -552,7 +525,7 @@ class PolicyEventDetails(CFMENavigateStep):
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
             self.obj.description,
-            self.obj.testing_event
+            self.obj.context_event
         )
 
 

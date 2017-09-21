@@ -227,20 +227,33 @@ ALERT_PROFILES = [
 ]
 
 
-@pytest.yield_fixture
-def random_vm_control_policy():
-    policy = policies.VMControlPolicy(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
+@pytest.fixture
+def policy_profile_collection(appliance):
+    return appliance.get(policy_profiles.PolicyProfileCollection)
+
+
+@pytest.fixture
+def policy_collection(appliance):
+    return appliance.get(policies.PolicyCollection)
+
+
+@pytest.fixture
+def condition_collection(appliance):
+    return appliance.get(conditions.ConditionCollection)
 
 
 @pytest.yield_fixture
-def random_host_control_policy():
-    policy = policies.HostControlPolicy(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
+def two_random_policies(policy_collection):
+    policy_1 = policy_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        random.choice(POLICIES)
+    )
+    policy_2 = policy_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        random.choice(POLICIES)
+    )
+    yield policy_1, policy_2
+    policy_collection.delete(policy_1, policy_2)
 
 
 @pytest.yield_fixture
@@ -259,32 +272,50 @@ def policy_class(request):
 
 
 @pytest.yield_fixture
-def policy(policy_class):
-    policy = policy_class(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
+def policy(policy_collection, policy_class):
+    policy_ = policy_collection.create(fauxfactory.gen_alphanumeric(), policy_class)
+    yield policy_
+    policy_.delete()
 
 
 @pytest.yield_fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__,
     scope="module")
-def condition_for_expressions(request):
+def condition_for_expressions(request, condition_collection):
     condition_class = request.param
-    cond = condition_class(
+    condition = condition_collection.create(
         fauxfactory.gen_alphanumeric(),
+        condition_class,
         expression="fill_field({} : Name, IS NOT EMPTY)".format(condition_class.FIELD_VALUE),
         scope="fill_field({} : Name, INCLUDES, {})".format(condition_class.FIELD_VALUE,
             fauxfactory.gen_alpha())
     )
-    cond.create()
-    yield cond
-    cond.delete()
+    yield condition
+    condition.delete()
+
+
+@pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__)
+def condition(request, condition_collection):
+    condition_class = request.param
+    expression = "fill_field({} : Name, =, {})".format(
+        condition_class.FIELD_VALUE,
+        fauxfactory.gen_alphanumeric()
+    )
+    scope = "fill_field({} : Name, =, {})".format(
+        condition_class.FIELD_VALUE,
+        fauxfactory.gen_alphanumeric()
+    )
+    return condition_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        condition_class,
+        scope=scope,
+        expression=expression
+    )
 
 
 @pytest.yield_fixture(params=CONTROL_POLICIES, ids=lambda policy_class: policy_class.__name__)
-def control_policy(request):
-    policy = request.param(fauxfactory.gen_alphanumeric())
-    policy.create()
+def control_policy(request, policy_collection):
+    policy_class = request.param
+    policy = policy_collection.create(fauxfactory.gen_alphanumeric(), policy_class)
     yield policy
     policy.delete()
 
@@ -304,52 +335,34 @@ def alert_profile(request):
     alert.delete()
 
 
-@pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__)
-def condition(request):
-    condition_class = request.param
-    expression = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE,
-        fauxfactory.gen_alphanumeric()
-    )
-    scope = "fill_field({} : Name, =, {})".format(
-        condition_class.FIELD_VALUE,
-        fauxfactory.gen_alphanumeric()
-    )
-    cond = condition_class(
-        fauxfactory.gen_alphanumeric(),
-        scope=scope,
-        expression=expression
-    )
-    return cond
-
-
 @pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
-def policy_and_condition(request):
+def policy_and_condition(request, policy_collection, condition_collection):
     condition_class = request.param.condition
+    policy_class = request.param.policy
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
-    condition = condition_class(
+    condition = condition_collection.create(
+        condition_class,
         fauxfactory.gen_alphanumeric(),
         expression=expression
     )
-    policy = request.param.policy(fauxfactory.gen_alphanumeric())
-    policy.create()
-    condition.create()
+    policy = policy_collection.create(
+        policy_class,
+        fauxfactory.gen_alphanumeric()
+    )
     yield policy, condition
     policy.delete()
     condition.delete()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda condition: condition is conditions.ProviderCondition and
-    current_version() < "5.7.1"
-)
-def test_condition_crud(condition):
+@pytest.mark.parametrize("condition_class", CONDITIONS,
+    ids=[cond_class.__name__ for cond_class in CONDITIONS])
+def test_condition_crud(condition_collection, condition_class):
     # CR
-    condition.create()
+    condition = condition_collection.create(condition_class, fauxfactory.gen_alphanumeric())
     # U
     with update(condition):
         condition.notes = "Modified!"
@@ -374,10 +387,9 @@ def test_action_crud():
 
 
 @pytest.mark.tier(2)
-def test_policy_crud(policy_class):
-    policy = policy_class(fauxfactory.gen_alphanumeric())
+def test_policy_crud(policy_collection, policy_class):
     # CR
-    policy.create()
+    policy = policy_collection.create(fauxfactory.gen_alphanumeric(), policy_class)
     # U
     with update(policy):
         policy.notes = "Modified!"
@@ -388,6 +400,7 @@ def test_policy_crud(policy_class):
 @pytest.mark.tier(3)
 def test_policy_copy(policy):
     random_policy_copy = policy.copy()
+    assert random_policy_copy.exists
     random_policy_copy.delete()
 
 
@@ -401,7 +414,7 @@ def test_assign_two_random_events_to_control_policy(control_policy, soft_assert)
 
 @pytest.mark.tier(3)
 def test_assign_condition_to_control_policy(request, policy_and_condition):
-    """This test checks whether an condition is assigned to a control policy.
+    """This test checks if a condition is assigned to a control policy.
     Steps:
         * Create a control policy.
         * Assign a condition to the created policy.
@@ -413,11 +426,10 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
 
 
 @pytest.mark.tier(2)
-def test_policy_profile_crud(appliance, random_vm_control_policy, random_host_control_policy):
-    profiles_collection = policy_profiles.PolicyProfileCollection(appliance)
-    profile = profiles_collection.create(
+def test_policy_profile_crud(policy_profile_collection, two_random_policies):
+    profile = policy_profile_collection.create(
         fauxfactory.gen_alphanumeric(),
-        policies=[random_vm_control_policy, random_host_control_policy]
+        policies_to_assign=two_random_policies
     )
     with update(profile):
         profile.notes = "Modified!"

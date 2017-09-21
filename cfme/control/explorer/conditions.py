@@ -7,7 +7,7 @@ from widgetastic.widget import Text, TextInput, Widget
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
 from cfme.utils import ParamClassName
 
@@ -130,21 +130,39 @@ class ConditionDetailsView(ControlExplorerView):
         )
 
 
-class ConditionCollection(NavigatableMixin):
+class ConditionPolicyDetailsView(ControlExplorerView):
+    title = Text("#explorer_title_text")
 
-    def __init__(self, parent=None, appliance=None):
-        if parent is None and appliance is None or parent and appliance:
-            raise ValueError("You should provider either parent or appliance")
-        self.parent = parent
-        self.appliance = getattr(self.parent, "appliance", appliance)
+    @property
+    def is_displayed(self):
+        return (
+            self.in_control_explorer and
+            self.title.text == '{} Condition "{}"'.format(self.context["object"].policy.PRETTY,
+                self.context["object"].description) and
+            self.policies.is_opened and
+            self.policies.tree.currently_selected == [
+                "All Policies",
+                "{} Policies".format(self.context["object"].policy.TYPE),
+                "{} {} Policies".format(self.context["object"].policy.TREE_NODE,
+                    self.context["object"].policy.TYPE),
+                self.context["object"].policy.description,
+                self.context["object"].description
+            ]
+        )
 
-    def instantiate(self, description, condition_class, expression=None, scope=None, notes=None):
-        return condition_class(description, self, expression=expression, scope=scope, notes=notes)
 
-    def create(self, description, condition_class, expression=None, scope=None, notes=None):
-        condition = condition_class(description, self, expression=expression, scope=scope,
+class ConditionCollection(BaseCollection):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, condition_class, description, expression=None, scope=None, notes=None):
+        return condition_class(self, description, expression=expression, scope=scope, notes=notes)
+
+    def create(self, condition_class, description, expression=None, scope=None, notes=None):
+        condition = condition_class(self, description, expression=expression, scope=scope,
             notes=notes)
-        view = navigate_to(self, "Add")
+        view = navigate_to(condition, "Add")
         view.fill({
             "description": condition.description,
             "expression": condition.expression,
@@ -154,32 +172,27 @@ class ConditionCollection(NavigatableMixin):
         view.add_button.click()
         view = self.create_view(ConditionDetailsView)
         assert view.is_displayed
-        view.flash.assert_success_message('Condition "{}" was added'.format(self.description))
+        view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
         return condition
 
+    def all(self):
+        raise NotImplementedError
 
-class BaseCondition(Updateable, NavigatableMixin, Pretty):
+
+class BaseCondition(BaseEntity, Updateable, Pretty):
 
     TREE_NODE = None
     PRETTY = None
     FIELD_VALUE = None
     _param_name = ParamClassName('description')
 
-    def __init__(self, description, collection, expression=None, scope=None, notes=None):
+    def __init__(self, collection, description, expression=None, scope=None, notes=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         self.description = description
         self.expression = expression
         self.scope = scope
         self.notes = notes
-
-    @property
-    def parent(self):
-        return self.collection.parent
-
-    @property
-    def policy(self):
-        return getattr(self.parent, "policy", None)
 
     def update(self, updates):
         """Update this Condition in UI.
@@ -249,10 +262,10 @@ class AllConditions(CFMENavigateStep):
 @navigator.register(BaseCondition, "Add")
 class ConditionNew(CFMENavigateStep):
     VIEW = NewConditionView
-    prerequisite = NavigateToSibling("All")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
-        self.view.conditions.tree.click_path(
+        self.prerequisite_view.conditions.tree.click_path(
             "All Conditions",
             "{} Conditions".format(self.obj.TREE_NODE)
         )
@@ -283,6 +296,24 @@ class ConditionDetails(CFMENavigateStep):
         self.prerequisite_view.conditions.tree.click_path(
             "All Conditions",
             "{} Conditions".format(self.obj.TREE_NODE),
+            self.obj.description
+        )
+
+
+@navigator.register(BaseCondition, "Details in policy")
+class PolicyConditionDetails(CFMENavigateStep):
+    VIEW = ConditionPolicyDetailsView
+    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+
+    def step(self):
+        self.prerequisite_view.policies.tree.click_path(
+            "All Policies",
+            "{} Policies".format(self.obj.context_policy.TYPE),
+            "{} {} Policies".format(
+                self.obj.context_policy.TREE_NODE,
+                self.obj.context_policy.TYPE
+            ),
+            self.obj.context_policy.description,
             self.obj.description
         )
 
