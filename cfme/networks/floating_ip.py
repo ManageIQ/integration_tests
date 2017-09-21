@@ -30,7 +30,7 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,
 class FloatingIPCollection(Navigatable):
     ''' Collection object for Floating ip object '''
 
-    def __init__(self, appliance=None, parent_provider=None):
+    def __init__(self, appliance, parent_provider=None):
         Navigatable.__init__(self, appliance=appliance)
         self.parent = parent_provider
 
