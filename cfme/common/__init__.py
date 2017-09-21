@@ -195,12 +195,13 @@ class TagPageView(BaseLoggedInPage):
 class WidgetasticTaggable(object):
     """
     This class can be inherited by any class that honors tagging.
-    Class should have following:
-        - 'Details' navigation
-        - 'Details' view should have entities.smart_management SummaryTable widget
-        - 'EditTags' navigation
-        - 'EditTags' view should have nested 'form' view with 'tags' table widget
-            - Suggest using class cfme.common.TagPageView as view for 'EditTags' nav
+    Class should have following
+
+    * 'Details' navigation
+    * 'Details' view should have entities.smart_management SummaryTable widget
+    * 'EditTags' navigation
+    * 'EditTags' view should have nested 'form' view with 'tags' table widget
+    * Suggest using class cfme.common.TagPageView as view for 'EditTags' nav
 
     This class provides functionality to assign and unassigned tags for page models with
     standardized widgetastic views

@@ -211,8 +211,10 @@ class MiddlewareBase(Validatable):
 
         The function first ensures that we are on the detail page for the specific cluster.
 
-        :param *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        :returns: A string representing the contents of the InfoBlock's value.
+        Args:
+            ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+
+        Returns: A string representing the contents of the InfoBlock's value.
         """
         view = self.load_details()
         return getattr(view.contents if hasattr(view, 'contents') else view.entities,
