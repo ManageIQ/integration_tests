@@ -533,9 +533,10 @@ class Vm(VM):
         @property
         def exists(self):
             self._nav_to_snapshot_mgmt()
+            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
             try:
                 self.snapshot_tree.find_path_to(
-                    re.compile(r"{}.*?".format(self.name or self.description)))
+                    re.compile(r"{}.*?".format(title)))
                 return True
             except CandidateNotFound:
                 return False
@@ -564,9 +565,10 @@ class Vm(VM):
                 bool: True if snapshot is active, False otherwise.
             """
             self._nav_to_snapshot_mgmt()
+            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
             try:
-                self._click_tree_path(self.name or self.description)
-                if sel.is_displayed_text("{} (Active)".format(self.name or self.description)):
+                self._click_tree_path(title)
+                if sel.is_displayed_text("{} (Active)".format(title)):
                     return True
             except CandidateNotFound:
                 return False
@@ -590,6 +592,10 @@ class Vm(VM):
 
         def delete(self, cancel=False):
             self._nav_to_snapshot_mgmt()
+
+            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
+            self._click_tree_path(title)
+
             toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             if not cancel:
@@ -607,7 +613,8 @@ class Vm(VM):
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
 
-            self._click_tree_path(self.name or self.description)
+            title = self.description if self.vm.provider.one_of(RHEVMProvider) else self.name
+            self._click_tree_path(title)
 
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
