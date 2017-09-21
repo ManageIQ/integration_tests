@@ -1740,6 +1740,26 @@ class IPAppliance(object):
             server id, server zone id)``
         """
         try:
+            servers = self.rest_api.collections.servers.all
+            chosen_server = None
+            if len(servers) == 1:
+                chosen_server = servers[0]
+            else:
+                for server in servers:
+                    if self.guid == server.guid:
+                        chosen_server = server
+            if chosen_server:
+                chosen_server.reload(attributes=['region_number'])
+                return (chosen_server.region_number, chosen_server.name,
+                        chosen_server.id, chosen_server.zone_id)
+            else:
+                return None, None, None, None
+        except:
+            return None
+
+    @cached_property
+    def configuration_details_old(self):
+        try:
             miq_servers = self.db.client['miq_servers']
             for region in self.db.client.session.query(self.db.client['miq_regions']):
                 reg_min = region.region * SEQ_FACT
