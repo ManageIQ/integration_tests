@@ -523,7 +523,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         view = navigate_to(self, 'Details')
         if refresh:
-            view.toolbar.reload()
+            view.toolbar.reload.click()
         return view
 
     def get_detail(self, *ident):
