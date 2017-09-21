@@ -12,12 +12,12 @@ from widgetastic_manageiq import (
     PaginationPane,
     SummaryTable,
     Table
-    )
+)
 from widgetastic_patternfly import (
     Button,
     Dropdown,
     FlashMessages
-    )
+)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
