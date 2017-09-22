@@ -63,7 +63,7 @@ def setup_distributed_env(cfme_version, provider, lease):
 
 @main.command('ha', help='Sets up high availability environment')
 @click.option('--cfme-version', required=True)
-@click.option('--provider', default=cfme_data['basic_info']['ha_provider'],
+@click.option('--provider', default=cfme_data.get('basic_info', {}).get('ha_provider'),
     help='Specify sprout provider, must not be RHOS')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
 def setup_ha_env(cfme_version, provider, lease):
