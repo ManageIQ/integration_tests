@@ -106,7 +106,7 @@ class ApplianceConsole(object):
             pass
         logger.debug(result)
 
-    def run_commands(self, commands, autoreturn=True, timeout=20, channel=None):
+    def run_commands(self, commands, autoreturn=True, timeout=10, channel=None):
         if not channel:
             channel = self.appliance.ssh_client.invoke_shell()
         self.commands = commands

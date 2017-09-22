@@ -7,11 +7,9 @@ Usage:
    scripts/encrypt_conf.py confname1 confname2 ... confnameN
    scripts/encrypt_conf.py credentials
 """
-
 import click
 from cached_property import cached_property
 from functools import partial
-
 from .setup_ansible import setup_ansible
 
 
