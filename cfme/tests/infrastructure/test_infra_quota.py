@@ -6,12 +6,9 @@ import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import Vm
-from cfme.provisioning import provisioning_form, do_vm_provisioning
+from cfme.provisioning import do_vm_provisioning
 from cfme.services.requests import Request
-from cfme.web_ui import fill, flash
 from cfme.utils import testgen, version
-from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     test_requirements.quota,
