@@ -31,8 +31,8 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.meta(blockers=[BZ(1433984, forced_streams=["5.7", "5.8", "upstream"]),
                                BZ(1468729, forced_streams=["5.9"]),
-                               BZ(1486529, unblock=lambda provider: not provider.one_of(
-                                  GCEProvider))]),
+                               BZ(1486529, forced_streams=["5.7", "5.8"],
+                                  unblock=lambda provider: not provider.one_of(GCEProvider))]),
     test_requirements.chargeback
 ]
 
@@ -216,9 +216,6 @@ def resource_usage(vm_ownership, appliance, provider):
     appliance.db.client.session.query(metrics).delete()
     appliance.db.client.session.query(rollups).delete()
 
-    provider_id = appliance.db.client.session.query(ems).filter(
-        ems.name == provider.name).first().id
-
     # Chargeback reporting is done on hourly and daily rollup values and not real-time values.So, we
     # are capturing C&U data and forcing hourly rollups by running these commands through
     # the Rails console.
@@ -233,7 +230,7 @@ def resource_usage(vm_ownership, appliance, provider):
         rc, out = appliance.ssh_client.run_rails_command(
             "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
             vm.perf_capture('realtime', 1.hour.ago.utc, Time.now.utc)\""
-            .format(provider_id, repr(vm_name)))
+            .format(provider.id, repr(vm_name)))
         assert rc == 0, "Failed to capture VM C&U data:".format(out)
 
         with appliance.db.client.transaction:
@@ -273,7 +270,7 @@ def resource_usage(vm_ownership, appliance, provider):
     rc, out = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".
-        format(provider_id, repr(vm_name)))
+        format(provider.id, repr(vm_name)))
     assert rc == 0, "Failed to rollup VM C&U data:".format(out)
 
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=600, fail_condition=False,

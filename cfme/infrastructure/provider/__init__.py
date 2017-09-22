@@ -166,13 +166,6 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         discover(self, cancel=False, start_ip=self.start_ip, end_ip=self.end_ip)
 
     @property
-    def id(self):
-        """
-        returns current provider id using rest api
-        """
-        return self.appliance.rest_api.collections.providers.find_by(name=self.name)[0].id
-
-    @property
     def hosts(self):
         """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
         provider according to the YAML
