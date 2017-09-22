@@ -12,21 +12,22 @@ from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
 from cfme.cloud.tenant import TenantCollection
 from cfme.web_ui import toolbar as tb, match_location
+from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
-
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
               pytest.mark.usefixtures("openstack_provider")]
 
 # TODO When all of these classes have widgets and views use them in the tests
+app = get_or_create_current_appliance()
 grid_pages = [CloudProvider,
               AvailabilityZone,
-              TenantCollection,
+              TenantCollection(app),
               Flavor,
               Instance,
-              StackCollection,
-              KeyPairCollection]
+              StackCollection(app),
+              KeyPairCollection(app)]
 
 # Dict values are kwargs for cfme.web_ui.match_location
 landing_pages = {
