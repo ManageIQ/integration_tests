@@ -7,7 +7,6 @@ from wait_for import wait_for
 
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 pwd = credentials['database']['password']
-provider = None
 
 
 def tot_time(string):
@@ -34,8 +33,9 @@ def main():
 
 @main.command('distributed', help='Sets up distributed environment')
 @click.option('--cfme-version', required=True)
-@click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
-def setup_distributed_env(cfme_version, lease):
+@click.option('--provider', default=None, help='Specify sprout provider')
+@click.option('--lease', default='3h', help='Set pool lease time, example: 1d4h30m')
+def setup_distributed_env(cfme_version, provider, lease):
     lease_time = tot_time(lease)
     """multi appliance single region configuration (distributed setup, 1st appliance has
     a local database and workers, 2nd appliance has workers pointing at 1st appliance)"""
@@ -63,10 +63,11 @@ def setup_distributed_env(cfme_version, lease):
 
 @main.command('ha', help='Sets up high availability environment')
 @click.option('--cfme-version', required=True)
+@click.option('--provider', default=cfme_data['basic_info']['ha_provider'],
+    help='Specify sprout provider, must not be RHOS')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
-def setup_ha_env(cfme_version, lease):
+def setup_ha_env(cfme_version, provider, lease):
     lease_time = tot_time(lease)
-    provider = cfme_data['basic_info']['ha_provider']
     """multi appliance setup consisting of dedicated primary and standy databases with a single
     UI appliance."""
     print("Provisioning and configuring HA environment")
@@ -104,8 +105,9 @@ def setup_ha_env(cfme_version, lease):
 
 @main.command('replicated', help='Sets up replicated environment')
 @click.option('--cfme-version', required=True)
+@click.option('--provider', default=None, help='Specify sprout provider')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
-def setup_replication_env(cfme_version, lease):
+def setup_replication_env(cfme_version, provider, lease):
     lease_time = tot_time(lease)
     """Multi appliance setup with multi region and replication from remote to global"""
     print("Provisioning and configuring replicated environment")
