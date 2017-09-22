@@ -22,7 +22,7 @@ from widgetastic_patternfly import (
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 
 
 class ManagerToolbar(View):
@@ -140,7 +140,7 @@ class ManagePoliciesView(ManagerView):
             self.breadcrumb.active_location == "'Storage Manager' Policy Assignment")
 
 
-class BlockManagerCollection(NavigatableMixin):
+class BlockManagerCollection(BaseCollection):
     """Collection object [block manager] for the :py:class:'cfme.storage.manager'"""
 
     def __init__(self, appliance):
@@ -151,10 +151,10 @@ class BlockManagerCollection(NavigatableMixin):
         self.type = 'Block Storage Managers'
 
     def instantiate(self, name, provider):
-        return Manager(name, provider, collection=self)
+        return Manager(self, name, provider)
 
 
-class ObjectManagerCollection(NavigatableMixin):
+class ObjectManagerCollection(BaseCollection):
     """Collection object [object manager] for the :py:class:'cfme.storage.manager'"""
 
     def __init__(self, appliance):
@@ -165,10 +165,10 @@ class ObjectManagerCollection(NavigatableMixin):
         self.type = 'Object Storage Managers'
 
     def instantiate(self, name, provider):
-        return Manager(name, provider, collection=self)
+        return Manager(self, name, provider)
 
 
-class Manager(NavigatableMixin):
+class Manager(BaseEntity):
     """ Model of an storage manager in cfme
 
     Args:
@@ -177,11 +177,11 @@ class Manager(NavigatableMixin):
         appliance: appliance
     """
 
-    def __init__(self, name, provider, collection):
-        self.name = name
-        self.provider = provider
+    def __init__(self, collection, name, provider):
         self.collection = collection
         self.appliance = self.collection.appliance
+        self.name = name
+        self.provider = provider
         self.nav = self.collection.nav
         self.type = self.collection.type
         self.name_vari = VersionPick({Version.lowest(): 'Storage Provider',
