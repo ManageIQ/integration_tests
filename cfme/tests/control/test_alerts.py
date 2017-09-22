@@ -11,7 +11,8 @@ from cfme.control.explorer import actions, alert_profiles, alerts, policies, pol
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.utils import ports, testgen
+from markers.env_markers.provider import providers
+from cfme.utils import ports
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -21,23 +22,18 @@ from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
 
+
+pf1 = ProviderFilter(classes=[InfraProvider])
+pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)
+
+CANDU_PROVIDER_TYPES = [VMwareProvider]  # TODO: rhevm
+
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+notifier"]),
     pytest.mark.tier(3),
     test_requirements.alert
 ]
-
-CANDU_PROVIDER_TYPES = [VMwareProvider]  # TODO: rhevm
-
-
-pf1 = ProviderFilter(classes=[InfraProvider])
-pf2 = ProviderFilter(classes=[SCVMMProvider], inverted=True)
-pytest_generate_tests = testgen.generate(
-    gen_func=testgen.providers,
-    filters=[pf1, pf2],
-    scope="module"
-)
 
 
 def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
@@ -187,6 +183,7 @@ def setup_snmp(appliance):
     appliance.ssh_client.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
+@pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, vm, smtp_test,
         register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
@@ -230,7 +227,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
     wait_for_alert(smtp_test, alert, delay=16 * 60)
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
+@pytest.mark.provider(CANDU_PROVIDER_TYPES)
 def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available.
@@ -263,7 +260,7 @@ def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu):
         "text": vm.name, "from_address": email})
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
+@pytest.mark.provider(CANDU_PROVIDER_TYPES)
 def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, provider, ssh,
         setup_candu, wait_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
@@ -309,7 +306,7 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
         pytest.fail("The event has not been found on the timeline. Event list: {}".format(events))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(*CANDU_PROVIDER_TYPES))
+@pytest.mark.provider(CANDU_PROVIDER_TYPES)
 def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, wait_candu):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the

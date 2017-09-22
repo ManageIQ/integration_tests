@@ -26,8 +26,8 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme import test_requirements
-from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.hosts import setup_host_creds
@@ -38,8 +38,6 @@ from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for, TimedOutError
 from . import do_scan, wait_for_ssa_enabled
 
-
-pytest_generate_tests = testgen.generate(gen_func=testgen.all_providers, scope="module")
 
 pytestmark = [
     pytest.mark.long_running,
@@ -288,8 +286,10 @@ def vm_off(provider, vm):
     return vm
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_for_testing):
     """ This test tests action 'Start Virtual Machine'
 
@@ -312,8 +312,10 @@ def test_action_start_virtual_machine_after_stopping(request, vm, vm_on, policy_
         pytest.fail("CFME did not power on the VM {}".format(vm.name))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Stop Virtual Machine'
 
@@ -336,8 +338,10 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
         pytest.fail("CFME did not power off the VM {}".format(vm.name))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off,
         policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
@@ -361,8 +365,10 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off,
 
 
 @pytest.mark.meta(blockers=[1142875])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Prevent current event from proceeding'
 
@@ -387,8 +393,10 @@ def test_action_prevent_event(request, vm, vm_off, policy_for_testing):
 
 
 @pytest.mark.meta(blockers=[1439331])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
     """This test sets the policy that prevents VM retiring.
 
@@ -407,7 +415,7 @@ def test_action_prevent_vm_retire(request, vm, vm_on, policy_for_testing):
         pytest.fail("CFME did not prevent retire of the VM {}".format(vm.name))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider], scope="module")
 def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, policy_for_testing):
     """Tests preventing Smart State Analysis.
 
@@ -432,8 +440,10 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
         pytest.fail("CFME did not prevent analysing the VM {}".format(vm.name))
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testing):
     """ This test tests action 'Generate log message'.
 
@@ -469,8 +479,10 @@ def test_action_power_on_logged(request, vm, vm_off, appliance, policy_for_testi
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testing):
     """ This test tests action 'Generate Audit Event'.
 
@@ -506,7 +518,7 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider], scope="module")
 def test_action_create_snapshot_and_delete_last(request, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
@@ -548,7 +560,7 @@ def test_action_create_snapshot_and_delete_last(request, vm, vm_on, policy_for_t
              message="wait for snapshot deleted", delay=5)
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider], scope="module")
 def test_action_create_snapshots_and_delete_them(request, vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
@@ -599,7 +611,7 @@ def test_action_create_snapshots_and_delete_them(request, vm, vm_on, policy_for_
              message="wait for snapshots to be deleted", delay=5)
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider], scope="module")
 def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm_off,
         policy_for_testing):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
@@ -661,8 +673,10 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
 
 
 # Purely custom actions
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_tag(request, vm, vm_off, policy_for_testing):
     """ Tests action tag
 
@@ -698,8 +712,10 @@ def test_action_tag(request, vm, vm_off, policy_for_testing):
 
 
 @pytest.mark.meta(blockers=[1205496])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_untag(request, vm, vm_off, policy_for_testing):
     """ Tests action untag
 
@@ -742,7 +758,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing):
 
 
 @pytest.mark.meta(blockers=[1381255])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.provider([VMwareProvider], scope="module")
 def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_testing):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time
@@ -771,8 +787,10 @@ def test_action_cancel_clone(request, provider, vm_name, vm_big, policy_for_test
     assert clone_request.status == "Error"
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider, RHEVMProvider,
-    OpenStackProvider, AzureProvider))
+@pytest.mark.provider(
+    [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
+    scope="module"
+)
 def test_action_check_compliance(request, provider, vm, vm_name, policy_for_testing):
     """Tests action "Check Host or VM Compliance". Policy profile should have control and compliance
     policies. Control policy initiates compliance check and compliance policy determines is the vm
