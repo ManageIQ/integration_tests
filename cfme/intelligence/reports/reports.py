@@ -113,6 +113,7 @@ class EditCustomReportView(CustomReportFormCommon):
 class CustomReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
     reload_button = Button(title="Reload current display")
+    paginator = PaginationPane()
 
     @View.nested
     class report_info(Tab):  # noqa

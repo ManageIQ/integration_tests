@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View, Text, ConditionalSwitchableView
+from widgetastic_manageiq import PaginationPane
 from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
@@ -265,6 +266,7 @@ class ProvidersView(BaseLoggedInPage):
     def is_displayed(self):
         return self.logged_in_as_current_user
 
+    paginator = PaginationPane()
     toolbar = View.nested(ProviderToolBar)
     sidebar = View.nested(ProviderSideBar)
     including_entities = View.include(ProviderEntitiesView, use_parent=True)
