@@ -16,7 +16,7 @@ from cfme.optimize.bottlenecks import Bottlenecks
 from cfme.infrastructure.networking import InfraNetworking
 from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
 from cfme.utils import version
-from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance import current_appliance, BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
@@ -50,7 +50,7 @@ pytestmark = [
 def test_pull_splitter_persistence(location, appliance):
     if location[0] == Server:
         location = (current_appliance.server, location[1])
-    elif 'Collection' in location[0].__name__:
+    elif issubclass(location[0], BaseCollection):
         location = (location[0](appliance), location[1])
     navigate_to(*location)
     # First we move splitter to hidden position by pulling it left twice

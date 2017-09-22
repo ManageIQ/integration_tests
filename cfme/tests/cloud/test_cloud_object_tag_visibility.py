@@ -10,6 +10,7 @@ from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
 from cfme.cloud.provider import CloudProvider
 from cfme.utils import version
+from cfme.utils.appliance import BaseCollection
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from fixtures.provider import setup_one_or_skip
@@ -42,7 +43,7 @@ def testing_vis_object(request, a_provider, appliance):
     """
     # TODO refactor, when all classes supports collections
     collection_name, param_class = request.param
-    if collection_name == 'stacks':
+    if issubclass(param_class, BaseCollection):
         return param_class(appliance).instantiate(
             name=a_provider.data.provisioning.stacks[0], provider=a_provider)
     elif collection_name in ['instances', 'flavors', 'availability_zones']:

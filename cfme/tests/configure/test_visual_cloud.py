@@ -12,6 +12,7 @@ from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
 from cfme.cloud.tenant import TenantCollection
 from cfme.web_ui import toolbar as tb, match_location
+from cfme.utils.appliance import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -89,12 +90,14 @@ def set_cloud_provider_quad():
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_grid_page_per_item(request, page, set_grid):
+def test_cloud_grid_page_per_item(request, page, set_grid, appliance):
     """ Tests grid items per page
 
     Metadata:
         test_flag: visuals
     """
+    if issubclass(page, BaseCollection):
+        page = page(appliance)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
     navigate_to(page, 'All')
@@ -107,12 +110,14 @@ def test_cloud_grid_page_per_item(request, page, set_grid):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_tile_page_per_item(request, page, set_tile):
+def test_cloud_tile_page_per_item(request, page, set_tile, appliance):
     """ Tests tile items per page
 
     Metadata:
         test_flag: visuals
     """
+    if issubclass(page, BaseCollection):
+        page = page(appliance)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
     navigate_to(page, 'All')
@@ -125,12 +130,14 @@ def test_cloud_tile_page_per_item(request, page, set_tile):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_cloud_list_page_per_item(request, page, set_list):
+def test_cloud_list_page_per_item(request, page, set_list, appliance):
     """ Tests list items per page
 
     Metadata:
         test_flag: visuals
     """
+    if issubclass(page, BaseCollection):
+        page = page(appliance)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
     navigate_to(page, 'All')
