@@ -3,7 +3,7 @@
 from navmazing import NavigateToAttribute
 from widgetastic_patternfly import Button, Input
 from widgetastic.utils import Version, VersionPick
-from widgetastic.widget import Text, Checkbox, TextInput
+from widgetastic.widget import Text, Checkbox, TextInput, View
 
 from . import ControlExplorerView
 from actions import Action
@@ -13,8 +13,8 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import (BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect,
-    SummaryFormItem)
+from widgetastic_manageiq import (
+    BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect, SummaryFormItem, Dropdown)
 
 
 class PoliciesAllView(ControlExplorerView):
@@ -169,8 +169,14 @@ class ConditionDetailsView(ControlExplorerView):
         )
 
 
+class EventDetailsToolbar(View):
+    """Toolbar widets on the event details page"""
+    configuration = Dropdown('Configuration')
+
+
 class EventDetailsView(ControlExplorerView):
     title = Text("#explorer_title_text")
+    toolbar = View.nested(EventDetailsToolbar)
 
     @property
     def is_displayed(self):
@@ -406,7 +412,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         self.testing_event = event
         view = navigate_to(self, "Event Details")
         assert view.is_displayed
-        view.configuration.item_select("Edit Actions for this Policy Event")
+        view.toolbar.configuration.item_select("Edit Actions for this Policy Event")
         view = self.create_view(EditEventView)
         assert view.is_displayed
         changed = view.fill({
