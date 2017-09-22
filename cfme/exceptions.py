@@ -461,3 +461,11 @@ class ManyEntitiesFound(CFMEException):
 
 class RoleNotFound(CFMEException):
     """Raised when Deployment role not found"""
+
+
+class RBACOperationBlocked(CFMEException):
+    """
+    Raised when a Role Based Access Control operation is blocked from execution due to invalid
+    permissions. Also thrown when trying to perform actions CRUD operations on roles/groups/users
+    that are CFME defaults
+    """
