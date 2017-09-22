@@ -63,9 +63,11 @@ def test_days_required_error_validation():
         hours=True)
     view = navigate_to(st.Timeprofile, 'All')
     tp.create(cancel=True)
-    if view.timeprofile_form.help_block.read() == "At least one day needs to be selected":
+    if view.timeprofile_form.help_block.text == "At least one day needs to be selected":
         assert view.timeprofile_form.save_button.disabled
-    view.timeprofile_form.cancel_button.click()
+        view.timeprofile_form.cancel_button.click()
+    else:
+        assert view.timeprofile_form.help_block.text == "At least one day needs to be selected"
 
 
 @pytest.mark.sauce
@@ -78,9 +80,11 @@ def test_hours_required_error_validation():
         hours=False)
     view = navigate_to(st.Timeprofile, 'All')
     tp.create(cancel=True)
-    if view.timeprofile_form.help_block.read() == "At least one hour needs to be selecte":
+    if view.timeprofile_form.help_block.text == "At least one hour needs to be selected":
         assert view.timeprofile_form.save_button.disabled
-    view.timeprofile_form.cancel_button.click()
+        view.timeprofile_form.cancel_button.click()
+    else:
+        assert view.timeprofile_form.help_block.text == "At least one hour needs to be selected"
 
 
 @pytest.mark.sauce
@@ -93,4 +97,6 @@ def test_timeprofile_description_required_error_validation():
     tp.create(cancel=True)
     if view.timeprofile_form.description.help_block == "Required":
         assert view.timeprofile_form.save_button.disabled
-    view.timeprofile_form.cancel_button.click()
+        view.timeprofile_form.cancel_button.click()
+    else:
+        assert view.timeprofile_form.description.help_block == "Required"
