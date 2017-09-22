@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+from copy import copy
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Button, Input
 from widgetastic.utils import Version, VersionPick
@@ -338,7 +340,9 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         view = self.create_view(PolicyDetailsView)
         assert view.is_displayed
         view.flash.assert_success_message('Policy "Copy of {}" was added'.format(self.description))
-        return type(self)("Copy of {}".format(self.description))
+        policy_copy = copy(self)
+        policy_copy.description = "Copy of {}".format(self.description)
+        return policy_copy
 
     def assign_events(self, *events, **kwargs):
         """Assign events to this Policy.

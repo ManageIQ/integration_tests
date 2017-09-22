@@ -31,7 +31,8 @@ class Expression(Widget):
     def text_list(self):
         return self.browser.element(self).text.split("\n")
 
-    def read(self):
+    @property
+    def text(self):
         """
         In Condition details view Scope and Expression don't have any locator. So we
         have to scrape whole text in the parent div and split it by "\\n". After that in text_list
@@ -53,6 +54,9 @@ class Expression(Widget):
         """
         index = self.text_list.index(self.type)
         return self.text_list[index + 1]
+
+    def read(self):
+        return self.text
 
 
 class ConditionsAllView(ControlExplorerView):
@@ -137,15 +141,16 @@ class ConditionPolicyDetailsView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == '{} Condition "{}"'.format(self.context["object"].policy.PRETTY,
+            self.title.text == '{} Condition "{}"'.format(
+                self.context["object"].context_policy.PRETTY,
                 self.context["object"].description) and
             self.policies.is_opened and
             self.policies.tree.currently_selected == [
                 "All Policies",
-                "{} Policies".format(self.context["object"].policy.TYPE),
-                "{} {} Policies".format(self.context["object"].policy.TREE_NODE,
-                    self.context["object"].policy.TYPE),
-                self.context["object"].policy.description,
+                "{} Policies".format(self.context["object"].context_policy.TYPE),
+                "{} {} Policies".format(self.context["object"].context_policy.TREE_NODE,
+                    self.context["object"].context_policy.TYPE),
+                self.context["object"].context_policy.description,
                 self.context["object"].description
             ]
         )
@@ -170,7 +175,7 @@ class ConditionCollection(BaseCollection):
             "notes": condition.notes
         })
         view.add_button.click()
-        view = self.create_view(ConditionDetailsView)
+        view = condition.create_view(ConditionDetailsView)
         assert view.is_displayed
         view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
         return condition
@@ -230,12 +235,12 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
     def read_expression(self):
         view = navigate_to(self, "Details")
         assert view.is_displayed
-        return view.expression.read()
+        return view.expression.text
 
     def read_scope(self):
         view = navigate_to(self, "Details")
         assert view.is_displayed
-        return view.scope.read()
+        return view.scope.text
 
     @property
     def exists(self):

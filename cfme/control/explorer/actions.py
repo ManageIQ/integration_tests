@@ -9,7 +9,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic.widget import Checkbox, Text, View
 
 from . import ControlExplorerView
-from cfme.utils.appliance import NavigatableMixin
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -112,19 +112,16 @@ class ActionDetailsView(ControlExplorerView):
         )
 
 
-class ActionCollection(NavigatableMixin):
+class ActionCollection(BaseCollection):
 
-    def __init__(self, parent=None, appliance=None):
-        if parent is None and appliance is None or parent and appliance:
-            raise ValueError("You should provider either parent or appliance")
-        self.parent = parent
-        self.appliance = getattr(self.parent, "appliance", appliance)
+    def __init__(self, appliance):
+        self.appliance = appliance
 
     def instantiate(self, description, action_type, action_values=None):
-        return Action(description, action_type, self, action_values=action_values)
+        return Action(self, description, action_type, action_values=action_values)
 
     def create(self, description, action_type, action_values=None):
-        """Create this Action in UI."""
+        """Create an Action in the UI."""
         action = self.instantiate(description, action_type, action_values=action_values)
         view = navigate_to(self, "Add")
         view.fill({
@@ -155,7 +152,7 @@ class ActionCollection(NavigatableMixin):
         return action
 
 
-class Action(Updateable, NavigatableMixin, Pretty):
+class Action(BaseEntity, Updateable, Pretty):
     """This class represents one Action.
 
     Example:
@@ -171,7 +168,7 @@ class Action(Updateable, NavigatableMixin, Pretty):
         description: Action name.
         action_type: Type of the action, value from the dropdown select.
     """
-    def __init__(self, description, action_type, collection, action_values=None):
+    def __init__(self, collection, description, action_type, action_values=None):
         self.collection = collection
         self.appliance = self.collection.appliance
         action_values = action_values or {}
@@ -284,8 +281,7 @@ class ActionEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.actions.tree.click_path("All Actions", self.obj.description)
-        self.view.configuration.item_select("Edit this Action")
+        self.prerequisite_view.configuration.item_select("Edit this Action")
 
 
 @navigator.register(Action, "Details")
