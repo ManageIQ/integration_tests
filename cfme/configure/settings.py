@@ -136,10 +136,7 @@ class Visual(Updateable, Navigatable):
     @grid_view_limit.setter
     def grid_view_limit(self, value):
         view = navigate_to(self, 'All')
-        if self.appliance.version < '5.8':
-            value_to_fill = "{} items".format(str(value))
-        else:
-            value_to_fill = str(value)
+        value_to_fill = str(value)
         if view.visualitem.grid_view.fill(value_to_fill):
             view.save.click()
 
@@ -152,10 +149,7 @@ class Visual(Updateable, Navigatable):
     @tile_view_limit.setter
     def tile_view_limit(self, value):
         view = navigate_to(self, 'All')
-        if self.appliance.version < '5.8':
-            value_to_fill = "{} items".format(str(value))
-        else:
-            value_to_fill = str(value)
+        value_to_fill = str(value)
         if view.visualitem.tile_view.fill(value_to_fill):
             view.save.click()
 
@@ -168,10 +162,7 @@ class Visual(Updateable, Navigatable):
     @list_view_limit.setter
     def list_view_limit(self, value):
         view = navigate_to(self, 'All')
-        if self.appliance.version < '5.8':
-            value_to_fill = "{} items".format(str(value))
-        else:
-            value_to_fill = str(value)
+        value_to_fill = str(value)
         if view.visualitem.list_view.fill(value_to_fill):
             view.save.click()
 
@@ -184,10 +175,7 @@ class Visual(Updateable, Navigatable):
     @report_view_limit.setter
     def report_view_limit(self, value):
         view = navigate_to(self, 'All')
-        if self.appliance.version < '5.8':
-            value_to_fill = "{} items".format(str(value))
-        else:
-            value_to_fill = str(value)
+        value_to_fill = str(value)
         if view.visualitem.reports.fill(value_to_fill):
             view.save.click()
 
