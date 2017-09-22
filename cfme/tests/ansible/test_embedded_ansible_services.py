@@ -12,15 +12,15 @@ from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.requests import Request
+from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
-from cfme.utils.version import current_version
 
 
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+embedded_ansible"]),
-    pytest.mark.uncollectif(lambda: current_version() < "5.8"),
+    pytest.mark.uncollectif(lambda: current_appliance.version < "5.8"),
     pytest.mark.ignore_stream("upstream"),
     test_requirements.ansible
 ]
@@ -229,16 +229,21 @@ def test_service_ansible_playbook_confirm():
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda host_type, action: (host_type == "blank" and
+    action == "retirement") or current_appliance.version < "5.8")
 @pytest.mark.parametrize("host_type,order_value,result", SERVICE_CATALOG_VALUES, ids=[
     value[0] for value in SERVICE_CATALOG_VALUES])
-def test_service_ansible_playbook_order(ansible_catalog_item, service_catalog, service_request,
-        service, host_type, order_value, result):
-    """Test ordering ansible playbook service against default host, blank field and
+@pytest.mark.parametrize("action", ["provisioning", "retirement"])
+def test_service_ansible_playbook_order_retire(ansible_catalog_item, service_catalog,
+        service_request, service, host_type, order_value, result, action):
+    """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.
     """
     service_catalog.ansible_dialog_values = {"hosts": order_value}
     service_catalog.order()
     service_request.wait_for_request()
+    if action == "retirement":
+        service.retire()
     view = navigate_to(service, "Details")
     assert result == view.provisioning.details.get_text_of("Hosts")
 
