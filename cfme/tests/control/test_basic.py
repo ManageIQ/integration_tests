@@ -4,7 +4,6 @@
 Whether we can create/update/delete/assign/... these objects. Nothing with deep meaning.
 Can be also used as a unit-test for page model coverage.
 
-TODO: * Multiple expression types entering. (extend the update tests)
 """
 from collections import namedtuple
 import fauxfactory
@@ -252,6 +251,11 @@ def alert_collection(appliance):
     return appliance.get(alerts.AlertCollection)
 
 
+@pytest.fixture(scope="module")
+def alert_profile_collection(appliance):
+    return appliance.get(alert_profiles.AlertProfileCollection)
+
+
 @pytest.yield_fixture
 def two_random_policies(policy_collection):
     policy_1 = policy_collection.create(
@@ -266,19 +270,13 @@ def two_random_policies(policy_collection):
     policy_collection.delete(policy_1, policy_2)
 
 
-@pytest.yield_fixture
-def random_alert(alert_collection):
-    alert = alert_collection.create(
-        fauxfactory.gen_alphanumeric(),
-        timeline_event=True,
-        driving_event="Hourly Timer"
-    )
-    yield alert
-    alert.delete()
-
-
 @pytest.fixture(params=POLICIES, ids=lambda policy_class: policy_class.__name__)
 def policy_class(request):
+    return request.param
+
+
+@pytest.fixture(params=ALERT_PROFILES, ids=lambda alert_profile: alert_profile.__name__)
+def alert_profile_class(request):
     return request.param
 
 
@@ -326,17 +324,33 @@ def control_policy(request, policy_collection):
     policy.delete()
 
 
-@pytest.yield_fixture(params=ALERT_PROFILES,
-    ids=lambda alert_profile_class: alert_profile_class.__name__)
-def alert_profile(request, alert_collection):
-    alert = alert_collection.create(
+@pytest.yield_fixture
+def alert(alert_collection):
+    alert_ = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
-        based_on=request.param.TYPE,
+        based_on=random.choice(ALERT_PROFILES).TYPE,
         timeline_event=True,
         driving_event="Hourly Timer"
     )
-    alert_profile = request.param(fauxfactory.gen_alphanumeric(), [alert.description])
-    yield alert_profile
+    yield alert_
+    alert_.delete()
+
+
+@pytest.yield_fixture
+def alert_profile(alert_profile_class, alert_collection, alert_profile_collection):
+    alert = alert_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        based_on=alert_profile_class.TYPE,
+        timeline_event=True,
+        driving_event="Hourly Timer"
+    )
+    alert_profile_ = alert_profile_collection.create(
+        alert_profile_class,
+        fauxfactory.gen_alphanumeric(),
+        [alert.description]
+    )
+    yield alert_profile_
+    alert_profile_.delete()
     alert.delete()
 
 
@@ -444,10 +458,6 @@ def test_policy_profile_crud(policy_profile_collection, two_random_policies):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(
-    lambda condition_for_expressions: condition_for_expressions is conditions.ProviderCondition and
-    current_version() < "5.7.1"
-)
 @pytest.mark.parametrize("fill_type,expression,verify", EXPRESSIONS_TO_TEST, ids=[
     expr[0] for expr in EXPRESSIONS_TO_TEST])
 def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
@@ -475,18 +485,27 @@ def test_alert_crud(alert_collection):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1303645], automates=[1303645])
-def test_control_alert_copy(random_alert):
-    alert_copy = random_alert.copy(description=fauxfactory.gen_alphanumeric())
+def test_control_alert_copy(alert):
+    alert_copy = alert.copy(description=fauxfactory.gen_alphanumeric())
     assert alert_copy.exists
     alert_copy.delete()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
-    current_version() < "5.7")
-def test_alert_profile_crud(alert_profile):
-    alert_profile.create()
+def test_alert_profile_crud(request, alert_profile_class, alert_collection,
+        alert_profile_collection):
+    alert = alert_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        based_on=alert_profile_class.TYPE,
+        timeline_event=True,
+        driving_event="Hourly Timer"
+    )
+    request.addfinalizer(alert.delete)
+    alert_profile = alert_profile_collection.create(
+        alert_profile_class,
+        fauxfactory.gen_alphanumeric(),
+        [alert.description]
+    )
     with update(alert_profile):
         alert_profile.notes = "Modified!"
     alert_profile.delete()
@@ -494,16 +513,11 @@ def test_alert_profile_crud(alert_profile):
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1416311, forced_streams=["5.7"])])
-@pytest.mark.uncollectif(
-    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
-    current_version() < "5.7")
 def test_alert_profile_assigning(alert_profile):
-    alert_profile.create()
     if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
         alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
     else:
         alert_profile.assign_to("The Enterprise")
-    alert_profile.delete()
 
 
 @pytest.mark.tier(2)
