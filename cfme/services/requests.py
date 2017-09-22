@@ -85,7 +85,7 @@ class Request(BaseEntity):
 
     def get_request_row_from_ui(self):
         """Opens CFME UI and return table_row object"""
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
         self.row = view.find_request(self.rest.description, partial_check=False)
         return self.row
 
@@ -117,7 +117,7 @@ class Request(BaseEntity):
         Request might be removed from CFME UI but present in DB
 
         """
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
         return bool(view.find_request(self.cells, self.partial_check))
 
     @variable(alias='rest')
@@ -130,7 +130,7 @@ class Request(BaseEntity):
 
     @update.variant('ui')
     def update_ui(self):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
         view.toolbar.reload.click()
         self.row = view.find_request(cells=self.cells, partial_check=self.partial_check)
 
@@ -487,7 +487,7 @@ class RequestAll(CFMENavigateStep):
 @navigator.register(Request, 'Details')
 class RequestDetails(CFMENavigateStep):
     VIEW = RequestDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         try:
