@@ -1813,6 +1813,79 @@ class DetailsToolBarViewSelector(View):
         return self.selected
 
 
+class CompareToolBarMixin(View):
+    """ It represents mixin for compare toolbar actions. """
+
+    @property
+    def _view_buttons(self):
+        """It should be overridden as per concern nested class buttons. """
+        pass
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The Mode with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        if self.is_displayed:
+            return next(btn.title for btn in self._view_buttons if btn.active)
+        else:
+            return None
+
+    def read(self):
+        return self.selected
+
+
+class CompareToolBarActionsView(View):
+    """ represents compare toolbar's actions control
+        it is present on pages like compare selected items and drift
+
+    .. code-block:: python
+
+        actions = View.nested(CompareToolBarActions)
+
+        action.AttributeSelector.select('Attributes with different values')
+        action.AttributeSelector.select.selected
+    """
+
+    ROOT = './/div[contains(@class, "toolbar-pf-actions")]'
+
+    @View.nested
+    class attribute_selector(CompareToolBarMixin):  # noqa
+        all_values_button = Button(title="All attributes")
+        diff_values_button = Button(title="Attributes with different values")
+        same_values_button = Button(title="Attributes with same values")
+
+        @property
+        def _view_buttons(self):
+            yield self.all_values_button
+            yield self.diff_values_button
+            yield self.same_values_button
+
+    @View.nested
+    class modes_selector(CompareToolBarMixin):  # noqa
+        details_mode = Button(title="Details Mode")
+        exists_mode = Button(title="Exists Mode")
+
+        @property
+        def _view_buttons(self):
+            yield self.details_mode
+            yield self.exists_mode
+
+    @View.nested
+    class views_selector(CompareToolBarMixin):  # noqa
+        expanded_button = Button(title="Expanded View")
+        compressed_button = Button(title="Compressed View")
+
+        @property
+        def _view_buttons(self):
+            yield self.expanded_button
+            yield self.compressed_button
+
+
 class Search(View):
     """ Represents search_text control
     # TODO Add advanced search

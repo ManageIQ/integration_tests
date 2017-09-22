@@ -14,6 +14,7 @@ from widgetastic_manageiq import (Accordion,
                                   BootstrapSelect,
                                   BootstrapTreeview,
                                   BreadCrumb,
+                                  CompareToolBarActionsView,
                                   ItemsToolBarViewSelector,
                                   JSBaseEntity,
                                   NonJSBaseEntity,
@@ -52,12 +53,7 @@ class DeploymentRoleDetailsToolbar(View):
 
 class DeploymentRoleComparisonToolbar(View):
     """The toolbar on Comparison Page of roles"""
-    all_attributes = Button(title="All attributes")
-    different_values_attributes = Button(title="Attributes with different values")
-    same_values_attributes = Button(title="Attributes with same values")
-
-    details_mode = Button(title="Details Mode")
-    exists_mode = Button(title="Exists Mode")
+    actions = View.nested(CompareToolBarActionsView)
     download = Dropdown('Download')
 
 
