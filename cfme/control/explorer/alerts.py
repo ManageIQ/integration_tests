@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 from copy import copy
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.widget import Checkbox, Text, View
 from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -112,7 +112,36 @@ class AlertDetailsView(ControlExplorerView):
         )
 
 
-class Alert(Updateable, Navigatable, Pretty):
+class AlertCollection(BaseCollection):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, description, active=None, based_on=None, evaluate=None,
+            driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
+            timeline_event=None, mgmt_event=None):
+        return Alert(self, description, active=active, based_on=based_on, evaluate=evaluate,
+            driving_event=driving_event, notification_frequency=notification_frequency,
+            snmp_trap=snmp_trap, emails=emails, timeline_event=timeline_event,
+            mgmt_event=mgmt_event)
+
+    def create(self, description, active=None, based_on=None, evaluate=None,
+            driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
+            timeline_event=None, mgmt_event=None):
+        alert = self.instantiate(description, active=active, based_on=based_on, evaluate=evaluate,
+            driving_event=driving_event, notification_frequency=notification_frequency,
+            snmp_trap=snmp_trap, emails=emails, timeline_event=timeline_event,
+            mgmt_event=mgmt_event)
+        view = navigate_to(self, "Add")
+        alert._fill(view)
+        view.add_button.click()
+        view = alert.create_view(AlertDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Alert "{}" was added'.format(alert.description))
+        return alert
+
+
+class Alert(BaseEntity, Updateable, Pretty):
     """Alert representation object.
     Example:
         >>> alert = Alert("my_alert", timeline_event=True, driving_event="Hourly Timer")
@@ -144,19 +173,11 @@ class Alert(Updateable, Navigatable, Pretty):
 
     pretty_attrs = ["description", "evaluate"]
 
-    def __init__(self,
-                 description,
-                 active=None,
-                 based_on=None,
-                 evaluate=None,
-                 driving_event=None,
-                 notification_frequency=None,
-                 snmp_trap=None,
-                 emails=None,
-                 timeline_event=None,
-                 mgmt_event=None,
-                 appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, collection, description, active=None, based_on=None, evaluate=None,
+            driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
+            timeline_event=None, mgmt_event=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.description = description
         self.active = active
         self.based_on = based_on
@@ -171,16 +192,6 @@ class Alert(Updateable, Navigatable, Pretty):
     def __str__(self):
         """Conversion to string used when assigning in multibox selector."""
         return self.description
-
-    def create(self):
-        """Create this Alert in UI."""
-        view = navigate_to(self, "Add")
-        self._fill(view)
-        view.add_button.click()
-        view = self.create_view(AlertDetailsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Alert "{}" was added'.format(self.description))
 
     def update(self, updates, cancel=False):
         """Update this Alert in UI.
@@ -197,7 +208,7 @@ class Alert(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view = self.create_view(AlertDetailsView)
+        view = self.create_view(AlertDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -221,8 +232,8 @@ class Alert(Updateable, Navigatable, Pretty):
         else:
             view = self.create_view(AlertsAllView)
             assert view.is_displayed
-            view.flash.assert_no_error()
-            view.flash.assert_message('Alert "{}": Delete successful'.format(self.description))
+            view.flash.assert_success_message(
+                'Alert "{}": Delete successful'.format(self.description))
 
     def copy(self, **updates):
         """Copy this Alert in UI.
@@ -297,40 +308,46 @@ class Alert(Updateable, Navigatable, Pretty):
             .count() > 0
 
 
-@navigator.register(Alert, "Add")
-class AlertNew(CFMENavigateStep):
-    VIEW = NewAlertView
+@navigator.register(AlertCollection, "All")
+class AlertsAll(CFMENavigateStep):
+    VIEW = AlertsAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.alerts.tree.click_path("All Alerts")
-        self.view.configuration.item_select("Add a New Alert")
+        self.prerequisite_view.alerts.tree.click_path("All Alerts")
+
+
+@navigator.register(AlertCollection, "Add")
+class AlertNew(CFMENavigateStep):
+    VIEW = NewAlertView
+    prerequisite = NavigateToSibling("All")
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select("Add a New Alert")
 
 
 @navigator.register(Alert, "Edit")
 class AlertEdit(CFMENavigateStep):
     VIEW = EditAlertView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.alerts.tree.click_path("All Alerts", self.obj.description)
-        self.view.configuration.item_select("Edit this Alert")
+        self.prerequisite_view.configuration.item_select("Edit this Alert")
 
 
 @navigator.register(Alert, "Details")
 class AlertDetails(CFMENavigateStep):
     VIEW = AlertDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
-        self.view.alerts.tree.click_path("All Alerts", self.obj.description)
+        self.prerequisite_view.alerts.tree.click_path("All Alerts", self.obj.description)
 
 
 @navigator.register(Alert, "Copy")
 class AlertCopy(CFMENavigateStep):
     VIEW = NewAlertView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.alerts.tree.click_path("All Alerts", self.obj.description)
-        self.view.configuration.item_select("Copy this Alert", handle_alert=True)
+        self.prerequisite_view.configuration.item_select("Copy this Alert", handle_alert=True)

@@ -247,6 +247,11 @@ def action_collection(appliance):
     return appliance.get(actions.ActionCollection)
 
 
+@pytest.fixture(scope="module")
+def alert_collection(appliance):
+    return appliance.get(alerts.AlertCollection)
+
+
 @pytest.yield_fixture
 def two_random_policies(policy_collection):
     policy_1 = policy_collection.create(
@@ -262,11 +267,12 @@ def two_random_policies(policy_collection):
 
 
 @pytest.yield_fixture
-def random_alert():
-    alert = alerts.Alert(
-        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
+def random_alert(alert_collection):
+    alert = alert_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        timeline_event=True,
+        driving_event="Hourly Timer"
     )
-    alert.create()
     yield alert
     alert.delete()
 
@@ -322,14 +328,13 @@ def control_policy(request, policy_collection):
 
 @pytest.yield_fixture(params=ALERT_PROFILES,
     ids=lambda alert_profile_class: alert_profile_class.__name__)
-def alert_profile(request):
-    alert = alerts.Alert(
+def alert_profile(request, alert_collection):
+    alert = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
         based_on=request.param.TYPE,
         timeline_event=True,
         driving_event="Hourly Timer"
     )
-    alert.create()
     alert_profile = request.param(fauxfactory.gen_alphanumeric(), [alert.description])
     yield alert_profile
     alert.delete()
@@ -454,12 +459,13 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
 
 
 @pytest.mark.tier(2)
-def test_alert_crud():
-    alert = alerts.Alert(
-        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
-    )
+def test_alert_crud(alert_collection):
     # CR
-    alert.create()
+    alert = alert_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        timeline_event=True,
+        driving_event="Hourly Timer"
+    )
     # U
     with update(alert):
         alert.notification_frequency = "2 Hours"
@@ -471,6 +477,7 @@ def test_alert_crud():
 @pytest.mark.meta(blockers=[1303645], automates=[1303645])
 def test_control_alert_copy(random_alert):
     alert_copy = random_alert.copy(description=fauxfactory.gen_alphanumeric())
+    assert alert_copy.exists
     alert_copy.delete()
 
 

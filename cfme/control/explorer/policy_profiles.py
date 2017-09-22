@@ -179,7 +179,7 @@ class PolicyProfileNew(CFMENavigateStep):
 @navigator.register(PolicyProfile, "Edit")
 class PolicyProfileEdit(CFMENavigateStep):
     VIEW = EditPolicyProfileView
-    prerequisite = NavigateToSibling("Details") 
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
         self.prerequisite_view.configuration.item_select("Edit this Policy Profile")
