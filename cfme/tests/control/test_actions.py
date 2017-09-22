@@ -41,12 +41,8 @@ from . import do_scan, wait_for_ssa_enabled
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.meta(blockers=[
-        BZ(
-            1149128,
-            unblock=lambda provider: not provider.one_of(SCVMMProvider))
-    ]),
     pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
+    pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576'),
     pytest.mark.tier(2),
     test_requirements.control
 ]
@@ -364,7 +360,6 @@ def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off,
         pytest.fail("CFME did not suspend the VM {}".format(vm.name))
 
 
-@pytest.mark.meta(blockers=[1142875])
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -711,7 +706,6 @@ def test_action_tag(request, vm, vm_off, policy_for_testing):
         pytest.fail("Tags were not assigned!")
 
 
-@pytest.mark.meta(blockers=[1205496])
 @pytest.mark.provider(
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
@@ -757,8 +751,8 @@ def test_action_untag(request, vm, vm_off, policy_for_testing):
         pytest.fail("Tags were not unassigned!")
 
 
-@pytest.mark.meta(blockers=[1381255])
 @pytest.mark.provider([VMwareProvider], scope="module")
+@pytest.mark.meta(blockers=[1381255])
 def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, policy_for_testing):
     """This test checks if 'Cancel vCenter task' action works.
     For this test we need big template otherwise CFME won't have enough time

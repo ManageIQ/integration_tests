@@ -215,7 +215,8 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm):
         vmware_vm.name)
 
 
-@pytest.mark.meta(blockers=[BZ(1395965, forced_streams=["5.6", "5.7"])])
+@pytest.mark.meta(blockers=[BZ(1395965, forced_streams=["5.6", "5.7"]),
+                            BZ(1491576)])
 def test_delete_all_actions_from_compliance_policy(request):
     """We should not allow a compliance policy to be saved
     if there are no actions on the compliance event.

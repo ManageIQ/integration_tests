@@ -19,6 +19,7 @@ from cfme.infrastructure import host, datastore
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from cfme.utils import testgen, ssh, safe_string, error
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, wait_for_decorator
@@ -608,6 +609,7 @@ def test_ssa_packages(provider, instance, soft_assert):
 
 
 @pytest.mark.long_running
+@pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 def test_ssa_files(provider, instance, policy_profile, soft_assert):
     """Tests that instances can be scanned for specific file."""
 

@@ -13,6 +13,7 @@ from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogIt
 from cfme.services.myservice import MyService
 from cfme.services.requests import RequestCollection
 from cfme.utils import ports
+from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
@@ -136,6 +137,7 @@ def ansible_action(ansible_catalog_item):
         action.delete()
 
 
+@pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(vmware_vm, provider, ansible_action):
     policy = VMControlPolicy(
