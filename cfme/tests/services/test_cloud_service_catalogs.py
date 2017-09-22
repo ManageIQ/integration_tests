@@ -6,7 +6,7 @@ from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import flash
 from cfme import test_requirements
 from cfme.utils import testgen
@@ -24,7 +24,8 @@ pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=[['provisioning', 'image']], scope="module")
 
 
-def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
+def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog, request,
+                            provisioning):
     """Tests cloud catalog item
 
     Metadata:
@@ -71,6 +72,7 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     request_description = item_name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.if_succeeded()

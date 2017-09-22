@@ -4,7 +4,7 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import flash
 from cfme import test_requirements
 
@@ -36,8 +36,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1256903])
-def test_vm_migrate(new_vm, provider):
+def test_vm_migrate(appliance, new_vm, provider):
     """Tests migration of a vm
 
     Metadata:
@@ -50,6 +49,7 @@ def test_vm_migrate(new_vm, provider):
     flash.assert_no_errors()
     request_description = new_vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
-    migrate_request = Request(request_description, cells=cells, partial_check=True)
+    migrate_request = RequestCollection(appliance).instantiate(request_description,
+                                                               cells=cells, partial_check=True)
     migrate_request.wait_for_request(method='ui')
     assert migrate_request.is_succeeded(method='ui')

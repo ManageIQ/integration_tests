@@ -7,7 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.web_ui import flash
 from cfme import test_requirements
 from cfme.utils.log import logger
@@ -31,7 +31,8 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.mark.tier(2)
-def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event):
+def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, request,
+                            register_event):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -47,7 +48,8 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
@@ -81,7 +83,7 @@ def test_order_catalog_item_via_rest(
 
 
 @pytest.mark.tier(2)
-def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
+def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
         test_flag: provision
@@ -99,7 +101,8 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(bundle_name))
     request_description = bundle_name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
@@ -138,7 +141,7 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
 
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
-def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
+def test_request_with_orphaned_template(appliance, provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision
@@ -148,7 +151,8 @@ def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provider.delete(cancel=False)
     provider.wait_for_delete()
     provision_request.wait_for_request(method='ui')

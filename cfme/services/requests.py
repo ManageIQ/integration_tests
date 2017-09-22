@@ -2,33 +2,44 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Table, Checkbox, View
 from widgetastic_manageiq import BreadCrumb, SummaryForm, SummaryFormItem, PaginationPane, Button
-from widgetastic_patternfly import Input, Tab, BootstrapTreeview, FlashMessages
+from widgetastic_patternfly import Input, Tab, BootstrapTreeview
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
 from cfme.exceptions import RequestException, ItemNotFound
 from cfme.utils.log import logger
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 
 
-class Request(Navigatable):
+class RequestCollection(BaseCollection):
+    """The appliance collection of requests"""
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, description=None, cells=None, partial_check=False):
+        """Create a request object"""
+        return Request(self, description=None, cells=None, partial_check=False)
+
+
+class Request(BaseEntity):
     """
     Class describes request row from Services - Requests page
     """
 
     REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
-    def __init__(self, description=None, cells=None, partial_check=False, appliance=None):
+    def __init__(self, collection, description=None, cells=None, partial_check=False):
         """
         Args:
             description: by default we'll be checking Description column to find required row
             cells: cells used to find required row in table
             partial_check: greedy search or not?
         """
-        Navigatable.__init__(self, appliance=appliance)
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.description = description
         self.partial_check = partial_check
         self.cells = cells or {'Description': self.description}
@@ -74,7 +85,7 @@ class Request(Navigatable):
 
     def get_request_row_from_ui(self):
         """Opens CFME UI and return table_row object"""
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
         self.row = view.find_request(self.rest.description, partial_check=False)
         return self.row
 
@@ -106,7 +117,7 @@ class Request(Navigatable):
         Request might be removed from CFME UI but present in DB
 
         """
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
         return bool(view.find_request(self.cells, self.partial_check))
 
     @variable(alias='rest')
@@ -119,7 +130,7 @@ class Request(Navigatable):
 
     @update.variant('ui')
     def update_ui(self):
-        view = navigate_to(self, 'All')
+        view = navigate_to(self.collection, 'All')
         view.toolbar.reload.click()
         self.row = view.find_request(cells=self.cells, partial_check=self.partial_check)
 
@@ -240,7 +251,6 @@ class RequestBasicView(BaseLoggedInPage):
 class RequestsView(RequestBasicView):
     table = Table(locator='//*[@id="list_grid"]/table')
     paginator = PaginationPane()
-    flash = FlashMessages('.//div[@id="flash_msg_div"]')
 
     def find_request(self, cells, partial_check=False):
         """Finds the request and returns the row element
@@ -465,7 +475,7 @@ class RequestCopyView(RequestProvisionView):
             return False
 
 
-@navigator.register(Request, 'All')
+@navigator.register(RequestCollection, 'All')
 class RequestAll(CFMENavigateStep):
     VIEW = RequestsView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -477,7 +487,7 @@ class RequestAll(CFMENavigateStep):
 @navigator.register(Request, 'Details')
 class RequestDetails(CFMENavigateStep):
     VIEW = RequestDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         try:

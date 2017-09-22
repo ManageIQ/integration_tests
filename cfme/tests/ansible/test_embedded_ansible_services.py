@@ -11,8 +11,7 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services.requests import Request
-from cfme.utils.appliance import current_appliance
+from cfme.services.requests import RequestCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
@@ -20,8 +19,7 @@ from cfme.utils.update import update
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+embedded_ansible"]),
-    pytest.mark.uncollectif(lambda: current_appliance.version < "5.8"),
-    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.ignore_stream("upstream", '5.7'),
     test_requirements.ansible
 ]
 
@@ -112,9 +110,9 @@ def service_catalog(ansible_catalog_item, catalog):
 
 
 @pytest.yield_fixture
-def service_request(ansible_catalog_item):
+def service_request(appliance, ansible_catalog_item):
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = Request(request_descr)
+    service_request_ = RequestCollection(appliance).instantiate(description=request_descr)
     yield service_request_
 
     if service_request_.exists:
@@ -198,12 +196,13 @@ def test_service_ansible_playbook_bundle(ansible_catalog_item):
 
 
 @pytest.mark.tier(2)
-def test_service_ansible_playbook_provision_in_requests(ansible_catalog_item, service_catalog):
+def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catalog_item,
+                                                        service_catalog):
     """Tests if ansible playbook service provisioning is shown in service requests."""
     service_catalog.order()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = Request(request_descr)
+    service_request = RequestCollection(appliance).instantiate(description=request_descr)
     assert service_request.exists()
 
 
@@ -229,12 +228,12 @@ def test_service_ansible_playbook_confirm():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda host_type, action: (host_type == "blank" and
-    action == "retirement") or current_appliance.version < "5.8")
+@pytest.mark.uncollectif(lambda host_type, action:
+                         host_type == "blank" and action == "retirement")
 @pytest.mark.parametrize("host_type,order_value,result", SERVICE_CATALOG_VALUES, ids=[
     value[0] for value in SERVICE_CATALOG_VALUES])
 @pytest.mark.parametrize("action", ["provisioning", "retirement"])
-def test_service_ansible_playbook_order_retire(ansible_catalog_item, service_catalog,
+def test_service_ansible_playbook_order_retire(appliance, ansible_catalog_item, service_catalog,
         service_request, service, host_type, order_value, result, action):
     """Test ordering and retiring ansible playbook service against default host, blank field and
     unavailable host.

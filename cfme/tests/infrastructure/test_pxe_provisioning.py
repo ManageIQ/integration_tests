@@ -81,10 +81,8 @@ def vm_name():
     return vm_name
 
 
-def test_pxe_provision_from_template(
-        provider, vm_name, smtp_test, setup_provider,
-        request, setup_pxe_servers_vm_prov
-):
+def test_pxe_provision_from_template(appliance, provider, vm_name, smtp_test, setup_provider,
+                                     request, setup_pxe_servers_vm_prov):
     """Tests provisioning via PXE
 
     Metadata:
@@ -123,7 +121,5 @@ def test_pxe_provision_from_template(
         'network': {
             'vlan': pxe_vlan}}
 
-    do_vm_provisioning(
-        pxe_template, provider, vm_name, provisioning_data,
-        request, smtp_test, num_sec=2100
-    )
+    do_vm_provisioning(appliance, pxe_template, provider, vm_name, provisioning_data, request,
+                       smtp_test, num_sec=2100)

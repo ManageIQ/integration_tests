@@ -6,7 +6,7 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme.utils import normalize_text, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -43,7 +43,7 @@ def vm_name():
 
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
-def test_provision_from_template(setup_provider, provider, vm_name, smtp_test,
+def test_provision_from_template(appliance, setup_provider, provider, vm_name, smtp_test,
                                  request, provisioning, auto):
     """ Tests provisioning from a template
 
@@ -74,13 +74,13 @@ def test_provision_from_template(setup_provider, provider, vm_name, smtp_test,
             'automatic_placement': True if auto else None},
         'network':
             {'vlan': provisioning['vlan']}}
-    do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
-                       num_sec=900)
+    do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
+                       smtp_test, num_sec=900)
 
 
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
-def test_provision_approval(
-        setup_provider, provider, vm_name, smtp_test, request, edit, provisioning):
+def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_test, request,
+                            edit, provisioning):
     """ Tests provisioning approval. Tests couple of things.
 
     * Approve manually
@@ -124,8 +124,8 @@ def test_provision_approval(
         'network':
             {'vlan': provisioning['vlan']}}
 
-    do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
-                       wait=False)
+    do_vm_provisioning(appliance, template, provider, vm_name, provisioning_data, request,
+                       smtp_test, wait=False)
     wait_for(
         lambda:
         len(filter(
@@ -142,7 +142,7 @@ def test_provision_approval(
         num_sec=90, delay=5)
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
-    provision_request = Request(cells=cells)
+    provision_request = RequestCollection(appliance).instantiate(cells=cells)
     navigate_to(provision_request, 'Details')
     if edit:
         # Automatic approval after editing the request to conform

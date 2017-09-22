@@ -4,7 +4,7 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -21,7 +21,7 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
-def test_copy_request(setup_provider, provider, catalog_item, request):
+def test_copy_request(appliance, setup_provider, provider, catalog_item, request):
     """Automate BZ 1194479"""
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
@@ -29,6 +29,7 @@ def test_copy_request(setup_provider, provider, catalog_item, request):
     service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     request_description = catalog_item.name
-    service_request = Request(request_description, partial_check=True)
+    service_request = RequestCollection(appliance).instantiate(request_description,
+                                                               partial_check=True)
     service_request.wait_for_request()
     assert navigate_to(service_request, 'Details')

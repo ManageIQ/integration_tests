@@ -7,7 +7,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
-from cfme.services.requests import Request
+from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils import testgen
 from cfme.utils.log import logger
@@ -92,7 +92,7 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
 
 @pytest.mark.usefixtures('setup_iso_datastore')
 @pytest.mark.meta(blockers=[BZ(1358069, forced_streams=["5.6", "5.7", "upstream"])])
-def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request):
+def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
     """Tests RHEV ISO service catalog
 
     Metadata:
@@ -106,6 +106,7 @@ def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     request_description = catalog_item.name
-    provision_request = Request(request_description, partial_check=True)
+    provision_request = RequestCollection(appliance).instantiate(request_description,
+                                                                 partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
