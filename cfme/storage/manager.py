@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_manageiq import (
@@ -140,16 +140,50 @@ class ManagePoliciesView(ManagerView):
             self.breadcrumb.active_location == "'Storage Manager' Policy Assignment")
 
 
+class BlockManagerCollection(NavigatableMixin):
+    """Collection object [block manager] for the :py:class:'cfme.storage.manager'"""
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+        self.nav = VersionPick({
+            Version.lowest(): ['Storage', 'Storage Providers'],
+            '5.8': ['Storage', 'Block Storage', 'Managers']})
+        self.type = 'Block Storage Managers'
+
+    def instantiate(self, name, provider):
+        return Manager(name, provider, collection=self)
+
+
+class ObjectManagerCollection(NavigatableMixin):
+    """Collection object [object manager] for the :py:class:'cfme.storage.manager'"""
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+        self.nav = VersionPick({
+            Version.lowest(): ['Storage', 'Storage Providers'],
+            '5.8': ['Storage', 'Object Storage', 'Managers']})
+        self.type = 'Object Storage Managers'
+
+    def instantiate(self, name, provider):
+        return Manager(name, provider, collection=self)
+
+
 class Manager(NavigatableMixin):
-    """ Its represents Base Manager class for block and object manager classes.
-    It should be initialized by the child classes.
+    """ Model of an storage manager in cfme
+
+    Args:
+        name: Name of the object manager.
+        provider: provider
+        appliance: appliance
     """
-    def __init__(self, name, provider, appliance, nav, type):
+
+    def __init__(self, name, provider, collection):
         self.name = name
         self.provider = provider
-        self.appliance = appliance
-        self.nav = nav
-        self.type = type
+        self.collection = collection
+        self.appliance = self.collection.appliance
+        self.nav = self.collection.nav
+        self.type = self.collection.type
         self.name_vari = VersionPick({Version.lowest(): 'Storage Provider',
                                   '5.8': 'Storage Manager'}).pick(self.appliance.version)
 
@@ -174,50 +208,8 @@ class Manager(NavigatableMixin):
         view.flash.assert_success_message(msg)
 
 
-class BlockManager(Manager):
-    """ Model of an storage block manager in cfme
-
-    Args:
-        name: Name of the block manager.
-        provider: provider
-        appliance: appliance
-    """
-    def __init__(self, name, provider, appliance):
-        self.nav = VersionPick({
-            Version.lowest(): ['Storage', 'Storage Providers'],
-            '5.8': ['Storage', 'Block Storage', 'Managers']})
-        self.type = 'Block Storage Managers'
-        self.provider = provider
-        self.appliance = appliance
-        self.name = name
-
-        super(BlockManager, self).__init__(name=self.name, provider=self.provider,
-                                           appliance=self.appliance, nav=self.nav, type=self.type)
-
-
-class ObjectManager(Manager):
-    """ Model of an storage object manager in cfme
-
-    Args:
-        name: Name of the object manager.
-        provider: provider
-        appliance: appliance
-    """
-
-    def __init__(self, name, provider, appliance):
-        self.nav = VersionPick({
-            Version.lowest(): ['Storage', 'Storage Providers'],
-            '5.8': ['Storage', 'Object Storage', 'Managers']})
-        self.type = 'Object Storage Managers'
-        self.provider = provider
-        self.appliance = appliance
-        self.name = name
-
-        super(ObjectManager, self).__init__(name=self.name, provider=self.provider,
-                                            appliance=self.appliance, nav=self.nav, type=self.type)
-
-
-@navigator.register(Manager, 'All')
+@navigator.register(BlockManagerCollection, 'All')
+@navigator.register(ObjectManagerCollection, 'All')
 class ManagerAll(CFMENavigateStep):
     VIEW = ManagerAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -230,7 +222,7 @@ class ManagerAll(CFMENavigateStep):
 @navigator.register(Manager, 'Details')
 class ManagerDetails(CFMENavigateStep):
     VIEW = ManagerDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
         try:
