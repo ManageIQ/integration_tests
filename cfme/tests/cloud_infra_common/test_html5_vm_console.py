@@ -83,7 +83,7 @@ def configure_websocket():
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')
 def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
-        configure_vmware_console_for_test):
+        configure_vmware_console_for_test, take_screenshot):
     """
     Test the HTML5 console support for a particular provider.
 
@@ -190,6 +190,12 @@ def test_html5_vm_console(appliance, provider, configure_websocket, vm_obj,
             # file using partial file name. Known issue, being worked on.
             command_result = ssh_client.run_command("rm blather", ensure_user=True)
             assert command_result
+    except:
+        # Take a screenshot if an exception occurs
+        vm_console.switch_to_console()
+        take_screenshot("ConsoleScreenshot")
+        vm_console.switch_to_appliance()
+        raise
     finally:
         vm_console.close_console_window()
         # Logout is required because when running the Test back 2 back against RHV and VMware
