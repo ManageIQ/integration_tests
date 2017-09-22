@@ -6,12 +6,9 @@ import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.infrastructure.virtual_machines import Vm
-from cfme.provisioning import provisioning_form
+from cfme.provisioning import do_vm_provisioning
 from cfme.services.requests import Request
-from cfme.web_ui import fill, flash
 from cfme.utils import testgen, version
-from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     test_requirements.quota,
@@ -111,12 +108,10 @@ def template_name(provisioning):
 
 @pytest.fixture(scope="function")
 def provisioner(request, setup_provider, provider):
-    def _provisioner(template, provisioning_data, delayed=None):
-        vm = Vm(name=vm_name, provider=provider, template_name=template)
-        navigate_to(vm, 'Provision')
-
-        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
-        flash.assert_no_errors()
+    def _provisioner(template, provisioning_data, vm_name, delayed=None):
+        do_vm_provisioning(template_name=template, provider=provider, vm_name=vm_name,
+                           provisioning_data=provisioning_data, request=None, smtp_test=None,
+                           wait=False)
 
     return _provisioner
 
@@ -209,12 +204,19 @@ def test_tenant_quota_max_cpu_check(
     Metadata:
         test_flag: provision
     """
-    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
-    prov_data["vm_name"] = vm_name
-    prov_data["num_sockets"] = "8"
-    prov_data["notes"] = note
+    prov_data = {
+        'catalog': {
+            'vm_name': vm_name
+        },
+        'environment': {
+            'automatic_placement': True
+        },
+        'hardware': {
+            'num_sockets': '8'
+        }
+    }
 
-    provisioner(template_name, prov_data)
+    provisioner(template_name, prov_data, vm_name)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
@@ -245,12 +247,19 @@ def test_tenant_quota_max_memory_check(
     Metadata:
         test_flag: provision
     """
-    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
-    prov_data["vm_name"] = vm_name
-    prov_data["memory"] = "4096"
-    prov_data["notes"] = note
+    prov_data = {
+        'catalog': {
+            'vm_name': vm_name
+        },
+        'environment': {
+            'automatic_placement': True
+        },
+        'hardware': {
+            'memory': '4096'
+        }
+    }
 
-    provisioner(template_name, prov_data)
+    provisioner(template_name, prov_data, vm_name)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
@@ -309,12 +318,17 @@ def test_tenant_quota_max_num_vms_check(
     Metadata:
         test_flag: provision
     """
-    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
-    prov_data["num_vms"] = "4"
-    prov_data["vm_name"] = vm_name
-    prov_data["notes"] = note
+    prov_data = {
+        'catalog': {
+            'vm_name': vm_name,
+            'num_vms': '4'
+        },
+        'environment': {
+            'automatic_placement': True
+        }
+    }
 
-    provisioner(template_name, prov_data)
+    provisioner(template_name, prov_data, vm_name)
 
     # nav to requests page to check quota validation
     request_description = 'Provision from [{}] to [{}###]'.format(template_name, vm_name)
