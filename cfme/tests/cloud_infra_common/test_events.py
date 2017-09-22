@@ -8,6 +8,7 @@ from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.control.explorer.actions import Action
 from cfme.utils import testgen
+from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 
 
@@ -33,6 +34,7 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
         vm.delete_from_provider()
 
 
+@pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
 def test_vm_create(request, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.

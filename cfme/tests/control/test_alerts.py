@@ -13,6 +13,7 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from markers.env_markers.provider import providers
 from cfme.utils import ports
+from cfme.utils.blockers import BZ
 from cfme.utils.conf import credentials
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
@@ -31,6 +32,7 @@ CANDU_PROVIDER_TYPES = [VMwareProvider]  # TODO: rhevm
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+notifier"]),
+    pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576'),
     pytest.mark.tier(3),
     test_requirements.alert
 ]
