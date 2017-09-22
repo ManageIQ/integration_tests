@@ -49,7 +49,7 @@ class Request(Navigatable):
             self.update(method='ui')
             return self.row.request_state.text in self.REQUEST_FINISHED_STATES
 
-        wait_for(_finished, num_sec=800, delay=20, message="Request finished")
+        wait_for(_finished, num_sec=1200, delay=10, message="Request finished")
 
     @property
     def rest(self):
@@ -120,7 +120,7 @@ class Request(Navigatable):
     @update.variant('ui')
     def update_ui(self):
         view = navigate_to(self, 'All')
-        view.reload.click()
+        view.toolbar.reload.click()
         self.row = view.find_request(cells=self.cells, partial_check=self.partial_check)
 
     @variable(alias='rest')
@@ -221,9 +221,14 @@ class Request(Navigatable):
         view.flash.assert_no_error()
 
 
+class RequestsToolbar(View):
+    """Toolbar on the requests view"""
+    reload = Button(title='Reload the current display')
+
+
 class RequestBasicView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
-    reload = Button(title='Reload the current display')
+    toolbar = View.nested(RequestsToolbar)
 
     @property
     def in_requests(self):

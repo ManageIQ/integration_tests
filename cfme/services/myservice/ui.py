@@ -3,15 +3,15 @@ from widgetastic.widget import Text, View
 from widgetastic_manageiq import Accordion, ManageIQTree, Calendar, SummaryTable
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
-from cfme.common import TagPageView
-from cfme.web_ui import toolbar as tb, Quadicon
-from cfme.fixtures import pytest_selenium as sel
 from cfme.base.login import BaseLoggedInPage
+from cfme.common import TagPageView
+from cfme.fixtures import pytest_selenium as sel
+from cfme.services.myservice import MyService
+from cfme.services.requests import RequestsView
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
-
-from . import MyService
+from cfme.web_ui import Quadicon
 
 
 class MyServicesView(BaseLoggedInPage):
@@ -22,8 +22,10 @@ class MyServicesView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_myservices and self.configuration.is_displayed and not \
-            self.myservice.is_dimmed
+        return (
+            self.in_myservices and
+            self.configuration.is_displayed and not
+            self.myservice.is_dimmed)
 
     @View.nested
     class myservice(Accordion):  # noqa
@@ -31,6 +33,8 @@ class MyServicesView(BaseLoggedInPage):
 
         tree = ManageIQTree()
 
+    # TODO drop '_btn' suffix
+    reload = Button(title='Reload current display')
     configuration = Dropdown('Configuration')
     policy_btn = Dropdown('Policy')
     lifecycle_btn = Dropdown('Lifecycle')
@@ -58,8 +62,14 @@ class SetOwnershipForm(MyServicesView):
     select_group = BootstrapSelect('group_name')
 
 
+class MyServiceDetailsToolbar(View):
+    """View of toolbar widgets to nest"""
+    reload = Button(title='Reload current display')
+
+
 class MyServiceDetailView(MyServicesView):
     title = Text("#explorer_title_text")
+    toolbar = View.nested(MyServiceDetailsToolbar)
 
     @View.nested
     class details(Tab):  # noqa
@@ -88,9 +98,9 @@ class MyServiceDetailView(MyServicesView):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and self.myservice.is_opened and
-            self.title.text == 'Service "{}"'.format(self.context['object'].name)
-        )
+            self.in_myservices and
+            self.myservice.is_opened and
+            self.title.text == 'Service "{}"'.format(self.context['object'].name))
 
 
 class EditMyServiceView(ServiceEditForm):
@@ -103,7 +113,8 @@ class EditMyServiceView(ServiceEditForm):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and self.myservice.is_opened and
+            self.in_myservices and
+            self.myservice.is_opened and
             self.title.text == 'Editing Service "{}"'.format(self.context['object'].name)
         )
 
@@ -116,9 +127,9 @@ class SetOwnershipView(SetOwnershipForm):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and self.myservice.is_opened and
-            self.title.text == 'Set Ownership of Service "{}"'.format(self.context['object'].name)
-        )
+            self.in_myservices and
+            self.myservice.is_opened and
+            self.title.text == 'Set Ownership of Service "{}"'.format(self.context['object'].name))
 
 
 class ServiceRetirementView(ServiceRetirementForm):
@@ -129,7 +140,8 @@ class ServiceRetirementView(ServiceRetirementForm):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and self.myservice.is_opened and
+            self.in_myservices and
+            self.myservice.is_opened and
             self.myservice.tree.currently_selected == self.context['object'].name and
             self.title.text == 'Set/Remove retirement date for Service')
 
@@ -142,7 +154,8 @@ class ReconfigureServiceView(SetOwnershipForm):
     @property
     def is_displayed(self):
         return (
-            self.in_myservices and self.myservice.is_opened and
+            self.in_myservices and
+            self.myservice.is_opened and
             self.title.text == 'Reconfigure Service "{}"'.format(self.context['object'].name)
         )
 
@@ -159,11 +172,9 @@ def retire(self):
     # wait for service to retire
     wait_for(
         lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
-        fail_func=tb.refresh,
-        num_sec=10 * 60,
-        delay=3,
-        message='Service Retirement wait'
-    )
+        fail_func=view.toolbar.reload.click,
+        num_sec=10 * 60, delay=3,
+        message='Service Retirement wait')
 
 
 @MyService.retire_on_date.external_implementation_for(ViaUI)
@@ -174,11 +185,9 @@ def retire_on_date(self, retirement_date):
     view = navigate_to(self, 'Details')
     wait_for(
         lambda: view.details.lifecycle.get_text_of("Retirement State") == 'Retired',
-        fail_func=tb.refresh,
-        num_sec=5 * 60,
-        delay=5,
-        message='Service Retirement'
-    )
+        fail_func=view.toolbar.reload.click,
+        num_sec=10 * 60, delay=3,
+        message='Service Retirement wait')
 
 
 @MyService.update.external_implementation_for(ViaUI)
@@ -261,7 +270,8 @@ def download_file(self, extension):
 def reconfigure_service(self):
     view = navigate_to(self, 'Reconfigure')
     view.submit_button.click()
-    # TODO - assert for request view after request widgetastic conversion
+    view = self.create_view(RequestsView)
+    assert view.is_displayed
     view.flash.assert_no_error()
 
 
@@ -282,10 +292,8 @@ class MyServiceDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        if self.appliance.version > '5.8':
-            self.prerequisite_view.myservice.tree.click_path("Active Services", self.obj.name)
-        else:
-            self.prerequisite_view.myservice.tree.click_path("All Services", self.obj.name)
+        path_start = "Active Services" if self.appliance.version > '5.8' else "All Services"
+        self.prerequisite_view.myservice.tree.click_path(path_start, self.obj.name)
 
 
 @navigator.register(MyService, 'Edit')
