@@ -211,7 +211,7 @@ def test_tenant_quota_max_cpu_check(
         'environment': {
             'automatic_placement': True
         },
-        'hardware':{
+        'hardware': {
             'num_sockets': '8'
         }
     }
@@ -254,7 +254,7 @@ def test_tenant_quota_max_memory_check(
         'environment': {
             'automatic_placement': True
         },
-        'hardware':{
+        'hardware': {
             'memory': '4096'
         }
     }
