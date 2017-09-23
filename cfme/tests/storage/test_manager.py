@@ -17,35 +17,28 @@ pytestmark = [pytest.mark.tier(3),
               pytest.mark.usefixtures('openstack_provider', 'setup_provider')]
 
 
+COLLECTION_CLASS_AND_TYPE = [
+    (ObjectManagerCollection, 'Swift Manager'),
+    (BlockManagerCollection, 'Cinder Manager')
+]
+
+
+@pytest.yield_fixture(params=COLLECTION_CLASS_AND_TYPE)
+def collection_manager(request, openstack_provider, appliance):
+    collection = request.param[0](appliance=appliance)
+    manager_name = '{0} {1}'.format(openstack_provider.name, request.param[1])
+    manager = collection.instantiate(name=manager_name, provider=openstack_provider)
+    yield collection, manager
+
+
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_block_manager_navigation(openstack_provider, appliance):
-    """Simple test for navigation destinations"""
-
-    collection = BlockManagerCollection(appliance=appliance)
-    block_name = '{} Cinder Manager'.format(openstack_provider.name)
-    block_manager = collection.instantiate(name=block_name, provider=openstack_provider)
-
+def test_manager_navigation(collection_manager):
+    collection, manager = collection_manager
     view = navigate_to(collection, 'All')
     assert view.is_displayed
 
-    view = navigate_to(block_manager, 'Details')
+    view = navigate_to(manager, 'Details')
     assert view.is_displayed
 
-    block_manager.refresh()
-
-
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_object_manager_navigation(openstack_provider, appliance):
-    """Simple test for navigation destinations"""
-
-    collection = ObjectManagerCollection(appliance=appliance)
-    object_name = '{} Swift Manager'.format(openstack_provider.name)
-    object_manager = collection.instantiate(name=object_name, provider=openstack_provider)
-
-    view = navigate_to(collection, 'All')
-    assert view.is_displayed
-
-    view = navigate_to(object_manager, 'Details')
-    assert view.is_displayed
-
-    object_manager.refresh()
+    manager.refresh()
