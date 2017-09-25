@@ -225,10 +225,12 @@ class ImagePolicySimulation(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Policy Simulation')
 
 
-@navigator.register(Image, 'EditTagsFromDetails')
+@navigator.register(Image, 'EditTags')
 class ImageEditTags(CFMENavigateStep):
     VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('AllForProvider')
 
     def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

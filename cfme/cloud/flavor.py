@@ -1,18 +1,17 @@
 """ Page functions for Flavor pages
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button, View
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
-from cfme.exceptions import FlavorNotFound
+from cfme.exceptions import FlavorNotFound, ItemNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, SummaryTable, Text, Table, PaginationPane, Accordion, ManageIQTree,
-    Search, BreadCrumb)
+    Search, BreadCrumb, BaseEntitiesView)
 
 
 class FlavorView(BaseLoggedInPage):
@@ -67,7 +66,7 @@ class FlavorAllView(FlavorView):
             self.entities.title.text == 'Flavors')
 
     toolbar = FlavorToolBar()
-    entities = FlavorEntities()
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
     paginator = PaginationPane()
 
 
@@ -116,20 +115,18 @@ class FlavorDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=self.obj.name,
-                cloud_provider=self.obj.provider.name)
-        except NoSuchElementException:
+            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True)
+        except ItemNotFound:
             raise FlavorNotFound('Could not locate flavor "{}" on provider {}'
                                  .format(self.obj.name, self.obj.provider.name))
         row.click()
 
 
-@navigator.register(Flavor, 'EditTagsFromDetails')
-class FlavorEditTags(CFMENavigateStep):
+@navigator.register(Flavor, 'EditTags')
+class EditTags(CFMENavigateStep):
     VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('All')
 
-    def step(self, *args, **kwargs):
+    def step(self):
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

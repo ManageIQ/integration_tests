@@ -838,7 +838,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         return result_list
 
 
-class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTaggable):
+class CloudInfraProvider(WidgetasticTaggable, BaseProvider, PolicyProfileAssignable):
     vm_name = ""
     template_name = ""
     detail_page_suffix = 'provider'

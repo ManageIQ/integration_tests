@@ -127,7 +127,7 @@ class StackView(BaseLoggedInPage):
 class StackAllView(StackView):
     """The main list page"""
     toolbar = View.nested(StackToolbar)
-    including_entities = View.include(StackEntities, use_parent=True)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
     paginator = PaginationPane()
 
     @property
@@ -351,18 +351,20 @@ class Details(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Go to the details page"""
         self.prerequisite_view.toolbar.view_selector.select('List View')
-        row = self.prerequisite_view.paginator.find_row_on_pages(
-            self.prerequisite_view.table, name=self.obj.name)
+        row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True)
         row.click()
 
 
-@navigator.register(Stack, 'EditTagsFromDetails')
+@navigator.register(Stack, 'EditTags')
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('collection', 'All')
 
     def step(self, *args, **kwargs):
         """Go to the edit tags screen"""
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                   surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 

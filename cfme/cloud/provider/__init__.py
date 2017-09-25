@@ -180,15 +180,6 @@ class EditTags(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
-@navigator.register(CloudProvider, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
-
-
 @navigator.register(CloudProvider, 'Timelines')
 class Timelines(CFMENavigateStep):
     VIEW = CloudProviderTimelinesView
