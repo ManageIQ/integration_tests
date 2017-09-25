@@ -179,11 +179,8 @@ def cart(appliance):
 
     yield cart
 
-    try:
+    if cart.exists:
         cart.action.delete()
-    except Exception:
-        # can be deleted by test
-        pass
 
 
 def unassign_templates(templates):
