@@ -1,7 +1,7 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.cluster import Cluster
+from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from fixtures.provider import setup_one_or_skip
@@ -12,7 +12,7 @@ from cfme.utils.update import update
 pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 
 test_items = [
-    ('clusters', Cluster),
+    ('clusters', ClusterCollection),
     ('vms', Vm),
     ('templates', Template)
 ]
@@ -44,7 +44,8 @@ def testing_vis_object(request, a_provider, appliance):
             if resource.vendor == item_type:
                 return param_class(name=resource.name, provider=a_provider)
     else:
-        return param_class(name=collection_rest[0].name, provider=a_provider)
+        return param_class(appliance).instantiate(
+            name='{} in Datacenter'.format(collection_rest[0].name), provider=a_provider)
 
 
 @pytest.fixture(scope='module')
