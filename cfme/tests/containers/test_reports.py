@@ -8,7 +8,6 @@ from wrapanapi.utils import eval_strings
 
 from cfme.containers.provider import ContainersProvider
 from cfme.intelligence.reports.reports import CannedSavedReport, CustomReport
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -18,8 +17,9 @@ pytestmark = [
     pytest.mark.meta(blockers=[BZ(1467059, forced_streams=["5.8"])]),
     pytest.mark.meta(
         server_roles='+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 @pytest.fixture(scope='module')

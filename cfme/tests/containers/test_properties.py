@@ -2,26 +2,28 @@
 import pytest
 from wrapanapi.utils import eval_strings
 
-from cfme.containers.provider import ContainersProvider,\
-    ContainersTestItem
+from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.route import Route
 from cfme.containers.project import Project
 from cfme.containers.service import Service
+from cfme.containers.node import Node
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.template import Template
 from cfme.containers.volume import Volume
+from cfme.containers.container import Container
 
-from cfme.utils import testgen, version
-from cfme.utils.version import current_version
+from cfme.utils import version
 from cfme.utils.soft_get import soft_get
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 # The polarion markers below are used to mark the test item
@@ -30,31 +32,28 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    # The next lines have been removed due to bug introduced in CFME 5.8.1 -
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1467639
-    # from cfme.containers.container import Container
-    #     pytest.mark.polarion('CMP-9945')(
-    #         ContainersTestItem(
-    #             Container,
-    #             'CMP-9945',
-    #             expected_fields=[
-    #                 'name', 'state', 'last_state', 'restart_count',
-    #                 'backing_ref_container_id', 'privileged'
-    #             ]
-    #         )
-    #     ),
+    pytest.mark.polarion('CMP-9945')(
+        ContainersTestItem(
+            Container,
+            'CMP-9945',
+            expected_fields=[
+                'name', 'state', 'last state', 'restart count',
+                'backing ref (container id)', 'privileged'
+            ]
+        )
+    ),
     pytest.mark.polarion('CMP-10430')(
         ContainersTestItem(
             Project,
             'CMP-10430',
-            expected_fields=['name', 'creation_timestamp', 'resource_version']
+            expected_fields=['name', 'creation timestamp', 'resource version']
         )
     ),
     pytest.mark.polarion('CMP-9877')(
         ContainersTestItem(
             Route,
             'CMP-9877',
-            expected_fields=['name', 'creation_timestamp', 'resource_version', 'host_name']
+            expected_fields=['name', 'creation timestamp', 'resource version', 'host name']
         )
     ),
     pytest.mark.polarion('CMP-9911')(
@@ -62,33 +61,32 @@ TEST_ITEMS = [
             Pod,
             'CMP-9911',
             expected_fields=[
-                'name', 'phase', 'creation_timestamp', 'resource_version',
-                'restart_policy', 'dns_policy', 'ip_address'
+                'name', 'phase', 'creation timestamp', 'resource version',
+                'restart policy', 'dns policy', 'ip address'
             ]
         )
     ),
-    # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
-    # pytest.mark.polarion('CMP-9960')(
-    #     ContainersTestItem(
-    #         Node,
-    #         'CMP-9960',
-    #         expected_fields=[
-    #             'name', 'creation_timestamp', 'resource_version', 'number_of_cpu_cores',
-    #             'memory', 'max_pods_capacity', 'system_bios_uuid', 'machine_id',
-    #             'infrastructure_machine_id', 'runtime_version', 'kubelet_version',
-    #             'proxy_version', 'operating_system_distribution', 'kernel_version',
-    #         ]
-    #     )
-    # ),
+    pytest.mark.polarion('CMP-9960')(
+        ContainersTestItem(
+            Node,
+            'CMP-9960',
+            expected_fields=[
+                'name', 'creation timestamp', 'resource version', 'number of cpu cores',
+                'memory', 'max pods capacity', 'system bios uuid', 'machine id',
+                'infrastructure machine id', 'runtime version', 'kubelet version',
+                'proxy version', 'operating system distribution', 'kernel version',
+            ]
+        )
+    ),
     pytest.mark.polarion('CMP-9978')(
         ContainersTestItem(
             Image,
             'CMP-9978',
             expected_fields={
-                version.LOWEST: ['name', 'image_id', 'full_name'],
+                version.LOWEST: ['name', 'image id', 'full name'],
                 '5.7': [
-                    'name', 'image_id', 'full_name', 'architecture', 'author',
-                    'entrypoint', 'docker_version', 'exposed_ports', 'size'
+                    'name', 'image id', 'full name', 'architecture', 'author',
+                    'entrypoint', 'docker version', 'exposed ports', 'size'
                 ]
             }
         )
@@ -98,8 +96,8 @@ TEST_ITEMS = [
             Service,
             'CMP-9890',
             expected_fields=[
-                'name', 'creation_timestamp', 'resource_version', 'session_affinity',
-                'type', 'portal_ip'
+                'name', 'creation timestamp', 'resource version', 'session affinity',
+                'type', 'portal ip'
             ]
         )
     ),
@@ -114,7 +112,7 @@ TEST_ITEMS = [
         ContainersTestItem(
             Template,
             'CMP-10316',
-            expected_fields=['name', 'creation_timestamp', 'resource_version']
+            expected_fields=['name', 'creation timestamp', 'resource version']
         )
     ),
     pytest.mark.polarion('CMP-10407')(
@@ -122,13 +120,13 @@ TEST_ITEMS = [
             'CMP-10407',
             expected_fields=[
                 'name',
-                'creation_timestamp',
-                'resource_version',
-                'access_modes',
-                'reclaim_policy',
-                'status_phase',
-                'nfs_server',
-                'volume_path']
+                'creation timestamp',
+                'resource version',
+                'access modes',
+                'reclaim policy',
+                'status phase',
+                'nfs server',
+                'volume path']
         )
     )
 ]
@@ -136,12 +134,9 @@ TEST_ITEMS = [
 
 @pytest.mark.parametrize('test_item', TEST_ITEMS,
                          ids=[ContainersTestItem.get_pretty_id(ti) for ti in TEST_ITEMS])
-def test_properties(provider, test_item, soft_assert):
+def test_properties(provider, appliance, test_item, soft_assert):
 
-    if current_version() < "5.7" and test_item.obj == Template:
-        pytest.skip('Templates are not exist in CFME version lower than 5.7. skipping...')
-
-    instances = test_item.obj.get_random_instances(provider, count=2)
+    instances = test_item.obj.get_random_instances(provider, count=2, appliance=appliance)
 
     for instance in instances:
 
@@ -150,8 +145,9 @@ def test_properties(provider, test_item, soft_assert):
         else:
             expected_fields = test_item.expected_fields
         for field in expected_fields:
+            view = navigate_to(instance, 'Details')
             try:
-                soft_get(instance.summary.properties, field)
+                soft_get(view.entities.properties.read(), field, dict_=True)
             except AttributeError:
                 soft_assert(False, '{} "{}" properties table has missing field - "{}"'
                                    .format(test_item.obj.__name__, instance.name, field))
@@ -166,13 +162,10 @@ def test_pods_conditions(provider, appliance, soft_assert):
     pods_per_ready_status = provider.pods_per_ready_status()
     for pod_name in selected_pods_cfme:
         cfme_pod = selected_pods_cfme[pod_name]
-
+        view = navigate_to(cfme_pod, 'Details')
         ose_pod_condition = pods_per_ready_status[pod_name]
-        cfme_pod_condition = {_type:
-                              eval_strings(
-                                  [getattr(getattr(cfme_pod.summary.conditions, _type), "Status")]
-                              ).pop()
-                              for _type in ose_pod_condition}
+        cfme_pod_condition = {r.name.text: eval_strings([r.status.text]).pop()
+                              for r in view.entities.conditions.rows()}
 
         for status in cfme_pod_condition:
             soft_assert(ose_pod_condition[status] == cfme_pod_condition[status],

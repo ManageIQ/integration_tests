@@ -96,6 +96,7 @@ pytest_plugins = (
     'cfme.fixtures.vm_name',
     'cfme.fixtures.vporizer',
     'cfme.fixtures.model_collections',
+    'cfme.fixtures.has_persistent_volume',
 
     'cfme.metaplugins',
 )

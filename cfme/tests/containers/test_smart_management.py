@@ -1,13 +1,10 @@
 import re
 import random
+
 import pytest
-from cfme.utils import testgen
-from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.utils.blockers import BZ
-from cfme.utils.version import current_version
-from cfme.web_ui import toolbar, AngularSelect, form_buttons
 from cfme.configure.configuration.region_settings import Tag
-from cfme.containers.provider import ContainersProvider, ContainersTestItem
+from cfme.containers.provider import ContainersProvider, ContainersTestItem,\
+    refresh_and_navigate
 from cfme.containers.image import Image
 from cfme.containers.project import Project
 from cfme.containers.image_registry import ImageRegistry
@@ -16,16 +13,17 @@ from cfme.containers.template import Template
 from cfme.containers.container import Container
 from cfme.utils.log import create_sublogger
 from cfme.utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 logger = create_sublogger("smart_management")
 
 TEST_ITEMS = [
-
     pytest.mark.polarion('CMP-9948')(ContainersTestItem(Container, 'CMP-9948')),
     pytest.mark.polarion('CMP-10320')(ContainersTestItem(Template, 'CMP-10320')),
     pytest.mark.polarion('CMP-9992')(ContainersTestItem(ImageRegistry, 'CMP-9992')),
@@ -43,35 +41,25 @@ def get_object_name(obj):
 
 
 def set_random_tag(instance):
+    view = navigate_to(instance, 'EditTags')
     logger.debug("Setting random tag")
-    navigate_to(instance, 'Details')
-    toolbar.select('Policy', 'Edit Tags')
-
-    # select random tag category
-    cat_selector = AngularSelect("tag_cat")
-    random_cat = random.choice(cat_selector.all_options)
+    random_cat = random.choice(view.form.tag_category.all_options).text
+    view.form.tag_category.select_by_visible_text(random_cat)  # In order to get the right tags list
     logger.debug("Selected category {cat}".format(cat=random_cat))
-    cat_selector.select_by_value(random_cat.value)
-
-    # select random tag tag
-    tag_selector = AngularSelect("tag_add")
-    random_tag = random.choice([op for op in tag_selector.all_options if op.value != "select"])
+    random_tag = random.choice([op for op in view.form.tag_name.all_options
+                                if "select" not in op.text.lower()]).text
     logger.debug("Selected value {tag}".format(tag=random_tag))
-    tag_selector.select_by_value(random_tag.value)
-
-    # Save tag conig
-    form_buttons.save()
+    instance.add_tag(random_cat, random_tag, details=False)
     logger.debug("Tag configuration was saved")
-    return Tag(display_name=random_tag.text, category=random_cat.text)
+    return Tag(display_name=random_tag, category=random_cat)
 
 
 def wait_for_tag(obj_inst):
     # Waiting for some tag to appear at "My Company Tags" and return pop'ed last tag
-    last_tag = wait_for(
-        lambda: getattr(obj_inst.summary.smart_management, 'my_company_tags', []),
-        fail_condition=[],
-        num_sec=30, delay=5,
-        fail_func=obj_inst.summary.reload).out
+    def is_tag():
+        view = refresh_and_navigate(obj_inst, 'Details')
+        return view.entities.smart_management.read().get('My Company Tags', [])
+    last_tag = wait_for(is_tag, fail_condition=[], num_sec=30, delay=5).out
     logger.debug("Last tag type: {t}".format(t=type(last_tag)))
     return last_tag.pop() if isinstance(last_tag, list) else last_tag
 
@@ -81,13 +69,11 @@ def wait_for_tag(obj_inst):
 @pytest.mark.meta(blockers=[BZ(1479412,
                                forced_streams=['5.7'],
                                unblock=lambda test_item: test_item.obj != Container)])
-def test_smart_management_add_tag(provider, test_item):
+def test_smart_management_add_tag(provider, appliance, test_item):
     logger.debug("Setting smart mgmt tag to {obj_type}".format(obj_type=test_item.obj.__name__))
     # validate no tag set to project
-    if test_item.obj is ContainersProvider:
-        obj_inst = provider
-    else:
-        obj_inst = test_item.obj.get_random_instances(provider, count=1).pop()
+    obj_inst = (provider if test_item.obj is ContainersProvider
+                else test_item.obj.get_random_instances(provider, 1, appliance).pop())
 
     logger.debug('Selected object is "{obj_name}"'.format(obj_name=obj_inst.name))
 
@@ -111,9 +97,7 @@ def test_smart_management_add_tag(provider, test_item):
 
     logger.debug("Fetching tag info for selected object")
     # validate new tag format
-    obj_inst.summary.reload()
     tag_display_text = wait_for_tag(obj_inst)
-    tag_display_text = tag_display_text.text_value
     logger.debug("Tag info: {info}".format(info=tag_display_text))
 
     assert re.match(regex, tag_display_text), "Tag formatting is invalid! "

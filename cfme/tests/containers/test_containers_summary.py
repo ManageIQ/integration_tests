@@ -1,5 +1,4 @@
 import pytest
-from widgetastic.utils import attributize_string
 
 from cfme.containers.overview import ContainersOverview
 from cfme.containers.provider import ContainersProvider
@@ -10,19 +9,17 @@ from cfme.containers.project import Project
 from cfme.containers.pod import Pod
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
-from cfme.web_ui import StatusBox
+from cfme.containers.node import Node
 
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')]
 
-# TODO Add Node back into the list when other classes are updated to use WT views and widgets.
-tested_objects = [Service, Route, Project, Pod, Image, Container, ImageRegistry]
+tested_objects = [Service, Route, Project, Pod, Image, Container, ImageRegistry, Node]
 
 
 @pytest.mark.polarion('CMP-10575')
@@ -38,14 +35,15 @@ def test_containers_summary_objects(provider, soft_assert):
            * Goes to Containers summary page and checks how many objects are shown there.
            * Checks the amount is equal
        """
-    navigate_to(ContainersOverview, 'All')
+    view = navigate_to(ContainersOverview, 'All')
     # Collecting status boxes values:
-    status_box_values = {obj: StatusBox(obj.PLURAL.split(' ')[-1]).value()
+    status_box_values = {obj: getattr(view, obj.PLURAL.split(' ')[-1].lower()).value
                          for obj in tested_objects}
     # Comparing to the values in the relationships tables:
+    view = navigate_to(provider, 'Details')
     for obj in tested_objects:
         sb_val = status_box_values[obj]
-        ui_val = getattr(provider.summary.relationships, attributize_string(obj.PLURAL)).value
+        ui_val = int(view.entities.relationships.get_text_of(obj.PLURAL))
         soft_assert(sb_val == ui_val,
             '{}: Mismatch between status box ({}) value in Containers overview'
             'and provider\'s relationships table ({}):'

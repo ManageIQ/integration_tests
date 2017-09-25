@@ -1,15 +1,14 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
+
 from cfme.containers.provider import ContainersProvider
-from cfme.utils import testgen
 from cfme.utils.ansible import setup_ansible_script, run_ansible, \
     fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files
-from cfme.utils.version import current_version
-
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.7")]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')]
 
 custom_attributes_to_add = {
     'name': 'custom1',
@@ -37,8 +36,16 @@ def ansible_custom_attributes():
     remove_tmp_files()
 
 
+def verify_custom_attributes(provider, custom_attributes_to_verify):
+    view = navigate_to(provider, 'Details')
+    assert view.entities.custom_attributes.is_displayed
+    custom_attributes = view.entities.custom_attributes.read()
+    for custom_attribute in custom_attributes_to_verify:
+        assert (str(custom_attributes.get(custom_attribute['name'])) ==
+                str(custom_attribute['value']))
+
+
 @pytest.mark.polarion('CMP-10559')
-@pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provider):
     """This test checks adding a Custom Attribute using Ansible script via Manage IQ module
         Steps:
@@ -52,14 +59,10 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
-    for custom_attribute in custom_attributes_to_add:
-        assert provider.get_detail('Custom Attributes',
-                                   custom_attribute['name']) == custom_attribute['value']
-        assert sel.is_displayed_text('Custom Attributes')
+    verify_custom_attributes(provider, custom_attributes_to_add)
 
 
 @pytest.mark.polarion('CMP-10560')
-@pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, provider):
     """This test checks editing a Custom Attribute using Ansible script via Manage IQ module
         Steps:
@@ -73,13 +76,10 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
-    for custom_attribute in custom_attributes_to_edit:
-        assert provider.get_detail('Custom Attributes',
-                                   custom_attribute['name']) == custom_attribute['value']
+    verify_custom_attributes(provider, custom_attributes_to_edit)
 
 
 @pytest.mark.polarion('CMP-10561')
-@pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attributes, provider):
     """This test checks adding a Custom Attribute with the same name
         using Ansible script via Manage IQ module
@@ -94,13 +94,10 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
-    for custom_attribute in custom_attributes_to_edit:
-        assert provider.get_detail('Custom Attributes',
-                                   custom_attribute['name']) == custom_attribute['value']
+    verify_custom_attributes(provider, custom_attributes_to_edit)
 
 
 @pytest.mark.polarion('CMP-10562')
-@pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attributes, provider):
     """This test checks adding a Custom Attribute with a bad user name
         using Ansible script via Manage IQ module
@@ -117,9 +114,7 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
                          script_type='custom_attributes')
     run_result = run_ansible('add_custom_attributes_bad_user')
     assert 'Authentication failed' in run_result
-    for custom_attribute in custom_attributes_to_edit:
-        assert provider.get_detail('Custom Attributes',
-                                   custom_attribute['name']) == custom_attribute['value']
+    verify_custom_attributes(provider, custom_attributes_to_edit)
 
 
 @pytest.mark.polarion('CMP-10563')
@@ -137,5 +132,5 @@ def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, pr
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
-    pytest.sel.refresh()
-    assert not sel.is_displayed_text('Custom Attributes')
+    view = navigate_to(provider, 'Details')
+    assert not view.entities.custom_attributes.is_displayed

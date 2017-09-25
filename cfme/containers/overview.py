@@ -1,33 +1,43 @@
 # -*- coding: utf-8 -*-
-from functools import partial
-
 from navmazing import NavigateToAttribute
+from widgetastic_manageiq import StatusBox
 
-from cfme.containers.provider import ContainersProvider
-from cfme.web_ui import match_location, StatusBox
+from cfme.base.login import BaseLoggedInPage
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from cfme.utils.appliance import Navigatable
 from cfme.utils.wait import wait_for
-
-
-match_page = partial(match_location, controller='container_dashboard', title='Container Dashboards')
 
 
 class ContainersOverview(Navigatable):
     pass
 
 
+class ContainersOverviewView(BaseLoggedInPage):
+    providers = StatusBox('Providers')
+    nodes = StatusBox('Nodes')
+    containers = StatusBox('Containers')
+    registries = StatusBox('Registries')
+    projects = StatusBox('Projects')
+    pods = StatusBox('Pods')
+    services = StatusBox('Services')
+    images = StatusBox('Images')
+    routes = StatusBox('Routes')
+    # TODO: Add widgets for utilization trends
+
+    @property
+    def is_displayed(self):
+        return self.navigation.currently_selected == ['Compute', 'Containers', 'Overview']
+
+
 @navigator.register(ContainersOverview, 'All')
 class All(CFMENavigateStep):
+    VIEW = ContainersOverviewView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page()
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Overview')
 
     def resetter(self):
         # We should wait ~2 seconds for the StatusBox population
-        wait_for(lambda: StatusBox(ContainersProvider.PLURAL.split(' ')[-1]).value(),
-                 num_sec=10, delay=1)
+        wait_for(lambda: self.view.providers.value,
+                 num_sec=10, delay=1, silent_failure=True)

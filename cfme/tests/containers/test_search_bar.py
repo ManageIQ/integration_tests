@@ -2,33 +2,23 @@ from random import choice
 
 import pytest
 
-from cfme.utils import testgen
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import search, CheckboxTable
-
 from cfme.containers.route import Route
 from cfme.containers.project import Project
-from cfme.containers.provider import ContainersProvider, navigate_and_get_rows
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.replicator import Replicator
 from cfme.containers.container import Container
 from cfme.containers.service import Service
 from cfme.containers.pod import Pod
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(3)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
-
-
-TEST_OBJECTS = [
-    Replicator,
-    Project,
-    Route,
-    Service,
-    ContainersProvider,
-    Pod,
-    Container
+    pytest.mark.tier(3),
+    pytest.mark.provider([ContainersProvider], scope='function')
 ]
+
+
+TEST_OBJECTS = [Replicator, Project, Route, Service, ContainersProvider, Pod, Container]
 
 
 @pytest.mark.polarion('CMP-10577')
@@ -41,11 +31,8 @@ def test_search_bar(provider, soft_assert):
         * Verify proper results
     """
     for obj in TEST_OBJECTS:
-        rows = navigate_and_get_rows(provider, obj, 1)
-        if not rows:
-            pytest.skip('No Records Found in {} table. Could not test search. skipping...'
-                        .format(obj))
-        exist_member_str = choice(rows).name.text
+        view = navigate_to(obj, 'All')
+        exist_member_str = choice(view.entities.entity_names)
         # Mapping the search string and the expected found result:
         search_strings_and_result = {
             '***': None,
@@ -56,12 +43,8 @@ def test_search_bar(provider, soft_assert):
 
         try:
             for search_string, result in search_strings_and_result.items():
-                search.normal_search(search_string)
-                # NOTE: We must re-instantiate here table
-                # in order to prevent StaleElementException or UsingSharedTables
-                list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-                results_row_names = ([r.name.text for r in list_tbl.rows_as_list()]
-                             if not sel.is_displayed_text("No Records Found.") else [])
+                view.entities.search.search(search_string)
+                results_row_names = view.entities.entity_names
                 if result:
                     soft_assert(result in results_row_names,
                         'Expected to get result "{}" '
@@ -73,6 +56,4 @@ def test_search_bar(provider, soft_assert):
                         'Should not find records, search results: "{}"'
                         .format(search_string, results_row_names))
         finally:
-            # search.ensure_no_filter_applied() -> TimedOutError
-            # https://github.com/ManageIQ/integration_tests/issues/4401
-            search.normal_search("")
+            view.entities.search.clear_search()

@@ -4,7 +4,6 @@ from random import choice
 
 import pytest
 
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
 from cfme.utils.browser import WithZoom
@@ -17,8 +16,9 @@ from cfme.fixtures.pytest_selenium import is_displayed_text
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 @pytest.mark.polarion('CMP-9996')

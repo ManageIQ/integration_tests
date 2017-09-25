@@ -1,13 +1,12 @@
 import re
 import random
-from functools import partial
 from random import sample
 from traceback import format_exc
 
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_patternfly import (SelectorDropdown, Dropdown, BootstrapSelect,
-                                    Input, Button, Tab)
+                                    Input, Button, Tab, FlashMessages)
 from widgetastic.widget import Text, View, TextInput
 from wrapanapi.utils import eval_strings
 
@@ -16,34 +15,23 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common.provider import BaseProvider, DefaultEndpoint, DefaultEndpointForm
 
 from cfme import exceptions
-from cfme.fixtures import pytest_selenium as sel
 from cfme.common.provider_views import BeforeFillMixin,\
     ContainersProviderAddView, ContainersProvidersView,\
-    ContainersProviderEditView, ProvidersView, ProviderDetailsView
+    ContainersProviderEditView, ProvidersView, ProviderDetailsView,\
+    ProviderSideBar, ProviderDetailsToolBar
 from cfme.base.credential import TokenCredential
-from cfme.web_ui import (
-    toolbar as tb, InfoBlock, Region, match_location, PagedTable)
 from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.utils.browser import ensure_browser_open, browser
+from cfme.utils.browser import browser
 from cfme.utils.pretty import Pretty
 from cfme.utils.varmeth import variable
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
-
-
-paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
-
-cfg_btn = partial(tb.select, 'Configuration')
-mon_btn = partial(tb.select, 'Monitoring')
-pol_btn = partial(tb.select, 'Policy')
-
-details_page = Region(infoblock_type='detail')
-
-
-match_page = partial(match_location, controller='ems_container',
-                     title='Containers Providers')
+from widgetastic_manageiq import SummaryTable, BreadCrumb, Accordion,\
+    ManageIQTree
+from widgetastic.exceptions import RowNotFound
+from cfme.common import TagPageView
 
 
 class ContainersProviderDefaultEndpoint(DefaultEndpoint):
@@ -89,6 +77,49 @@ class ContainersProviderEndpointsForm(View):
         validate = Button('Validate')
 
 
+class LoggingableView(View):
+
+    monitor = Dropdown('Monitoring')
+
+    def get_logging_url(self):
+
+        def report_kibana_failure():
+            raise RuntimeError("Kibana not found in the window title or content")
+
+        browser_instance = browser()
+
+        all_windows_before = browser_instance.window_handles
+        appliance_window = browser_instance.current_window_handle
+
+        self.monitor.item_select('External Logging')
+
+        all_windows_after = browser_instance.window_handles
+
+        new_windows = set(all_windows_after) - set(all_windows_before)
+
+        if not new_windows:
+            raise RuntimeError("No logging window was open!")
+
+        logging_window = new_windows.pop()
+        browser_instance.switch_to_window(logging_window)
+
+        logging_url = browser_instance.current_url
+
+        wait_for(lambda: "kibana" in
+                         browser_instance.title.lower() + " " +
+                         browser_instance.page_source.lower(),
+                 fail_func=report_kibana_failure, num_sec=60, delay=5)
+
+        browser_instance.close()
+        browser_instance.switch_to_window(appliance_window)
+
+        return logging_url
+
+
+class ContainersProviderDetailsView(ProviderDetailsView, LoggingableView):
+    pass
+
+
 class ContainersProvider(BaseProvider, Pretty):
     PLURAL = 'Providers'
     provider_types = {}
@@ -111,6 +142,8 @@ class ContainersProvider(BaseProvider, Pretty):
     quad_name = None
     db_types = ["ContainerManager"]
     endpoints_form = ContainersProviderEndpointsForm
+    all_view = ContainersProvidersView
+    details_view = ContainersProviderDetailsView
 
     def __init__(
             self,
@@ -134,27 +167,6 @@ class ContainersProvider(BaseProvider, Pretty):
             'prov_type': self.type,
             'zone': self.zone,
         }
-
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        ensure_browser_open()
-        return sel.is_displayed(
-            '//div//h1[contains(., "{} (Summary)")]'.format(self.name))
-
-    def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        if refresh:
-            tb.refresh()
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
-        """
-        navigate_to(self, 'Details')
-        return details_page.infoblock.text(*ident)
 
     @variable(alias='db')
     def num_project(self):
@@ -269,10 +281,9 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("Grid View")
-        from cfme.web_ui import paginator
-        paginator.check_all()
-        paginator.uncheck_all()
+        self.view.toolbar.view_selector.select("Grid View")
+        self.view.paginator.check_all()
+        self.view.paginator.uncheck_all()
 
 
 @navigator.register(ContainersProvider, 'Add')
@@ -281,56 +292,7 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn(version.pick({
-            version.LOWEST: 'Add a New Containers Provider',
-            '5.7': 'Add Existing Containers Provider'
-        }))
-
-
-class LoggingableView(View):
-
-    monitor = Dropdown('Monitoring')
-
-    def get_logging_url(self):
-
-        def report_kibana_failure():
-            raise RuntimeError("Kibana not found in the window title or content")
-
-        browser_instance = browser()
-
-        all_windows_before = browser_instance.window_handles
-        appliance_window = browser_instance.current_window_handle
-
-        self.monitor.item_select('External Logging')
-
-        all_windows_after = browser_instance.window_handles
-
-        new_windows = set(all_windows_after) - set(all_windows_before)
-
-        if not new_windows:
-            raise RuntimeError("No logging window was open!")
-
-        logging_window = new_windows.pop()
-        browser_instance.switch_to_window(logging_window)
-
-        logging_url = browser_instance.current_url
-
-        wait_for(lambda: "kibana" in
-                         browser_instance.title.lower() + " " +
-                         browser_instance.page_source.lower(),
-                 fail_func=report_kibana_failure, num_sec=60, delay=5)
-
-        browser_instance.close()
-        browser_instance.switch_to_window(appliance_window)
-
-        return logging_url
-
-
-class ContainersProviderDetailsView(ProviderDetailsView, LoggingableView):
-
-    @property
-    def is_displayed(self):
-        return match_page(summary="{} (Summary)".format(self.obj.name))
+        self.prerequisite_view.toolbar.configuration.item_select('Add Existing Containers Provider')
 
 
 @navigator.register(ContainersProvider, 'Details')
@@ -343,7 +305,7 @@ class Details(CFMENavigateStep):
                                                    surf_pages=True).click()
 
     def resetter(self):
-        tb.select("Summary View")
+        self.view.toolbar.view_selector.select("Summary View")
 
 
 @navigator.register(ContainersProvider, 'Edit')
@@ -353,8 +315,9 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(self.obj.name,
-                                                   surf_pages=True).click()
-        cfg_btn('Edit Selected Containers Provider')
+                                                   surf_pages=True).check()
+        self.prerequisite_view.toolbar.configuration.item_select(
+            'Edit Selected Containers Provider')
 
 
 @navigator.register(ContainersProvider, 'EditFromDetails')
@@ -362,25 +325,27 @@ class EditFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this Containers Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Containers Provider')
 
 
 @navigator.register(ContainersProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(self.obj.name,
                                                    surf_pages=True).click()
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(ContainersProvider, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        pol_btn('Edit Tags')
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(ContainersProvider, 'TimelinesFromDetails')
@@ -388,7 +353,7 @@ class TimelinesFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        mon_btn('Timelines')
+        self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
 
 
 @navigator.register(ContainersProvider, 'TopologyFromDetails')
@@ -396,7 +361,8 @@ class TopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.click(InfoBlock('Overview', 'Topology'))
+        # TODO: implement topology view
+        self.prerequisite_view.toolbar.view_selector.select("Topology View")
 
 
 class AdHocMetricsView(BaseLoggedInPage):
@@ -442,7 +408,7 @@ class AdHocMain(CFMENavigateStep):
 
 class ContainerObjectAllBaseView(ProvidersView):
     """Base class for container object All view.
-    TITLE_TEXT should be defined in child.
+    SUMMARY_TEXT should be defined in child.
     """
     summary = Text('//div[@id="main-content"]//h1')
     policy = Dropdown('Policy')
@@ -454,7 +420,46 @@ class ContainerObjectAllBaseView(ProvidersView):
 
     @property
     def is_displayed(self):
-        return self.summary.text == self.TITLE_TEXT
+        return self.summary.text == self.SUMMARY_TEXT
+
+
+class ContainerObjectDetailsEntities(View):
+    properties = SummaryTable(title="Properties")
+    status = SummaryTable(title="Status")
+    relationships = SummaryTable(title="Relationships")
+    overview = SummaryTable(title="Overview")
+    smart_management = SummaryTable(title="Smart Management")
+    labels = SummaryTable(title="Labels")
+
+
+class ContainerObjectDetailsBaseView(BaseLoggedInPage, LoggingableView):
+
+    title = Text('//div[@id="main-content"]//h1')
+    breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
+    toolbar = View.nested(ProviderDetailsToolBar)
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+
+    entities = View.nested(ContainerObjectDetailsEntities)
+
+    @View.nested
+    class sidebar(ProviderSideBar):  # noqa
+
+        @View.nested
+        class properties(Accordion):  # noqa
+            tree = ManageIQTree()
+
+        @View.nested
+        class relationships(Accordion):  # noqa
+            tree = ManageIQTree()
+
+    @property
+    def is_displayed(self):
+        return (
+            self.title.is_displayed and
+            self.breadcrumb.is_displayed and
+            self.breadcrumb.active_location == '{} (Summary)'.format(self.context['object'].name)
+        )
 
 
 # Common methods:
@@ -497,6 +502,26 @@ class ContainersTestItem(object):
                 pretty_id = cls.get_pretty_id(arg)
                 if pretty_id:
                     return pretty_id
+
+
+class LoadDetailsMixin(object):
+    """Embed load details functionality for objects -
+    required for some classes like PolicyProfileAssignable"""
+    def load_details(self, refresh=False):
+        view = navigate_to(self, 'Details')
+        if refresh:
+            view.browser.refresh()
+
+    def get_detail(self, table_name, field_name):
+        """ Gets details from the details infoblock
+        Args:
+            table_name: the name of the table to get the data from.
+            table: the name of the field to get from this table.
+        Returns: A string representing the contents of the summary's value.
+        """
+        view = navigate_to(self, 'Details')
+        table = getattr(view, table_name.lower(), getattr(view.entities, table_name.lower()))
+        return table.read().get(field_name)
 
 
 class Labelable(object):
@@ -564,11 +589,36 @@ def navigate_and_get_rows(provider, obj, count, silent_failure=False):
 
     view = navigate_to(obj, 'All')
     view.toolbar.view_selector.list_button.click()
-    if sel.is_displayed_text("No Records Found.") and silent_failure:
+    if filter(lambda msg: 'No Records Found.' in msg.text, view.flash.messages) and silent_failure:
         return []
-    view.entities.paginator.set_items_per_page(1000)
+    view.paginator.set_items_per_page(1000)
     rows = list(view.table.rows())
     if not rows:
         return []
 
     return sample(rows, min(count, len(rows)))
+
+
+def click_row(view, **filters):
+    """Since we still unable to get entity by multiple elements (not only by name),
+    We have this workaround for the navigation to details page.
+    Args:
+        view (ContainerObjectAllBaseView): the prerequisite view of the details view.
+        filters: the filters, the elements of this object.
+    """
+    view.toolbar.view_selector.select('List View')
+    for _ in view.paginator.pages():
+        try:
+            row = view.table.row(**filters)
+            row.click()
+            break
+        except RowNotFound:
+            pass
+
+
+def refresh_and_navigate(*args, **kwargs):
+    # Refreshing the page and navigate - we need this for cases that we already in
+    # the page and want to reload it
+    view = navigate_to(*args, **kwargs)
+    view.browser.refresh()
+    return view

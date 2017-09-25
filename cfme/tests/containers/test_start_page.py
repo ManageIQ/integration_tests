@@ -4,7 +4,7 @@ from collections import namedtuple
 import pytest
 
 from cfme.configure import settings
-# from cfme.containers.overview import OverviewView
+from cfme.containers.overview import ContainersOverviewView
 from cfme.containers.node import NodeAllView
 from cfme.containers.pod import PodAllView
 from cfme.containers.service import ServiceAllView
@@ -15,22 +15,20 @@ from cfme.containers.template import TemplateAllView
 from cfme.containers.replicator import ReplicatorAllView
 from cfme.containers.route import RouteAllView
 from cfme.containers.volume import VolumeAllView
-from cfme.web_ui import browser_title
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
 
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < "5.8"),
-    pytest.mark.usefixtures("setup_provider")]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.usefixtures("setup_provider"),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 DataSet = namedtuple('DataSet', ['obj_view', 'page_name'])
 data_sets = (
-    # TODO: Uncomment once OverviewView is implemented
-    # DataSet(OverviewView, 'Compute / Containers / Overview'),
+    DataSet(ContainersOverviewView, 'Compute / Containers / Overview'),
     DataSet(ContainersProvidersView, 'Compute / Containers / Providers'),
     DataSet(NodeAllView, 'Compute / Containers / Container Nodes'),
     DataSet(PodAllView, 'Compute / Containers / Pods'),
@@ -57,8 +55,6 @@ def test_start_page(appliance, soft_assert):
         view = appliance.browser.create_view(data_set.obj_view)
         soft_assert(
             view.is_displayed,
-            'Configured start page is "{page_name}", but the start page now'
-            ' is "{title}" instead of "{page_name}"'.format(
-                page_name=data_set.page_name, title=browser_title()
-            )
+            'Configured start page is "{page_name}", but the start page now is "{cur_page}".'
+            .format(page_name=data_set.page_name, cur_page=view.navigation.currently_selected)
         )

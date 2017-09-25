@@ -3,13 +3,14 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.base.login import BaseLoggedInPage
-from cfme.utils import testgen
 from cfme.utils.version import current_version
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [pytest.mark.uncollectif(lambda: current_version() < "5.8")]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+pytestmark = [
+    pytest.mark.uncollectif(lambda: current_version() < "5.8"),
+    pytest.mark.provider([ContainersProvider], scope='function')
+]
 
 
 def config_menus_visibility(appliance, is_visible):

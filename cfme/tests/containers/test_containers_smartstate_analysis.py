@@ -4,18 +4,19 @@ from collections import namedtuple
 import pytest
 
 from cfme.containers.image import Image
-from cfme.containers.provider import ContainersProvider, ContainersTestItem
+from cfme.containers.provider import (ContainersProvider, ContainersTestItem,
+                                      refresh_and_navigate)
 
-from cfme.utils import testgen
 from cfme.utils.wait import wait_for
 from cfme.configure.tasks import delete_all_tasks
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
     pytest.mark.meta(server_roles='+smartproxy'),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='function')]
 
 AttributeToVerify = namedtuple('AttributeToVerify', ['table', 'attr', 'verifier'])
 
@@ -49,8 +50,8 @@ def delete_all_container_tasks():
 
 
 @pytest.fixture(scope='function')
-def random_image_instance(provider):
-    return Image.get_random_instances(provider, count=1).pop()
+def random_image_instance(provider, appliance):
+    return Image.get_random_instances(provider, 1, appliance).pop()
 
 
 @pytest.mark.polarion('10030')
@@ -62,6 +63,14 @@ def test_manage_policies_navigation(random_image_instance):
 def test_check_compliance(random_image_instance):
     random_image_instance.assign_policy_profiles('OpenSCAP profile')
     random_image_instance.check_compliance()
+
+
+def get_table_attr(instance, table_name, attr):
+    # Trying to read the table <table_name> attribute <attr>
+    view = refresh_and_navigate(instance, 'Details')
+    table = getattr(view.entities, table_name, None)
+    if table:
+        return table.read().get(attr)
 
 
 @pytest.mark.parametrize(('test_item'), TEST_ITEMS)
@@ -76,19 +85,19 @@ def test_containers_smartstate_analysis(provider, test_item, soft_assert,
 
     random_image_instance.perform_smartstate_analysis(wait_for_finish=True)
 
-    random_image_instance.summary.reload()
+    view = navigate_to(random_image_instance, 'Details')
     for tbl, attr, verifier in test_item.tested_attr:
 
-        table = getattr(random_image_instance.summary, tbl)
+        table = getattr(view.entities, tbl)
+        table_data = table.read()
 
-        if not soft_assert(hasattr(table, attr),
+        if not soft_assert(attr in table_data,
                 '{} table has missing attribute \'{}\''.format(tbl, attr)):
             continue
         provider.refresh_provider_relationships()
-        wait_for_retval = wait_for(lambda: getattr(table, attr).value,
+        wait_for_retval = wait_for(lambda: get_table_attr(random_image_instance, tbl, attr),
                                    message='Trying to get attribute "{}" of table "{}"'.format(
                                        attr, tbl),
-                                   fail_func=random_image_instance.summary.reload,
                                    delay=5, num_sec=120, silent_failure=True)
         if not wait_for_retval:
             soft_assert(False, 'Could not get attribute "{}" for "{}" table.'

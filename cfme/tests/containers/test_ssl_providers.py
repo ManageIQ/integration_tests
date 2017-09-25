@@ -6,13 +6,14 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import FlashMessageException
-from cfme.utils import testgen
 from cfme.utils.version import current_version
+from cfme.common.provider_views import ContainersProvidersView
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < "5.8.0.3")]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
+    pytest.mark.uncollectif(lambda: current_version() < "5.8.0.3"),
+    pytest.mark.provider([ContainersProvider], scope='module')
+]
 
 alphanumeric_name = gen_alphanumeric(10)
 long_alphanumeric_name = gen_alphanumeric(100)
@@ -49,7 +50,7 @@ TEST_ITEMS = (
 
 @pytest.mark.polarion('CMP-9836')
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_provider_naming_conventions(provider, soft_assert):
+def test_add_provider_naming_conventions(provider, appliance, soft_assert):
     """" This test is checking ability to add Providers with different names:
 
     Steps:
@@ -67,7 +68,9 @@ def test_add_provider_naming_conventions(provider, soft_assert):
         new_provider.endpoints['default'].sec_protocol = 'SSL'
         try:
             new_provider.setup()
-            flash.assert_message_contain('Containers Providers "' + provider_name + '" was saved')
+            view = appliance.browser.create_view(ContainersProvidersView)
+            view.flash.assert_success_message(
+                'Containers Providers "' + provider_name + '" was saved')
         except FlashMessageException:
             soft_assert(False, provider_name + ' wasn\'t added successfully')
         ContainersProvider.clear_providers()
@@ -100,7 +103,7 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
         ti.args[1].default_sec_protocol, ti.args[1].hawkular_sec_protocol)
     for ti in TEST_ITEMS])
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_add_hawkular_provider_ssl(provider, test_item, soft_assert):
+def test_add_hawkular_provider_ssl(provider, appliance, test_item, soft_assert):
     """This test checks adding container providers with 3 different security protocols:
     SSL trusting custom CA, SSL without validation and SSL
     The test checks the Default Endpoint as well as the Hawkular Endpoint
@@ -117,7 +120,9 @@ def test_add_hawkular_provider_ssl(provider, test_item, soft_assert):
     new_provider.endpoints['hawkular'].sec_protocol = test_item.hawkular_sec_protocol
     try:
         new_provider.setup()
-        flash.assert_message_contain('Containers Providers "' + provider.name + '" was saved')
+        view = appliance.browser.create_view(ContainersProvidersView)
+        view.flash.assert_success_message(
+            'Containers Providers "' + provider.name + '" was saved')
     except FlashMessageException:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     test_item.default_sec_protocol + ' security protocol and ' +

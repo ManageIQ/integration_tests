@@ -1,76 +1,39 @@
 # -*- coding: utf-8 -*-
-
+# added new list_tbl definition
 import attr
 import random
 import itertools
 from cached_property import cached_property
 
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.exceptions import NoSuchElementException
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, BreadCrumb, ItemsToolBarViewSelector, SummaryTable, Text,
-    TimelinesView)
-from widgetastic_patternfly import BootstrapNav, Button, Dropdown, FlashMessages
-from widgetastic.widget import View
 from wrapanapi.containers.node import Node as ApiNode
 
-from cfme.base.login import BaseLoggedInPage
-from cfme.common.vm_views import ManagePoliciesView
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.widget import View
+from widgetastic_manageiq import Button, Text, TimelinesView
+
 from cfme.common import WidgetasticTaggable, TagPageView
-from cfme.containers.provider import ContainersProvider, Labelable
-from cfme.exceptions import ItemNotFound, NodeNotFound
+from cfme.containers.provider import (ContainersProvider, Labelable,
+    ContainerObjectAllBaseView, LoggingableView, ContainerObjectDetailsBaseView,
+    click_row)
 from cfme.modeling.base import BaseCollection, BaseEntity
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
+                                                     navigate_to)
+from cfme.utils.appliance import current_appliance
+from cfme.common.provider_views import ProviderDetailsToolBar
+from cfme.common.vm_views import ManagePoliciesView
 
 
-class NodeToolbar(View):
-    """The toolbar on the Node page"""
-    policy = Dropdown('Policy')
-    download = Dropdown('Download')
-
-    view_selector = View.nested(ItemsToolBarViewSelector)
+class NodeDetailsToolBar(ProviderDetailsToolBar):
+    web_console = Button('Web Console')
 
 
-class NodeDetailsToolbar(View):
-    """The toolbar on the Node Details page"""
-    monitoring = Dropdown('Monitoring')
-    policy = Dropdown('Policy')
-    # TODO: Add entry for the Web Console button
-    download = Button(title='Download summary in PDF format')
+class NodeView(ContainerObjectAllBaseView, LoggingableView):
+    SUMMARY_TEXT = "Nodes"
 
-    view_selector = View.nested(ItemsToolBarViewSelector)
-
-
-class NodeDetailsAccordion(View):
-    """The accordion on the Node Details page"""
-    @View.nested
-    class properties(Accordion):        # noqa
-        nav = BootstrapNav('//div[@id="ems_prop"]//ul')
-
-    @View.nested
-    class relationships(Accordion):     # noqa
-        nav = BootstrapNav('//div[@id="ems_rel"]//ul')
-
-
-class NodeDetailsEntities(View):
-    """The entities on the Node Details page"""
-    breadcrumb = BreadCrumb()
-    title = Text('//div[@id="main-content"]//h1')
-    properties = SummaryTable(title='Properties')
-    labels = SummaryTable(title='Labels')
-    compliance = SummaryTable(title='Compliance')
-    custom_attributes = SummaryTable(title='Custom Attributes')
-    relationships = SummaryTable(title='Relationships')
-    conditions = SummaryTable(title='Conditions')
-    smart_management = SummaryTable(title='Smart Management')
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
-
-
-class NodeView(BaseLoggedInPage):
-    """A base view for all the Nodes pages"""
-    TITLE_TEXT = "Nodes"
+    @property
+    def nodes(self):
+        return self.table
 
     @property
     def in_node(self):
@@ -82,20 +45,21 @@ class NodeView(BaseLoggedInPage):
 
 
 class NodeAllView(NodeView):
-    """The all Nodes page"""
-    toolbar = View.nested(NodeToolbar)
-    including_entities = View.include(BaseEntitiesView, use_parent=True)
-
     @property
     def is_displayed(self):
-        """Is this page currently being displayed"""
-        return self.in_node and self.entities.title.text == 'Nodes'
+        return self.in_node and super(NodeAllView, self).is_displayed
+
+
+class NodeDetailsView(ContainerObjectDetailsBaseView):
+    toolbar = View.nested(NodeDetailsToolBar)
 
 
 @attr.s
 class Node(BaseEntity, WidgetasticTaggable, Labelable):
     """Node Class"""
     PLURAL = 'Nodes'
+    all_view = NodeAllView
+    details_view = NodeDetailsView
 
     name = attr.ib()
     provider = attr.ib()
@@ -108,6 +72,7 @@ class Node(BaseEntity, WidgetasticTaggable, Labelable):
     @classmethod
     def get_random_instances(cls, provider, count=1, appliance=None):
         """Generating random instances."""
+        appliance = appliance or current_appliance()
         node_list = provider.mgmt.list_node()
         random.shuffle(node_list)
         collection = NodeCollection(appliance)
@@ -117,6 +82,7 @@ class Node(BaseEntity, WidgetasticTaggable, Labelable):
     @property
     def exists(self):
         """Return True if the Node exists"""
+        # TODO: move this to some ContainerObjectBase so it'll be shared among all objects
         try:
             navigate_to(self, 'Details')
         except NoSuchElementException:
@@ -127,12 +93,11 @@ class Node(BaseEntity, WidgetasticTaggable, Labelable):
 
 @attr.s
 class NodeCollection(BaseCollection):
-    """Collection object for :py:class:`cfme.containers.node.Node`"""
+    """Collection object for :py:class:`Node`."""
 
     ENTITY = Node
 
     def all(self):
-        """Get all Nodes"""
         # container_nodes table has ems_id, join with ext_mgmgt_systems on id for provider name
         node_table = self.appliance.db.client['container_nodes']
         ems_table = self.appliance.db.client['ext_management_systems']
@@ -148,64 +113,39 @@ class NodeCollection(BaseCollection):
 
 
 # Still registering Node to keep on consistency on container objects navigations
-# @navigator.register(Node, 'All')
+@navigator.register(Node, 'All')
 @navigator.register(NodeCollection, 'All')
-class NodeAll(CFMENavigateStep):
+class All(CFMENavigateStep):
     VIEW = NodeAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        """Navigate to the Nodes page"""
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Nodes')
 
     def resetter(self):
-        """Reset the View"""
-        self.view.entities.paginator.check_all()
-        self.view.entities.paginator.uncheck_all()
-
-
-class NodeDetailsView(NodeView):
-    toolbar = View.nested(NodeDetailsToolbar)
-    sidebar = View.nested(NodeDetailsAccordion)
-    entities = View.nested(NodeDetailsEntities)
-
-    @property
-    def is_displayed(self):
-        """Is this page currently being displayed"""
-        expected_title = '{} (Summary)'.format(self.context['object'].name)
-        return (
-            self.in_node and
-            self.entities.title.text == expected_title and
-            self.entities.breadcrumb.active_location == expected_title
-        )
+        # Reset view and selection
+        self.view.toolbar.view_selector.select("List View")
+        if self.view.paginator.is_displayed:
+            self.view.paginator.check_all()
+            self.view.paginator.uncheck_all()
 
 
 @navigator.register(Node, 'Details')
-class NodeDetails(CFMENavigateStep):
+class Details(CFMENavigateStep):
     VIEW = NodeDetailsView
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
-        """Navigate to the Node Details page"""
-        self.prerequisite_view.toolbar.view_selector.select('List View')
-        try:
-            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True)
-        except ItemNotFound:
-            raise NodeNotFound('Failed to locate Node with name "{}"'.format(self.obj.name))
-        row.click()
-
-    def resetter(self):
-        """Reset the view"""
-        self.view.browser.refresh()
+        click_row(self.prerequisite_view,
+                  name=self.obj.name, provider=self.obj.provider.name)
 
 
-@navigator.register(Node, 'EditTagsFromDetails')
+@navigator.register(Node, 'EditTags')
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self, *args, **kwargs):
-        """Navigate to the Edit Tags page"""
+    def step(self):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
@@ -214,9 +154,9 @@ class ManagePolicies(CFMENavigateStep):
     VIEW = ManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
-    def step(self, *args, **kwargs):
+    def step(self):
         """Navigate to the Manage Policies page"""
-        self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
+        self.prerequisite_view.policy.item_select('Manage Policies')
 
 
 class NodeUtilizationView(NodeView):
@@ -239,7 +179,7 @@ class Utilization(CFMENavigateStep):
 
     def step(self):
         """Navigate to the Utilization page"""
-        self.prerequisite_view.toolbar.monitoring.item_select('Utilization')
+        self.prerequisite_view.monitor.item_select('Utilization')
 
 
 class NodeTimelinesView(TimelinesView, NodeView):
@@ -261,7 +201,7 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         """Navigate to the Timelines page"""
-        self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
+        self.prerequisite_view.monitor.item_select('Timelines')
 
 # TODO Need Ad hoc Metrics
 # TODO Need External Logging

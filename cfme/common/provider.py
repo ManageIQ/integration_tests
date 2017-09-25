@@ -20,7 +20,7 @@ from cfme.utils.stats import tol_check
 from cfme.utils.update import Updateable
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for, RefreshTimer
-from . import PolicyProfileAssignable, Taggable, SummaryMixin
+from . import PolicyProfileAssignable, SummaryMixin
 
 
 def base_types():
@@ -43,7 +43,7 @@ def all_types():
     return all_types
 
 
-class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
+class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
     _param_name = ParamClassName('name')
     STATS_TO_MATCH = []

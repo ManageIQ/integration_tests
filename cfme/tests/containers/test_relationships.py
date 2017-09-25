@@ -1,14 +1,9 @@
-from random import shuffle
+from random import randrange
 
 import pytest
 
-from cfme.utils import testgen
-from cfme.utils.version import current_version
-from cfme.web_ui import summary_title
-
 from cfme.containers.pod import Pod
-from cfme.containers.provider import ContainersProvider,\
-    ContainersTestItem
+from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.service import Service
 from cfme.containers.replicator import Replicator
 from cfme.containers.image import Image
@@ -17,12 +12,13 @@ from cfme.containers.template import Template
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.volume import Volume
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+    pytest.mark.tier(1),
+    pytest.mark.provider([ContainersProvider], scope='module')
+]
 
 
 # The polarion markers below are used to mark the test item
@@ -46,33 +42,11 @@ TEST_ITEMS = [
 ]
 
 
-def check_relationships(instance):
-    """Check the relationships linking & data integrity"""
-    instance.summary.reload()  # Because sometimes:
-    # AttributeError: 'Summary' object has no attribute 'relationships'
-    sum_values = instance.summary.relationships.items().values()
-    shuffle(sum_values)
-    for attr in sum_values:
-        if attr.clickable:
-            break
-    else:
-        return  # No clickable object but we still want to pass
-    link_value = attr.value
-    attr.click()
-    if type(link_value) is int:
-        from cfme.web_ui import paginator
-        rec_total = int(paginator.rec_total())
-        if rec_total != link_value:
-            raise Exception('Difference between the value({}) in the relationships table in {}'
-                            'to number of records ({}) in the target'
-                            'page'.format(link_value, instance.name, rec_total))
-    else:
-        assert '(Summary)' in summary_title()
-
-
-@pytest.mark.parametrize('test_item', TEST_ITEMS,
+@pytest.mark.parametrize('test_item', TEST_ITEMS, scope='module',
                          ids=[ti.args[1].pretty_id() for ti in TEST_ITEMS])
-def test_relationships_tables(provider, test_item):
+@pytest.mark.usefixtures('has_persistent_volume')
+@pytest.mark.usefixtures('setup_provider_modscope')
+def test_relationships_tables(provider, has_persistent_volume, appliance, test_item):
     """This test verifies the integrity of the Relationships table.
     clicking on each field in the Relationships table takes the user
     to either Summary page where we verify that the field that appears
@@ -80,33 +54,39 @@ def test_relationships_tables(provider, test_item):
     or to the page where the number of rows is equal to the number
     that is displayed in the Relationships table.
     """
-
-    if current_version() < "5.7" and test_item.obj == Template:
-        pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
-
-    if test_item.obj is ContainersProvider:
-        instance = provider
+    instance = (provider if test_item.obj is ContainersProvider
+                else test_item.obj.get_random_instances(provider, 1, appliance).pop())
+    # Check the relationships linking & data integrity
+    view = navigate_to(instance, 'Details')
+    relations = [key for key, val in view.entities.relationships.read().items() if val != '0']
+    relation = relations[randrange(len(relations))]
+    field = view.entities.relationships.get_field(relation)[1]
+    text = field.text
+    field.click()
+    if text.isdigit():
+        view = appliance.browser.create_view(test_item.obj.all_view)
+        value = int(text)
+        items_amount = int(view.paginator.items_amount)
+        assert items_amount == value, (
+            'Difference between the value({}) in the relationships table in {}'
+            'to number of records ({}) in the target page'
+            .format(value, instance.name, items_amount)
+        )
     else:
-        rand_instances = test_item.obj.get_random_instances(provider, count=1)
-        if not rand_instances:
-            pytest.skip('Could not find instance of {} to test relationships.'
-                        .format(test_item.obj.__class__.__name__))
-        instance = rand_instances.pop()
-
-    check_relationships(instance)
+        view = appliance.browser.create_view(test_item.obj.details_view)
+        assert view.title.text == '{} (Summary)'.format(text)
 
 
 @pytest.mark.polarion('CMP-9934')
+@pytest.mark.usefixtures('setup_provider')
 def test_container_status_relationships_data_integrity(provider, appliance, soft_assert):
     """ This test verifies that the sum of running, waiting and terminated containers
         in the status summary table
         is the same number that appears in the Relationships table containers field
     """
     for obj in Pod.get_random_instances(provider, count=3, appliance=appliance):
-        all_containers = obj.summary.relationships.containers.value
-        running = obj.summary.container_statuses_summary.running.value
-        waiting = obj.summary.container_statuses_summary.waiting.value
-        terminated = obj.summary.container_statuses_summary.terminated.value
+        view = navigate_to(obj, 'Details')
         soft_assert(
-            all_containers == sum([running, waiting, terminated])
+            (int(view.entities.relationships.read()['Containers']) ==
+             sum([int(v) for v in view.entities.container_statuses_summary.read().values()]))
         )

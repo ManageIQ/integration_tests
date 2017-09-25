@@ -1,14 +1,12 @@
 import pytest
+
 from cfme.containers.provider import ContainersProvider
-from cfme.utils import testgen
-from cfme.utils.ansible import setup_ansible_script, run_ansible, \
-    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files
-from cfme.utils.version import current_version
+from cfme.utils.ansible import (setup_ansible_script, run_ansible,
+    fetch_miq_ansible_module, create_tmp_directory, remove_tmp_files)
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
-pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.7")]
-pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+pytestmark = [pytest.mark.provider([ContainersProvider], scope='function')]
 
 tags_to_add = {
     'category': 'environment',
@@ -38,15 +36,10 @@ def ansible_tags():
 
 
 def get_smart_management(provider):
-    index = 0
-    smart_management_tags = []
-    if isinstance(provider.summary.smart_management.my_company_tags, list):
-        for tag in provider.summary.smart_management.my_company_tags:
-            smart_management_tags.append(tag.value)
-            index += 1
-    else:
-        smart_management_tags.append(provider.summary.smart_management.my_company_tags)
-    return smart_management_tags
+    view = navigate_to(provider, 'Details')
+    my_company_tags = view.entities.smart_management.read().get('My Company Tags')
+    return (my_company_tags if isinstance(my_company_tags, list)
+            else [my_company_tags])
 
 
 def clean_tags(provider):
