@@ -1,11 +1,13 @@
 import pytest
+
+from cfme.exceptions import ItemNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.utils import testgen
 from cfme.utils.version import current_version
-from cfme.web_ui import toolbar as tb, Quadicon, breadcrumbs_names
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.containers.provider import ContainersProvider
 from cfme.utils.wait import wait_for
+from cfme.web_ui import toolbar as tb, breadcrumbs_names
+from cfme.containers.provider import ContainersProvider
 
 
 pytestmark = [
@@ -17,10 +19,16 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 def select_first_provider_and_get_its_name():
-    navigate_to(ContainersProvider, 'All')
+    """Selecting the first provider and return its name.
+    If no such item found - return None."""
+    view = navigate_to(ContainersProvider, 'All')
     tb.select('Grid View')
-    Quadicon.select_first_quad()
-    return Quadicon.get_first_quad_title()
+    try:
+        entity = view.entities.get_first_entity()
+    except ItemNotFound:
+        return
+    entity.check()
+    return entity.name
 
 
 @pytest.mark.polarion('CMP-9880')
@@ -49,7 +57,7 @@ def test_remove_selected_containers_provider():
         success message that the provider has been deleted from VMDB.'''
     name = select_first_provider_and_get_its_name()
     ContainersProvider(name).delete(cancel=False)
-    assert wait_for(lambda: not Quadicon(name).exists,
+    assert wait_for(lambda: not select_first_provider_and_get_its_name(),
                     msg='Waiting for containers provider to be removed.',
                     fail_func=sel.refresh,
                     delay=5,

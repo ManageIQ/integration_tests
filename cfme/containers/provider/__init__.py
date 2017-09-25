@@ -22,7 +22,7 @@ from cfme.common.provider_views import BeforeFillMixin,\
     ContainersProviderEditView, ProvidersView, ProviderDetailsView
 from cfme.base.credential import TokenCredential
 from cfme.web_ui import (
-    Quadicon, toolbar as tb, InfoBlock, Region, match_location, PagedTable)
+    toolbar as tb, InfoBlock, Region, match_location, PagedTable)
 from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -326,7 +326,7 @@ class LoggingableView(View):
         return logging_url
 
 
-class ProviderDetailsView(BaseLoggedInPage, LoggingableView):
+class ContainersProviderDetailsView(ProviderDetailsView, LoggingableView):
 
     @property
     def is_displayed(self):
@@ -335,11 +335,12 @@ class ProviderDetailsView(BaseLoggedInPage, LoggingableView):
 
 @navigator.register(ContainersProvider, 'Details')
 class Details(CFMENavigateStep):
-    VIEW = ProviderDetailsView
+    VIEW = ContainersProviderDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        self.prerequisite_view.entities.get_entity(self.obj.name,
+                                                   surf_pages=True).click()
 
     def resetter(self):
         tb.select("Summary View")
@@ -348,10 +349,9 @@ class Details(CFMENavigateStep):
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = ContainersProviderEditView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
         cfg_btn('Edit Selected Containers Provider')
 
 
@@ -365,10 +365,9 @@ class EditFromDetails(CFMENavigateStep):
 
 @navigator.register(ContainersProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
         pol_btn('Edit Tags')
 
 
