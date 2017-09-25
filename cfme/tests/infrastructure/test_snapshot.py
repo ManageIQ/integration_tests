@@ -118,6 +118,11 @@ def test_snapshot_crud(small_test_vm, provider):
         snapshot = new_snapshot(small_test_vm)
     snapshot.create()
     snapshot.delete()
+    # The Snapshot.delete method does not wait for snapshot deletion, it just initializes
+    # the process. We however need to wait for the process to complete, otherwise there
+    # may be a failure when trying to delete small_test_vm from the provider. The VM can't be
+    # deleted, because there is a pending snapshot operation. Does occur on RHV provider.
+    wait_for(lambda: not snapshot.exists, num_sec=300, delay=20, fail_func=snapshot.refresh)
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
