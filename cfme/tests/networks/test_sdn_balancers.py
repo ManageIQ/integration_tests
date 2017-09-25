@@ -12,13 +12,13 @@ pytest_generate_tests = testgen.generate(
 pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
-def test_prov_balances_number(provider):
+def test_prov_balances_number(provider, appliance):
     """
     Test number of balancers on 1 provider
     Prerequisites:
         Only one refreshed cloud provider in cfme database
     """
-    prov_collection = NetworkProviderCollection()
+    prov_collection = NetworkProviderCollection(appliance)
     providers = prov_collection.all()
     for prov in providers:
         view = navigate_to(prov, 'Details')
@@ -27,9 +27,9 @@ def test_prov_balances_number(provider):
         assert int(balancers_number) == sum_all
 
 
-def test_balances_detail(provider):
+def test_balances_detail(provider, appliance):
     """ Test of getting attribute from balancer object """
-    collection = NetworkProviderCollection()
+    collection = NetworkProviderCollection(appliance)
     providers = collection.all()
     for prov in providers:
         for balancer in prov.balancers.all():
