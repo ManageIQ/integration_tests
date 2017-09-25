@@ -21,7 +21,7 @@ class RequestCollection(BaseCollection):
 
     def instantiate(self, description=None, cells=None, partial_check=False):
         """Create a request object"""
-        return Request(self, description=None, cells=None, partial_check=False)
+        return Request(self, description=description, cells=cells, partial_check=partial_check)
 
 
 class Request(BaseEntity):
