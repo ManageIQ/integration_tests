@@ -68,13 +68,13 @@ def catalog_item(request, config_manager, dialog, catalog):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_order_tower_catalog_item(catalog_item, request):
+def test_order_tower_catalog_item(appliance, catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
@@ -92,7 +92,7 @@ def test_retire_ansible_service(appliance, catalog_item, request):
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}

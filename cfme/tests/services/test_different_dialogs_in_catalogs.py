@@ -89,7 +89,7 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[BZ(1434990, forced_streams=["5.7", "upstream"])])
-def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request):
+def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
         test_flag: provision
@@ -100,7 +100,7 @@ def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request)
     dialog_values = {
         'default_select_value': "Gold"
     }
-    service_catalogs = ServiceCatalogs(catalog=catalog_item.catalog, name=catalog_item.name,
+    service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog, name=catalog_item.name,
                                        dialog_values=dialog_values)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))

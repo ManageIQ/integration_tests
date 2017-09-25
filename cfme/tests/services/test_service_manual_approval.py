@@ -60,7 +60,7 @@ def modify_instance(create_domain):
 
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
-def test_service_manual_approval(provider, setup_provider, modify_instance, catalog_item, request):
+def test_service_manual_approval(appliance, provider, setup_provider, modify_instance, catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision
@@ -69,7 +69,7 @@ def test_service_manual_approval(provider, setup_provider, modify_instance, cata
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
 
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name

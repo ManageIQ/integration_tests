@@ -81,7 +81,7 @@ def test_order_catalog_item_via_rest(
 
 
 @pytest.mark.tier(2)
-def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
+def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
         test_flag: provision
@@ -138,7 +138,7 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
 
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
-def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
+def test_request_with_orphaned_template(appliance, provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
         test_flag: provision

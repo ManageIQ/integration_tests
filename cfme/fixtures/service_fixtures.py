@@ -66,7 +66,7 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
 
 
 @pytest.fixture(scope="function")
-def order_catalog_item_in_ops_ui(provider, catalog_item, request):
+def order_catalog_item_in_ops_ui(appliance, provider, catalog_item, request):
     """
         Fixture for SSUI tests.
         Orders catalog item in OPS UI.
@@ -74,7 +74,7 @@ def order_catalog_item_in_ops_ui(provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm("{}_0001".format(vm_name), provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name

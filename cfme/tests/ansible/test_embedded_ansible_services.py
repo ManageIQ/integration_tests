@@ -106,8 +106,8 @@ def catalog(ansible_catalog_item):
 
 
 @pytest.fixture(scope="module")
-def service_catalog(ansible_catalog_item, catalog):
-    service_catalog_ = ServiceCatalogs(catalog, ansible_catalog_item.name)
+def service_catalog(appliance, ansible_catalog_item, catalog):
+    service_catalog_ = ServiceCatalogs(appliance, catalog, ansible_catalog_item.name)
     return service_catalog_
 
 

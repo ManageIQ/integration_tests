@@ -92,7 +92,7 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
 
 @pytest.mark.usefixtures('setup_iso_datastore')
 @pytest.mark.meta(blockers=[BZ(1358069, forced_streams=["5.6", "5.7", "upstream"])])
-def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request):
+def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_item, request):
     """Tests RHEV ISO service catalog
 
     Metadata:
@@ -101,7 +101,7 @@ def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)

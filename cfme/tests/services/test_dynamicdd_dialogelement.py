@@ -97,11 +97,11 @@ def copy_instance(request, copy_domain):
 
 
 @pytest.mark.tier(3)
-def test_dynamicdropdown_dialog(dialog, catalog):
+def test_dynamicdropdown_dialog(appliance, dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()

@@ -33,21 +33,21 @@ def catalog_item(dialog, catalog):
     yield catalog_item
 
 
-def test_delete_catalog_deletes_service(dialog, catalog):
+def test_delete_catalog_deletes_service(appliance, dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog)
     catalog_item.create()
     catalog.delete()
-    service_catalogs = ServiceCatalogs(catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog, catalog_item.name)
     with error.expected(NoSuchElementException):
         service_catalogs.order()
 
 
-def test_delete_catalog_item_deletes_service(catalog_item):
+def test_delete_catalog_item_deletes_service(appliance, catalog_item):
     catalog_item.delete()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     with error.expected(NoSuchElementException):
         service_catalogs.order()
 
@@ -68,13 +68,13 @@ def test_service_circular_reference(catalog_item):
         catalog_bundle.update({'catalog_items': sec_catalog_bundle.name})
 
 
-def test_service_generic_catalog_bundle(catalog_item):
+def test_service_generic_catalog_bundle(appliance, catalog_item):
     bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
                    catalog_items=[catalog_item.name])
     catalog_bundle.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, bundle_name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, bundle_name)
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
@@ -84,7 +84,7 @@ def test_service_generic_catalog_bundle(catalog_item):
     assert provision_request.is_succeeded()
 
 
-def test_bundles_in_bundle(catalog_item):
+def test_bundles_in_bundle(appliance, catalog_item):
     bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
@@ -100,7 +100,7 @@ def test_bundles_in_bundle(catalog_item):
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog,
                    catalog_items=[bundle_name, sec_bundle_name])
     third_catalog_bundle.create()
-    service_catalogs = ServiceCatalogs(third_catalog_bundle.catalog, third_bundle_name)
+    service_catalogs = ServiceCatalogs(appliance, third_catalog_bundle.catalog, third_bundle_name)
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
