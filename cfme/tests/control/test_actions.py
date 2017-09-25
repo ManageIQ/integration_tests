@@ -212,37 +212,49 @@ def policy_profile_name(name_suffix):
 
 
 @pytest.fixture(scope="module")
-def compliance_condition():
-    condition = conditions.VMCondition(
-        fauxfactory.gen_alpha(),
-        expression="fill_tag(VM and Instance.My Company Tags : Service Level, Gold)"
-    )
-    condition.create()
-    return condition
+def action_collection(appliance):
+    return appliance.get(actions.ActionCollection)
 
 
 @pytest.fixture(scope="module")
-def compliance_policy(vm_name, policy_name, compliance_condition):
-    compliance_policy = policies.VMCompliancePolicy(
+def compliance_condition(appliance):
+    condition_collection = appliance.get(conditions.ConditionCollection)
+    return condition_collection.create(
+        conditions.VMCondition,
+        fauxfactory.gen_alpha(),
+        expression="fill_tag(VM and Instance.My Company Tags : Service Level, Gold)"
+    )
+
+
+@pytest.fixture(scope="module")
+def policy_collection(appliance):
+    return appliance.get(policies.PolicyCollection)
+
+
+@pytest.fixture(scope="module")
+def compliance_policy(vm_name, policy_name, compliance_condition, policy_collection):
+    compliance_policy = policy_collection.create(
+        policies.VMCompliancePolicy,
         "complaince_{}".format(policy_name),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
     )
-    compliance_policy.create()
     compliance_policy.assign_conditions(compliance_condition)
     return compliance_policy
 
 
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, compliance_policy,
-        compliance_condition):
-    control_policy = policies.VMControlPolicy(
+        compliance_condition, policy_collection, appliance):
+    control_policy = policy_collection.create(
+        policies.VMControlPolicy,
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
     )
-    control_policy.create()
-    policy_profile = policy_profiles.PolicyProfile(policy_profile_name,
-        policies=[control_policy, compliance_policy])
-    policy_profile.create()
+    policy_profile_collection = appliance.get(policy_profiles.PolicyProfileCollection)
+    policy_profile = policy_profile_collection.create(
+        policy_profile_name,
+        policies=[control_policy, compliance_policy]
+    )
     provider.assign_policy_profiles(policy_profile_name)
     yield control_policy
     provider.unassign_policy_profiles(policy_profile_name)
@@ -672,7 +684,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
 )
-def test_action_tag(request, vm, vm_off, policy_for_testing):
+def test_action_tag(request, vm, vm_off, policy_for_testing, action_collection):
     """ Tests action tag
 
     Metadata:
@@ -682,7 +694,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing):
            for tag in vm.crud.get_tags()):
         vm.crud.remove_tag(("Service Level", "Gold"))
 
-    tag_assign_action = actions.Action(
+    tag_assign_action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
@@ -710,7 +722,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing):
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
 )
-def test_action_untag(request, vm, vm_off, policy_for_testing):
+def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection):
     """ Tests action untag
 
     Metadata:
@@ -726,7 +738,7 @@ def test_action_untag(request, vm, vm_off, policy_for_testing):
                for tag in vm.crud.get_tags()):
             vm.crud.remove_tag(("Service Level", "Gold"))
 
-    tag_unassign_action = actions.Action(
+    tag_unassign_action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
         action_values={"remove_tag": ["Service Level"]}

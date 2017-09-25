@@ -8,7 +8,7 @@ from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import Text, Checkbox, TextInput, View
 
 from . import ControlExplorerView
-from actions import Action
+from actions import Action, ActionCollection
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import BaseCollection, BaseEntity
@@ -419,15 +419,6 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
                     false_actions.append(action)
         else:
             raise TypeError("assign_actions_to_event expects, list, tuple, set or dict!")
-        # Check whether actions exist
-        for action in true_actions + false_actions:
-            if isinstance(action, Action):
-                if not action.exists:
-                    action.create()
-                    assert action.exists, "Could not create action {}!".format(action.description)
-            else:  # string
-                if not Action(action, "Tag").exists:
-                    raise NameError("Action with name {} does not exist!".format(action))
         # Check whether we have all necessary events assigned
         if not self.is_event_assigned(event):
             self.assign_events(event, extend=True)
