@@ -57,7 +57,7 @@ def setup_external_auth_ipa(**data):
         appliance.current_appliance.server.login_admin()
 
         if data["ipaserver"] not in (
-                appliance.current_appliance.server.settings.settings.ntp_servers_form.values()):
+                appliance.current_appliance.server.settings.ntp_servers_form.values()):
             appliance.current_appliance.server.settings.update_ntp_servers(
                 {'ntp_server_1': data["ipaserver"]})
             sleep(120)

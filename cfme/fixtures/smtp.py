@@ -71,7 +71,7 @@ def smtp_test(request, appliance):
         collector.wait()
         logger.info("Collector finished")
         logger.info("Cleaning up smtp setup in CFME")
-        appliance.server.settings.smtp_conf.update_smtp_server({
+        appliance.server.settings.update_smtp_server({
             'host': '',
             'port': ''
         })
