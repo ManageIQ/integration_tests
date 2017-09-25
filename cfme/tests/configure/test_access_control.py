@@ -367,15 +367,11 @@ def test_delete_default_group():
 def test_delete_group_with_assigned_user():
     """Test that CFME prevents deletion of a group that has users assigned
     """
-    flash_msg = ("EVM Group \"{}\": Error during delete: "
-                "The group has users assigned that do not "
-                "belong to any other group")
-
     group = new_group()
     group.create()
     user = new_user(group=group)
     user.create()
-    with error.expected(flash_msg.format(group.description)):
+    with pytest.raises(RBACOperationBlocked):
         group.delete()
 
 

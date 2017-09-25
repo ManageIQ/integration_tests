@@ -717,9 +717,13 @@ class Group(Updateable, Pretty, Navigatable):
                 for currently selected group
         """
         flash_success_msg = 'EVM Group "{}": Delete successful'.format(self.description)
-        flash_blocked_msg = (
-            "EVM Group \"{}\": "
-            "Error during delete: A read only group cannot be deleted.".format(self.description))
+        flash_blocked_msg_list = [
+            ('EVM Group "{}": '
+                'Error during delete: A read only group cannot be deleted.'.format(
+                    self.description)),
+            ('EVM Group "{}": Error during delete: '
+                'The group has users assigned that do not '
+                'belong to any other group'.format(self.description))]
         delete_group_txt = 'Delete this Group'
 
         view = navigate_to(self, 'Details')
@@ -729,11 +733,12 @@ class Group(Updateable, Pretty, Navigatable):
                 delete_group_txt))
 
         view.toolbar.configuration.item_select(delete_group_txt, handle_alert=cancel)
-        try:
-            view.flash.assert_message(flash_blocked_msg)
-            raise RBACOperationBlocked(flash_blocked_msg)
-        except AssertionError:
-            pass
+        for flash_blocked_msg in flash_blocked_msg_list:
+            try:
+                view.flash.assert_message(flash_blocked_msg)
+                raise RBACOperationBlocked(flash_blocked_msg)
+            except AssertionError:
+                pass
 
         view.flash.assert_no_error()
         view.flash.assert_message(flash_success_msg)
