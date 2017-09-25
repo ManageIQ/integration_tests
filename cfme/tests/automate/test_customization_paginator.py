@@ -46,7 +46,7 @@ def get_relevant_rows(table):
 @test_requirements.general_ui
 @pytest.mark.meta(blocks=[1125230, 1205235])
 @pytest.mark.tier(3)
-def test_paginator(some_dialogs, soft_assert):
+def test_paginator(some_dialogs, soft_assert, appliance):
     """ This test tests weird behaviour of the paginator in Service dialogs.
 
     Prerequisities:
@@ -61,7 +61,7 @@ def test_paginator(some_dialogs, soft_assert):
         * During the cycling, assert the numbers displayed in the paginator make sense
         * During the cycling, assert the paginator does not get stuck.
     """
-    navigate_to(DialogCollection, 'All')
+    navigate_to(DialogCollection(appliance), 'All')
     from cfme.web_ui import paginator
     paginator.results_per_page(50)
     paginator.results_per_page(5)
