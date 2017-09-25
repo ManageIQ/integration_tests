@@ -6,16 +6,15 @@ from cfme.utils import testgen
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['ownership_vm'])
+    argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['cap_and_util'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
-
 
 pytestmark = [test_requirements.tag]
 
 
 @pytest.yield_fixture(scope="module")
-def tagged_vm(tag, provider):
-    ownership_vm = provider.data['ownership_vm']
+def tagged_vm(tag, setup_provider_modscope, provider):
+    ownership_vm = provider.data.cap_and_util.capandu_vm
     tag_vm = VM.factory(ownership_vm, provider)
     tag_vm.add_tag(tag)
     yield tag_vm
