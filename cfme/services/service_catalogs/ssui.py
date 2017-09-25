@@ -1,7 +1,7 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
 from widgetastic_manageiq import SSUIServiceCatalogcard, SSUIInput, Notification
-from widgetastic_patternfly import Input, Button, BootstrapSelect, NavDropdown
+from widgetastic_patternfly import Input, Button, BootstrapSelect
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
 from cfme.services.service_catalogs import ServiceCatalogs

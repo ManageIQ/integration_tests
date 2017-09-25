@@ -19,7 +19,10 @@ class ServicesCatalogView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        return self.in_service_catalogs and self.configuration.is_displayed and not self.catalogs.is_dimmed
+        return (
+            self.in_service_catalogs and
+            self.configuration.is_displayed and
+            not self.catalogs.is_dimmed)
 
     @View.nested
     class service_catalogs(Accordion):  # noqa

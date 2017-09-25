@@ -4,7 +4,7 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.services.requests import Request
 from cfme import test_requirements
@@ -60,7 +60,8 @@ def modify_instance(create_domain):
 
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.tier(2)
-def test_service_manual_approval(appliance, provider, setup_provider, modify_instance, catalog_item, request):
+def test_service_manual_approval(appliance, provider, setup_provider,
+                                 modify_instance, catalog_item, request):
     """Tests order catalog item
     Metadata:
         test_flag: provision

@@ -31,7 +31,8 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.mark.tier(2)
-def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, request, register_event):
+def test_order_catalog_item(appliance, provider, setup_provider,
+                            catalog_item, request, register_event):
     """Tests order catalog item
     Metadata:
         test_flag: provision

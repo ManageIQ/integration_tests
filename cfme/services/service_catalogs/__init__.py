@@ -29,4 +29,3 @@ class ServiceCatalogs(Navigatable, WidgetasticTaggable, Updateable, sentaku.mode
 
 from . import ui, ssui  # NOQA last for import cycles
 sentaku.register_external_implementations_in(ui, ssui)
-

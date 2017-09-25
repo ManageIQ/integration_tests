@@ -4,7 +4,7 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services.requests import Request

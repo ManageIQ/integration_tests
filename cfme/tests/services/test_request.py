@@ -3,7 +3,7 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import Request
 from cfme import test_requirements
 from cfme.utils import testgen

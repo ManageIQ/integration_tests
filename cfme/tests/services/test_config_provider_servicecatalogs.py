@@ -3,7 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
 from cfme.services.requests import Request
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
 

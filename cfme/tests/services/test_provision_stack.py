@@ -6,7 +6,7 @@ from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.requests import Request
 from cfme.cloud.provider import CloudProvider
@@ -152,7 +152,8 @@ def prepare_stack_data(provider, provisioning):
     return stack_data
 
 
-def test_provision_stack(appliance, setup_provider, provider, provisioning, catalog, catalog_item, request):
+def test_provision_stack(appliance, setup_provider, provider,
+                         provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
@@ -165,7 +166,8 @@ def test_provision_stack(appliance, setup_provider, provider, provisioning, cata
     def _cleanup_vms():
         clean_up(stack_data, provider)
 
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
+                                       catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name
@@ -174,7 +176,8 @@ def test_provision_stack(appliance, setup_provider, provider, provisioning, cata
     assert provision_request.is_succeeded()
 
 
-def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog_item, request):
+def test_reconfigure_service(appliance, provider, provisioning,
+                             catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
@@ -187,7 +190,8 @@ def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog
     def _cleanup_vms():
         clean_up(stack_data, provider)
 
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
+                                       catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name
@@ -199,7 +203,8 @@ def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog
     myservice.reconfigure_service()
 
 
-def test_remove_template_provisioning(appliance, provider, provisioning, catalog, catalog_item):
+def test_remove_template_provisioning(appliance, provider, provisioning,
+                                      catalog, catalog_item):
     """Tests stack provisioning
 
     Metadata:
@@ -207,7 +212,8 @@ def test_remove_template_provisioning(appliance, provider, provisioning, catalog
     """
     catalog_item, template = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
+                                       catalog_item.name, stack_data)
     service_catalogs.order()
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
@@ -229,7 +235,8 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
     DefaultView.set_default_view("Stacks", "Grid View")
 
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name, stack_data)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog,
+                                       catalog_item.name, stack_data)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name

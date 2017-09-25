@@ -6,7 +6,7 @@ from cfme.automate.service_dialogs import DialogCollection
 from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import Request
 from cfme.utils.log import logger
 

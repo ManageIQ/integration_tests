@@ -4,7 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.service_dialogs import DialogCollection
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.infrastructure.provider import InfraProvider
@@ -100,8 +100,8 @@ def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_ite
     dialog_values = {
         'default_select_value': "Gold"
     }
-    service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog, name=catalog_item.name,
-                                       dialog_values=dialog_values)
+    service_catalogs = ServiceCatalogs(appliance, catalog=catalog_item.catalog,
+                                       name=catalog_item.name, dialog_values=dialog_values)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name

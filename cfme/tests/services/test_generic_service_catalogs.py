@@ -5,7 +5,7 @@ import pytest
 from cfme.automate.service_dialogs import DialogCollection
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.requests import Request
 from cfme.web_ui import flash

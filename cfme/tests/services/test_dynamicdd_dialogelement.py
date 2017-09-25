@@ -6,7 +6,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.catalog import Catalog
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme import test_requirements
 
 pytestmark = [

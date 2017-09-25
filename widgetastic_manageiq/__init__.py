@@ -1106,11 +1106,12 @@ class SSUIVerticalNavigation(VerticalNavigation):
 
 class SSUIInput(Input):
 
-    locator=ParametrizedLocator('.//*[self::input and @uib-tooltip={@text|quote}]')
+    locator = ParametrizedLocator('.//*[self::input and @uib-tooltip={@text|quote}]')
 
     def __init__(self, parent, text, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.text = text
+
 
 class SSUIlist(Widget, ClickableMixin):
     """Represents the list of items like Services ,

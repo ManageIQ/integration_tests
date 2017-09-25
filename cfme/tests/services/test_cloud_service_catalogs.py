@@ -5,7 +5,7 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import Request
 from cfme.web_ui import flash
 from cfme import test_requirements
@@ -24,7 +24,8 @@ pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=[['provisioning', 'image']], scope="module")
 
 
-def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog, request, provisioning):
+def test_cloud_catalog_item(appliance, setup_provider, provider,
+                            dialog, catalog, request, provisioning):
     """Tests cloud catalog item
 
     Metadata:
