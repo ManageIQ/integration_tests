@@ -18,7 +18,7 @@ from cfme.containers.provider import ContainersProvider, Labelable,\
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
-from cfme.utils.appliance import BaseCollection, BaseEntity, Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity, Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 
 
@@ -117,7 +117,7 @@ class Node(Taggable, Labelable, SummaryMixin, BaseEntity, Navigatable):
         """Generating random instances."""
         node_list = provider.mgmt.list_node()
         random.shuffle(node_list)
-        return [cls(obj.name, provider, collection=NodeCollection(appliance))
+        return [cls(obj.name, provider, collection=NodeCollection(appliance or current_appliance()))
                 for obj in itertools.islice(node_list, count)]
 
 
