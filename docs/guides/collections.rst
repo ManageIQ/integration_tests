@@ -4,7 +4,7 @@ Designing Models
 General Guidelines
 ------------------
 
-In general, any object that is represented in the MiQ Appliance is goign to be only relevant
+In general, any object that is represented in the MiQ Appliance is going to be only relevant
 along with the context of a particular appliance. The objects in the codebase are designed
 to function similarly to REST API based objects where you have a Collection object that
 handles the creation/searching/non-instance functions, and then an Entity object that handles
@@ -35,12 +35,12 @@ Collection Methods
   and assign this to the ``self.appliance`` attribute.
 * ``instantiate()`` - The collection object **should** provide an ``instantiate()`` method which
   will simply return an entity instance with the supplied arguments. It **must** pass ``self``
-  as the first argument so tha tthe user doesn't have to.
+  as the first argument so that the user doesn't have to.
 * ``create()`` - The collection object **should** provider a ``create()`` method where appropriate.
   This method will attempt to create the object on the appliance and **must** then call
   ``self.instantiate`` and return the object.
 
-.. note:: The ``__init__()`` method could in the future become part automatic in the BaseEntity class
+.. note:: The ``__init__()`` method could in the future become part automatic in the BaseCollection class
           but this is a future feature and is not yet planned.
 
 .. warning:: Failure to comply with the above guidelines in the future may result in an Exception
@@ -85,7 +85,7 @@ Below is an example of a generic object using the collection and entity relation
                     """An object entity"""
 
                     def __init__(self, collection, name, label):
-                        self.collecion = collection
+                        self.collection = collection
                         self.appliance = self.collection.appliance
 
                     def update(self, *updates):
