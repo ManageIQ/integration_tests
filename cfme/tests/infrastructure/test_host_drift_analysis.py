@@ -109,9 +109,8 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
     )
 
     # add a tag and a finalizer to remove it
-    tag = ('Department', 'Accounting')
-    test_host.tag(tag, single_value=False)
-    request.addfinalizer(lambda: test_host.untag(tag))
+    test_host.add_tag('Department', 'Accounting')
+    request.addfinalizer(lambda: test_host.remove_tag('Department', 'Accounting'))
 
     # initiate 2nd analysis
     test_host.run_smartstate_analysis()
