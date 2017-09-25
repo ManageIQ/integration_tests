@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration.region_settings import CANDUCollection
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
@@ -125,10 +124,9 @@ def set_performance_capture_threshold(appliance):
 @pytest.yield_fixture(scope="module")
 def setup_candu(appliance):
     candu = appliance.get(CANDUCollection)
-    server_settings = ServerInformation(appliance=appliance)
     candu.enable_all()
-    server_settings.server_roles_enabled('ems_metrics_coordinator', 'ems_metrics_collector',
-            'ems_metrics_processor')
+    appliance.server.settings.server_roles_enabled(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     yield
     candu.disable_all()
 

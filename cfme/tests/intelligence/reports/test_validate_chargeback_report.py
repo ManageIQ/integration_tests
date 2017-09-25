@@ -15,7 +15,6 @@ from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
 from cfme.configure.configuration.region_settings import CANDUCollection
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
@@ -105,7 +104,7 @@ def enable_candu(provider, appliance):
     # that are not needed for Chargeback reporting.
 
     candu = appliance.get(CANDUCollection)
-    server_info = ServerInformation(appliance=appliance)
+    server_info = appliance.server.settings
     original_roles = server_info.server_roles_db
     server_info.server_roles_enabled(
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')

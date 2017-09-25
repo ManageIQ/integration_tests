@@ -10,7 +10,6 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration.region_settings import CANDUCollection
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -41,7 +40,7 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
-    server_settings = ServerInformation(appliance=appliance)
+    server_settings = appliance.server.settings
     original_roles = server_settings.server_roles_db
     try:
         server_settings.server_roles_enabled(

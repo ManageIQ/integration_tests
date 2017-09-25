@@ -2,7 +2,6 @@
 import pytest
 from functools import partial
 
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.utils.conf import cfme_data
 
 server_roles_conf = cfme_data.get('server_roles',
@@ -42,7 +41,7 @@ def test_server_roles_changing(request, roles, appliance):
       - Use for parametrization on more roles set?
       - Change the yaml role list to dict.
     """
-    server_settings = ServerInformation(appliance=appliance)
+    server_settings = appliance.server.settings
     original_roles = server_settings.server_roles_db
     # For reverting back
     request.addfinalizer(lambda: server_settings.update_server_roles_db(original_roles))

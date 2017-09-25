@@ -10,7 +10,6 @@ from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.configure import configuration
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.configure.tasks import is_vm_analysis_finished
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMControlPolicy
@@ -140,8 +139,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
         set_host_credentials(request, provider, vm_analysis_data)
 
     # Make sure all roles are set
-    server_info = ServerInformation(appliance=appliance)
-    server_info.server_roles_enabled('automate', 'smartproxy', 'smartstate')
+    appliance.server.settings.server_roles_enabled('automate', 'smartproxy', 'smartstate')
 
 
 def set_host_credentials(request, provider, vm_analysis_data):

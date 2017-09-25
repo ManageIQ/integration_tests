@@ -7,7 +7,6 @@ from urlparse import urlparse
 from cfme.base.ui import ServerView
 from cfme.common.vm import VM
 from cfme.configure import configuration as conf
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.infrastructure.provider import wait_for_a_provider
 from cfme.utils import version
 from cfme.utils.appliance import provision_appliance, current_appliance
@@ -79,7 +78,7 @@ def configure_db_replication(db_address, appliance):
     view = current_appliance.server.browser.create_view(ServerView)
     view.flash.assert_message("Configuration settings saved for CFME Server")  # may be partial
     navigate_to(current_appliance.server, 'Server')
-    ServerInformation(appliance=appliance).server_roles_enabled('database_synchronization')
+    appliance.server.settings.server_roles_enabled('database_synchronization')
     navigate_to(current_appliance.server.zone.region, 'Replication')
     rep_status, _ = wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
                              fail_condition=False, num_sec=360, delay=10,
@@ -181,7 +180,7 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        server_settings = ServerInformation(appliance=appliance)
+        server_settings = appliance.server.settings
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         server_settings.server_roles_disabled('database_synchronization')
@@ -221,7 +220,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        server_settings = ServerInformation(appliance=appliance)
+        server_settings = appliance.server.settings
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         virtualcenter_provider.create()

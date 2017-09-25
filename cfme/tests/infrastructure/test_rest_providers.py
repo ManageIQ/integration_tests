@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for
@@ -70,8 +69,7 @@ def test_provider_refresh(request, a_provider, appliance):
     if "refresh" not in appliance.rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
     provider_rest = appliance.rest_api.collections.providers.get(name=a_provider.name)
-    server_settings = ServerInformation(appliance=appliance)
-    server_settings.server_roles_disabled("ems_inventory", "ems_operations")
+    appliance.server.settings.server_roles_disabled("ems_inventory", "ems_operations")
     vm_name = deploy_template(
         a_provider.key,
         "test_rest_prov_refresh_{}".format(fauxfactory.gen_alphanumeric(length=4)))

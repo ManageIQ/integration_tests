@@ -3,7 +3,6 @@
 import fauxfactory
 import pytest
 
-from cfme.configure.configuration.server_settings import ServerInformation
 from cfme.cloud import provider as cloud_provider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.vm import VM
@@ -80,7 +79,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         # Manage infra,cloud providers and set some roles before taking a DB backup
-        server_info = ServerInformation(appliance=appliance)
+        server_info = appliance.server.settings
         server_info.server_roles_enabled('automate')
         roles = server_info.server_roles_db
         virtualcenter_provider_crud.setup()
