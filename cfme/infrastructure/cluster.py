@@ -136,10 +136,11 @@ class ClusterCollection(BaseCollection):
         view = navigate_to(self, 'All')
         view.toolbar.view_selector.select('List View')
 
-        if not view.entities.table.is_displayed:
+        # todo: replace with get_all later
+        if not view.entities.elements.is_displayed:
             raise ValueError('No Clusters found')
 
-        for row in view.entities.table:
+        for row in view.entities.elements:
             for cluster in clusters:
                 if cluster.name == row.name.text:
                     checked_clusters.append(cluster)
