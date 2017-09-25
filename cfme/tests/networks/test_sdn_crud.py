@@ -13,7 +13,7 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 
 
 @pytest.mark.tier(1)
-def test_sdn_crud(provider):
+def test_sdn_crud(provider, appliance):
     """ Test for functional addition of network manager with cloud provider
         and functional references to components on detail page
     Prerequisites: Cloud provider in cfme
@@ -21,7 +21,7 @@ def test_sdn_crud(provider):
 
     view = navigate_to(provider, 'Details')
     net_prov_name = view.contents.relationships.get_text_of("Network Manager")
-    collection = NetworkProviderCollection()
+    collection = NetworkProviderCollection(appliance)
     network_provider = collection.instantiate(name=net_prov_name)
 
     view = navigate_to(network_provider, 'Details')

@@ -14,11 +14,11 @@ pytestmark = pytest.mark.usefixtures('setup_provider')
 
 @pytest.mark.parametrize("tested_part", ["Cloud Subnets", "Cloud Networks", "Network Routers",
                          "Security Groups", "Network Ports", "Load Balancers"])
-def test_provider_relationships_navigation(provider, tested_part):
+def test_provider_relationships_navigation(provider, tested_part, appliance):
     view = navigate_to(provider, 'Details')
     net_prov_name = view.contents.relationships.get_text_of('Network Manager')
 
-    collection = NetworkProviderCollection()
+    collection = NetworkProviderCollection(appliance)
     network_provider = collection.instantiate(name=net_prov_name)
 
     view = navigate_to(network_provider, 'Details')
@@ -27,11 +27,11 @@ def test_provider_relationships_navigation(provider, tested_part):
         navigate_to(network_provider, tested_part.replace(' ', ''))
 
 
-def test_provider_topology_navigation(provider):
+def test_provider_topology_navigation(provider, appliance):
     view = navigate_to(provider, 'Details')
     net_prov_name = view.contents.relationships.get_text_of('Network Manager')
 
-    collection = NetworkProviderCollection()
+    collection = NetworkProviderCollection(appliance)
     network_provider = collection.instantiate(name=net_prov_name)
 
     navigate_to(network_provider, "TopologyFromDetails")
