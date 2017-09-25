@@ -20,7 +20,6 @@ from cfme.common.host_views import (
 )
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
-from cfme.web_ui import mixins
 from cfme.utils import conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator

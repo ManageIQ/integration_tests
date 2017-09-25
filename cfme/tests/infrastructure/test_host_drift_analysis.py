@@ -49,7 +49,7 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
     """
     test_host = host_obj.Host(name=host['name'], provider=provider)
 
-    wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh,
+    wait_for(lambda: test_host.exists, delay=20, num_sec=120, fail_func=sel.refresh,
              message="hosts_exists")
 
     # get drift history num
@@ -109,9 +109,8 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
     )
 
     # add a tag and a finalizer to remove it
-    tag = ('Department', 'Accounting')
-    test_host.tag(tag, single_value=False)
-    request.addfinalizer(lambda: test_host.untag(tag))
+    test_host.add_tag(category='Department', tag='Accounting')
+    request.addfinalizer(lambda: test_host.remove_tag(category='Department', tag='Accounting'))
 
     # initiate 2nd analysis
     test_host.run_smartstate_analysis()
