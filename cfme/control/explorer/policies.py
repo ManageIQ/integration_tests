@@ -8,7 +8,7 @@ from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import Text, Checkbox, TextInput, View
 
 from . import ControlExplorerView
-from actions import Action, ActionCollection
+from actions import Action
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import BaseCollection, BaseEntity

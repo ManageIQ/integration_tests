@@ -7,11 +7,11 @@ from cfme import test_requirements
 from cfme.base import Server
 from cfme.common.vm import VM
 from cfme.exceptions import CFMEExceptionOccured
-from cfme.control.explorer.policy_profiles import PolicyProfile
-from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
-from cfme.control.explorer.actions import Action
-from cfme.control.explorer.alerts import Alert, AlertDetailsView
-from cfme.control.explorer.conditions import VMCondition
+from cfme.control.explorer.policy_profiles import PolicyProfileCollection
+from cfme.control.explorer.policies import PolicyCollection, VMCompliancePolicy, VMControlPolicy
+from cfme.control.explorer.actions import ActionCollection
+from cfme.control.explorer.alerts import AlertCollection, AlertDetailsView
+from cfme.control.explorer.conditions import ConditionCollection, VMCondition
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
@@ -26,62 +26,88 @@ pytestmark = [
 ]
 
 
-def create_policy(request):
-    policy = VMControlPolicy(fauxfactory.gen_alpha())
-    policy.create()
+@pytest.fixture(scope="module")
+def policy_profile_collection(appliance):
+    return appliance.get(PolicyProfileCollection)
+
+
+@pytest.fixture(scope="module")
+def policy_collection(appliance):
+    return appliance.get(PolicyCollection)
+
+
+@pytest.fixture(scope="module")
+def condition_collection(appliance):
+    return appliance.get(ConditionCollection)
+
+
+@pytest.fixture(scope="module")
+def action_collection(appliance):
+    return appliance.get(ActionCollection)
+
+
+@pytest.fixture(scope="module")
+def alert_collection(appliance):
+    return appliance.get(AlertCollection)
+
+
+def create_policy(request, collection):
+    args = (VMControlPolicy, fauxfactory.gen_alpha())
+    kwargs = {}
+    policy = collection.create(*args)
 
     @request.addfinalizer
     def _delete():
         while policy.exists:
             policy.delete()
 
-    return policy
+    return args, kwargs
 
 
-def create_condition(request):
-    condition = VMCondition(
+def create_condition(request, collection):
+    args = (
+        VMCondition,
         fauxfactory.gen_alpha(),
         "fill_field(VM and Instance : Boot Time, BEFORE, Today)"
     )
-    condition.create()
+    kwargs = {}
+    condition = collection.create(*args)
 
     @request.addfinalizer
     def _delete():
         while condition.exists:
             condition.delete()
 
-    return condition
+    return args, kwargs
 
 
-def create_action(request):
-    action = Action(
-        fauxfactory.gen_alpha(),
-        action_type="Tag",
-        action_values={"tag": ("My Company Tags", "Department", "Accounting")}
-    )
-    action.create()
+def create_action(request, collection):
+    args = (fauxfactory.gen_alpha(),)
+    kwargs = {
+        "action_type": "Tag",
+        "action_values": {"tag": ("My Company Tags", "Department", "Accounting")}
+    }
+    action = collection.create(*args, **kwargs)
 
     @request.addfinalizer
     def _delete():
         while action.exists:
             action.delete()
 
-    return action
+    return args, kwargs
 
 
-def create_alert(request):
-    random_string = fauxfactory.gen_alpha()
-    alert = Alert(
-        random_string, timeline_event=True, driving_event="Hourly Timer"
-    )
-    alert.create()
+def create_alert(request, collection):
+    args = (fauxfactory.gen_alpha(),)
+    kwargs = {"timeline_event": True, "driving_event": "Hourly Timer"}
+    alert = collection.create(*args, **kwargs)
 
     @request.addfinalizer
     def _delete():
         while alert.exists:
             alert.delete()
 
-    return alert
+    return args, kwargs
 
 
 ProfileCreateFunction = namedtuple('ProfileCreateFunction', ['name', 'fn'])
@@ -94,6 +120,16 @@ items = [
 ]
 
 
+@pytest.fixture(scope="module")
+def collections(policy_collection, condition_collection, action_collection, alert_collection):
+    return {
+        "Policies": policy_collection,
+        "Conditions": condition_collection,
+        "Actions": action_collection,
+        "Alerts": alert_collection
+    }
+
+
 @pytest.fixture
 def vmware_vm(request, virtualcenter_provider):
     vm = VM.factory(random_vm_name("control"), virtualcenter_provider)
@@ -103,34 +139,32 @@ def vmware_vm(request, virtualcenter_provider):
 
 
 @pytest.yield_fixture
-def hardware_reconfigured_alert():
-    alert = Alert(
+def hardware_reconfigured_alert(alert_collection):
+    alert = alert_collection.create(
         fauxfactory.gen_alpha(),
         evaluate=("Hardware Reconfigured", {"hardware_attribute": "RAM"}),
         timeline_event=True
     )
-    alert.create()
     yield alert
     alert.delete()
 
 
 @pytest.mark.meta(blockers=[1155284])
-def test_scope_windows_registry_stuck(request, infra_provider):
+def test_scope_windows_registry_stuck(request, infra_provider, policy_collection):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
-    policy = VMCompliancePolicy(
+    policy = policy_collection.create(
+        VMCompliancePolicy,
         "Windows registry scope glitch testing Compliance Policy",
         active=True,
         scope=r"fill_registry(HKLM\SOFTWARE\Microsoft\CurrentVersion\Uninstall\test, "
         r"some value, INCLUDES, some content)"
     )
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)
-    policy.create()
-    profile = PolicyProfile(
+    profile = policy_profile_collection.create(
         "Windows registry scope glitch testing Compliance Policy",
         policies=[policy]
     )
     request.addfinalizer(lambda: profile.delete() if profile.exists else None)
-    profile.create()
     # Now assign this malformed profile to a VM
     vm = VM.factory(Vm.get_first_vm_title(provider=infra_provider), infra_provider)
     vm.assign_policy_profiles(profile.description)
@@ -142,7 +176,7 @@ def test_scope_windows_registry_stuck(request, infra_provider):
 
 
 @pytest.mark.meta(blockers=[1243357], automates=[1243357])
-def test_invoke_custom_automation(request):
+def test_invoke_custom_automation(request, action_collection):
     """This test tests a bug that caused the ``Invoke Custom Automation`` fields to disappear.
 
     Steps:
@@ -150,7 +184,7 @@ def test_invoke_custom_automation(request):
         * The form with additional fields should appear
     """
     # The action is to have all possible fields filled, that way we can ensure it is good
-    action = Action(
+    action = action_collection.create(
         fauxfactory.gen_alpha(),
         "Invoke a Custom Automation",
         dict(
@@ -165,18 +199,15 @@ def test_invoke_custom_automation(request):
             attribute_4=fauxfactory.gen_alpha(),
             value_4=fauxfactory.gen_alpha(),
             attribute_5=fauxfactory.gen_alpha(),
-            value_5=fauxfactory.gen_alpha(),))
-
-    @request.addfinalizer
-    def _delete_action():
-        if action.exists:
-            action.delete()
-
-    action.create()
+            value_5=fauxfactory.gen_alpha()
+        )
+    )
+    request.addfinalizer(lambda: action.delete() if action.exists else None)
 
 
 @pytest.mark.meta(blockers=[1375093], automates=[1375093])
-def test_check_compliance_history(request, virtualcenter_provider, vmware_vm):
+def test_check_compliance_history(request, virtualcenter_provider, vmware_vm, policy_collection,
+        policy_profile_collection):
     """This test checks if compliance history link in a VM details screen work.
 
     Steps:
@@ -190,19 +221,15 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm):
     Result:
         Compliance history screen with last 10 checks should be opened
     """
-    policy = VMCompliancePolicy(
+    policy = policy_collection.create(
+        VMCompliancePolicy,
         "Check compliance history policy {}".format(fauxfactory.gen_alpha()),
         active=True,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
     )
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)
-    policy.create()
-    policy_profile = PolicyProfile(
-        policy.description,
-        policies=[policy]
-    )
+    policy_profile = policy_profile_collection.create(policy.description, policies=[policy])
     request.addfinalizer(lambda: policy_profile.delete() if policy_profile.exists else None)
-    policy_profile.create()
     virtualcenter_provider.assign_policy_profiles(policy_profile.description)
     request.addfinalizer(lambda: virtualcenter_provider.unassign_policy_profiles(
         policy_profile.description))
@@ -216,8 +243,8 @@ def test_check_compliance_history(request, virtualcenter_provider, vmware_vm):
 
 
 @pytest.mark.meta(blockers=[BZ(1395965, forced_streams=["5.6", "5.7"]),
-                            BZ(1491576)])
-def test_delete_all_actions_from_compliance_policy(request):
+                            BZ(1491576, forced_streams=["5.7"])])
+def test_delete_all_actions_from_compliance_policy(request, policy_collection):
     """We should not allow a compliance policy to be saved
     if there are no actions on the compliance event.
 
@@ -228,20 +255,14 @@ def test_delete_all_actions_from_compliance_policy(request):
     Result:
         The policy shouldn't be saved.
     """
-    policy = VMCompliancePolicy(fauxfactory.gen_alphanumeric())
-
-    @request.addfinalizer
-    def _delete_policy():
-        if policy.exists:
-            policy.delete()
-
-    policy.create()
+    policy = policy_collection.create(VMCompliancePolicy, fauxfactory.gen_alphanumeric())
+    request.addfinalizer(lambda: policy.delete() if policy.exists else None)
     with pytest.raises(AssertionError):
         policy.assign_actions_to_event("VM Compliance Check", [])
 
 
 @pytest.mark.parametrize("create_function", items, ids=[item.name for item in items])
-def test_control_identical_descriptions(request, create_function):
+def test_control_identical_descriptions(request, create_function, collections):
     """CFME should not allow to create policy, alerts, profiles, actions and others to be created
     if the item with the same description already exists.
 
@@ -252,27 +273,26 @@ def test_control_identical_descriptions(request, create_function):
     Result:
         The item shouldn't be created.
     """
-    item = create_function.fn(request)
+    args, kwargs = create_function.fn(request, collections[create_function.name])
     with pytest.raises(AssertionError):
-        item.create()
+        collections[create_function.name].create(*args, **kwargs)
 
 
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])
-def test_vmware_alarm_selection_does_not_fail():
+def test_vmware_alarm_selection_does_not_fail(alert_collection):
     """Test the bug that causes CFME UI to explode when VMware Alarm type is selected.
 
     Metadata:
         test_flag: alerts
     """
-    alert = Alert(
-        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
-        active=True,
-        based_on="VM and Instance",
-        evaluate=("VMware Alarm", {}),
-        notification_frequency="5 Minutes",
-    )
     try:
-        alert.create()
+        alert = alert_collection.create(
+            "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
+            active=True,
+            based_on="VM and Instance",
+            evaluate=("VMware Alarm", {}),
+            notification_frequency="5 Minutes",
+        )
     except CFMEExceptionOccured as e:
         pytest.fail("The CFME has thrown an error: {}".format(str(e)))
     except Exception as e:
