@@ -13,18 +13,26 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
+# Todo: Will remove this widget from here once it is available in widgetastic_patternly.
+class SaveButton(Button):
+    @property
+    def disabled(self):
+        return 'disabled' in self.browser.classes(self)
+
+
 class TimeProfileAddForm(View):
     description = Input(id='description')
     scope = BootstrapSelect('profile_type')
     timezone = BootstrapSelect('profile_tz')
     days = BootstrapSwitch(name='all_days')
     hours = BootstrapSwitch(name='all_hours')
-    save_button = Button(VersionPick({Version.lowest(): 'Add',
-                                      '5.8': 'Save'}))
+    save_button = SaveButton(VersionPick({Version.lowest(): 'Add',
+                                          '5.8': 'Save'}))
     configuration = Dropdown('Configuration')
     table = Table("//div[@id='main_div']//table")
     save_edit_button = Button('Save')
     cancel_button = Button('Cancel')
+    help_block = Text("//span[contains(@class, 'help-block')]")
 
 
 class TimeprofileAddEntities(View):
