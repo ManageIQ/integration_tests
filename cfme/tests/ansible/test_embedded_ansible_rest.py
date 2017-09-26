@@ -47,34 +47,17 @@ def repository(appliance, ansible):
         "scm_update_on_launch": False
     }
 
-    results = collection.action.create(data)
+    collection.action.create(data)
     assert_response(appliance)
 
     repo_rest, __ = wait_for(
         lambda: collection.find_by(name=repo_name) or False, num_sec=300, delay=5)
     repo_rest = repo_rest[0]
 
-    def _check_task(task):
-        # TODO: https://github.com/ManageIQ/manageiq-api-client-python/pull/24
-        # branch below can be removed once this PR is released
-        if isinstance(task, dict):
-            task = appliance.rest_api.get_entity('tasks', task['task_id'])
-        task.reload()
-        wait_for(
-            lambda: task.state.lower() == 'finished', fail_func=task.reload, num_sec=300, delay=5)
-
-    if isinstance(results, list):
-        for task in results:
-            _check_task(task)
-    else:
-        _check_task(results)
-
     yield repo_rest
 
-    collection.reload()
-    delete_entities = [e for e in collection if e.id == repo_rest.id]
-    if delete_entities:
-        collection.action.delete(*delete_entities)
+    if repo_rest.exists:
+        repo_rest.action.delete()
 
 
 class TestReposRESTAPI(object):
@@ -123,12 +106,7 @@ class TestReposRESTAPI(object):
 
         del_action()
         assert_response(appliance)
-        wait_for(
-            lambda: not appliance.rest_api.collections.configuration_script_sources.find_by(
-                name=repository.name),
-            num_sec=300,
-            delay=5
-        )
+        repository.wait_not_exists(num_sec=300, delay=5)
 
         # this will fail once BZ 1477520 is fixed
         del_action()
@@ -142,12 +120,7 @@ class TestReposRESTAPI(object):
         """
         appliance.rest_api.collections.configuration_script_sources.action.delete.POST(repository)
         assert_response(appliance)
-        wait_for(
-            lambda: not appliance.rest_api.collections.configuration_script_sources.find_by(
-                name=repository.name),
-            num_sec=300,
-            delay=5
-        )
+        repository.wait_not_exists(num_sec=300, delay=5)
 
         # this will fail once BZ 1477520 is fixed
         appliance.rest_api.collections.configuration_script_sources.action.delete.POST(repository)
