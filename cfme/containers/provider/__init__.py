@@ -349,9 +349,11 @@ class Details(CFMENavigateStep):
 @navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = ContainersProviderEditView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('All')
 
     def step(self):
+        self.prerequisite_view.entities.get_entity(self.obj.name,
+                                                   surf_pages=True).click()
         cfg_btn('Edit Selected Containers Provider')
 
 
@@ -365,9 +367,11 @@ class EditFromDetails(CFMENavigateStep):
 
 @navigator.register(ContainersProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('All')
 
     def step(self):
+        self.prerequisite_view.entities.get_entity(self.obj.name,
+                                                   surf_pages=True).click()
         pol_btn('Edit Tags')
 
 
