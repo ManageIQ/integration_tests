@@ -325,11 +325,13 @@ class LoggingableView(View):
 
         return logging_url
 
+
 class ContainersProviderDetailsView(ProviderDetailsView, LoggingableView):
 
     @property
     def is_displayed(self):
         return match_page(summary="{} (Summary)".format(self.obj.name))
+
 
 @navigator.register(ContainersProvider, 'Details')
 class Details(CFMENavigateStep):
