@@ -88,19 +88,20 @@ def if_scvmm_refresh_provider(provider):
 
 
 def check_power_options(provider, soft_assert, vm, power_state):
-    must_be_available = {'on': [vm.POWER_OFF, vm.SUSPEND, vm.RESET],
-                         'off': [vm.POWER_ON]
-                         }
-    mustnt_be_available = {'on': [vm.POWER_ON],
-                           'off': [vm.POWER_OFF, vm.SUSPEND, vm.RESET]
-                           }
+    must_be_available = {
+        'on': [vm.POWER_OFF, vm.SUSPEND, vm.RESET],
+        'off': [vm.POWER_ON]
+    }
+    mustnt_be_available = {
+        'on': [vm.POWER_ON],
+        'off': [vm.POWER_OFF, vm.SUSPEND, vm.RESET]
+    }
     # VMware and RHEVM have extended power options
     if not provider.one_of(SCVMMProvider):
         mustnt_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
         mustnt_be_available['off'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
     if provider.one_of(RHEVMProvider):
         must_be_available['on'].remove(vm.RESET)
-        must_be_available['on'].remove(vm.GUEST_RESTART)
     vm.load_details()
     toolbar.pf_select('Power')
     for pwr_option in must_be_available[power_state]:
