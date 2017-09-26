@@ -41,6 +41,33 @@ def vm_name():
     return vm_name
 
 
+@pytest.fixture(scope="function")
+def provision_request(provisioning, provider, request, vm_name):
+    # generate_tests makes sure these have values
+    template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
+
+    provisioning_data = {
+        'vm_name': vm_name,
+        'host_name': {'name': [host]},
+        'datastore_name': {'name': [datastore]},
+        'num_vms': "1",
+    }
+
+    if provider.type == 'rhevm':
+        provisioning_data['provision_type'] = 'Native Clone'
+    elif provider.type == 'virtualcenter':
+        provisioning_data['provision_type'] = 'VMware'
+
+    try:
+        provisioning_data['vlan'] = provisioning['vlan']
+    except KeyError:
+        # provisioning['vlan'] is required for rhevm provisioning
+        if provider.type == 'rhevm':
+            raise pytest.fail('rhevm requires a vlan value in provisioning info')
+
+    return template, provisioning_data
+
+
 @pytest.mark.tier(1)
 @pytest.mark.parametrize('auto', [True, False], ids=["Auto", "Manual"])
 def test_provision_from_template(appliance, setup_provider, provider, vm_name, smtp_test,
@@ -184,5 +211,29 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
                 in normalize_text(mail["subject"]),
                 smtp_test.get_emails())) == len(vm_names)
         )
-
     wait_for(verify, message="email receive check", delay=5)
+
+
+@pytest.mark.parametrize("approve", [True, False], ids=["approved", "denied"])
+def test_provision_approval_msg(
+        setup_provider, provider, vm_name, request, approve, provision_request):
+    template, prov_data = provision_request
+    prov_data['num_vms'] = "2"
+    if approve:
+        do_vm_provisioning(template, provider, vm_name, prov_data, request, smtp_test=False,
+                       wait=False)
+    else:
+        do_vm_provisioning(template, provider, vm_name, prov_data, request, smtp_test=False,
+                       wait=False)
+    cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
+    if approve:
+        requests.approve_request(cells, "Approved")
+        request.addfinalizer(lambda: requests.delete_request(cells))
+    else:
+        requests.deny_request(cells, "Denied")
+    row, __ = wait_for(requests.find_request, [cells],
+                       fail_func=requests.reload, num_sec=1500, delay=20)
+    if approve:
+        assert normalize_text(row.reason.text) == 'approved'
+    else:
+        assert normalize_text(row.reason.text) == 'denied'
