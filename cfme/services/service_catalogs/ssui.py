@@ -87,7 +87,7 @@ def add_to_shopping_cart(self):
     view.flash.assert_no_error()
     # There is a pop up that stays for 10 secs and blocks opening up the drawer
     # Only way to remove is to wait for 10 secs.
-    time.sleep(10)
+    time.sleep(8)
     assert view.notification.assert_message("Item added to shopping cart")
 
 
