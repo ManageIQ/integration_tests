@@ -14,6 +14,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
+from cfme.utils.appliance import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -39,15 +40,19 @@ pytestmark = [
 ]
 
 
-def _navigate_and_check(location):
-    navigate_to(param_classes[location], 'All')
+def _navigate_and_check(location, appliance):
+    if issubclass(param_classes[location], BaseCollection):
+        cls_or_col = param_classes[location](appliance)
+    else:
+        cls_or_col = param_classes[location]
+    navigate_to(cls_or_col, 'All')
     tb.select('Grid View')
     return Quadicon.any_present()
 
 # TODO Replace navigation and item selection with widgets when all tested classes have them
 
 
-def _tag_item_through_selecting(request, location, tag):
+def _tag_item_through_selecting(request, location, tag, appliance):
     """Add a tag to an item with going through the details page.
 
     Prerequisities:
@@ -61,13 +66,13 @@ def _tag_item_through_selecting(request, location, tag):
         * Go back to the quadicon view and select ``Policy/Edit Tags`` and remove the tag.
         * Click on the quadicon and verify the tag is not present. (TODO)
     """
-    if not _navigate_and_check(location):
+    if not _navigate_and_check(location, appliance):
         pytest.skip("No Quadicon present, cannot test.")
     Quadicon.select_first_quad()
 
     def _delete():
         # Ignoring the result of the check here
-        _navigate_and_check(location)
+        _navigate_and_check(location, appliance)
         Quadicon.select_first_quad()
         mixins.remove_tag(tag)
     request.addfinalizer(lambda: diaper(_delete))
@@ -75,7 +80,7 @@ def _tag_item_through_selecting(request, location, tag):
     _delete()
 
 
-def _tag_item_through_details(request, location, tag):
+def _tag_item_through_details(request, location, tag, appliance):
     """Add a tag to an item with going through the details page.
 
     Prerequisities:
@@ -89,7 +94,7 @@ def _tag_item_through_details(request, location, tag):
         * Select ``Policy/Edit Tags`` and remove the tag.
         * Verify the tag is not present. (TODO)
     """
-    if not _navigate_and_check(location):
+    if not _navigate_and_check(location, appliance):
         pytest.skip("No Quadicon present, cannot test.")
     pytest.sel.click(Quadicon.first())
     request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))
@@ -100,18 +105,22 @@ def _tag_item_through_details(request, location, tag):
 @pytest.mark.usefixtures('has_no_providers', scope='class')
 class TestCloudTagVisibility():
 
-    def test_cloud_tag_item_through_selecting(self, request, cloud_provider, location, tag):
-        _tag_item_through_selecting(request, location, tag)
+    def test_cloud_tag_item_through_selecting(self, cloud_provider, request, location, tag,
+                                              appliance):
+        _tag_item_through_selecting(request, location, tag, appliance)
 
-    def test_cloud_tag_item_through_details(self, request, cloud_provider, location, tag):
-        _tag_item_through_details(request, location, tag)
+    def test_cloud_tag_item_through_details(self, cloud_provider, request, location, tag,
+                                            appliance):
+        _tag_item_through_details(request, location, tag, appliance)
 
 
 @pytest.mark.usefixtures('has_no_providers', scope='class')
 class TestInfraTagVisibility():
 
-    def test_infra_tag_item_through_selecting(self, request, infra_provider, location, tag):
-        _tag_item_through_selecting(request, location, tag)
+    def test_infra_tag_item_through_selecting(self, cloud_provider, request, location, tag,
+                                              appliance):
+        _tag_item_through_selecting(request, location, tag, appliance)
 
-    def test_infra_tag_item_through_details(self, request, infra_provider, location, tag):
-        _tag_item_through_details(request, location, tag)
+    def test_infra_tag_item_through_details(self, cloud_provider, request, location, tag,
+                                            appliance):
+        _tag_item_through_details(request, location, tag, appliance)
