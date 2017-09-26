@@ -168,6 +168,8 @@ class VMConsole(Pretty):
         after_height = self.selenium.get_window_size()['height']
         fullscreen_btn.click()
         self.switch_to_console()
+        logger.info("Height before fullscreen: {}\n Height after fullscreen:{}\n".format(
+            before_height, after_height))
         if after_height > before_height:
             return True
         return False
@@ -212,6 +214,11 @@ class VMConsole(Pretty):
         Returns:
             If the match is found returns True else False.
         """
+        # With provider RHOS7-GA, VMs spawned from Cirros template goes into screensaver mode
+        # sometimes, and shows a blank black screen, which causes test failures. To avoid that,
+        # and wake Cirros up from screensaver, following check is applied ,"\n" is sent if required.
+        if not self.get_screen_text():
+            self.send_keys("\n")
         if current_line:
             return re.search(text_to_find, self.get_screen_text().split('\n')[-1]) is not None
         return re.search(text_to_find, self.get_screen_text()) is not None
