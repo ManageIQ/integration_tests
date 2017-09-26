@@ -132,6 +132,9 @@ def test_delete_all_snapshots(small_test_vm, provider):
     snapshot2 = new_snapshot(small_test_vm)
     snapshot2.create()
     snapshot2.delete_all()
+    # Make sure the snapshots are indeed deleted
+    wait_for(lambda: not snapshot1.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
+    wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
 
 
 @pytest.mark.uncollectif(lambda provider:
@@ -274,12 +277,9 @@ def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
                 "Quadicon state is {}".format(current_state))
     assert small_test_vm.provider.mgmt.is_vm_suspended(small_test_vm.name)
     # Try to delete both snapshots while the VM is suspended
-    snapshot2.delete_all()
-    # Wait for both snapshots to disappear
-    wait_for(lambda: not snapshot1.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
-    logger.info("First snapshot successfully deleted")
-    wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot2.refresh)
-    logger.info("Second snapshot successfully deleted")
+    # The delete method will make sure the snapshots are indeed deleted
+    snapshot1.delete()
+    snapshot2.delete()
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
@@ -299,11 +299,9 @@ def test_operations_powered_off_vm(small_test_vm, provider, soft_assert):
     snapshot1.revert_to()
     wait_for(lambda: snapshot1.active is True, num_sec=300, delay=20, fail_func=snapshot1.refresh)
     # Try to delete both snapshots while the VM is off
-    snapshot2.delete_all()
-    wait_for(lambda: not snapshot1.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
-    logger.info("First snapshot successfully deleted")
-    wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot2.refresh)
-    logger.info("Second snapshot successfully deleted")
+    # The delete method will make sure the snapshots are indeed deleted
+    snapshot1.delete()
+    snapshot2.delete()
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))

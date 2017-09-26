@@ -602,6 +602,7 @@ class Vm(VM):
             if not cancel:
                 flash.assert_message_match('Remove Snapshot initiated for 1 '
                                            'VM and Instance from the CFME Database')
+            wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=sel.refresh)
 
         def delete_all(self, cancel=False):
             self._nav_to_snapshot_mgmt()
