@@ -44,6 +44,28 @@ class ServerDetailsToolbar(View):
     drivers = Dropdown('JDBC Drivers')
     datasources = Dropdown('Datasources')
     download = Button(title='Download summary in PDF format')
+    generate_jdr = Button(title='Enqueue generation of new JDR report')
+
+
+class JDRToolbar(View):
+    """The toolbar on the JDR Reports list"""
+    download_list = Dropdown('Download list of JDR')
+    delete = Button('Delete')
+    view_selector = View.nested(ItemsToolBarViewSelector)
+
+
+class JDREntitiesView(View):
+    """Entities on the JDR Reports list"""
+    title = Text('//div[@id="mw_dr_header"]//h3')
+    table = Table('//div[@id="mw_dr_section"]//table')
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
+
+
+class JDRAllView(View):
+    """The "all" view -- a list of JDR Reports"""
+    toolbar = View.nested(JDRToolbar)
+    including_entities = View.include(JDREntitiesView, use_parent=True)
 
 
 class ServerDetailsAccordion(View):
@@ -157,6 +179,7 @@ class ServerDetailsView(ServerView):
     entities = View.nested(ServerDetailsEntities)
     power_operation_form = View.nested(PowerOperationForm)
     flash = FlashMessages(FLASH_MESSAGE_LOCATOR)
+    jdr_reports = View.nested(JDRAllView)
 
 
 class DatasourceAllToolbar(View):

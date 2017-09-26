@@ -407,3 +407,10 @@ class Deployable(SummaryMixin):
         view = self.load_details()
         view.toolbar.operations.item_select("Enable", handle_alert=True)
         view.flash.assert_success_message('Enable initiated for selected deployment(s)')
+
+
+class Reportable(SummaryMixin):
+    def generate_jdr(self):
+        view = self.load_details()
+        view.toolbar.generate_jdr.click()
+        view.flash.assert_success_message('Generate JDR report initiated for selected server(s)')

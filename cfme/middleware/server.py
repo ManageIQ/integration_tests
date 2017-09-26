@@ -11,7 +11,7 @@ from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.provider import (
     MiddlewareBase, download
 )
-from cfme.middleware.provider import (parse_properties, Container)
+from cfme.middleware.provider import (parse_properties, Container, Reportable)
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.provider.middleware_views import (ServerAllView,
     ServerDetailsView, ServerDatasourceAllView, ServerDeploymentAllView,
@@ -63,7 +63,8 @@ def _get_servers_page(provider=None, server_group=None):
         return navigate_to(MiddlewareServer, 'All')
 
 
-class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, UtilizationMixin):
+class MiddlewareServer(MiddlewareBase, Taggable, Container, Reportable,
+                       Navigatable, UtilizationMixin):
     """
     MiddlewareServer class provides actions and details on Server page.
     Class method available to get existing servers list
