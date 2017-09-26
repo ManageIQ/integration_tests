@@ -111,6 +111,9 @@ def template_name(image_link, image_ts, checksum_link, version=None):
         else:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
             return "miq-nightly-{}".format(result[0])
+
+    elif 'openshift' in image_link:
+        return 'cfme-{}-{}{}'.format(version, image_dt.strftime('%m'), image_dt.strftime('%d'))
     # z-stream
     else:
         pattern = re.compile(r'[.-](\d+(?:\d+)?)')
@@ -263,6 +266,8 @@ def browse_directory(dir_url):
     google_image_name = google_pattern.findall(string_from_url)
     ec2_pattern = re.compile(r'<a href="?\'?([^"\']*ec2[^"\'>]*)')
     ec2_image_name = ec2_pattern.findall(string_from_url)
+    openshift_pattern = re.compile(r'<a href="?\'?(openshift-pods/*)')
+    openshift_image_name = openshift_pattern.findall(string_from_url)
 
     if len(rhevm_image_name) is not 0:
         name_dict['template_upload_rhevm'] = rhevm_image_name[0]
@@ -276,6 +281,8 @@ def browse_directory(dir_url):
         name_dict['template_upload_gce'] = google_image_name[0]
     if len(ec2_image_name) is not 0:
         name_dict['template_upload_ec2'] = ec2_image_name[0]
+    if len(openshift_image_name) is not 0:
+        name_dict['template_upload_openshift'] = openshift_image_name[0]
 
     if not dir_url.endswith('/'):
         dir_url = dir_url + '/'
@@ -284,7 +291,13 @@ def browse_directory(dir_url):
         name_dict[key] = dir_url + val
 
     for key in name_dict.keys():
-        date = urlopen(name_dict[key]).info().getdate('last-modified')
+        if key == 'template_upload_openshift':
+            # this is necessary because headers don't contain last-modified date for folders
+            # todo: remove this along with refactoring script
+            url = name_dict[key] + 'cfme-template.yaml'
+        else:
+            url = name_dict[key]
+        date = urlopen(url).info().getdate('last-modified')
         name_dict[key + "_date"] = "%02d" % date[1] + "%02d" % date[2]
 
     return name_dict
@@ -340,6 +353,7 @@ def main():
         module = None
         if not provider_type:
             sys.exit('specify the provider_type')
+
         if provider_type == 'openstack':
             module = 'template_upload_rhos'
             if module not in dir_files.iterkeys():
@@ -364,6 +378,11 @@ def main():
             module = 'template_upload_ec2'
             if module not in dir_files.iterkeys():
                 continue
+        elif provider_type == 'openshift':
+            module = 'template_upload_openshift'
+            if module not in dir_files.iterkeys():
+                continue
+
         if not module:
             logger.error('Could not match module to given provider type')
             return 1
