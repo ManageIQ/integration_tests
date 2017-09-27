@@ -30,7 +30,6 @@ grid_pages = [CloudProvider,
               KeyPairCollection]
 
 # Dict values are kwargs for cfme.web_ui.match_location
-
 landing_pages = {
     'Clouds / Providers': {'controller': 'ems_cloud',
                            'title': 'Cloud Providers',
