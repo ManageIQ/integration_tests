@@ -4,7 +4,7 @@ import pytest
 
 import cfme.configure.access_control as ac
 from cfme import test_requirements
-from cfme.configure.access_control import Tenant
+from cfme.configure.access_control import TenantCollection
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.services.requests import RequestCollection
@@ -45,11 +45,16 @@ def set_group_cpu():
     group.remove_tag("Quota - Max CPUs *", "2")
 
 
+@pytest.fixture(scope=module)
+def roottenant(appliance):
+    tc = TenantCollection(appliance)
+    yield tc.get_root_tenant()
+
+
 @pytest.yield_fixture(scope="module")
-def set_tenant_cpu():
+def set_tenant_cpu(roottenant):
     cpu_data = {'cpu_cb': True, 'cpu': 2}
     reset_cpu_data = {'cpu_cb': False}
-    roottenant = Tenant.get_root_tenant()
     roottenant.set_quota(**cpu_data)
     yield
     roottenant.set_quota(**reset_cpu_data)
@@ -59,7 +64,6 @@ def set_tenant_cpu():
 def set_tenant_memory():
     memory_data = {'memory_cb': True, 'memory': 2}
     reset_memory_data = {'memory_cb': False}
-    roottenant = Tenant.get_root_tenant()
     roottenant.set_quota(**memory_data)
     yield
     roottenant.set_quota(**reset_memory_data)
@@ -69,7 +73,6 @@ def set_tenant_memory():
 def set_tenant_storage():
     storage_data = {'storage_cb': True, 'storage': 0.01}
     reset_storage_data = {'storage_cb': False}
-    roottenant = Tenant.get_root_tenant()
     roottenant.set_quota(**storage_data)
     yield
     roottenant.set_quota(**reset_storage_data)
@@ -79,7 +82,6 @@ def set_tenant_storage():
 def set_tenant_vm():
     vm_data = {'vm_cb': True, 'vm': 1}
     reset_vm_data = {'vm_cb': False}
-    roottenant = Tenant.get_root_tenant()
     roottenant.set_quota(**vm_data)
     yield
     roottenant.set_quota(**reset_vm_data)
