@@ -3,15 +3,13 @@ from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import Checkbox, TextInput, Text, View
-from widgetastic_manageiq import (
-    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
-    Table, Version, VersionPick)
 from widgetastic_patternfly import BootstrapSelect, Dropdown, FlashMessages, Tab
 
 from cfme.base.credential import Credential as BaseCredential
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.configure.configuration.region_settings import Category, Tag
+from cfme.utils import ParamClassName
 from cfme.utils import version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -19,6 +17,12 @@ from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
+from cfme.web_ui import (
+    Table
+)
+from widgetastic_manageiq import (
+    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
+    Version, VersionPick)
 
 
 class ConfigManagementToolbar(View):
@@ -235,6 +239,7 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     """
 
     pretty_attr = ['name', 'url']
+    _param_name = ParamClassName('name')
     type = None
     refresh_flash_msg = 'Refresh Provider initiated for 1 provider'
 

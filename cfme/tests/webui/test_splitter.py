@@ -1,8 +1,7 @@
-import pytest
 from xml.sax.saxutils import quoteattr, unescape
 
-from cfme.exceptions import CannotScrollException
-from cfme.base.ui import Server
+import pytest
+
 # from cfme.cloud.instance import Instance
 # from cfme.infrastructure.config_management import ConfigManager
 # from cfme.infrastructure.datastore import DatastoreCollection
@@ -11,15 +10,15 @@ from cfme.base.ui import Server
 # from cfme.intelligence.chargeback.rates import ComputeRate
 # from cfme.intelligence.reports.reports import CustomReport
 import cfme.fixtures.pytest_selenium as sel
-from cfme.services.myservice import MyService
-from cfme.optimize.utilization import Utilization
-from cfme.optimize.bottlenecks import Bottlenecks
+from cfme.base.ui import Server
+from cfme.exceptions import CannotScrollException
 from cfme.infrastructure.networking import InfraNetworking
-from cfme.utils.appliance import current_appliance
 from cfme.modeling.base import BaseCollection
+from cfme.optimize.bottlenecks import Bottlenecks
+from cfme.optimize.utilization import Utilization
+from cfme.services.myservice import MyService
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
-
 from widgetastic_manageiq import Splitter
 
 # LOCATIONS = [
@@ -38,8 +37,7 @@ LOCATIONS = [
 
 pytestmark = [
     pytest.mark.parametrize(
-        "location", LOCATIONS, ids=[
-            "{}-{}".format(loc[0].__name__, loc[1]) for loc in LOCATIONS]
+        "model_object,destination", LOCATIONS
     ),
 ]
 
@@ -52,24 +50,23 @@ pytestmark = [
 )
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
-def test_pull_splitter_persistence(request, location, appliance):
+def test_pull_splitter_persistence(request, appliance, model_object, destination):
     splitter = Splitter(parent=appliance.browser.widgetastic)
 
     request.addfinalizer(splitter.reset)
 
-    if location[0] == Server:
-        location = (current_appliance.server, location[1])
-    elif issubclass(location[0], BaseCollection):
-        location = (location[0](appliance), location[1])
-    navigate_to(*location)
+    if model_object == Server:
+        model_object = appliance.server
+    elif issubclass(model_object, BaseCollection):
+        model_object = model_object(appliance)
 
-    # TODO: When all WT is complete, use the view for this
-
+    navigate_to(model_object, destination)
+    # First we move splitter to hidden position by pulling it left twice
     splitter.pull_left()
     splitter.pull_left()
     navigate_to(appliance.server, 'Dashboard')
     try:
-        navigate_to(*location)
+        navigate_to(model_object, destination)
     except (TypeError, CannotScrollException):
         # this exception is expected here since
         # some navigation commands try to use accordion when it is hidden by splitter
@@ -83,8 +80,9 @@ def test_pull_splitter_persistence(request, location, appliance):
         # Pull splitter left
         splitter.pull_right()
         navigate_to(appliance.server, 'Dashboard')
-        navigate_to(*location)
+        navigate_to(model_object, destination)
         # Then check its position
-        if not sel.elements("//div[@id='left_div'][contains(@class, {})]"
-                .format(unescape(quoteattr(position)))):
+        if not sel.elements(
+                "//div[@id='left_div'][contains(@class, {})]".format(
+                    unescape(quoteattr(position)))):
             pytest.fail("Splitter did not persist when on " + str(position) + " position!")

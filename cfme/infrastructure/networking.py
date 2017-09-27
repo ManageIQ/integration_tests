@@ -9,6 +9,8 @@ from widgetastic_manageiq import PaginationPane, ItemsToolBarViewSelector, Text
 
 
 class InfraNetworking(Navigatable):
+    _param_name = 'InfraNetworking'
+
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance)
 

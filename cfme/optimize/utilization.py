@@ -4,6 +4,8 @@ from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class Utilization(Navigatable):
+    _param_name = 'Utilization'
+
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance)
 

@@ -7,6 +7,7 @@ from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab, CandidateNotFound
 
+from cfme.utils import ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
@@ -179,6 +180,7 @@ class AllCustomReportsView(CloudIntelReportsView):
 
 
 class CustomReport(Updateable, Navigatable):
+    _param_name = ParamClassName('title')
     _default_dict = {
         "menu_name": None,
         "title": None,
