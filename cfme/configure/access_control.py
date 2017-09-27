@@ -263,8 +263,8 @@ class User(Updateable, Pretty, Navigatable):
         return new_user
 
     def delete(self, cancel=True):
-        """
-        Delete existing user
+        """Delete existing user
+
         Args:
             cancel: Default value 'True', user will be deleted
                     'False' - deletion of user will be canceled
@@ -576,13 +576,14 @@ class Group(Updateable, Pretty, Navigatable):
 
     def create(self, cancel=False):
         """ Create group method
-            Args:
-                cancel: True - if you want to cancel group creation,
-                        by default group will be created
-            Throws:
-                RBACOperationBlocked: If operation is blocked due to current user
-                    not having appropriate permissions OR delete is not allowed
-                    for currently selected user
+
+        Args:
+            cancel: True - if you want to cancel group creation,
+                    by default group will be created
+        Throws:
+            RBACOperationBlocked: If operation is blocked due to current user
+                not having appropriate permissions OR delete is not allowed
+                for currently selected user
         """
         if self.appliance.version < "5.8":
             flash_blocked_msg = ("Description has already been taken")
@@ -1059,13 +1060,14 @@ class Role(Updateable, Pretty, Navigatable):
 
     def delete(self, cancel=True):
         """ Delete existing role
-            Args:
-                cancel: Default value 'True', role will be deleted
-                        'False' - deletion of role will be canceled
-            Throws:
-                RBACOperationBlocked: If operation is blocked due to current user
-                    not having appropriate permissions OR delete is not allowed
-                    for currently selected role
+
+        Args:
+            cancel: Default value 'True', role will be deleted
+                    'False' - deletion of role will be canceled
+        Throws:
+            RBACOperationBlocked: If operation is blocked due to current user
+                not having appropriate permissions OR delete is not allowed
+                for currently selected role
         """
         flash_blocked_msg = ("Role \"{}\": Error during delete: Cannot delete record "
                 "because of dependent entitlements".format(self.name))
