@@ -11,7 +11,7 @@ from cfme.exceptions import (
     VmOrInstanceNotFound, ItemNotFound, OptionNotAvailable, UnknownProviderType)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
+    AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Select, fill, flash,
     form_buttons, toolbar, PagedTable, SplitPagedTable, search, CheckboxTable,
     DriftGrid, BootstrapTreeview
 )
@@ -382,14 +382,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         sel.click(InfoBlock(*properties))
 
     @classmethod
-    def get_first_vm_title(cls, do_not_navigate=False, provider=None):
-        """Get the title of first VM/Instance."""
-        if not do_not_navigate:
-            if provider is None:
-                navigate_to(cls, 'All')
-            else:
-                provider.load_all_provider_vms()
-        return Quadicon.get_first_quad_title()
+    def get_first_vm(cls, provider):
+        """Get first VM/Instance."""
+        # todo: move this to base provider ?
+        view = navigate_to(cls, 'AllForProvider', provider=provider)
+        return view.entities.get_first_entity()
 
     @property
     def last_analysed(self):

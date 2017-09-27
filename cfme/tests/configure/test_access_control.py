@@ -518,13 +518,14 @@ def _test_vm_provision():
     vms.lcl_btn("Provision VMs")
 
 
-def _test_vm_power_on():
-    """Ensures power button is shown for a VM"""
-    logger.info("Checking for power button")
-    vm_name = vms.Vm.get_first_vm_title()
-    logger.debug("VM " + vm_name + " selected")
-    if not vms.is_pwr_option_visible(vm_name, option=vms.Vm.POWER_ON):
-        raise OptionNotAvailable("Power button does not exist")
+# this fixture is used in disabled tests. it should be updated along with tests
+# def _test_vm_power_on():
+#     """Ensures power button is shown for a VM"""
+#     logger.info("Checking for power button")
+#     vm_name = vms.Vm.get_first_vm()
+#     logger.debug("VM " + vm_name + " selected")
+#     if not vms.is_pwr_option_visible(vm_name, option=vms.Vm.POWER_ON):
+#         raise OptionNotAvailable("Power button does not exist")
 
 
 def _test_vm_removal():

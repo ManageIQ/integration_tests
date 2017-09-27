@@ -7,12 +7,13 @@ from wait_for import TimedOutError
 
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.host import Host
-from cfme.web_ui import Quadicon
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
+
 
 pytest_generate_tests = testgen.generate([OpenStackProvider],
                                          scope='module')
@@ -163,19 +164,23 @@ def test_delete_instance(new_instance):
     new_instance.wait_for_instance_state_change(OpenStackInstance.STATE_UNKNOWN)
 
     assert new_instance.name not in new_instance.provider.mgmt.list_vm()
-    navigate_to(new_instance, 'AllForProvider')
-    assert new_instance.name not in [q.name for q in Quadicon.all()]
+    view = navigate_to(new_instance, 'AllForProvider')
+    try:
+        view.entities.get_entity(new_instance.name, surf_pages=True)
+        assert False, "entity still exists"
+    except ItemNotFound:
+        pass
 
 
 def test_list_vms_infra_node(provider, soft_assert):
-    navigate_to(provider.infra_provider, 'ProviderNodes')
+    view = navigate_to(provider.infra_provider, 'ProviderNodes')
     # Match hypervisors by IP with count of running VMs
     hvisors = {hv.host_ip: hv.running_vms for hv in provider.mgmt.api.hypervisors.list()}
 
     # Skip non-compute nodes
-    quads = [q.name for q in Quadicon.all() if 'Compute' in q.name]
-    for quad in quads:
-        host = Host(quad, provider=provider.infra_provider)
+    host_names = [e for e in view.entities.all_entity_names if 'Compute' in e]
+    for host_name in host_names:
+        host = Host(host_name, provider=provider.infra_provider)
         host_ip = host.get_detail('Properties', 'IP Address')
         vms = int(host.get_detail('Relationships', 'VMs'))
         soft_assert(vms == hvisors[host_ip],

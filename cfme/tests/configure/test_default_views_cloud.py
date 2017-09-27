@@ -8,7 +8,7 @@ from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
 from cfme.configure.settings import DefaultView
-from cfme.web_ui import Quadicon, fill, toolbar as tb
+from cfme.web_ui import toolbar as tb
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
@@ -25,15 +25,6 @@ gtl_params = {
 
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
-
-
-def select_two_quads():
-    count = 0
-    for quad in Quadicon.all("cloud_prov", this_page=True):
-        count += 1
-        if count > 2:
-            break
-        fill(quad.checkbox(), True)
 
 
 def set_and_test_default_view(group_name, view, page):
@@ -66,9 +57,9 @@ def test_cloud_grid_defaultview(request, key):
 def set_and_test_view(group_name, view):
     old_default = DefaultView.get_default_view(group_name)
     DefaultView.set_default_view(group_name, view)
-    navigate_to(Instance, 'All')
-    select_two_quads()
-    tb.select('Configuration', 'Compare Selected items')
+    inst_view = navigate_to(Instance, 'All')
+    [e.check() for e in inst_view.entities.get_all()[:2]]
+    inst_view.toolbar.configuration.item_select('Compare Selected items')
     assert tb.is_active(view), "{} setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 

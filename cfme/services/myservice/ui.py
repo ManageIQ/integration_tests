@@ -1,17 +1,16 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
-from widgetastic_manageiq import Accordion, ManageIQTree, Calendar, SummaryTable
+from widgetastic_manageiq import (Accordion, ManageIQTree, Calendar, SummaryTable,
+                                  BaseNonInteractiveEntitiesView)
 from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, CandidateNotFound, Tab
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
-from cfme.fixtures import pytest_selenium as sel
 from cfme.services.myservice import MyService
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
 from cfme.utils.wait import wait_for
-from cfme.web_ui import Quadicon
 
 
 class MyServicesView(BaseLoggedInPage):
@@ -70,6 +69,7 @@ class MyServiceDetailsToolbar(View):
 class MyServiceDetailView(MyServicesView):
     title = Text("#explorer_title_text")
     toolbar = View.nested(MyServiceDetailsToolbar)
+    entities = View.nested(BaseNonInteractiveEntitiesView)
 
     @View.nested
     class details(Tab):  # noqa
@@ -253,9 +253,7 @@ def edit_tags(self, tag, value):
 @MyService.check_vm_add.external_implementation_for(ViaUI)
 def check_vm_add(self, add_vm_name):
     view = navigate_to(self, 'Details')
-    # TODO - replace Quadicon later
-    quadicon = Quadicon(add_vm_name, "vm")
-    sel.click(quadicon)
+    view.entities.get_entity(add_vm_name).click()
     view.flash.assert_no_error()
 
 

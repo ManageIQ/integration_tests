@@ -6,10 +6,9 @@ from cfme.cloud.instance.image import Image
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme.common.vm import VM
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar, Quadicon
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import TimedOutError
 
 pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=['remove_test'], scope="module")
@@ -21,21 +20,13 @@ pytestmark = [pytest.mark.tier(2),
 
 @pytest.fixture(scope="module")
 def set_grid():
-    navigate_to(Image, 'All')
-    toolbar.select('Grid View')
+    view = navigate_to(Image, 'All')
+    view.toolbar.view_selector.select('Grid View')
 
 
 def reset():
-    navigate_to(Image, 'All')
-    toolbar.select('List View')
-
-
-# TODO take generic object instead of stack when instance and image support navmazing destinations
-def refresh_and_wait(provider, stack):
-    provider.refresh_provider_relationships()
-    navigate_to(stack, 'All')
-    if not sel.is_displayed(Quadicon(stack.name, stack.quad_name)):
-        stack.wait_for_appear()
+    view = navigate_to(Image, 'All')
+    view.toolbar.view_selector.select('List View')
 
 
 def test_delete_instance_appear_after_refresh(setup_provider, provider):
@@ -74,7 +65,11 @@ def test_delete_stack_appear_after_refresh(setup_provider, provider, provisionin
         test_flag: delete_object
     """
     stack = Stack(provisioning['stacks'][0], provider=provider)
-    refresh_and_wait(provider, stack)
+    # wait for delete implemented in delete()
     stack.delete()
-    navigate_to(stack, 'All')
-    assert lambda: not sel.is_displayed(Quadicon(stack.name, stack.quad_name))
+    # refresh relationships is implemented in wait_for_exists()
+    try:
+        stack.wait_for_exists()
+    except TimedOutError:
+        pytest.fail("stack didn't appear after refresh")
+    request.addfinalizer(reset)

@@ -132,7 +132,7 @@ def test_scope_windows_registry_stuck(request, infra_provider):
     request.addfinalizer(lambda: profile.delete() if profile.exists else None)
     profile.create()
     # Now assign this malformed profile to a VM
-    vm = VM.factory(Vm.get_first_vm_title(provider=infra_provider), infra_provider)
+    vm = VM.factory(Vm.get_first_vm(provider=infra_provider).name, infra_provider)
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     navigate_to(Server, 'Dashboard')

@@ -3,7 +3,6 @@ from navmazing import NavigationDestinationNotFound
 
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import Quadicon
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.version import current_version
@@ -18,13 +17,12 @@ pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 @pytest.fixture(scope='module')
 def host_on(provider):
     try:
-        navigate_to(provider, 'ProviderNodes')
+        view = navigate_to(provider, 'ProviderNodes')
     except NavigationDestinationNotFound:
-        assert "Missing nodes in provider's details"
+        assert False, "Missing nodes in provider's details"
 
-    my_quads = list(Quadicon.all())
-    quad = my_quads[0]
-    my_host_on = Host(name=quad.name, provider=provider)
+    first_host = view.entities.get_first_entity()
+    my_host_on = Host(name=first_host.name, provider=provider)
 
     if my_host_on.get_power_state() == 'off':
         my_host_on.power_on()
@@ -35,13 +33,12 @@ def host_on(provider):
 @pytest.fixture(scope='module')
 def host_off(provider):
     try:
-        navigate_to(provider, 'ProviderNodes')
+        view = navigate_to(provider, 'ProviderNodes')
     except NavigationDestinationNotFound:
-        assert "Missing nodes in provider's details"
+        assert False, "Missing nodes in provider's details"
 
-    my_quads = list(Quadicon.all())
-    quad = my_quads[0]
-    my_host_off = Host(name=quad.name, provider=provider)
+    first_host = view.entities.get_first_entity()
+    my_host_off = Host(name=first_host.name, provider=provider)
 
     if my_host_off.get_power_state() == 'on':
         my_host_off.power_off()

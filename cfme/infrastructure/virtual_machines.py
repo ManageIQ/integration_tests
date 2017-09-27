@@ -31,7 +31,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.requests import RequestCollection
 from cfme.web_ui import (
-    CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, fill, flash, form_buttons,
+    CheckboxTree, Form, InfoBlock, Region, Tree, fill, flash, form_buttons,
     match_location, Table, toolbar, Calendar, Select, Input, CheckboxTable,
     summary_title, BootstrapTreeview, AngularSelect)
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -987,6 +987,7 @@ class Genealogy(object):
 # Multi-object functions
 #
 # todo: to check and probably remove this function. it might be better off refactoring whole file
+# todo: there will be an entity's method to apply some operation to a bunch of entities
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
     if isinstance(vm_names, basestring):
@@ -994,13 +995,16 @@ def _method_setup(vm_names, provider_crud=None):
 
     if provider_crud:
         provider_crud.load_all_provider_vms()
+        from cfme.utils.appliance import get_or_create_current_appliance
+        app = get_or_create_current_appliance()
+        view = app.browser.create_view(navigator.get_class(Vm, 'VMsOnly').VIEW)
     else:
-        navigate_to(Vm, 'VMsOnly')
-    from cfme.web_ui import paginator
-    if paginator.page_controls_exist():
-        paginator.results_per_page(1000)
+        view = navigate_to(Vm, 'VMsOnly')
+
+    if view.entities.paginator.exists:
+        view.entities.paginator.set_items_per_page(1000)
     for vm_name in vm_names:
-        sel.check(Quadicon(vm_name, 'vm').checkbox())
+        view.entities.get_entity(vm_name).check()
 
 
 def find_quadicon(vm_name):
@@ -1118,10 +1122,15 @@ def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
 
 
 def get_all_vms(do_not_navigate=False):
-    """Returns list of all vms"""
-    if not do_not_navigate:
-        navigate_to(Vm, 'VMsOnly')
-    return [q.name for q in Quadicon.all("vm")]
+    """Returns list of all vms on current page"""
+    if do_not_navigate:
+        from cfme.utils.appliance import get_or_create_current_appliance
+        app = get_or_create_current_appliance()
+        view = app.browser.create_view(navigator.get_class(Vm, 'VMsOnly').VIEW)
+    else:
+        view = navigate_to(Vm, 'VMsOnly')
+
+    return [entity.name for entity in view.entities.get_all()]
 
 
 def get_number_of_vms(do_not_navigate=False):
