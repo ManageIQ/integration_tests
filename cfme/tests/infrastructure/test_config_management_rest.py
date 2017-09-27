@@ -52,7 +52,7 @@ def authentications(appliance, config_manager):
             'manager_resource': {'href': prov.href}
         })
 
-    results = collection.action.create(*data)
+    collection.action.create(*data)
     assert_response(appliance)
 
     auths = []
@@ -60,21 +60,6 @@ def authentications(appliance, config_manager):
         search, __ = wait_for(lambda: collection.find_by(name=cred) or False, num_sec=300, delay=5)
         auths.append(search[0])
     assert len(auths) == auth_num
-
-    def _check_task(task):
-        # TODO: https://github.com/ManageIQ/manageiq-api-client-python/pull/24
-        # branch below can be removed once this PR is released
-        if isinstance(task, dict):
-            task = appliance.rest_api.get_entity('tasks', task['task_id'])
-        task.reload()
-        wait_for(
-            lambda: task.state.lower() == 'finished', fail_func=task.reload, num_sec=300, delay=5)
-
-    if isinstance(results, list):
-        for task in results:
-            _check_task(task)
-    else:
-        _check_task(results)
 
     yield auths
 
@@ -147,10 +132,7 @@ class TestAuthenticationsRESTAPI(object):
         for auth in authentications:
             auth.action.delete.POST()
             assert_response(appliance)
-
-            wait_for(
-                lambda: not appliance.rest_api.collections.authentications.find_by(name=auth.name),
-                num_sec=180, delay=5)
+            auth.wait_not_exists(num_sec=180, delay=5)
 
             # this will fail once BZ1476869 is fixed
             auth.action.delete.POST()
@@ -165,10 +147,7 @@ class TestAuthenticationsRESTAPI(object):
         for auth in authentications:
             auth.action.delete.DELETE()
             assert_response(appliance)
-
-            wait_for(
-                lambda: not appliance.rest_api.collections.authentications.find_by(name=auth.name),
-                num_sec=180, delay=5)
+            auth.wait_not_exists(num_sec=180, delay=5)
 
             # this will fail once BZ1476869 is fixed
             auth.action.delete.DELETE()
@@ -180,14 +159,11 @@ class TestAuthenticationsRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        auth_names = [auth.name for auth in authentications]
         appliance.rest_api.collections.authentications.action.delete.POST(*authentications)
         assert_response(appliance)
 
-        for name in auth_names:
-            wait_for(
-                lambda: not appliance.rest_api.collections.authentications.find_by(name=name),
-                num_sec=180, delay=5)
+        for auth in authentications:
+            auth.wait_not_exists(num_sec=180, delay=5)
 
         # this will fail once BZ1476869 is fixed
         appliance.rest_api.collections.authentications.action.delete.POST(*authentications)

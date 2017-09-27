@@ -112,7 +112,7 @@ class TestRESTSnapshots(object):
 
         del_action()
         assert_response(appliance)
-        wait_for(lambda: not vm.snapshots.find_by(name=snapshot.name), num_sec=300, delay=5)
+        snapshot.wait_not_exists(num_sec=300, delay=5)
 
         with error.expected('ActiveRecord::RecordNotFound'):
             del_action()
@@ -128,7 +128,7 @@ class TestRESTSnapshots(object):
 
         vm.snapshots.action.delete.POST(snapshot)
         assert_response(appliance)
-        wait_for(lambda: not vm.snapshots.find_by(name=snapshot.name), num_sec=300, delay=5)
+        snapshot.wait_not_exists(num_sec=300, delay=5)
 
         with error.expected('ActiveRecord::RecordNotFound'):
             vm.snapshots.action.delete.POST(snapshot)
@@ -144,16 +144,5 @@ class TestRESTSnapshots(object):
         """
         __, snapshot = vm_snapshot
 
-        task = snapshot.action.revert()
+        snapshot.action.revert()
         assert_response(appliance)
-        # TODO: https://github.com/ManageIQ/manageiq-api-client-python/pull/24
-        # branch below can be removed once this PR is released
-        if isinstance(task, dict):
-            task = appliance.rest_api.get_entity('tasks', task['task_id'])
-
-        def _revert_finished():
-            task.reload()
-            return task.state.lower() == 'finished'
-
-        wait_for(_revert_finished, num_sec=300, delay=5)
-        assert task.status.lower() == 'ok'
