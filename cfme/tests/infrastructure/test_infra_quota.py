@@ -45,7 +45,7 @@ def set_group_cpu():
     group.remove_tag("Quota - Max CPUs *", "2")
 
 
-@pytest.fixture(scope=module)
+@pytest.fixture(scope="module")
 def roottenant(appliance):
     tc = TenantCollection(appliance)
     yield tc.get_root_tenant()
@@ -61,7 +61,7 @@ def set_tenant_cpu(roottenant):
 
 
 @pytest.yield_fixture(scope="module")
-def set_tenant_memory():
+def set_tenant_memory(roottenant):
     memory_data = {'memory_cb': True, 'memory': 2}
     reset_memory_data = {'memory_cb': False}
     roottenant.set_quota(**memory_data)
@@ -70,7 +70,7 @@ def set_tenant_memory():
 
 
 @pytest.yield_fixture(scope="module")
-def set_tenant_storage():
+def set_tenant_storage(roottenant):
     storage_data = {'storage_cb': True, 'storage': 0.01}
     reset_storage_data = {'storage_cb': False}
     roottenant.set_quota(**storage_data)
@@ -79,7 +79,7 @@ def set_tenant_storage():
 
 
 @pytest.yield_fixture(scope="module")
-def set_tenant_vm():
+def set_tenant_vm(roottenant):
     vm_data = {'vm_cb': True, 'vm': 1}
     reset_vm_data = {'vm_cb': False}
     roottenant.set_quota(**vm_data)
