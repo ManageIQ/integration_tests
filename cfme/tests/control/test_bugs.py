@@ -150,7 +150,8 @@ def hardware_reconfigured_alert(alert_collection):
 
 
 @pytest.mark.meta(blockers=[1155284])
-def test_scope_windows_registry_stuck(request, infra_provider, policy_collection):
+def test_scope_windows_registry_stuck(request, infra_provider, policy_collection,
+        policy_profile_collection):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
     policy = policy_collection.create(
         VMCompliancePolicy,
@@ -285,18 +286,25 @@ def test_vmware_alarm_selection_does_not_fail(alert_collection):
     Metadata:
         test_flag: alerts
     """
+    alert_obj = alert_collection.instantiate(
+        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
+        active=True,
+        based_on="VM and Instance",
+        evaluate=("VMware Alarm", {}),
+        notification_frequency="5 Minutes"
+    )
     try:
-        alert = alert_collection.create(
+        alert_collection.create(
             "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
             active=True,
             based_on="VM and Instance",
             evaluate=("VMware Alarm", {}),
-            notification_frequency="5 Minutes",
+            notification_frequency="5 Minutes"
         )
     except CFMEExceptionOccured as e:
         pytest.fail("The CFME has thrown an error: {}".format(str(e)))
     except Exception as e:
-        view = alert.create_view(AlertDetailsView)
+        view = alert_obj.create_view(AlertDetailsView)
         view.flash.assert_message("At least one of E-mail, SNMP Trap, Timeline Event, or"
             " Management Event must be configured")
     else:
