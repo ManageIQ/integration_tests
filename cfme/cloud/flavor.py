@@ -12,7 +12,7 @@ from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, SummaryTable, Text, Table, PaginationPane, Accordion, ManageIQTree,
-    Search, BreadCrumb, BaseNonInteractiveEntitiesView)
+    Search, BreadCrumb)
 
 
 class FlavorView(BaseLoggedInPage):
