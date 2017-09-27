@@ -40,7 +40,7 @@ from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
     BootstrapSelect, Button, CheckableBootstrapTreeview,
     CandidateNotFound, Dropdown, Input, FlashMessages,
-    VerticalNavigation)
+    NavDropdown, VerticalNavigation)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
@@ -1580,6 +1580,33 @@ def PaginationPane(*args, **kwargs):  # noqa
         '5.9': JSPaginationPane(*args, **kwargs),
     })
     return verpick_obj.pick(parent.browser.product_version) if parent else verpick_obj
+
+
+class SSUIPaginator(Paginator):
+    """ Represents Paginator control for SSUI."""
+
+    PAGINATOR_CTL = './/ul[@class="pagination"]'
+    CUR_PAGE_CTL = './li[3]/span/..'
+    PAGE_BUTTON_CTL = './li[contains(@class, {})]/span'
+
+
+class SSUIPaginationPane(NonJSPaginationPane):
+    """ Represents Paginator Pane for SSUI."""
+
+    ROOT = '//div[@class="pagination-footer"]'
+
+    check_all_items = Checkbox(id='masterToggle')
+    sort_by = BootstrapSelect(id='sort_choice')
+    items_on_page = SSUIDropdown('items')
+    paginator = SSUIPaginator()
+
+    def set_items_per_page(self, value):
+        """Selects number of items to be displayed on page.
+
+        Args:
+            value: value like 5 items or 10 items.
+        """
+        self.items_on_page.item_select(value)
 
 
 class Stepper(View):
