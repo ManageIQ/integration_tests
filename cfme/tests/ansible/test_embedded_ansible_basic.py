@@ -5,7 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
 from cfme.ansible.credentials import CredentialsCollection
-from cfme.control.explorer.actions import Action
+from cfme.control.explorer.actions import ActionCollection
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -67,6 +67,11 @@ REPOSITORIES = [
 @pytest.fixture(scope="module")
 def wait_for_ansible(appliance):
     appliance.wait_for_embedded_ansible()
+
+
+@pytest.fixture(scope="module")
+def action_collection(appliance):
+    return appliance.get(ActionCollection)
 
 
 @pytest.yield_fixture(scope='module')
@@ -165,8 +170,8 @@ def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
 
 
 @pytest.mark.tier(2)
-def test_control_crud_ansible_playbook_action(request, catalog_item):
-    action = Action(
+def test_control_crud_ansible_playbook_action(request, catalog_item, action_collection):
+    action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values={
@@ -179,7 +184,6 @@ def test_control_crud_ansible_playbook_action(request, catalog_item):
             }
         }
     )
-    action.create()
     request.addfinalizer(action.delete_if_exists)
     with update(action):
         ipaddr = fauxfactory.gen_ipaddr()
@@ -198,8 +202,9 @@ def test_control_crud_ansible_playbook_action(request, catalog_item):
 
 
 @pytest.mark.tier(2)
-def test_control_add_ansible_playbook_action_invalid_address(request, catalog_item):
-    action = Action(
+def test_control_add_ansible_playbook_action_invalid_address(request, catalog_item,
+        action_collection):
+    action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values={
@@ -213,7 +218,6 @@ def test_control_add_ansible_playbook_action_invalid_address(request, catalog_it
             }
         }
     )
-    action.create()
     request.addfinalizer(action.delete_if_exists)
     assert action.exists
     view = navigate_to(action, "Edit")

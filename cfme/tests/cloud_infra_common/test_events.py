@@ -4,9 +4,9 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.control.explorer.policy_profiles import PolicyProfile
-from cfme.control.explorer.policies import VMControlPolicy
-from cfme.control.explorer.actions import Action
+from cfme.control.explorer.policy_profiles import PolicyProfileCollection
+from cfme.control.explorer.policies import PolicyCollection, VMControlPolicy
+from cfme.control.explorer.actions import ActionCollection
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for
@@ -36,7 +36,7 @@ def vm_crud(provider, setup_provider_modscope, small_template_modscope):
 
 @pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
-def test_vm_create(request, vm_crud, provider, register_event):
+def test_vm_create(request, appliance, vm_crud, provider, register_event):
     """ Test whether vm_create_complete event is emitted.
 
     Prerequisities:
@@ -52,23 +52,24 @@ def test_vm_create(request, vm_crud, provider, register_event):
     Metadata:
         test_flag: provision
     """
-    action = Action(
+    action = ActionCollection(appliance=appliance).create(
         fauxfactory.gen_alpha(),
         "Tag",
         dict(tag=("My Company Tags", "Environment", "Development")))
-    action.create()
     request.addfinalizer(action.delete)
 
-    policy = VMControlPolicy(fauxfactory.gen_alpha())
-    policy.create()
+    policy = PolicyCollection(appliance=appliance).create(
+        VMControlPolicy,
+        fauxfactory.gen_alpha()
+    )
     request.addfinalizer(policy.delete)
 
     policy.assign_events("VM Create Complete")
     request.addfinalizer(policy.assign_events)
     policy.assign_actions_to_event("VM Create Complete", action)
 
-    profile = PolicyProfile(fauxfactory.gen_alpha(), policies=[policy])
-    profile.create()
+    profile = PolicyProfileCollection(appliance=appliance).create(
+        fauxfactory.gen_alpha(), policies=[policy])
     request.addfinalizer(profile.delete)
 
     provider.assign_policy_profiles(profile.description)
