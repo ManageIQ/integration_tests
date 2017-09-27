@@ -66,6 +66,10 @@ setup(
             'infra = cfme.infrastructure.virtual_machines:Template',
             'cloud = cfme.cloud.instance.image:Image'
         ],
+        'manageiq.appliance_collections':
+        [
+            'datastore = cfme.infrastructure.datastore:DatastoreCollection'
+        ],
         'pytest11':
         [
             'cfme = cfme.test_framework.pytest_plugin',
