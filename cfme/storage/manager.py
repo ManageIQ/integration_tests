@@ -75,10 +75,10 @@ class ManagerView(BaseLoggedInPage):
 
     @property
     def in_manager(self):
-        nav = self.context['object'].nav.pick(self.context['object'].appliance.version)
+        nav_path = self.context['object'].nav.pick(self.context['object'].appliance.version)
         return(
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav)
+            self.navigation.currently_selected == nav_path)
 
 
 class ManagerAllView(ManagerView):
@@ -87,7 +87,7 @@ class ManagerAllView(ManagerView):
     def is_displayed(self):
         return (
             self.in_manager and
-            self.title.text in ('Storage Managers', self.context['object'].type))
+            self.title.text in ('Storage Managers', self.context['object'].manager_type))
 
     toolbar = View.nested(ManagerToolbar)
     entities = View.nested(ManagerEntities)
@@ -114,8 +114,8 @@ class ManagerTagsView(ManagerView):
     breadcrumb = BreadCrumb()
     select_tag = BootstrapSelect('tag_cat')
     select_value = BootstrapSelect('tag_add')
-    save_button = Button('Save')
-    reset_button = Button('Reset')
+    save = Button('Save')
+    reset = Button('Reset')
     cancel = Button('Cancel')
 
     @property
@@ -148,10 +148,10 @@ class BlockManagerCollection(BaseCollection):
         self.nav = VersionPick({
             Version.lowest(): ['Storage', 'Storage Providers'],
             '5.8': ['Storage', 'Block Storage', 'Managers']})
-        self.type = 'Block Storage Managers'
+        self.manager_type = 'Block Storage Managers'
 
     def instantiate(self, name, provider):
-        return Manager(self, name, provider)
+        return BaseManager(self, name, provider)
 
 
 class ObjectManagerCollection(BaseCollection):
@@ -162,19 +162,19 @@ class ObjectManagerCollection(BaseCollection):
         self.nav = VersionPick({
             Version.lowest(): ['Storage', 'Storage Providers'],
             '5.8': ['Storage', 'Object Storage', 'Managers']})
-        self.type = 'Object Storage Managers'
+        self.manager_type = 'Object Storage Managers'
 
     def instantiate(self, name, provider):
-        return Manager(self, name, provider)
+        return BaseManager(self, name, provider)
 
 
-class Manager(BaseEntity):
+class BaseManager(BaseEntity):
     """ Model of an storage manager in cfme
 
     Args:
+        collection: Instance of collection
         name: Name of the object manager.
-        provider: provider
-        appliance: appliance
+        provider: Provider
     """
 
     def __init__(self, collection, name, provider):
@@ -183,8 +183,8 @@ class Manager(BaseEntity):
         self.name = name
         self.provider = provider
         self.nav = self.collection.nav
-        self.type = self.collection.type
-        self.name_vari = VersionPick({Version.lowest(): 'Storage Provider',
+        self.manager_type = self.collection.manager_type
+        self.storage_title = VersionPick({Version.lowest(): 'Storage Provider',
                                   '5.8': 'Storage Manager'}).pick(self.appliance.version)
 
     def refresh(self, cancel=False):
@@ -194,17 +194,17 @@ class Manager(BaseEntity):
                                                handle_alert=not cancel)
 
         if not cancel:
-            msg = "Refresh Provider initiated for 1 {} from the CFME Database"\
-                .format(self.name_vari)
+            msg = "Refresh Provider initiated for 1 {} from the CFME Database".format(
+                self.storage_title)
             view.flash.assert_success_message(msg)
 
     def delete(self, wait=True):
         """Delete storage manager"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select(
-            'Remove this {}'.format(self.name_vari), handle_alert=True)
+            'Remove this {}'.format(self.storage_title), handle_alert=True)
 
-        msg = "Delete initiated for 1 {} from the CFME Database".format(self.name_vari)
+        msg = "Delete initiated for 1 {} from the CFME Database".format(self.storage_title)
         view.flash.assert_success_message(msg)
 
 
@@ -219,7 +219,7 @@ class ManagerAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select(*nav)
 
 
-@navigator.register(Manager, 'Details')
+@navigator.register(BaseManager, 'Details')
 class ManagerDetails(CFMENavigateStep):
     VIEW = ManagerDetailsView
     prerequisite = NavigateToAttribute('collection', 'All')
