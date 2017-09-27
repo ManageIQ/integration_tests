@@ -465,7 +465,7 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         self.datetime_in_tree = parsetime.from_american_with_utc(self.datetime).to_iso_with_utc()
 
     def navigate(self):
-        navigate_to(self, "Info")
+        navigate_to(self, "Details")
 
     @classmethod
     def new(cls, path):
