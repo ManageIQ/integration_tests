@@ -1,5 +1,7 @@
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import UpDownSelect, PaginationPane, SummaryFormItem, Table
+from widgetastic_manageiq import (
+    UpDownSelect, PaginationPane, SummaryFormItem, Table, BaseListEntity)
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
@@ -10,6 +12,7 @@ from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
 from cfme.exceptions import OptionNotAvailable, RBACOperationBlocked
 from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -1192,8 +1195,12 @@ class TenantForm(ConfigurationView):
     """ Tenant Form """
     name = Input(name='name')
     description = Input(name='description')
-
+    add_button = Button('Add')
     cancel_button = Button('Cancel')
+
+
+class ListEntity(BaseListEntity):
+    pass
 
 
 class TenantQuotaForm(View):
@@ -1228,6 +1235,7 @@ class TenantQuotaView(ConfigurationView):
 class AllTenantView(ConfigurationView):
     """ All Tenants View """
     toolbar = View.nested(AccessControlToolbar)
+    table = Table('//*[@id="fieldset"]/table')
 
     @property
     def is_displayed(self):
@@ -1237,9 +1245,9 @@ class AllTenantView(ConfigurationView):
         )
 
 
-class AddTenantView(TenantForm):
+class AddTenantView(View):
     """ Add Tenant View """
-    add_button = Button('Add')
+    form = View.nested(TenantForm)
 
     @property
     def is_displayed(self):
@@ -1252,6 +1260,10 @@ class AddTenantView(TenantForm):
 class DetailsTenantView(ConfigurationView):
     """ Details Tenant View """
     toolbar = View.nested(AccessControlToolbar)
+    name = Text('Name')
+    description = Text('Description')
+    parent = Text('Parent')
+    table = Table('//*[@id="fieldset"]/table')
 
     @property
     def is_displayed(self):
@@ -1271,20 +1283,24 @@ class ParentDetailsTenantView(DetailsTenantView):
         )
 
 
-class EditTenantView(TenantForm):
+class EditTenantView(View):
     """ Edit Tenant View """
+    form = View.nested(TenantForm)
     save_button = Button('Save')
     reset_button = Button('Reset')
 
     @property
     def is_displayed(self):
         return (
-            self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name)
+            self.form.accordions.accesscontrol.is_opened and
+            any([self.form.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name),
+                self.form.title.text == 'Editing Project "{}"'.format(self.context['object'].name)])
         )
+        # used any() because `project` inherits `tenant` and edit page can have any one in name
 
 
-class Tenant(Updateable, Pretty, Navigatable):
+@attr.s
+class Tenant(Updateable, BaseEntity):
     """ Class representing CFME tenants in the UI.
     * Kudos to mfalesni *
 
@@ -1296,95 +1312,10 @@ class Tenant(Updateable, Pretty, Navigatable):
         description: Description of the tenant
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
-    pretty_attrs = ["name", "description"]
-
-    @classmethod
-    def get_root_tenant(cls):
-        return cls(name="My Company", _default=True)
-
-    def __init__(self, name=None, description=None, parent_tenant=None, _default=False,
-                 appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.description = description
-        self.parent_tenant = parent_tenant
-        self._default = _default
-
-    @property
-    def parent_tenant(self):
-        if self._default:
-            return None
-        if self._parent_tenant:
-            return self._parent_tenant
-        return self.get_root_tenant()
-
-    @parent_tenant.setter
-    def parent_tenant(self, tenant):
-        if tenant is not None and isinstance(tenant, Project):
-            # If we try to
-            raise ValueError("Project cannot be a parent object.")
-        if isinstance(tenant, basestring):
-            # If parent tenant is passed as string,
-            # we assume that tenant name was passed instead of object
-            tenant = Tenant(tenant)
-        self._parent_tenant = tenant
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return False
-        else:
-            return self.name == other.name
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
-    @property
-    def tree_path(self):
-        if self._default:
-            return [self.name]
-        else:
-            return self.parent_tenant.tree_path + [self.name]
-
-    @property
-    def parent_path(self):
-        return self.tree_path[:-1]
-
-    def create(self, cancel=False):
-        """ Create role method
-
-        Args:
-            cancel: True - if you want to cancel role creation,
-                    by defaul(False), role will be created
-        """
-        if self._default:
-            raise ValueError("Cannot create the root tenant {}".format(self.name))
-
-        view = navigate_to(self, 'Add')
-        view.fill({'name': self.name,
-                   'description': self.description})
-        if cancel:
-            view.cancel_button.click()
-            tenant_flash_message = 'Add of new Tenant was cancelled by the user'
-            project_flash_message = 'Add of new Project was cancelled by the user'
-        else:
-            view.add_button.click()
-            tenant_flash_message = 'Tenant "{}" was saved'.format(self.name)
-            project_flash_message = 'Project "{}" was saved'.format(self.name)
-        view = self.create_view(ParentDetailsTenantView)
-        if isinstance(self, Tenant):
-            view.flash.assert_success_message(tenant_flash_message)
-        elif isinstance(self, Project):
-            view.flash.assert_success_message(project_flash_message)
-        else:
-            raise TypeError(
-                'No Tenant or Project class passed to create method{}'.format(
-                    type(self).__name__))
-        assert view.is_displayed
+    name = attr.ib()
+    description = attr.ib(default="")
+    parent_tenant = attr.ib(default=None)
+    _default = attr.ib(default=False)
 
     def update(self, updates):
         """ Update tenant/project method
@@ -1395,8 +1326,8 @@ class Tenant(Updateable, Pretty, Navigatable):
         Note: In case updates is the same as original tenant/project data, update will be canceled,
             as 'Save' button will not be active
         """
-        view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
+        view = navigate_to(self, 'Edit', wait_for_view=True)
+        changed = view.form.fill(updates)
         if changed:
             view.save_button.click()
             flash_message = 'Project "{}" was saved'.format(updates.get('name', self.name))
@@ -1406,7 +1337,6 @@ class Tenant(Updateable, Pretty, Navigatable):
                 updates.get('name', self.name))
         view = self.create_view(DetailsTenantView, override=updates)
         view.flash.assert_message(flash_message)
-        assert view.is_displayed
 
     def delete(self, cancel=True):
         """ Delete existing role
@@ -1445,8 +1375,75 @@ class Tenant(Updateable, Pretty, Navigatable):
         view.flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
         assert view.is_displayed
 
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        else:
+            return self.tree_path == other.tree_path
 
-@navigator.register(Tenant, 'All')
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
+
+    @property
+    def tree_path(self):
+        if self._default:
+            return [self.name]
+        else:
+            return self.parent_tenant.tree_path + [self.name]
+
+    @property
+    def parent_path(self):
+        return self.parent_tenant.tree_path
+
+
+@attr.s
+class TenantCollection(BaseCollection):
+    """Collection class for Tenant"""
+    ENTITY = Tenant
+
+    def get_root_tenant(self):
+        return self.instantiate(str(self.appliance.rest_api.collections.tenants[0].name),
+                                default=True)
+
+    def create(self, name, description, parent):
+
+        tenant = self.instantiate(name, description, parent)
+
+        view = navigate_to(tenant.parent_tenant, 'Details')
+        view.toolbar.configuration.item_select('Add child Tenant to this Tenant')
+
+        view = self.create_view(AddTenantView)
+        changed = view.form.fill({'name': name,
+                   'description': description})
+        if changed:
+            view.form.add_button.click()
+        else:
+            view.form.cancel_button.click()
+
+        view = self.create_view(ParentDetailsTenantView)
+        view.flash.assert_success_message('Tenant "{}" was saved'.format(name))
+
+        return tenant
+
+    def delete(self, *tenants):
+
+        view = navigate_to(self, 'All')
+
+        for tenant in tenants:
+            try:
+                view.table.row(name=tenant.name).check()
+            except Exception:
+                logger.exception('Failed to check element "%s"', tenant.name)
+        else:
+            view.toolbar.configuration.item_select('Delete selected items', handle_alert=True)
+
+
+@navigator.register(TenantCollection, 'All')
 class TenantAll(CFMENavigateStep):
     VIEW = AllTenantView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
@@ -1459,30 +1456,11 @@ class TenantAll(CFMENavigateStep):
 @navigator.register(Tenant, 'Details')
 class TenantDetails(CFMENavigateStep):
     VIEW = DetailsTenantView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
             self.obj.appliance.server_region_string(), 'Tenants', *self.obj.tree_path)
-
-
-@navigator.register(Tenant, 'Add')
-class TenantAdd(CFMENavigateStep):
-    VIEW = AddTenantView
-
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        self.prerequisite_view.accordions.accesscontrol.tree.click_path(
-            self.obj.appliance.server_region_string(), 'Tenants', *self.obj.parent_path)
-        if isinstance(self.obj, Tenant):
-            add_selector = 'Add child Tenant to this Tenant'
-        elif isinstance(self.obj, Project):
-            add_selector = 'Add Project to this Tenant'
-        else:
-            raise OptionNotAvailable('Object type unsupported for Tenant Add: {}'
-                                     .format(type(self.obj).__name__))
-        self.prerequisite_view.toolbar.configuration.item_select(add_selector)
 
 
 @navigator.register(Tenant, 'Edit')
@@ -1521,6 +1499,39 @@ class Project(Tenant):
         parent_tenant: Parent project, can be None, can be passed as string or object
     """
     pass
+
+
+class ProjectCollection(TenantCollection):
+    """Collection class for Projects under Tenants"""
+
+    ENTITY = Project
+
+    def get_root_tenant(self):
+        # returning Tenant directly because 'My Company' needs to be treated like Tenant object,
+        # to be able to make child tenant/project under it
+        return self.appliance.collections.tenants.instantiate(
+            name=str(self.appliance.rest_api.collections.tenants[0].name), default=True)
+
+    def create(self, name, description, parent):
+        project = self.instantiate(name, description, parent)
+
+        view = navigate_to(project.parent_tenant, 'Details')
+        view.toolbar.configuration.item_select('Add Project to this Tenant')
+
+        view = self.create_view(AddTenantView)
+        changed = view.form.fill({'name': name,
+                   'description': description})
+        if changed:
+            view.form.add_button.click()
+        else:
+            view.form.cancel_button.click()
+
+        view = self.create_view(ParentDetailsTenantView)
+        view.flash.assert_success_message('Project "{}" was saved'.format(name))
+
+        return project
+
+
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # END PROJECT METHODS
 ####################################################################################################
