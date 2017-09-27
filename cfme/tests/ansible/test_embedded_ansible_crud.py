@@ -12,7 +12,6 @@ def enabled_embedded_appliance(temp_appliance_preconfig):
     return temp_appliance_preconfig
 
 
-@pytest.mark.smoke
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.uncollectif(lambda: current_version() < "5.8")
 def test_embedded_ansible_enable(enabled_embedded_appliance):
