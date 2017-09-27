@@ -30,6 +30,7 @@ grid_pages = [CloudProvider,
               KeyPairCollection]
 
 # Dict values are kwargs for cfme.web_ui.match_location
+
 landing_pages = {
     'Clouds / Providers': {'controller': 'ems_cloud',
                            'title': 'Cloud Providers',
@@ -151,17 +152,20 @@ def test_cloud_list_page_per_item(request, page, set_list, appliance):
 
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
 def test_cloud_start_page(request, appliance, start_page):
+    # TODO: Need to dynamically fetch this value and move this test case to common.
     """ Tests start page
 
     Metadata:
         test_flag: visuals
     """
+    start = "" if appliance.version < '5.8' else "Compute / "
+    start_page = "{}{}".format(start, start_page)
     request.addfinalizer(set_default_page)
     visual.login_page = start_page
     appliance.server.logout()
     appliance.server.login_admin()
-    match_args = landing_pages[start_page]
-    assert match_location(**match_args), "Landing Page Failed"
+    logged_in_page = navigate_to(appliance.server, 'LoggedIn')
+    assert logged_in_page.is_displayed
 
 
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):
