@@ -53,7 +53,7 @@ def test_zone_add_cancel_validation():
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request, appliance):
     """ Tests that an appliance can be changed to another Zone """
-    zc = current_appliance.get(ZoneCollection)
+    zc = appliance.get(ZoneCollection)
     # CREATE
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -63,15 +63,15 @@ def test_zone_change_appliance_zone(request, appliance):
 
     @request.addfinalizer
     def _return_zone_back():
-        current_appliance.server.zone = current_appliance.default_zone
+        appliance.server.zone = appliance.default_zone
 
     server_settings = appliance.server.settings
     request.addfinalizer(lambda: server_settings.update_basic_information(
         {'appliance_zone': "default"}))
-    server_settings.appliance.server.zone = zone
+    appliance.server.zone = zone
     server_settings.update_basic_information({'appliance_zone': zone.name})
-    assert zone.description == server_settings.appliance.zone_description
-    server_settings.appliance.server.zone = server_settings.appliance.default_zone
+    assert zone.description == appliance.zone_description
+    appliance.server.zone = appliance.default_zone
 
 
 @pytest.mark.tier(2)

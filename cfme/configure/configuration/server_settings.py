@@ -167,9 +167,7 @@ class ServerInformation(Updateable, Pretty, Navigatable):
             decryption: url description
     """
     CONSOLE_TYPES = ('VNC', 'VMware VMRC Plugin', 'VMware WebMKS')
-
-    basic_information = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone', 'locale']
-    server_roles = ('embedded_ansible', 'ems_metrics_coordinator', 'ems_operations',
+    SERVER_ROLES = ('embedded_ansible', 'ems_metrics_coordinator', 'ems_operations',
                     'ems_metrics_collector', 'reporting', 'ems_metrics_processor', 'scheduler',
                     'smartproxy', 'database_operations', 'smartstate', 'event', 'user_interface',
                     'web_services', 'ems_inventory', 'notifier', 'automate',
@@ -177,35 +175,27 @@ class ServerInformation(Updateable, Pretty, Navigatable):
                     'storage_metrics_processor', 'storage_metrics_collector',
                     'storage_metrics_coordinator', 'storage_inventory', 'vmdb_storage_bridge',
                     'cockpit_ws')
-    vmware_console = ['console_type']
-    ntp_servers = ['ntp_server_1', 'ntp_server_2', 'ntp_server_3']
-    smtp_server = ['host', 'port', 'domain', 'start_tls', 'ssl_verify', 'auth', 'username',
+
+    _basic_information = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone', 'locale']
+    _vmware_console = ['console_type']
+    _ntp_servers = ['ntp_server_1', 'ntp_server_2', 'ntp_server_3']
+    _smtp_server = ['host', 'port', 'domain', 'start_tls', 'ssl_verify', 'auth', 'username',
                    'password', 'from_email', 'to_email']
-    web_services = ['mode', 'security']
-    logging = ['log_level']
-    custom_support_url = ['url', 'description']
+    _web_services = ['mode', 'security']
+    _logging = ['log_level']
+    _custom_support_url = ['url', 'description']
 
     pretty_attrs = ['appliance']
 
-    def __init__(self, appliance, **kwargs):
+    def __init__(self, appliance):
         self.appliance = appliance
-        full_form = (self.basic_information + list(self.server_roles) + self.vmware_console +
-                     self.ntp_servers + self.smtp_server + self.web_services + self.logging +
-                     self.custom_support_url)
+        full_form = (self._basic_information + list(self.SERVER_ROLES) + self._vmware_console +
+                     self._ntp_servers + self._smtp_server + self._web_services + self._logging +
+                     self._custom_support_url)
         for att in full_form:
-            setattr(self, att, None)
-        for name, value in kwargs.items():
-            if name == 'console_type':
-                if name not in self.CONSOLE_TYPES:
-                    raise ConsoleTypeNotSupported(value)
-                if self.appliance.version < '5.8':
-                    raise ConsoleNotSupported(
-                        product_name=self.appliance.product_name,
-                        version=self.appliance.version
-                    )
             # embedded_ansible available from 5.8 version
-            elif name != 'embedded_ansible' and self.appliance.version > '5.7':
-                setattr(self, name, value)
+            if att != 'embedded_ansible' and self.appliance.version > '5.7':
+                setattr(self, att, None)
 
 
 # ============================= Basic Information Form =================================
@@ -224,7 +214,7 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         self._save_action(view, updates, reset)
 
     @property
-    def basic_info(self):
+    def basic_information_form(self):
         view = navigate_to(self, 'Details')
         return view.basic_information.read()
 
@@ -239,6 +229,15 @@ class ServerInformation(Updateable, Pretty, Navigatable):
 
         """
         view = navigate_to(self, 'Details')
+        for name, value in updates.items():
+            if name == 'console_type':
+                if name not in self.CONSOLE_TYPES:
+                    raise ConsoleTypeNotSupported(value)
+                if self.appliance.version < '5.8':
+                    raise ConsoleNotSupported(
+                        product_name=self.appliance.product_name,
+                        version=self.appliance.version
+                    )
         view.vmware_console.fill(updates)
         self._save_action(view, updates, reset)
 
@@ -265,6 +264,11 @@ class ServerInformation(Updateable, Pretty, Navigatable):
     def ntp_servers_form(self):
         view = navigate_to(self, 'Details')
         return view.ntp_servers.read()
+
+    @property
+    def ntp_servers_fields_keys(self):
+        return self._ntp_servers
+
 
 # ============================= SMTP Server Form =================================
 

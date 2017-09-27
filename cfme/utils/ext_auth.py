@@ -35,18 +35,17 @@ def setup_external_auth_ipa(**data):
         'password': credentials['host_default']['password'],
         'hostname': data['ipaserver'],
     }
-    current_appliance = get_or_create_current_appliance()
     appliance_name = 'cfmeappliance{}'.format(fauxfactory.gen_alpha(7).lower())
-    appliance_address = current_appliance.address
+    appliance_address = appliance.current_appliance.address
     appliance_fqdn = '{}.{}'.format(appliance_name, data['iparealm'].lower())
     with SSHClient(**connect_kwargs) as ipaserver_ssh:
         ipaserver_ssh.run_command('cp /etc/hosts /etc/hosts_bak')
         ipaserver_ssh.run_command("sed -i -r '/^{}/d' /etc/hosts".format(appliance_address))
         command = 'echo "{}\t{}" >> /etc/hosts'.format(appliance_address, appliance_fqdn)
         ipaserver_ssh.run_command(command)
-    with current_appliance.ssh_client as ssh:
+    with appliance.current_appliance.ssh_client as ssh:
         result = ssh.run_command('appliance_console_cli --host {}'.format(appliance_fqdn)).success
-        if not current_appliance.is_pod:
+        if not appliance.current_appliance.is_pod:
             assert result
         else:
             # appliance_console_cli fails when calls hostnamectl --host. it seems docker issue

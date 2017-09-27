@@ -2,6 +2,7 @@ from functools import partial
 
 from cfme import test_requirements
 from datetime import datetime, timedelta
+from cfme.utils.appliance import current_appliance
 from cfme.utils.browser import quit
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
@@ -11,8 +12,9 @@ import pytest
 
 
 pytestmark = [test_requirements.configuration]
-ntp_servers_keys = ['ntp_server_1', 'ntp_server_2', 'ntp_server_3']
+ntp_servers_keys = current_appliance.server.settings.ntp_servers_fields_keys
 empty_ntp_dict = {field_key: '' for field_key in ntp_servers_keys}
+
 
 def appliance_date(appliance):
     status, msg = appliance.ssh_client.run_command("date --iso-8601=hours")
@@ -114,7 +116,7 @@ def test_ntp_server_check(request, appliance):
         appliance.wait_for_web_ui(timeout=1200)
         # Incase if ntpd service is stopped
         appliance.ssh_client.run_command("service chronyd restart")
-        # Providing two hour runtime for the test run to avoid day chanadding problem
+        # Providing two hour runtime for the test run to avoid day changing problem
         # (in case if the is triggerred in the midnight)
         wait_for(
             lambda: (orig_date - appliance_date(appliance)).total_seconds() <= 7200, num_sec=300)
