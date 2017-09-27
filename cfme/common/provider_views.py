@@ -332,7 +332,6 @@ class ProviderAddView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
     name = Input('name')
     prov_type = BootstrapSelect(id='emstype')
-    keystone_v3_domain_id = Input('keystone_v3_domain_id')  # OpenStack only
     zone = Input('zone')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -374,6 +373,7 @@ class CloudProviderAddView(ProviderAddView):
     project_id = Input('project')  # only for Azure
     # bug in cfme this field has different ids for cloud and infra add views
     api_version = BootstrapSelect(id='ems_api_version')  # only for OpenStack
+    keystone_v3_domain_id = Input('keystone_v3_domain_id')  # OpenStack only
     infra_provider = BootstrapSelect(id='ems_infra_provider_id')  # OpenStack only
     tenant_mapping = Checkbox(name='tenant_mapping_enabled')  # OpenStack only
 

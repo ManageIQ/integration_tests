@@ -21,13 +21,16 @@ class OpenStackProvider(CloudProvider):
     _ctrl_alt_del_xpath = '//*[@id="sendCtrlAltDelButton"]'
 
     def __init__(self, name=None, endpoints=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
-                 tenant_mapping=None, infra_provider=None, appliance=None):
+                 ip_address=None, api_port=None, api_version=None, sec_protocol=None,
+                 amqp_sec_protocol=None, keystone_v3_domain_id=None, tenant_mapping=None,
+                 infra_provider=None, appliance=None):
         super(OpenStackProvider, self).__init__(name=name, endpoints=endpoints,
                                                 zone=zone, key=key, appliance=appliance)
         self.hostname = hostname
         self.ip_address = ip_address
         self.api_port = api_port
+        self.api_version = api_version
+        self.keystone_v3_domain_id = keystone_v3_domain_id
         self.infra_provider = infra_provider
         self.sec_protocol = sec_protocol
         self.tenant_mapping = tenant_mapping
@@ -59,6 +62,8 @@ class OpenStackProvider(CloudProvider):
             'region': None,
             'infra_provider': infra_provider_name,
             'tenant_mapping': getattr(self, 'tenant_mapping', None),
+            'api_version': self.api_version,
+            'keystone_v3_domain_id': self.keystone_v3_domain_id
         }
 
     def deployment_helper(self, deploy_args):
@@ -79,13 +84,20 @@ class OpenStackProvider(CloudProvider):
         from cfme.utils.providers import get_crud
         infra_prov_key = prov_config.get('infra_provider_key')
         infra_provider = get_crud(infra_prov_key, appliance=appliance) if infra_prov_key else None
+        api_version = prov_config.get('api_version', None)
+
+        if not api_version:
+            api_version = 'Keystone v2'
+
         return cls(name=prov_config['name'],
                    hostname=prov_config['hostname'],
                    ip_address=prov_config['ipaddress'],
                    api_port=prov_config['port'],
+                   api_version=api_version,
                    endpoints=endpoints,
                    zone=prov_config['server_zone'],
                    key=prov_key,
+                   keystone_v3_domain_id=prov_config.get('domain_id', None),
                    sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
                    tenant_mapping=prov_config.get('tenant_mapping', False),
                    infra_provider=infra_provider,
