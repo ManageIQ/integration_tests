@@ -5,7 +5,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure.settings import visual
-from cfme.intelligence.reports.reports import CannedSavedReport
+from cfme.intelligence.reports.reports import CannedSavedReport, CannedReportView
 from cfme.web_ui import toolbar as tb
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.provider import InfraProvider
