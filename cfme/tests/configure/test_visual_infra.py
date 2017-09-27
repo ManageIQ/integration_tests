@@ -228,16 +228,23 @@ def test_host_noquads(request, set_host_quad):
 
 def test_datastore_noquads(request, set_datastore_quad, appliance):
     dc = DatastoreCollection(appliance)
-    navigate_to(dc, 'All')
-    assert visual.check_image_exists, "Image View Failed!"
+    view = navigate_to(dc, 'All')
+    view.toolbar.view_selector.select("Grid View")
+    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
+    assert view.entities.get_first_entity().data is None
+    # assert visual.check_image_exists, "Image View Failed!"
 
 
 def test_vm_noquads(request, set_vm_quad):
-    navigate_to(vms.Vm, 'All')
-    assert visual.check_image_exists, "Image View Failed!"
+    view = navigate_to(vms.Vm, 'All')
+    view.toolbar.view_selector.select("Grid View")
+    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
+    assert view.entities.get_first_entity().data is None
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
 def test_template_noquads(request, set_template_quad):
-    navigate_to(vms.Template, 'TemplatesOnly')
-    assert visual.check_image_exists, "Image View Failed!"
+    view = navigate_to(vms.Template, 'TemplatesOnly')
+    view.toolbar.view_selector.select("Grid View")
+    # Here get_first_entity() method will return None when the Quadrants option is deactivated.
+    assert view.entities.get_first_entity().data is None

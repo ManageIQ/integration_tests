@@ -3,10 +3,18 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View, Text
 from cfme.exceptions import ItemNotFound
-from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                  BaseEntitiesView)
+from widgetastic_manageiq import (ManageIQTree,
+                                  SummaryTable,
+                                  ItemsToolBarViewSelector,
+                                  BaseEntitiesView,
+                                  NonJSBaseEntity,
+                                  BaseListEntity,
+                                  BaseQuadIconEntity,
+                                  BaseTileIconEntity,
+                                  JSBaseEntity)
+from widgetastic.widget import ParametrizedView
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
-
+from widgetastic.utils import Version, VersionPick
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.common.host_views import HostsView
@@ -41,11 +49,42 @@ class DatastoreSideBar(View):
         tree = ManageIQTree()
 
 
+class DatastoreQuadIconEntity(BaseQuadIconEntity):
+    @property
+    def data(self):
+        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="a"))
+
+
+class DatastoreTileIconEntity(BaseTileIconEntity):
+    quad_icon = ParametrizedView.nested(DatastoreQuadIconEntity)
+
+
+class DatastoreListEntity(BaseListEntity):
+    pass
+
+
+class NonJSDatastoreEntity(NonJSBaseEntity):
+    quad_entity = DatastoreQuadIconEntity
+    list_entity = DatastoreListEntity
+    tile_entity = DatastoreTileIconEntity
+
+
+def DatastoreEntity():  # noqa
+    """Temporary wrapper for Datastore Entity during transition to JS based Entity """
+    return VersionPick({
+        Version.lowest(): NonJSDatastoreEntity,
+        '5.9': JSBaseEntity,
+    })
+
+
 class DatastoreEntities(BaseEntitiesView):
     """
     represents central view where all QuadIcons, etc are displayed
     """
-    pass
+
+    @property
+    def entity_class(self):
+        return DatastoreEntity().pick(self.browser.product_version)
 
 
 class DatastoresView(BaseLoggedInPage):
