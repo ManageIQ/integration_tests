@@ -10,7 +10,6 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestCollection
-from cfme.web_ui import flash
 from cfme.utils import testgen
 from cfme.utils.log import logger
 from cfme.utils import version
@@ -64,7 +63,6 @@ def create_vm(appliance, provider, setup_provider, catalog_item, request):
     catalog_item.create()
     service_catalogs = ServiceCatalogs(catalog_item.name)
     service_catalogs.order()
-    flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     request_description = catalog_item.name
     request_row = RequestCollection(appliance).instantiate(request_description, partial_check=True)

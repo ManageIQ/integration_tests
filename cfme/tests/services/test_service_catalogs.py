@@ -8,7 +8,6 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestCollection
-from cfme.web_ui import flash
 from cfme import test_requirements
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for_decorator
@@ -135,8 +134,6 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
     catalog_item.create()
     provider.delete(cancel=False)
     catalog_item.update({'description': 'my edited description'})
-    flash.assert_success_message('Service Catalog Item "{}" was saved'.format(
-                                 catalog_item.name))
 
 
 @pytest.mark.tier(3)

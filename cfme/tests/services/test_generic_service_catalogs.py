@@ -8,7 +8,6 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.requests import RequestCollection
-from cfme.web_ui import flash
 from cfme import test_requirements
 from selenium.common.exceptions import NoSuchElementException
 from cfme.utils import error
@@ -76,7 +75,6 @@ def test_service_generic_catalog_bundle(appliance, catalog_item):
     catalog_bundle.create()
     service_catalogs = ServiceCatalogs(catalog_item.catalog, bundle_name)
     service_catalogs.order()
-    flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     request_description = bundle_name
     provision_request = RequestCollection(appliance).instantiate(request_description,
@@ -103,7 +101,6 @@ def test_bundles_in_bundle(appliance, catalog_item):
     third_catalog_bundle.create()
     service_catalogs = ServiceCatalogs(third_catalog_bundle.catalog, third_bundle_name)
     service_catalogs.order()
-    flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     request_description = third_bundle_name
     provision_request = RequestCollection(appliance).instantiate(request_description,

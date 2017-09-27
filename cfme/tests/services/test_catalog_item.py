@@ -7,7 +7,6 @@ from selenium.common.exceptions import NoSuchElementException
 import cfme.tests.configure.test_access_control as tac
 from cfme import test_requirements
 from cfme.services.catalogs.catalog_item import CatalogItem, CatalogBundle
-from cfme.web_ui import flash
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
@@ -74,7 +73,6 @@ def check_catalog_visibility(request, user_restricted, tag):
 
 def test_create_catalog_item(catalog_item):
     catalog_item.create()
-    flash.assert_success_message('Service Catalog Item "{}" was added'.format(catalog_item.name))
 
 
 def test_update_catalog_item(catalog_item):

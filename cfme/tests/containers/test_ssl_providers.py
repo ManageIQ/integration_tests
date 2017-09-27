@@ -6,7 +6,6 @@ import pytest
 
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import FlashMessageException
-from cfme.web_ui import flash
 from cfme.utils import testgen
 from cfme.utils.version import current_version
 
@@ -90,7 +89,6 @@ def test_add_provider_ssl(provider, default_sec_protocol, soft_assert):
     new_provider.endpoints['default'].sec_protocol = default_sec_protocol
     try:
         new_provider.setup()
-        flash.assert_message_contain('Containers Providers "' + provider.name + '" was saved')
     except FlashMessageException:
         soft_assert(False, provider.name + ' wasn\'t added successfully using ' +
                     default_sec_protocol + ' security protocol')

@@ -5,7 +5,6 @@ from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.services.requests import RequestCollection
-from cfme.web_ui import flash
 from cfme import test_requirements
 
 from cfme.utils.generators import random_vm_name
@@ -46,7 +45,6 @@ def test_vm_migrate(appliance, new_vm, provider):
     vm_host = new_vm.get_detail(properties=('Relationships', 'Host'))
     migrate_to = [vds.name for vds in provider.hosts if vds.name not in vm_host][0]
     new_vm.migrate_vm("email@xyz.com", "first", "last", host_name=migrate_to)
-    flash.assert_no_errors()
     request_description = new_vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
     migrate_request = RequestCollection(appliance).instantiate(request_description,
