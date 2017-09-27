@@ -5,7 +5,6 @@ from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.utils import testgen, error
 from cfme.utils.update import update
-from cfme.web_ui import mixins
 from cfme import test_requirements
 from cfme.utils.appliance.implementations.ui import navigate_to
 

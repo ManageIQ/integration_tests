@@ -9,6 +9,7 @@ def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['cap_and_util'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
+
 pytestmark = [test_requirements.tag]
 
 
