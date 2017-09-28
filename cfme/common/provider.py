@@ -953,10 +953,6 @@ class DefaultEndpoint(object):
                 pass
             setattr(self, key, val)
 
-        if not hasattr(self, 'credentials'):
-            logger.warn("credentials weren't passed "
-                        "for endpoint {}".format(self.__class__.__name__))
-
     @property
     def view_value_mapping(self):
         return {'hostname': self.hostname}
