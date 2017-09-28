@@ -12,6 +12,7 @@ from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
 from cfme.cloud.tenant import TenantCollection
 from cfme.web_ui import toolbar as tb
+from cfme.base.ui import BaseLoggedInPage
 from cfme.utils.appliance import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -163,8 +164,8 @@ def test_cloud_start_page(request, appliance, start_page):
     visual.login_page = start_page
     appliance.server.logout()
     appliance.server.login_admin()
-    logged_in_page = navigate_to(appliance.server, 'LoggedIn')
-    assert logged_in_page.is_displayed
+    landing_view = appliance.browser.create_view(BaseLoggedInPage)
+    assert landing_view.is_displayed
 
 
 def test_cloudprovider_noquads(request, set_cloud_provider_quad):
