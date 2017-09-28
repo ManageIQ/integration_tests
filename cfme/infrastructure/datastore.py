@@ -52,7 +52,11 @@ class DatastoreSideBar(View):
 class DatastoreQuadIconEntity(BaseQuadIconEntity):
     @property
     def data(self):
-        return self.browser.get_attribute("alt", self.QUADRANT.format(pos="a"))
+        return {
+            'type': self.browser.get_attribute("alt", self.QUADRANT.format(pos="a")),
+            'no_vm': int(self.browser.text(self.QUADRANT.format(pos="b"))),
+            'no_host': int(self.browser.text(self.QUADRANT.format(pos="c"))),
+        }
 
 
 class DatastoreTileIconEntity(BaseTileIconEntity):
