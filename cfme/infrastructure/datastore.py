@@ -116,60 +116,6 @@ class RegisteredHostsView(HostsView):
         return False
 
 
-class DatastoreCollection(BaseCollection):
-    """Collection class for `cfme.infrastructure.datastore.Datastore`"""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider, type=None):
-        return Datastore(self, name, provider, type=type)
-
-    def delete(self, *datastores):
-        """
-        Note:
-            Datastores must have 0 hosts and 0 VMs for this to work.
-        """
-        datastores = list(datastores)
-        checked_datastores = list()
-        view = navigate_to(self, 'All')
-
-        for datastore in datastores:
-            try:
-                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
-                checked_datastores.append(datastore)
-            except ItemNotFound:
-                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
-
-        if set(datastores) == set(checked_datastores):
-            view.toolbar.configuration.item_select('Remove Datastores', handle_alert=True)
-            view.entities.flash.assert_success_message(
-                'Delete initiated for Datastore from the CFME Database')
-
-            for datastore in datastores:
-                wait_for(lambda: not datastore.exists, num_sec=600, delay=30,
-                         message='Wait for Datastore to be deleted')
-
-    def run_smartstate_analysis(self, *datastores):
-        datastores = list(datastores)
-
-        checked_datastores = list()
-
-        view = navigate_to(self, 'All')
-
-        for datastore in datastores:
-            try:
-                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
-                checked_datastores.append(datastore)
-            except ItemNotFound:
-                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
-
-        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
-        for datastore in datastores:
-            view.flash.assert_success_message(
-                '"{}": scan successfully initiated'.format(datastore.name))
-
-
 class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
     """ Model of an infrastructure datastore in cfme
 
@@ -177,6 +123,7 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
         name: Name of the datastore.
         provider: provider this datastore is attached to.
     """
+
     pretty_attrs = ['name', 'provider_key']
 
     def __init__(self, collection, name, provider, type=None):
@@ -270,6 +217,61 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         view.flash.assert_success_message(('"{}": scan successfully '
                                            'initiated'.format(self.name)))
+
+
+class DatastoreCollection(BaseCollection):
+    """Collection class for `cfme.infrastructure.datastore.Datastore`"""
+    ENTITY = Datastore
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, name, provider, type=None):
+        return Datastore(self, name, provider, type=type)
+
+    def delete(self, *datastores):
+        """
+        Note:
+            Datastores must have 0 hosts and 0 VMs for this to work.
+        """
+        datastores = list(datastores)
+        checked_datastores = list()
+        view = navigate_to(self, 'All')
+
+        for datastore in datastores:
+            try:
+                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
+                checked_datastores.append(datastore)
+            except ItemNotFound:
+                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
+
+        if set(datastores) == set(checked_datastores):
+            view.toolbar.configuration.item_select('Remove Datastores', handle_alert=True)
+            view.entities.flash.assert_success_message(
+                'Delete initiated for Datastore from the CFME Database')
+
+            for datastore in datastores:
+                wait_for(lambda: not datastore.exists, num_sec=600, delay=30,
+                         message='Wait for Datastore to be deleted')
+
+    def run_smartstate_analysis(self, *datastores):
+        datastores = list(datastores)
+
+        checked_datastores = list()
+
+        view = navigate_to(self, 'All')
+
+        for datastore in datastores:
+            try:
+                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
+                checked_datastores.append(datastore)
+            except ItemNotFound:
+                raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
+
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        for datastore in datastores:
+            view.flash.assert_success_message(
+                '"{}": scan successfully initiated'.format(datastore.name))
 
 
 @navigator.register(DatastoreCollection, 'All')

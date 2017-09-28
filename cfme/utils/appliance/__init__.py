@@ -1,3 +1,4 @@
+import inspect
 import json
 import logging
 import os
@@ -183,6 +184,54 @@ class ApplianceConsoleCli(object):
         assert return_code != 0
 
 
+def validate_collection(cls):
+    """Validates that a collection can be use
+
+    This function ensures that the Entity and Collection objects have the correct argument
+    names.
+    """
+    if inspect.getargspec(cls.__init__).args[1] != 'appliance':
+        raise Exception('Collection {} must take appliance as first arg'.format(cls))
+    if cls.ENTITY:
+        if inspect.getargspec(cls.ENTITY.__init__).args[1] != 'collection':
+            raise Exception('Entity {} must take collection as first arg'.format(cls.ENTITY))
+    else:
+        raise Exception('Collection class {} does not have an ENTITY class defined'.format(cls))
+    return True
+
+
+class ApplianceCollections(object):
+    """Caches instances of collection objects for use by the collections accessor
+
+    The appliance object has a ``collections`` attribute. This attribute is an instance
+    of this class. It is initialized with an appliance object and locally stores a cache
+    of all known good collections.
+    """
+    _collection_classes = None
+
+    def __init__(self, appliance):
+        self._collection_cache = {}
+        self.appliance = appliance
+        if not self._collection_classes:
+            self.load_collections()
+        for collection, cls in self._collection_classes.items():
+            self._collection_cache[collection] = cls(self.appliance)
+
+    def load_collections(self):
+        """Loads the collection definitions from the entrypoints system"""
+        from pkg_resources import iter_entry_points
+        ApplianceCollections._collection_classes = {
+            ep.name: ep.resolve() for ep in iter_entry_points(
+                'manageiq.appliance_collections') if validate_collection(ep.resolve())
+        }
+
+    def __getattr__(self, name):
+        try:
+            return self._collection_cache[name]
+        except KeyError:
+            raise Exception('Collection [{}] not known to applinace'.format(name))
+
+
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -231,6 +280,7 @@ class IPAppliance(object):
     def __init__(
             self, address=None, browser_steal=False, container=None, openshift_creds=None,
             db_host=None, db_port=None, ssh_port=None):
+        self.collections = ApplianceCollections(self)
         self.ssh_port = ssh_port or ports.SSH
         self.db_port = db_port or ports.DB
         if address is not None:
@@ -2639,6 +2689,15 @@ class CurrentAppliance(object):
 
 
 class NavigatableMixin(object):
+    """NavigatableMixin ensures that an object can navigate properly
+
+    The NavigatableMixin object ensures that a Collection/Entity object inside the
+    framework has access to be able to **create** a Widgetastic View, and that it
+    has access to the browser.
+
+    Note: The browser access will have to change once proliferation of the Sentaku
+          system becomes common place
+    """
 
     @property
     def browser(self):
@@ -2668,8 +2727,40 @@ class Navigatable(NavigatableMixin):
 
 
 class BaseCollection(NavigatableMixin):
-    pass
+    """Class for helping create consistent Collections
+
+    The BaseCollection class is responsible for ensuring two things:
+
+    1) That the API consistently has the first argument passed to it
+    2) That that first argument is an appliance instance
+
+    This class works in tandem with the entrypoint loader which ensures that the correct
+    argument names have been used.
+    """
+
+    ENTITY = None
+
+    def __new__(cls, *args, **kwargs):
+        first_arg = args[0] if args else kwargs.get('appliance')
+        if not first_arg or not isinstance(first_arg, IPAppliance):
+            raise Exception('First argument must be an appliance')
+        return super(BaseCollection, cls).__new__(cls)
 
 
 class BaseEntity(NavigatableMixin):
-    pass
+    """Class for helping create consistent entitys
+
+    The BaseEntity class is responsible for ensuring two things:
+
+    1) That the API consistently has the first argument passed to it
+    2) That that first argument is a collection instance
+
+    This class works in tandem with the entrypoint loader which ensures that the correct
+    argument names have been used.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        first_arg = args[0] if args else kwargs.get('collection')
+        if not first_arg or not isinstance(first_arg, BaseCollection):
+            raise Exception('First argument must be a collection')
+        return super(BaseEntity, cls).__new__(cls)
