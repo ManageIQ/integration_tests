@@ -293,6 +293,9 @@ class Repository(BaseEntity):
     def playbooks(self):
         return PlaybooksCollection(self)
 
+    def as_fill_value(self):
+        return self.name
+
 
 @navigator.register(RepositoryCollection, 'All')
 class AnsibleRepositories(CFMENavigateStep):
