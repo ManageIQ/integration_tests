@@ -4,7 +4,6 @@ import pytest
 
 from cfme.configure.configuration import DatabaseBackupSchedule
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import flash
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from urlparse import urlparse
@@ -205,7 +204,6 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
 
     sched = DatabaseBackupSchedule(**sched_args)
     sched.create()
-    flash.assert_message_contain('Schedule "{}" was saved'.format(db_backup_data.schedule_name))
     # ----
 
     # ---- Add cleanup finalizer
@@ -214,9 +212,6 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
             ssh_client.run_command('rm -rf {}'.format(full_path), ensure_user=True)
 
         sched.delete()
-        flash.assert_message_contain(
-            'Schedule "{}": Delete successful'.format(db_backup_data.schedule_description)
-        )
     request.addfinalizer(delete_sched_and_files)
     # ----
 

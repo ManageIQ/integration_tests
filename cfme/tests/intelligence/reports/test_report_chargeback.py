@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-import cfme.web_ui.flash as flash
 
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.utils.log import logger
@@ -48,8 +47,6 @@ def test_charge_report_filter_owner(infra_provider, request):
         return lambda: _cleanup_report(report)
 
     request.addfinalizer(cleanup_report(report))
-
-    flash.assert_message_match('Report "{}" was added'.format(report.menu_name))
     report.queue(wait_for_finish=True)
 
 
@@ -84,5 +81,4 @@ def test_charge_report_filter_tag(infra_provider, request):
 
     request.addfinalizer(cleanup_report(report))
 
-    flash.assert_message_match('Report "{}" was added'.format(report.menu_name))
     report.queue(wait_for_finish=True)

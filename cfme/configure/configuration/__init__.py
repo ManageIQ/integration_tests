@@ -1142,6 +1142,8 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.cancel()
         else:
             form_buttons.add()
+            flash.assert_message_contain(
+                'Schedule "{}" was saved'.format(self.details['name']))
 
     def update(self, updates, cancel=False, samba_validate=False):
         """ Modify an existing schedule with informations from this instance.
@@ -1162,6 +1164,12 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.cancel()
         else:
             form_buttons.save()
+
+    def delete(self):
+        super(DatabaseBackupSchedule, self).delete()
+        flash.assert_message_contain(
+            'Schedule "{}": Delete successful'.format(self.details['description'])
+        )
 
     @property
     def last_date(self):

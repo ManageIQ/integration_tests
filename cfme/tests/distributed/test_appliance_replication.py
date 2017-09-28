@@ -4,7 +4,6 @@ import pytest
 from time import sleep
 from urlparse import urlparse
 
-import cfme.web_ui.flash as flash
 from cfme.base.ui import ServerView
 from cfme.common.vm import VM
 from cfme.configure import configuration as conf
@@ -344,7 +343,6 @@ def test_distributed_vm_power_control(request, test_vm, virtualcenter_provider, 
                        event_type='vm_poweroff')
 
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
-        flash.assert_message_contain("Stop initiated")
         navigate_to(test_vm.provider, 'Details')
         test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
         soft_assert(test_vm.find_quadicon().data['state'] == 'currentstate-off')
