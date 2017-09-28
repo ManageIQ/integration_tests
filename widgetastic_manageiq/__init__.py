@@ -2651,12 +2651,15 @@ class BaseEntitiesView(View):
 
         @property
         def entity_names(self):
-            """ looks for entities and extracts their names
+            """ looks for entities and extracts their names or keys
 
             Returns: all current page entities
             """
+
             try:
                 return [row.name.text for row in self.elements.rows()]
+            except AttributeError:
+                return [row.key.text for row in self.elements.rows()]
             except NoSuchElementException:
                 return []
 
