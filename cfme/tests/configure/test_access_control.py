@@ -916,9 +916,7 @@ def test_superadmin_child_tenant_crud(request, tenantcollection, number_of_child
         assert not tenant_item.exists
 
 
-@pytest.mark.tier(3)
-@pytest.mark.parametrize("object_type", [tenantcollection, projectcollection])
-def test_tenant_unique_tenant_project_name_on_parent_level(request, object_type):
+def tenant_unique_tenant_project_name_on_parent_level(request, object_type):
     """Tenant or Project has always unique name on parent level. Same name cannot be used twice.
 
     Prerequisities:
@@ -939,16 +937,28 @@ def test_tenant_unique_tenant_project_name_on_parent_level(request, object_type)
         description=tenant_description,
         parent=object_type.get_root_tenant())
 
-    @request.addfinalizer
-    def _delete_tenant():
-        if tenant.exists:
-            tenant.delete()
-        if tenant2.exists:
-            tenant2.delete()
-
     with error.expected("Validation failed: Name should be unique per parent"):
         tenant2 = object_type.create(
             name=name_of_tenant,
             description=tenant_description,
             parent=object_type.get_root_tenant())
+
     tenant.delete()
+
+    @request.addfinalizer
+    def _delete_tenant():
+        if tenant.exists:
+            tenant.delete()
+        try:
+            if tenant2.exists:
+                tenant2.delete()
+        except NameError:
+            pass
+
+@pytest.mark.tier(3)
+def test_unique_tenant_name_on_parent_level(request, tenantcollection):
+    tenant_unique_tenant_project_name_on_parent_level(request, tenantcollection)
+
+@pytest.mark.tier(3)
+def test_unique_project_name_on_parent_level(request, projectcollection):
+    tenant_unique_tenant_project_name_on_parent_level(request, projectcollection)
