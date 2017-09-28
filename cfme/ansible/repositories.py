@@ -291,7 +291,7 @@ class Repository(BaseEntity):
 
     @property
     def playbooks(self):
-        return PlaybooksCollection(self)
+        return PlaybooksCollection(self.appliance, self)
 
 
 @navigator.register(RepositoryCollection, 'All')
