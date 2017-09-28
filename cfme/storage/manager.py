@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_manageiq import (
     Accordion,
-    BootstrapSelect,
     BootstrapTreeview,
     BreadCrumb,
     ManageIQTree,
@@ -20,18 +19,19 @@ from widgetastic_patternfly import (
 )
 
 from cfme.base.ui import BaseLoggedInPage
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.appliance import BaseCollection, BaseEntity
 
 
-class ManagerToolbar(View):
+class StorageManagerToolbar(View):
     """The toolbar on the Storage Manager or Provider page"""
     configuration = Dropdown('Configuration')
     policy = Dropdown('Policy')
 
 
-class ManagerDetailsToolbar(View):
+class StorageManagerDetailsToolbar(View):
     """The toolbar on the Storage Manager or Provider detail page"""
     reload = Button(title='Reload Current Display')
     configuration = Dropdown('Configuration')
@@ -40,12 +40,12 @@ class ManagerDetailsToolbar(View):
     download = Button(title='Download summary in PDF format')
 
 
-class ManagerEntities(View):
+class StorageManagerEntities(View):
     """The entities on the main list Storage Manager or Provider page"""
     table = Table(".//div[@id='list_grid']/table")
 
 
-class ManagerDetailsEntities(View):
+class StorageManagerDetailsEntities(View):
     """The entities on the Storage Manager or Provider details page"""
     breadcrumb = BreadCrumb()
     properties = SummaryTable('Properties')
@@ -54,7 +54,7 @@ class ManagerDetailsEntities(View):
     status = SummaryTable('Status')
 
 
-class ManagerDetailsAccordion(View):
+class StorageManagerDetailsAccordion(View):
     """The accordion on the Storage Manager or Provider details page"""
     @View.nested
     class properties(Accordion):  # noqa
@@ -65,7 +65,7 @@ class ManagerDetailsAccordion(View):
         tree = ManageIQTree()
 
 
-class ManagerView(BaseLoggedInPage):
+class StorageManagerView(BaseLoggedInPage):
     """A base view for all the Storage Manager or Provider pages"""
     title = Text('.//div[@id="center_div" or @id="main-content"]//h1')
 
@@ -75,13 +75,14 @@ class ManagerView(BaseLoggedInPage):
 
     @property
     def in_manager(self):
-        nav_path = self.context['object'].nav.pick(self.context['object'].appliance.version)
+        navigation_path = self.context['object'].navigation_path.pick(self.context[
+                                                                'object'].appliance.version)
         return(
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav_path)
+            self.navigation.currently_selected == navigation_path)
 
 
-class ManagerAllView(ManagerView):
+class StorageManagerAllView(StorageManagerView):
     """The all Storage Manager or Provider page"""
     @property
     def is_displayed(self):
@@ -89,12 +90,12 @@ class ManagerAllView(ManagerView):
             self.in_manager and
             self.title.text in ('Storage Managers', self.context['object'].manager_type))
 
-    toolbar = View.nested(ManagerToolbar)
-    entities = View.nested(ManagerEntities)
+    toolbar = View.nested(StorageManagerToolbar)
+    entities = View.nested(StorageManagerEntities)
     paginator = PaginationPane()
 
 
-class ManagerDetailsView(ManagerView):
+class StorageManagerDetailsView(StorageManagerView):
     """The details page for Storage Manager or Provider"""
     @property
     def is_displayed(self):
@@ -104,34 +105,18 @@ class ManagerDetailsView(ManagerView):
             self.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title)
 
-    toolbar = View.nested(ManagerDetailsToolbar)
-    sidebar = View.nested(ManagerDetailsAccordion)
-    entities = View.nested(ManagerDetailsEntities)
+    toolbar = View.nested(StorageManagerDetailsToolbar)
+    sidebar = View.nested(StorageManagerDetailsAccordion)
+    entities = View.nested(StorageManagerDetailsEntities)
 
 
-class ManagerTagsView(ManagerView):
-    """The tag page for Storage Manager or Provider"""
-    breadcrumb = BreadCrumb()
-    select_tag = BootstrapSelect('tag_cat')
-    select_value = BootstrapSelect('tag_add')
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_manager and
-            self.breadcrumb.active_location == 'Tag Assignment')
-
-
-class ManagePoliciesView(ManagerView):
+class StorageManagePoliciesView(StorageManagerView):
     """The policies page for Storage Manager or Provider"""
     breadcrumb = BreadCrumb()
     policies = BootstrapTreeview("protectbox")
-    save_button = Button("Save")
-    reset_button = Button("Reset")
-    cancel_button = Button("Cancel")
+    save = Button("Save")
+    reset = Button("Reset")
+    cancel = Button("Cancel")
 
     @property
     def is_displayed(self):
@@ -145,13 +130,13 @@ class BlockManagerCollection(BaseCollection):
 
     def __init__(self, appliance):
         self.appliance = appliance
-        self.nav = VersionPick({
+        self.navigation_path = VersionPick({
             Version.lowest(): ['Storage', 'Storage Providers'],
             '5.8': ['Storage', 'Block Storage', 'Managers']})
         self.manager_type = 'Block Storage Managers'
 
     def instantiate(self, name, provider):
-        return BaseManager(self, name, provider)
+        return StorageManager(self, name, provider)
 
 
 class ObjectManagerCollection(BaseCollection):
@@ -159,16 +144,16 @@ class ObjectManagerCollection(BaseCollection):
 
     def __init__(self, appliance):
         self.appliance = appliance
-        self.nav = VersionPick({
+        self.navigation_path = VersionPick({
             Version.lowest(): ['Storage', 'Storage Providers'],
             '5.8': ['Storage', 'Object Storage', 'Managers']})
         self.manager_type = 'Object Storage Managers'
 
     def instantiate(self, name, provider):
-        return BaseManager(self, name, provider)
+        return StorageManager(self, name, provider)
 
 
-class BaseManager(BaseEntity):
+class StorageManager(BaseEntity, WidgetasticTaggable):
     """ Model of an storage manager in cfme
 
     Args:
@@ -182,7 +167,7 @@ class BaseManager(BaseEntity):
         self.appliance = self.collection.appliance
         self.name = name
         self.provider = provider
-        self.nav = self.collection.nav
+        self.navigation_path = self.collection.navigation_path
         self.manager_type = self.collection.manager_type
         self.storage_title = VersionPick({Version.lowest(): 'Storage Provider',
                                   '5.8': 'Storage Manager'}).pick(self.appliance.version)
@@ -210,18 +195,18 @@ class BaseManager(BaseEntity):
 
 @navigator.register(BlockManagerCollection, 'All')
 @navigator.register(ObjectManagerCollection, 'All')
-class ManagerAll(CFMENavigateStep):
-    VIEW = ManagerAllView
+class StorageManagerAll(CFMENavigateStep):
+    VIEW = StorageManagerAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav = self.obj.nav.pick(self.obj.appliance.version)
-        self.prerequisite_view.navigation.select(*nav)
+        navigation_path = self.obj.navigation_path.pick(self.obj.appliance.version)
+        self.prerequisite_view.navigation.select(*navigation_path)
 
 
-@navigator.register(BaseManager, 'Details')
-class ManagerDetails(CFMENavigateStep):
-    VIEW = ManagerDetailsView
+@navigator.register(StorageManager, 'Details')
+class StorageManagerDetails(CFMENavigateStep):
+    VIEW = StorageManagerDetailsView
     prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
@@ -231,3 +216,13 @@ class ManagerDetails(CFMENavigateStep):
             row.click()
         except NoSuchElementException:
             raise ItemNotFound('Could not locate {}'.format(self.obj.name))
+
+
+@navigator.register(StorageManager, 'EditTagsFromDetails')
+class StorageObjectDetailEditTag(CFMENavigateStep):
+    """ This navigation destination help to WidgetasticTaggable"""
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
