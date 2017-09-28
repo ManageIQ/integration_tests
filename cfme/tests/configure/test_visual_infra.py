@@ -213,6 +213,10 @@ def test_infra_start_page(request, appliance, start_page):
 
 
 def test_infraprovider_noquads(request, set_infra_provider_quad):
+    """
+        This test checks that Infraprovider Quadrant when switched off from Mysetting page under
+        Visual Tab under "Show Infrastructure Provider Quadrants" option works properly.
+    """
     view = navigate_to(InfraProvider, 'All')
     view.toolbar.view_selector.select("Grid View")
     # Here get_first_entity() method will return None when the Quadrants option is deactivated.
@@ -220,6 +224,10 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
 
 
 def test_host_noquads(request, set_host_quad):
+    """
+        This test checks that Host Quadrant when switched off from Mysetting page under
+        Visual Tab under "Show Host Quadrants" option works properly.
+    """
     view = navigate_to(Host, 'All')
     view.toolbar.view_selector.select("Grid View")
     # Here get_first_entity() method will return None when the Quadrants option is deactivated.
@@ -227,6 +235,10 @@ def test_host_noquads(request, set_host_quad):
 
 
 def test_datastore_noquads(request, set_datastore_quad, appliance):
+    """
+        This test checks that Host Quadrant when switched off from Mysetting page under
+        Visual Tab under "Show Datastores Quadrants" option works properly.
+    """
     dc = DatastoreCollection(appliance)
     view = navigate_to(dc, 'All')
     view.toolbar.view_selector.select("Grid View")
@@ -236,6 +248,10 @@ def test_datastore_noquads(request, set_datastore_quad, appliance):
 
 
 def test_vm_noquads(request, set_vm_quad):
+    """
+        This test checks that VM Quadrant when switched off from Mysetting page under
+        Visual Tab under "Show VM Quadrants" option works properly.
+    """
     view = navigate_to(vms.Vm, 'All')
     view.toolbar.view_selector.select("Grid View")
     # Here get_first_entity() method will return None when the Quadrants option is deactivated.
@@ -244,6 +260,10 @@ def test_vm_noquads(request, set_vm_quad):
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
 def test_template_noquads(request, set_template_quad):
+    """
+        This test checks that Template Quadrant when switched off from Mysetting page under
+        Visual Tab under "Show Template Quadrants" option works properly.
+    """
     view = navigate_to(vms.Template, 'TemplatesOnly')
     view.toolbar.view_selector.select("Grid View")
     # Here get_first_entity() method will return None when the Quadrants option is deactivated.
