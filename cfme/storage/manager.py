@@ -75,8 +75,8 @@ class StorageManagerView(BaseLoggedInPage):
 
     @property
     def in_manager(self):
-        navigation_path = self.context['object'].navigation_path.pick(self.context[
-                                                                'object'].appliance.version)
+        navigation_path = self.context['object'].navigation_path.pick(
+            self.context['object'].appliance.version)
         return(
             self.logged_in_as_current_user and
             self.navigation.currently_selected == navigation_path)
