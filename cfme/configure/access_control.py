@@ -1287,6 +1287,10 @@ class TenantCollection(BaseCollection):
         return Tenant(collection=self, name='My Company', _default=True)
 
     def create(self, name, description, parent):
+
+        if isinstance(parent, Project):
+            raise ValueError("Projects cannot have children.")
+
         tenant = self.instantiate(name, description, parent)
 
         view = navigate_to(tenant.parent_tenant, 'Details')
@@ -1478,6 +1482,9 @@ class ProjectCollection(TenantCollection):
 
     def create(self, name, description, parent):
         project = self.instantiate(name, description, parent)
+
+        if isinstance(parent, Project):
+            raise ValueError("Projects cannot have children.")
 
         view = navigate_to(project.parent_tenant, 'Details')
         view.toolbar.configuration.item_select('Add Project to this Tenant')
