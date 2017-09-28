@@ -1276,6 +1276,7 @@ class EditTenantView(View):
         )
         # used any() because `project` inherits `tenant` and edit page can have any one in name
 
+
 class TenantCollection(BaseCollection):
     """Collection class for Tenant"""
 

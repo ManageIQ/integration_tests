@@ -796,6 +796,7 @@ def tenantcollection(appliance):
     tc = TenantCollection(appliance=appliance)
     yield tc
 
+
 @pytest.fixture(scope="module")
 def projectcollection(appliance):
     pc = ProjectCollection(appliance=appliance)
@@ -955,9 +956,11 @@ def tenant_unique_tenant_project_name_on_parent_level(request, object_type):
         except NameError:
             pass
 
+
 @pytest.mark.tier(3)
 def test_unique_tenant_name_on_parent_level(request, tenantcollection):
     tenant_unique_tenant_project_name_on_parent_level(request, tenantcollection)
+
 
 @pytest.mark.tier(3)
 def test_unique_project_name_on_parent_level(request, projectcollection):
