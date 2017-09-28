@@ -1261,18 +1261,20 @@ class ParentDetailsTenantView(DetailsTenantView):
         )
 
 
-class EditTenantView(TenantForm):
+class EditTenantView(View):
     """ Edit Tenant View """
+    form = View.nested(TenantForm)
     save_button = Button('Save')
     reset_button = Button('Reset')
 
     @property
     def is_displayed(self):
         return (
-            self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name)
+            self.form.accordions.accesscontrol.is_opened and
+            any([self.title.text == 'Editing Tenant "{}"'.format(self.context['object'].name),
+                self.title.text == 'Editing Project "{}"'.format(self.context['object'].name)])
         )
-
+        # used any() because `project` inherits `tenant` and edit page can have any one in name
 
 class TenantCollection(BaseCollection):
     """Collection class for Tenant"""
@@ -1300,9 +1302,9 @@ class TenantCollection(BaseCollection):
         changed = view.form.fill({'name': name,
                    'description': description})
         if changed:
-            view.add_button.click()
+            view.form.add_button.click()
         else:
-            view.cancel.click()
+            view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
         view.flash.assert_success_message('Tenant "{}" was saved'.format(name))
@@ -1354,7 +1356,7 @@ class Tenant(BaseEntity):
             as 'Save' button will not be active
         """
         view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
+        changed = view.form.fill(updates)
         if changed:
             view.save_button.click()
             flash_message = 'Project "{}" was saved'.format(updates.get('name', self.name))
@@ -1364,7 +1366,6 @@ class Tenant(BaseEntity):
                 updates.get('name', self.name))
         view = self.create_view(DetailsTenantView, override=updates)
         view.flash.assert_message(flash_message)
-        assert view.is_displayed
 
     def delete(self, cancel=True):
         """ Delete existing role
@@ -1493,12 +1494,12 @@ class ProjectCollection(TenantCollection):
         changed = view.form.fill({'name': name,
                    'description': description})
         if changed:
-            view.add_button.click()
+            view.form.add_button.click()
         else:
-            view.cancel.click()
+            view.form.cancel_button.click()
 
         view = self.create_view(ParentDetailsTenantView)
-        view.flash.assert_success_message('Tenant "{}" was saved'.format(name))
+        view.flash.assert_success_message('Project "{}" was saved'.format(name))
 
         return project
 
