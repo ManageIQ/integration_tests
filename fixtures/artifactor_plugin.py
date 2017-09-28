@@ -169,6 +169,8 @@ def pytest_runtest_protocol(item):
         session_ver = str(version.current_version())
         session_build = store.current_appliance.build
         session_stream = store.current_appliance.version.stream()
+        if str(session_ver) not in session_build:
+            session_build = "{}-{}".format(str(session_ver), session_build)
         fire_art_hook(
             item.config, 'session_info',
             version=session_ver,
