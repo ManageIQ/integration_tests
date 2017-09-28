@@ -177,14 +177,14 @@ def assign_compute_rate(obj_type, compute_rate, provider):
 
 
 @pytest.yield_fixture(scope='module')
-def chargeback_report(obj_type, interval, assign_compute_rate, provider):
+def chargeback_report_data(obj_type, interval, assign_compute_rate, provider):
     report = gen_report_base(obj_type, provider, assign_compute_rate.description, interval)
-    yield report
+    yield report.get_saved_reports()[0].data
     report.delete()
 
 
 def abstract_test_chargeback_cost(
-        rate_key, obj_type, interval, chargeback_report, compute_rate, soft_assert):
+        rate_key, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     """This is an abstract test function for testing rate costs.
     It's comparing the expected value that calculated by the rate
     to the value in the chargeback report
@@ -192,22 +192,20 @@ def abstract_test_chargeback_cost(
         :py:type:`str` rate_key: The rate key as it appear in the CHARGEBACK_HEADER_NAMES keys.
         :py:type:`str` obj_type: Object being tested; only 'Project' and 'Image' are supported
         :py:type:`str` interval:  The rate interval, (Hourly/Daily/Weekly/Monthly)
-        :py:class:`CustomReport` chargeback_report: The chargeback report object.
+        :py:class:`CustomReport` chargeback_report_data: The chargeback report data.
         :py:class:`ComputeRate` compute_rate: The compute rate object.
         :var soft_assert: soft_assert fixture.
     """
-    report_data = chargeback_report.get_saved_reports()[0].data
     if sel.is_displayed_text("No records found for this report"):
         pytest.skip('No records found in the report. probably the setup didn\'t '
                     'manage to collect enough metrics for the current rate. '
-                    'rate={}; interval={} report={}'
-                    .format(compute_rate.description, interval,
-                            chargeback_report.menu_name))
+                    'rate={}; interval={}'
+                    .format(compute_rate.description, interval))
 
     report_headers = CHARGEBACK_HEADER_NAMES[rate_key]
 
     found_something_to_test = False
-    for row in report_data.rows:
+    for row in chargeback_report_data.rows:
 
         if row['Chargeback Rates'].lower() != compute_rate.description.lower():
             continue
@@ -220,14 +218,15 @@ def abstract_test_chargeback_cost(
             metric = round(parse_size(str(size_) + unit_, binary=True) / 1048576.0, 2)
         else:
             metric = parse_number(row[report_headers.metric_name])
-        fixed_metric = parse_number(row[CHARGEBACK_HEADER_NAMES['Fixed1'].metric_name])
-        interval_factor = (hours_count_lut.values()[hours_count_lut.keys().index(interval) + 1] /
-                           hours_count_lut[interval])
-        fixed_product = fixed_metric / hours_count_lut[interval]
         # Give us the number of units per the previous units. e.g.
         #     # of hours in a day / # of days in a week
+        interval_factor = (hours_count_lut.values()[hours_count_lut.keys().index(interval) + 1] /
+                           hours_count_lut[interval])
+        fixed_metric = parse_number(row[CHARGEBACK_HEADER_NAMES['Fixed1'].metric_name])
+        fixed_product = fixed_metric / hours_count_lut[interval]
+        fixed_expected = fixed_product * fixed_rate
         expected_value = round(interval_factor * metric * variable_rate +
-                               fixed_product * fixed_rate, 2)
+                               fixed_expected, 2)
         found_value = round(parse_number(row[report_headers.cost_name]), 2)
 
         match_threshold = TEST_MATCH_ACCURACY * expected_value
@@ -255,39 +254,42 @@ def abstract_test_chargeback_cost(
 #         (rate_type == 'fixed' and rate not in fixed_rates))
 # @pytest.mark.parametrize('rate', all_rates)
 # def test_chargeback_rate(
-#         rate, rate_type, obj_type, interval, chargeback_report, compute_rate, soft_assert):
+#         rate, rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
 #     abstract_test_chargeback_cost(
-#         rate, obj_type, interval, chargeback_report, compute_rate, soft_assert)
+#         rate, obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 #
 #
 # Workaround:
 @pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
 def test_chargeback_rate_fixed_1(
-        rate_type, obj_type, interval, chargeback_report, compute_rate, soft_assert):
+        rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     abstract_test_chargeback_cost(
-        'Fixed1', obj_type, interval, chargeback_report, compute_rate, soft_assert)
+        'Fixed1', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
 
 @pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
 def test_chargeback_rate_fixed_2(
-        rate_type, obj_type, interval, chargeback_report, compute_rate, soft_assert):
+        rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     abstract_test_chargeback_cost(
-        'Fixed2', obj_type, interval, chargeback_report, compute_rate, soft_assert)
+        'Fixed2', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
 
 def test_chargeback_rate_cpu_cores(
-        rate_type, obj_type, interval, chargeback_report, compute_rate, soft_assert):
+        rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     abstract_test_chargeback_cost(
-        'CpuCores', obj_type, interval, chargeback_report, compute_rate, soft_assert)
-
-
-def test_chargeback_rate_network_io(
-        rate_type, obj_type, interval, chargeback_report, compute_rate, soft_assert):
-    abstract_test_chargeback_cost(
-        'Memory', obj_type, interval, chargeback_report, compute_rate, soft_assert)
+        'CpuCores', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
 
 def test_chargeback_rate_memory_used(
-        rate_type, obj_type, interval, chargeback_report, compute_rate, soft_assert):
+        rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     abstract_test_chargeback_cost(
-        'Network', obj_type, interval, chargeback_report, compute_rate, soft_assert)
+        'Network', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
+
+
+# Network variable rate tests are skipped until this bug is solved:
+#     https://github.com/ManageIQ/integration_tests/issues/5027
+@pytest.mark.uncollectif(lambda rate_type: rate_type == 'variable')
+def test_chargeback_rate_network_io(
+        rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
+    abstract_test_chargeback_cost(
+        'Memory', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
