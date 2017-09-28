@@ -8,7 +8,7 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
-from cfme.web_ui import Quadicon, fill, toolbar as tb
+from cfme.web_ui import toolbar as tb
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -30,15 +30,6 @@ gtl_params = {
     'Templates & Images': TemplatesImages}
 
 
-def select_two_quads():
-    count = 0
-    for quad in Quadicon.all("infra_prov", this_page=True):
-        count += 1
-        if count > 2:
-            break
-        fill(quad.checkbox(), True)
-
-
 def set_and_test_default_view(group_name, view, page):
     old_default = DefaultView.get_default_view(group_name)
     DefaultView.set_default_view(group_name, view)
@@ -55,41 +46,41 @@ def set_and_test_default_view(group_name, view, page):
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_tile_defaultview(request, key):
+def test_infra_tile_defaultview(key):
     set_and_test_default_view(key, 'Tile View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_list_defaultview(request, key):
+def test_infra_list_defaultview(key):
     set_and_test_default_view(key, 'List View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
-def test_infra_grid_defaultview(request, key):
+def test_infra_grid_defaultview(key):
     set_and_test_default_view(key, 'Grid View', gtl_params[key])
 
 
 def set_and_test_view(group_name, view):
     old_default = DefaultView.get_default_view(group_name)
     DefaultView.set_default_view(group_name, view)
-    navigate_to(Vm, 'All')
-    select_two_quads()
-    tb.select('Configuration', 'Compare Selected items')
+    vm_view = navigate_to(Vm, 'All')
+    [e.check() for e in vm_view.entities.get_all()[:2]]
+    vm_view.toolbar.configuration.item_select('Compare Selected items')
     assert tb.is_active(view), "{} setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
 
-def test_infra_expanded_view(request):
+def test_infra_expanded_view():
     set_and_test_view('Compare', 'Expanded View')
 
 
-def test_infra_compressed_view(request):
+def test_infra_compressed_view():
     set_and_test_view('Compare', 'Compressed View')
 
 
-def test_infra_details_view(request):
+def test_infra_details_view():
     set_and_test_view('Compare Mode', 'Details Mode')
 
 
-def test_infra_exists_view(request):
+def test_infra_exists_view():
     set_and_test_view('Compare Mode', 'Exists Mode')

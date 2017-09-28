@@ -13,9 +13,10 @@ from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
-from cfme.web_ui import Quadicon, mixins, toolbar as tb
+from cfme.web_ui import mixins
 from cfme.utils.appliance import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.exceptions import ItemNotFound
 
 
 param_classes = {
@@ -45,9 +46,14 @@ def _navigate_and_check(location, appliance):
         cls_or_col = param_classes[location](appliance)
     else:
         cls_or_col = param_classes[location]
-    navigate_to(cls_or_col, 'All')
-    tb.select('Grid View')
-    return Quadicon.any_present()
+    view = navigate_to(cls_or_col, 'All')
+    view.toolbar.view_selector.select('Grid View')
+    try:
+        entity = view.entities.get_first_entity()
+        entity.check()
+        return entity
+    except ItemNotFound:
+        pytest.skip("No Quadicon present, cannot test.")
 
 # TODO Replace navigation and item selection with widgets when all tested classes have them
 
@@ -66,14 +72,11 @@ def _tag_item_through_selecting(request, location, tag, appliance):
         * Go back to the quadicon view and select ``Policy/Edit Tags`` and remove the tag.
         * Click on the quadicon and verify the tag is not present. (TODO)
     """
-    if not _navigate_and_check(location, appliance):
-        pytest.skip("No Quadicon present, cannot test.")
-    Quadicon.select_first_quad()
+    _navigate_and_check(location, appliance)
 
     def _delete():
         # Ignoring the result of the check here
         _navigate_and_check(location, appliance)
-        Quadicon.select_first_quad()
         mixins.remove_tag(tag)
     request.addfinalizer(lambda: diaper(_delete))
     mixins.add_tag(tag)
@@ -94,9 +97,8 @@ def _tag_item_through_details(request, location, tag, appliance):
         * Select ``Policy/Edit Tags`` and remove the tag.
         * Verify the tag is not present. (TODO)
     """
-    if not _navigate_and_check(location, appliance):
-        pytest.skip("No Quadicon present, cannot test.")
-    pytest.sel.click(Quadicon.first())
+    entity = _navigate_and_check(location, appliance)
+    entity.click()
     request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))
     mixins.add_tag(tag)
     mixins.remove_tag(tag)

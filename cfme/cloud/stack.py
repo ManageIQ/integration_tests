@@ -3,8 +3,8 @@ from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages, BootstrapNav
 from widgetastic_manageiq import (
-    Accordion, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
-    SummaryTable, Table, Text)
+    Accordion, BreadCrumb, ItemsToolBarViewSelector, PaginationPane,
+    SummaryTable, Table, Text, BaseEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
@@ -53,14 +53,10 @@ class StackDetailsAccordion(View):
         nav = BootstrapNav('//div[@id="stack_rel"]//ul')
 
 
-class StackEntities(View):
-    """The entties on the main list page"""
-    title = Text('//div[@id="main-content"]//h1')
+class StackEntities(BaseEntitiesView):
+    """The entities on the main list page"""
     table = Table("//div[@id='gtl_div']//table")
-    search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+    # todo: remove table and use entities instead
 
 
 class StackDetailsEntities(View):
@@ -131,7 +127,7 @@ class StackView(BaseLoggedInPage):
 class StackAllView(StackView):
     """The main list page"""
     toolbar = View.nested(StackToolbar)
-    entities = View.nested(StackEntities)
+    including_entities = View.include(StackEntities, use_parent=True)
     paginator = PaginationPane()
 
     @property
@@ -238,7 +234,7 @@ class StackCollection(BaseCollection):
 
         for stack in stacks:
             try:
-                row = view.paginator.find_row_on_pages(view.entities.table, name=stack.name)
+                row = view.paginator.find_row_on_pages(view.table, name=stack.name)
                 row[0].check()
                 checked_stacks.append(stack)
             except NoSuchElementException:
@@ -275,7 +271,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
         view = navigate_to(self.collection, 'All')
         view.toolbar.view_selector.select('List View')
         try:
-            view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+            view.paginator.find_row_on_pages(view.table, name=self.name)
             return True
         except NoSuchElementException:
             return False
@@ -313,7 +309,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
     def retire_stack(self, wait=True):
         view = navigate_to(self.collection, 'All')
         view.toolbar.view_selector.select('List View')
-        row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+        row = view.paginator.find_row_on_pages(view.table, name=self.name)
         row[0].check()
         view.toolbar.lifecycle.item_select('Retire selected Orchestration Stacks',
                                            handle_alert=True)
@@ -356,7 +352,7 @@ class Details(CFMENavigateStep):
         """Go to the details page"""
         self.prerequisite_view.toolbar.view_selector.select('List View')
         row = self.prerequisite_view.paginator.find_row_on_pages(
-            self.prerequisite_view.entities.table, name=self.obj.name)
+            self.prerequisite_view.table, name=self.obj.name)
         row.click()
 
 

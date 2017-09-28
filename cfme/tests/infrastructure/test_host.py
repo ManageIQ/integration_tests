@@ -2,12 +2,10 @@
 import pytest
 import random
 
-import cfme.fixtures.pytest_selenium as sel
 from cfme.base.credential import Credential
 from cfme.common.host_views import HostsEditView
 from cfme.common.provider_views import ProviderNodesView
 from cfme.infrastructure.provider import InfraProvider
-from cfme.web_ui import Quadicon
 from cfme.utils import testgen
 from cfme.utils.conf import credentials
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -43,15 +41,11 @@ def navigate_and_select_quads(provider):
         view: the provider nodes view, quadicons already selected"""
     hosts_view = navigate_to(provider, 'ProviderNodes')
     assert hosts_view.is_displayed
-
-    quads = Quadicon.all("host", this_page=True)
-    for quad in quads:
-        sel.check(quad.checkbox())
+    [h.check() for h in hosts_view.entities.get_all()]
 
     hosts_view.toolbar.configuration.item_select('Edit Selected items')
     edit_view = provider.create_view(HostsEditView)
     assert edit_view.is_displayed
-
     return edit_view
 
 
