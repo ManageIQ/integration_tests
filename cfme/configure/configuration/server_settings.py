@@ -5,7 +5,7 @@ from widgetastic.widget import Text, View
 
 from cfme.base.ui import ServerView
 from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.pretty import Pretty
@@ -124,7 +124,7 @@ class ServerInformationView(ServerView):
         }
 
 
-class ServerInformation(Updateable, Pretty, Navigatable):
+class ServerInformation(Updateable, Pretty, NavigatableMixin):
     """ This class represents the Server tab in Server Settings
     Kwargs:
         All lower parameters by default set to None
@@ -214,7 +214,8 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         self._save_action(view, updates, reset)
 
     @property
-    def basic_information_form(self):
+    def basic_information_values(self):
+        """ Returns(dict): basic_information fields values"""
         view = navigate_to(self, 'Details')
         return view.basic_information.read()
 
@@ -242,7 +243,8 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         self._save_action(view, updates, reset)
 
     @property
-    def vmware_console_form(self):
+    def vmware_console_values(self):
+        """ Returns(dict): vmware_console fields values"""
         view = navigate_to(self, 'Details')
         return view.vmware_console.read()
 
@@ -261,12 +263,14 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         self._save_action(view, updates, reset)
 
     @property
-    def ntp_servers_form(self):
+    def ntp_servers_values(self):
+        """ Returns(dict): ntp_servers fields values"""
         view = navigate_to(self, 'Details')
         return view.ntp_servers.read()
 
     @property
     def ntp_servers_fields_keys(self):
+        """ Returns(list): ntp servers fields names"""
         return self._ntp_servers
 
 
@@ -293,7 +297,8 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         view.smtp_server.verify.click()
 
     @property
-    def smtp_server_form(self):
+    def smtp_server_values(self):
+        """ Returns(dict): smtp_server fields values"""
         view = navigate_to(self, 'Details')
         return view.smtp_server.read()
 
@@ -310,7 +315,8 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         self._save_action(view, updates, reset)
 
     @property
-    def web_services_form(self):
+    def web_services_values(self):
+        """ Returns(dict): web_services fields values"""
         view = navigate_to(self, 'Details')
         return view.web_services.read()
 
@@ -327,7 +333,8 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         self._save_action(view, updates, reset)
 
     @property
-    def logging_form(self):
+    def logging_values(self):
+        """ Returns(dict): logging fields values"""
         view = navigate_to(self, 'Details')
         return view.logging_form.read()
 
@@ -344,7 +351,8 @@ class ServerInformation(Updateable, Pretty, Navigatable):
         self._save_action(view, updates, reset)
 
     @property
-    def custom_support_url_form(self):
+    def custom_support_url_values(self):
+        """ Returns(dict): custom_support_url fields values"""
         view = navigate_to(self, 'Details')
         return view.custom_support_url.read()
 
