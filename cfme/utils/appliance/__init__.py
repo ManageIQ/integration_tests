@@ -185,6 +185,11 @@ class ApplianceConsoleCli(object):
 
 
 def validate_collection(cls):
+    """Validates that a collection can be use
+
+    This function ensures that the Entity and Collection objects have the correct argument
+    names.
+    """
     if inspect.getargspec(cls.__init__).args[1] != 'appliance':
         raise Exception('Collection {} must take appliance as first arg'.format(cls))
     if cls.ENTITY:
@@ -196,6 +201,12 @@ def validate_collection(cls):
 
 
 class ApplianceCollections(object):
+    """Caches instances of collection objects for use by the collections accessor
+
+    The appliance object has a ``collections`` attribute. This attribute is an instance
+    of this class. It is initialized with an appliance object and locally stores a cache
+    of all known good collections.
+    """
     _collection_classes = None
 
     def __init__(self, appliance):
@@ -207,6 +218,7 @@ class ApplianceCollections(object):
             self._collection_cache[collection] = cls(self.appliance)
 
     def load_collections(self):
+        """Loads the collection definitions from the entrypoints system"""
         from pkg_resources import iter_entry_points
         ApplianceCollections._collection_classes = {
             ep.name: ep.resolve() for ep in iter_entry_points(
@@ -2677,6 +2689,15 @@ class CurrentAppliance(object):
 
 
 class NavigatableMixin(object):
+    """NavigatableMixin ensures that an object can navigate properly
+
+    The NavigatableMixin object ensures that a Collection/Entity object inside the
+    framework has access to be able to **create** a Widgetastic View, and that it
+    has access to the browser.
+
+    Note: The browser access will have to change once proliferation of the Sentaku
+          system becomes common place
+    """
 
     @property
     def browser(self):
@@ -2706,6 +2727,16 @@ class Navigatable(NavigatableMixin):
 
 
 class BaseCollection(NavigatableMixin):
+    """Class for helping create consistent Collections
+
+    The BaseCollection class is responsible for ensuring two things:
+
+    1) That the API consistently has the first argument passed to it
+    2) That that first argument is an appliance instance
+
+    This class works in tandem with the entrypoint loader which ensures that the correct
+    argument names have been used.
+    """
 
     ENTITY = None
 
@@ -2717,6 +2748,17 @@ class BaseCollection(NavigatableMixin):
 
 
 class BaseEntity(NavigatableMixin):
+    """Class for helping create consistent entitys
+
+    The BaseEntity class is responsible for ensuring two things:
+
+    1) That the API consistently has the first argument passed to it
+    2) That that first argument is a collection instance
+
+    This class works in tandem with the entrypoint loader which ensures that the correct
+    argument names have been used.
+    """
+
     def __new__(cls, *args, **kwargs):
         first_arg = args[0] if args else kwargs.get('collection')
         if not first_arg or not isinstance(first_arg, BaseCollection):
