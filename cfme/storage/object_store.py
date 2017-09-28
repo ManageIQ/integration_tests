@@ -89,7 +89,7 @@ class All(CFMENavigateStep):
                 'Storage', 'Object Storage', 'Object Store Containers')
 
     def resetter(self):
-        self.view.toolbar.select("Grid View")
+        self.view.toolbar.view_selector.select("Grid View")
 
 
 @navigator.register(ObjectStore, 'Details')

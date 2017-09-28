@@ -4,7 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.instance.image import Image
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.stack import Stack
+from cfme.cloud.stack import StackCollection
 from cfme.common.vm import VM
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -58,13 +58,16 @@ def test_delete_image_appear_after_refresh(setup_provider, provider, set_grid, r
     request.addfinalizer(reset)
 
 
-def test_delete_stack_appear_after_refresh(setup_provider, provider, provisioning, request):
+def test_delete_stack_appear_after_refresh(setup_provider, provider, provisioning, request,
+                                           appliance):
     """ Tests delete stack
 
     Metadata:
         test_flag: delete_object
     """
-    stack = Stack(provisioning['stacks'][0], provider=provider)
+
+    stack = StackCollection(appliance).instantiate(name=provisioning['stacks'][0],
+                                                   provider=provider)
     # wait for delete implemented in delete()
     stack.delete()
     # refresh relationships is implemented in wait_for_exists()

@@ -56,6 +56,7 @@ class StackDetailsAccordion(View):
 class StackEntities(BaseEntitiesView):
     """The entities on the main list page"""
     table = Table("//div[@id='gtl_div']//table")
+    # todo: remove table and use entities instead
 
 
 class StackDetailsEntities(View):
@@ -233,7 +234,7 @@ class StackCollection(BaseCollection):
 
         for stack in stacks:
             try:
-                row = view.paginator.find_row_on_pages(view.entities.table, name=stack.name)
+                row = view.paginator.find_row_on_pages(view.table, name=stack.name)
                 row[0].check()
                 checked_stacks.append(stack)
             except NoSuchElementException:
@@ -270,7 +271,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
         view = navigate_to(self.collection, 'All')
         view.toolbar.view_selector.select('List View')
         try:
-            view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+            view.paginator.find_row_on_pages(view.table, name=self.name)
             return True
         except NoSuchElementException:
             return False
@@ -308,7 +309,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
     def retire_stack(self, wait=True):
         view = navigate_to(self.collection, 'All')
         view.toolbar.view_selector.select('List View')
-        row = view.paginator.find_row_on_pages(view.entities.table, name=self.name)
+        row = view.paginator.find_row_on_pages(view.table, name=self.name)
         row[0].check()
         view.toolbar.lifecycle.item_select('Retire selected Orchestration Stacks',
                                            handle_alert=True)
@@ -351,7 +352,7 @@ class Details(CFMENavigateStep):
         """Go to the details page"""
         self.prerequisite_view.toolbar.view_selector.select('List View')
         row = self.prerequisite_view.paginator.find_row_on_pages(
-            self.prerequisite_view.entities.table, name=self.obj.name)
+            self.prerequisite_view.table, name=self.obj.name)
         row.click()
 
 

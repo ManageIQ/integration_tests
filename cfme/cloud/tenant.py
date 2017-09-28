@@ -1,8 +1,4 @@
 """ Page functions for Tenant pages
-
-
-:var list_page: A :py:class:`cfme.web_ui.Region` object describing elements on the list page.
-:var details_page: A :py:class:`cfme.web_ui.Region` object describing elements on the detail page.
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
@@ -11,7 +7,7 @@ from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav, Button, Dropdown, FlashMessages, Input
 from widgetastic_manageiq import (
     Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
-    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView)
+    SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
@@ -51,14 +47,10 @@ class TenantDetailsAccordion(View):
         nav = BootstrapNav('//div[@id="ems_rel"]//ul')
 
 
-class TenantEntities(View):
+class TenantEntities(BaseEntitiesView):
     """The entities on the main list page"""
-    title = Text('//div[@id="main-content"]//h1')
     table = Table('//div[@id="list_grid"]//table')
-    search = View.nested(Search)
-    # element attributes changed from id to class in upstream-fine+, capture both with locator
-    flash = FlashMessages('.//div[@id="flash_msg_div"]'
-                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+    # todo: remove stuff about and use the same widgets from entities view ^^
 
 
 class TenantDetailsEntities(View):
@@ -101,7 +93,7 @@ class TenantView(BaseLoggedInPage):
 class TenantAllView(TenantView):
     """The all tenants page"""
     toolbar = View.nested(TenantToolbar)
-    entities = View.nested(TenantEntities)
+    including_entities = View.include(TenantEntities, use_parent=True)
     paginator = PaginationPane()
 
     @property
@@ -238,9 +230,9 @@ class TenantCollection(BaseCollection):
         view = navigate_to(self, 'All')
         # double check we're in List View
         view.toolbar.view_selector.select('List View')
-        if not view.entities.table.is_displayed:
+        if not view.table.is_displayed:
             raise ValueError('No Tenants found')
-        for row in view.entities.table:
+        for row in view.table:
             for tenant in tenants:
                 if tenant.name == row.name.text:
                     checked_tenants.append(tenant)
@@ -260,7 +252,9 @@ class TenantCollection(BaseCollection):
 
 
 class Tenant(BaseEntity, WidgetasticTaggable):
-    '''Tenant Class'''
+    """Tenant Class
+
+    """
     _param_name = 'Tenant'
 
     def __init__(self, collection, name, provider):
@@ -337,7 +331,7 @@ class TenantAll(CFMENavigateStep):
     def resetter(self):
         """Reset the view"""
         self.view.toolbar.view_selector.select('List View')
-        if self.view.entities.table.is_displayed:
+        if self.view.table.is_displayed:
             self.view.paginator.check_all()
             self.view.paginator.uncheck_all()
 
@@ -351,7 +345,7 @@ class TenantDetails(CFMENavigateStep):
         """Navigate to the details page"""
         self.prerequisite_view.toolbar.view_selector.select('List View')
         row = self.prerequisite_view.paginator.find_row_on_pages(
-            self.prerequisite_view.entities.table, name=self.obj.name)
+            self.prerequisite_view.table, name=self.obj.name)
         row.click()
 
     def resetter(self):

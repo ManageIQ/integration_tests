@@ -173,6 +173,9 @@ def test_delete_instance(new_instance):
 
 
 def test_list_vms_infra_node(provider, soft_assert):
+    if getattr(provider, 'infra_provider', None):
+        pytest.skip("Provider {prov} doesn't have infra provider set".format(prov=provider.name))
+
     view = navigate_to(provider.infra_provider, 'ProviderNodes')
     # Match hypervisors by IP with count of running VMs
     hvisors = {hv.host_ip: hv.running_vms for hv in provider.mgmt.api.hypervisors.list()}
