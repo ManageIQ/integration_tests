@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Ansible/Repositories"""
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox
+from widgetastic.widget import Text, Checkbox, Fillable
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button, Input, FlashMessages
 from widgetastic_manageiq import Table, PaginationPane
@@ -210,7 +210,7 @@ class RepositoryCollection(BaseCollection):
                 'Delete of Repository "{}" was successfully initiated.'.format(repository.name))
 
 
-class Repository(BaseEntity):
+class Repository(BaseEntity, Fillable):
     """A class representing one Embedded Ansible repository in the UI."""
 
     def __init__(self, collection, name, url, description=None, scm_credentials=None,

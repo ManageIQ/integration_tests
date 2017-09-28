@@ -89,7 +89,7 @@ def catalog_item(ansible_repository):
         fauxfactory.gen_alphanumeric(),
         fauxfactory.gen_alphanumeric(),
         provisioning={
-            "repository": ansible_repository.as_fill_value(),
+            "repository": ansible_repository,
             "playbook": "dump_all_variables.yml",
             "machine_credential": "CFME Default Credential",
             "create_new": True,
