@@ -4,7 +4,7 @@ import random
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage.object_store_object import ObjectStoreObjectCollection
-from cfme.utils import testgen
+from cfme.utils import testgen, version
 
 
 pytestmark = pytest.mark.usefixtures("setup_provider")
@@ -20,6 +20,7 @@ def objects(appliance, provider):
     yield objects
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 @pytest.mark.tier(3)
 def test_add_remove_tag(objects):
     object = random.choice(objects)
