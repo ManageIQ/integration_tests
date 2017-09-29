@@ -213,6 +213,9 @@ class RepositoryCollection(BaseCollection):
 class Repository(BaseEntity, Fillable):
     """A class representing one Embedded Ansible repository in the UI."""
 
+    _collections = {'playbook': (PlaybooksCollection, {})}
+    _collections_obj = None
+
     def __init__(self, collection, name, url, description=None, scm_credentials=None,
                  scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
         self.name = name

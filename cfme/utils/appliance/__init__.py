@@ -232,6 +232,22 @@ class ApplianceCollections(object):
             raise Exception('Collection [{}] not known to applinace'.format(name))
 
 
+class ObjectCollections(ApplianceCollections):
+    def __init__(self, parent):
+        self._collection_cache = {}
+        self.parent = parent
+        self.appliance = self.parent.appliance
+        self.collections = self.parent._collections
+        self.load_collections()
+
+    def load_collections(self):
+        for collection, cls_and_or_filter in self.collections.items():
+            filter = {'parent': self.parent}
+            if isinstance(cls_and_or_filter, tuple):
+                filter.update(cls_and_or_filter[1])
+            self._collection_cache[collection] = cls_and_or_filter[0](self.appliance, filter)
+
+
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -2769,3 +2785,9 @@ class BaseEntity(NavigatableMixin):
         # if not first_arg or not isinstance(first_arg, BaseCollection):
         #     raise Exception('First argument must be a collection')
         return super(BaseEntity, cls).__new__(cls)
+
+    @property
+    def collections(self):
+        if not self._collections_obj:
+            self._collections_obj = ObjectCollections(self)
+        return self._collections_obj

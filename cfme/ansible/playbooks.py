@@ -102,7 +102,7 @@ class PlaybooksCollection(BaseCollection):
 
     def __init__(self, appliance, filter=None):
         self.appliance = appliance
-        self.parent = filter.get('parent_repository', None) if filter else None
+        self.parent = filter.get('parent', None) if filter else None
 
     def instantiate(self, name, repository):
         return Playbook(self, name, repository)
