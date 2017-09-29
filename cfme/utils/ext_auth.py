@@ -2,8 +2,7 @@
 import fauxfactory
 from time import sleep
 
-from cfme.configure.configuration import (
-    DatabaseAuthSetting, ExternalAuthSetting, get_ntp_servers, set_ntp_servers)
+from cfme.configure.configuration import DatabaseAuthSetting, ExternalAuthSetting
 from cfme.utils import appliance
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.conf import credentials
@@ -55,9 +54,12 @@ def setup_external_auth_ipa(**data):
             assert str(ssh.run_command('hostname')).rstrip() == appliance_fqdn
 
         ensure_browser_open()
-        appliance.current_appliance.server.login_admin()
-        if data["ipaserver"] not in get_ntp_servers():
-            set_ntp_servers(data["ipaserver"])
+        current_appliance.server.login_admin()
+
+        if data["ipaserver"] not in (
+                current_appliance.server.settings.ntp_servers_form.values()):
+            current_appliance.server.settings.update_ntp_servers(
+                {'ntp_server_1': data["ipaserver"]})
             sleep(120)
         auth = ExternalAuthSetting(get_groups=data.pop("get_groups", False))
         auth.setup()
@@ -67,7 +69,7 @@ def setup_external_auth_ipa(**data):
             "appliance_console_cli --ipaserver {ipaserver} --iparealm {iparealm} "
             "--ipaprincipal {principal} --ipapassword {password}".format(**data)
         )
-    appliance.current_appliance.server.login_admin()
+    current_appliance.server.login_admin()
 
 
 def setup_external_auth_openldap(**data):

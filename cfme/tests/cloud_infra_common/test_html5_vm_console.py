@@ -7,12 +7,10 @@ import re
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.provider import CloudInfraProvider
-from cfme.configure.configuration import VMwareConsoleSupport
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure import configuration
 from cfme.common.vm import VM
 from cfme.utils import testgen, version, ssh
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.conf import credentials
@@ -58,13 +56,7 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
 def configure_vmware_console_for_test(appliance, provider):
     """Configure VMware Console to use VNC which is what is required for the HTML5 console."""
     if provider.one_of(VMwareProvider):
-        navigate_to(appliance.server, 'Server')
-
-        settings_pg = VMwareConsoleSupport(
-            appliance=appliance,
-            console_type='VNC',
-        )
-        settings_pg.update()
+        appliance.server.settings.update_vmware_console({'console_type': 'VNC'})
 
 
 @pytest.fixture(scope="session")

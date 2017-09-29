@@ -5,10 +5,8 @@ import pytest
 import re
 
 from cfme.common.vm import VM
-from cfme.configure.configuration import VMwareConsoleSupport
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils import testgen, version, ssh
-from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.conf import credentials
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
@@ -41,15 +39,9 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
 
 
 @pytest.fixture(scope="module")
-def configure_vmware_console_for_test(appliance, provider):
+def configure_vmware_console_for_test(appliance):
     """Configure VMware Console to use VNC which is what is required for the HTML5 console."""
-    navigate_to(appliance.server, 'Server')
-
-    settings_pg = VMwareConsoleSupport(
-        appliance=appliance,
-        console_type='VMware WebMKS',
-    )
-    settings_pg.update()
+    appliance.server.settings.update_vmware_console({'console_type': 'VMware WebMKS'})
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')
