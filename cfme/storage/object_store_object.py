@@ -12,7 +12,7 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from widgetastic.widget import View, Text, NoSuchElementException
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView,  WidgetasticTaggable
+from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.appliance import BaseCollection, BaseEntity
@@ -59,7 +59,7 @@ class ObjectStoreObjectView(BaseLoggedInPage):
         'contains(@class, "flash_text_div")]')
 
     @property
-    def in_Object(self):
+    def in_object(self):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Storage', 'Object Storage',
@@ -74,7 +74,7 @@ class ObjectStoreObjectAllView(ObjectStoreObjectView):
     @property
     def is_displayed(self):
         return (
-            self.in_Object and
+            self.in_object and
             self.title.text == 'Cloud Object Store Objects')
 
 
@@ -100,7 +100,7 @@ class ObjectStoreObjectCollection(BaseCollection):
         self.appliance = appliance
 
     def instantiate(self, key, provider):
-        return ObjectStoreObject(self,key, provider)
+        return ObjectStoreObject(self, key, provider)
 
     def all(self, provider):
         """returning all Object Store Objects"""
@@ -123,7 +123,7 @@ class ObjectStoreObjectCollection(BaseCollection):
                                                handle_alert=True)
 
 
-class ObjectStoreObject(BaseEntity,  WidgetasticTaggable):
+class ObjectStoreObject(BaseEntity, WidgetasticTaggable):
     """ Model of an Storage Object Store Object in cfme
 
     Args:
