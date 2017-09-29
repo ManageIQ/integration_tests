@@ -6,6 +6,7 @@ from widgetastic_patternfly import Input, BootstrapSelect, Dropdown, Button, Can
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView
+from cfme.common.vm_views import VMDetailsEntities
 from cfme.services.myservice import MyService
 from cfme.services.requests import RequestsView
 from cfme.utils.appliance import current_appliance
@@ -157,6 +158,15 @@ class ReconfigureServiceView(SetOwnershipForm):
             self.in_myservices and
             self.myservice.is_opened and
             self.title.text == 'Reconfigure Service "{}"'.format(self.context['object'].name)
+        )
+
+
+class ServiceVMDetailsView(VMDetailsEntities):
+    @property
+    def is_displayed(self):
+        return (
+            self.in_myservices and self.myservice.is_opened and
+            self.title.text == 'VM and Instance "{}"'.format(self.context['object'].name)
         )
 
 
@@ -345,3 +355,12 @@ class MyServiceReconfigure(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Reconfigure this Service')
+
+
+@navigator.register(MyService, 'VMDetails')
+class MyServiceVMDetails(CFMENavigateStep):
+    VIEW = ServiceVMDetailsView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.entities.get_entity(self.obj.vm_name).click()

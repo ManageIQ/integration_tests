@@ -8,8 +8,10 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.requests import RequestCollection
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
+from cfme.services.myservice.ui import MyServiceDetailView
 
 from cfme.utils import browser, testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
 from cfme.utils.update import update
@@ -124,3 +126,15 @@ def test_download_file(appliance, context, needs_firefox, myservice, filetype):
     with appliance.context.use(context):
         myservice = MyService(appliance, name=service_name, vm_name=vm_name)
         myservice.download_file(filetype)
+
+
+@pytest.mark.parametrize('context', [ViaUI])
+def test_service_link(appliance, context, myservice):
+    """Tests service link from VM details page(BZ1443772)"""
+    service_name, vm_name = myservice
+    with appliance.context.use(context):
+        myservice = MyService(appliance, name=service_name, vm_name=vm_name)
+        view = navigate_to(myservice, 'VMDetails')
+        view.relationships.click_at("Service")
+        new_view = myservice.create_view(MyServiceDetailView)
+        assert new_view.is_displayed
