@@ -100,9 +100,9 @@ class PlaybooksView(PlaybookBaseView):
 class PlaybooksCollection(BaseCollection):
     """Collection object for the :py:class:`Playbook`."""
 
-    def __init__(self, appliance, parent_repository):
+    def __init__(self, appliance, filter=None):
         self.appliance = appliance
-        self.parent = parent_repository
+        self.parent = filter.get('parent_repository', None) if filter else None
 
     def instantiate(self, name, repository):
         return Playbook(self, name, repository)
@@ -111,10 +111,8 @@ class PlaybooksCollection(BaseCollection):
         view = navigate_to(Server, "AnsiblePlaybooks")
         playbooks = []
         for entity in view.entities.get_all(surf_pages=True):
-            if entity.data["Repository"] == self.parent.name:
-                playbooks.append(
-                    self.instantiate(entity.data["Name"], entity.data["Repository"])
-                )
+            if (self.parent and entity.data["Repository"] == self.parent.name) or not self.parent:
+                playbooks.append(self.instantiate(entity.data["Name"], entity.data["Repository"]))
         return playbooks
 
 

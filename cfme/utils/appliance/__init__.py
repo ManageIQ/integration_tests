@@ -2747,6 +2747,9 @@ class BaseCollection(NavigatableMixin):
         #     raise Exception('First argument must be an appliance')
         return super(BaseCollection, cls).__new__(cls)
 
+    def filter(self, filter):
+        return self.__class__(self.appliance, filter)
+
 
 class BaseEntity(NavigatableMixin):
     """Class for helping create consistent entitys
