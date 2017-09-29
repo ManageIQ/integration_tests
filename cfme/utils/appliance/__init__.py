@@ -2741,9 +2741,10 @@ class BaseCollection(NavigatableMixin):
     ENTITY = None
 
     def __new__(cls, *args, **kwargs):
-        first_arg = args[0] if args else kwargs.get('appliance')
-        if not first_arg or not isinstance(first_arg, IPAppliance):
-            raise Exception('First argument must be an appliance')
+        # DISABLED as breaking 'copy' operations
+        # first_arg = args[0] if args else kwargs.get('appliance')
+        # if not first_arg or not isinstance(first_arg, IPAppliance):
+        #     raise Exception('First argument must be an appliance')
         return super(BaseCollection, cls).__new__(cls)
 
 
@@ -2760,7 +2761,8 @@ class BaseEntity(NavigatableMixin):
     """
 
     def __new__(cls, *args, **kwargs):
-        first_arg = args[0] if args else kwargs.get('collection')
-        if not first_arg or not isinstance(first_arg, BaseCollection):
-            raise Exception('First argument must be a collection')
+        # DISABLED as breaking 'copy' operations
+        # first_arg = args[0] if args else kwargs.get('collection')
+        # if not first_arg or not isinstance(first_arg, BaseCollection):
+        #     raise Exception('First argument must be a collection')
         return super(BaseEntity, cls).__new__(cls)
