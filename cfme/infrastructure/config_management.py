@@ -1,17 +1,17 @@
-from functools import partial
-
+# -*- coding: utf-8 -*-
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.exceptions import NoSuchElementException
+from widgetastic.widget import Checkbox, TextInput, Text, View
+from widgetastic_manageiq import (
+    Accordion, BaseEntitiesView, Button, ItemsToolBarViewSelector, ManageIQTree, SummaryTable,
+    Table)
+from widgetastic_patternfly import BootstrapSelect, Dropdown, FlashMessages, Tab
 
 from cfme.base.credential import Credential as BaseCredential
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.flash as flash
-import cfme.web_ui.tabstrip as tabs
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import (
-    accordion, Quadicon, Form, Input, fill, form_buttons, mixins, Table, Region,
-    AngularSelect, match_location
-)
+from cfme.base.login import BaseLoggedInPage
+from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils import version, conf
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -20,39 +20,201 @@ from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 
-properties_form = Form(
-    fields=[
-        ('name_text', Input('name')),
-        ('type_select', AngularSelect("provider_type")),
-        ('url_text', Input('url')),
-        ('ssl_checkbox', Input('verify_ssl'))
-    ])
 
-credential_form = Form(
-    fields=[
-        ('principal_text', Input('log_userid')),
-        ('secret_pass', Input('log_password')),
-        ('verify_secret_pass', Input('log_verify')),
-        ('validate_btn', form_buttons.validate)
-    ])
+class ConfigManagementToolbar(View):
+    """Toolbar"""
+    refresh = Button(title='Reload current display')
+    configuration = Dropdown('Configuration')
+    lifecycle = Dropdown('Lifecycle')
+    policy = Dropdown('Policy')
+    download = Dropdown(title='Download')
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-def cfm_mgr_table():
-    return Table("//div[@id='main_div']//div[@id='list_grid']/table")
+class ConfigManagementDetailsToolbar(View):
+    """Toolbar on the details page"""
+    history = Dropdown(title='History')
+    refresh = Button(title='Reload current display')
+    lifecycle = Dropdown('Lifecycle')
+    policy = Dropdown('Policy')
+    download = Button(title='Download summary in PDF format')
+    view_selector = View.nested(ItemsToolBarViewSelector)
 
 
-page = Region(locators={
-    'list_table_config_profiles': cfm_mgr_table(),
-    'list_table_config_systems': cfm_mgr_table()})
+class ConfigManagementSideBar(View):
+    """Side bar"""
+    @View.nested
+    class providers(Accordion):             # noqa
+        ACCORDION_NAME = 'Providers'
+        tree = ManageIQTree()
 
-add_manager_btn = form_buttons.FormButton('Add')
-edit_manager_btn = form_buttons.FormButton('Save')
-cfg_btn = partial(tb.select, 'Configuration')
-RELOAD_LOC = "//button[@name='summary_reload']"
+    @View.nested
+    class configured_systems(Accordion):    # noqa
+        ACCORDION_NAME = 'Configured Systems'
+        tree = ManageIQTree()
+
+    @View.nested
+    class job_templates(Accordion):         # noqa
+        ACCORDION_NAME = 'Job Templates'
+        tree = ManageIQTree()
 
 
-match_page = partial(match_location, controller='provider_foreman',
-                     title='Red Hat Satellite Provider')
+class ConfigManagementEntities(BaseEntitiesView):
+    """The entities on the page"""
+    table = Table('//div[@id="main_div"]//div[@id="list_grid"]/table')
+
+
+class ConfigManagementProfileEntities(BaseEntitiesView):
+    """Entities view for the detail page"""
+    @View.nested
+    class summary(Tab):                     # noqa
+        TAB_NAME = 'Summary'
+
+        properties = SummaryTable(title='Properties')
+        environment = SummaryTable(title='Environment')
+        operating_system = SummaryTable(title='Operating System')
+        tenancy = SummaryTable(title='Tenancy')
+        smart_management = SummaryTable(title='Smart Management')
+
+    @View.nested
+    class configured_systems(Tab):          # noqa
+        TAB_NAME = 'Configured Systems'
+        table = Table('//div[@id="main_div"]//div[@id="list_grid"]/table')
+
+
+class ConfigManagementAddForm(View):
+    """Form to add a provider"""
+    name = TextInput('name')
+    provider_type = BootstrapSelect('provider_type')
+    zone = TextInput('zone')
+    url = TextInput('url')
+    ssl = Checkbox('verify_ssl')
+
+    username = TextInput('log_userid')
+    password = TextInput('log_password')
+    confirm_password = TextInput('log_verify')
+
+    validate = Button('Validate')
+
+
+class ConfigManagementEditForm(View):
+    """Form to add a provider"""
+    name = TextInput('name')
+    provider_type = BootstrapSelect('provider_type')
+    zone = TextInput('zone')
+    url = TextInput('url')
+    ssl = Checkbox('verify_ssl')
+
+    username = TextInput('log_userid')
+    password = TextInput('log_password')
+
+    validate = Button('Validate')
+
+
+class ConfigManagementAddEntities(View):
+    """The entities on the add page"""
+    title = Text('//div[@id="main-content"]//h1')
+    form = View.nested(ConfigManagementAddForm)
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class ConfigManagementEditEntities(View):
+    """The entities on the edit page"""
+    title = Text('//div[@id="main-content"]//h1')
+    form = View.nested(ConfigManagementEditForm)
+    save = Button('Save')
+    reset = Button('Reset')
+    cancel = Button('Cancel')
+
+    # element attributes changed from id to class in upstream-fine+, capture both with locator
+    flash = FlashMessages('.//div[@id="flash_msg_div"]'
+                          '/div[@id="flash_text_div" or contains(@class, "flash_text_div")]')
+
+
+class ConfigManagementView(BaseLoggedInPage):
+    """The base page for both the all and details page"""
+
+    @property
+    def in_config(self):
+        """Determine if we're in the config section"""
+        if (self.context['object'].appliance.version >= '5.8' and
+                self.context['object'].type == 'Ansible Tower'):
+            nav_chain = ['Automation', 'Ansible', 'Ansible Tower']
+        else:
+            nav_chain = ['Configuration', 'Management']
+        return self.logged_in_as_current_user and self.navigation.currently_selected == nav_chain
+
+
+class ConfigManagementAllView(ConfigManagementView):
+    """The main list view"""
+    toolbar = View.nested(ConfigManagementToolbar)
+    sidebar = View.nested(ConfigManagementSideBar)
+    including_entities = View.include(ConfigManagementEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed?"""
+        if self.obj.appliance.version >= '5.8' and self.obj.type == 'Ansible Tower':
+            title_text = 'All Ansible Tower Providers'
+        else:
+            title_text = 'All Configuration Manager Providers'
+        return self.in_config and self.entities.title.text == title_text
+
+
+class ConfigManagementDetailsView(ConfigManagementView):
+    """The details page"""
+    toolbar = View.nested(ConfigManagementToolbar)
+    sidebar = View.nested(ConfigManagementSideBar)
+    including_entities = View.include(ConfigManagementEntities, use_parent=True)
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed?"""
+        titles = [t.format(self.obj.name) for t in [
+            'Configuration Profiles under Red Hat Satellite Provider "{} Configuration Manager"',
+            'Inventory Groups under Ansible Tower Provider "{} Configuration Manager"'
+        ]]
+        return self.in_config and self.entities.title.text in titles
+
+
+class ConfigManagementProfileView(ConfigManagementView):
+    """The profile page"""
+    toolbar = View.nested(ConfigManagementDetailsToolbar)
+    sidebar = View.nested(ConfigManagementSideBar)
+    entities = View.nested(ConfigManagementProfileEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed?"""
+        title = 'Configured System ({}) "{}"'.format(self.obj.type, self.obj.name)
+        return self.in_config and self.entities.title.text == title
+
+
+class ConfigManagementAddView(ConfigManagementView):
+    """The add page"""
+    sidebar = View.nested(ConfigManagementSideBar)
+    entities = View.nested(ConfigManagementAddEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed?"""
+        return False
+
+
+class ConfigManagementEditView(ConfigManagementView):
+    """The edit page"""
+    sidebar = View.nested(ConfigManagementSideBar)
+    entities = View.nested(ConfigManagementEditEntities)
+
+    @property
+    def is_displayed(self):
+        """Is this view being displayed?"""
+        return False
 
 
 class ConfigManager(Updateable, Pretty, Navigatable):
@@ -81,22 +243,13 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         self.credentials = credentials
         self.key = key or name
 
-    def _form_mapping(self, create=None, **kwargs):
-        provider_type = None if self.appliance.version >= '5.8' else (create and self.type)
-        return {'name_text': kwargs.get('name'),
-                'type_select': provider_type,
-                'url_text': kwargs.get('url'),
-                'ssl_checkbox': kwargs.get('ssl')}
-
     class Credential(BaseCredential, Updateable):
         pass
 
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            form_buttons.cancel()
-        else:
-            submit_button()
-            flash.assert_no_errors()
+    @property
+    def ui_name(self):
+        """Return the name used in the UI"""
+        return '{} Configuration Manager'.format(self.name)
 
     def create(self, cancel=False, validate_credentials=True, validate=True, force=False):
         """Creates the manager through UI
@@ -122,12 +275,23 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
         if not force and self.exists:
             return
-        navigate_to(self, 'Add')
-        fill(properties_form, self._form_mapping(create=True, **self.__dict__))
-        fill(credential_form, self.credentials, validate=validate_credentials)
-        self._submit(cancel, add_manager_btn)
-        if not cancel:
-            flash.assert_message_match(self._refresh_flash_msg)
+        form_dict = self.__dict__
+        form_dict.update(self.credentials.view_value_mapping)
+        if self.appliance.version < '5.8':
+            form_dict['provider_type'] = self.type
+        view = navigate_to(self, 'Add')
+        view.entities.form.fill(form_dict)
+        if validate_credentials:
+            view.entities.form.validate.click()
+            view.entities.flash.assert_success_message('Credential validation was successful')
+        if cancel:
+            view.entities.cancel.click()
+            view.entities.flash.assert_success_message('Add of Provider was cancelled by the user')
+        else:
+            view.entities.add.click()
+            success_message = '{} Provider "{}" was added'.format(self.type, self.name)
+            view.entities.flash.assert_success_message(success_message)
+            view.entities.flash.assert_success_message(self._refresh_flash_msg)
             if validate:
                 try:
                     self.yaml_data['config_profiles']
@@ -154,19 +318,19 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         Note:
             utils.update use is recommended over use of this method.
         """
-        navigate_to(self, 'Edit')
-        # Workaround - without this, update was failing on downstream appliance
-        sel.wait_for_ajax()
-        sel.wait_for_element(properties_form.name_text)
-
-        fill(properties_form, self._form_mapping(**updates))
-        fill(credential_form, updates.get('credentials'), validate=validate_credentials)
-        self._submit(cancel, edit_manager_btn)
-        name = updates['name'] or self.name
-        if not cancel:
-            flash.assert_message_match('{} Provider "{}" was updated'.format(self.type, name))
-
-        self.__dict__.update(**updates)
+        view = navigate_to(self, 'Edit')
+        view.entities.form.fill(updates)
+        if validate_credentials:
+            view.entities.form.validate.click()
+            view.entities.flash.assert_success_message('Credential validation was successful')
+        if cancel:
+            view.entities.cancel.click()
+            view.entities.flash.assert_success_message('Edit of Provider was cancelled by the user')
+        else:
+            view.entities.save.click()
+            view.entities.flash.assert_success_message(
+                '{} Provider "{}" was updated'.format(self.type, updates['name'] or self.name))
+            self.__dict__.update(**updates)
 
     def delete(self, cancel=False, wait_deleted=True, force=False):
         """Deletes the manager through UI
@@ -181,18 +345,14 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         """
         if not force and not self.exists:
             return
-        navigate_to(self, 'All')
-        sel.check(Quadicon(self.quad_name, None).checkbox())
-        item_text = version.pick({'5.6': 'Remove selected items from the VMDB',
-                                  '5.7': 'Remove selected items'})
-        cfg_btn(item_text, invokes_alert=True)
-
-        sel.handle_alert(cancel)
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+        row = view.entities.paginator.find_row_on_pages(view.entities.elements,
+                                                        provider_name=self.ui_name)
+        row[0].check()
+        view.toolbar.configuration.item_select('Remove selected items', handle_alert=not cancel)
         if not cancel:
-            flash_msg = version.pick({'5.6': 'Delete initiated for 1 provider',
-                                      '5.7': 'Delete initiated for 1 Provider'})
-
-            flash.assert_message_match(flash_msg)
+            view.entities.flash.assert_success_message('Delete initiated for 1 Provider')
             if wait_deleted:
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
 
@@ -205,39 +365,46 @@ class ConfigManager(Updateable, Pretty, Navigatable):
     @property
     def exists(self):
         """Returns whether the manager exists in the UI or not"""
-        navigate_to(self, 'All')
-        if (Quadicon.any_present() and
-                Quadicon(self.quad_name, None).exists):
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+        try:
+            view.entities.paginator.find_row_on_pages(view.entities.elements,
+                                                      provider_name=self.ui_name)
             return True
+        except NoSuchElementException:
+            pass
         return False
 
     def refresh_relationships(self, cancel=False):
         """Refreshes relationships and power states of this manager"""
-        navigate_to(self, 'All')
-
-        sel.check(Quadicon(self.quad_name, None).checkbox())
-        cfg_btn('Refresh Relationships and Power states', invokes_alert=True)
-
-        sel.handle_alert(cancel)
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+        row = view.entities.paginator.find_row_on_pages(view.entities.elements,
+                                                        provider_name=self.ui_name)
+        row[0].check()
+        if view.toolbar.configuration.item_enabled('Refresh Relationships and Power states'):
+            view.toolbar.configuration.item_select('Refresh Relationships and Power states',
+                                                   handle_alert=not cancel)
         if not cancel:
-            flash.assert_message_match(self._refresh_flash_msg)
-
-    def _does_profile_exist(self):
-        return sel.is_displayed(page.list_table_config_profiles)
+            view.entities.flash.assert_success_message(self._refresh_flash_msg)
 
     @property
     def config_profiles(self):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
-        navigate_to(self, 'Details')
+        view = navigate_to(self, 'Details')
         # TODO - remove it later.Workaround for BZ 1452425
-        tb.select('List View')
-        wait_for(self._does_profile_exist, num_sec=300, delay=20, fail_func=sel.refresh)
+        view.toolbar.view_selector.select('List View')
+        view.toolbar.refresh.click()
+        wait_for(lambda: view.entities.elements.is_displayed, fail_func=view.toolbar.refresh.click,
+                 handle_exception=True, num_sec=60, delay=5)
         config_profiles = []
-        for row in page.list_table_config_profiles.rows():
+        for row in view.entities.elements:
             if self.type == 'Ansible Tower':
-                name = row['name'].text
+                name = row.name.text
             else:
-                name = row['Description'].text
+                name = row.description.text
+            if 'unassigned' in name.lower():
+                continue
             config_profiles.append(ConfigProfile(name=name, manager=self))
         return config_profiles
 
@@ -282,17 +449,6 @@ def get_config_manager_from_config(cfg_mgr_key):
         raise Exception("Unknown configuration manager key")
 
 
-@fill.method((Form, ConfigManager.Credential))
-def _fill_credential(form, cred, validate=None):
-    """How to fill in a credential. Validates the credential if that option is passed in."""
-    fill(credential_form, {'principal_text': cred.principal,
-                           'secret_pass': cred.secret,
-                           'verify_secret_pass': cred.verify_secret,
-                           'validate_btn': validate})
-    if validate:
-        flash.assert_no_errors()
-
-
 class ConfigProfile(Pretty, Navigatable):
     """Configuration profile object (foreman-side hostgroup)
 
@@ -310,25 +466,21 @@ class ConfigProfile(Pretty, Navigatable):
     @property
     def systems(self):
         """Returns 'ConfigSystem' objects that are active under this profile"""
-        navigate_to(self, 'Details')
-        # ajax wait doesn't work here
-        _title_loc = "//span[contains(@id, 'explorer_title_text') " \
-                     "and contains(normalize-space(text()), 'Configured Systems')]"
-        sel.wait_for_element(_title_loc)
+        view = navigate_to(self, 'Details')
+        view.toolbar.view_selector.select('List View')
 
         # Unassigned config profile has no tabstrip
-        if "unassigned" not in self.name.lower():
-            tabs.select_tab("Configured Systems")
+        if 'unassigned' not in self.name.lower():
+            view.entities.configured_systems.click()
 
-        if sel.is_displayed(page.list_table_config_systems):
-            row_key = 'hostname'
-            return [ConfigSystem(row[row_key].text, self) for row in
-                    page.list_table_config_systems.rows()]
+        if view.entities.configured_systems.table.is_displayed:
+            return [ConfigSystem(row.hostname.text, self)
+                    for row in view.entities.configured_systems.table]
         return list()
 
 
-class ConfigSystem(Pretty, Navigatable):
-
+class ConfigSystem(Pretty, Navigatable, WidgetasticTaggable):
+    """The tags pages of the config system"""
     pretty_attrs = ['name', 'manager_key']
 
     def __init__(self, name, profile, appliance=None):
@@ -336,23 +488,13 @@ class ConfigSystem(Pretty, Navigatable):
         self.name = name
         self.profile = profile
 
-    def tag(self, tag):
-        """Tags the system by given tag"""
-        navigate_to(self, 'EditTags')
-        fill(mixins.tag_form, {'category': 'Cost Center *', 'tag': 'Cost Center 001'})
-        # ---
-        mixins.add_tag(tag, navigate=False)
-
-    def untag(self, tag):
-        """Removes the selected tag off the system"""
-        navigate_to(self, 'EditTags')
-        mixins.remove_tag(tag)
-
-    @property
-    def tags(self):
-        """Returns a list of this system's active tags"""
-        navigate_to(self, 'EditTags')
-        return mixins.get_tags()
+    def get_tags(self, tenant="My Company Tags"):
+        """Overridden get_tags method to deal with the fact that configured systems don't have a
+        details view."""
+        view = navigate_to(self, 'EditTags')
+        return [Tag(category=Category(display_name=r.category.text.replace('*', '').strip()),
+                    display_name=r.assigned_value.text.strip())
+                for r in view.form.tags]
 
 
 class Satellite(ConfigManager):
@@ -453,6 +595,7 @@ class AnsibleTower(ConfigManager):
 
 @navigator.register(ConfigManager, 'All')
 class MgrAll(CFMENavigateStep):
+    VIEW = ConfigManagementAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
@@ -463,96 +606,87 @@ class MgrAll(CFMENavigateStep):
 
     def resetter(self):
         if self.obj.appliance.version >= '5.8' and self.obj.type == 'Ansible Tower':
-            accordion.tree('Providers', 'All Ansible Tower Providers')
+            self.view.sidebar.providers.tree.click_path('All Ansible Tower Providers')
         else:
-            accordion.tree('Providers', 'All Configuration Manager Providers')
-        tb.select('Grid View')
-
-    def am_i_here(self):
-        if self.obj.appliance.version >= '5.8' and self.obj.type == 'Ansible Tower':
-            page = 'All Ansible Tower Providers'
-        else:
-            page = 'All Configuration Manager Providers'
-        return match_page(summary=page)
+            self.view.sidebar.providers.tree.click_path('All Configuration Manager Providers')
 
 
 @navigator.register(ConfigManager, 'Add')
 class MgrAdd(CFMENavigateStep):
+    VIEW = ConfigManagementAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a new Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new Provider')
 
 
 @navigator.register(ConfigManager, 'Edit')
 class MgrEdit(CFMENavigateStep):
+    VIEW = ConfigManagementEditView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.quad_name, None).checkbox())
-        cfg_btn('Edit Selected item')
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+            self.prerequisite_view.entities.elements, provider_name=self.obj.ui_name)
+        row.click()
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
 
 
 @navigator.register(ConfigManager, 'Details')
 class MgrDetails(CFMENavigateStep):
+    VIEW = ConfigManagementDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.quad_name, None))
-
-    def am_i_here(self):
-        return any((match_page(summary='Configuration Profiles under Red Hat Satellite '
-                                       'Provider "{} Configuration Manager"'.format(self.obj.name)),
-                    match_page(summary='Inventory Groups under Ansible Tower Provider'
-                                       ' "{} Configuration Manager"'.format(self.obj.name))))
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+            self.prerequisite_view.entities.elements, provider_name=self.obj.ui_name)
+        row.click()
 
 
 @navigator.register(ConfigManager, 'EditFromDetails')
 class MgrEditFromDetails(CFMENavigateStep):
+    VIEW = ConfigManagementEditView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this Provider')
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Provider')
 
 
-# todo: not sure whether this works or not. it seems it wasn't used for a long time
 @navigator.register(ConfigProfile, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = ConfigManagementProfileView
     prerequisite = NavigateToAttribute('manager', 'Details')
 
     def step(self):
-        tb.select('List View'),
-        page.list_table_config_profiles.click_cell('Description', self.obj.name)
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+            self.prerequisite_view.entities.elements, description=self.obj.name)
+        row.click()
 
 
 @navigator.register(ConfigSystem, 'All')
 class SysAll(CFMENavigateStep):
+    VIEW = ConfigManagementAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         self.prerequisite_view.navigation.select('Configuration', 'Management')
 
     def resetter(self):
-        accordion.tree('Configured Systems', 'All Configured Systems')
-        tb.select('Grid View')
-
-    def am_i_here(self):
-        return match_page(summary='All Configured Systems')
-
-
-@navigator.register(ConfigSystem, 'Provision')
-class SysProvision(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        sel.check(Quadicon(self.obj.name, None))
-        cfg_btn('Provision Configured Systems')
+        self.view.sidebar.configured_systems.open()
+        self.view.sidebar.configured_systems.tree.click_path('All Configured Systems')
 
 
 @navigator.register(ConfigSystem, 'EditTags')
 class SysEditTags(CFMENavigateStep):
+    VIEW = TagPageView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, None))
-        cfg_btn('Edit Tags')
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        row = self.prerequisite_view.entities.paginator.find_row_on_pages(
+            self.prerequisite_view.entities.elements, hostname=self.obj.name)
+        row[0].check()
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

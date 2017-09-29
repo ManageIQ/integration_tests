@@ -118,8 +118,10 @@ def test_config_manager_remove(config_manager):
         config_manager_obj.type != "Ansible Tower")]
 )
 def test_config_system_tag(request, config_system, tag):
-    config_system.tag(tag)
-    assert '{}: {}'.format(tag.category.display_name, tag.display_name) in config_system.tags,\
+    config_system.add_tag(tag=tag, details=False)
+    tags = config_system.get_tags()
+    assert '{}: {}'.format(tag.category.display_name, tag.display_name) in \
+        ['{}: {}'.format(t.category.display_name, t.display_name) for t in tags], \
         "Failed to setup a configuration system's tag"
 
 
