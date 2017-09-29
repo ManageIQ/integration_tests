@@ -133,7 +133,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
 
     # TODO: allow for vddk parameterization
     if provider.one_of(VMwareProvider):
-        appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
+        appliance.install_vddk()
         appliance.browser.quit_browser()
         appliance.browser.open_browser()
         set_host_credentials(request, provider, vm_analysis_data)

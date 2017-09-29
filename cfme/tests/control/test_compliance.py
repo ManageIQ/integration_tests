@@ -78,7 +78,7 @@ def vddk_url(provider):
 @pytest.yield_fixture(scope="module")
 def configure_fleecing(appliance, provider, setup_provider_modscope, vddk_url):
     setup_providers_hosts_credentials(provider.key)
-    appliance.install_vddk(reboot=False, vddk_url=vddk_url)
+    appliance.install_vddk(vddk_url=vddk_url)
     yield
     appliance.uninstall_vddk()
 
