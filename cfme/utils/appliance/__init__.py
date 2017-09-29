@@ -248,7 +248,12 @@ class ObjectCollections(ApplianceCollections):
                 cls = cls_and_or_filter[0]
             else:
                 cls = cls_and_or_filter
-            self._collection_cache[collection] = cls(self.appliance, filter)
+            collection_instance = cls(self.appliance, filter)
+            if collection_instance._filters is None:
+                collection_instance._filters = filter
+            else:
+                collection_instance._filters.update(filter)
+            self._collection_cache[collection] = collection_instance
 
 
 class IPAppliance(object):
@@ -2758,6 +2763,7 @@ class BaseCollection(NavigatableMixin):
     """
 
     ENTITY = None
+    _filters = None
 
     def __new__(cls, *args, **kwargs):
         # DISABLED as breaking 'copy' operations
@@ -2767,7 +2773,14 @@ class BaseCollection(NavigatableMixin):
         return super(BaseCollection, cls).__new__(cls)
 
     def filter(self, filter):
-        return self.__class__(self.appliance, filter)
+        if self._filters:
+            n_filter = self._filters.copy()
+            n_filter.update(filter)
+        else:
+            n_filter = filter
+        instance = self.__class__(self.appliance, n_filter)
+        instance._filters = n_filter
+        return instance
 
 
 class BaseEntity(NavigatableMixin):
