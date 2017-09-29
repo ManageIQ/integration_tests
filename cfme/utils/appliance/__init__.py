@@ -232,30 +232,6 @@ class ApplianceCollections(object):
             raise Exception('Collection [{}] not known to applinace'.format(name))
 
 
-class ObjectCollections(ApplianceCollections):
-    def __init__(self, parent):
-        self._collection_cache = {}
-        self.parent = parent
-        self.appliance = self.parent.appliance
-        self.collections = self.parent._collections
-        self.load_collections()
-
-    def load_collections(self):
-        for collection, cls_and_or_filter in self.collections.items():
-            filter = {'parent': self.parent}
-            if isinstance(cls_and_or_filter, tuple):
-                filter.update(cls_and_or_filter[1])
-                cls = cls_and_or_filter[0]
-            else:
-                cls = cls_and_or_filter
-            collection_instance = cls(self.appliance, filter)
-            if collection_instance._filters is None:
-                collection_instance._filters = filter
-            else:
-                collection_instance._filters.update(filter)
-            self._collection_cache[collection] = collection_instance
-
-
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -2750,6 +2726,26 @@ class Navigatable(NavigatableMixin):
         self.appliance = appliance or get_or_create_current_appliance()
 
 
+class ObjectCollections(ApplianceCollections):
+    def __init__(self, parent):
+        self._collection_cache = {}
+        self.parent = parent
+        self.appliance = self.parent.appliance
+        self.collections = self.parent._collections
+        self.load_collections()
+
+    def load_collections(self):
+        for collection, cls_and_or_filter in self.collections.items():
+            filter = {'parent': self.parent}
+            if isinstance(cls_and_or_filter, tuple):
+                filter.update(cls_and_or_filter[1])
+                cls = cls_and_or_filter[0]
+            else:
+                cls = cls_and_or_filter
+            collection_instance = cls(self.appliance, filters=filter)
+            self._collection_cache[collection] = collection_instance
+
+
 class BaseCollection(NavigatableMixin):
     """Class for helping create consistent Collections
 
@@ -2772,14 +2768,21 @@ class BaseCollection(NavigatableMixin):
         #     raise Exception('First argument must be an appliance')
         return super(BaseCollection, cls).__new__(cls)
 
+    def __init__(self, appliance, *args, **kwargs):
+        self.appliance = appliance
+        self.filters = kwargs.pop('filters', None)
+        self.init(*args, **kwargs)
+
+    def init(self, *args, **kwargs):
+        pass
+
     def filter(self, filter):
-        if self._filters:
-            n_filter = self._filters.copy()
+        if self.filters:
+            n_filter = self.filters.copy()
             n_filter.update(filter)
         else:
             n_filter = filter
-        instance = self.__class__(self.appliance, n_filter)
-        instance._filters = n_filter
+        instance = self.__class__(self.appliance, filters=n_filter)
         return instance
 
 
@@ -2801,6 +2804,14 @@ class BaseEntity(NavigatableMixin):
         # if not first_arg or not isinstance(first_arg, BaseCollection):
         #     raise Exception('First argument must be a collection')
         return super(BaseEntity, cls).__new__(cls)
+
+    def __init__(self, collection, *args, **kwargs):
+        self.collection = collection
+        self.appliance = self.collection.appliance
+        self.init(*args, **kwargs)
+
+    def init(self, *args, **kwargs):
+        pass
 
     @property
     def collections(self):

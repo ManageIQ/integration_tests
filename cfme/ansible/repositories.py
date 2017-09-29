@@ -88,10 +88,6 @@ class RepositoryEditView(RepositoryFormView):
 
 class RepositoryCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.ansible.repositories.Repository`."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
     def instantiate(self, name, url, description=None, scm_credentials=None,
                     scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
         return Repository(
@@ -216,12 +212,10 @@ class Repository(BaseEntity, Fillable):
     _collections = {'playbook': PlaybooksCollection}
     _collections_obj = None
 
-    def __init__(self, collection, name, url, description=None, scm_credentials=None,
-                 scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
+    def init(self, name, url, description=None, scm_credentials=None,
+             scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
         self.name = name
         self.url = url
-        self.collection = collection
-        self.appliance = self.collection.appliance
         self.description = description or ""
         self.scm_credentials = scm_credentials
         self.scm_branch = scm_branch or ""
