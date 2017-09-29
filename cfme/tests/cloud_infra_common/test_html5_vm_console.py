@@ -35,7 +35,7 @@ def vm_obj(request, provider, setup_provider, console_template, vm_name):
     after the test is completed.
 
     """
-    vm_obj = VM.factory(vm_name, provider, template_name=console_template)
+    vm_obj = VM.factory(vm_name, provider, template_name=console_template.name)
 
     @request.addfinalizer
     def _delete_vm():
