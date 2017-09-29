@@ -9,16 +9,18 @@ from cfme.utils.generators import random_vm_name
 
 pytest_generate_tests = testgen.generate(
     [VMwareProvider, RHEVMProvider],
-    required_fields=['small_template'],
+    required_fields=['templates'],
     scope="module")
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider'), pytest.mark.long_running, pytest.mark.tier(2)]
+    pytest.mark.usefixtures('setup_provider_modscope'),
+    pytest.mark.long_running,
+    pytest.mark.tier(2)]
 
 
 @pytest.yield_fixture(scope='module')
 def small_vm(provider, small_template_modscope):
-    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template_modscope)
+    vm = VM.factory(random_vm_name(context='reconfig'), provider, small_template_modscope.name)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     vm.refresh_relationships()
 

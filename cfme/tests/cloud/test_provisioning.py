@@ -3,8 +3,8 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
-from riggerlib import recursive_update
 
+from riggerlib import recursive_update
 from textwrap import dedent
 
 from cfme import test_requirements
@@ -17,12 +17,14 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.services.requests import RequestCollection
 from cfme.utils import testgen
+from cfme.utils.conf import credentials
 from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.update import update
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, RefreshTimer
+
 
 pytestmark = [pytest.mark.meta(server_roles="+automate"),
               test_requirements.provision, pytest.mark.tier(2)]
@@ -96,6 +98,12 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     # Azure specific
     if provider.one_of(AzureProvider):
         # Azure uses different provisioning keys for some reason
+        try:
+            template = provider.data.templates.small_template
+            vm_user = credentials[template.creds].username
+            vm_password = credentials[template.creds].password
+        except AttributeError:
+            pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
         recursive_update(inst_args, {
             'environment': {
                 'automatic_placement': auto,
@@ -107,8 +115,8 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
             'properties': {
                 'instance_type': provisioning['vm_size'].lower()},
             'customize': {
-                'admin_username': provisioning['vm_user'],
-                'admin_password': provisioning['vm_password']}})
+                'admin_username': vm_user,
+                'root_password': vm_password}})
 
     yield instance, inst_args, image
 
@@ -243,9 +251,15 @@ def test_provision_from_template_using_rest(
         provision_data['vm_fields']['zone'] = provisioning['availability_zone']
         provision_data['vm_fields']['region'] = 'us-central1'
     elif isinstance(provider, AzureProvider):
+        try:
+            template = provider.data.templates.small_template
+            vm_user = credentials[template.creds].username
+            vm_password = credentials[template.creds].password
+        except AttributeError:
+            pytest.skip('Could not find small_template or credentials for {}'.format(provider.name))
         # mapping: product/dialogs/miq_dialogs/miq_provision_azure_dialogs_template.yaml
-        provision_data['vm_fields']['root_username'] = provisioning['vm_user']
-        provision_data['vm_fields']['root_password'] = provisioning['vm_password']
+        provision_data['vm_fields']['root_username'] = vm_user
+        provision_data['vm_fields']['root_password'] = vm_password
 
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
@@ -464,7 +478,6 @@ def copy_domains(original_request_class, domain):
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_provision_from_template_with_attached_disks(request, testing_instance, provider, disks,
@@ -512,7 +525,6 @@ def test_provision_from_template_with_attached_disks(request, testing_instance, 
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_provision_with_boot_volume(request, testing_instance, provider, soft_assert, copy_domains,
                                     modified_request_class):
@@ -557,10 +569,10 @@ def test_provision_with_boot_volume(request, testing_instance, provider, soft_as
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
-def test_provision_with_additional_volume(request, testing_instance, provider, soft_assert,
-                                          copy_domains, domain, modified_request_class):
+def test_provision_with_additional_volume(request, testing_instance, provider, small_template,
+                                          soft_assert, copy_domains, domain,
+                                          modified_request_class):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
@@ -572,7 +584,7 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
     # Set up automate
     method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
     try:
-        image_id = provider.mgmt.get_template_id(provider.data["small_template"])
+        image_id = provider.mgmt.get_template_id(small_template.name)
     except KeyError:
         pytest.skip("No small_template in provider adta!")
     with update(method):

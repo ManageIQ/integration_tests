@@ -25,10 +25,11 @@ def pytest_generate_tests(metafunc):
 
 @pytest.yield_fixture(scope="function")
 def vm_crud(provider, setup_provider_modscope, small_template_modscope):
+    template = small_template_modscope
     vm = VM.factory(
         'test_events_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
         provider,
-        template_name=small_template_modscope)
+        template_name=template.name)
     yield vm
     if vm.does_vm_exist_on_provider():
         vm.delete_from_provider()

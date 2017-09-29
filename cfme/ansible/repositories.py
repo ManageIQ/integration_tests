@@ -232,6 +232,11 @@ class Repository(BaseEntity):
         return self.appliance.db.client.sessionmaker(autocommit=True).query(table).filter(
             table.name == self.name).first()
 
+    @property
+    def as_fill_value(self):
+        """For use when selecting this repo in the UI forms"""
+        return self.name
+
     def update(self, updates):
         """Update the repository in the UI.
 

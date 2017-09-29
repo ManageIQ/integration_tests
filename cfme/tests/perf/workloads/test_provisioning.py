@@ -21,8 +21,8 @@ roles_provisioning_cleanup = ['database_operations', 'ems_inventory', 'ems_opera
     'event', 'notifier', 'reporting', 'scheduler', 'user_interface', 'web_services']
 
 
-def get_provision_data(rest_api, provider, small_template, auto_approve=True):
-    templates = rest_api.collections.templates.find_by(name=small_template)
+def get_provision_data(rest_api, provider, template_name, auto_approve=True):
+    templates = rest_api.collections.templates.find_by(name=template_name)
     for template in templates:
         try:
             ems_id = template.ems_id
@@ -32,7 +32,7 @@ def get_provision_data(rest_api, provider, small_template, auto_approve=True):
             guid = template.guid
             break
     else:
-        raise Exception("No such template {} on provider!".format(small_template))
+        raise Exception("No such template {} on provider!".format(template_name))
 
     result = {
         "version": "1.1",
@@ -149,8 +149,8 @@ def test_provisioning(appliance, request, scenario):
             provision_list.append((vm_to_provision, guid_to_provision,
                 prov.data['provisioning']['vlan']))
 
-        template = prov.data.get('small_template')
-        provision_data = get_provision_data(appliance.rest_api, prov, template)
+        template = prov.data.templates.get('small_template')
+        provision_data = get_provision_data(appliance.rest_api, prov, template.name)
         vm_name = provision_data["vm_fields"]["vm_name"]
         response = appliance.rest_api.collections.provision_requests.action.create(**provision_data)
         assert appliance.rest_api.response.status_code == 200
@@ -201,5 +201,5 @@ def test_provisioning(appliance, request, scenario):
     quantifiers['Queued_VM_Provisionings'] = total_provisioned_vms
     quantifiers['Deleted_VMs'] = total_deleted_vms
     logger.info('Provisioned {} VMs and deleted {} VMs during the scenario.'
-        .format(total_provisioned_vms, total_deleted_vms))
+                .format(total_provisioned_vms, total_deleted_vms))
     logger.info('Test Ending...')

@@ -32,7 +32,7 @@ def vm_name():
 
 @pytest.fixture(scope="function")
 def vm_obj(request, provider, setup_provider, small_template, vm_name):
-    vm_obj = VM.factory(vm_name, provider, template_name=small_template)
+    vm_obj = VM.factory(vm_name, provider, template_name=small_template.name)
 
     @request.addfinalizer
     def _delete_vm():
