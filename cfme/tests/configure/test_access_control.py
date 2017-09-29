@@ -793,14 +793,12 @@ def test_user_change_password(appliance, request):
 
 @pytest.fixture(scope="module")
 def tenantcollection(appliance):
-    tc = TenantCollection(appliance=appliance)
-    yield tc
+    yield TenantCollection(appliance=appliance)
 
 
 @pytest.fixture(scope="module")
 def projectcollection(appliance):
-    pc = ProjectCollection(appliance=appliance)
-    yield pc
+    yield ProjectCollection(appliance=appliance)
 
 
 @pytest.mark.tier(3)

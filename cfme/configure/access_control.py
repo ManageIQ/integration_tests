@@ -1,5 +1,6 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic_manageiq import UpDownSelect, PaginationPane, SummaryFormItem, Table
+from widgetastic_manageiq import UpDownSelect, PaginationPane, SummaryFormItem, Table, \
+    BaseListEntity
 from widgetastic_patternfly import (
     BootstrapSelect, Button, Input, Tab, CheckableBootstrapTreeview,
     BootstrapSwitch, CandidateNotFound, Dropdown)
@@ -1241,7 +1242,7 @@ class DetailsTenantView(ConfigurationView):
     name = Text('Name')
     description = Text('Description')
     parent = Text('Parent')
-    table = Table('//*[@id="fieldset"]/table')
+    table = BaseListEntity()
 
     @property
     def is_displayed(self):
@@ -1283,11 +1284,12 @@ class TenantCollection(BaseCollection):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def instantiate(self, name, description=None, parent=None):
-        return Tenant(collection=self, name=name, description=description, parent_tenant=parent)
+    def instantiate(self, name, description=None, parent=None, default=False):
+        return Tenant(collection=self, name=name, description=description, parent_tenant=parent,
+                      _default=default)
 
     def get_root_tenant(self):
-        return Tenant(collection=self, name='My Company', _default=True)
+        return self.instantiate('My Company', default=True)
 
     def create(self, name, description, parent):
 

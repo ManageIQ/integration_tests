@@ -47,8 +47,7 @@ def set_group_cpu():
 
 @pytest.fixture(scope="module")
 def roottenant(appliance):
-    tc = TenantCollection(appliance)
-    yield tc.get_root_tenant()
+    return TenantCollection(appliance).get_root_tenant()
 
 
 @pytest.yield_fixture(scope="module")
