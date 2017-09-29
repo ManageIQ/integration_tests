@@ -23,7 +23,8 @@ COLLECTION_CLASS_AND_TYPE = [
 ]
 
 
-@pytest.yield_fixture(params=COLLECTION_CLASS_AND_TYPE)
+@pytest.yield_fixture(params=COLLECTION_CLASS_AND_TYPE,
+                      ids=['object_manager', 'block_manager'])
 def collection_manager(request, openstack_provider, appliance):
     collection = request.param[0](appliance=appliance)
     manager_name = '{0} {1}'.format(openstack_provider.name, request.param[1])
