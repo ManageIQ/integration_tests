@@ -17,12 +17,18 @@ os.environ['OS_TENANT_NAME'] = 'admin'
 os.environ['OS_AUTH_URL'] = GLANCE_SERVER
 
 
-QCOW_IMAGE = os.path.basename(CFME_IMAGE_URL)
+CFME_QCOW_IMAGE = os.path.basename(CFME_IMAGE_URL)
 
-p = subprocess.Popen(['wget', '-N', CFME_IMAGE_URL, '-O', QCOW_IMAGE], stdout=subprocess.PIPE)
+# Fetch image from CFME_IMAGE_URL
+p = subprocess.Popen(['wget', '-N', CFME_IMAGE_URL, '-O', CFME_QCOW_IMAGE], stdout=subprocess.PIPE)
 err = p.communicate()
 
+# Upload fetched image to Glance server
 p = subprocess.Popen(['glance', 'image-create', '--name=IMAGE_NAME_IN_GLANCE',
    '--visibility public', '--container-format=bare', '--disk-format=qcow2', '--progress',
    '--file QCOW_IMAGE'])
 err = p.communicate
+
+# Delete local copy of CFME_QCOW_IMAGE
+p = subprocess.Popen(['rm', '-rf', CFME_QCOW_IMAGE], stdout=subprocess.PIPE)
+err = p.communicate()
