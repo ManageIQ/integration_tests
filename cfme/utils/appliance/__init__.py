@@ -245,7 +245,10 @@ class ObjectCollections(ApplianceCollections):
             filter = {'parent': self.parent}
             if isinstance(cls_and_or_filter, tuple):
                 filter.update(cls_and_or_filter[1])
-            self._collection_cache[collection] = cls_and_or_filter[0](self.appliance, filter)
+                cls = cls_and_or_filter[0]
+            else:
+                cls = cls_and_or_filter
+            self._collection_cache[collection] = cls(self.appliance, filter)
 
 
 class IPAppliance(object):
