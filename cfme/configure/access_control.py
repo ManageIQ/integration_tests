@@ -1359,6 +1359,7 @@ class Tenant(BaseEntity):
             as 'Save' button will not be active
         """
         view = navigate_to(self, 'Edit')
+        wait_for(lambda : view.is_displayed, num_sec=5)
         changed = view.form.fill(updates)
         if changed:
             view.save_button.click()
