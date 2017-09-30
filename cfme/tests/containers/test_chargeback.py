@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
+import calendar
+from datetime import datetime
+
+
 import fauxfactory
 from humanfriendly import parse_size, tokenize
 import pytest
@@ -18,7 +22,7 @@ obj_types = ['Image', 'Project']
 fixed_rates = ['Fixed1', 'Fixed2', 'CpuCores', 'Memory', 'Network']
 variable_rates = ['CpuCores', 'Memory', 'Network']
 all_rates = set(fixed_rates + variable_rates)
-intervals = ['Hourly', 'Daily', 'Weekly']  # , 'Monthly']
+intervals = ['Hourly', 'Daily', 'Weekly', 'Monthly']
 rate_types = ['fixed', 'variable']
 
 
@@ -33,13 +37,26 @@ pytestmark = [
 ]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 
-
 # We cannot calculate the accurate value because the prices in the reports
 # appears in a lower precision (floored). Hence we're using this accuracy coefficient:
 TEST_MATCH_ACCURACY = 0.1
 
-hours_count_lut = OrderedDict([('Hourly', 1.), ('Daily', 24.),
-                               ('Weekly', 168.), ('Monthly', 672.), ('Yearly', 8760)])
+now = datetime.now()
+hours_count_lut = OrderedDict([('Hourly', 1.), ('Daily', 24.), ('Weekly', 168.),
+                               ('Monthly', calendar.monthrange(now.year, now.month)[1] * 24.),
+                               ('Yearly', 8760)])
+
+
+def dump_args(**kwargs):
+    """Return string of the arguments and their values.
+    E.g. dump_args(a=1, b=2) --> 'a=1, b=2;
+    '"""
+    out = ''
+    for key, val in kwargs.items():
+        out += '{}={}, '.format(key, val)
+    if out:
+        return out[:-2] + ';'
+    return kwargs
 
 
 def gen_report_base(obj_type, provider, rate_desc, rate_interval):
@@ -213,31 +230,31 @@ def abstract_test_chargeback_cost(
 
         fixed_rate = float(compute_rate.fields[report_headers.rate_name]['fixed_rate'])
         variable_rate = float(compute_rate.fields[report_headers.rate_name].get('variable_rate', 0))
+        # Calculate numerical metric
         if rate_key == 'Memory':
             size_, unit_ = tokenize(row[report_headers.metric_name].upper())
             metric = round(parse_size(str(size_) + unit_, binary=True) / 1048576.0, 2)
         else:
             metric = parse_number(row[report_headers.metric_name])
-        # Give us the number of units per the previous units. e.g.
-        #     # of hours in a day / # of days in a week
-        interval_factor = (hours_count_lut.values()[hours_count_lut.keys().index(interval) + 1] /
-                           hours_count_lut[interval])
-        fixed_metric = parse_number(row[CHARGEBACK_HEADER_NAMES['Fixed1'].metric_name])
-        fixed_product = fixed_metric / hours_count_lut[interval]
-        fixed_expected = fixed_product * fixed_rate
-        expected_value = round(interval_factor * metric * variable_rate +
-                               fixed_expected, 2)
-        found_value = round(parse_number(row[report_headers.cost_name]), 2)
+        # Calculate fixed product and cost
+        num_hours = parse_number(row[CHARGEBACK_HEADER_NAMES['Fixed1'].metric_name])
+        num_intervals = num_hours / hours_count_lut[interval]
+        fixed_cost = num_intervals * fixed_rate
+        variable_cost = num_intervals * metric * variable_rate
+        # Calculate expected cost
+        expected_cost = round(variable_cost + fixed_cost, 2)
+        found_cost = round(parse_number(row[report_headers.cost_name]), 2)
 
-        match_threshold = TEST_MATCH_ACCURACY * expected_value
+        match_threshold = TEST_MATCH_ACCURACY * expected_cost
         soft_assert(
-            abs(found_value - expected_value) <= match_threshold,
-            'Chargeback {} mismatch: {}: "{}"; rate: "{}"; '
-            'Expected price range: {} - {}; Found: {};'
-            .format(obj_type, obj_type, row['{} Name'.format(obj_type)],
-                    report_headers.cost_name,
-                    expected_value - match_threshold,
-                    expected_value + match_threshold, found_value))
+            abs(found_cost - expected_cost) <= match_threshold,
+            'Unexpected Chargeback: {}'.format(dump_args(
+                charge_for=obj_type, rate_key=rate_key, metric=metric, num_hours=num_hours,
+                num_intervals=num_intervals, fixed_rate=fixed_rate, variable_rate=variable_rate,
+                fixed_cost=fixed_cost, variable_cost=variable_cost,
+                expected_full_cost=expected_cost, found_full_cost=found_cost
+            ))
+        )
 
     assert found_something_to_test, \
         'Could not find {} with the assigned rate: {}'.format(obj_type, compute_rate.description)
@@ -283,7 +300,7 @@ def test_chargeback_rate_cpu_cores(
 def test_chargeback_rate_memory_used(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     abstract_test_chargeback_cost(
-        'Network', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
+        'Memory', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
 
 
 # Network variable rate tests are skipped until this bug is solved:
@@ -292,4 +309,4 @@ def test_chargeback_rate_memory_used(
 def test_chargeback_rate_network_io(
         rate_type, obj_type, interval, chargeback_report_data, compute_rate, soft_assert):
     abstract_test_chargeback_cost(
-        'Memory', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
+        'Network', obj_type, interval, chargeback_report_data, compute_rate, soft_assert)
