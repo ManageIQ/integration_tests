@@ -775,8 +775,16 @@ class Table(VanillaTable):
         './/input[@id="masterToggle"]',
         './/th[1]/input[@id="check-all"]'
     ])
-    SORTED_BY_LOC = (
-        './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]')
+    SORTED_BY_LOC = '|'.join([
+        # Old one
+        './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
+        # New one
+        './thead/tr/th[./div/i[contains(@class, "fa-sort-")]]/a'])
+    SORTED_BY_CLASS_LOC = '|'.join([
+        # Old one
+        './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]',
+        # New one
+        './thead/tr/th/div/i[contains(@class, "fa-sort-")]'])
     SORT_LINK = './thead/tr/th[{}]/a'
     Row = TableRow
 
@@ -814,8 +822,18 @@ class Table(VanillaTable):
         Returns:
             ``asc`` or ``desc``
         """
-        klass = self.browser.get_attribute('class', self.SORTED_BY_LOC, parent=self)
-        return re.search(r'sorting_(asc|desc)', klass).groups()[0]
+        klass = self.browser.get_attribute('class', self.SORTED_BY_CLASS_LOC, parent=self)
+        # We get two group matches and one of them will always be None, therefore empty filter
+        # for filtering the None out
+        try:
+            return filter(
+                None, re.search(r'sorting_(asc|desc)|fa-sort-(asc|desc)', klass).groups())[0]
+        except IndexError:
+            raise ValueError(
+                'Could not figure out which column is used for sorting now. The class was {!r}'
+                .format(klass))
+        except AttributeError:
+            raise TypeError('SORTED_BY_CLASS_LOC tag did not provide any class. Maybe fix Table?')
 
     def click_sort(self, column):
         """Clicks the sorting link in the given column. The column gets attributized."""
