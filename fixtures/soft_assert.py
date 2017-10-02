@@ -42,24 +42,16 @@ _thread_locals = local()
 @pytest.mark.hookwrapper(tryfirst=True)
 def pytest_runtest_protocol(item, nextitem):
     if 'soft_assert' in item.fixturenames:
-        with _soft_assert_cm():
-            yield
-    else:
-        yield
+        _thread_locals.caught_asserts = []
+    yield
 
 
-@pytest.mark.hookwrapper(tryfirst=True)
-def pytest_runtest_teardown(item, nextitem):
-    """
-    pytest hook to handle :py:func:`soft_assert` fixture for case
-    when soft_assert is used in another fixture like register_event
-    """
-    try:
-        yield
-    finally:
-        if 'soft_assert' in item.fixturenames:
-            if _thread_locals.caught_asserts:
-                raise SoftAssertionError(_thread_locals.caught_asserts)
+@pytest.mark.hookwrapper
+def pytest_runtest_call(item):
+    """pytest hook to handle :py:func:`soft_assert` fixture usage"""
+    yield
+    if 'soft_assert' in item.fixturenames and _thread_locals.caught_asserts:
+        raise SoftAssertionError(_thread_locals.caught_asserts)
 
 
 class SoftAssertionError(AssertionError):
@@ -100,6 +92,8 @@ def _soft_assert_cm():
     """
     _thread_locals.caught_asserts = []
     yield _thread_locals.caught_asserts
+    if _thread_locals.caught_asserts:
+        raise SoftAssertionError(_thread_locals.caught_asserts)
 
 
 def handle_assert_artifacts(request, fail_message=None):
