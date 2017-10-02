@@ -120,8 +120,8 @@ def service_request(appliance, ansible_catalog_item):
 
 
 @pytest.yield_fixture
-def service(ansible_catalog_item):
-    service_ = MyService(ansible_catalog_item.name)
+def service(appliance, ansible_catalog_item):
+    service_ = MyService(appliance, ansible_catalog_item.name)
     yield service_
 
     if service_.exists:
@@ -289,3 +289,30 @@ def test_service_ansible_playbook_pass_extra_vars(service_catalog, service_reque
     result_dict = json.loads(json_str[5].replace('", "', "").replace('\\"', '"').replace(
         '\\, "', '",').split('" ] } PLAY')[0])
     assert result_dict["some_var"] == "some_value"
+
+
+@pytest.mark.tier(3)
+def test_service_ansible_execution_ttl(request, service_catalog, ansible_catalog_item, service,
+         service_request):
+    """Test if long running processes allowed to finish. There is a code that guarantees to have 100
+    retries with a minimum of 1 minute per retry. So we need to run ansible playbook service more
+    than 100 minutes and set max ttl greater than ansible playbook running time.
+    """
+    with update(ansible_catalog_item):
+        ansible_catalog_item.provisioning = {
+            "playbook": "long_running_playbook.yml",
+            "max_ttl": 200
+        }
+
+    def _revert():
+        with update(ansible_catalog_item):
+            ansible_catalog_item.provisioning = {
+                "playbook": "dump_all_variables.yml",
+                "max_ttl": ""
+            }
+
+    request.addfinalizer(_revert)
+    service_catalog.order()
+    service_request.wait_for_request(method="ui", num_sec=200 * 60, delay=120)
+    view = navigate_to(service, "Details")
+    assert view.provisioning.results.get_text_of("Status") == "successful"

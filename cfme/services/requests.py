@@ -47,20 +47,20 @@ class Request(BaseEntity):
 
     # TODO Replace varmeth with Sentaku one day
     @variable(alias='rest')
-    def wait_for_request(self):
+    def wait_for_request(self, num_sec=1800, delay=20):
         def _finished():
             self.rest.reload()
             return self.rest.request_state.title() in self.REQUEST_FINISHED_STATES
 
-        wait_for(_finished, num_sec=1800, delay=20, message="Request finished")
+        wait_for(_finished, num_sec=num_sec, delay=delay, message="Request finished")
 
     @wait_for_request.variant('ui')
-    def wait_for_request_ui(self):
+    def wait_for_request_ui(self, num_sec=1200, delay=10):
         def _finished():
             self.update(method='ui')
             return self.row.request_state.text in self.REQUEST_FINISHED_STATES
 
-        wait_for(_finished, num_sec=1200, delay=10, message="Request finished")
+        wait_for(_finished, num_sec=num_sec, delay=delay, message="Request finished")
 
     @property
     def rest(self):
