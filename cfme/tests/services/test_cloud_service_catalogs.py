@@ -73,4 +73,4 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     provision_request = RequestCollection(appliance).instantiate(request_description,
                                                                  partial_check=True)
     provision_request.wait_for_request()
-    assert provision_request.if_succeeded()
+    assert provision_request.is_succeeded()
