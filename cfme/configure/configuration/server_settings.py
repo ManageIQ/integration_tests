@@ -222,7 +222,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 # ============================= VMware Console Form =================================
 
     def update_vmware_console(self, updates, reset=False):
-        """ Navigate to a Server Tab. Updates Vmware comsole
+        """ Navigate to a Server Tab. Updates Vmware console
 
         Args:
              updates: dict, widgets will be updated regarding updates.
@@ -232,7 +232,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         view = navigate_to(self, 'Details')
         for name, value in updates.items():
             if name == 'console_type':
-                if name not in self.CONSOLE_TYPES:
+                if value not in self.CONSOLE_TYPES:
                     raise ConsoleTypeNotSupported(value)
                 if self.appliance.version < '5.8':
                     raise ConsoleNotSupported(
