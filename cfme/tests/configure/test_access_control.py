@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 import traceback
 
-from cfme.configure.access_control import User, Group, Role, Tenant, Project
+from cfme.configure.access_control import User, Group, Role, TenantCollection, ProjectCollection
 from cfme.utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
@@ -790,8 +790,19 @@ def test_user_change_password(appliance, request):
 
 
 # Tenant/Project test cases
+
+@pytest.fixture(scope="module")
+def tenantcollection(appliance):
+    yield TenantCollection(appliance=appliance)
+
+
+@pytest.fixture(scope="module")
+def projectcollection(appliance):
+    yield ProjectCollection(appliance=appliance)
+
+
 @pytest.mark.tier(3)
-def test_superadmin_tenant_crud(request):
+def test_superadmin_tenant_crud(request, tenantcollection):
     """Test suppose to verify CRUD operations for CFME tenants
 
     Prerequisities:
@@ -803,16 +814,16 @@ def test_superadmin_tenant_crud(request):
         * Update name of tenat
         * Delete tenant
     """
-    tenant = Tenant(
+    tenant = tenantcollection.create(
         name='tenant1' + fauxfactory.gen_alphanumeric(),
-        description='tenant1 description')
+        description='tenant1 description',
+        parent=tenantcollection.get_root_tenant())
 
     @request.addfinalizer
     def _delete_tenant():
         if tenant.exists:
             tenant.delete()
 
-    tenant.create()
     with update(tenant):
         tenant.description = tenant.description + "edited"
     with update(tenant):
@@ -822,7 +833,7 @@ def test_superadmin_tenant_crud(request):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1387088, forced_streams=['5.7', 'upstream'])])
-def test_superadmin_tenant_project_crud(request):
+def test_superadmin_tenant_project_crud(request, tenantcollection, projectcollection):
     """Test suppose to verify CRUD operations for CFME projects
 
     Prerequisities:
@@ -836,13 +847,15 @@ def test_superadmin_tenant_project_crud(request):
         * Delete project
         * Delete tenant
     """
-    tenant = Tenant(
+    tenant = tenantcollection.create(
         name='tenant1' + fauxfactory.gen_alphanumeric(),
-        description='tenant1 description')
-    project = Project(
+        description='tenant1 description',
+        parent=tenantcollection.get_root_tenant())
+
+    project = projectcollection.create(
         name='project1' + fauxfactory.gen_alphanumeric(),
         description='project1 description',
-        parent_tenant=tenant)
+        parent=tenant)
 
     @request.addfinalizer
     def _delete_tenant_and_project():
@@ -850,8 +863,6 @@ def test_superadmin_tenant_project_crud(request):
             if item.exists:
                 item.delete()
 
-    tenant.create()
-    project.create()
     with update(project):
         project.description = project.description + "edited"
     with update(project):
@@ -862,7 +873,7 @@ def test_superadmin_tenant_project_crud(request):
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize('number_of_childrens', [5])
-def test_superadmin_child_tenant_crud(request, number_of_childrens):
+def test_superadmin_child_tenant_crud(request, tenantcollection, number_of_childrens):
     """Test CRUD operations for CFME child tenants, where several levels of tenants are created.
 
     Prerequisities:
@@ -875,7 +886,7 @@ def test_superadmin_child_tenant_crud(request, number_of_childrens):
         * Delete all created tenants in reversed order
     """
 
-    tenant = None
+    tenant = tenantcollection.get_root_tenant()
     tenant_list = []
 
     @request.addfinalizer
@@ -886,12 +897,11 @@ def test_superadmin_child_tenant_crud(request, number_of_childrens):
                 tenant.delete()
 
     for i in range(1, number_of_childrens + 1):
-        new_tenant = Tenant(
+        new_tenant = tenantcollection.create(
             name="tenant{}_{}".format(i, fauxfactory.gen_alpha(4)),
             description=fauxfactory.gen_alphanumeric(16),
-            parent_tenant=tenant)
+            parent=tenant)
         tenant_list.append(new_tenant)
-        new_tenant.create()
         tenant = new_tenant
 
     tenant_update = tenant.parent_tenant
@@ -905,9 +915,7 @@ def test_superadmin_child_tenant_crud(request, number_of_childrens):
         assert not tenant_item.exists
 
 
-@pytest.mark.tier(3)
-@pytest.mark.parametrize("object_type", [Tenant, Project])
-def test_tenant_unique_tenant_project_name_on_parent_level(request, object_type):
+def tenant_unique_tenant_project_name_on_parent_level(request, object_type):
     """Tenant or Project has always unique name on parent level. Same name cannot be used twice.
 
     Prerequisities:
@@ -920,25 +928,38 @@ def test_tenant_unique_tenant_project_name_on_parent_level(request, object_type)
         * Delete created objects
     """
 
-    name_of_tenant = object_type.__name__ + fauxfactory.gen_alphanumeric()
-    tenant_description = object_type.__name__ + 'description'
+    name_of_tenant = fauxfactory.gen_alphanumeric()
+    tenant_description = 'description'
 
-    tenant = object_type(
+    tenant = object_type.create(
         name=name_of_tenant,
-        description=tenant_description)
+        description=tenant_description,
+        parent=object_type.get_root_tenant())
 
-    tenant2 = object_type(
-        name=name_of_tenant,
-        description=tenant_description)
+    with error.expected("Validation failed: Name should be unique per parent"):
+        tenant2 = object_type.create(
+            name=name_of_tenant,
+            description=tenant_description,
+            parent=object_type.get_root_tenant())
+
+    tenant.delete()
 
     @request.addfinalizer
     def _delete_tenant():
         if tenant.exists:
             tenant.delete()
-        if tenant2.exists:
-            tenant2.delete()
+        try:
+            if tenant2.exists:
+                tenant2.delete()
+        except NameError:
+            pass
 
-    tenant.create()
-    with error.expected("Validation failed: Name should be unique per parent"):
-        tenant2.create()
-    tenant.delete()
+
+@pytest.mark.tier(3)
+def test_unique_tenant_name_on_parent_level(request, tenantcollection):
+    tenant_unique_tenant_project_name_on_parent_level(request, tenantcollection)
+
+
+@pytest.mark.tier(3)
+def test_unique_project_name_on_parent_level(request, projectcollection):
+    tenant_unique_tenant_project_name_on_parent_level(request, projectcollection)
