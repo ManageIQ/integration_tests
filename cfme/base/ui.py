@@ -472,8 +472,8 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.accordions.settings.tree.click_path(
             self.obj.zone.region.settings_string,
             "Zones",
-            "Zone: {} (current)".format(self.obj.zone.description),
-            "Server: {} [{}] (current)".format(self.obj.name,
+            "Zone: {} (current)".format(self.obj.appliance.zone_description),
+            "Server: {} [{}] (current)".format(self.obj.appliance.server_name(),
                 self.obj.sid))
 
 

@@ -6,7 +6,6 @@ from widgetastic.widget import Text, View
 
 from cfme.base.ui import ServerView
 from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
-from cfme.utils import version
 from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -195,9 +194,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
                      self._ntp_servers + self._smtp_server + self._web_services + self._logging +
                      self._custom_support_url)
         for att in full_form:
-            # embedded_ansible available from 5.8 version
-            if att != 'embedded_ansible' and self.appliance.version > '5.7':
-                setattr(self, att, None)
+            setattr(self, att, None)
 
 # ============================= Basic Information Form =================================
 
@@ -236,7 +233,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         if self.appliance.version < '5.8' and 'embedded_ansible' in updates:
             updates.pop('embedded_ansible')
         # cockpit_ws element is not present for downstream version
-        if self.appliance.version != version.UPSTREAM and 'cockpit_ws' in updates:
+        if self.appliance.version != self.appliance.version.latest() and 'cockpit_ws' in updates:
             updates.pop('cockpit_ws')
         view.server_roles.fill(updates)
         self._save_action(view, updates, reset)
