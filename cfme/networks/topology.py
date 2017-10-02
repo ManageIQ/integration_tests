@@ -122,7 +122,7 @@ class TopologyDisplayNames(object):
 class TopologyElement(object):
     def __init__(self, obj, element):
         if element is None:
-            raise KeyError('Element should not be None')
+            raise ValueError('Element should not be None')
         self.element = element
         self.object = obj
         element_data = re.search('Name: (.*) Type: (.*) Status: (.*)', element.text)
