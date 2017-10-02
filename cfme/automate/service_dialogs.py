@@ -87,12 +87,14 @@ class DialogCollection(BaseCollection):
     def create(self, label=None, description=None, submit=False, cancel=False):
         """ Create dialog label method """
         view = navigate_to(self, 'Add')
+        # filling label twice to avoid the selenium field bug
         fill_dict = {
             k: v
             for k, v in {'label': label, 'description': description,
-            'submit_button': submit, 'cancel_button': cancel}.items()
+                         'submit_button': submit, 'cancel_button': cancel}.items()
             if v is not None}
         view.fill(fill_dict)
+        view.fill({'label': label})
         return self.instantiate(
             label=label, description=description, submit=submit, cancel=cancel)
 
