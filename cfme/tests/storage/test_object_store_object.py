@@ -22,7 +22,7 @@ def objects(appliance, provider):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 @pytest.mark.tier(3)
-def test_add_remove_tag(objects):
+def test_object_add_remove_tag(objects):
     object = random.choice(objects)
 
     # add tag with category Department and tag communication
