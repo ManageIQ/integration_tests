@@ -101,7 +101,7 @@ class ObjectStoreContainerCollection(BaseCollection):
         self.appliance = appliance
 
     def instantiate(self, key, provider):
-        return ObjectStoreContainer(self,key, provider)
+        return ObjectStoreContainer(self, key, provider)
 
     def all(self, provider):
         """returning all containers objects"""
