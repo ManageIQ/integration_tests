@@ -10,6 +10,7 @@ from cfme.utils.appliance.implementations.ssui import (
     navigate_to,
     ViaSSUI
 )
+from cfme.utils.wait import wait_for
 
 from . import MyService
 
@@ -70,7 +71,10 @@ def update(self, updates):
     view.fill_with(updates, on_change=view.save_button, no_change=view.cancel_button)
     view.flash.assert_no_error()
     view = self.create_view(DetailsMyServiceView, override=updates)
-    assert view.is_displayed
+    wait_for(
+        lambda: view.is_displayed, delay=15, num_sec=300,
+        message="waiting for view to be displayed"
+    )
     # TODO - implement notifications and then assert.
 
 
