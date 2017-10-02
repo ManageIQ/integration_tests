@@ -29,6 +29,8 @@ def ansible_providers():
     remove_tmp_files()
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-xxx')
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_manageiq_ansible_add_provider_ssl(ansible_providers, provider):
@@ -45,6 +47,8 @@ def test_manageiq_ansible_add_provider_ssl(ansible_providers, provider):
     assert get_yml_value(script_name, 'name') in view.entities.entity_names
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10290')
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_manageiq_ansible_add_provider(ansible_providers, provider):
@@ -60,6 +64,8 @@ def test_manageiq_ansible_add_provider(ansible_providers, provider):
     assert get_yml_value(script_name, 'name') in view.entities.entity_names
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10295')
 def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_assert):
     """This test checks updating a Containers Provider using Ansible script via Manage IQ module
@@ -83,6 +89,8 @@ def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_asse
     )
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10292')
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_manageiq_ansible_add_provider_same_name(ansible_providers, provider):
@@ -101,6 +109,8 @@ def test_manageiq_ansible_add_provider_same_name(ansible_providers, provider):
     assert get_yml_value(script_name, 'name') in view.entities.entity_names
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10298')
 def test_manageiq_ansible_update_provider_incorrect_user(ansible_providers, provider):
     """This test checks updating a Containers Provider with a wrong user using
@@ -124,6 +134,8 @@ def test_manageiq_ansible_update_provider_incorrect_user(ansible_providers, prov
     assert get_yml_value(script_name, 'name') in view.entities.entity_names
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10298')
 @pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_remove_provider(ansible_providers, provider, soft_assert):
@@ -147,6 +159,8 @@ def test_manageiq_ansible_remove_provider(ansible_providers, provider, soft_asse
     )
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10300')
 @pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_remove_non_existing_provider(ansible_providers, provider):
@@ -166,6 +180,8 @@ def test_manageiq_ansible_remove_non_existing_provider(ansible_providers, provid
     assert get_yml_value('add_provider', 'name') in view.entities.entity_names
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10294')
 @pytest.mark.usefixtures('has_no_containers_providers')
 def test_manageiq_ansible_add_provider_incorrect_user(ansible_providers, provider, soft_assert):
@@ -186,6 +202,8 @@ def test_manageiq_ansible_add_provider_incorrect_user(ansible_providers, provide
     assert not get_yml_value(script_name, 'name') in view.entities.entity_names
 
 
+@pytest.mark.skip(reason="Broken test, "
+                         "need to be investigated by pavelz, won't run until it be fixed")
 @pytest.mark.polarion('CMP-10302')
 @pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_remove_provider_incorrect_user(ansible_providers, provider):
