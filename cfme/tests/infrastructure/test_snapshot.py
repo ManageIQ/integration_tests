@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
-from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
@@ -19,7 +18,6 @@ from cfme.utils.path import data_path
 from cfme.utils.ssh import SSHClient
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
-from selenium.common.exceptions import NoSuchElementException
 
 
 pytestmark = [
@@ -29,7 +27,7 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate([InfraProvider], scope="module")
+pytest_generate_tests = testgen.generate([RHEVMProvider, VMwareProvider], scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -39,52 +37,51 @@ def domain(request, appliance):
     return dom
 
 
-def provision_vm(provider, request, small_template=True):
-    vm_name = random_vm_name(context="snapshot")
-    if small_template:
-        vm = VM.factory(vm_name, provider, template_name=provider.data['small_template'])
-    else:
-        vm = VM.factory(vm_name, provider, template_name=provider.data['full_template']['name'])
+def provision_vm(provider, template):
+    vm_name = random_vm_name(context="snpst")
+    vm = VM.factory(vm_name, provider, template_name=template.name)
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        request.addfinalizer(vm.delete_from_provider)
     return vm
 
 
-@pytest.fixture(scope="module")
-def small_test_vm(setup_provider_modscope, provider, request):
-    return provision_vm(provider, request)
+@pytest.yield_fixture(scope="module")
+def small_test_vm(setup_provider_modscope, provider, small_template_modscope, request):
+    vm = provision_vm(provider, small_template_modscope)
+    yield vm
+
+    try:
+        vm.delete_from_provider()
+    except Exception:
+        logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 
 
-@pytest.fixture(scope="module")
-def full_test_vm(setup_provider_modscope, provider, request):
-    return provision_vm(provider, request, small_template=False)
+@pytest.yield_fixture(scope="module")
+def full_test_vm(setup_provider_modscope, provider, full_template_modscope, request):
+    vm = provision_vm(provider, full_template_modscope)
+    yield vm
+
+    try:
+        vm.delete_from_provider()
+    except Exception:
+        logger.exception('Exception deleting test vm "%s" on %s', vm.name, provider.name)
 
 
 def new_snapshot(test_vm, has_name=True, memory=False):
-    if has_name:
-        new_snapshot = Vm.Snapshot(
-            name="snpshot_{}".format(fauxfactory.gen_alphanumeric(8)),
-            description="snapshot", memory=memory, parent_vm=test_vm
-        )
-    else:
-        new_snapshot = Vm.Snapshot(
-            description="snapshot_{}".format(fauxfactory.gen_alphanumeric(8)),
-            memory=memory, parent_vm=test_vm
-        )
-    return new_snapshot
+    return Vm.Snapshot(
+        name="snpshot_{}".format(fauxfactory.gen_alphanumeric(8)) if has_name else None,
+        description="snapshot", memory=memory, parent_vm=test_vm)
 
 
 @pytest.mark.uncollectif(lambda provider:
-    not provider.one_of(RHEVMProvider, VMwareProvider) or
-    (provider.one_of(RHEVMProvider) and provider.version < 4) or
-    current_version() < '5.8')
+                         (provider.one_of(RHEVMProvider) and provider.version < 4) or
+                         current_version() < '5.8', 'Must be RHEVM provider version >= 4')
 def test_memory_checkbox(small_test_vm, provider, soft_assert):
     # Make sure the VM is powered on
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_ON, cancel=False)
     # Try to create snapshot with memory on powered on VM
-    has_name = not provider.one_of(RHEVMProvider)
+    has_name = provider.one_of(RHEVMProvider)
     snapshot1 = new_snapshot(small_test_vm, has_name=has_name, memory=True)
     snapshot1.create()
     assert snapshot1.exists
@@ -99,28 +96,26 @@ def test_memory_checkbox(small_test_vm, provider, soft_assert):
     except NoSuchElementException:
         logger.info("Memory checkbox is not present on powered off VM.")
     # Make sure that snapshot with memory was not created
-    wait_for(lambda: not snapshot2.exists, num_sec=40, delay=20, fail_func=sel.refresh,
+    wait_for(lambda: not snapshot2.exists, num_sec=40, delay=20, fail_func=provider.browser.refresh,
              handle_exception=True)
 
 
-@pytest.mark.uncollectif(lambda provider:
-    not provider.one_of(RHEVMProvider, VMwareProvider) or
-    (provider.one_of(RHEVMProvider) and provider.version < 4))
+@pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
+                         'Must be RHEVM provider version >= 4')
 def test_snapshot_crud(small_test_vm, provider):
     """Tests snapshot crud
 
     Metadata:
         test_flag: snapshot, provision
     """
-    if provider.one_of(RHEVMProvider):
-        snapshot = new_snapshot(small_test_vm, has_name=False)
-    else:
-        snapshot = new_snapshot(small_test_vm)
+    # has_name is false if testing RHEVMProvider
+    snapshot = new_snapshot(small_test_vm, has_name=(not provider.one_of(RHEVMProvider)))
     snapshot.create()
     snapshot.delete()
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
+                         'Not VMware provider')
 def test_delete_all_snapshots(small_test_vm, provider):
     """Tests snapshot removal
 
@@ -137,10 +132,9 @@ def test_delete_all_snapshots(small_test_vm, provider):
     wait_for(lambda: not snapshot2.exists, num_sec=300, delay=20, fail_func=snapshot1.refresh)
 
 
-@pytest.mark.uncollectif(lambda provider:
-    not provider.one_of(RHEVMProvider, VMwareProvider) or
-    (provider.one_of(RHEVMProvider) and provider.version < 4))
-def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event, request):
+@pytest.mark.uncollectif(lambda provider: (provider.one_of(RHEVMProvider) and provider.version < 4),
+                         'Must be RHEVM provider version >= 4')
+def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_event):
     """Tests revert snapshot
 
     Metadata:
@@ -150,10 +144,11 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
         snapshot1 = new_snapshot(full_test_vm, has_name=False)
     else:
         snapshot1 = new_snapshot(full_test_vm)
+    full_template = getattr(provider.data.templates, 'full_template')
     ssh_kwargs = {
         'hostname': snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name),
-        'username': credentials[provider.data['full_template']['creds']]['username'],
-        'password': credentials[provider.data['full_template']['creds']]['password']
+        'username': credentials[full_template.creds]['username'],
+        'password': credentials[full_template.creds]['password']
     }
     ssh_client = SSHClient(**ssh_kwargs)
     # We need to wait for ssh to become available on the vm, it can take a while. Without
@@ -184,7 +179,7 @@ def test_verify_revert_snapshot(full_test_vm, provider, soft_assert, register_ev
     snapshot1.revert_to()
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
-    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=sel.refresh)
+    wait_for(lambda: snapshot1.active, num_sec=300, delay=20, fail_func=provider.browser.refresh)
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_OFF, timeout=720)
     full_test_vm.power_control_from_cfme(option=full_test_vm.POWER_ON, cancel=False)
     full_test_vm.wait_for_vm_state_change(desired_state=full_test_vm.STATE_ON, timeout=900)
@@ -213,12 +208,13 @@ def setup_snapshot_env(test_vm, memory):
     snapshot2.create()
     snapshot1.revert_to()
     wait_for(lambda: snapshot1.active,
-             num_sec=300, delay=20, fail_func=sel.refresh)
+             num_sec=300, delay=20, fail_func=test_vm.provider.browser.refresh)
 
 
 @pytest.mark.parametrize("parent_vm", ["on_with_memory", "on_without_memory", "off"])
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_verify_vm_state_revert_snapshot(provider, parent_vm, request, small_test_vm):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
+                         'Not VMware provider')
+def test_verify_vm_state_revert_snapshot(provider, parent_vm, small_test_vm):
     """
     test vm state after revert snapshot with parent vm:
      - powered on and includes memory
@@ -239,8 +235,9 @@ def test_verify_vm_state_revert_snapshot(provider, parent_vm, request, small_tes
     assert bool(small_test_vm.provider.mgmt.is_vm_running(small_test_vm.name)) == memory
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
+                         'Not VMware provider')
+def test_operations_suspended_vm(small_test_vm, soft_assert):
     """Tests snapshot operations on suspended vm
 
     Metadata:
@@ -282,8 +279,9 @@ def test_operations_suspended_vm(small_test_vm, provider, soft_assert):
     snapshot2.delete()
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_operations_powered_off_vm(small_test_vm, provider, soft_assert):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
+                         'Not VMware provider')
+def test_operations_powered_off_vm(small_test_vm):
     # Make sure the VM is off
     small_test_vm.power_control_from_cfme(option=small_test_vm.POWER_OFF, cancel=False)
     small_test_vm.wait_for_vm_state_change(desired_state=small_test_vm.STATE_OFF)
@@ -304,8 +302,9 @@ def test_operations_powered_off_vm(small_test_vm, provider, soft_assert):
     snapshot2.delete()
 
 
-@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider))
-def test_create_snapshot_via_ae(request, domain, small_test_vm, appliance):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(VMwareProvider),
+                         'Not VMware provider')
+def test_create_snapshot_via_ae(appliance, request, domain, small_test_vm):
     """This test checks whether the vm.create_snapshot works in AE.
 
     Prerequisities:
@@ -351,7 +350,7 @@ def test_create_snapshot_via_ae(request, domain, small_test_vm, appliance):
         attributes_values={"snap_name": snap_name})
 
     wait_for(lambda: snapshot.exists, timeout="2m", delay=10,
-             fail_func=sel.refresh, handle_exception=True)
+             fail_func=small_test_vm.provider.browser.refresh, handle_exception=True)
 
     # Clean up if it appeared
     snapshot.delete()

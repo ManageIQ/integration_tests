@@ -22,6 +22,12 @@ class Server(Navigatable, sentaku.modeling.ElementMixin):
     current_full_name = sentaku.ContextualMethod()
     current_username = sentaku.ContextualMethod()
 
+    @property
+    def settings(self):
+        from cfme.configure.configuration.server_settings import ServerInformation
+        setting = ServerInformation(appliance=self.appliance)
+        return setting
+
 
 class ZoneCollection(Navigatable, sentaku.modeling.ElementMixin):
 

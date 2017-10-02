@@ -297,31 +297,31 @@ def template(template_location, provider):
 
 
 def _get_template(provider, template_type_name):
-    template = provider.data.get(template_type_name)
-    # if the template is None, try to get it from templates section on provider data
-    # because additional templates are present in this section which are not present
-    # under provider directly
-    if not template:
-        template = provider.data.templates.get(template_type_name)
-    if isinstance(template, Mapping):
-        template_name = template.get("name")
-    else:
-        template_name = template
-    if template_name:
-        if not TEMPLATES:
-            # Same as couple of lines above
-            return template
-        templates = TEMPLATES.get(provider.key)
-        # If template is type string then return template else template_name
-        # since template could be AttrDict and returning it would fail provisioning
-        # _get_template should always return template name of type string
-        if templates and template_name in templates and isinstance(template, six.string_types):
-            return template
-        return template_name
-    else:
+    """Get the template name for the given template type
+    YAML is expected to have structure with a templates section in the provider:
+    provider:
+        templates:
+            small_template:
+                name:
+                creds:
+            big_template:
+                name:
+                creds:
+    Args:
+        provider (obj): Provider object to lookup template on
+        template_type_name (str): Template type to lookup (small_template, big_template, etc)
+    Returns:
+         (dict) template dictionary from the yaml, with name and creds key:value pairs
+    """
+    try:
+        template_type = provider.data.templates.get(template_type_name)
+    except AttributeError:
+        logger.error("Wanted template %s on %s but it is not there!", template, provider.key)
         pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
-    logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
-    pytest.skip('Template not available')
+    if not isinstance(template_type, Mapping):
+        pytest.skip('Template mapping is incorrect, {} on provider {}'
+                    .format(template_type_name, provider.key))
+    return template_type
 
 
 @pytest.fixture(scope="function")

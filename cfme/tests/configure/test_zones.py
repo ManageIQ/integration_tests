@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-import cfme.configure.configuration as conf
 from cfme.base import ZoneCollection
 from fixtures.pytest_store import store
 from cfme.utils.appliance import current_appliance
@@ -52,9 +51,9 @@ def test_zone_add_cancel_validation():
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
-def test_zone_change_appliance_zone(request):
+def test_zone_change_appliance_zone(request, appliance):
     """ Tests that an appliance can be changed to another Zone """
-    zc = current_appliance.get(ZoneCollection)
+    zc = appliance.get(ZoneCollection)
     # CREATE
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -64,12 +63,15 @@ def test_zone_change_appliance_zone(request):
 
     @request.addfinalizer
     def _return_zone_back():
-        current_appliance.server.zone = current_appliance.default_zone
-    request.addfinalizer(conf.BasicInformation(appliance_zone="default").update)
-    basic_info = conf.BasicInformation(appliance_zone=zone.name)
-    basic_info.update()
-    current_appliance.server.zone = zone
-    assert zone.description == store.current_appliance.zone_description
+        appliance.server.zone = appliance.default_zone
+
+    server_settings = appliance.server.settings
+    request.addfinalizer(lambda: server_settings.update_basic_information(
+        {'appliance_zone': "default"}))
+    appliance.server.zone = zone
+    server_settings.update_basic_information({'appliance_zone': zone.name})
+    assert zone.description == appliance.zone_description
+    appliance.server.zone = appliance.default_zone
 
 
 @pytest.mark.tier(2)

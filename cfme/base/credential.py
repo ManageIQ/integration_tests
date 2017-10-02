@@ -95,7 +95,7 @@ class Credential(Pretty, Updateable, FromConfigMixin):
             'username': self.principal,
             'password': self.secret,
             'confirm_password': version.pick({version.LOWEST: self.verify_secret,
-                                              version.UPSTREAM: None})
+                                              '5.9': None})
         }
 
     def __eq__(self, other):
@@ -177,7 +177,7 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
         return {
             'token': self.token,
             'verify_token': version.pick({version.LOWEST: self.verify_token,
-                                          version.UPSTREAM: None})
+                                          '5.9': None})
         }
 
     @property

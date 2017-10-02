@@ -99,7 +99,8 @@ def ansible_catalog_item(ansible_repository):
 
 @pytest.yield_fixture(scope="module")
 def vmware_vm(full_template_modscope, provider):
-    vm_obj = VM.factory(random_vm_name("ansible"), provider, template_name=full_template_modscope)
+    vm_obj = VM.factory(random_vm_name("ansible"), provider,
+                        template_name=full_template_modscope.name)
     vm_obj.create_on_provider(allow_skip="default")
     provider.mgmt.start_vm(vm_obj.name)
     provider.mgmt.wait_vm_running(vm_obj.name)
@@ -163,8 +164,8 @@ def ansible_credential(appliance, full_template_modscope):
     credential = CredentialsCollection(appliance=appliance).create(
         fauxfactory.gen_alpha(),
         "Machine",
-        username=credentials[full_template_modscope]["username"],
-        password=credentials[full_template_modscope]["password"]
+        username=credentials[full_template_modscope.creds]["username"],
+        password=credentials[full_template_modscope.creds]["password"]
     )
     yield credential
 
@@ -194,9 +195,9 @@ def service(ansible_catalog_item):
 @pytest.mark.tier(3)
 @pytest.mark.parametrize("host_type,inventory", ANSIBLE_ACTION_VALUES, ids=[
     value[0] for value in ANSIBLE_ACTION_VALUES])
-def test_action_run_ansible_playbook(request, full_template, ansible_catalog_item, ansible_action,
-        policy_for_testing, vmware_vm, ansible_credential, service_request, service, host_type,
-        inventory):
+def test_action_run_ansible_playbook(request, ansible_catalog_item, ansible_action, vmware_vm,
+                                     ansible_credential, service_request, service, host_type,
+                                     inventory):
     """Tests a policy with ansible playbook action against localhost, manual address,
        target machine and unavailable address.
     """

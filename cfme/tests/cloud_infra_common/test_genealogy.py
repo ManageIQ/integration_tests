@@ -38,7 +38,7 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="function")
 def vm_crud(provider, small_template):
     return VM.factory(random_vm_name(context='genealogy'), provider,
-                      template_name=small_template)
+                      template_name=small_template.name)
 
 
 # uncollected above in pytest_generate_tests
@@ -86,12 +86,12 @@ def test_vm_genealogy_detected(
         else:
             # Ordinary Select
             parent = pytest.sel.text(opt).strip()
-        assert parent.startswith(small_template), "The parent template not detected!"
+        assert parent.startswith(small_template.name), "The parent template not detected!"
     else:
         try:
             vm_crud_ancestors = vm_crud.genealogy.ancestors
         except NameError:
             logger.exception("The parent template not detected!")
             raise pytest.fail("The parent template not detected!")
-        assert small_template in vm_crud_ancestors, \
-            "{} is not in {}'s ancestors".format(small_template, vm_crud.name)
+        assert small_template.name in vm_crud_ancestors, \
+            "{} is not in {}'s ancestors".format(small_template.name, vm_crud.name)
