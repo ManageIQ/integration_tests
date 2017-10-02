@@ -103,9 +103,6 @@ class PlaybooksCollection(BaseCollection):
     def init(self):
         self.parent = self.filters.get('parent', None) if self.filters else None
 
-    def instantiate(self, name, repository):
-        return Playbook(self, name, repository)
-
     def all(self):
         view = navigate_to(Server, "AnsiblePlaybooks")
         playbooks = []

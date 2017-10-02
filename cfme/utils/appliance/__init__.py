@@ -2773,6 +2773,9 @@ class BaseCollection(NavigatableMixin):
         self.filters = kwargs.pop('filters', None)
         self.init(*args, **kwargs)
 
+    def instantiate(self, *args, **kwargs):
+        return self.ENTITY(self, *args, **kwargs)
+
     def init(self, *args, **kwargs):
         pass
 
