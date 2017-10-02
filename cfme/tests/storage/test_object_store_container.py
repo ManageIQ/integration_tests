@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import pytest
+import random
+
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.storage import object_store
-from cfme.web_ui import mixins
+from cfme.storage.object_store_container import ObjectStoreContainerCollection
 from cfme.utils import testgen
 
 
@@ -12,40 +13,24 @@ pytestmark = pytest.mark.usefixtures("setup_provider")
 pytest_generate_tests = testgen.generate([OpenStackProvider], scope="module")
 
 
-@pytest.mark.tier(3)
-def test_add_tag(request, provider, provisioning):
-    """Tests object store edit tag
-
-       Steps:
-        * Click on quadicon.
-        * On the details page, select ``Policy/Edit Tags`` and assign the tag to it.
-        * Verify the tag is assigned.
-        * Select ``Policy/Edit Tags`` and remove the tag.
-    """
-    obj_name = provisioning['cloud_object_store']
-    cloud_obj = object_store.ObjectStore(name=obj_name)
-    tag = ('Department', 'Accounting')
-    cloud_obj.add_tag(tag, single_value=False)
-    tagged_value = mixins.get_tags(tag="My Company Tags")
-    assert tagged_value == ["Department: Accounting"], "Add tag failed"
-    cloud_obj.untag(tag)
+@pytest.yield_fixture(scope="module")
+def containers(appliance, provider):
+    collection = ObjectStoreContainerCollection(appliance=appliance)
+    containers = collection.all(provider)
+    # TODO add create method and remove pytest skip as BZ 1490320 fix
+    yield containers if containers else pytest.skip("No Containers Available")
 
 
 @pytest.mark.tier(3)
-def test_remove_tag(request, provider, provisioning):
-    """Tests object store edit tag
+def test_add_remove_tag(containers):
+    container = random.choice(containers)
 
-       Steps:
-        * Click on quadicon.
-        * On the details page, select ``Policy/Edit Tags`` and assign the tag to it.
-        * Select ``Policy/Edit Tags`` and remove the tag.
-        * Verify the tag is not present.
-    """
-    obj_name = provisioning['cloud_object_store']
-    cloud_obj = object_store.ObjectStore(name=obj_name)
-    tag = ('Department', 'Accounting')
-    cloud_obj.add_tag(tag, single_value=False)
-    tagged_value1 = mixins.get_tags(tag="My Company Tags")
-    cloud_obj.untag(tag)
-    tagged_value2 = mixins.get_tags(tag="My Company Tags")
-    assert tagged_value1 != tagged_value2, "Remove tag failed"
+    # add tag with category Department and tag communication
+    container.add_tag('Department', 'Communication')
+    tag_available = container.get_tags()
+    assert('Department' in tag_available and 'Communication' in tag_available)
+
+    # remove assigned tag
+    container.remove_tag('Department', 'Communication')
+    tag_available = container.get_tags()
+    assert('Department' not in tag_available and 'Communication' not in tag_available)
