@@ -1182,6 +1182,10 @@ class TenantForm(ConfigurationView):
     cancel_button = Button('Cancel')
 
 
+class ListEntity(BaseListEntity):
+    pass
+
+
 class TenantQuotaForm(View):
     cpu_cb = BootstrapSwitch(id='cpu_allocated')
     memory_cb = BootstrapSwitch(id='mem_allocated')
@@ -1214,7 +1218,7 @@ class TenantQuotaView(ConfigurationView):
 class AllTenantView(ConfigurationView):
     """ All Tenants View """
     toolbar = View.nested(AccessControlToolbar)
-    table = Table('//*[@id="records_div"]/table')
+    table = ListEntity
 
     @property
     def is_displayed(self):
@@ -1242,7 +1246,7 @@ class DetailsTenantView(ConfigurationView):
     name = Text('Name')
     description = Text('Description')
     parent = Text('Parent')
-    table = BaseListEntity()
+    table = ListEntity
 
     @property
     def is_displayed(self):
