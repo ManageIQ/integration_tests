@@ -116,7 +116,8 @@ class Node(Taggable, Labelable, SummaryMixin, BaseEntity):
         """Generating random instances."""
         node_list = provider.mgmt.list_node()
         random.shuffle(node_list)
-        return [cls(obj.name, provider, appliance=appliance)
+        collection = NodeCollection(appliance)
+        return [collection.instantiate(obj.name, provider)
                 for obj in itertools.islice(node_list, count)]
 
 
