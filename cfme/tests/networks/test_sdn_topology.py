@@ -1,12 +1,11 @@
 import pytest
-import time
+from random import choice
 
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.fixtures.pytest_selenium import is_displayed_text
 from cfme.networks.topology import Topology
 from cfme.utils import testgen
 from cfme.utils.wait import wait_for
-from random import choice
 
 
 pytest_generate_tests = testgen.generate(classes=[EC2Provider], scope='module')
@@ -22,7 +21,6 @@ def test_sdn_topology_names(provider, appliance):
 
     for show_names_state in (True, False):
         topology_object.display_names.enable(show_names_state)
-        time.sleep(5)
         for elem in topology_object.elements:
             assert is_displayed_text(elem.name) == show_names_state
 
