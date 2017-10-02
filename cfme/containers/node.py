@@ -55,7 +55,7 @@ class NodeCollection(BaseCollection):
         self.appliance = appliance
 
     def instantiate(self, name, provider):
-        return Node(name=name, provider=provider, collection=self)
+        return Node(self, name=name, provider=provider)
 
     def all(self):
         # container_nodes table has ems_id, join with ext_mgmgt_systems on id for provider name
@@ -66,10 +66,9 @@ class NodeCollection(BaseCollection):
         nodes = []
         for name, provider_name in node_query.all():
             # Hopefully we can get by with just provider name?
-            nodes.append(Node(name=name,
-                              provider=ContainersProvider(name=provider_name,
-                                                          appliance=self.appliance),
-                              collection=self))
+            nodes.append(self.instantiate(name=name,
+                                          provider=ContainersProvider(name=provider_name,
+                                                                      appliance=self.appliance)))
         return nodes
 
 
@@ -88,7 +87,7 @@ class Node(Taggable, Labelable, SummaryMixin, BaseEntity):
 
     PLURAL = 'Nodes'
 
-    def __init__(self, name, provider, collection):
+    def __init__(self, collection, name, provider):
         self.name = name
         self.provider = provider
         self.collection = collection
