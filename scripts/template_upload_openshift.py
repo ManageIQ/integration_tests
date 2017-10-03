@@ -77,8 +77,8 @@ def list_templates(hostname, username, password, upload_folder):
             return []
 
 
-def upload_template(hostname, username, password,
-                    provider, url, name, provider_data, stream, upload_folder):
+def upload_template(hostname, username, password, provider, url, name, provider_data,
+                    stream, upload_folder, oc_username, oc_password):
     try:
         kwargs = {}
 
@@ -102,6 +102,27 @@ def upload_template(hostname, username, password,
                 if result.failed:
                     logger.exception("OPENSHIFT: cannot upload template %r", str(result))
                     raise
+
+                # updating image streams in openshift
+                login_cmd = 'oc login --username={u} --password={p}'
+                result = ssh.run_command(login_cmd.format(u=oc_username, p=oc_password))
+                if result.failed:
+                    logger.exception("OPENSHIFT: couldn't login to openshift %r", str(result))
+                    raise
+
+                get_urls_cmd = 'find {d} -type f -name "cfme-openshift-*" -exec tail -1 {{}} \;'
+                result = ssh.run_command(get_urls_cmd.format(d=dest_dir))
+                if result.failed:
+                    logger.exception("OPENSHIFT: couldn't get img stream urls %r", str(result))
+                    raise
+
+                for img_url in list(result):
+                    update_img_cmd = 'docker pull {url}'
+                    result = ssh.run_command(update_img_cmd.format(url=img_url))
+                    if result.failed:
+                        logger.exception("OPENSHIFT: couldn't update image stream using url %r,"
+                                         "%r", img_url, str(result))
+                        raise
 
             if not provider_data:
                 logger.info("OPENSHIFT:%r Adding template %r to trackerbot", provider, name)
@@ -132,9 +153,12 @@ def run(**kwargs):
                 username = mgmt_sys[provider]['username']
                 password = mgmt_sys[provider]['password']
             else:
-                creds = credentials[mgmt_sys[provider]['ssh_creds']]
-                username = creds['username']
-                password = creds['password']
+                ssh_creds = credentials[mgmt_sys[provider]['ssh_creds']]
+                username = ssh_creds['username']
+                password = ssh_creds['password']
+                oc_creds = credentials[mgmt_sys[provider]['credentials']]
+                oc_username = oc_creds['username']
+                oc_password = oc_creds['password']
             host_ip = mgmt_sys[provider]['ipaddress']
             hostname = mgmt_sys[provider]['hostname']
 
@@ -146,7 +170,8 @@ def run(**kwargs):
             thread = Thread(target=upload_template,
                             args=(hostname, username, password, provider,
                                   kwargs.get('image_url'), kwargs.get('template_name'),
-                                  kwargs['provider_data'], kwargs['stream'], upload_folder))
+                                  kwargs['provider_data'], kwargs['stream'], upload_folder,
+                                  oc_username, oc_password))
             thread.daemon = True
             thread_queue.append(thread)
             thread.start()
