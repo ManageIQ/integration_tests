@@ -35,7 +35,7 @@ pytest_generate_tests = testgen.generate(
 
 
 @pytest.yield_fixture(scope="function")
-def testing_instance(request, setup_provider, provider, provisioning, vm_name):
+def testing_instance(request, setup_provider, provider, provisioning, vm_name, tag):
     """ Fixture to prepare instance parameters for provisioning
     """
     image = provisioning['image']['name']
@@ -57,11 +57,18 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
 
     # Check whether auto-selection of environment is passed
+    auto = False  # By default provisioning will be manual
     try:
-        auto = request.param
+        parameter = request.param
+        if parameter == 'tag':
+            inst_args['purpose'] = {
+                'apply_tags': ('{} *'.format(tag.category.display_name), tag.display_name)
+            }
+        else:
+            auto = parameter
     except AttributeError:
         # in case nothing was passed just skip
-        auto = False
+        pass
 
     # All providers other than Azure
     if not provider.one_of(AzureProvider):
@@ -133,13 +140,9 @@ def vm_name(request):
     return random_vm_name('prov')
 
 
-@pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(appliance, provider, testing_instance, soft_assert):
-    """ Tests instance provision from template
-
-    Metadata:
-        test_flag: provision
-    """
+@pytest.fixture(scope='function')
+def provisioned_instance(provider, testing_instance, appliance):
+    """ Checks provisioning status for instance """
     instance, inst_args, image = testing_instance
     instance.create(**inst_args)
     logger.info('Waiting for cfme provision request for vm %s', instance.name)
@@ -148,10 +151,12 @@ def test_provision_from_template(appliance, provider, testing_instance, soft_ass
     try:
         provision_request.wait_for_request(method='ui')
     except Exception as e:
-        logger.info("Provision failed {}: {}".format(e, provision_request.row.last_message.text()))
+        logger.info(
+            "Provision failed {}: {}".format(e, provision_request.row.last_message.text()))
         raise e
-    assert provision_request.is_succeeded(method='ui'), \
-        "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
+    assert provision_request.is_succeeded(method='ui'), (
+        "Provisioning failed with the message {}".format(
+            provision_request.row.last_message.text))
     instance.wait_to_appear(timeout=800)
     provider.refresh_provider_relationships()
     logger.info("Refreshing provider relationships and power states")
@@ -162,7 +167,17 @@ def test_provision_from_template(appliance, provider, testing_instance, soft_ass
              num_sec=1000,
              delay=60,
              handle_exception=True)
-    soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+    return instance
+
+
+@pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
+def test_provision_from_template(provider, provisioned_instance):
+    """ Tests instance provision from template
+
+    Metadata:
+        test_flag: provision
+    """
+    assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider) or
@@ -627,3 +642,23 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider.mgmt.volume_exists(volume_id):
                 provider.mgmt.delete_volume(volume_id)
+
+
+@pytest.mark.parametrize('testing_instance', ['tag'], indirect=True)
+def test_cloud_provision_with_tag(provisioned_instance, tag):
+    """ Tests tagging instance using provisioning dialogs.
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, pick a tag.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit instance page, it should display the selected tags
+    Metadata:
+        test_flag: provision
+    """
+    assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
+    tags = provisioned_instance.get_tags()
+    assert any(
+        instance_tag.category.display_name == tag.category.display_name and
+        instance_tag.display_name == tag.display_name for instance_tag in tags), (
+        "{}: {} not in ({})".format(tag.category.display_name, tag.display_name, str(tags)))

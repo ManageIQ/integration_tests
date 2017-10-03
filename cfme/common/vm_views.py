@@ -4,7 +4,7 @@ from time import sleep
 
 from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
 from widgetastic_patternfly import (
-    Dropdown, BootstrapSelect, FlashMessages, Tab, Input, BootstrapTreeview)
+    Dropdown, BootstrapSelect, FlashMessages, Tab, Input, CheckableBootstrapTreeview)
 from widgetastic_manageiq import BreadCrumb
 
 from cfme.base.login import BaseLoggedInPage
@@ -173,7 +173,7 @@ class BasicProvisionFormView(View):
     @View.nested
     class purpose(Tab):  # noqa
         TAB_NAME = 'Purpose'
-        apply_tags = BootstrapTreeview('all_tags_treebox')
+        apply_tags = CheckableBootstrapTreeview('all_tags_treebox')
 
     @View.nested
     class catalog(Tab):  # noqa
