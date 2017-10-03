@@ -1434,8 +1434,7 @@ class IPAppliance(object):
         return result
 
     @logger_wrap("Install VDDK: {}")
-    def install_vddk(self, reboot=True, force=False, vddk_url=None, log_callback=None,
-                     wait_for_web_ui_after_reboot=False):
+    def install_vddk(self, force=False, vddk_url=None, log_callback=None):
         """Install the vddk on a appliance"""
 
         def log_raise(exception_class, message):
@@ -1479,12 +1478,6 @@ class IPAppliance(object):
                         Exception,
                         "Potential installation issue, libraries not detected\n{}".format(out))
 
-                # reboot
-                if reboot:
-                    self.reboot(log_callback=log_callback,
-                                wait_for_web_ui=wait_for_web_ui_after_reboot)
-                else:
-                    log_callback('A reboot is required before vddk will work')
 
     @logger_wrap("Uninstall VDDK: {}")
     def uninstall_vddk(self, log_callback=None):

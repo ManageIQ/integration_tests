@@ -233,8 +233,9 @@ class AnalysisProfile(Pretty, Updateable, Fillable, Navigatable):
         else:
             view.add.click()
 
-        view = self.create_view(AnalysisProfileAllView)
         view.flush_widget_cache()
+        view = self.create_view(AnalysisProfileAllView)
+
         assert view.is_displayed
         view.flash.assert_success_message(
             'Add of new Analysis Profile was cancelled by the user'
