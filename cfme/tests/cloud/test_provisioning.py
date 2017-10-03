@@ -163,13 +163,13 @@ def provisioned_instance(provider, testing_instance, appliance):
 
 
 @pytest.mark.parametrize('testing_instance', [True, False], ids=["Auto", "Manual"], indirect=True)
-def test_provision_from_template(provider, provisioned_instance, soft_assert):
+def test_provision_from_template(provider, provisioned_instance):
     """ Tests instance provision from template
 
     Metadata:
         test_flag: provision
     """
-    soft_assert(provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+    assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
 
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(GCEProvider) or
@@ -633,7 +633,7 @@ def test_provision_with_additional_volume(request, testing_instance, provider, s
 
 
 @pytest.mark.parametrize('testing_instance', ['tag'], indirect=True)
-def test_cloud_provision_with_tag(provisioned_instance, soft_assert, tag):
+def test_cloud_provision_with_tag(provisioned_instance, tag):
     """ Tests tagging instance using provisioning dialogs.
 
     Steps:
@@ -644,7 +644,7 @@ def test_cloud_provision_with_tag(provisioned_instance, soft_assert, tag):
     Metadata:
         test_flag: provision
     """
-    soft_assert(provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+    assert provisioned_instance.does_vm_exist_on_provider(), "Instance wasn't provisioned"
     tags = provisioned_instance.get_tags()
     assert any(
         instance_tag.category.display_name == tag.category.display_name and
