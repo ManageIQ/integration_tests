@@ -80,7 +80,7 @@ def tags(request, rest_api, categories):
     return _creating_skeleton(request, rest_api, 'tags', tags, substr_search=True)
 
 
-def dialog_ui(appliance, label=None, description=None, submit=False, cancel=False):
+def dialog_ui(appliance):
     """Creates service dialog using UI."""
     service_dialogs = appliance.get(DialogCollection)
     uid = fauxfactory.gen_alphanumeric()
@@ -92,10 +92,10 @@ def dialog_ui(appliance, label=None, description=None, submit=False, cancel=Fals
         default_text_box="default value"
     )
     service_dialog = service_dialogs.create(
-        label=label or "dialog_{}".format(uid),
-        description=description or "my dialog {}".format(uid),
-        submit=submit,
-        cancel=cancel
+        label="dialog_{}".format(uid),
+        description="my dialog {}".format(uid),
+        submit=True,
+        cancel=True
     )
     tab = service_dialog.tabs.create(
         tab_label="tab_{}".format(uid),
@@ -109,12 +109,13 @@ def dialog_ui(appliance, label=None, description=None, submit=False, cancel=Fals
     return service_dialog
 
 
-def dialog_rest(request, rest_api, label=None, description=None, submit=False, cancel=False):
+def dialog_rest(request, rest_api):
     """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
     data = {
-        "description": description or "my dialog {}".format(uid),
-        "label": label or "dialog_{}".format(uid),
+        "description": "my dialog {}".format(uid),
+        "label": "dialog_{}".format(uid),
+        "buttons": "submit,cancel",
         "dialog_tabs": [{
             "description": "my tab desc {}".format(uid),
             "position": 0,
@@ -150,15 +151,6 @@ def dialog_rest(request, rest_api, label=None, description=None, submit=False, c
         }]
     }
 
-    buttons = []
-    if submit:
-        buttons.append("submit")
-    if cancel:
-        buttons.append("cancel")
-    buttons = ",".join(buttons)
-    if buttons:
-        data["buttons"] = buttons
-
     service_dialog = _creating_skeleton(request, rest_api, "service_dialogs", [data])
     return service_dialog[0]
 
@@ -167,10 +159,10 @@ def dialog(request, appliance):
     """Returns service dialog object."""
     # action "create" is not supported in version < 5.8, use UI
     if version.current_version() < '5.8':
-        return dialog_ui(appliance, submit=True, cancel=True)
+        return dialog_ui(appliance)
 
     # setup dialog using REST API
-    rest_resource = dialog_rest(request, appliance.rest_api, submit=True, cancel=True)
+    rest_resource = dialog_rest(request, appliance.rest_api)
     service_dialogs = appliance.get(DialogCollection)
     service_dialog = service_dialogs.instantiate(
         label=rest_resource.label,
