@@ -1,6 +1,5 @@
 import pytest
 from random import choice
-from selenium.common.exceptions import NoSuchElementException
 
 from cfme.configure.tasks import is_host_analysis_finished
 from cfme.infrastructure.deployment_roles import DeploymentRoleCollection
@@ -45,7 +44,7 @@ def test_host_role_association(provider, soft_assert):
 
         try:
             role_assoc = view.entities.relationships.get_text_of('Deployment Role')
-        except NoSuchElementException:
+        except NameError:
             role_assoc = view.entities.relationships.get_text_of('Cluster / Deployment Role')
         soft_assert(role_name in role_assoc, 'Deployment roles misconfigured')
 
