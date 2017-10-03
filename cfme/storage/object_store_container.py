@@ -9,7 +9,7 @@ from widgetastic_manageiq import (
     SummaryTable,
 )
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
-from widgetastic.widget import View, Text, NoSuchElementException
+from widgetastic.widget import View, Text
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
