@@ -25,18 +25,18 @@ gpgkey=https://copr-be.cloud.fedoraproject.org/results/jlaska/rabbitmq/pubkey.gp
 enabled=1
 enabled_metadata=1
 EOF"""
-PGDG_94_CENTOS_REPO_PATH = "/etc/yum.repos.d/pgdg-94-centos.repo"
-PGDG_94_CENTOS_REPO_CONTENT = """EOF
-[pgdg94]
-name=PostgreSQL 9.4 $releasever - $basearch
-baseurl=http://download.postgresql.org/pub/repos/yum/9.4/redhat/rhel-\$releasever-\$basearch
+PGDG_96_CENTOS_REPO_PATH = "/etc/yum.repos.d/pgdg-96-centos.repo"
+PGDG_96_CENTOS_REPO_CONTENT = """EOF
+[pgdg96]
+name=PostgreSQL 9.6 $releasever - $basearch
+baseurl=http://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-\$releasever-\$basearch
 enabled=1
 gpgcheck=0
 EOF"""
 REPOS = [
     (ANSIBLE_TOWER_REPO_PATH, ANSIBLE_TOWER_REPO_CONTENT),
     (JLASKA_RABBITMQ_REPO_PATH, JLASKA_RABBITMQ_REPO_CONTENT),
-    (PGDG_94_CENTOS_REPO_PATH, PGDG_94_CENTOS_REPO_CONTENT)
+    (PGDG_96_CENTOS_REPO_PATH, PGDG_96_CENTOS_REPO_CONTENT)
 ]
 
 
