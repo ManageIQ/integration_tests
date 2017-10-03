@@ -100,30 +100,22 @@ class PlaybooksView(PlaybookBaseView):
 class PlaybooksCollection(BaseCollection):
     """Collection object for the :py:class:`Playbook`."""
 
-    def __init__(self, appliance, parent_repository):
-        self.appliance = appliance
-        self.parent = parent_repository
-
-    def instantiate(self, name, repository):
-        return Playbook(self, name, repository)
+    def init(self):
+        self.parent = self.filters.get('parent', None) if self.filters else None
 
     def all(self):
         view = navigate_to(Server, "AnsiblePlaybooks")
         playbooks = []
         for entity in view.entities.get_all(surf_pages=True):
-            if entity.data["Repository"] == self.parent.name:
-                playbooks.append(
-                    self.instantiate(entity.data["Name"], entity.data["Repository"])
-                )
+            if (self.parent and entity.data["Repository"] == self.parent.name) or not self.parent:
+                playbooks.append(self.instantiate(entity.data["Name"], entity.data["Repository"]))
         return playbooks
 
 
 class Playbook(BaseEntity):
     """A class representing one Embedded Ansible playbook in the UI."""
 
-    def __init__(self, collection, name, repository):
-        self.collection = collection
-        self.appliance = self.collection.appliance
+    def init(self, name, repository):
         self.name = name
         self.repository = repository
 
