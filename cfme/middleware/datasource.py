@@ -286,5 +286,5 @@ class Details(CFMENavigateStep):
                     datasource_name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareDatasourceNotFound(
-                "Datasource '{}' not found in table".format(self.name))
+                "Datasource '{}' not found in table".format(self.obj.name))
         row.click()

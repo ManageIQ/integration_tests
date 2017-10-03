@@ -252,5 +252,5 @@ class Details(CFMENavigateStep):
                     deployment_name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareDeploymentNotFound(
-                "Deployment '{}' not found in table".format(self.name))
+                "Deployment '{}' not found in table".format(self.obj.name))
         row.click()
