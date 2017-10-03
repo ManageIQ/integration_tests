@@ -80,6 +80,35 @@ def tags(request, rest_api, categories):
     return _creating_skeleton(request, rest_api, 'tags', tags, substr_search=True)
 
 
+def dialog_ui(appliance, label=None, description=None, submit=False, cancel=False):
+    """Creates service dialog using UI."""
+    service_dialogs = appliance.get(DialogCollection)
+    uid = fauxfactory.gen_alphanumeric()
+    element_data = dict(
+        ele_label="ele_{}".format(uid),
+        ele_name="ele{}".format(uid),
+        ele_desc="my ele desc {}".format(uid),
+        choose_type="Text Box",
+        default_text_box="default value"
+    )
+    service_dialog = service_dialogs.create(
+        label=label or "dialog_{}".format(uid),
+        description=description or "my dialog {}".format(uid),
+        submit=submit,
+        cancel=cancel
+    )
+    tab = service_dialog.tabs.create(
+        tab_label="tab_{}".format(uid),
+        tab_desc="my tab desc {}".format(uid)
+    )
+    box = tab.boxes.create(
+        box_label="box_{}".format(uid),
+        box_desc="my box desc {}".format(uid)
+    )
+    box.elements.create(element_data=[element_data])
+    return service_dialog
+
+
 def dialog_rest(request, rest_api, label=None, description=None, submit=False, cancel=False):
     """Creates service dialog using REST API."""
     uid = fauxfactory.gen_alphanumeric()
@@ -136,6 +165,11 @@ def dialog_rest(request, rest_api, label=None, description=None, submit=False, c
 
 def dialog(request, appliance):
     """Returns service dialog object."""
+    # action "create" is not supported in version < 5.8, use UI
+    if version.current_version() < '5.8':
+        return dialog_ui(appliance, submit=True, cancel=True)
+
+    # setup dialog using REST API
     rest_resource = dialog_rest(request, appliance.rest_api, submit=True, cancel=True)
     service_dialogs = appliance.get(DialogCollection)
     service_dialog = service_dialogs.instantiate(
