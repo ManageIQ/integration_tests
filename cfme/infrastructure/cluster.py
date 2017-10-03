@@ -8,7 +8,7 @@ from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelecto
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -319,12 +319,3 @@ class Timelines(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
         self.prerequisite_view.toolbar.monitoring.item_select('Timelines')
-
-
-@navigator.register(Cluster, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View, NoSuchElementException, Text
 from widgetastic_manageiq import (
@@ -19,7 +19,7 @@ from widgetastic_patternfly import (
 )
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.appliance import BaseCollection, BaseEntity
@@ -216,13 +216,3 @@ class StorageManagerDetails(CFMENavigateStep):
             row.click()
         except NoSuchElementException:
             raise ItemNotFound('Could not locate {}'.format(self.obj.name))
-
-
-@navigator.register(StorageManager, 'EditTagsFromDetails')
-class StorageObjectDetailEditTag(CFMENavigateStep):
-    """ This navigation destination help to WidgetasticTaggable"""
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

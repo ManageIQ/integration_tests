@@ -285,15 +285,6 @@ class EditTags(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
-@navigator.register(InfraProvider, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
-
-
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
     VIEW = InfraProviderEditView

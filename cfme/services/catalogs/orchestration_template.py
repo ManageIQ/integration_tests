@@ -3,7 +3,7 @@ from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic_manageiq import ScriptBox, Table
 from navmazing import NavigateToAttribute, NavigateToSibling
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
 from cfme.utils.appliance import Navigatable
@@ -272,12 +272,3 @@ class CopyTemplate(CFMENavigateStep):
 
     def step(self):
         self.view.configuration.item_select("Copy this Orchestration Template")
-
-
-@navigator.register(OrchestrationTemplate, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.policy.item_select('Edit Tags')

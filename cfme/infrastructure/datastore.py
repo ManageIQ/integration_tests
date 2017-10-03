@@ -1,6 +1,6 @@
 """ A model of an Infrastructure Datastore in CFME
 """
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute
 from widgetastic.widget import View, Text
 from cfme.exceptions import ItemNotFound
 from widgetastic_manageiq import (ManageIQTree,
@@ -16,7 +16,7 @@ from widgetastic.widget import ParametrizedView
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
 from widgetastic.utils import Version, VersionPick
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.common.host_views import HostsView
 from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -356,15 +356,6 @@ class DetailsFromProvider(CFMENavigateStep):
     def step(self):
         prov_view = navigate_to(self.obj.provider, 'Details')
         prov_view.contents.relationships.click_at('Datastores')
-
-
-@navigator.register(Datastore, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 def get_all_datastores():

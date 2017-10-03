@@ -10,7 +10,7 @@ from widgetastic_manageiq import (
     SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import BaseCollection, BaseEntity
@@ -377,13 +377,3 @@ class TenantEdit(CFMENavigateStep):
             self.prerequisite_view.toolbar.configuration.item_select('Edit Cloud Tenant')
         else:
             raise DestinationNotFound('Cannot edit Cloud Tenants in CFME < 5.7')
-
-
-@navigator.register(Tenant, 'EditTagsFromDetails')
-class TenantEditTags(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        """Navigate to the edit tags page"""
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+from navmazing import NavigateToSibling
 from urlparse import urlparse
 from widgetastic.exceptions import NoSuchElementException, RowNotFound
 from widgetastic_patternfly import BootstrapSelect, Button
@@ -15,7 +16,7 @@ from cfme.web_ui.timelines import Timelines
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
-from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils import attributize_string, version, deferred_verpick
 from cfme.utils.units import Unit
 from cfme.utils.varmeth import variable
@@ -332,6 +333,15 @@ class WidgetasticTaggable(object):
         if not reset and not cancel:
             view.form.save.click()
             view.flash.assert_success_message('Tag edits were successfully saved')
+
+
+@navigator.register(WidgetasticTaggable, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 class SummaryMixin(object):
