@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.configure.configuration import server_roles_enabled
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.myservice import MyService
 from cfme import test_requirements
 from cfme.utils import testgen
-from cfme.utils.version import current_version
 from cfme.utils.appliance import get_or_create_current_appliance, ViaSSUI
-
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -21,6 +22,20 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
     ['provisioning', 'host'],
     ['provisioning', 'datastore']
 ], scope="module")
+
+
+@pytest.fixture(scope="module")
+def configure_websocket(appliance):
+    """
+    Enable websocket role if it is disabled.
+
+    Currently the fixture cfme/fixtures/base.py:27,
+    disables the websocket role to avoid intrusive popups.
+    """
+    with server_roles_enabled('websocket'):
+        logger.info('Enabling the websocket role to allow console connections')
+        yield
+    logger.info('Disabling the websocket role to avoid intrusive popups')
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
