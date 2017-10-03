@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
     Accordion,
@@ -15,7 +17,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 
 
 class ObjectStoreObjectToolbar(View):
@@ -93,20 +95,28 @@ class ObjectStoreObjectDetailsView(ObjectStoreObjectView):
     entities = View.nested(ObjectStoreObjectDetailsEntities)
 
 
+@attr.s
+class ObjectStoreObject(BaseEntity, WidgetasticTaggable):
+    """ Model of an Storage Object Store Object in cfme
+
+    Args:
+        key: key of the object.
+        provider: provider
+    """
+    key = attr.ib()
+
+
+@attr.s
 class ObjectStoreObjectCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.storage.object_store_object.ObjStoreObject' """
 
-    def __init__(self, appliance):
-        self.appliance = appliance
+    ENTITY = ObjectStoreObject
 
-    def instantiate(self, key, provider):
-        return ObjectStoreObject(self, key, provider)
-
-    def all(self, provider):
+    def all(self):
         """returning all Object Store Objects"""
         view = navigate_to(self, 'All')
         view.toolbar.view_selector.select("Grid View")
-        objects = [self.instantiate(key=item, provider=provider)
+        objects = [self.instantiate(key=item)
                    for item in view.entities.entity_names]
         return objects
 
@@ -124,20 +134,6 @@ class ObjectStoreObjectCollection(BaseCollection):
 
         view.toolbar.configuration.item_select('Remove Object Storage Objects',
                                                handle_alert=True)
-
-
-class ObjectStoreObject(BaseEntity, WidgetasticTaggable):
-    """ Model of an Storage Object Store Object in cfme
-
-    Args:
-        key: key of the object.
-        provider: provider
-    """
-    def __init__(self, collection, key, provider):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.key = key
-        self.provider = provider
 
 
 @navigator.register(ObjectStoreObjectCollection, 'All')

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import attr
 
 from navmazing import NavigateToAttribute
 from widgetastic.utils import Version, VersionPick
@@ -22,7 +23,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 
 
 class StorageManagerToolbar(View):
@@ -125,34 +126,7 @@ class StorageManagePoliciesView(StorageManagerView):
             self.breadcrumb.active_location == "'Storage Manager' Policy Assignment")
 
 
-class BlockManagerCollection(BaseCollection):
-    """Collection object [block manager] for the :py:class:'cfme.storage.manager'"""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-        self.navigation_path = VersionPick({
-            Version.lowest(): ['Storage', 'Storage Providers'],
-            '5.8': ['Storage', 'Block Storage', 'Managers']})
-        self.manager_type = 'Block Storage Managers'
-
-    def instantiate(self, name, provider):
-        return StorageManager(self, name, provider)
-
-
-class ObjectManagerCollection(BaseCollection):
-    """Collection object [object manager] for the :py:class:'cfme.storage.manager'"""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-        self.navigation_path = VersionPick({
-            Version.lowest(): ['Storage', 'Storage Providers'],
-            '5.8': ['Storage', 'Object Storage', 'Managers']})
-        self.manager_type = 'Object Storage Managers'
-
-    def instantiate(self, name, provider):
-        return StorageManager(self, name, provider)
-
-
+@attr.s
 class StorageManager(BaseEntity, WidgetasticTaggable):
     """ Model of an storage manager in cfme
 
@@ -162,15 +136,20 @@ class StorageManager(BaseEntity, WidgetasticTaggable):
         provider: Provider
     """
 
-    def __init__(self, collection, name, provider):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.provider = provider
-        self.navigation_path = self.collection.navigation_path
-        self.manager_type = self.collection.manager_type
-        self.storage_title = VersionPick({Version.lowest(): 'Storage Provider',
-                                  '5.8': 'Storage Manager'}).pick(self.appliance.version)
+    name = attr.ib()
+    provider = attr.ib()
+    storage_title = VersionPick({
+        Version.lowest(): 'Storage Provider',
+        '5.8': 'Storage Manager'
+    })
+
+    @property
+    def navigation_path(self):
+        return self.parent.navigation_path
+
+    @property
+    def manager_type(self):
+        return self.parent.manager_type
 
     def refresh(self, cancel=False):
         """Refresh storage manager"""
@@ -191,6 +170,28 @@ class StorageManager(BaseEntity, WidgetasticTaggable):
 
         msg = "Delete initiated for 1 {} from the CFME Database".format(self.storage_title)
         view.flash.assert_success_message(msg)
+
+
+@attr.s
+class BlockManagerCollection(BaseCollection):
+    """Collection object [block manager] for the :py:class:'cfme.storage.manager'"""
+    ENTITY = StorageManager
+    manager_type = 'Block Storage Managers'
+    navigation_path = VersionPick({
+        Version.lowest(): ['Storage', 'Storage Providers'],
+        '5.8': ['Storage', 'Block Storage', 'Managers']}
+    )
+
+
+@attr.s
+class ObjectManagerCollection(BaseCollection):
+    """Collection object [object manager] for the :py:class:'cfme.storage.manager'"""
+    ENTITY = StorageManager
+    manager_type = 'Object Storage Managers'
+    navigation_path = VersionPick({
+        Version.lowest(): ['Storage', 'Storage Providers'],
+        '5.8': ['Storage', 'Object Storage', 'Managers']}
+    )
 
 
 @navigator.register(BlockManagerCollection, 'All')

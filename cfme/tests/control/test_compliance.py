@@ -4,10 +4,8 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.control.explorer.policies import (HostCompliancePolicy, PolicyCollection,
-    VMCompliancePolicy,)
-from cfme.control.explorer.conditions import ConditionCollection, VMCondition
-from cfme.control.explorer.policy_profiles import PolicyProfileCollection
+from cfme.control.explorer.policies import HostCompliancePolicy, VMCompliancePolicy
+from cfme.control.explorer.conditions import VMCondition
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.utils import testgen, conf
@@ -31,17 +29,17 @@ pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 @pytest.fixture(scope="module")
 def policy_profile_collection(appliance):
-    return appliance.get(PolicyProfileCollection)
+    return appliance.collections.policy_profiles
 
 
 @pytest.fixture(scope="module")
 def policy_collection(appliance):
-    return appliance.get(PolicyCollection)
+    return appliance.collections.policies
 
 
 @pytest.fixture(scope="module")
 def condition_collection(appliance):
-    return appliance.get(ConditionCollection)
+    return appliance.collections.conditions
 
 
 @pytest.fixture

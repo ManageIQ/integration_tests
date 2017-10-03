@@ -19,7 +19,7 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         InfraProvidersView,
                                         ProviderNodesView)
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.cluster import ClusterCollection, ClusterView, ClusterToolbar
+from cfme.infrastructure.cluster import ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
 from cfme.utils import conf, version
 from cfme.utils.appliance import Navigatable
@@ -189,7 +189,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
         view = navigate_to(self, 'Clusters')
-        col = self.appliance.get(ClusterCollection)
+        col = self.appliance.collections.clusters
         return [col.instantiate(e.name, self) for e in view.entities.get_all(surf_pages=True)]
 
     def as_fill_value(self):

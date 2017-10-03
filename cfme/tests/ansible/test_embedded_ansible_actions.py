@@ -2,16 +2,11 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.ansible.repositories import RepositoryCollection
-from cfme.ansible.credentials import CredentialsCollection
 from cfme.common.vm import VM
-from cfme.control.explorer.actions import ActionCollection
-from cfme.control.explorer.policies import PolicyCollection, VMControlPolicy
-from cfme.control.explorer.policy_profiles import PolicyProfileCollection
+from cfme.control.explorer.policies import VMControlPolicy
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
-from cfme.services.requests import RequestCollection
 from cfme.utils import ports
 from cfme.utils.blockers import BZ
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -65,7 +60,7 @@ def wait_for_ansible(appliance):
 
 @pytest.yield_fixture(scope="module")
 def ansible_repository(appliance, wait_for_ansible):
-    repositories = RepositoryCollection(appliance=appliance)
+    repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
         url="https://github.com/quarckster/ansible_playbooks",
@@ -122,7 +117,7 @@ def vmware_vm(full_template_modscope, provider):
 
 @pytest.yield_fixture(scope="module")
 def ansible_action(appliance, ansible_catalog_item):
-    action_collection = appliance.get(ActionCollection)
+    action_collection = appliance.collections.actions
     action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
@@ -141,13 +136,13 @@ def ansible_action(appliance, ansible_catalog_item):
 @pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(appliance, vmware_vm, provider, ansible_action):
-    policy = PolicyCollection(appliance=appliance).create(
+    policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha(),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
     )
     policy.assign_actions_to_event("Tag Complete", [ansible_action.description])
-    policy_profile = PolicyProfileCollection(appliance=appliance).create(
+    policy_profile = appliance.collections.policy_profiles.create(
         fauxfactory.gen_alpha(), policies=[policy])
     provider.assign_policy_profiles(policy_profile.description)
     yield
@@ -161,7 +156,7 @@ def policy_for_testing(appliance, vmware_vm, provider, ansible_action):
 
 @pytest.yield_fixture(scope="module")
 def ansible_credential(appliance, full_template_modscope):
-    credential = CredentialsCollection(appliance=appliance).create(
+    credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
         "Machine",
         username=credentials[full_template_modscope.creds]["username"],
@@ -176,7 +171,7 @@ def ansible_credential(appliance, full_template_modscope):
 @pytest.yield_fixture
 def service_request(appliance, ansible_catalog_item):
     request_desc = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = RequestCollection(appliance).instantiate(request_desc)
+    service_request_ = appliance.collections.requests.instantiate(request_desc)
     yield service_request_
 
     if service_request_.exists:

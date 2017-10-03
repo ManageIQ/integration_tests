@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Anisble/Credentials"""
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import ParametrizedLocator
@@ -10,7 +12,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Dropdown, FlashMessa
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
 
@@ -155,80 +157,21 @@ class CredentialEditView(CredentialFormView):
                 continue
 
 
-class CredentialsCollection(BaseCollection):
-    """Collection object for the :py:class:`Credential`."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, credential_type, **credentials):
-        return Credential(self, name, credential_type, **credentials)
-
-    def create(self, name, credential_type, **credentials):
-        add_page = navigate_to(self, "Add")
-        machine_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "private_key": credentials.get("private_key"),
-            "private_key_phrase": credentials.get("private_key_phrase"),
-            "privilage_escalation": credentials.get("privilage_escalation"),
-            "privilage_escalation_username": credentials.get("privilage_escalation_username"),
-            "privilage_escalation_password": credentials.get("privilage_escalation_password"),
-            "vault_password": credentials.get("vault_password")
-        }
-        scm_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "private_key": credentials.get("private_key"),
-            "private_key_phrase": credentials.get("private_key_phrase")
-        }
-        amazon_credential_fill_dict = {
-            "access_key": credentials.get("access_key"),
-            "secret_key": credentials.get("secret_key"),
-            "sts_token": credentials.get("sts_token"),
-        }
-        vmware_credential_fill_dict = {
-            "username": credentials.get("username"),
-            "password": credentials.get("password"),
-            "vcenter_host": credentials.get("vcenter_host")
-        }
-        credential_type_map = {
-            "Machine": machine_credential_fill_dict,
-            "Scm": scm_credential_fill_dict,
-            "Amazon": amazon_credential_fill_dict,
-            "VMware": vmware_credential_fill_dict
-        }
-
-        add_page.fill({"name": name, "credential_type": credential_type})
-        add_page.credential_form.fill(credential_type_map[credential_type])
-        add_page.add_button.click()
-        credentials_list_page = self.create_view(CredentialsListView)
-        # Without this StaleElementReferenceException can be raised
-        wait_for(lambda: False, silent_failure=True, timeout=5)
-        assert credentials_list_page.is_displayed
-        credentials_list_page.flash.assert_success_message(
-            'Add of Credential "{}" has been successfully queued.'.format(name))
-
-        credential = self.instantiate(name, credential_type, **credentials)
-
-        wait_for(
-            lambda: credential.exists,
-            fail_func=credentials_list_page.browser.selenium.refresh,
-            delay=5,
-            timeout=300)
-
-        return credential
-
-
 class Credential(BaseEntity):
     """A class representing one Embedded Ansible credential in the UI."""
+
+    # TODO - This is one of the only classes that hasn't been converted to attrs
+    # The class needs to be reworked and split into multiple subtypes. The kwargs
+    # is also problematic for attrs
+
     def __init__(self, collection, name, credential_type, **credentials):
-        self.collection = collection
-        self.appliance = self.collection.appliance
+        super(Credential, self).__init__(collection)
         self.name = name
         self.credential_type = credential_type
         for key, value in credentials.iteritems():
             setattr(self, key, value)
+
+    __repr__ = object.__repr__
 
     def update(self, updates):
         machine_credential_fill_dict = {
@@ -304,6 +247,68 @@ class Credential(BaseEntity):
             fail_func=credentials_list_page.browser.selenium.refresh,
             timeout=300
         )
+
+
+@attr.s
+class CredentialsCollection(BaseCollection):
+    """Collection object for the :py:class:`Credential`."""
+
+    ENTITY = Credential
+
+    def create(self, name, credential_type, **credentials):
+        add_page = navigate_to(self, "Add")
+        machine_credential_fill_dict = {
+            "username": credentials.get("username"),
+            "password": credentials.get("password"),
+            "private_key": credentials.get("private_key"),
+            "private_key_phrase": credentials.get("private_key_phrase"),
+            "privilage_escalation": credentials.get("privilage_escalation"),
+            "privilage_escalation_username": credentials.get("privilage_escalation_username"),
+            "privilage_escalation_password": credentials.get("privilage_escalation_password"),
+            "vault_password": credentials.get("vault_password")
+        }
+        scm_credential_fill_dict = {
+            "username": credentials.get("username"),
+            "password": credentials.get("password"),
+            "private_key": credentials.get("private_key"),
+            "private_key_phrase": credentials.get("private_key_phrase")
+        }
+        amazon_credential_fill_dict = {
+            "access_key": credentials.get("access_key"),
+            "secret_key": credentials.get("secret_key"),
+            "sts_token": credentials.get("sts_token"),
+        }
+        vmware_credential_fill_dict = {
+            "username": credentials.get("username"),
+            "password": credentials.get("password"),
+            "vcenter_host": credentials.get("vcenter_host")
+        }
+        credential_type_map = {
+            "Machine": machine_credential_fill_dict,
+            "Scm": scm_credential_fill_dict,
+            "Amazon": amazon_credential_fill_dict,
+            "VMware": vmware_credential_fill_dict
+        }
+
+        add_page.fill({"name": name, "credential_type": credential_type})
+        add_page.credential_form.fill(credential_type_map[credential_type])
+        add_page.add_button.click()
+        credentials_list_page = self.create_view(CredentialsListView)
+        # Without this StaleElementReferenceException can be raised
+        wait_for(lambda: False, silent_failure=True, timeout=5)
+        assert credentials_list_page.is_displayed
+        credentials_list_page.flash.assert_success_message(
+            'Add of Credential "{}" has been successfully queued.'.format(name))
+
+        credential = self.instantiate(name, credential_type, **credentials)
+
+        wait_for(
+            lambda: credential.exists,
+            fail_func=credentials_list_page.browser.selenium.refresh,
+            delay=5,
+            timeout=300)
+
+        return credential
 
 
 @navigator.register(Server)

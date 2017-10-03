@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module handling schedules"""
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic.exceptions import NoSuchElementException
@@ -7,7 +9,7 @@ from widgetastic.widget import Text, Checkbox, TextInput
 from widgetastic_manageiq import Calendar, AlertEmail, Table, PaginationPane
 from widgetastic_patternfly import Button, BootstrapSelect
 
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
@@ -95,15 +97,82 @@ class ScheduleDetailsView(CloudIntelReportsView):
         )
 
 
+@attr.s
+class Schedule(Updateable, Pretty, BaseEntity):
+    """Represents a schedule in Cloud Intel/Reports/Schedules.
+
+    Args:
+        name: Schedule name.
+        description: Schedule description.
+        filter: 3-tuple with filter selection (see the UI).
+        active: Whether is this schedule active.
+        run: Specifies how often this schedule runs. It can be either string "Once", or a tuple,
+            which maps to the two selects in UI ("Hourly", "Every hour")...
+        time_zone: Specify time zone.
+        start_date: Specify the start date.
+        start_time: Specify the start time either as a string ("0:15") or tuple ("0", "15")
+        send_email: If specifies, turns on e-mail sending. Can be string, or list or set.
+    """
+    pretty_attrs = ["name", "filter"]
+
+    def __str__(self):
+        return self.name
+
+    name = attr.ib()
+    description = attr.ib()
+    filter = attr.ib()
+    active = attr.ib(default=None)
+    timer = attr.ib(default=None)
+    emails = attr.ib(default=None)
+    email_options = attr.ib(default=None)
+
+    @property
+    def exists(self):
+        schedules = self.appliance.db["miq_schedules"]
+        return self.appliance.db.session\
+            .query(schedules.name)\
+            .filter(schedules.name == self.name)\
+            .count() > 0
+
+    def update(self, updates):
+        view = navigate_to(self, "Edit")
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(ScheduleDetailsView, override=updates)
+        assert view.is_displayed
+        # TODO Doesn't work due https://bugzilla.redhat.com/show_bug.cgi?id=1441101
+        # view.flash.assert_no_error()
+        # if changed:
+        #     view.flash.assert_message(
+        #         'Schedule "{}" was saved'.format(updates.get("name", self.name)))
+        # else:
+        #     view.flash.assert_message(
+        #         'Edit of Schedule "{}" was cancelled by the user'.format(self.name))
+
+    def delete(self, cancel=False):
+        view = navigate_to(self, "Details")
+        view.configuration.item_select("Delete this Schedule", handle_alert=not cancel)
+        if cancel:
+            assert view.is_displayed
+        else:
+            view = self.create_view(SchedulesAllView)
+            assert view.is_displayed
+        # TODO Doesn't work due https://bugzilla.redhat.com/show_bug.cgi?id=1441101
+        # view.flash.assert_no_error()
+
+    def queue(self):
+        """Queue this schedule."""
+        view = navigate_to(self, "Details")
+        view.configuration.item_select("Queue up this Schedule to run now")
+
+
+@attr.s
 class ScheduleCollection(BaseCollection):
 
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, description, filter, active=None, timer=None,
-                    emails=None, email_options=None):
-        return Schedule(self, name, description, filter, active=active, timer=timer,
-            emails=emails, email_options=email_options)
+    ENTITY = Schedule
 
     def create(self, name=None, description=None, filter=None, active=None,
                timer=None, emails=None, email_options=None):
@@ -211,81 +280,6 @@ class ScheduleCollection(BaseCollection):
         self._action_on_schedules(
             "Delete the selected Schedules", schedules, kwargs.pop("cancel", False)
         )
-
-
-class Schedule(Updateable, Pretty, BaseEntity):
-    """Represents a schedule in Cloud Intel/Reports/Schedules.
-
-    Args:
-        name: Schedule name.
-        description: Schedule description.
-        filter: 3-tuple with filter selection (see the UI).
-        active: Whether is this schedule active.
-        run: Specifies how often this schedule runs. It can be either string "Once", or a tuple,
-            which maps to the two selects in UI ("Hourly", "Every hour")...
-        time_zone: Specify time zone.
-        start_date: Specify the start date.
-        start_time: Specify the start time either as a string ("0:15") or tuple ("0", "15")
-        send_email: If specifies, turns on e-mail sending. Can be string, or list or set.
-    """
-    pretty_attrs = ["name", "filter"]
-
-    def __str__(self):
-        return self.name
-
-    def __init__(self, collection, name, description, filter, active=None, timer=None, emails=None,
-                 email_options=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.description = description
-        self.filter = filter
-        self.active = active
-        self.timer = timer
-        self.emails = emails
-        self.email_options = email_options
-
-    @property
-    def exists(self):
-        schedules = self.appliance.db["miq_schedules"]
-        return self.appliance.db.session\
-            .query(schedules.name)\
-            .filter(schedules.name == self.name)\
-            .count() > 0
-
-    def update(self, updates):
-        view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(ScheduleDetailsView, override=updates)
-        assert view.is_displayed
-        # TODO Doesn't work due https://bugzilla.redhat.com/show_bug.cgi?id=1441101
-        # view.flash.assert_no_error()
-        # if changed:
-        #     view.flash.assert_message(
-        #         'Schedule "{}" was saved'.format(updates.get("name", self.name)))
-        # else:
-        #     view.flash.assert_message(
-        #         'Edit of Schedule "{}" was cancelled by the user'.format(self.name))
-
-    def delete(self, cancel=False):
-        view = navigate_to(self, "Details")
-        view.configuration.item_select("Delete this Schedule", handle_alert=not cancel)
-        if cancel:
-            assert view.is_displayed
-        else:
-            view = self.create_view(SchedulesAllView)
-            assert view.is_displayed
-        # TODO Doesn't work due https://bugzilla.redhat.com/show_bug.cgi?id=1441101
-        # view.flash.assert_no_error()
-
-    def queue(self):
-        """Queue this schedule."""
-        view = navigate_to(self, "Details")
-        view.configuration.item_select("Queue up this Schedule to run now")
 
 
 @navigator.register(ScheduleCollection, "All")

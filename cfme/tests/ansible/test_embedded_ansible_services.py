@@ -4,8 +4,6 @@ import json
 import pytest
 
 from cfme import test_requirements
-from cfme.ansible.credentials import CredentialsCollection
-from cfme.ansible.repositories import RepositoryCollection
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
@@ -38,7 +36,7 @@ def wait_for_ansible(appliance):
 
 @pytest.yield_fixture(scope="module")
 def ansible_repository(appliance, wait_for_ansible):
-    repositories = RepositoryCollection(appliance=appliance)
+    repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         name=fauxfactory.gen_alpha(),
         url="https://github.com/quarckster/ansible_playbooks",
@@ -51,7 +49,7 @@ def ansible_repository(appliance, wait_for_ansible):
 
 @pytest.yield_fixture(scope="module")
 def ansible_credential(appliance):
-    credential = CredentialsCollection(appliance=appliance).create(
+    credential = appliance.collections.ansible_credentials.create(
         fauxfactory.gen_alpha(),
         "Machine",
         username=fauxfactory.gen_alpha(),

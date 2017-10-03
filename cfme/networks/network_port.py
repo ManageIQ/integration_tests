@@ -1,33 +1,16 @@
+import attr
+
 from navmazing import NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import NetworkPortDetailsView, NetworkPortView
 from cfme.utils import version
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
-class NetworkPortCollection(BaseCollection):
-    """ Collection object for NetworkPort object
-        Note: Network providers object are not implemented in mgmt
-    """
-    def __init__(self, appliance, parent_provider=None):
-        self.appliance = appliance
-        self.parent = parent_provider
-
-    def instantiate(self, name):
-        return NetworkPort(collection=self, name=name)
-
-    def all(self):
-        if self.parent:
-            view = navigate_to(self.parent, 'NetworkPorts')
-        else:
-            view = navigate_to(self, 'All')
-        list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=p.name) for p in list_networks_obj]
-
-
+@attr.s
 class NetworkPort(WidgetasticTaggable, BaseEntity):
     """Class representing network ports in sdn"""
     in_version = ('5.8', version.LATEST)
@@ -37,11 +20,7 @@ class NetworkPort(WidgetasticTaggable, BaseEntity):
     quad_name = None
     db_types = ['CloudNetworkPort']
 
-    def __init__(self, collection, name, provider=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.provider = provider
+    name = attr.ib()
 
     @property
     def mac_address(self):
@@ -67,20 +46,41 @@ class NetworkPort(WidgetasticTaggable, BaseEntity):
         return view.entities.properties.get_text_of('Fixed ip addresses')
 
     @property
+    def provider(self):
+        from cfme.networks.provider import NetworkProvider
+        return parent_of_type(self, NetworkProvider)
+
+    @property
     def network_provider(self):
         """ Returns network provider """
-        from cfme.networks.provider import NetworkProviderCollection
         # port collection contains reference to provider
-        if self.collection.parent:
-            return self.collection.parent
+        if self.provider:
+            return self.provider
         # otherwise get provider name from ui
         view = navigate_to(self, 'Details')
         try:
             prov_name = view.entities.relationships.get_text_of("Network Manager")
-            collection = NetworkProviderCollection(appliance=self.appliance)
+            collection = self.appliance.collections.network_provider
             return collection.instantiate(name=prov_name)
         except ItemNotFound:  # BZ 1480577
             return None
+
+
+@attr.s
+class NetworkPortCollection(BaseCollection):
+    """ Collection object for NetworkPort object
+        Note: Network providers object are not implemented in mgmt
+    """
+
+    ENTITY = NetworkPort
+
+    def all(self):
+        if self.filters.get('parent'):
+            view = navigate_to(self.filters.get('parent'), 'NetworkPorts')
+        else:
+            view = navigate_to(self, 'All')
+        list_networks_obj = view.entities.get_all(surf_pages=True)
+        return [self.instantiate(name=p.name) for p in list_networks_obj]
 
 
 @navigator.register(NetworkPortCollection, 'All')

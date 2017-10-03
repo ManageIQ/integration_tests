@@ -1,3 +1,5 @@
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
 
@@ -21,27 +23,12 @@ from cfme.networks.views import (
     OneProviderSubnetView
 )
 from cfme.utils import version
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
 
 
-class NetworkProviderCollection(BaseCollection):
-    """Collection object for NetworkProvider object
-       Note: Network providers object are not implemented in mgmt
-    """
-    def __init__(self, appliance=None):
-        self.appliance = appliance
-
-    def instantiate(self, name):
-        return NetworkProvider(collection=self, name=name)
-
-    def all(self):
-        view = navigate_to(self, 'All')
-        list_networks = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=p.name) for p in list_networks]
-
-
+@attr.s
 class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     """ Class representing network provider in sdn
 
@@ -62,11 +49,17 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
     detail_page_suffix = 'provider_detail'
     db_types = ['NetworksManager']
 
-    def __init__(self, collection, name, provider=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.provider = provider
+    _collections = {
+        'balancers': BalancerCollection,
+        'cloud_networks': CloudNetworkCollection,
+        'ports': NetworkPortCollection,
+        'routers': NetworkRouterCollection,
+        'subnets': SubnetCollection,
+        'security_groups': SecurityGroupCollection,
+    }
+
+    name = attr.ib()
+    provider = attr.ib(default=None)
 
     def refresh_provider_relationships(self, cancel=True):
         """ Refresh relationships of network provider """
@@ -100,27 +93,41 @@ class NetworkProvider(BaseProvider, WidgetasticTaggable, BaseEntity):
 
     @cached_property
     def balancers(self):
-        return BalancerCollection(self.appliance, parent_provider=self)
+        return self.collections.balancers
 
     @cached_property
     def subnets(self):
-        return SubnetCollection(self.appliance, parent_provider=self)
+        return self.collections.subnets
 
     @cached_property
     def networks(self):
-        return CloudNetworkCollection(self.appliance, parent_provider=self)
+        return self.collections.cloud_networks
 
     @cached_property
     def ports(self):
-        return NetworkPortCollection(self.appliance, parent_provider=self)
+        return self.collections.ports
 
     @cached_property
     def routers(self):
-        return NetworkRouterCollection(self.appliance, parent_provider=self)
+        return self.collections.routers
 
     @cached_property
     def security_groups(self):
-        return SecurityGroupCollection(self.appliance, parent_provider=self)
+        return self.collections.security_groups
+
+
+@attr.s
+class NetworkProviderCollection(BaseCollection):
+    """Collection object for NetworkProvider object
+       Note: Network providers object are not implemented in mgmt
+    """
+
+    ENTITY = NetworkProvider
+
+    def all(self):
+        view = navigate_to(self, 'All')
+        list_networks = view.entities.get_all(surf_pages=True)
+        return [self.instantiate(name=p.name) for p in list_networks]
 
 
 @navigator.register(NetworkProviderCollection, 'All')
@@ -134,7 +141,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(NetworkProvider, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = NetworkProviderDetailsView
 
     def step(self):

@@ -2,7 +2,6 @@ import fauxfactory
 import pytest
 from Crypto.PublicKey import RSA
 
-from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
@@ -21,7 +20,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope='function')
 def keypairs(appliance):
-    return KeyPairCollection(appliance=appliance)
+    return appliance.collections.keypairs
 
 
 @pytest.mark.tier(3)

@@ -5,8 +5,7 @@ from datetime import datetime, timedelta
 
 from cfme import test_requirements
 from cfme.common.vm import VM
-from cfme.configure.configuration.region_settings import CANDUCollection
-from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
+from cfme.control.explorer import alert_profiles, policies
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -70,27 +69,27 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
 
 @pytest.fixture(scope="module")
 def policy_profile_collection(appliance):
-    return appliance.get(policy_profiles.PolicyProfileCollection)
+    return appliance.collections.policy_profiles
 
 
 @pytest.fixture(scope="module")
 def policy_collection(appliance):
-    return appliance.get(policies.PolicyCollection)
+    return appliance.collections.policies
 
 
 @pytest.fixture(scope="module")
 def action_collection(appliance):
-    return appliance.get(actions.ActionCollection)
+    return appliance.collections.actions
 
 
 @pytest.fixture(scope="module")
 def alert_collection(appliance):
-    return appliance.get(alerts.AlertCollection)
+    return appliance.collections.alerts
 
 
 @pytest.fixture(scope="module")
 def alert_profile_collection(appliance):
-    return appliance.get(alert_profiles.AlertProfileCollection)
+    return appliance.collections.alert_profiles
 
 
 @pytest.fixture
@@ -151,7 +150,7 @@ def set_performance_capture_threshold(appliance):
 
 @pytest.yield_fixture(scope="module")
 def setup_candu(appliance):
-    candu = appliance.get(CANDUCollection)
+    candu = appliance.collections.candus
     candu.enable_all()
     appliance.server.settings.enable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')

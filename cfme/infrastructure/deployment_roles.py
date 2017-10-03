@@ -1,4 +1,5 @@
 """ A model of an Infrastructure Deployment roles in CFME"""
+import attr
 
 from functools import partial
 
@@ -30,9 +31,8 @@ from widgetastic_patternfly import (BootstrapNav,
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound, RoleNotFound
-from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 
 
 class DeploymentRoleToolbar(View):
@@ -234,18 +234,46 @@ class DeploymentRoleManagePoliciesView(DeploymentRoleView):
         )
 
 
+@attr.s
+class DeploymentRoles(BaseEntity):
+    """ Model of an infrastructure deployment roles in cfme
+
+    Args:
+        name: Name of the role.
+        provider: provider this role is attached to
+            (deployment roles available only for Openstack!).
+    """
+    # TODO: add deployment role creation method with cli
+    name = attr.ib()
+
+    # TODO : Replace this with a walk when the provider can give us clusters
+    @property
+    def provider(self):
+        # return parent_of_type(self, OpenstackInfraProvider)  <--- should be this
+        return self.parent.filters.get('provider')
+
+    def delete(self, cancel=False):
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Remove item',
+                                               handle_alert=not cancel)
+
+        if not cancel:
+            view = self.create_view(DeploymentRoleAllView)
+            assert view.is_displayed
+            view.flash.assert_success_message("The selected Clusters / "
+                                              "Deployment Roles was deleted")
+
+
+@attr.s
 class DeploymentRoleCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.infrastructure.deployment_role.DeploymentRoles'"""
+    ENTITY = DeploymentRoles
 
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider):
-        return DeploymentRoles(self, name, provider)
-
-    def all(self, provider):
+    # TODO - Once the OpenStack provider is able to give you a deploymentRoleCollection the
+    # need for the provider arg here will go as it will become a filter
+    def all(self):
         view = navigate_to(self, 'All')
-        roles = [self.instantiate(name=item.name, provider=provider)
+        roles = [self.instantiate(name=item.name)
                  for item in view.entities.get_all()]
         return roles
 
@@ -274,38 +302,6 @@ class DeploymentRoleCollection(BaseCollection):
             view.flash.assert_success_message(flash_msg)
         else:
             raise RoleNotFound('No Deployment Role for Deletion')
-
-
-class DeploymentRoles(BaseEntity):
-    """ Model of an infrastructure deployment roles in cfme
-
-    Args:
-        name: Name of the role.
-        provider: provider this role is attached to
-            (deployment roles available only for Openstack!).
-    """
-    # TODO: add deployment role creation method with cli
-
-    def __init__(self, collection, name, provider):
-        self.name = name
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
-
-        if not provider.one_of(OpenstackInfraProvider):
-            raise NotImplementedError('Deployment roles available only '
-                                      'for Openstack provider')
-
-    def delete(self, cancel=False):
-        view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove item',
-                                               handle_alert=not cancel)
-
-        if not cancel:
-            view = self.create_view(DeploymentRoleAllView)
-            assert view.is_displayed
-            view.flash.assert_success_message("The selected Clusters / "
-                                              "Deployment Roles was deleted")
 
 
 @navigator.register(DeploymentRoleCollection, 'All')

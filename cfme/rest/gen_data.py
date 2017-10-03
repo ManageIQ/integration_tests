@@ -3,7 +3,6 @@ import re
 
 import fauxfactory
 
-from cfme.automate.service_dialogs import DialogCollection
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -82,7 +81,7 @@ def tags(request, rest_api, categories):
 
 def dialog_ui(appliance):
     """Creates service dialog using UI."""
-    service_dialogs = appliance.get(DialogCollection)
+    service_dialogs = appliance.collections.service_dialogs
     uid = fauxfactory.gen_alphanumeric()
     # ele_name has to be "service_name" so that we can override the service name generated
     # by provisioning as that name contains timestamp which is difficult to assert.
@@ -166,7 +165,7 @@ def dialog(request, appliance):
 
     # setup dialog using REST API
     rest_resource = dialog_rest(request, appliance.rest_api)
-    service_dialogs = appliance.get(DialogCollection)
+    service_dialogs = appliance.collections.service_dialogs
     service_dialog = service_dialogs.instantiate(
         label=rest_resource.label,
         description=rest_resource.description,

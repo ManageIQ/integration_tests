@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from copy import copy
 
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Table, Checkbox, View
 from widgetastic_manageiq import BreadCrumb, SummaryForm, SummaryFormItem, PaginationPane, Button
@@ -10,22 +12,13 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm_views import ProvisionView, BasicProvisionFormView
 from cfme.exceptions import RequestException, ItemNotFound
 from cfme.utils.log import logger
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.varmeth import variable
 from cfme.utils.wait import wait_for
 
 
-class RequestCollection(BaseCollection):
-    """The appliance collection of requests"""
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, description=None, cells=None, partial_check=False):
-        """Create a request object"""
-        return Request(self, description=description, cells=cells, partial_check=partial_check)
-
-
+@attr.s
 class Request(BaseEntity):
     """
     Class describes request row from Services - Requests page
@@ -33,19 +26,13 @@ class Request(BaseEntity):
 
     REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
-    def __init__(self, collection, description=None, cells=None, partial_check=False):
-        """
-        Args:
-            description: by default we'll be checking Description column to find required row
-            cells: cells used to find required row in table
-            partial_check: greedy search or not?
-        """
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.description = description or cells.get('Description')
-        self.partial_check = partial_check
-        self.cells = cells or {'Description': self.description}
-        self.row = None
+    description = attr.ib(default=None)
+    partial_check = attr.ib(default=False)
+    cells = attr.ib(default=None)
+    row = attr.ib(default=None, init=False)
+
+    def __attrs_post_init__(self):
+        self.cells = self.cells or {'Description': self.description}
 
     # TODO Replace varmeth with Sentaku one day
     @variable(alias='rest')
@@ -235,6 +222,12 @@ class Request(BaseEntity):
         else:
             logger.debug('Nothing was changed in current request')
         view.flash.assert_no_error()
+
+
+@attr.s
+class RequestCollection(BaseCollection):
+    """The appliance collection of requests"""
+    ENTITY = Request
 
 
 class RequestsToolbar(View):
@@ -493,7 +486,7 @@ class RequestAll(CFMENavigateStep):
 @navigator.register(Request, 'Details')
 class RequestDetails(CFMENavigateStep):
     VIEW = RequestDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         try:

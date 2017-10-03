@@ -3,9 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.ansible.repositories import RepositoryCollection
-from cfme.ansible.credentials import CredentialsCollection
-from cfme.control.explorer.actions import ActionCollection
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
@@ -71,12 +68,12 @@ def wait_for_ansible(appliance):
 
 @pytest.fixture(scope="module")
 def action_collection(appliance):
-    return appliance.get(ActionCollection)
+    return appliance.collections.actions
 
 
 @pytest.yield_fixture(scope='module')
 def ansible_repository(appliance):
-    repositories = RepositoryCollection(appliance=appliance)
+    repositories = appliance.collections.ansible_repositories
     repository = repositories.create(
         fauxfactory.gen_alpha(),
         REPOSITORIES[0],
@@ -123,7 +120,7 @@ def test_embedded_ansible_repository_crud(ansible_repository, wait_for_ansible):
     ids=[cred[0] for cred in CREDENTIALS])
 def test_embedded_ansible_credential_crud(
         wait_for_ansible, credential_type, credentials, appliance):
-    credentials_collection = CredentialsCollection(appliance)
+    credentials_collection = appliance.collections.ansible_credentials
     credential = credentials_collection.create(
         "{}_credential_{}".format(credential_type, fauxfactory.gen_alpha()),
         credential_type,
@@ -157,7 +154,7 @@ def test_embedded_ansible_credential_crud(
 def test_embed_tower_playbooks_list_changed(appliance, wait_for_ansible):
     "Tests if playbooks list changed after playbooks repo removing"
     playbooks = []
-    repositories_collection = RepositoryCollection(appliance=appliance)
+    repositories_collection = appliance.collections.ansible_repositories
     for repo_url in REPOSITORIES:
         repository = repositories_collection.create(
             fauxfactory.gen_alpha(),

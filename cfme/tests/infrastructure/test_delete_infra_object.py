@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, resource_pool
-from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -26,7 +25,7 @@ def test_delete_cluster_appear_after_refresh(setup_provider, provider, appliance
         test_flag: delete_object
     """
     cluster_name = provider.data['remove_test']['cluster']
-    cluster_col = appliance.get(ClusterCollection)
+    cluster_col = appliance.collections.clusters
     test_cluster = cluster_col.instantiate(name=cluster_name, provider=provider)
     test_cluster.delete(cancel=False, wait=True)
     provider.refresh_provider_relationships()
@@ -126,6 +125,6 @@ def test_delete_cluster_from_table(setup_provider, provider, appliance):
         test_flag: delete_object
     """
     cluster_name = provider.data['remove_test']['cluster']
-    cluster_col = appliance.get(ClusterCollection)
+    cluster_col = appliance.collections.clusters
     cluster1 = cluster_col.instantiate(name=cluster_name, provider=provider)
     cluster_col.delete(cluster1)

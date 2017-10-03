@@ -1,28 +1,13 @@
+import attr
+
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text
-from widgetastic_patternfly import Input, Dropdown
-from cached_property import cached_property
 
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from .service_dialogs import AddDialogView
 
-
-class TabForm(AddDialogView):
-    tab_label = Input(name='tab_label')
-    tab_desc = Input(name="tab_description")
-
-
-class AddTabView(TabForm):
-
-    plus_btn = Dropdown('Add')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_customization and self.service_dialogs.is_opened and
-            self.title.text == "Adding a new Dialog [Tab Information]"
-        )
+from . import TabForm, AddTabView
+from .dialog_box import BoxCollection
 
 
 class EditTabView(TabForm):
@@ -46,18 +31,37 @@ class DetailsTabView(TabForm):
         )
 
 
+@attr.s
+class Tab(BaseEntity):
+    """A class representing one Tab in the UI."""
+    tab_label = attr.ib()
+    tab_desc = attr.ib()
+
+    _collections = {'boxes': BoxCollection}
+
+    @property
+    def boxes(self):
+        return self.collections.boxes
+
+    @property
+    def tree_path(self):
+        return self.parent.tree_path + [self.tab_label]
+
+    @property
+    def dialog(self):
+        """ Returns parent object - Dialog"""
+        from .service_dialogs import Dialog
+        return parent_of_type(self, Dialog)
+
+
+@attr.s
 class TabCollection(BaseCollection):
-    def __init__(self, appliance, parent):
-        self.parent = parent
-        self.appliance = appliance
+
+    ENTITY = Tab
 
     @property
     def tree_path(self):
         return self.parent.tree_path
-
-    def instantiate(self, tab_label=None, tab_desc=None):
-        return Tab(self,
-            tab_label=tab_label, tab_desc=tab_desc)
 
     def add_tab(self):
         view = navigate_to(self, "AddTab")
@@ -74,39 +78,11 @@ class TabCollection(BaseCollection):
         return self.instantiate(tab_label=tab_label, tab_desc=tab_desc)
 
 
-class Tab(BaseEntity):
-    """A class representing one Tab in the UI."""
-    def __init__(self, collection, tab_label, tab_desc):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.tab_label = tab_label
-        self.tab_desc = tab_desc
-
-    @property
-    def parent(self):
-        """ Returns parent object - Dialog"""
-        return self.collection.parent
-
-    @cached_property
-    def boxes(self):
-        from .dialog_box import BoxCollection
-        return BoxCollection(self.appliance, self)
-
-    @property
-    def tree_path(self):
-        return self.collection.tree_path + [self.tab_label]
-
-    @property
-    def dialog(self):
-        """ Returns parent object - Dialog"""
-        return self.parent
-
-
 @navigator.register(TabCollection)
 class Add(CFMENavigateStep):
     VIEW = AddTabView
 
-    prerequisite = NavigateToAttribute('parent.collection', 'Add')
+    prerequisite = NavigateToAttribute('parent.parent', 'Add')
 
     def step(self):
         self.prerequisite_view.plus_btn.item_select("Add a new Tab to this Dialog")

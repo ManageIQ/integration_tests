@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View
 from widgetastic.utils import VersionPick, Version
@@ -13,7 +15,7 @@ from cfme.exceptions import KeyPairNotFound
 
 from cfme.web_ui import match_location
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.wait import wait_for
 
 
@@ -111,49 +113,7 @@ class KeyPairAddView(KeyPairView):
     form = View.nested(KeyPairAddForm)
 
 
-class KeyPairCollection(BaseCollection):
-    """ Collection object for the :py:class: `cfme.cloud.KeyPair`. """
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider, public_key=None):
-        return KeyPair(self,
-                       name=name, provider=provider, public_key=public_key or "")
-
-    def create(self, name, provider, public_key=None, cancel=False):
-        """Create new keyPair.
-
-        Args:
-            name (str): name of the KeyPair
-            public_key (str): RSA Key if present
-            provider (str): Cloud Provider
-            cancel (boolean): Cancel Keypair creation
-        """
-
-        view = navigate_to(self, 'Add')
-        changed = view.form.fill({'name': name,
-                                  'public_key': public_key,
-                                  'provider': provider.name
-                                  })
-        if cancel and not changed:
-            view.form.cancel.click()
-            flash_message = 'Add of new Key Pair was cancelled by the user'
-        else:
-            view.form.add.click()
-            flash_message = VersionPick({
-                Version.lowest(): 'Creating Key Pair {}'.format(name),
-                '5.8': 'Key Pair "{}" created'.format(name)}).pick(self.appliance.version)
-
-        # add/cancel should redirect, new view
-        view = self.create_view(KeyPairAllView)
-        # TODO BZ 1444520 causing ridiculous redirection times after submitting the form
-        wait_for(lambda: view.is_displayed, num_sec=240, delay=2,
-                 fail_func=view.flush_widget_cache, handle_exception=True)
-        assert view.is_displayed
-        view.entities.flash.assert_success_message(flash_message)
-        return self.instantiate(name, provider, public_key=public_key)
-
-
+@attr.s
 class KeyPair(BaseEntity, WidgetasticTaggable):
     """ Automate Model page of KeyPairs
 
@@ -162,12 +122,9 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
     """
     _param_name = "KeyPair"
 
-    def __init__(self, collection, name, provider, public_key=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.provider = provider
-        self.public_key = public_key or ""
+    name = attr.ib()
+    provider = attr.ib()
+    public_key = attr.ib(default="")
 
     def delete(self, cancel=False, wait=False):
         view = navigate_to(self, 'Details')
@@ -211,6 +168,45 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
             return False
         else:
             return True
+
+
+@attr.s
+class KeyPairCollection(BaseCollection):
+    """ Collection object for the :py:class: `cfme.cloud.KeyPair`. """
+    ENTITY = KeyPair
+
+    def create(self, name, provider, public_key=None, cancel=False):
+        """Create new keyPair.
+
+        Args:
+            name (str): name of the KeyPair
+            public_key (str): RSA Key if present
+            provider (str): Cloud Provider
+            cancel (boolean): Cancel Keypair creation
+        """
+
+        view = navigate_to(self, 'Add')
+        changed = view.form.fill({'name': name,
+                                  'public_key': public_key,
+                                  'provider': provider.name
+                                  })
+        if cancel and not changed:
+            view.form.cancel.click()
+            flash_message = 'Add of new Key Pair was cancelled by the user'
+        else:
+            view.form.add.click()
+            flash_message = VersionPick({
+                Version.lowest(): 'Creating Key Pair {}'.format(name),
+                '5.8': 'Key Pair "{}" created'.format(name)}).pick(self.appliance.version)
+
+        # add/cancel should redirect, new view
+        view = self.create_view(KeyPairAllView)
+        # TODO BZ 1444520 causing ridiculous redirection times after submitting the form
+        wait_for(lambda: view.is_displayed, num_sec=240, delay=2,
+                 fail_func=view.flush_widget_cache, handle_exception=True)
+        assert view.is_displayed
+        view.entities.flash.assert_success_message(flash_message)
+        return self.instantiate(name, provider, public_key=public_key)
 
 
 @navigator.register(KeyPairCollection, 'All')

@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.base import ZoneCollection
 from cfme.utils.appliance import current_appliance
 from cfme.utils.update import update
 from cfme.utils import error
@@ -12,7 +11,7 @@ from cfme.utils import error
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_crud(soft_assert):
-    zc = current_appliance.get(ZoneCollection)
+    zc = current_appliance.collections.zones
     # CREATE
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -38,7 +37,7 @@ def test_zone_crud(soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_cancel_validation():
-    zc = current_appliance.get(ZoneCollection)
+    zc = current_appliance.collections.zones
     # CREATE
     zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -52,7 +51,7 @@ def test_zone_add_cancel_validation():
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request, appliance):
     """ Tests that an appliance can be changed to another Zone """
-    zc = appliance.get(ZoneCollection)
+    zc = current_appliance.collections.zones
     # CREATE
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -76,7 +75,7 @@ def test_zone_change_appliance_zone(request, appliance):
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_zone_add_dupe(request):
-    zc = current_appliance.get(ZoneCollection)
+    zc = current_appliance.collections.zones
     name = fauxfactory.gen_alphanumeric(5)
     description = fauxfactory.gen_alphanumeric(8)
     zone = zc.create(
@@ -93,7 +92,7 @@ def test_zone_add_dupe(request):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_maxlength(request, soft_assert):
-    zc = current_appliance.get(ZoneCollection)
+    zc = current_appliance.collections.zones
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(50),
         description=fauxfactory.gen_alphanumeric(50)
@@ -107,7 +106,7 @@ def test_zone_add_maxlength(request, soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_blank_name():
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.collections.zones
     with error.expected("Name can't be blank"):
         zc.create(
             name='',
@@ -118,7 +117,7 @@ def test_zone_add_blank_name():
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_blank_description():
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.collections.zones
     with error.expected("Description is required"):
         zc.create(
             name=fauxfactory.gen_alphanumeric(5),

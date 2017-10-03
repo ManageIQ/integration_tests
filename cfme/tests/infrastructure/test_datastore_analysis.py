@@ -40,7 +40,7 @@ def pytest_generate_tests(metafunc):
     appliance = get_or_create_current_appliance()
     # TODO: turn the datastore into a parameterized fixture by type,
     #       and discuss semantics for obtaining them by type
-    datastore_collection = datastore.DatastoreCollection(appliance=appliance)
+    datastore_collection = datastore.DatastoreCollection(appliance)
 
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))

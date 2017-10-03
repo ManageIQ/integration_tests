@@ -15,7 +15,7 @@ pytest_generate_tests = testgen.generate([OpenStackProvider], scope="module")
 
 @pytest.yield_fixture(scope="module")
 def containers(appliance, provider):
-    collection = ObjectStoreContainerCollection(appliance=appliance)
+    collection = ObjectStoreContainerCollection(appliance=appliance).filter({'provider': provider})
     containers = collection.all(provider)
     # TODO add create method and remove pytest skip as BZ 1490320 fix
     yield containers if containers else pytest.skip("No Containers Available")

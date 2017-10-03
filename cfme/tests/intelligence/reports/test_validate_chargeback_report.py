@@ -103,7 +103,7 @@ def enable_candu(provider, appliance):
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
 
-    candu = appliance.get(CANDUCollection)
+    candu = appliance.collections.candus
     server_info = appliance.server.settings
     original_roles = server_info.server_roles_db
     server_info.enable_server_roles(
