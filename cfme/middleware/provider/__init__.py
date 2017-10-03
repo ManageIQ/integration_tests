@@ -84,14 +84,11 @@ class Details(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            # TODO find_row_on_pages change to entities.get_entity()
-            row = self.prerequisite_view.entities.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.elements,
-                name=self.obj.name)
+            entity = self.prerequisite_view.entities.get_entity(by_name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareProviderNotFound(
-                "Middleware Provider '{}' not found in table".format(self.name))
-        row.click()
+                "Middleware Provider '{}' not found in table".format(self.obj.name))
+        entity.click()
 
 
 @navigator.register(MiddlewareProvider, 'Edit')

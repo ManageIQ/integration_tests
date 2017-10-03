@@ -252,7 +252,7 @@ class Details(CFMENavigateStep):
                 domain_name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareDomainNotFound(
-                "Domain '{}' not found in table".format(self.name))
+                "Domain '{}' not found in table".format(self.obj.name))
         row.click()
 
 

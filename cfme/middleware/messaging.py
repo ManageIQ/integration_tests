@@ -259,5 +259,5 @@ class Details(CFMENavigateStep):
                     messaging_name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareMessagingNotFound(
-                "Messaging '{}' not found in table".format(self.name))
+                "Messaging '{}' not found in table".format(self.obj.name))
         row.click()

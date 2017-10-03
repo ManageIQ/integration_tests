@@ -1,4 +1,6 @@
 import re
+from urllib import quote
+
 from cfme.utils.wait import wait_for
 from cfme.middleware.server import MiddlewareServer
 
@@ -57,7 +59,7 @@ def get_servers_set(servers):
     Return the set of servers which contains only necessary fields,
     such as 'feed', 'provider.name' and 'name'
     """
-    return set((server.feed, server.provider.name, server.name)
+    return set((quote(server.feed, safe='%'), server.provider.name, server.name)
                for server in servers)
 
 

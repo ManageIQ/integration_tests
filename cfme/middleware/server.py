@@ -363,7 +363,7 @@ class Details(CFMENavigateStep):
                     self.prerequisite_view.entities.elements, server_name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareServerNotFound(
-                "Server '{}' not found in table".format(self.name))
+                "Server '{}' not found in table".format(self.obj.name))
         row.click()
 
 

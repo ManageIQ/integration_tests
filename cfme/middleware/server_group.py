@@ -247,7 +247,7 @@ class Details(CFMENavigateStep):
                 server_group_name=self.obj.name)
         except NoSuchElementException:
             raise MiddlewareServerGroupNotFound(
-                "Server Group '{}' not found in table".format(self.name))
+                "Server Group '{}' not found in table".format(self.obj.name))
         row.click()
 
 
