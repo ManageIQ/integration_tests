@@ -2,8 +2,8 @@
 import fauxfactory
 import pytest
 
-from cfme.automate.service_dialogs import DialogCollection
 from cfme.common.provider import cleanup_vm
+from cfme.rest.gen_data import dialog as _dialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -11,26 +11,9 @@ from cfme.services.requests import RequestCollection
 from cfme.utils.log import logger
 
 
-@pytest.yield_fixture(scope="function")
-def dialog(appliance):
-    service_dialogs = DialogCollection(appliance)
-    dialog = fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name="service_name",
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box=dialog
-    )
-
-    sd = service_dialogs.create(label=dialog,
-        description="my dialog", submit=True, cancel=True,)
-    tab = sd.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
-        tab_desc="my tab desc")
-    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
-        box_desc="my box desc")
-    box.elements.create(element_data=[element_data])
-    yield sd
+@pytest.fixture(scope="function")
+def dialog(request, appliance):
+    return _dialog(request, appliance)
 
 
 @pytest.yield_fixture(scope="function")

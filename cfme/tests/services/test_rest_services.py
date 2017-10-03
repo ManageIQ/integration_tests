@@ -15,6 +15,7 @@ from cfme.rest.gen_data import (
     blueprints as _blueprints,
     copy_role,
     dialog as _dialog,
+    dialog_rest as _dialog_rest,
     groups,
     orchestration_templates as _orchestration_templates,
     service_catalog_obj as _service_catalog_obj,
@@ -88,8 +89,13 @@ def service_body(**kwargs):
 
 
 @pytest.fixture(scope="function")
-def dialog(appliance):
-    return _dialog(appliance)
+def dialog(request, appliance):
+    return _dialog(request, appliance)
+
+
+@pytest.fixture(scope="function")
+def dialog_rest(request, appliance):
+    return _dialog_rest(request, appliance.rest_api, submit=True, cancel=True)
 
 
 @pytest.fixture(scope="function")
@@ -566,18 +572,16 @@ class TestServiceRESTAPI(object):
 
 class TestServiceDialogsRESTAPI(object):
     @pytest.mark.parametrize("method", ["post", "delete"])
-    def test_delete_service_dialog(self, appliance, dialog, method):
+    def test_delete_service_dialog(self, appliance, dialog_rest, method):
         """Tests deleting service dialogs from detail.
 
         Metadata:
             test_flag: rest
         """
-        service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
-
         if method == "delete":
-            del_action = service_dialog.action.delete.DELETE
+            del_action = dialog_rest.action.delete.DELETE
         else:
-            del_action = service_dialog.action.delete.POST
+            del_action = dialog_rest.action.delete.POST
 
         del_action()
         assert_response(appliance)
@@ -585,17 +589,16 @@ class TestServiceDialogsRESTAPI(object):
             del_action()
         assert_response(appliance, http_status=404)
 
-    def test_delete_service_dialogs(self, appliance, dialog):
+    def test_delete_service_dialogs(self, appliance, dialog_rest):
         """Tests deleting service dialogs from collection.
 
         Metadata:
             test_flag: rest
         """
-        service_dialog = appliance.rest_api.collections.service_dialogs.get(label=dialog.label)
-        appliance.rest_api.collections.service_dialogs.action.delete(service_dialog)
+        appliance.rest_api.collections.service_dialogs.action.delete(dialog_rest)
         assert_response(appliance)
         with error.expected("ActiveRecord::RecordNotFound"):
-            appliance.rest_api.collections.service_dialogs.action.delete(service_dialog)
+            appliance.rest_api.collections.service_dialogs.action.delete(dialog_rest)
         assert_response(appliance, http_status=404)
 
 

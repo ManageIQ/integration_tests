@@ -80,23 +80,70 @@ def tags(request, rest_api, categories):
     return _creating_skeleton(request, rest_api, 'tags', tags, substr_search=True)
 
 
-def dialog(appliance):
+def dialog_rest(request, rest_api, label=None, description=None, submit=False, cancel=False):
+    """Creates service dialog using REST API."""
+    uid = fauxfactory.gen_alphanumeric()
+    data = {
+        "description": description or "my dialog {}".format(uid),
+        "label": label or "dialog_{}".format(uid),
+        "dialog_tabs": [{
+            "description": "my tab desc {}".format(uid),
+            "position": 0,
+            "label": "tab_{}".format(uid),
+            "display": "edit",
+            "dialog_groups": [{
+                "description": "my box desc {}".format(uid),
+                "label": "box_{}".format(uid),
+                "display": "edit",
+                "position": 0,
+                "dialog_fields": [{
+                    "name": "ele{}".format(uid),
+                    "description": "my ele desc {}".format(uid),
+                    "label": "ele_{}".format(uid),
+                    "data_type": "string",
+                    "display": "edit",
+                    "required": False,
+                    "default_value": "default value",
+                    "options": {
+                        "protected": False
+                    },
+                    "position": 0,
+                    "dynamic": False,
+                    "read_only": False,
+                    "visible": True,
+                    "type": "DialogFieldTextBox",
+                    "resource_action": {
+                        "resource_type": "DialogField",
+                        "ae_attributes": {}
+                    }
+                }]
+            }]
+        }]
+    }
+
+    buttons = []
+    if submit:
+        buttons.append("submit")
+    if cancel:
+        buttons.append("cancel")
+    buttons = ",".join(buttons)
+    if buttons:
+        data["buttons"] = buttons
+
+    service_dialog = _creating_skeleton(request, rest_api, "service_dialogs", [data])
+    return service_dialog[0]
+
+
+def dialog(request, appliance):
+    """Returns service dialog object."""
+    rest_resource = dialog_rest(request, appliance.rest_api, submit=True, cancel=True)
     service_dialogs = appliance.get(DialogCollection)
-    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
-    element_data = dict(
-        ele_label="ele_{}".format(fauxfactory.gen_alphanumeric()),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
+    service_dialog = service_dialogs.instantiate(
+        label=rest_resource.label,
+        description=rest_resource.description,
+        submit=True,
+        cancel=True
     )
-    service_dialog = service_dialogs.create(label=dialog,
-        description="my dialog", submit=True, cancel=True,)
-    tab = service_dialog.tabs.create(tab_label='tab_' + fauxfactory.gen_alphanumeric(),
-        tab_desc="my tab desc")
-    box = tab.boxes.create(box_label='box_' + fauxfactory.gen_alphanumeric(),
-        box_desc="my box desc")
-    box.elements.create(element_data=[element_data])
     return service_dialog
 
 
@@ -203,7 +250,7 @@ def vm(request, a_provider, rest_api):
 def service_templates_ui(request, appliance, service_dialog=None, service_catalog=None,
         a_provider=None, num=4):
     if not service_dialog:
-        service_dialog = dialog(appliance)
+        service_dialog = dialog(request, appliance)
     if not service_catalog:
         service_catalog = service_catalog_obj(request, appliance.rest_api)
 
@@ -275,7 +322,7 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
 
 def service_templates_rest(request, appliance, service_dialog=None, service_catalog=None, num=4):
     if not service_dialog:
-        service_dialog = dialog(appliance)
+        service_dialog = dialog(request, appliance)
     if not service_catalog:
         service_catalog = service_catalog_obj(request, appliance.rest_api)
 
