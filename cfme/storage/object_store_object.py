@@ -113,11 +113,11 @@ class ObjectStoreObjectCollection(BaseCollection):
         # TODO: capture flash message after BZ 1497113 resolve.
         view = navigate_to(self, 'All')
 
-        for object in objects:
+        for obj in objects:
             try:
-                view.entities.get_entity(object.key).check()
+                view.entities.get_entity(obj.key).check()
             except NoSuchElementException:
-                raise ItemNotFound('Could not locate object {}'.format(object.key))
+                raise ItemNotFound('Could not locate object {}'.format(obj.key))
 
         view.toolbar.configuration.item_select('Remove Object Storage Objects',
                                                handle_alert=True)
