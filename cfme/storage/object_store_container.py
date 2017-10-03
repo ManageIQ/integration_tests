@@ -40,7 +40,7 @@ class ObjectStoreContainerDetailsEntities(View):
     smart_management = SummaryTable('Smart Management')
 
 
-class ObjectStoreContainerDetailsAccordion(View):
+class ObjectStoreContainerDetailSidebar(View):
     """The accordion on the Object Store Containers details page"""
     @View.nested
     class properties(Accordion):  # noqa
@@ -89,7 +89,7 @@ class ObjectStoreContainerDetailsView(ObjectStoreContainerView):
             self.entities.breadcrumb.active_location == expected_title)
 
     toolbar = View.nested(ObjectStoreContainerDetailsToolbar)
-    sidebar = View.nested(ObjectStoreContainerDetailsAccordion)
+    sidebar = View.nested(ObjectStoreContainerDetailSidebar)
     entities = View.nested(ObjectStoreContainerDetailsEntities)
 
 
@@ -106,8 +106,8 @@ class ObjectStoreContainerCollection(BaseCollection):
     def all(self, provider):
         """returning all containers objects"""
         view = navigate_to(self, 'All')
-        containers = [self.instantiate(key=item.name, provider=provider)
-                 for item in view.entities.get_all()]
+        containers = [self.instantiate(key=item, provider=provider)
+                      for item in view.entities.all_entity_names]
         return containers
 
 
@@ -152,7 +152,7 @@ class Details(CFMENavigateStep):
         try:
             self.prerequisite_view.entities.get_entity(self.obj.key,
                                                        surf_pages=True).click()
-        except NoSuchElementException:
+        except ItemNotFound:
             raise ItemNotFound('Could not locate container {}'.format(self.obj.key))
 
 
