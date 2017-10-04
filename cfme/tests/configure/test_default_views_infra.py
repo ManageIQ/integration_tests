@@ -10,6 +10,7 @@ from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.web_ui import toolbar as tb
 from cfme.utils.appliance.implementations.ui import navigate_to
+from selenium.common.exceptions import NoSuchElementException
 
 
 pytestmark = [pytest.mark.tier(3),
@@ -53,8 +54,12 @@ def check_vm_visibility():
     tree_vm = value[1][0][1][0][1][length - 1]
     view.sidebar.vmstemplates.tree.click_path(tree_root,
                                               tree_provider, tree_datacenter, tree_vm)
-    view = view.browser.create_view(InfraVmDetailsView)
-    return "Instance" in view.title.text
+    vm = Vm(name=tree_vm, provider=tree_provider)
+    view = vm.create_view(InfraVmDetailsView)
+    try:
+        return view.is_displayed
+    except NoSuchElementException:
+        return False
 
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different
 # pages in different releases

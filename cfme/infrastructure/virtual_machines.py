@@ -155,7 +155,7 @@ class VmsTemplatesAllView(InfraVmView):
     def is_displayed(self):
         return (
             self.in_infra_vms and
-            self.sidebar.vmstemplates.tree.currently_selected == 'All VMs & Templates' and
+            self.sidebar.vmstemplates.tree.currently_selected[0] == 'All VMs & Templates' and
             self.entities.title.text == 'All VMs & Templates')
 
     def reset_page(self):
@@ -231,7 +231,7 @@ class InfraVmDetailsView(InfraVmView):
     @property
     def is_displayed(self):
         expected_name = self.context['object'].name
-        expected_provider = self.context['object'].provider.name
+        expected_provider = self.context['object'].provider
         try:
             relationship_provider_name = self.entities.relationships.get_text_of('Infrastructure '
                                                                                  'Provider')
