@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-
 from cfme import test_requirements
 from cfme.configure.settings import visual
-from cfme.cloud.availability_zone import AvailabilityZone
-from cfme.cloud.provider import CloudProvider
-from cfme.cloud.flavor import Flavor
+from cfme.cloud.availability_zone import AvailabilityZone, AvailabilityZoneView
+from cfme.cloud.provider import CloudProvider, CloudProvidersView
+from cfme.cloud.flavor import Flavor, FlavorAllView
 from cfme.cloud.instance import Instance
-from cfme.cloud.keypairs import KeyPairCollection
-from cfme.cloud.stack import StackCollection
-from cfme.cloud.tenant import TenantCollection
+from cfme.cloud.keypairs import KeyPairCollection, KeyPairAllView
+from cfme.cloud.stack import StackCollection, StackAllView
+from cfme.cloud.tenant import TenantCollection, TenantAllView
 from cfme.web_ui import toolbar as tb
-from cfme.base.ui import BaseLoggedInPage
 from cfme.utils.appliance import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
@@ -30,23 +28,14 @@ grid_pages = [CloudProvider,
               StackCollection,
               KeyPairCollection]
 
-# Dict values are kwargs for cfme.web_ui.match_location
+# Dict values are views which are required to check correct landing pages.
 landing_pages = {
-    'Clouds / Providers': {'controller': 'ems_cloud',
-                           'title': 'Cloud Providers',
-                           'summary': 'Cloud Providers'},
-    'Clouds / Key Pairs': {'controller': 'auth_key_pair_cloud',
-                           'title': 'Key Pairs',
-                           'summary': 'Key Pairs'},
-    'Clouds / Tenants': {'controller': 'cloud_tenant',
-                         'title': 'Cloud Tenants',
-                         'summary': 'Cloud Tenants'},
-    'Clouds / Flavors': {'controller': 'flavor',
-                         'title': 'Flavors',
-                         'summary': 'Flavors'},
-    'Clouds / Availability Zones': {'controller': 'availability_zone',
-                                    'title': 'Availability Zones',
-                                    'summary': 'Availability Zones'},
+    'Clouds / Providers': CloudProvidersView,
+    'Clouds / Key Pairs': KeyPairAllView,
+    'Clouds / Tenants': TenantAllView,
+    'Clouds / Flavors': FlavorAllView,
+    'Clouds / Availability Zones': AvailabilityZoneView,
+    'Clouds / Stacks': StackAllView,
 }
 
 
@@ -159,12 +148,12 @@ def test_cloud_start_page(request, appliance, start_page):
         test_flag: visuals
     """
     start = "" if appliance.version < '5.8' else "Compute / "
-    start_page = "{}{}".format(start, start_page)
+    new_start_page = "{}{}".format(start, start_page)
     request.addfinalizer(set_default_page)
-    visual.login_page = start_page
+    visual.login_page = new_start_page
     appliance.server.logout()
     appliance.server.login_admin()
-    landing_view = appliance.browser.create_view(BaseLoggedInPage)
+    landing_view = appliance.browser.create_view(landing_pages[start_page])
     assert landing_view.is_displayed
 
 
