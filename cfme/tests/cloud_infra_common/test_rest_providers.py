@@ -4,8 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.common.provider import CloudInfraProvider
-from cfme.utils import error
-from cfme.utils import testgen
+from cfme.utils import error, testgen
 from cfme.utils.rest import assert_response
 from cfme.utils.version import pick
 from cfme.utils.wait import wait_for
@@ -29,6 +28,7 @@ def delete_provider(appliance, name):
 
 @pytest.fixture(scope="function")
 def provider_rest(request, appliance, provider):
+    """Creates provider using REST API."""
     delete_provider(appliance, provider.name)
     request.addfinalizer(lambda: delete_provider(appliance, provider.name))
 
@@ -80,10 +80,11 @@ def provider_rest(request, appliance, provider):
     if hasattr(endpoint_default, "api_port") and endpoint_default.api_port:
         default_connection["endpoint"]["port"] = endpoint_default.api_port
         con_config_to_include.append(default_connection)
-    # OpenStack only?
     if hasattr(endpoint_default, "security_protocol") and endpoint_default.security_protocol:
-        default_connection["endpoint"][
-            "security_protocol"] = endpoint_default.security_protocol.lower()
+        security_protocol = endpoint_default.security_protocol.lower()
+        if security_protocol == "basic (ssl)":
+            security_protocol = "ssl"
+        default_connection["endpoint"]["security_protocol"] = security_protocol
         con_config_to_include.append(default_connection)
 
     # candu endpoint
