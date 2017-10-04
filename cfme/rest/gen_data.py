@@ -84,15 +84,18 @@ def dialog_ui(appliance):
     """Creates service dialog using UI."""
     service_dialogs = appliance.get(DialogCollection)
     uid = fauxfactory.gen_alphanumeric()
+    # ele_name has to be "service_name" so that we can override the service name generated
+    # by provisioning as that name contains timestamp which is difficult to assert.
+    # Also the dialog label and default text box should be same value = uid here.
     element_data = dict(
         ele_label="ele_{}".format(uid),
-        ele_name="ele{}".format(uid),
+        ele_name="service_name",
         ele_desc="my ele desc {}".format(uid),
         choose_type="Text Box",
-        default_text_box="default value"
+        default_text_box=uid
     )
     service_dialog = service_dialogs.create(
-        label="dialog_{}".format(uid),
+        label=uid,
         description="my dialog {}".format(uid),
         submit=True,
         cancel=True
@@ -114,7 +117,7 @@ def dialog_rest(request, rest_api):
     uid = fauxfactory.gen_alphanumeric()
     data = {
         "description": "my dialog {}".format(uid),
-        "label": "dialog_{}".format(uid),
+        "label": uid,
         "buttons": "submit,cancel",
         "dialog_tabs": [{
             "description": "my tab desc {}".format(uid),
@@ -127,13 +130,13 @@ def dialog_rest(request, rest_api):
                 "display": "edit",
                 "position": 0,
                 "dialog_fields": [{
-                    "name": "ele{}".format(uid),
+                    "name": "service_name",
                     "description": "my ele desc {}".format(uid),
                     "label": "ele_{}".format(uid),
                     "data_type": "string",
                     "display": "edit",
                     "required": False,
-                    "default_value": "default value",
+                    "default_value": uid,
                     "options": {
                         "protected": False
                     },
