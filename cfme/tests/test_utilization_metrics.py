@@ -54,7 +54,6 @@ def enable_candu(appliance):
 
 
 @pytest.yield_fixture(scope="module")
-@pytest.yield_fixture(scope="module")
 def clean_setup_provider(request, provider):
     BaseProvider.clear_providers()
     setup_or_skip(request, provider)

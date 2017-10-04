@@ -35,6 +35,7 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
+    original_roles = appliance.server.settings.server_roles_db
     try:
         appliance.server.settings.server_roles_enabled(
             'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
@@ -42,6 +43,7 @@ def enable_candu(appliance):
         yield
     finally:
         candu.disable_all()
+        appliance.server.settings.update_server_roles_db(original_roles)
 
 
 # Blow away all providers when done - collecting metrics for all of them is too much
