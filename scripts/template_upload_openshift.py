@@ -89,15 +89,18 @@ def upload_template(hostname, username, password, provider, url, name, provider_
         if not check_kwargs(**kwargs):
             return False
 
+        logger.info("checking whether this template is already present in provider env")
         if name not in list_templates(hostname, username, password, upload_folder):
             with SSHClient(hostname=hostname, username=username, password=password) as ssh:
                 dest_dir = os.path.join(upload_folder, name)
+                logger.info("creating folder for templates: {f}".format(f=dest_dir))
                 result = ssh.run_command('mkdir {dir}'.format(dir=dest_dir))
                 if result.failed:
                     logger.exception("OPENSHIFT: cant create folder %r", str(result))
                     raise
                 download_cmd = ('wget -q --no-parent --no-directories --reject "index.html*" '
                                 '--directory-prefix={dir} -r {url}')
+                logger.info("downloading templates to destination dir {f}".format(f=dest_dir))
                 result = ssh.run_command(download_cmd.format(dir=dest_dir, url=url))
                 if result.failed:
                     logger.exception("OPENSHIFT: cannot upload template %r", str(result))
@@ -110,14 +113,16 @@ def upload_template(hostname, username, password, provider, url, name, provider_
                     logger.exception("OPENSHIFT: couldn't login to openshift %r", str(result))
                     raise
 
+                logger.info("looking for templates in destination dir {f}".format(f=dest_dir))
                 get_urls_cmd = 'find {d} -type f -name "cfme-openshift-*" -exec tail -1 {{}} \;'
                 result = ssh.run_command(get_urls_cmd.format(d=dest_dir))
                 if result.failed:
                     logger.exception("OPENSHIFT: couldn't get img stream urls %r", str(result))
                     raise
 
-                for img_url in list(result):
+                for img_url in str(result).split():
                     update_img_cmd = 'docker pull {url}'
+                    logger.info("updating image stream to tag {t}".format(t=img_url))
                     result = ssh.run_command(update_img_cmd.format(url=img_url))
                     if result.failed:
                         logger.exception("OPENSHIFT: couldn't update image stream using url %r,"
