@@ -8,7 +8,6 @@ import re
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.configure import configuration
 from cfme.common.vm import VM
 from cfme.utils import testgen, version, ssh
 from cfme.utils.blockers import BZ
@@ -60,17 +59,21 @@ def configure_vmware_console_for_test(appliance, provider):
 
 
 @pytest.fixture(scope="session")
-def configure_websocket():
+def configure_websocket(appliance):
     """
     Enable websocket role if it is disabled.
 
     Currently the fixture cfme/fixtures/base.py,
     disables the websocket role to avoid intrusive popups.
     """
-    with configuration.server_roles_enabled('websocket'):
+    server_settings = appliance.server.settings
+    roles = server_settings.server_roles_db
+    if 'websocket' in roles and not roles['websocket']:
         logger.info('Enabling the websocket role to allow console connections')
+        server_settings.enable_server_roles('websocket')
         yield
     logger.info('Disabling the websocket role to avoid intrusive popups')
+    server_settings.disable_server_roles('websocket')
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')

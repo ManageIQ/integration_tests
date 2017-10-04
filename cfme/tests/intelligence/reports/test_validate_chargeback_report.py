@@ -14,7 +14,6 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
-from cfme.configure.configuration import get_server_roles, set_server_roles
 from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -103,22 +102,18 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
 def enable_candu(provider, appliance):
     # C&U data collection consumes a lot of memory and CPU.So, we are disabling some server roles
     # that are not needed for Chargeback reporting.
-    candu = appliance.get(CANDUCollection)
-    original_roles = get_server_roles()
-    new_roles = original_roles.copy()
-    new_roles.update({
-        'ems_metrics_coordinator': True,
-        'ems_metrics_collector': True,
-        'ems_metrics_processor': True,
-        'automate': False,
-        'smartstate': False})
 
-    set_server_roles(**new_roles)
+    candu = appliance.get(CANDUCollection)
+    server_info = appliance.server.settings
+    original_roles = server_info.server_roles_db
+    server_info.enable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+    server_info.disable_server_roles('automate', 'smartstate')
     candu.enable_all()
 
     yield
 
-    set_server_roles(**original_roles)
+    server_info.update_server_roles_db(original_roles)
     candu.disable_all()
 
 

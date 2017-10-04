@@ -59,7 +59,6 @@ def test_webmks_vm_console(request, appliance, provider, vm_obj,
     """Test the VMware WebMKS console support for a particular provider.
 
     The supported providers are:
-
         VMware vSphere6 and vSphere6.5
 
     For a given provider, and a given VM, the console will be opened, and then:

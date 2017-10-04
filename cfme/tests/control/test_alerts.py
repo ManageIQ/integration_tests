@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 
 from cfme import test_requirements
 from cfme.common.vm import VM
-from cfme.configure.configuration import server_roles_enabled
 from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.infrastructure.provider import InfraProvider
@@ -126,9 +125,9 @@ def set_performance_capture_threshold(appliance):
 def setup_candu(appliance):
     candu = appliance.get(CANDUCollection)
     candu.enable_all()
-    with server_roles_enabled('ems_metrics_coordinator', 'ems_metrics_collector',
-            'ems_metrics_processor'):
-        yield
+    appliance.server.settings.enable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+    yield
     candu.disable_all()
 
 

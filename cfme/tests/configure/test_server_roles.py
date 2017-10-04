@@ -2,8 +2,6 @@
 import pytest
 from functools import partial
 
-from cfme.configure import configuration
-from cfme.web_ui import flash
 from cfme.utils.conf import cfme_data
 
 server_roles_conf = cfme_data.get('server_roles',
@@ -34,7 +32,7 @@ def roles(request, all_possible_roles, appliance):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.uncollectif(lambda: not server_roles_conf["all"])
-def test_server_roles_changing(request, roles):
+def test_server_roles_changing(request, roles, appliance):
     """ Test that sets and verifies the server roles in configuration.
 
     If there is no forced interrupt, it cleans after, so the roles are intact after the testing.
@@ -43,13 +41,14 @@ def test_server_roles_changing(request, roles):
       - Use for parametrization on more roles set?
       - Change the yaml role list to dict.
     """
-    request.addfinalizer(partial(configuration.set_server_roles,
-                                 **configuration.get_server_roles()))   # For reverting back
+    server_settings = appliance.server.settings
+    original_roles = server_settings.server_roles_db
+    # For reverting back
+    request.addfinalizer(lambda: server_settings.update_server_roles_db(original_roles))
     # Set roles
-    configuration.set_server_roles(db=False, **roles)
-    flash.assert_no_errors()
+    server_settings.update_server_roles_ui(roles)
     # Get roles and check; use UI because the changes take a while to propagate to DB
-    for role, is_enabled in configuration.get_server_roles(db=False).iteritems():
+    for role, is_enabled in server_settings.server_roles_ui.iteritems():
         if is_enabled:
             assert roles[role], "Role '{}' is selected but should not be".format(role)
         else:

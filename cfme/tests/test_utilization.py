@@ -6,7 +6,6 @@ import time
 from cfme import test_requirements
 from fixtures.pytest_store import store
 
-from cfme.configure.configuration import server_roles_enabled
 from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
@@ -36,13 +35,15 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
+    original_roles = appliance.server.settings.server_roles_db
     try:
-        with server_roles_enabled(
-                'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor'):
-            candu.enable_all()
-            yield
+        appliance.server.settings.enable_server_roles(
+            'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+        candu.enable_all()
+        yield
     finally:
         candu.disable_all()
+        appliance.server.settings.update_server_roles_db(original_roles)
 
 
 # Blow away all providers when done - collecting metrics for all of them is too much

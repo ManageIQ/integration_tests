@@ -3,7 +3,6 @@
 import fauxfactory
 import pytest
 
-from cfme.configure import configuration as config
 from cfme.cloud import provider as cloud_provider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.vm import VM
@@ -67,7 +66,8 @@ def get_appliances():
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(
     lambda: not store.current_appliance.is_downstream)
-def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provider_crud):
+def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provider_crud,
+                    appliance):
 
     appl1, appl2 = get_appliances()
 
@@ -79,8 +79,9 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         # Manage infra,cloud providers and set some roles before taking a DB backup
-        config.set_server_roles(automate=True)
-        roles = config.get_server_roles()
+        server_info = appliance.server.settings
+        server_info.enable_server_roles('automate')
+        roles = server_info.server_roles_db
         virtualcenter_provider_crud.setup()
         wait_for_a_provider()
         ec2_provider_crud.setup()
@@ -113,8 +114,9 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
 
         # Assert providers on the second appliance
         providers_appl2 = appl2.ipapp.managed_known_providers
-        assert set(providers_appl2).issubset(providers_appl1),\
+        assert set(providers_appl2).issubset(providers_appl1), (
             'Restored DB is missing some providers'
+        )
 
         # Verify that existing provider can detect new VMs on the second appliance
         vm = provision_vm(request, virtualcenter_provider_crud)
@@ -122,7 +124,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
         soft_assert(vm.provider.mgmt.is_vm_running(vm.name), "vm running")
 
         # Assert server roles on the second appliance
-        for role, is_enabled in config.get_server_roles(db=False).iteritems():
+        for role, is_enabled in server_info.server_roles_ui.iteritems():
             if is_enabled:
                 assert roles[role], "Role '{}' is selected but should not be".format(role)
             else:
