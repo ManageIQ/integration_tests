@@ -1,6 +1,6 @@
 import fauxfactory
 import pytest
-from cfme.configure.configuration import Category, Tag
+from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.utils import error, version
 from cfme.utils.update import update
 from cfme.utils.testgen import config_managers, generate
