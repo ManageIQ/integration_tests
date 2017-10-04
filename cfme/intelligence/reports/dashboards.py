@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboards"""
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox
+from widgetastic.widget import Checkbox, Text
 from widgetastic_manageiq import SummaryFormItem, DashboardWidgetsPicker
 from widgetastic_patternfly import Button, Input
 
@@ -36,12 +36,7 @@ class DashboardFormCommon(CloudIntelReportsView):
     tab_title = Input(name="description")
     locked = Checkbox("locked")
     sample_dashboard = Text(".//div[@id='form_widgets_div']/h3")
-    widgets = DashboardWidgetsPicker(
-        "form_widgets_div",
-        select_id="widget",
-        names_locator=".//a[starts-with(@id, 'w_')]/..",
-        remove_locator=".//div[contains(@title, {})]//a/i"
-    )
+    widget_picker = DashboardWidgetsPicker("form_widgets_div")
     cancel_button = Button("Cancel")
 
 
@@ -168,7 +163,7 @@ class Dashboard(Updateable, Pretty, Navigatable):
             "name": self.name,
             "tab_title": self.title,
             "locked": self.locked,
-            "widgets": self.widgets
+            "widget_picker": self.widgets
         })
         view.add_button.click()
         view = self.create_view(DashboardAllGroupsView)

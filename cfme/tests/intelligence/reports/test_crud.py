@@ -86,7 +86,7 @@ def test_menuwidget_crud():
         active=True,
         shortcuts={
             "Services / Catalogs": fauxfactory.gen_alphanumeric(),
-            "Clouds / Providers": fauxfactory.gen_alphanumeric(),
+            "Cloud Intel / Dashboard": fauxfactory.gen_alphanumeric(),
         },
         visibility="<To All Users>"
     )
