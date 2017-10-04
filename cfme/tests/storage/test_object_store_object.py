@@ -14,9 +14,9 @@ pytest_generate_tests = testgen.generate([OpenStackProvider], scope="module")
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 @pytest.mark.tier(3)
-def test_object_add_remove_tag(objects):
-    collection, objects = objects
-    obj = random.choice(objects)
+def test_object_add_remove_tag(objects, provider):
+    all_objects = objects.all(provider)
+    obj = random.choice(all_objects)
 
     # add tag with category Department and tag communication
     obj.add_tag('Department', 'Communication')

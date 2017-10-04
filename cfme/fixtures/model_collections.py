@@ -8,9 +8,7 @@ def dashboards(appliance):
     return DashboardCollection(appliance=appliance)
 
 
-@pytest.fixture(scope="module")
-def objects(appliance, provider):
+@pytest.fixture(scope="function")
+def objects(appliance):
     from cfme.storage.object_store_object import ObjectStoreObjectCollection
-    collection = ObjectStoreObjectCollection(appliance=appliance)
-    objects = collection.all(provider)
-    return [collection, objects]
+    return ObjectStoreObjectCollection(appliance=appliance)
