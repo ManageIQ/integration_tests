@@ -1122,6 +1122,15 @@ class SSUIVerticalNavigation(VerticalNavigation):
     CURRENTLY_SELECTED = './/li[contains(@class, "active")]/a/span'
 
 
+class SSUIInput(Input):
+
+    locator = ParametrizedLocator('.//*[self::input and @uib-tooltip={@text|quote}]')
+
+    def __init__(self, parent, text, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.text = text
+
+
 class SSUIlist(Widget, ClickableMixin):
     """Represents the list of items like Services ,
     Orders or service catalogs in SSUI pages.
@@ -1248,6 +1257,71 @@ class SSUIAggregatecard(Widget, ClickableMixin):
             item_name: Name of the card
         """
         return self.aggregate_card(item_name).card_count()
+
+
+class SSUIServiceCatalogcard(Widget, ClickableMixin):
+    """Represents an service catalog card in SSUI."""
+
+    @ParametrizedView.nested
+    class catalog_card(ParametrizedView):  # noqa
+        PARAMETERS = ("item_name",)
+        card = Text(ParametrizedLocator('.//div[@class="card-content"]/div'
+                                        '/ss-card/h3[normalize-space(.)={item_name|quote}]'))
+
+        def card_click(self):
+            """Clicks the primary card with this name."""
+
+            return self.card.click()
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def click_at(self, item_name):
+        """Clicks the card item with this name.
+
+        Args:
+            item_name: Name of the card
+        """
+        return self.catalog_card(item_name).card_click()
+
+
+class Notification(Widget, ClickableMixin):
+    """Represent Notification drawer"""
+
+    @ParametrizedView.nested
+    class notification_drawer(ParametrizedView):  # noqa
+        PARAMETERS = ("message",)
+        notification_bell = Text('.//li/a[contains(@title, "notifications")]/i')
+        events = Text(".//h4[contains(@class, 'panel-title')]")
+        find_event = Text(ParametrizedLocator('.//div[contains(@class, "drawer-pf-notification")]'
+                                         '/div/span[normalize-space(.)={message|quote}]'))
+
+        def click_bell(self):
+            """Opens and closes the notification bell at the Nav bar"""
+            self.notification_bell.click()
+
+        def event_click(self):
+            """Clicks the Event under Notification."""
+            self.click_bell()
+            self.events.click()
+            self.find_event.click()
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def dismiss(self):
+        """Closes the notification window"""
+
+        return self.notification_drawer().click_bell()
+
+    def assert_message(self, message):
+        """Finds the events in the notification drawer"""
+
+        try:
+            self.notification_drawer(message).event_click()
+            return True
+        except NoSuchElementException:
+            return False
 
 
 class Paginator(Widget):

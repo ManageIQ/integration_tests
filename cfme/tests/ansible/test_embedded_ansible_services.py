@@ -9,7 +9,7 @@ from cfme.ansible.repositories import RepositoryCollection
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.requests import RequestCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -104,8 +104,8 @@ def catalog(ansible_catalog_item):
 
 
 @pytest.fixture(scope="module")
-def service_catalog(ansible_catalog_item, catalog):
-    service_catalog_ = ServiceCatalogs(catalog, ansible_catalog_item.name)
+def service_catalog(appliance, ansible_catalog_item, catalog):
+    service_catalog_ = ServiceCatalogs(appliance, catalog, ansible_catalog_item.name)
     return service_catalog_
 
 

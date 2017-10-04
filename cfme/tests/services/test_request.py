@@ -3,7 +3,7 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils import testgen
@@ -26,7 +26,7 @@ def test_copy_request(appliance, setup_provider, provider, catalog_item, request
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     request_description = catalog_item.name
     service_request = RequestCollection(appliance).instantiate(request_description,

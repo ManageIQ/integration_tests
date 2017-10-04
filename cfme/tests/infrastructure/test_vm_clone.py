@@ -8,7 +8,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestCollection
 from cfme.utils import testgen
 from cfme.utils.log import logger
@@ -61,7 +61,7 @@ def clone_vm_name():
 def create_vm(appliance, provider, setup_provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     request_description = catalog_item.name
