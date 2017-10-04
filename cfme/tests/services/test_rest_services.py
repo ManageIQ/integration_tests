@@ -171,6 +171,18 @@ def vm(request, a_provider, appliance):
     return _vm(request, a_provider, appliance.rest_api)
 
 
+@pytest.yield_fixture(scope="function")
+def cart(appliance):
+    cart = appliance.rest_api.collections.service_orders.action.create(name="cart")
+    assert_response(appliance)
+    cart = cart[0]
+
+    yield cart
+
+    if cart.exists:
+        cart.action.delete()
+
+
 def unassign_templates(templates):
     rest_api = templates[0].collection.api
     for template in templates:
@@ -1438,3 +1450,215 @@ class TestOrchestrationTemplatesRESTAPI(object):
             with error.expected("content must be unique"):
                 appliance.rest_api.collections.orchestration_templates.action.copy(*new)
             assert_response(appliance, http_status=400)
+
+
+class TestServiceOrderCart(object):
+    @pytest.fixture(scope="class")
+    def service_templates_class(self, request, appliance):
+        return service_templates(request, appliance)
+
+    def add_requests(self, cart, service_templates):
+        body = [{'service_template_href': tmplt.href} for tmplt in service_templates]
+        response = cart.service_requests.action.add(*body)
+        assert_response(cart.collection._api)
+        assert len(response) == len(service_templates)
+        assert cart.service_requests.subcount == len(response)
+        return response
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_create_empty_cart(self, appliance, cart):
+        """Tests creating an empty cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert cart.state == 'cart'
+        cart_dict = appliance.rest_api.get('{}/cart'.format(cart.collection._href))
+        assert cart_dict['id'] == cart.id
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_create_second_cart(self, request, appliance, cart):
+        """Tests that it's not possible to create second cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        # This will fail somehow once BZ 1493788 is fixed.
+        # There can be one and only one shopping cart for the authenticated user.
+        second_cart = appliance.rest_api.collections.service_orders.action.create(name="cart2")
+        second_cart = second_cart[0]
+        request.addfinalizer(second_cart.action.delete)
+        assert second_cart.state == 'cart'
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    @pytest.mark.meta(blockers=[BZ(1493785, forced_streams=['5.8', 'upstream'])])
+    def test_create_cart(self, appliance, service_templates):
+        """Tests creating a cart with service requests.
+
+        Metadata:
+            test_flag: rest
+        """
+        requests = [{'service_template_href': tmplt.href} for tmplt in service_templates]
+        body = {'service_requests': requests}
+        href = appliance.rest_api.collections.service_orders._href
+        response = appliance.rest_api.post(href, **body)
+        assert_response(appliance)
+        cart_dict = appliance.rest_api.get('{}/cart'.format(href))
+        assert response['id'] == cart_dict['id']
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_add_to_cart(self, request, cart, service_templates_class):
+        """Tests adding service requests to a cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert cart.service_requests.subcount == 0
+        self.add_requests(cart, service_templates_class)
+        request.addfinalizer(cart.action.clear)
+        templates_ids = [tmplt.id for tmplt in service_templates_class]
+        for service_request in cart.service_requests:
+            assert service_request.source_id in templates_ids
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_delete_requests(self, appliance, cart, service_templates_class):
+        """Tests that deleting service requests removes them also from a cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        self.add_requests(cart, service_templates_class)
+        cart_req_ids = {req.id for req in cart.service_requests}
+        body = [{'id': req.id} for req in cart.service_requests]
+        response = cart.collection._api.collections.service_requests.action.delete(*body)
+        assert_response(appliance)
+        assert len(response) == len(service_templates_class)
+        cart.service_requests.reload()
+        assert cart.service_requests.subcount == 0
+        all_req_ids = {req.id for req in appliance.rest_api.collections.service_requests}
+        # check that all service requests that were in the cart were deleted
+        assert all_req_ids - cart_req_ids == all_req_ids
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_remove_from_cart(self, appliance, cart, service_templates_class):
+        """Tests removing service requests from a cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        self.add_requests(cart, service_templates_class)
+        cart_req_ids = {req.id for req in cart.service_requests}
+        body = [{'id': req.id} for req in cart.service_requests]
+        response = cart.service_requests.action.remove(*body)
+        assert_response(appliance)
+        assert len(response) == len(service_templates_class)
+        cart.service_requests.reload()
+        assert cart.service_requests.subcount == 0
+        all_req_ids = {req.id for req in appliance.rest_api.collections.service_requests}
+        # check that all service requests that were in the cart were deleted
+        assert all_req_ids - cart_req_ids == all_req_ids
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_clear_cart(self, appliance, cart, service_templates_class):
+        """Tests removing all service requests from a cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        self.add_requests(cart, service_templates_class)
+        cart_req_ids = {req.id for req in cart.service_requests}
+        cart.action.clear()
+        assert_response(appliance)
+        cart.service_requests.reload()
+        assert cart.service_requests.subcount == 0
+        all_req_ids = {req.id for req in appliance.rest_api.collections.service_requests}
+        # check that all service requests that were in the cart were deleted
+        assert all_req_ids - cart_req_ids == all_req_ids
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_copy_cart(self, appliance, cart):
+        """Tests that it's not possible to copy a cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        with error.expected('Cannot copy a service order in the cart state'):
+            cart.action.copy(name='new_cart')
+        assert_response(appliance, http_status=400)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_order_cart(self, request, appliance, cart, service_templates_class):
+        """Tests ordering service requests in a cart.
+
+        Metadata:
+            test_flag: rest
+        """
+        self.add_requests(cart, service_templates_class[:2])
+        cart.action.order()
+        assert_response(appliance)
+        cart.reload()
+        assert cart.state == 'ordered'
+        service_requests = list(cart.service_requests)
+
+        def _order_finished():
+            for sr in service_requests:
+                sr.reload()
+                if sr.status.lower() != 'ok' or sr.request_state.lower() != 'finished':
+                    return False
+            return True
+
+        wait_for(_order_finished, num_sec=180, delay=10)
+
+        for sr in service_requests:
+            service_name = re.search(r' \[([^\]]+)\] ', sr.message).group(1)
+            # this fails if the service with the `service_name` doesn't exist
+            new_service = appliance.rest_api.collections.services.get(name=service_name)
+            request.addfinalizer(new_service.action.delete)
+
+        # when cart is ordered, it can not longer be accessed using /api/service_orders/cart
+        with error.expected('ActiveRecord::RecordNotFound'):
+            appliance.rest_api.get('{}/cart'.format(cart.collection._href))
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
+    def test_delete_cart_from_detail(self, appliance, cart, method):
+        """Tests deleting cart from detail.
+
+        Metadata:
+            test_flag: rest
+        """
+        if method == 'delete':
+            del_action = cart.action.delete.DELETE
+        else:
+            del_action = cart.action.delete.POST
+
+        del_action()
+        assert_response(appliance)
+        with error.expected('ActiveRecord::RecordNotFound'):
+            del_action()
+        assert_response(appliance, http_status=404)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
+    def test_delete_cart_from_collection(self, appliance, cart):
+        """Tests deleting cart from collection.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.service_orders
+        collection.action.delete(cart)
+        assert_response(appliance)
+        with error.expected('ActiveRecord::RecordNotFound'):
+            collection.action.delete(cart)
+        assert_response(appliance, http_status=404)
