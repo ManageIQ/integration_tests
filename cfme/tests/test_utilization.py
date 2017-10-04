@@ -37,7 +37,7 @@ def enable_candu(appliance):
     candu = appliance.get(CANDUCollection)
     original_roles = appliance.server.settings.server_roles_db
     try:
-        appliance.server.settings.server_roles_enabled(
+        appliance.server.settings.enable_server_roles(
             'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
         candu.enable_all()
         yield

@@ -267,11 +267,11 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         roles.pop('default_smart_proxy')
         return roles
 
-    def server_roles_enabled(self, *roles):
+    def enable_server_roles(self, *roles):
         """ Enables Server roles """
         self._change_server_roles_state(True, *roles)
 
-    def server_roles_disabled(self, *roles):
+    def disable_server_roles(self, *roles):
         """ Disable Server roles """
         self._change_server_roles_state(False, *roles)
 

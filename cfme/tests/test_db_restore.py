@@ -80,7 +80,7 @@ def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provi
     with appl1.ipapp:
         # Manage infra,cloud providers and set some roles before taking a DB backup
         server_info = appliance.server.settings
-        server_info.server_roles_enabled('automate')
+        server_info.enable_server_roles('automate')
         roles = server_info.server_roles_db
         virtualcenter_provider_crud.setup()
         wait_for_a_provider()

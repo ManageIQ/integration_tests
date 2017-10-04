@@ -70,10 +70,10 @@ def configure_websocket(appliance):
     roles = server_settings.server_roles_db
     if 'websocket' in roles and not roles['websocket']:
         logger.info('Enabling the websocket role to allow console connections')
-        server_settings.server_roles_enabled('websocket')
+        server_settings.enable_server_roles('websocket')
         yield
     logger.info('Disabling the websocket role to avoid intrusive popups')
-    server_settings.server_roles_disabled('websocket')
+    server_settings.disable_server_roles('websocket')
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8', reason='Only valid for >= 5.8')

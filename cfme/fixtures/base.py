@@ -25,7 +25,7 @@ def ensure_websocket_role_disabled(appliance):
     roles = server_settings.server_roles_db
     if 'websocket' in roles and roles['websocket']:
         logger.info('Disabling the websocket role to ensure we get no intrusive popups')
-        server_settings.server_roles_disabled('websocket')
+        server_settings.disable_server_roles('websocket')
 
 
 @pytest.fixture(scope="session", autouse=True)

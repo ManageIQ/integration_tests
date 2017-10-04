@@ -78,7 +78,7 @@ def configure_db_replication(db_address, appliance):
     view = current_appliance.server.browser.create_view(ServerView)
     view.flash.assert_message("Configuration settings saved for CFME Server")  # may be partial
     navigate_to(current_appliance.server, 'Server')
-    appliance.server.settings.server_roles_enabled('database_synchronization')
+    appliance.server.settings.enable_server_roles('database_synchronization')
     navigate_to(current_appliance.server.zone.region, 'Replication')
     rep_status, _ = wait_for(conf.get_replication_status, func_kwargs={'navigate': False},
                              fail_condition=False, num_sec=360, delay=10,
@@ -183,12 +183,12 @@ def test_appliance_replicate_sync_role_change(request, virtualcenter_provider, a
         server_settings = appliance.server.settings
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
-        server_settings.server_roles_disabled('database_synchronization')
+        server_settings.disable_server_roles('database_synchronization')
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=True,
                  num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
                  message="get_replication_status")
-        server_settings.server_roles_enabled('database_synchronization')
+        server_settings.enable_server_roles('database_synchronization')
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=False,
                  num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
@@ -224,12 +224,12 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, virtualcente
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         virtualcenter_provider.create()
-        server_settings.server_roles_disabled('database_synchronization')
+        server_settings.disable_server_roles('database_synchronization')
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=True,
                  num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,
                  message="get_replication_status")
-        server_settings.server_roles_enabled('database_synchronization')
+        server_settings.enable_server_roles('database_synchronization')
         navigate_to(appliance.server.zone.region, 'Replication')
         wait_for(conf.get_replication_status, func_kwargs={'navigate': False}, fail_condition=False,
                  num_sec=360, delay=10, fail_func=appl1.server.browser.refresh,

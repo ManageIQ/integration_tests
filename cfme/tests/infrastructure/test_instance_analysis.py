@@ -139,7 +139,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
         set_host_credentials(request, provider, vm_analysis_data)
 
     # Make sure all roles are set
-    appliance.server.settings.server_roles_enabled('automate', 'smartproxy', 'smartstate')
+    appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
 
 
 def set_host_credentials(request, provider, vm_analysis_data):

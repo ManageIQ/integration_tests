@@ -125,7 +125,7 @@ def set_performance_capture_threshold(appliance):
 def setup_candu(appliance):
     candu = appliance.get(CANDUCollection)
     candu.enable_all()
-    appliance.server.settings.server_roles_enabled(
+    appliance.server.settings.enable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     yield
     candu.disable_all()

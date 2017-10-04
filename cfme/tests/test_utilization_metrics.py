@@ -43,9 +43,9 @@ def enable_candu(appliance):
     server_settings = appliance.server.settings
     original_roles = server_settings.server_roles_db
     try:
-        server_settings.server_roles_enabled(
+        server_settings.enable_server_roles(
             'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
-        server_settings.server_roles_disabled('automate', 'smartstate')
+        server_settings.disable_server_roles('automate', 'smartstate')
         candu.enable_all()
         yield
     finally:
