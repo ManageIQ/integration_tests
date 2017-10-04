@@ -6,7 +6,6 @@ results of the relationships
 import pytest
 
 import cfme.fixtures.pytest_selenium as sel
-from selenium.common.exceptions import NoSuchElementException
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import InfoBlock, Table
 from cfme.utils import testgen
@@ -24,7 +23,7 @@ def test_assigned_roles(provider):
     navigate_to(provider, 'Details')
     try:
         res = provider.get_detail('Relationships', 'Deployment Roles')
-    except NoSuchElementException:
+    except NameError:
         res = provider.get_detail('Relationships', 'Clusters / Deployment Roles')
     assert int(res) > 0
 
