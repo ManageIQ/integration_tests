@@ -88,8 +88,8 @@ def service_body(**kwargs):
 
 
 @pytest.fixture(scope="function")
-def dialog(appliance):
-    return _dialog(appliance)
+def dialog(request, appliance):
+    return _dialog(request, appliance)
 
 
 @pytest.fixture(scope="function")
