@@ -148,6 +148,7 @@ MARKER_LEN = 80
 _default_conf = {
     'level': 'INFO',
     'errors_to_console': False,
+    'to_console': False,
 }
 
 # let logging know we made a TRACE level
