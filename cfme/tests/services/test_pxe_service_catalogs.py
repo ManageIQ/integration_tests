@@ -4,7 +4,7 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services.requests import RequestCollection
@@ -113,7 +113,7 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)

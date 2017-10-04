@@ -3,7 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
 from cfme.services.requests import RequestCollection
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog_item import CatalogItem
 
@@ -74,7 +74,7 @@ def test_order_tower_catalog_item(appliance, catalog_item, request):
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}
@@ -92,7 +92,7 @@ def test_retire_ansible_service(appliance, catalog_item, request):
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     cells = {'Description': catalog_item.name}

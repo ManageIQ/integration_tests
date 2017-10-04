@@ -1,14 +1,35 @@
-from widgetastic.widget import Text
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.widget import Text, View
+from widgetastic_manageiq import Accordion, ManageIQTree
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 from widgetastic.exceptions import NoSuchElementException
-from navmazing import NavigateToAttribute, NavigateToSibling
-from cfme.utils.update import Updateable
-from cfme.utils.pretty import Pretty
-from cfme.utils.appliance import Navigatable
-from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.base import Server
 
-from . import ServicesCatalogView
+from cfme.base import Server
+from cfme.base.login import BaseLoggedInPage
+from cfme.services.service_catalogs import ServiceCatalogs
+from cfme.services.requests import RequestsView
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to, ViaUI
+
+
+class ServicesCatalogView(BaseLoggedInPage):
+    @property
+    def in_service_catalogs(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Services', 'Catalogs'])
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_service_catalogs and
+            self.configuration.is_displayed and
+            not self.catalogs.is_dimmed)
+
+    @View.nested
+    class service_catalogs(Accordion):  # noqa
+        ACCORDION_NAME = "Service Catalogs"
+
+        tree = ManageIQTree()
 
 
 class OrderForm(ServicesCatalogView):
@@ -88,28 +109,18 @@ class OrderServiceCatalogView(OrderForm):
         )
 
 
-class ServiceCatalogs(Updateable, Pretty, Navigatable):
-
-    def __init__(self, catalog=None, name=None, stack_data=None,
-                 dialog_values=None, ansible_dialog_values=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.catalog = catalog
-        self.name = name
-        self.stack_data = stack_data
-        self.dialog_values = dialog_values
-        self.ansible_dialog_values = ansible_dialog_values
-
-    def order(self):
-        view = navigate_to(self, 'Order')
-        if self.stack_data:
-            view.fill(self.stack_data)
-        if self.dialog_values:
-            view.fill(self.dialog_values)
-        if self.ansible_dialog_values:
-            view.fill(self.ansible_dialog_values)
-        view.submit_button.click()
-        # Request page is displayed after this hence not asserting for view
-        view.flash.assert_success_message("Order Request was Submitted")
+@ServiceCatalogs.order.external_implementation_for(ViaUI)
+def order(self):
+    view = navigate_to(self, 'Order')
+    if self.stack_data:
+        view.fill(self.stack_data)
+    if self.dialog_values:
+        view.fill(self.dialog_values)
+    if self.ansible_dialog_values:
+        view.fill(self.ansible_dialog_values)
+    view.submit_button.click()
+    view = self.create_view(RequestsView)
+    view.flash.assert_success_message("Order Request was Submitted")
 
 
 @navigator.register(Server)

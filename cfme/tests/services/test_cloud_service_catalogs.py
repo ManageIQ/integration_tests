@@ -5,7 +5,7 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils import testgen
@@ -66,7 +66,7 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
                                provider=provider,
                                prov_data=provisioning_data)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     request_description = item_name

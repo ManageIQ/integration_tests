@@ -6,7 +6,7 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils.log import logger
@@ -43,7 +43,7 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
     register_event(target_type='Service', target_name=catalog_item.name,
                    event_type='service_provisioned')
 
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name
@@ -96,7 +96,7 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
                    display_in=True, catalog=catalog_item.catalog,
                    dialog=catalog_item.dialog, catalog_items=[catalog_item.name])
     catalog_bundle.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_bundle.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_bundle.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(bundle_name))
     request_description = bundle_name
@@ -144,7 +144,7 @@ def test_request_with_orphaned_template(appliance, provider, setup_provider, cat
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name

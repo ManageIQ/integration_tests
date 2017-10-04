@@ -6,7 +6,7 @@ from cfme.common.provider import cleanup_vm
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.requests import RequestCollection
 from cfme.utils.log import logger
 
@@ -57,7 +57,7 @@ def order_catalog_item_in_ops_ui(appliance, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm("{}_0001".format(vm_name), provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.catalog, catalog_item.name)
+    service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name

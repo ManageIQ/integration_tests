@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.services.catalogs import service_catalogs  # NOQA
+from cfme.services.service_catalogs import ServiceCatalogs  # NOQA
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.web_ui import AngularSelect, fill
@@ -14,7 +14,7 @@ from cfme.utils.version import current_version
 @pytest.mark.uncollectif(lambda: current_version() < "5.5.0.7")
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1274665])
-def test_broken_angular_select(request):
+def test_broken_angular_select(appliance, request):
     """Test that checks the fancy selects do not break.
 
     Prerequisities:
@@ -40,7 +40,7 @@ def test_broken_angular_select(request):
         dialog="azure-single-vm-from-user-image")
     item.create()
     request.addfinalizer(item.delete)
-    sc = service_catalogs.ServiceCatalogs(item.catalog, item.name)
+    sc = ServiceCatalogs(appliance, item.catalog, item.name)
     navigate_to(sc, 'Order')
     # The check itself
     fill(the_select, "Linux")
