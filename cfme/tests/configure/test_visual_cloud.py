@@ -3,7 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure.settings import visual
-from cfme.cloud.availability_zone import AvailabilityZone, AvailabilityZoneView
+from cfme.cloud.availability_zone import AvailabilityZone, AvailabilityZoneAllView
 from cfme.cloud.provider import CloudProvider, CloudProvidersView
 from cfme.cloud.flavor import Flavor, FlavorAllView
 from cfme.cloud.instance import Instance
@@ -34,7 +34,7 @@ landing_pages = {
     'Clouds / Key Pairs': KeyPairAllView,
     'Clouds / Tenants': TenantAllView,
     'Clouds / Flavors': FlavorAllView,
-    'Clouds / Availability Zones': AvailabilityZoneView,
+    'Clouds / Availability Zones': AvailabilityZoneAllView,
     'Clouds / Stacks': StackAllView,
 }
 
