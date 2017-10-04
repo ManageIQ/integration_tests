@@ -89,3 +89,13 @@ def test_soft_assert_helpers(soft_assert):
 
     # the caught_asserts identifier is now empty after calling clear_asserts
     assert not caught_asserts
+
+
+@pytest.fixture(scope="function")
+def some_fixture(soft_assert):
+    soft_assert(False, "bla bla bla")
+
+
+@pytest.mark.xfail(raises=SoftAssertionError)
+def test_soft_assert_fail_in_fixture(some_fixture):
+    pass
