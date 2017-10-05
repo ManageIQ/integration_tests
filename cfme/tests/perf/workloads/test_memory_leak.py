@@ -1,3 +1,6 @@
+import time
+import pytest
+
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.grafana import get_scenario_dashboard_urls
@@ -5,8 +8,7 @@ from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.smem_memory_monitor import add_workload_quantifiers, SmemMemoryMonitor
 from cfme.utils.workloads import get_memory_leak_scenarios
-import time
-import pytest
+
 
 roles_memory_leak = ['automate', 'database_operations', 'ems_inventory', 'ems_metrics_collector',
     'ems_metrics_coordinator', 'ems_metrics_processor', 'ems_operations', 'event', 'notifier',
@@ -79,8 +81,9 @@ def test_workload_memory_leak(request, scenario, appliance, provider):
     request.addfinalizer(lambda: cleanup_workload(scenario, from_ts, quantifiers, scenario_data))
 
     monitor_thread.start()
-    appliance.update_server_roles({role: True for role in roles_memory_leak})
+
     appliance.wait_for_miq_server_workers_started(poll_interval=2)
+    appliance.update_server_roles({role: True for role in roles_memory_leak})
     prepare_workers(appliance)
     provider.create()
 
