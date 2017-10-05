@@ -149,6 +149,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, Widgetastic
             ipmi_credentials_changed = view.endpoints.ipmi.fill(ipmi_credentials.view_value_mapping)
             if validate_credentials:
                 view.endpoints.ipmi.validate_button.click()
+        view.flash.assert_no_error()
         changed = any([changed, credentials_changed, ipmi_credentials_changed])
         if changed:
             view.save_button.click()
