@@ -148,6 +148,7 @@ MARKER_LEN = 80
 _default_conf = {
     'level': 'INFO',
     'errors_to_console': False,
+    'to_console': False,
 }
 
 # let logging know we made a TRACE level
@@ -339,10 +340,10 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
     return handler
 
 
-def error_console_handler():
+def console_handler(level):
     formatter = logging.Formatter('[%(levelname)s] %(message)s (%(pathname)s:%(lineno)s)')
     handler = logging.StreamHandler()
-    handler.setLevel(logging.ERROR)
+    handler.setLevel(level)
     handler.setFormatter(formatter)
     return handler
 
@@ -363,7 +364,9 @@ def setup_logger(logger):
     logger.addHandler(make_file_handler(logger.name + '.log', level=conf['level']))
 
     if conf['errors_to_console']:
-        logger.addHandler(error_console_handler())
+        logger.addHandler(console_handler(logging.ERROR))
+    if conf['to_console']:
+        logger.addHandler(console_handler(conf['to_console']))
 
     logger.addFilter(_RelpathFilter())
     return logger
