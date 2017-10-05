@@ -7,7 +7,6 @@ from wrapanapi.openstack_infra import OpenstackInfraSystem
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import EventsEndpoint, SSHEndpoint, DefaultEndpoint, DefaultEndpointForm
 from cfme.common.provider_views import BeforeFillMixin, ProviderNodesView
-from cfme.exceptions import DestinationNotFound
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 
 
@@ -58,6 +57,7 @@ class OpenstackInfraProvider(InfraProvider):
     mgmt_class = OpenstackInfraSystem
     db_types = ["Openstack::InfraManager"]
     endpoints_form = OpenStackInfraEndpointForm
+    hosts_menu_item = "Nodes"
     bad_credentials_error_msg = (
         'Credential validation was not successful: ',
         'Login failed due to a bad username or password.'
@@ -161,19 +161,6 @@ class OpenstackInfraProvider(InfraProvider):
         node_uuid = str(nodes_dict[name])
         for db_node in query.all():
             return db_node.hosts.name == str(node_uuid.uuid)
-
-
-@navigator.register(OpenstackInfraProvider, 'ProviderNodes')
-class ProviderNodes(CFMENavigateStep):
-    VIEW = ProviderNodesView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        view = self.prerequisite_view
-        try:
-            view.contents.relationships.click_at('Nodes')
-        except NameError:
-            raise DestinationNotFound("Nodes aren't present on details page of this provider")
 
 
 class ProviderRegisterNodesView(View):
