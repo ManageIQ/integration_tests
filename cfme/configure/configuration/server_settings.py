@@ -2,7 +2,7 @@
 from copy import copy
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch
-from widgetastic.widget import Text, View
+from widgetastic.widget import Text, Checkbox, View
 
 from cfme.base.ui import ServerView
 from cfme.exceptions import ConsoleNotSupported, ConsoleTypeNotSupported
@@ -451,13 +451,278 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         view.flash.assert_message(flash_message)
 
 
-@navigator.register(ServerInformation)
-class Details(CFMENavigateStep):
+@navigator.register(ServerInformation, 'Details')
+class DetailsServer(CFMENavigateStep):
     VIEW = ServerInformationView
     prerequisite = NavigateToAttribute('appliance.server', 'Details')
 
     def step(self):
         self.prerequisite_view.server.select()
+
+
+# ============================= AUTHENTICATION TAB ===================================
+
+
+class ServerAuthenticationView(ServerView):
+    """ Server Authentication View."""
+    title = Text("//div[@id='settings_authentication']/h3[1]")
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    hours_timeout = BootstrapSelect(id='session_timeout_hours')
+    minutes_timeout = BootstrapSelect(id='session_timeout_mins')
+    authentication_mode = BootstrapSelect(id='authentication_mode')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.authentication_mode.is_displayed and
+            self.title.text == 'Authentication'
+        )
+
+
+class DatabaseAuthenticationView(ServerAuthenticationView):
+    """ Database Authentication View """
+    @property
+    def is_displayed(self):
+        return (
+            self.authentication_mode.is_displayed and
+            self.authentication_mode.selected_option == 'Database'
+        )
+# TODO create ConditionalView, since there is dependence on authentication_mode widget selection
+
+
+class LdapAuthenticationView(ServerAuthenticationView):
+    """ Ldap Authentication View """
+
+    ldap_host_1 = Input(name='authentication_ldaphost_1')
+    ldap_host_2 = Input(name='authentication_ldaphost_2')
+    ldap_host_3 = Input(name='authentication_ldaphost_3')
+    port = Input(name='authentication_ldapport')
+    user_type = BootstrapSelect(id='authentication_user_type')
+    domain_prefix = Input(name='authentication_domain_prefix')
+    user_suffix = Input(name='authentication_user_suffix')
+
+    get_roles = Checkbox(name='ldap_role')
+    get_groups = Checkbox(name='get_direct_groups')
+    follow_referrals = Checkbox(name='follow_referrals')
+    base_dn = Input(name='authentication_basedn')
+    bind_dn = Input(name='authentication_bind_dn')
+    bind_password = Input(name='authentication_bind_pwd')
+    validate = Button('Validate')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.authentication_mode.is_displayed and
+            self.authentication_mode.selected_option == 'LDAP'
+        )
+
+
+class LdapsAuthenticationView(LdapAuthenticationView):
+    """ Ldaps Authentication View """
+
+    @property
+    def is_displayed(self):
+        return (
+            self.authentication_mode.is_displayed and
+            self.authentication_mode.selected_option == 'LDAPS'
+        )
+
+
+class AmazonAuthenticationView(ServerAuthenticationView):
+    """ Amazon Authentication View """
+
+    access_key = Input(name='authentication_amazon_key')
+    secret_key = Input(name='authentication_amazon_secret')
+
+    get_groups = Checkbox(name='amazon_role')
+    validate = Button('Validate')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.authentication_mode.is_displayed and
+            self.authentication_mode.selected_option == 'Amazon'
+        )
+
+
+class ExternalAuthenticationView(ServerAuthenticationView):
+    """ External Authentication View """
+
+    enable_sso = Checkbox(name='sso_enabled')
+    enable_saml = Checkbox(name='saml_enabled')
+
+    get_groups = Checkbox(name='httpd_role')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.authentication_mode.is_displayed and
+            self.authentication_mode.selected_option == 'External (httpd)'
+        )
+
+
+class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
+    """
+        Represents Authentication Setting for CFME
+
+        Args:
+            auth_mode: authorization mode, default value 'Database'
+    """
+
+    pretty_attrs = ['auth_mode']
+
+    user_type_dict = {
+        'userprincipalname': 'User Principal Name',
+        'dn-uid': 'Distinguished Name (UID=<user>)'
+    }
+
+    def __init__(self, appliance, auth_mode=None):
+        self.auth_mode = auth_mode.capitalize() if auth_mode else 'Database'
+        self.appliance = appliance
+
+    def set_session_timeout(self, hours=None, minutes=None):
+        """
+            Sets the session timeout of the appliance.
+            Args:
+                hours(str): timeout hours value
+                minutes(str): timeout minutes value
+            ex. auth_settings.set_session_timeout('0', '30')
+        """
+        view = navigate_to(self, 'Details')
+        updated = view.fill({
+            "hours_timeout": hours,
+            "minutes_timeout": minutes
+        })
+        if updated:
+            view.save_button.click()
+            flash_message = (
+                'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
+                    self.appliance.product_name,
+                    self.appliance.server_name(),
+                    self.appliance.server_id(),
+                    self.appliance.server.zone.name))
+            view.flash.assert_message(flash_message)
+
+    def _update_form(self, updates, reset=False):
+        """
+            Fill auth form view
+            Args:
+                updates: dict with field: value type
+                reset: Set True, to reset all changes for the page. Default value: False
+            ex. auth_settings.update_form({"hours_timeout": hours, "mode": "Amazon"}, reset=True)
+        """
+        view = navigate_to(self, self.auth_mode)
+        view.fill(updates)
+        try:
+            view.validate.click()
+            view.flash.assert_message(
+                '{} Settings validation was successful'.format(
+                    view.authentication_mode.selected_option))
+        except AttributeError:
+            logger.info("View doesn't have validate button")
+        if reset:
+            view.reset_button.click()
+            view.flash.assert_message('All changes have been reset')
+        else:
+            view.save_button.click()
+            flash_message = (
+                'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
+                    self.appliance.product_name,
+                    self.appliance.server_name(),
+                    self.appliance.server_id(),
+                    self.appliance.server.zone.name))
+            view.flash.assert_message(flash_message)
+
+    @property
+    def auth_settings(self):
+        """ Authentication view fields values """
+        view = navigate_to(self, self.auth_mode)
+        return view.read()
+
+    def set_auth_mode(self, reset=False, **kwargs):
+        """ Set up authentication mode
+
+        Args:
+            reset: Set True, to reset all changes for the page. Default value: False
+
+        kwargs: A dict of keyword arguments used to initialize auth mode
+                if you want not to use yamls settings,
+                mode='your_mode_type_here' key/value should be a mandatory in your kwargs
+            ex. auth_settings.set_auth_mode(
+            reset= True, mode='Amazon', access_key=key, secret_key=secret_key)
+        """
+        form_to_fill = {}
+        if kwargs:
+            self.auth_mode = kwargs['mode'].capitalize()
+            for key, value in kwargs.items():
+                if key not in ['mode', 'default_groups']:
+                    if key == 'hosts':
+                        assert len(value) <= 3, "You can specify only 3 LDAP hosts"
+                        for enum, host in enumerate(value):
+                            form_to_fill["ldap_host_{}".format(enum + 1)] = host
+                    elif key == 'user_type':
+                        form_to_fill[key] = self.user_type_dict[value]
+                    else:
+                        form_to_fill[key] = value
+        else:
+            self.auth_mode = 'Database'
+        self._update_form(form_to_fill, reset)
+
+
+@navigator.register(AuthenticationSetting, 'Details')
+class DetailsAuth(CFMENavigateStep):
+    VIEW = ServerAuthenticationView
+    prerequisite = NavigateToAttribute('appliance.server', 'Details')
+
+    def step(self):
+        self.prerequisite_view.authentication.select()
+
+
+@navigator.register(AuthenticationSetting)
+class Database(CFMENavigateStep):
+    VIEW = DatabaseAuthenticationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.view.authentication_mode.fill('Database')
+
+
+@navigator.register(AuthenticationSetting, 'Ldap')
+class Ldap(CFMENavigateStep):
+    VIEW = LdapAuthenticationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.authentication_mode.fill('LDAP')
+
+
+@navigator.register(AuthenticationSetting)
+class Ldaps(CFMENavigateStep):
+    VIEW = LdapsAuthenticationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.authentication_mode.fill('LDAPS')
+
+
+@navigator.register(AuthenticationSetting)
+class Amazon(CFMENavigateStep):
+    VIEW = AmazonAuthenticationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.authentication_mode.fill('Amazon')
+
+
+@navigator.register(AuthenticationSetting)
+class External(CFMENavigateStep):
+    VIEW = ExternalAuthenticationView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.authentication_mode.fill('External (httpd)')
 
 
 @navigator.register(ServerInformation)

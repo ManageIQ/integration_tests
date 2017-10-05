@@ -254,14 +254,8 @@ def resource_usage(vm_ownership, appliance, provider):
     # and hosts is on.This would mess up our Chargeback calculations, so we are disabling C&U
     # collection after data has been fetched for the last hour.
 
-    original_roles = get_server_roles()
-    new_roles = original_roles.copy()
-    new_roles.update({
-        'ems_metrics_coordinator': False,
-        'ems_metrics_collector': False})
-
-    set_server_roles(**new_roles)
-
+    appliance.server.settings.disable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector')
     rc, out = appliance.ssh_client.run_rails_command(
         "\"vm = Vm.where(:ems_id => {}).where(:name => {})[0];\
         vm.perf_rollup_range(1.hour.ago.utc, Time.now.utc,'realtime')\"".

@@ -3,22 +3,22 @@ import pytest
 
 import time
 
-from cfme.configure.configuration import AuthSetting
 from cfme.utils.browser import ensure_browser_open, quit
 from cfme.utils.wait import wait_for
 
-
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-def test_session_timeout(request):
+def test_session_timeout(request, appliance):
     """Sets the timeout to shortest possible time and waits if it really times out."""
+
+    auth_settings = appliance.server.authentication
     @request.addfinalizer  # Wow, why we did not figure this out before?!
     def _finalize():
         quit()
         ensure_browser_open()
-        AuthSetting.set_session_timeout(hours="24", minutes="0")
+        auth_settings.set_session_timeout(hours="24", minutes="0")
 
-    AuthSetting.set_session_timeout(hours="0", minutes="5")
+    auth_settings.set_session_timeout(hours="0", minutes="5")
     # Wait 10 minutes
     time.sleep(10 * 60)
     # Try getting timeout
