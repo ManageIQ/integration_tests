@@ -1,16 +1,15 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_manageiq import SSUIPrimarycard, SSUIAggregatecard, SSUIlist
+from widgetastic_manageiq import SSUIPrimarycard, SSUIAggregatecard, SSUIlist, SSUIPaginationPane
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
+from cfme.services.dashboard import Dashboard
 from cfme.utils.appliance.implementations.ssui import (
     navigator,
     SSUINavigateStep,
     navigate_to,
     ViaSSUI
 )
-
-from . import Dashboard
 
 
 class DashboardView(SSUIBaseLoggedInPage):
@@ -36,6 +35,7 @@ class MyServiceForm(SSUIBaseLoggedInPage):
 
 class MyServicesView(MyServiceForm):
     title = Text(locator='//li[@class="active"]')
+    paginator = SSUIPaginationPane()
 
     def in_myservices(self):
         return (
@@ -47,28 +47,71 @@ class MyServicesView(MyServiceForm):
         return self.in_myservices and self.title.text == "My Services"
 
 
-@Dashboard.total_service.external_implementation_for(ViaSSUI)
-def total_service(self):
-    """Returns the count of total services(Integer) displayed on dashboard"""
+@Dashboard.num_of_rows.external_implementation_for(ViaSSUI)
+def num_of_rows(self):
+    """Returns the number of rows/services displayed"""
+
+    view = self.create_view(MyServicesView)
+    view.paginator.set_items_per_page("100 items")
+    rows = view.paginator.items_amount
+    return rows
+
+
+@Dashboard.total_services.external_implementation_for(ViaSSUI)
+def total_services(self):
+    """Returns the total services(Integer) displayed on dashboard"""
 
     view = navigate_to(self, 'DashboardAll')
-    total_services = view.dashboard_card.get_count('Total Services')
+    total_service = view.dashboard_card.get_count('Total Services')
     view = navigate_to(self, 'TotalServices')
     view.flash.assert_no_error()
     view = self.create_view(MyServicesView)
     assert view.is_displayed
-    return total_services
+    return total_service
 
 
-@Dashboard.total_request.external_implementation_for(ViaSSUI)
-def total_request(self):
+@Dashboard.total_requests.external_implementation_for(ViaSSUI)
+def total_requests(self):
     """Total Request cannot be clicked so this method just
     returns the total number of requests displayed on dashboard.
     """
 
     view = navigate_to(self, 'DashboardAll')
-    total_requests = view.dashboard_card.get_count('Total Requests')
-    return total_requests
+    total_request = view.dashboard_card.get_count('Total Requests')
+    return total_request
+
+
+@Dashboard.pending_requests.external_implementation_for(ViaSSUI)
+def pending_requests(self):
+    """Pending Request cannot be clicked so this method just
+    returns the total number of requests displayed on dashboard.
+    """
+
+    view = navigate_to(self, 'DashboardAll')
+    pending_request = view.aggregate_card.get_count('Pending Requests')
+    return pending_request
+
+
+@Dashboard.approved_requests.external_implementation_for(ViaSSUI)
+def approved_requests(self):
+    """Approved Request cannot be clicked so this method just
+    returns the total number of requests displayed on dashboard.
+    """
+
+    view = navigate_to(self, 'DashboardAll')
+    approved_request = view.aggregate_card.get_count('Approved Requests')
+    return approved_request
+
+
+@Dashboard.denied_requests.external_implementation_for(ViaSSUI)
+def denied_requests(self):
+    """Denied Request cannot be clicked so this method just
+    returns the total number of requests displayed on dashboard.
+    """
+
+    view = navigate_to(self, 'DashboardAll')
+    denied_request = view.aggregate_card.get_count('Denied Requests')
+    return denied_request
 
 
 @Dashboard.retiring_soon.external_implementation_for(ViaSSUI)
@@ -85,29 +128,29 @@ def retiring_soon(self):
 
 
 @Dashboard.current_services.external_implementation_for(ViaSSUI)
-def current_service(self):
+def current_services(self):
     """Returns the count of active services displayed on dashboard"""
 
     view = navigate_to(self, 'DashboardAll')
-    current_services = view.aggregate_card.get_count('Current Services')
+    current_service = view.aggregate_card.get_count('Current Services')
     view = navigate_to(self, 'CurrentServices')
     view.flash.assert_no_error()
     view = self.create_view(MyServicesView)
     assert view.is_displayed
-    return current_services
+    return current_service
 
 
 @Dashboard.retired_services.external_implementation_for(ViaSSUI)
-def retired_service(self):
+def retired_services(self):
     """Returns the count of retired services displayed on dashboard"""
 
     view = navigate_to(self, 'DashboardAll')
-    retired_services = view.aggregate_card.get_count('Retired Services')
+    retired_service = view.aggregate_card.get_count('Retired Services')
     view = navigate_to(self, 'RetiredServices')
     view.flash.assert_no_error()
     view = self.create_view(MyServicesView)
     assert view.is_displayed
-    return retired_services
+    return retired_service
 
 
 @Dashboard.monthly_charges.external_implementation_for(ViaSSUI)

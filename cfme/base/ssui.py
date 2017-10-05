@@ -100,6 +100,15 @@ def login(self, user=None, **kwargs):
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
         user = User(credential=cred)
+
+    logged_in_view = self.appliance.ssui.create_view(SSUIBaseLoggedInPage)
+
+    if logged_in_view.logged_in_as_user(user):
+        return
+
+    if logged_in_view.logged_in:
+        logged_in_view.logout()
+
     login_view = navigate_to(self.appliance.server, 'LoginScreen')
     login_view.fill({
         'username': user.credential.principal,
