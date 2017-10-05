@@ -47,7 +47,7 @@ from markers.meta import plugin
 
 from cfme.utils.conf import cfme_data
 from cfme.configure.configuration.server_settings import ServerInformation
-
+from cfme.configure.configuration.server_settings import ServerInformation
 available_roles = set(ServerInformation.SERVER_ROLES)
 
 

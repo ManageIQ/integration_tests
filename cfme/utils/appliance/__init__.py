@@ -11,6 +11,8 @@ from tempfile import NamedTemporaryFile
 from time import sleep, time
 from urlparse import ParseResult, urlparse
 
+import attr
+
 import dateutil.parser
 from debtcollector import removals
 import fauxfactory
@@ -2576,11 +2578,24 @@ def load_appliances(appliance_list, global_kwargs):
         kwargs = {}
         kwargs.update(global_kwargs)
         kwargs.update(appliance_kwargs)
+
+        if kwargs.pop('dummy', False):
+            result.append(DummyAppliance(**kwargs))
+            continue
         if not kwargs.get('base_url'):
             raise ValueError('Appliance definition {!r} is missing base_url'.format(kwargs))
 
         result.append(IPAppliance(**{IPAppliance.CONFIG_MAPPING[k]: v for k, v in kwargs.items()}))
     return result
+
+
+@attr.s
+class DummyAppliance(object):
+    address = '0.0.0.0'
+    browser_steal = False
+    version = Version('5.8.0')
+    is_downstream = True
+    is_pod = False
 
 
 def load_appliances_from_config(config):

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from copy import copy
+
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Input, Button, BootstrapSelect, BootstrapSwitch
 from widgetastic.widget import Text, Checkbox, View

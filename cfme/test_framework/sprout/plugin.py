@@ -65,6 +65,8 @@ def pytest_configure(config):
         return
     if not config.getoption('--use-sprout'):
         return
+    if config.getoption('--dummy-appliance'):
+        return
 
     provision_request = SproutProvisioningRequest.from_config(config)
 
