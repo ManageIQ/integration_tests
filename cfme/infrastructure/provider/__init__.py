@@ -3,6 +3,7 @@
 from widgetastic.utils import Fillable
 
 from cached_property import cached_property
+from cfme.exceptions import DestinationNotFound
 from navmazing import NavigateToSibling, NavigateToObject
 from widgetastic_manageiq import BreadCrumb, BaseEntitiesView, View
 
@@ -15,7 +16,8 @@ from cfme.common.provider_views import (InfraProviderAddView,
                                         ProviderTimelinesView,
                                         InfraProvidersDiscoverView,
                                         ProvidersManagePoliciesView,
-                                        InfraProvidersView)
+                                        InfraProvidersView,
+                                        ProviderNodesView)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import ClusterCollection, ClusterView, ClusterToolbar
 from cfme.infrastructure.host import Host
@@ -70,6 +72,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     page_name = "infrastructure"
     templates_destination_name = "Templates"
     db_types = ["InfraManager"]
+    hosts_menu_item = "Hosts"
 
     def __init__(
             self, name=None, endpoints=None, key=None, zone=None, provider_data=None,
@@ -320,6 +323,20 @@ class DetailsFromProvider(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
         self.prerequisite_view.contents.relationships.click_at('Clusters')
+
+
+@navigator.register(InfraProvider, 'ProviderNodes')  # matching other infra class destinations
+class ProviderNodes(CFMENavigateStep):
+    VIEW = ProviderNodesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        try:
+            self.prerequisite_view.contents.relationships.click_at(self.obj.hosts_menu_item)
+        except NameError:
+            raise DestinationNotFound(
+                "{} aren't present on details page of this provider"
+                .format(self.obj.hosts_menu_item))
 
 
 def get_all_providers():

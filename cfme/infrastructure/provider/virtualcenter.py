@@ -1,10 +1,6 @@
-from navmazing import NavigateToSibling
 from wrapanapi.virtualcenter import VMWareSystem
 
 from cfme.common.provider import DefaultEndpoint, DefaultEndpointForm
-from cfme.common.provider_views import ProviderNodesView
-from cfme.exceptions import DestinationNotFound
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from . import InfraProvider
 from cfme.exceptions import ItemNotFound
 
@@ -105,15 +101,3 @@ class VMwareProvider(InfraProvider):
                 self._fullscreen_xpath)
         except:
             raise ItemNotFound("Element not found on screen, is current focus on console window?")
-
-
-@navigator.register(VMwareProvider, 'ProviderNodes')  # matching other infra class destinations
-class ProviderNodes(CFMENavigateStep):
-    VIEW = ProviderNodesView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        try:
-            self.prerequisite_view.contents.relationships.click_at('Hosts')
-        except NameError:
-            raise DestinationNotFound("Hosts aren't present on details page of this provider")
