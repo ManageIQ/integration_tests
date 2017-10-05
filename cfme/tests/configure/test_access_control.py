@@ -11,7 +11,7 @@ from cfme.base.credential import Credential
 from cfme.automate.explorer import AutomateExplorer  # NOQA
 from cfme.base import Server
 from cfme.control.explorer import ControlExplorer # NOQA
-from cfme.exceptions import OptionNotAvailable, RBACOperationBlocked
+from cfme.exceptions import RBACOperationBlocked
 from cfme.common.provider import base_types
 from cfme.infrastructure import virtual_machines as vms
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
