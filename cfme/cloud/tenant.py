@@ -6,7 +6,7 @@ from widgetastic.utils import VersionPick
 from widgetastic.widget import View
 from widgetastic_patternfly import BootstrapNav, Button, Dropdown, FlashMessages, Input
 from widgetastic_manageiq import (
-    Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane, Search,
+    Accordion, BootstrapSelect, BreadCrumb, ItemsToolBarViewSelector, PaginationPane,
     SummaryTable, Table, Text, BaseNonInteractiveEntitiesView, BaseEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
