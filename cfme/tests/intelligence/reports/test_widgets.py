@@ -85,3 +85,18 @@ def test_widgets_on_dashboard(request, dashboard, default_widgets, custom_widget
             Widget.by_name(custom_w.title)
         except NameError:
             soft_assert(False, "Widget {} not found on dashboard".format(custom_w.title))
+
+
+@test_requirements.dashboard
+@pytest.mark.tier(3)
+def test_widgets_reorder_in_reports(request, dashboard):
+    """Tests drag and drop widgets in Cloud Intel/Reports/Dashboards"""
+    view = navigate_to(dashboard, "Edit")
+    previous_names = view.widget_picker.all_dashboard_widgets
+    first_widget = previous_names[0]
+    second_widget = previous_names[1]
+    view.widget_picker.drag_and_drop(first_widget, second_widget)
+    new_names = view.widget_picker.all_dashboard_widgets
+    assert previous_names[2:] == new_names[2:]
+    assert previous_names[0] == new_names[1]
+    assert previous_names[1] == new_names[0]

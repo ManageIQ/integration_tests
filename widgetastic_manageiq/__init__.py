@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import atexit
 import json
+import math
 import os
 import re
 import six
@@ -2805,65 +2806,110 @@ def ProviderEntity():  # noqa
 
 
 class DashboardWidgetsPicker(View):
-    """ Represents widgets picker in Dashboard editing screen (Cloud Intel/Reports/Dashobards).
+    """Represents widgets picker in Dashboard editing screen (Cloud Intel/Reports/Dashboards).
 
+    Args:
+        id (str): id attribute of the root div
     """
-    ROOT = ParametrizedLocator(".//div[@id='{@id}']")
-    select = BootstrapSelect(Parameter("@select_id"))
 
-    def __init__(self, parent, id, select_id, names_locator=None, remove_locator=None, logger=None):
+    ROOT = ParametrizedLocator(".//div[@id={@id|quote}]")
+    select = BootstrapSelect("widget")
+
+    def __init__(self, parent, id, logger=None):
         View.__init__(self, parent=parent, logger=logger)
         self.id = id
-        self.select_id = select_id
-        self.names_locator = names_locator
-        self.remove_locator = remove_locator
 
-    def add_widget(self, widget):
+    @View.nested
+    class dashboard_widgets(ParametrizedView):  # noqa
+        PARAMETERS = ("title", )
+        ALL_WIDGETS = ".//div[starts-with(@id, 'w_')]"
+        DIV = ParametrizedLocator(".//div[contains(@title, {title|quote})]")
+        remove_link = Text(ParametrizedLocator(".//div[contains(@title, {title|quote})]//a/i"))
+
+        def remove(self):
+            self.remove_link.click()
+
+        @property
+        def div(self):
+            return self.browser.element(self.DIV)
+
+        @classmethod
+        def all(cls, browser):
+            return [
+                (e.get_attribute("title").split('"')[1], ) for
+                e in browser.elements(cls.ALL_WIDGETS)
+            ]
+
+    def add_dashboard_widget(self, widget):
         self.select.fill(widget)
 
-    def remove_widget(self, widget):
-        self.browser.click(self.remove_locator.format(quote(widget)))
+    def remove_dashboard_widget(self, widget):
+        self.dashboard_widgets(widget).remove()
 
     @property
-    def all_elements(self):
-        return self.browser.elements(self.names_locator)
-
-    @property
-    def all_widgets(self):
-        if self.all_elements:
-            return [widget.text for widget in self.all_elements]
+    def all_dashboard_widgets(self):
+        widgets = list(self.dashboard_widgets)
+        if widgets:
+            return [self.browser.text(widget.div) for widget in widgets]
         else:
             return []
 
     def _values_to_remove(self, values):
-        return list(set(self.all_widgets) - set(values))
+        return list(set(self.all_dashboard_widgets) - set(values))
 
     def _values_to_add(self, values):
-        return list(set(values) - set(self.all_widgets))
+        return list(set(values) - set(self.all_dashboard_widgets))
 
     def fill(self, values):
         if isinstance(values, six.string_types):
             values = [values]
-        if set(values) == set(self.all_widgets):
+        if set(values) == set(self.all_dashboard_widgets):
             return False
         else:
             values_to_remove = self._values_to_remove(values)
             values_to_add = self._values_to_add(values)
             for value in values_to_remove:
-                self.remove_widget(value)
+                self.remove_dashboard_widget(value)
             for value in values_to_add:
-                self.add_widget(value)
+                self.add_dashboard_widget(value)
             return True
 
+    def drag_and_drop(self, dragged_widget, dropped_widget):
+        dragged_widget_el = self.dashboard_widgets(dragged_widget).div
+        dragged_middle = self.browser.middle_of(dragged_widget_el)
+        dropped_middle = self.browser.middle_of(self.dashboard_widgets(dropped_widget).div)
+        drop_x = dropped_middle.x
+        # In order to perform a successful drag and drop we should drop a dragged widget a bit above
+        # or below of the dropped widget center. If the dragged widget is above of the dropped one
+        # we should add a small delta to "y" coordinate of the dropped widget middle, otherwise that
+        # delta should be deducted.
+        drop_y = dropped_middle.y + math.copysign(5, dropped_middle.y - dragged_middle.y)
+        self.browser.drag_and_drop_to(dragged_widget_el, to_x=drop_x, to_y=drop_y)
+        self.browser.plugin.ensure_page_safe()
+
     def read(self):
-        return self.all_widgets
+        return self.all_dashboard_widgets
 
 
-class MenuShortcutsPicker(DashboardWidgetsPicker):
-    """ Represents shortcut picker in Menu Widget editing screen
+class MenuShortcutsPicker(View):
+    """Represents shortcut picker in Menu Widget editing screen
     (Cloud Intel/Reports/Dashboard Widgets/Menus).
 
+    Args:
+        id (str): id attribute of the root div
+        select_id (str): id attribute for BootstrapSelect
+        names_locator (str): xpath for all elements with shortcuts names
     """
+
+    ROOT = ParametrizedLocator(".//div[@id={@id|quote}]")
+    select = BootstrapSelect(Parameter("@select_id"))
+
+    def __init__(self, parent, id, select_id, names_locator=None, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+        self.id = id
+        self.select_id = select_id
+        self.names_locator = names_locator
+
     @ParametrizedView.nested
     class shortcut(ParametrizedView):  # noqa
         PARAMETERS = ("number",)
@@ -2875,6 +2921,10 @@ class MenuShortcutsPicker(DashboardWidgetsPicker):
 
         def remove(self):
             self.remove_button.click()
+
+    @property
+    def all_elements(self):
+        return self.browser.elements(self.names_locator)
 
     def add_shortcut(self, shortcut, alias):
         # We need to get all options from the dropdown before picking

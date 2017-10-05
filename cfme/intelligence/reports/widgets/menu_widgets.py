@@ -18,8 +18,7 @@ class MenuWidgetFormCommon(BaseDashboardWidgetFormCommon):
     menu_shortcuts = MenuShortcutsPicker(
         "form_filter_div",
         select_id="add_shortcut",
-        names_locator=".//input[starts-with(@name, 'shortcut_desc_')]",
-        remove_locator=".//input[@value={}]/../a[@title='Remove this Shortcut']"
+        names_locator=".//input[starts-with(@name, 'shortcut_desc_')]"
     )
 
 
