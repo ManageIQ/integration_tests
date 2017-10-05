@@ -105,8 +105,9 @@ class ObjectStoreObjectCollection(BaseCollection):
     def all(self, provider):
         """returning all Object Store Objects"""
         view = navigate_to(self, 'All')
-        objects = [self.instantiate(key=item.name, provider=provider)
-                   for item in view.entities.get_all()]
+        view.toolbar.view_selector.select("Grid View")
+        objects = [self.instantiate(key=item, provider=provider)
+                   for item in view.entities.entity_names]
         return objects
 
     def delete(self, *objects):
@@ -115,7 +116,9 @@ class ObjectStoreObjectCollection(BaseCollection):
 
         for obj in objects:
             try:
-                view.entities.get_entity(obj.key).check()
+                row = view.entities.paginator.find_row_on_pages(
+                    view.entities.elements, Key=obj.key)
+                row[0].check()
             except NoSuchElementException:
                 raise ItemNotFound('Could not locate object {}'.format(obj.key))
 
@@ -146,6 +149,9 @@ class ObjectStoreObjectAll(CFMENavigateStep):
         self.prerequisite_view.navigation.select(
             'Storage', 'Object Storage', 'Object Store Objects')
 
+    def resetter(self):
+        self.view.toolbar.view_selector.select("List View")
+
 
 @navigator.register(ObjectStoreObject, 'Details')
 class ObjectStoreObjectDetails(CFMENavigateStep):
@@ -153,7 +159,6 @@ class ObjectStoreObjectDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute('collection', 'All')
 
     def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
             row = self.prerequisite_view.entities.paginator.find_row_on_pages(
                 self.prerequisite_view.entities.elements, Key=self.obj.key)
