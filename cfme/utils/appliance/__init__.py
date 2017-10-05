@@ -1430,7 +1430,6 @@ class IPAppliance(object):
                         Exception,
                         "Potential installation issue, libraries not detected\n{}".format(out))
 
-
     @logger_wrap("Uninstall VDDK: {}")
     def uninstall_vddk(self, log_callback=None):
         """Uninstall the vddk from an appliance"""
