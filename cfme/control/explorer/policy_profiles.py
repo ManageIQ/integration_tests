@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput
 from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -70,34 +70,38 @@ class PolicyProfilesAllView(ControlExplorerView):
         )
 
 
-class PolicyProfile(Updateable, Navigatable, Pretty):
+class PolicyProfileCollection(BaseCollection):
 
-    def __init__(self, description, policies=None, notes=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, collection, description, policies, notes=None):
+        return PolicyProfile(self, description, policies, notes=notes)
+
+    def create(self, description, policies, notes=None):
+        policy_profile = self.instantiate(self, description, policies, notes=notes)
+        view = navigate_to(self, "Add")
+        view.fill({
+            "description": policy_profile.description,
+            "notes": policy_profile.notes,
+            "policies": [policy.name_for_policy_profile for policy in policy_profile.policies]
+        })
+        view.add_button.click()
+        view = policy_profile.create_view(PolicyProfileDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Policy Profile "{}" was added'.format(
+            policy_profile.description))
+        return policy_profile
+
+
+class PolicyProfile(BaseEntity, Updateable, Pretty):
+
+    def __init__(self, collection, description, policies, notes=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.description = description
         self.notes = notes
         self.policies = policies
-
-    def create(self):
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": self.description,
-            "notes": self.notes,
-            "policies": self.prepared_policies
-        })
-        view.add_button.click()
-        view = self.create_view(PolicyProfileDetailsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy Profile "{}" was added'.format(self.description))
-
-    @property
-    def prepared_policies(self):
-        if self.policies is not None:
-            return ["{} {}: {}".format(
-                policy.PRETTY, policy.TYPE, policy.description) for policy in self.policies]
-        else:
-            return None
 
     def update(self, updates):
         """Update this Policy Profile in UI.
@@ -112,9 +116,7 @@ class PolicyProfile(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
-        view = self.create_view(PolicyProfileDetailsView)
+        view = self.create_view(PolicyProfileDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -139,8 +141,7 @@ class PolicyProfile(Updateable, Navigatable, Pretty):
         else:
             view = self.create_view(PolicyProfilesAllView)
             assert view.is_displayed
-            view.flash.assert_no_error()
-            view.flash.assert_message(
+            view.flash.assert_success_message(
                 'Policy Profile "{}": Delete successful'.format(self.description))
 
     @property
@@ -157,30 +158,40 @@ class PolicyProfile(Updateable, Navigatable, Pretty):
             .count() > 0
 
 
-@navigator.register(PolicyProfile, "Add")
-class PolicyProfileNew(CFMENavigateStep):
-    VIEW = NewPolicyProfileView
+@navigator.register(PolicyProfileCollection, "All")
+class PolicyProfileAll(CFMENavigateStep):
+    VIEW = PolicyProfilesAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.policy_profiles.tree.click_path("All Policy Profiles")
-        self.view.configuration.item_select("Add a New Policy Profile")
+        self.prerequisite_view.policy_profiles.tree.click_path("All Policy Profiles")
+
+
+@navigator.register(PolicyProfileCollection, "Add")
+class PolicyProfileNew(CFMENavigateStep):
+    VIEW = NewPolicyProfileView
+    prerequisite = NavigateToSibling("All")
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select("Add a New Policy Profile")
 
 
 @navigator.register(PolicyProfile, "Edit")
 class PolicyProfileEdit(CFMENavigateStep):
     VIEW = EditPolicyProfileView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.policy_profiles.tree.click_path("All Policy Profiles", self.obj.description)
-        self.view.configuration.item_select("Edit this Policy Profile")
+        self.prerequisite_view.configuration.item_select("Edit this Policy Profile")
 
 
 @navigator.register(PolicyProfile, "Details")
 class PolicyProfileDetails(CFMENavigateStep):
     VIEW = PolicyProfileDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
-        self.view.policy_profiles.tree.click_path("All Policy Profiles", self.obj.description)
+        self.prerequisite_view.policy_profiles.tree.click_path(
+            "All Policy Profiles",
+            self.obj.description
+        )

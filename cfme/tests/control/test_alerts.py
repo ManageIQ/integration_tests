@@ -68,46 +68,74 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
     )
 
 
-def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
-    """This function takes alerts and sets up CFME for testing it. If event and further args are
-    not specified, it won't create the actions and policy profiles.
+@pytest.fixture(scope="module")
+def policy_profile_collection(appliance):
+    return appliance.get(policy_profiles.PolicyProfileCollection)
 
-    Args:
-        request: py.test funcarg request
-        alerts: Alert objects
-        event: Event to hook on (VM Power On, ...)
-        vm_name: VM name to use for policy filtering
-        provider: funcarg provider
-    """
-    alert_profile = alert_profiles.VMInstanceAlertProfile(
-        "Alert profile for {}".format(vm_name),
-        alerts
-    )
-    alert_profile.create()
-    request.addfinalizer(alert_profile.delete)
-    alert_profile.assign_to("The Enterprise")
-    if event is not None:
-        action = actions.Action(
-            "Evaluate Alerts for {}".format(vm_name),
-            "Evaluate Alerts",
-            action_values={"alerts_to_evaluate": alerts}
+
+@pytest.fixture(scope="module")
+def policy_collection(appliance):
+    return appliance.get(policies.PolicyCollection)
+
+
+@pytest.fixture(scope="module")
+def action_collection(appliance):
+    return appliance.get(actions.ActionCollection)
+
+
+@pytest.fixture(scope="module")
+def alert_collection(appliance):
+    return appliance.get(alerts.AlertCollection)
+
+
+@pytest.fixture(scope="module")
+def alert_profile_collection(appliance):
+    return appliance.get(alert_profiles.AlertProfileCollection)
+
+
+@pytest.fixture
+def setup_for_alerts(alert_profile_collection, action_collection, policy_collection,
+        policy_profile_collection):
+    def _setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
+        """This function takes alerts and sets up CFME for testing it. If event and further args are
+        not specified, it won't create the actions and policy profiles.
+
+        Args:
+            request: py.test funcarg request
+            alerts: Alert objects
+            event: Event to hook on (VM Power On, ...)
+            vm_name: VM name to use for policy filtering
+            provider: funcarg provider
+        """
+        alert_profile = alert_profile_collection.create(
+            alerts.VMInstanceAlertProfile,
+            "Alert profile for {}".format(vm_name),
+            alerts
         )
-        action.create()
-        request.addfinalizer(action.delete)
-        policy = policies.VMControlPolicy(
-            "Evaluate Alerts policy for {}".format(vm_name),
-            scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
-        )
-        policy.create()
-        request.addfinalizer(policy.delete)
-        policy_profile = policy_profiles.PolicyProfile(
-            "Policy profile for {}".format(vm_name), [policy]
-        )
-        policy_profile.create()
-        request.addfinalizer(policy_profile.delete)
-        policy.assign_actions_to_event(event, [action])
-        provider.assign_policy_profiles(policy_profile.description)
-        request.addfinalizer(lambda: provider.unassign_policy_profiles(policy_profile.description))
+        request.addfinalizer(alert_profile.delete)
+        alert_profile.assign_to("The Enterprise")
+        if event is not None:
+            action = action_collection.create(
+                "Evaluate Alerts for {}".format(vm_name),
+                "Evaluate Alerts",
+                action_values={"alerts_to_evaluate": alerts}
+            )
+            request.addfinalizer(action.delete)
+            policy = policy_collection.create(
+                policies.VMControlPolicy,
+                "Evaluate Alerts policy for {}".format(vm_name),
+                scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
+            )
+            request.addfinalizer(policy.delete)
+            policy_profile = policy_profile_collection.create(
+                "Policy profile for {}".format(vm_name), policies=[policy]
+            )
+            request.addfinalizer(policy_profile.delete)
+            policy.assign_actions_to_event(event, [action])
+            provider.assign_policy_profiles(policy_profile.description)
+            request.addfinalizer(
+                lambda: provider.unassign_policy_profiles(policy_profile.description))
+    return _setup_for_alerts
 
 
 @pytest.yield_fixture(scope="module")
@@ -186,13 +214,13 @@ def setup_snmp(appliance):
 
 @pytest.mark.provider(gen_func=providers, filters=[pf1, pf2], scope="module")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider, vm, smtp_test,
-        register_event):
+        register_event, alert_collection, setup_for_alerts):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
     Metadata:
         test_flag: alerts, provision
     """
-    alert = alerts.Alert("VM Power On > 2 in last 15 min")
+    alert = alert_collection.create("VM Power On > 2 in last 15 min")
     with update(alert):
         alert.active = True
         alert.emails = fauxfactory.gen_email()
@@ -229,7 +257,8 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(request, provider
 
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES)
-def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu):
+def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu, setup_for_alerts,
+        alert_collection):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available.
 
@@ -237,7 +266,7 @@ def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu):
         test_flag: alerts, provision, metrics_collection
     """
     email = fauxfactory.gen_email()
-    alert = alerts.Alert(
+    alert = alert_collection.create(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -253,7 +282,6 @@ def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu):
         notification_frequency="5 Minutes",
         emails=email,
     )
-    alert.create()
     request.addfinalizer(alert.delete)
 
     setup_for_alerts(request, [alert])
@@ -263,14 +291,14 @@ def test_alert_rtp(request, vm, smtp_test, provider, setup_candu, wait_candu):
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES)
 def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, provider, ssh,
-        setup_candu, wait_candu):
+        setup_candu, wait_candu, setup_for_alerts, alert_collection):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
     a CPU spike in the machine to trigger the threshold. The alert is displayed in the timelines.
 
     Metadata:
         test_flag: alerts, provision, metrics_collection
     """
-    alert = alerts.Alert(
+    alert = alert_collection.create(
         "TL event by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -286,7 +314,6 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
         notification_frequency="1 Minute",
         timeline_event=True,
     )
-    alert.create()
     request.addfinalizer(alert.delete)
 
     setup_for_alerts(request, [alert], vm_name=vm.name)
@@ -308,7 +335,8 @@ def test_alert_timeline_cpu(request, vm, set_performance_capture_threshold, prov
 
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES)
-def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, wait_candu):
+def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, wait_candu,
+        alert_collection, setup_for_alerts):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
@@ -317,7 +345,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
         test_flag: alerts, provision, metrics_collection
     """
     match_string = fauxfactory.gen_alpha(length=8)
-    alert = alerts.Alert(
+    alert = alert_collection(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -338,7 +366,6 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
             "traps": [
                 ("1.2.3", "OctetString", "{}".format(match_string))]},
     )
-    alert.create()
     request.addfinalizer(alert.delete)
 
     setup_for_alerts(request, [alert])

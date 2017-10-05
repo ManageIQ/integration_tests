@@ -11,9 +11,9 @@ from cfme.cloud.provider import CloudProvider
 from cfme.configure import configuration
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.configure.tasks import is_vm_analysis_finished
-from cfme.control.explorer.policy_profiles import PolicyProfile
-from cfme.control.explorer.policies import VMControlPolicy
-from cfme.control.explorer.actions import Action
+from cfme.control.explorer.policy_profiles import PolicyProfileCollection
+from cfme.control.explorer.policies import PolicyCollection, VMControlPolicy
+from cfme.control.explorer.actions import ActionCollection
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -272,7 +272,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data,
 
 
 @pytest.fixture(scope="module")
-def policy_profile(request, instance):
+def policy_profile(request, appliance, instance):
     collected_files = [
         {"Name": "/etc/redhat-access-insights/machine-id", "Collect Contents?": True},
         {"Name": ssa_expect_file, "Collect Contents?": True}
@@ -289,30 +289,30 @@ def policy_profile(request, instance):
     analysis_profile.create()
     request.addfinalizer(analysis_profile.delete)
 
-    action = Action(
+    action = ActionCollection(appliance=appliance).create(
         'ssa_action_{}'.format(fauxfactory.gen_alpha()),
         "Assign Profile to Analysis Task",
         dict(analysis_profile=analysis_profile_name))
     if action.exists:
         action.delete()
-    action.create()
     request.addfinalizer(action.delete)
 
-    policy = VMControlPolicy('ssa_policy_{}'.format(fauxfactory.gen_alpha()))
+    policy = PolicyCollection(appliance=appliance).create(
+        VMControlPolicy,
+        'ssa_policy_{}'.format(fauxfactory.gen_alpha())
+    )
     if policy.exists:
         policy.delete()
-    policy.create()
     request.addfinalizer(policy.delete)
 
     policy.assign_events("VM Analysis Start")
     request.addfinalizer(policy.assign_events)
     policy.assign_actions_to_event("VM Analysis Start", action)
 
-    profile = PolicyProfile('ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()),
-                            policies=[policy])
+    profile = PolicyProfileCollection(appliance=appliance).create(
+        'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[policy])
     if profile.exists:
         profile.delete()
-    profile.create()
     request.addfinalizer(profile.delete)
 
     instance.assign_policy_profiles(profile.description)

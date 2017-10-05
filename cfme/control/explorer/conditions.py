@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from cfme.utils.pretty import Pretty
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 from widgetastic.widget import Text, TextInput, Widget
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
-from cfme.utils import version, deferred_verpick, ParamClassName
+from cfme.utils import ParamClassName
 
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
@@ -31,7 +31,8 @@ class Expression(Widget):
     def text_list(self):
         return self.browser.element(self).text.split("\n")
 
-    def read(self):
+    @property
+    def text(self):
         """
         In Condition details view Scope and Expression don't have any locator. So we
         have to scrape whole text in the parent div and split it by "\\n". After that in text_list
@@ -53,6 +54,9 @@ class Expression(Widget):
         """
         index = self.text_list.index(self.type)
         return self.text_list[index + 1]
+
+    def read(self):
+        return self.text
 
 
 class ConditionsAllView(ControlExplorerView):
@@ -130,33 +134,70 @@ class ConditionDetailsView(ControlExplorerView):
         )
 
 
-class BaseCondition(Updateable, Navigatable, Pretty):
+class ConditionPolicyDetailsView(ControlExplorerView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_control_explorer and
+            self.title.text == '{} Condition "{}"'.format(
+                self.context["object"].context_policy.PRETTY,
+                self.context["object"].description) and
+            self.policies.is_opened and
+            self.policies.tree.currently_selected == [
+                "All Policies",
+                "{} Policies".format(self.context["object"].context_policy.TYPE),
+                "{} {} Policies".format(self.context["object"].context_policy.TREE_NODE,
+                    self.context["object"].context_policy.TYPE),
+                self.context["object"].context_policy.description,
+                self.context["object"].description
+            ]
+        )
+
+
+class ConditionCollection(BaseCollection):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, condition_class, description, expression=None, scope=None, notes=None):
+        return condition_class(self, description, expression=expression, scope=scope, notes=notes)
+
+    def create(self, condition_class, description, expression=None, scope=None, notes=None):
+        condition = condition_class(self, description, expression=expression, scope=scope,
+            notes=notes)
+        view = navigate_to(condition, "Add")
+        view.fill({
+            "description": condition.description,
+            "expression": condition.expression,
+            "scope": condition.scope,
+            "notes": condition.notes
+        })
+        view.add_button.click()
+        view = condition.create_view(ConditionDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
+        return condition
+
+    def all(self):
+        raise NotImplementedError
+
+
+class BaseCondition(BaseEntity, Updateable, Pretty):
 
     TREE_NODE = None
     PRETTY = None
     FIELD_VALUE = None
     _param_name = ParamClassName('description')
 
-    def __init__(self, description, expression=None, scope=None, notes=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, collection, description, expression=None, scope=None, notes=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.description = description
         self.expression = expression
         self.scope = scope
         self.notes = notes
-
-    def create(self):
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": self.description,
-            "expression": self.expression,
-            "scope": self.scope,
-            "notes": self.notes
-        })
-        view.add_button.click()
-        view = self.create_view(ConditionDetailsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Condition "{}" was added'.format(self.description))
 
     def update(self, updates):
         """Update this Condition in UI.
@@ -168,10 +209,9 @@ class BaseCondition(Updateable, Navigatable, Pretty):
         view = navigate_to(self, "Edit")
         view.fill(updates)
         view.save_button.click()
-        view = self.create_view(ConditionDetailsView)
+        view = self.create_view(ConditionDetailsView, override=updates)
         assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message(
+        view.flash.assert_success_message(
             'Condition "{}" was saved'.format(updates.get("description", self.description)))
 
     def delete(self, cancel=False):
@@ -189,18 +229,18 @@ class BaseCondition(Updateable, Navigatable, Pretty):
         else:
             view = self.create_view(ConditionsAllView)
             assert view.is_displayed
-            view.flash.assert_no_error()
-            view.flash.assert_message('Condition "{}": Delete successful'.format(self.description))
+            view.flash.assert_success_message('Condition "{}": Delete successful'.format(
+                self.description))
 
     def read_expression(self):
         view = navigate_to(self, "Details")
         assert view.is_displayed
-        return view.expression.read()
+        return view.expression.text
 
     def read_scope(self):
         view = navigate_to(self, "Details")
         assert view.is_displayed
-        return view.scope.read()
+        return view.scope.text
 
     @property
     def exists(self):
@@ -215,23 +255,33 @@ class BaseCondition(Updateable, Navigatable, Pretty):
             .count() > 0
 
 
-@navigator.register(BaseCondition, "Add")
-class ConditionNew(CFMENavigateStep):
-    VIEW = NewConditionView
+@navigator.register(ConditionCollection, "All")
+class AllConditions(CFMENavigateStep):
+    VIEW = ConditionsAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.conditions.tree.click_path(
+        self.prerequisite_view.conditions.tree.click_path("All Conditions")
+
+
+@navigator.register(BaseCondition, "Add")
+class ConditionNew(CFMENavigateStep):
+    VIEW = NewConditionView
+    prerequisite = NavigateToAttribute("collection", "All")
+
+    def step(self):
+        self.prerequisite_view.conditions.tree.click_path(
             "All Conditions",
             "{} Conditions".format(self.obj.TREE_NODE)
         )
-        self.view.configuration.item_select("Add a New {} Condition".format(self.obj.PRETTY))
+        self.prerequisite_view.configuration.item_select(
+            "Add a New {} Condition".format(self.obj.PRETTY))
 
 
 @navigator.register(BaseCondition, "Edit")
 class ConditionEdit(CFMENavigateStep):
     VIEW = EditConditionView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
         self.view.conditions.tree.click_path(
@@ -239,18 +289,36 @@ class ConditionEdit(CFMENavigateStep):
             "{} Conditions".format(self.obj.TREE_NODE),
             self.obj.description
         )
-        self.view.configuration.item_select("Edit this Condition")
+        self.prerequisite_view.configuration.item_select("Edit this Condition")
 
 
 @navigator.register(BaseCondition, "Details")
 class ConditionDetails(CFMENavigateStep):
     VIEW = ConditionDetailsView
+    prerequisite = NavigateToAttribute("collection", "All")
+
+    def step(self):
+        self.prerequisite_view.conditions.tree.click_path(
+            "All Conditions",
+            "{} Conditions".format(self.obj.TREE_NODE),
+            self.obj.description
+        )
+
+
+@navigator.register(BaseCondition, "Details in policy")
+class PolicyConditionDetails(CFMENavigateStep):
+    VIEW = ConditionPolicyDetailsView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.conditions.tree.click_path(
-            "All Conditions",
-            "{} Conditions".format(self.obj.TREE_NODE),
+        self.prerequisite_view.policies.tree.click_path(
+            "All Policies",
+            "{} Policies".format(self.obj.context_policy.TYPE),
+            "{} {} Policies".format(
+                self.obj.context_policy.TREE_NODE,
+                self.obj.context_policy.TYPE
+            ),
+            self.obj.context_policy.description,
             self.obj.description
         )
 
@@ -293,21 +361,12 @@ class ContainerNodeCondition(BaseCondition):
 class ContainerImageCondition(BaseCondition):
 
     TREE_NODE = "Container Image"
-    PRETTY = deferred_verpick({
-        version.LOWEST: "Image",
-        '5.7': "Container Image",
-    })
-    FIELD_VALUE = deferred_verpick({
-        version.LOWEST: "Image",
-        '5.7': "Container Image",
-    })
+    PRETTY = "Container Image"
+    FIELD_VALUE = "Container Image"
 
 
 class ProviderCondition(BaseCondition):
 
-    TREE_NODE = deferred_verpick({
-        version.LOWEST: "Container Provider",
-        '5.7.2': "Provider",
-    })
+    TREE_NODE = "Provider"
     PRETTY = "Provider"
     FIELD_VALUE = "Provider"

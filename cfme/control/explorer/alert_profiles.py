@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput
 from widgetastic_manageiq import CheckableManageIQTree, MultiBoxSelect
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
 from cfme.utils import version, ParamClassName
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -98,30 +98,43 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
         )
 
 
-class BaseAlertProfile(Updateable, Navigatable, Pretty):
+class AlertProfileCollection(BaseCollection):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, alert_profile_class, description, alerts=None, notes=None):
+        return alert_profile_class(self, description, alerts=alerts, notes=notes)
+
+    def create(self, alert_profile_class, description, alerts=None, notes=None):
+        alert_profile = self.instantiate(alert_profile_class, description, alerts=alerts,
+            notes=notes)
+        view = navigate_to(alert_profile, "Add")
+        view.fill({
+            "description": alert_profile.description,
+            "notes": alert_profile.notes,
+            "alerts": [str(alert) for alert in alert_profile.alerts]
+        })
+        view.add_button.click()
+        view = alert_profile.create_view(AlertProfileDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message(
+            'Alert Profile "{}" was added'.format(alert_profile.description))
+        return alert_profile
+
+
+class BaseAlertProfile(BaseEntity, Updateable, Pretty):
 
     TYPE = None
     _param_name = ParamClassName('description')
     pretty_attrs = ["description", "alerts"]
 
-    def __init__(self, description, alerts=None, notes=None, appliance=None):
-            Navigatable.__init__(self, appliance=appliance)
-            self.description = description
-            self.notes = notes
-            self.alerts = alerts
-
-    def create(self):
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": self.description,
-            "notes": self.notes,
-            "alerts": [str(alert) for alert in self.alerts]
-        })
-        view.add_button.click()
-        view = self.create_view(AlertProfileDetailsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Alert Profile "{}" was added'.format(self.description))
+    def __init__(self, collection, description, alerts=None, notes=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
+        self.description = description
+        self.notes = notes
+        self.alerts = alerts
 
     def update(self, updates):
         """Update this Alert Profile in UI.
@@ -163,8 +176,7 @@ class BaseAlertProfile(Updateable, Navigatable, Pretty):
         else:
             view = self.create_view(AlertProfilesAllView)
             assert view.is_displayed
-            view.flash.assert_no_error()
-            view.flash.assert_message(
+            view.flash.assert_success_message(
                 'Alert Profile "{}": Delete successful'.format(self.description))
 
     @property
@@ -215,46 +227,52 @@ class BaseAlertProfile(Updateable, Navigatable, Pretty):
                 'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
 
 
-@navigator.register(BaseAlertProfile, "Add")
-class AlertProfileNew(CFMENavigateStep):
-    VIEW = NewAlertProfileView
+@navigator.register(AlertProfileCollection, "All")
+class AlertProfilesAll(CFMENavigateStep):
+    VIEW = AlertProfilesAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.alert_profiles.tree.click_path("All Alert Profiles",
+        self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles")
+
+
+@navigator.register(BaseAlertProfile, "Add")
+class AlertProfileNew(CFMENavigateStep):
+    VIEW = NewAlertProfileView
+    prerequisite = NavigateToAttribute("collection", "All")
+
+    def step(self):
+        self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
             "{} Alert Profiles".format(self.obj.TYPE))
-        self.view.configuration.item_select("Add a New {} Alert Profile".format(self.obj.TYPE))
+        self.prerequisite_view.configuration.item_select(
+            "Add a New {} Alert Profile".format(self.obj.TYPE))
 
 
 @navigator.register(BaseAlertProfile, "Edit")
 class AlertProfileEdit(CFMENavigateStep):
     VIEW = EditAlertProfileView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.alert_profiles.tree.click_path("All Alert Profiles",
-            "{} Alert Profiles".format(self.obj.TYPE), self.obj.description)
-        self.view.configuration.item_select("Edit this Alert Profile")
+        self.prerequisite_view.configuration.item_select("Edit this Alert Profile")
 
 
 @navigator.register(BaseAlertProfile, "Edit assignments")
 class AlertProfileEditAssignments(CFMENavigateStep):
     VIEW = AlertProfilesEditAssignmentsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.alert_profiles.tree.click_path("All Alert Profiles",
-            "{} Alert Profiles".format(self.obj.TYPE), self.obj.description)
-        self.view.configuration.item_select("Edit assignments for this Alert Profile")
+        self.prerequisite_view.configuration.item_select("Edit assignments for this Alert Profile")
 
 
 @navigator.register(BaseAlertProfile, "Details")
 class AlertProfileDetails(CFMENavigateStep):
     VIEW = AlertProfileDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
-        self.view.alert_profiles.tree.click_path("All Alert Profiles",
+        self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
             "{} Alert Profiles".format(self.obj.TYPE), self.obj.description)
 
 

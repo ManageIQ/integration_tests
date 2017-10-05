@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
-from navmazing import NavigateToAttribute
+from copy import copy
+
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic_patternfly import Button, Input
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import Text, Checkbox, TextInput, View
@@ -9,7 +11,7 @@ from . import ControlExplorerView
 from actions import Action
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -170,8 +172,8 @@ class ConditionDetailsView(ControlExplorerView):
 
 
 class EventDetailsToolbar(View):
-    """Toolbar widets on the event details page"""
-    configuration = Dropdown('Configuration')
+    """Toolbar widgets on the event details page"""
+    configuration = Dropdown("Configuration")
 
 
 class EventDetailsView(ControlExplorerView):
@@ -182,7 +184,7 @@ class EventDetailsView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == 'Event "{}"'.format(self.context["object"].testing_event)
+            self.title.text == 'Event "{}"'.format(self.context["object"].context_event)
         )
 
 
@@ -211,11 +213,44 @@ class EditEventView(ControlExplorerView):
     def is_displayed(self):
         return (
             self.in_control_explorer and
-            self.title.text == 'Editing Event "{}"'.format(self.context["object"].testing_event)
+            self.title.text == 'Editing Event "{}"'.format(self.context["object"].context_event)
         )
 
 
-class BasePolicy(Updateable, Navigatable, Pretty):
+class PolicyCollection(BaseCollection):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def instantiate(self, policy_class, description, active=True, scope=None, notes=None):
+        return policy_class(self, description, active=active, scope=scope, notes=notes)
+
+    def create(self, policy_class, description, active=True, scope=None, notes=None):
+        policy = self.instantiate(policy_class, description, active=active, scope=scope,
+            notes=notes)
+        view = navigate_to(policy, "Add")
+        view.fill({
+            "description": policy.description,
+            "active": policy.active,
+            "scope": policy.scope,
+            "notes": policy.notes
+        })
+        view.add_button.click()
+        view = policy.create_view(PolicyDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
+        return policy
+
+    def all(self):
+        raise NotImplementedError
+
+    def delete(self, *policies):
+        for policy in policies:
+            if policy.exists:
+                policy.delete()
+
+
+class BasePolicy(BaseEntity, Updateable, Pretty):
     """This class represents a Policy.
 
     Example:
@@ -238,8 +273,9 @@ class BasePolicy(Updateable, Navigatable, Pretty):
     PRETTY = None
     _param_name = ParamClassName('description')
 
-    def __init__(self, description, active=True, scope=None, notes=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
+    def __init__(self, collection, description, active=True, scope=None, notes=None):
+        self.collection = collection
+        self.appliance = self.collection.appliance
         self.description = description
         self.active = active
         self.scope = scope
@@ -248,20 +284,9 @@ class BasePolicy(Updateable, Navigatable, Pretty):
     def __str__(self):
         return self.description
 
-    def create(self):
-        "Create this Policy in UI."
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": self.description,
-            "active": self.active,
-            "scope": self.scope,
-            "notes": self.notes
-        })
-        view.add_button.click()
-        view = self.create_view(PolicyDetailsView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "{}" was added'.format(self.description))
+    @property
+    def name_for_policy_profile(self):
+        return "{} {}: {}".format(self.PRETTY, self.TYPE, self.description)
 
     def update(self, updates):
         """Update this Policy in UI.
@@ -276,9 +301,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
-        view = self.create_view(PolicyDetailsView)
+        view = self.create_view(PolicyDetailsView, override=updates)
         assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -316,9 +339,10 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             handle_alert=not cancel)
         view = self.create_view(PolicyDetailsView)
         assert view.is_displayed
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "Copy of {}" was added'.format(self.description))
-        return type(self)("Copy of {}".format(self.description))
+        view.flash.assert_success_message('Policy "Copy of {}" was added'.format(self.description))
+        policy_copy = copy(self)
+        policy_copy.description = "Copy of {}".format(self.description)
+        return policy_copy
 
     def assign_events(self, *events, **kwargs):
         """Assign events to this Policy.
@@ -340,8 +364,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "{}" was saved'.format(self.description))
+        view.flash.assert_success_message('Policy "{}" was saved'.format(self.description))
 
     def is_event_assigned(self, event):
         return event in self.assigned_events
@@ -359,14 +382,15 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         changed = view.fill({"conditions": [condition.description for condition in conditions]})
         if changed:
             view.save_button.click()
+            flash_message = 'Policy "{}" was saved'.format(self.description)
         else:
             view.cancel_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Policy "{}" was saved'.format(self.description))
+            flash_message = 'Edit of Policy "{}" was cancelled by the user'.format(self.description)
+        view.flash.assert_success_message(flash_message)
 
     def is_condition_assigned(self, condition):
-        self.testing_condition = condition
-        view = navigate_to(self, "Condition Details")
+        condition.context_policy = self
+        view = navigate_to(condition, "Details in policy")
         return view.is_displayed
 
     def assign_actions_to_event(self, event, actions):
@@ -395,21 +419,12 @@ class BasePolicy(Updateable, Navigatable, Pretty):
                     false_actions.append(action)
         else:
             raise TypeError("assign_actions_to_event expects, list, tuple, set or dict!")
-        # Check whether actions exist
-        for action in true_actions + false_actions:
-            if isinstance(action, Action):
-                if not action.exists:
-                    action.create()
-                    assert action.exists, "Could not create action {}!".format(action.description)
-            else:  # string
-                if not Action(action, "Tag").exists:
-                    raise NameError("Action with name {} does not exist!".format(action))
         # Check whether we have all necessary events assigned
         if not self.is_event_assigned(event):
             self.assign_events(event, extend=True)
             assert self.is_event_assigned(event), "Could not assign event {}!".format(event)
         # And now we can assign actions
-        self.testing_event = event
+        self.context_event = event
         view = navigate_to(self, "Event Details")
         assert view.is_displayed
         view.toolbar.configuration.item_select("Edit Actions for this Policy Event")
@@ -423,8 +438,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Actions for Policy Event "{}" were saved'.format(
+        view.flash.assert_success_message('Actions for Policy Event "{}" were saved'.format(
             event))
 
     @property
@@ -448,62 +462,50 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             events.id.in_(assigned_events))]
 
 
-@navigator.register(BasePolicy, "Add")
-class PolicyNew(CFMENavigateStep):
-    VIEW = NewPolicyView
+@navigator.register(PolicyCollection, "All")
+class PolicyAll(CFMENavigateStep):
+    VIEW = PoliciesAllView
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        self.view.policies.tree.click_path(
+        self.prerequisite_view.policies.tree.click_path("All Policies")
+
+
+@navigator.register(BasePolicy, "Add")
+class PolicyNew(CFMENavigateStep):
+    VIEW = NewPolicyView
+    prerequisite = NavigateToAttribute("collection", "All")
+
+    def step(self):
+        self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE)
         )
-        self.view.configuration.item_select("Add a New {} {} Policy".format(self.obj.PRETTY,
-            self.obj.TYPE))
+        self.prerequisite_view.configuration.item_select("Add a New {} {} Policy".format(
+            self.obj.PRETTY, self.obj.TYPE))
 
 
 @navigator.register(BasePolicy, "Edit")
 class PolicyEdit(CFMENavigateStep):
     VIEW = EditPolicyView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.policies.tree.click_path(
-            "All Policies",
-            "{} Policies".format(self.obj.TYPE),
-            "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
-            self.obj.description
-        )
-        self.view.configuration.item_select("Edit Basic Info, Scope, and Notes")
+        self.prerequisite_view.configuration.item_select("Edit Basic Info, Scope, and Notes")
 
 
 @navigator.register(BasePolicy, "Details")
 class PolicyDetails(CFMENavigateStep):
     VIEW = PolicyDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+    prerequisite = NavigateToAttribute("collection", "All")
 
     def step(self):
-        self.view.policies.tree.click_path(
+        self.prerequisite_view.policies.tree.click_path(
             "All Policies",
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
             self.obj.description
-        )
-
-
-@navigator.register(BasePolicy, "Condition Details")
-class PolicyConditionDetails(CFMENavigateStep):
-    VIEW = ConditionDetailsView
-    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
-
-    def step(self):
-        self.view.policies.tree.click_path(
-            "All Policies",
-            "{} Policies".format(self.obj.TYPE),
-            "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
-            self.obj.description,
-            self.obj.testing_condition.description
         )
 
 
@@ -518,7 +520,7 @@ class PolicyEventDetails(CFMENavigateStep):
             "{} Policies".format(self.obj.TYPE),
             "{} {} Policies".format(self.obj.TREE_NODE, self.obj.TYPE),
             self.obj.description,
-            self.obj.testing_event
+            self.obj.context_event
         )
 
 

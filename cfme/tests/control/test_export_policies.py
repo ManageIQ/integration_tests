@@ -2,19 +2,27 @@
 import fauxfactory
 import pytest
 
-from cfme.control.explorer.policies import VMControlPolicy
-from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.control.explorer.policies import PolicyCollection, VMControlPolicy
+from cfme.control.explorer.policy_profiles import PolicyProfileCollection
 from cfme.control.import_export import is_imported
 from cfme import test_requirements
 
 
 @pytest.fixture(scope="module")
-def policy_profile(request):
-    policy = VMControlPolicy(fauxfactory.gen_alpha())
-    policy.create()
+def policy_profile_collection(appliance):
+    return appliance.get(PolicyProfileCollection)
+
+
+@pytest.fixture(scope="module")
+def policy_collection(appliance):
+    return appliance.get(PolicyCollection)
+
+
+@pytest.fixture(scope="module")
+def policy_profile(request, policy_collection, policy_profile_collection):
+    policy = policy_collection.create(VMControlPolicy, fauxfactory.gen_alpha())
     request.addfinalizer(policy.delete)
-    profile = PolicyProfile(fauxfactory.gen_alpha(), policies=[policy])
-    profile.create()
+    profile = policy_profile_collection.create(fauxfactory.gen_alpha(), policies=[policy])
     request.addfinalizer(profile.delete)
     return profile
 

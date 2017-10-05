@@ -4,9 +4,10 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.control.explorer.policies import VMCompliancePolicy, HostCompliancePolicy
-from cfme.control.explorer.conditions import VMCondition
-from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.control.explorer.policies import (HostCompliancePolicy, PolicyCollection,
+    VMCompliancePolicy,)
+from cfme.control.explorer.conditions import ConditionCollection, VMCondition
+from cfme.control.explorer.policy_profiles import PolicyProfileCollection
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.configure.configuration.analysis_profile import AnalysisProfile
 from cfme.utils import testgen, conf
@@ -28,6 +29,21 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
+@pytest.fixture(scope="module")
+def policy_profile_collection(appliance):
+    return appliance.get(PolicyProfileCollection)
+
+
+@pytest.fixture(scope="module")
+def policy_collection(appliance):
+    return appliance.get(PolicyCollection)
+
+
+@pytest.fixture(scope="module")
+def condition_collection(appliance):
+    return appliance.get(ConditionCollection)
+
+
 @pytest.fixture
 def policy_name():
     return "compliance_testing: policy {}".format(fauxfactory.gen_alphanumeric(8))
@@ -44,11 +60,10 @@ def host(provider, setup_provider):
 
 
 @pytest.yield_fixture
-def policy_for_testing(policy_name, policy_profile_name, provider):
-    policy = HostCompliancePolicy(policy_name)
-    policy.create()
-    policy_profile = PolicyProfile(policy_profile_name, policies=[policy])
-    policy_profile.create()
+def policy_for_testing(policy_name, policy_profile_name, provider, policy_collection,
+        policy_profile_collection):
+    policy = policy_collection.create(HostCompliancePolicy, policy_name)
+    policy_profile = policy_profile_collection.create(policy_profile_name, policies=[policy])
     yield policy
     policy_profile.delete()
     policy.delete()
@@ -113,56 +128,59 @@ def analysis_profile():
     ap.delete()
 
 
-def test_check_package_presence(request, compliance_vm, analysis_profile):
+def test_check_package_presence(request, compliance_vm, analysis_profile, policy_collection,
+        policy_profile_collection, condition_collection):
     """This test checks compliance by presence of a certain "kernel" package which is expected
     to be present on the full_template."""
-    condition = VMCondition(
+    condition = condition_collection.create(
+        VMCondition,
         "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(field=VM and Instance.Guest Applications : Name, "
             "skey=STARTS WITH, value=kernel, check=Check Count, ckey= = , cvalue=1)")
     )
     request.addfinalizer(lambda: diaper(condition.delete))
-    condition.create()
-    policy = VMCompliancePolicy("Compliance {}".format(fauxfactory.gen_alphanumeric(8)))
+    policy = policy_collection.create(
+        VMCompliancePolicy,
+        "Compliance {}".format(fauxfactory.gen_alphanumeric(8))
+    )
     request.addfinalizer(lambda: diaper(policy.delete))
-    policy.create()
     policy.assign_conditions(condition)
-    profile = PolicyProfile(
+    profile = policy_profile_collection.create(
         "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
         policies=[policy]
     )
     request.addfinalizer(lambda: diaper(profile.delete))
-    profile.create()
     compliance_vm.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: compliance_vm.unassign_policy_profiles(profile.description))
     do_scan(compliance_vm)
     assert compliance_vm.check_compliance()
 
 
-def test_check_files(request, compliance_vm, analysis_profile):
+def test_check_files(request, compliance_vm, analysis_profile, condition_collection):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
     """
     check_file_name = "/etc/hosts"
     check_file_contents = "127.0.0.1"
-    condition = VMCondition(
+    condition = condition_collection.create(
+        VMCondition,
         "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(VM and Instance.Files : Name, "
             "=, {}, Check Any, Contents, INCLUDES, {})".format(
                 check_file_name, check_file_contents))
     )
     request.addfinalizer(lambda: diaper(condition.delete))
-    condition.create()
-    policy = VMCompliancePolicy("Compliance {}".format(fauxfactory.gen_alphanumeric(8)))
+    policy = policy_collection.create(
+        VMCompliancePolicy,
+        "Compliance {}".format(fauxfactory.gen_alphanumeric(8))
+    )
     request.addfinalizer(lambda: diaper(policy.delete))
-    policy.create()
     policy.assign_conditions(condition)
-    profile = PolicyProfile(
+    profile = policy_profile_collection.create(
         "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
         policies=[policy]
     )
     request.addfinalizer(lambda: diaper(profile.delete))
-    profile.create()
     compliance_vm.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: compliance_vm.unassign_policy_profiles(profile.description))
 

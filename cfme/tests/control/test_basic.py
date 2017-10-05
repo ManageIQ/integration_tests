@@ -4,7 +4,6 @@
 Whether we can create/update/delete/assign/... these objects. Nothing with deep meaning.
 Can be also used as a unit-test for page model coverage.
 
-TODO: * Multiple expression types entering. (extend the update tests)
 """
 from collections import namedtuple
 import fauxfactory
@@ -227,30 +226,48 @@ ALERT_PROFILES = [
 ]
 
 
-@pytest.yield_fixture
-def random_vm_control_policy():
-    policy = policies.VMControlPolicy(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
+@pytest.fixture(scope="module")
+def policy_profile_collection(appliance):
+    return appliance.get(policy_profiles.PolicyProfileCollection)
+
+
+@pytest.fixture(scope="module")
+def policy_collection(appliance):
+    return appliance.get(policies.PolicyCollection)
+
+
+@pytest.fixture(scope="module")
+def condition_collection(appliance):
+    return appliance.get(conditions.ConditionCollection)
+
+
+@pytest.fixture(scope="module")
+def action_collection(appliance):
+    return appliance.get(actions.ActionCollection)
+
+
+@pytest.fixture(scope="module")
+def alert_collection(appliance):
+    return appliance.get(alerts.AlertCollection)
+
+
+@pytest.fixture(scope="module")
+def alert_profile_collection(appliance):
+    return appliance.get(alert_profiles.AlertProfileCollection)
 
 
 @pytest.yield_fixture
-def random_host_control_policy():
-    policy = policies.HostControlPolicy(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
-
-
-@pytest.yield_fixture
-def random_alert():
-    alert = alerts.Alert(
-        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
+def two_random_policies(policy_collection):
+    policy_1 = policy_collection.create(
+        random.choice(POLICIES),
+        fauxfactory.gen_alphanumeric()
     )
-    alert.create()
-    yield alert
-    alert.delete()
+    policy_2 = policy_collection.create(
+        random.choice(POLICIES),
+        fauxfactory.gen_alphanumeric()
+    )
+    yield policy_1, policy_2
+    policy_collection.delete(policy_1, policy_2)
 
 
 @pytest.fixture(params=POLICIES, ids=lambda policy_class: policy_class.__name__)
@@ -258,54 +275,35 @@ def policy_class(request):
     return request.param
 
 
+@pytest.fixture(params=ALERT_PROFILES, ids=lambda alert_profile: alert_profile.__name__)
+def alert_profile_class(request):
+    return request.param
+
+
 @pytest.yield_fixture
-def policy(policy_class):
-    policy = policy_class(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
+def policy(policy_collection, policy_class):
+    policy_ = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
+    yield policy_
+    policy_.delete()
 
 
 @pytest.yield_fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__,
     scope="module")
-def condition_for_expressions(request):
+def condition_for_expressions(request, condition_collection):
     condition_class = request.param
-    cond = condition_class(
+    condition = condition_collection.create(
+        condition_class,
         fauxfactory.gen_alphanumeric(),
         expression="fill_field({} : Name, IS NOT EMPTY)".format(condition_class.FIELD_VALUE),
         scope="fill_field({} : Name, INCLUDES, {})".format(condition_class.FIELD_VALUE,
             fauxfactory.gen_alpha())
     )
-    cond.create()
-    yield cond
-    cond.delete()
-
-
-@pytest.yield_fixture(params=CONTROL_POLICIES, ids=lambda policy_class: policy_class.__name__)
-def control_policy(request):
-    policy = request.param(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
-
-
-@pytest.yield_fixture(params=ALERT_PROFILES,
-    ids=lambda alert_profile_class: alert_profile_class.__name__)
-def alert_profile(request):
-    alert = alerts.Alert(
-        fauxfactory.gen_alphanumeric(),
-        based_on=request.param.TYPE,
-        timeline_event=True,
-        driving_event="Hourly Timer"
-    )
-    alert.create()
-    alert_profile = request.param(fauxfactory.gen_alphanumeric(), [alert.description])
-    yield alert_profile
-    alert.delete()
+    yield condition
+    condition.delete()
 
 
 @pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__)
-def condition(request):
+def condition_prerequisites(request, condition_collection):
     condition_class = request.param
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE,
@@ -315,42 +313,79 @@ def condition(request):
         condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
-    cond = condition_class(
+    return condition_class, scope, expression
+
+
+@pytest.yield_fixture(params=CONTROL_POLICIES, ids=lambda policy_class: policy_class.__name__)
+def control_policy(request, policy_collection):
+    policy_class = request.param
+    policy = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
+    yield policy
+    policy.delete()
+
+
+@pytest.yield_fixture
+def alert(alert_collection):
+    alert_ = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
-        scope=scope,
-        expression=expression
+        based_on=random.choice(ALERT_PROFILES).TYPE,
+        timeline_event=True,
+        driving_event="Hourly Timer"
     )
-    return cond
+    yield alert_
+    alert_.delete()
+
+
+@pytest.yield_fixture
+def alert_profile(alert_profile_class, alert_collection, alert_profile_collection):
+    alert = alert_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        based_on=alert_profile_class.TYPE,
+        timeline_event=True,
+        driving_event="Hourly Timer"
+    )
+    alert_profile_ = alert_profile_collection.create(
+        alert_profile_class,
+        fauxfactory.gen_alphanumeric(),
+        [alert.description]
+    )
+    yield alert_profile_
+    alert_profile_.delete()
+    alert.delete()
 
 
 @pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item.name)
-def policy_and_condition(request):
+def policy_and_condition(request, policy_collection, condition_collection):
     condition_class = request.param.condition
+    policy_class = request.param.policy
     expression = "fill_field({} : Name, =, {})".format(
         condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
-    condition = condition_class(
+    condition = condition_collection.create(
+        condition_class,
         fauxfactory.gen_alphanumeric(),
         expression=expression
     )
-    policy = request.param.policy(fauxfactory.gen_alphanumeric())
-    policy.create()
-    condition.create()
+    policy = policy_collection.create(
+        policy_class,
+        fauxfactory.gen_alphanumeric()
+    )
     yield policy, condition
     policy.delete()
     condition.delete()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda condition: condition is conditions.ProviderCondition and
-    current_version() < "5.7.1"
-)
-def test_condition_crud(condition):
+def test_condition_crud(condition_collection, condition_prerequisites):
     # CR
-    condition.create()
-    # U
+    condition_class, scope, expression = condition_prerequisites
+    condition = condition_collection.create(
+        condition_class,
+        fauxfactory.gen_alphanumeric(),
+        scope=scope,
+        expression=expression
+    )
     with update(condition):
         condition.notes = "Modified!"
     # D
@@ -358,14 +393,13 @@ def test_condition_crud(condition):
 
 
 @pytest.mark.tier(2)
-def test_action_crud():
-    action = actions.Action(
+def test_action_crud(action_collection):
+    # CR
+    action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Department", "Accounting")}
     )
-    # CR
-    action.create()
     # U
     with update(action):
         action.description = "w00t w00t"
@@ -374,10 +408,9 @@ def test_action_crud():
 
 
 @pytest.mark.tier(2)
-def test_policy_crud(policy_class):
-    policy = policy_class(fauxfactory.gen_alphanumeric())
+def test_policy_crud(policy_collection, policy_class):
     # CR
-    policy.create()
+    policy = policy_collection.create(policy_class, fauxfactory.gen_alphanumeric())
     # U
     with update(policy):
         policy.notes = "Modified!"
@@ -388,6 +421,7 @@ def test_policy_crud(policy_class):
 @pytest.mark.tier(3)
 def test_policy_copy(policy):
     random_policy_copy = policy.copy()
+    assert random_policy_copy.exists
     random_policy_copy.delete()
 
 
@@ -401,7 +435,7 @@ def test_assign_two_random_events_to_control_policy(control_policy, soft_assert)
 
 @pytest.mark.tier(3)
 def test_assign_condition_to_control_policy(request, policy_and_condition):
-    """This test checks whether an condition is assigned to a control policy.
+    """This test checks if a condition is assigned to a control policy.
     Steps:
         * Create a control policy.
         * Assign a condition to the created policy.
@@ -413,22 +447,17 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
 
 
 @pytest.mark.tier(2)
-def test_policy_profile_crud(random_vm_control_policy, random_host_control_policy):
-    profile = policy_profiles.PolicyProfile(
+def test_policy_profile_crud(policy_profile_collection, two_random_policies):
+    profile = policy_profile_collection.create(
         fauxfactory.gen_alphanumeric(),
-        policies=[random_vm_control_policy, random_host_control_policy]
+        policies=two_random_policies
     )
-    profile.create()
     with update(profile):
         profile.notes = "Modified!"
     profile.delete()
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(
-    lambda condition_for_expressions: condition_for_expressions is conditions.ProviderCondition and
-    current_version() < "5.7.1"
-)
 @pytest.mark.parametrize("fill_type,expression,verify", EXPRESSIONS_TO_TEST, ids=[
     expr[0] for expr in EXPRESSIONS_TO_TEST])
 def test_modify_condition_expression(condition_for_expressions, fill_type, expression, verify):
@@ -440,12 +469,13 @@ def test_modify_condition_expression(condition_for_expressions, fill_type, expre
 
 
 @pytest.mark.tier(2)
-def test_alert_crud():
-    alert = alerts.Alert(
-        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
-    )
+def test_alert_crud(alert_collection):
     # CR
-    alert.create()
+    alert = alert_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        timeline_event=True,
+        driving_event="Hourly Timer"
+    )
     # U
     with update(alert):
         alert.notification_frequency = "2 Hours"
@@ -455,17 +485,27 @@ def test_alert_crud():
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1303645], automates=[1303645])
-def test_control_alert_copy(random_alert):
-    alert_copy = random_alert.copy(description=fauxfactory.gen_alphanumeric())
+def test_control_alert_copy(alert):
+    alert_copy = alert.copy(description=fauxfactory.gen_alphanumeric())
+    assert alert_copy.exists
     alert_copy.delete()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(
-    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
-    current_version() < "5.7")
-def test_alert_profile_crud(alert_profile):
-    alert_profile.create()
+def test_alert_profile_crud(request, alert_profile_class, alert_collection,
+        alert_profile_collection):
+    alert = alert_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        based_on=alert_profile_class.TYPE,
+        timeline_event=True,
+        driving_event="Hourly Timer"
+    )
+    request.addfinalizer(alert.delete)
+    alert_profile = alert_profile_collection.create(
+        alert_profile_class,
+        fauxfactory.gen_alphanumeric(),
+        [alert.description]
+    )
     with update(alert_profile):
         alert_profile.notes = "Modified!"
     alert_profile.delete()
@@ -473,20 +513,15 @@ def test_alert_profile_crud(alert_profile):
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[BZ(1416311, forced_streams=["5.7"])])
-@pytest.mark.uncollectif(
-    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
-    current_version() < "5.7")
 def test_alert_profile_assigning(alert_profile):
-    alert_profile.create()
     if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
         alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
     else:
         alert_profile.assign_to("The Enterprise")
-    alert_profile.delete()
 
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda: current_version() < "5.8")
-def test_control_is_ansible_playbook_available_in_actions_dropdown():
-    view = navigate_to(actions.Action, "Add")
+def test_control_is_ansible_playbook_available_in_actions_dropdown(action_collection):
+    view = navigate_to(action_collection, "Add")
     assert "Run Ansible Playbook" in [option.text for option in view.action_type.all_options]

@@ -5,9 +5,9 @@ from cfme import test_requirements
 from cfme.ansible.repositories import RepositoryCollection
 from cfme.ansible.credentials import CredentialsCollection
 from cfme.common.vm import VM
-from cfme.control.explorer.actions import Action
-from cfme.control.explorer.policies import VMControlPolicy
-from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.control.explorer.actions import ActionCollection
+from cfme.control.explorer.policies import PolicyCollection, VMControlPolicy
+from cfme.control.explorer.policy_profiles import PolicyProfileCollection
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.ansible_catalog_item import AnsiblePlaybookCatalogItem
 from cfme.services.myservice import MyService
@@ -121,8 +121,9 @@ def vmware_vm(full_template_modscope, provider):
 
 
 @pytest.yield_fixture(scope="module")
-def ansible_action(ansible_catalog_item):
-    action = Action(
+def ansible_action(appliance, ansible_catalog_item):
+    action_collection = appliance.get(ActionCollection)
+    action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Run Ansible Playbook",
         action_values={
@@ -131,7 +132,6 @@ def ansible_action(ansible_catalog_item):
             }
         }
     )
-    action.create()
     yield action
 
     if action.exists:
@@ -140,15 +140,15 @@ def ansible_action(ansible_catalog_item):
 
 @pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576')
 @pytest.yield_fixture(scope="module")
-def policy_for_testing(vmware_vm, provider, ansible_action):
-    policy = VMControlPolicy(
+def policy_for_testing(appliance, vmware_vm, provider, ansible_action):
+    policy = PolicyCollection(appliance=appliance).create(
+        VMControlPolicy,
         fauxfactory.gen_alpha(),
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
     )
-    policy.create()
     policy.assign_actions_to_event("Tag Complete", [ansible_action.description])
-    policy_profile = PolicyProfile(fauxfactory.gen_alpha(), policies=[policy])
-    policy_profile.create()
+    policy_profile = PolicyProfileCollection(appliance=appliance).create(
+        fauxfactory.gen_alpha(), policies=[policy])
     provider.assign_policy_profiles(policy_profile.description)
     yield
 
