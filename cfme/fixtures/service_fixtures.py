@@ -27,8 +27,17 @@ def catalog():
 
 @pytest.fixture(scope="function")
 def catalog_item(provider, provisioning, vm_name, dialog, catalog):
+    catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
+    return catalog_item
+
+
+def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, console_template=None):
+
     template, host, datastore, iso_file, catalog_item_type, vlan = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
+    if console_template:
+        logger.info("Console template name : {}".format(console_template.name))
+        template = console_template.name
     item_name = dialog.label
     provisioning_data = dict(
         vm_name=vm_name,
@@ -42,20 +51,26 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, catalog_name=template,
-                  provider=provider, prov_data=provisioning_data)
+        description="my catalog", display_in=True, catalog=catalog,
+        dialog=dialog, catalog_name=template,
+        provider=provider, prov_data=provisioning_data)
     return catalog_item
 
 
 @pytest.fixture(scope="function")
-def order_catalog_item_in_ops_ui(appliance, provider, catalog_item, request):
+def order_catalog_item_in_ops_ui(appliance, provider, provisioning, vm_name, dialog, catalog,
+        console_template, request):
     """
         Fixture for SSUI tests.
         Orders catalog item in OPS UI.
     """
+    if hasattr(request, 'param'):
+        catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog,
+            console_template if 'console_test' in request.param else None)
+    else:
+        catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
     vm_name = catalog_item.provisioning_data["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm("{}_0001".format(vm_name), provider))
+    request.addfinalizer(lambda: cleanup_vm("{}0001".format(vm_name), provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
