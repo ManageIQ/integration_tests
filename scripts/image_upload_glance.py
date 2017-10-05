@@ -1,48 +1,69 @@
 #!/usr/bin/env python2
 
-import os
-import subprocess
+"""
+Script to upload iso/ova/qcow images to Glance server.
+This script requires that python-glanceclient be installed.
 
+pip install python-glanceclient
+
+Usage:
+1.scripts/image_upload_glance.py --image cfme-rhevm-5.8.2.1-1.x86_64.qcow2 \
+                                 --image_name_in_glance cfme-5821.qcow2 \
+                                 --provider glance11
+
+"""
+import argparse
+import sys
+
+from cfme.utils.conf import cfme_data, credentials
 from keystoneauth1 import loading
 from keystoneauth1 import session
 from glanceclient import Client
 
-# TO DO : Fetch all variables from yamls
-#       : Add Glance server details and creds to the yamls
-CFME_IMAGE_URL = ('http://file.cloudforms.xx.yy.com/'
-                  'builds/cfme/5.8/5.8.2.1/cfme-rhevm-5.8.2.1-1.x86_64.qcow2')
-GLANCE_SERVER = 'http://xx.yy.zz.aa:5000/v2.0/'
-IMAGE_NAME_IN_GLANCE = 'cfme-5821-qcow2'
-CFME_QCOW_IMAGE = os.path.basename(CFME_IMAGE_URL)
 
-# Set environment variables for Glance
-os.environ['OS_USERNAME'] = 'admin'
-os.environ['OS_PASSWORD'] = ''
-os.environ['OS_TENANT_NAME'] = 'admin'
-os.environ['OS_AUTH_URL'] = GLANCE_SERVER
+def upload_to_glance(image, image_name_in_glance, provider):
+    """
+    Upload iso/qcow images to Glance.
+    """
+    api_version = '2'  # python-glanceclient API version
+    provider_dict = cfme_data['management_systems'][provider]
 
-loader = loading.get_plugin_loader('password')
-auth = loader.load_from_options(
-    auth_url="http://xx.yy.zz.aa:5000/v2.0/",
-    username='admin',
-    password='password',
-    tenant_name='admin')
-glance_session = session.Session(auth=auth)
-glance = Client('2', session=glance_session)
+    loader = loading.get_plugin_loader('password')
+    auth = loader.load_from_options(
+        auth_url=provider_dict['auth_url'],
+        username=credentials['cloudqe_rhos_default']['username'],
+        password=credentials['cloudqe_rhos_default']['password'],
+        tenant_name=credentials['cloudqe_rhos_default']['tenant'])
+    glance_session = session.Session(auth=auth)
+    glance = Client(api_version, session=glance_session)
 
-image = glance.images.create(name=IMAGE_NAME_IN_GLANCE)
-glance.images.upload(image.id, open('/tmp/abc.qcow2', 'rb'))
+    # Two images on Glance could have the same name since Glance assigns them different IDS.
+    # So, we are running a check to make sure an image with the same name doesn't already exist.
+    for image in glance.images.list():
+        if image.name == image_name_in_glance:
+            print("Image already exists on Glance server")
+            sys.exit(127)
 
-# Fetch image from CFME_IMAGE_URL
-p = subprocess.Popen(['wget', '-N', CFME_IMAGE_URL, '-O', CFME_QCOW_IMAGE], stdout=subprocess.PIPE)
-err = p.communicate()
+    glance_img = glance.images.create(name=image_name_in_glance)
+    # Update image properties before uploading the image.
+    glance.images.update(glance_img.id, container_format="bare")
+    glance.images.update(glance_img.id, disk_format="qcow2")
+    glance.images.update(glance_img.id, visibility="public")
+    glance.images.upload(glance_img.id, open(image, 'rb'))
 
-# Upload fetched image to Glance server
-p = subprocess.Popen(['glance', 'image-create', '--name=IMAGE_NAME_IN_GLANCE',
-   '--visibility public', '--container-format=bare', '--disk-format=qcow2', '--progress',
-   '--file QCOW_IMAGE'])
-err = p.communicate
 
-# Delete local copy of CFME_QCOW_IMAGE
-p = subprocess.Popen(['rm', '-rf', CFME_QCOW_IMAGE], stdout=subprocess.PIPE)
-err = p.communicate()
+def main():
+    parser = argparse.ArgumentParser(description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument('--image', help='Image to be uploaded to Glance')
+    parser.add_argument('--image_name_in_glance', help='Image name in Glance')
+    parser.add_argument('--provider', help='Glance provider key in cfme_data')
+
+    args = parser.parse_args()
+
+    upload_to_glance(args.image, args.image_name_in_glance, args.provider)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
