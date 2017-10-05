@@ -108,7 +108,7 @@ def test_infra_exists_view():
 
 def test_vm_visibility_off():
     DefaultView.set_default_view_switch_off()
-    assert not(check_vm_visibility())
+    assert not check_vm_visibility()
 
 
 def test_vm_visibility_on():
