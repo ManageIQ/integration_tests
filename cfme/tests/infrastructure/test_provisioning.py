@@ -147,7 +147,9 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
     if edit:
         # Automatic approval after editing the request to conform
         new_vm_name = vm_name + "-xx"
-        modifications = {'catalog': {'num_vms': "1", 'vm_name': new_vm_name}}
+        modifications = {
+            'catalog': {'num_vms': "1", 'vm_name': new_vm_name},
+            'Description': 'Provision from [{}] to [{}]'.format(template, new_vm_name)}
         provision_request.edit_request(values=modifications)
         vm_names = [new_vm_name]  # Will be just one now
         request.addfinalizer(
