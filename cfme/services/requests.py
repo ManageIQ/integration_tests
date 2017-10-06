@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from copy import copy
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Table, Checkbox, View
 from widgetastic_manageiq import BreadCrumb, SummaryForm, SummaryFormItem, PaginationPane, Button
@@ -261,6 +263,7 @@ class RequestsView(RequestBasicView):
         """
         contains = '' if not partial_check else '__contains'
         column_list = self.table.attributized_headers
+        cells = copy(cells)
         for key in cells.keys():
             for column_name, column_text in column_list.items():
                 if key == column_text:
