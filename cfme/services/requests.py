@@ -42,7 +42,7 @@ class Request(BaseEntity):
         """
         self.collection = collection
         self.appliance = self.collection.appliance
-        self.description = description
+        self.description = description or cells.get('Description')
         self.partial_check = partial_check
         self.cells = cells or {'Description': self.description}
         self.row = None
@@ -225,6 +225,10 @@ class Request(BaseEntity):
         if view.form.fill(values):
             if not cancel:
                 view.form.submit_button.click()
+                # TODO remove this hack for description update that anchors the request
+                if values.get('Description'):
+                    self.description = values['Description']
+                    self.cells.update({'Description': self.description})
                 self.update()
             else:
                 view.cancel_button.click()
