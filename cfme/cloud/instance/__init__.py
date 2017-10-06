@@ -1,5 +1,6 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from riggerlib import recursive_update
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Button
 from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion
@@ -109,8 +110,8 @@ class InstanceDetailsView(CloudInstanceView):
         expected_provider = self.context['object'].provider.name
         try:
             # Not displayed when the instance is archived
-            relationship_provider_name = self.relationships_detail.get_text_of('Cloud Provider')
-        except NameError:
+            relationship_provider_name = self.entities.relationships.get_text_of('Cloud Provider')
+        except (NameError, NoSuchElementException):
             logger.warning('No "Cloud Provider" Relationship, assume instance view not displayed')
             return False
         return (
@@ -127,7 +128,7 @@ class InstanceTimelinesView(CloudInstanceView, TimelinesView):
     @property
     def is_displayed(self):
         return (
-            super(CloudInstanceView, self).in_cloud_instance and
+            self.in_cloud_instance and
             super(TimelinesView, self).is_displayed)
 
 
