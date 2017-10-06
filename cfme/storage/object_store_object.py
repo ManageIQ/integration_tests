@@ -40,8 +40,8 @@ class ObjectStoreObjectDetailsEntities(View):
     smart_management = SummaryTable('Smart Management')
 
 
-class ObjectStoreObjectDetailsAccordion(View):
-    """The accordion on the Object Store Object details page"""
+class ObjectStoreObjectDetailsSidebar(View):
+    """The sidebar on the Object Store Object details page"""
     @View.nested
     class properties(Accordion):  # noqa
         tree = ManageIQTree()
@@ -89,7 +89,7 @@ class ObjectStoreObjectDetailsView(ObjectStoreObjectView):
             self.entities.breadcrumb.active_location == expected_title)
 
     toolbar = View.nested(ObjectStoreObjectDetailsToolbar)
-    sidebar = View.nested(ObjectStoreObjectDetailsAccordion)
+    sidebar = View.nested(ObjectStoreObjectDetailsSidebar)
     entities = View.nested(ObjectStoreObjectDetailsEntities)
 
 
