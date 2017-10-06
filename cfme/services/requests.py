@@ -216,8 +216,8 @@ class Request(BaseEntity):
         view.flash.assert_no_error()
         # The way we identify request is a description which is based on vm_name,
         # no need returning Request obj if name is the same => raw request copy
-        if 'vm_name' in values.keys():
-            return Request(description=values['vm_name'], partial_check=True)
+        if 'vm_name' in values['catalog'].keys():
+            return Request(description=values['catalog']['vm_name'], partial_check=True)
 
     def edit_request(self, values, cancel=False):
         """Opens the request for editing and saves or cancels depending on success.
@@ -226,6 +226,9 @@ class Request(BaseEntity):
         if view.form.fill(values):
             if not cancel:
                 view.form.submit_button.click()
+                if 'vm_name' in values['catalog'].keys():
+                    self.cells = {'Description': values['catalog']['vm_name']}
+                    self.partial_check = True
                 self.update()
             else:
                 view.cancel_button.click()
