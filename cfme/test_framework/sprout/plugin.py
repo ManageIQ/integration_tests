@@ -59,25 +59,19 @@ def dump_pool_info(log, pool_data):
             log.info("\t\t%s: %s", key, appliance[key])
 
 
-@pytest.mark.tryfirst
-def pytest_configure(config):
-    if config.getoption("appliances"):
-        return
-    if not config.getoption('--use-sprout'):
-        return
-    if config.getoption('--dummy-appliance'):
-        return
+def mangle_in_sprout_appliances(config):
+    """
+    this helper function resets the appliances option of the config and mangles in
+    the sprout ones
 
+    its a hopefully temporary hack until we make a correctly ordered hook for obtaining appliances
+    """
     provision_request = SproutProvisioningRequest.from_config(config)
 
     mgr = config._sprout_mgr = SproutManager()
     requested_appliances = mgr.request_appliances(provision_request)
     config.option.appliances[:] = []
     appliances = config.option.appliances
-    # Push an appliance to the stack to have proper reference for test collection
-    # FIXME: this is a bad hack based on the need for controll of collection partitioning
-    appliance_stack.push(
-        IPAppliance(address=requested_appliances[0]["ip_address"]))
     log.info("Appliances were provided:")
     for appliance in requested_appliances:
         url = "https://{}/".format(appliance["ip_address"])

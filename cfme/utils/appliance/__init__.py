@@ -2591,11 +2591,15 @@ def load_appliances(appliance_list, global_kwargs):
 
 @attr.s
 class DummyAppliance(object):
+    """a dummy with minimal attribute set"""
     address = '0.0.0.0'
     browser_steal = False
     version = Version('5.8.0')
     is_downstream = True
     is_pod = False
+
+    def set_session_timeout(self, *k):
+        pass
 
 
 def load_appliances_from_config(config):
