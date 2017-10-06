@@ -162,7 +162,7 @@ def test_service_ansible_playbook_crud(ansible_repository):
     assert not cat_item.exists
 
 
-def test_service_ansible_playbook_taging(request, ansible_catalog_item):
+def test_service_ansible_playbook_tagging(ansible_catalog_item):
     """ Tests ansible_playbook tag addition, check added tag and removal
 
     Steps:
@@ -172,7 +172,9 @@ def test_service_ansible_playbook_taging(request, ansible_catalog_item):
         4. Remove the given tag
     """
     ansible_catalog_item.add_tag('Department', 'Support')
-    assert ansible_catalog_item.get_tags() == ['Department', 'Support']
+    assert any(tag.category.display_name == "Department" and tag.display_name == "Support"
+               for tag in ansible_catalog_item.get_tags()), (
+        'Assigned tag was not found on the details page')
     ansible_catalog_item.remove_tag('Department', 'Support')
     assert ansible_catalog_item.get_tags() == []
 

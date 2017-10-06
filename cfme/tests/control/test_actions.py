@@ -692,7 +692,7 @@ def test_action_tag(request, vm, vm_off, policy_for_testing, action_collection):
     """
     if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
            for tag in vm.crud.get_tags()):
-        vm.crud.remove_tag(("Service Level", "Gold"))
+        vm.crud.remove_tag("Service Level", "Gold")
 
     tag_assign_action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -730,13 +730,13 @@ def test_action_untag(request, vm, vm_off, policy_for_testing, action_collection
     """
     if not any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
            for tag in vm.crud.get_tags()):
-        vm.crud.add_tag(("Service Level", "Gold"), single_value=True)
+        vm.crud.add_tag("Service Level", "Gold")
 
     @request.addfinalizer
     def _remove_tag():
         if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
                for tag in vm.crud.get_tags()):
-            vm.crud.remove_tag(("Service Level", "Gold"))
+            vm.crud.remove_tag("Service Level", "Gold")
 
     tag_unassign_action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -805,17 +805,17 @@ def test_action_check_compliance(request, provider, vm, vm_name, policy_for_test
     """
     if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
            for tag in vm.crud.get_tags()):
-        vm.crud.remove_tag(("Service Level", "Gold"))
+        vm.crud.remove_tag("Service Level", "Gold")
 
     @request.addfinalizer
     def _remove_tag():
         if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
                for tag in vm.crud.get_tags()):
-            vm.crud.remove_tag(("Service Level", "Gold"))
+            vm.crud.remove_tag("Service Level", "Gold")
 
     policy_for_testing.assign_actions_to_event("Tag Complete", ["Check Host or VM Compliance"])
     request.addfinalizer(policy_for_testing.assign_events)
-    vm.crud.add_tag(("Service Level", "Gold"), single_value=True)
+    vm.crud.add_tag("Service Level", "Gold")
     view = navigate_to(vm.crud, "Details")
     view.toolbar.reload.click()
     assert vm.crud.compliant

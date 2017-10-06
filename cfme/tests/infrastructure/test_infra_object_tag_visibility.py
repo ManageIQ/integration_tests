@@ -1,7 +1,7 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.cluster import Cluster
+from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.provider import InfraProvider
@@ -21,7 +21,7 @@ def a_provider(request):
 
 test_items = [
     ('providers', InfraProvider),
-    ('clusters', Cluster),
+    ('clusters', ClusterCollection),
     ('hosts', Host),
     ('data_stores', DatastoreCollection),
     ('vms', Vm),
@@ -47,12 +47,13 @@ def testing_vis_object(request, a_provider, appliance):
             if test_item_value.vendor == item_type:
                 return param_class(name=test_item_value.name, provider=a_provider)
     elif collection_name != 'providers':
+        entity_name = test_items[0].name
+        if collection_name == 'clusters':
+            entity_name = '{} in Datacenter'.format(test_items[0].name)
         try:
-            return param_class(name=test_items[0].name, provider=a_provider)
+            return param_class(name=entity_name, provider=a_provider)
         except TypeError:
-            return param_class(appliance).instantiate(
-                name=test_items[0].name, provider=a_provider)
-
+            return param_class(appliance).instantiate(name=entity_name, provider=a_provider)
     else:
         return a_provider
 

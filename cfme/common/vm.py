@@ -16,6 +16,7 @@ from cfme.web_ui import (
     DriftGrid, BootstrapTreeview
 )
 import cfme.web_ui.toolbar as tb
+from cfme.common import WidgetasticTaggable
 from cfme.utils import version, ParamClassName
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -26,7 +27,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.virtual_machines import deploy_template
 from cfme.utils.wait import wait_for, TimedOutError
 
-from . import PolicyProfileAssignable, Taggable, SummaryMixin
+from . import PolicyProfileAssignable, SummaryMixin
 
 access_btn = partial(toolbar.select, "Access")
 cfg_btn = partial(toolbar.select, "Configuration")
@@ -77,7 +78,8 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin, Navigatable):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
+             SummaryMixin, Navigatable):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
