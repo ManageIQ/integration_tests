@@ -436,6 +436,10 @@ class ArtifactorHandler(logging.Handler):
 
     slaveid = artifactor = None
 
+    def createLock(self):  # NOQA: false positive, base class override
+        # opt out of locking since artifactor hook calling is threadsave
+        self.lock = None
+
     def emit(self, record):
         if self.artifactor:
             self.artifactor.fire_hook(
