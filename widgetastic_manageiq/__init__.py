@@ -916,7 +916,9 @@ class SummaryTable(VanillaTable):
         else:
             rowspan_image_element = self.browser.element('{}/*[self::i or self::img]'.format(
                 rowspan_path), self)
-            rowspan_child_class = rowspan_image_element.get_attribute(rowspan_attribute)
+            rowspan_child_class = rowspan_image_element.get_attribute('class')
+            if not rowspan_child_class:
+                rowspan_child_class = rowspan_image_element.get_attribute('alt')
             multiple_fields = self.browser.elements(
                 './tbody//*[self::i or self::img][contains(@class|@alt, {})]/parent::td'.format(
                     quote(rowspan_child_class), self))
