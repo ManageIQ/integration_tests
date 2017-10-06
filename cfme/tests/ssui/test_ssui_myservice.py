@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.configure.configuration import server_roles_enabled
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.myservice import MyService
 from cfme import test_requirements
@@ -32,9 +31,10 @@ def configure_websocket(appliance):
     Currently the fixture cfme/fixtures/base.py:27,
     disables the websocket role to avoid intrusive popups.
     """
-    with server_roles_enabled('websocket'):
-        logger.info('Enabling the websocket role to allow console connections')
-        yield
+    appliance.server.settings.enable_server_roles('websocket')
+    logger.info('Enabling the websocket role to allow console connections')
+    yield
+    appliance.server.settings.disable_server_roles('websocket')
     logger.info('Disabling the websocket role to avoid intrusive popups')
 
 
