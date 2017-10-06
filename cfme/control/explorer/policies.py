@@ -3,20 +3,21 @@
 from copy import copy
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic_manageiq import (
+    BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect, SummaryFormItem, Dropdown)
 from widgetastic_patternfly import Button, Input
+from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version, VersionPick
-from widgetastic.widget import Text, Checkbox, TextInput, View
+from widgetastic.widget import Checkbox, Table, Text, TextInput, View
 
 from . import ControlExplorerView
 from actions import Action
-from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 from cfme.utils import ParamClassName
 from cfme.utils.appliance import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
-from widgetastic_manageiq import (
-    BootstrapSwitchSelect, CheckboxSelect, MultiBoxSelect, SummaryFormItem, Dropdown)
+from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 
 class PoliciesAllView(ControlExplorerView):
@@ -179,6 +180,10 @@ class EventDetailsToolbar(View):
 class EventDetailsView(ControlExplorerView):
     title = Text("#explorer_title_text")
     toolbar = View.nested(EventDetailsToolbar)
+    true_actions = Table(".//h3[text()='Order of Actions if ALL Conditions are True']/"
+        "following-sibling::table[1]")
+    false_actions = Table(".//h3[text()='Order of Actions if ANY Conditions are False']/"
+        "following-sibling::table[1]")
 
     @property
     def is_displayed(self):
@@ -397,7 +402,6 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         """
         This method takes a list or dict of actions, goes into the policy event and assigns them.
         Actions can be passed both as the objects, but they can be passed also as a string.
-        Actions, passed as an object but not created yet, will be created.
         If the specified event is not assigned to the policy, it will be assigned.
 
         Args:
@@ -460,6 +464,19 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
             policy_contents.miq_policy_id == policy_id)
         return [event_name[0] for event_name in session.query(events.description).filter(
             events.id.in_(assigned_events))]
+
+    def assigned_actions_to_event(self, event):
+        self.context_event = event
+        view = navigate_to(self, "Event Details")
+        try:
+            true_actions = [row.description.text for row in view.true_actions.rows()]
+        except NoSuchElementException:
+            true_actions = []
+        try:
+            false_actions = [row.description.text for row in view.false_actions.rows()]
+        except NoSuchElementException:
+            false_actions = []
+        return true_actions + false_actions
 
 
 @navigator.register(PolicyCollection, "All")

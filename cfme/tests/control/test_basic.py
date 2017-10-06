@@ -325,6 +325,17 @@ def control_policy(request, policy_collection):
 
 
 @pytest.yield_fixture
+def action(action_collection):
+    action_ = action_collection.create(
+        fauxfactory.gen_alphanumeric(),
+        action_type="Tag",
+        action_values={"tag": ("My Company Tags", "Department", "Accounting")}
+    )
+    yield action_
+    action_.delete()
+
+
+@pytest.yield_fixture
 def alert(alert_collection):
     alert_ = alert_collection.create(
         fauxfactory.gen_alphanumeric(),
@@ -431,6 +442,22 @@ def test_assign_two_random_events_to_control_policy(control_policy, soft_assert)
     control_policy.assign_events(*random_events)
     soft_assert(control_policy.is_event_assigned(random_events[0]))
     soft_assert(control_policy.is_event_assigned(random_events[1]))
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1491576, forced_streams=["5.7.4"])])
+def test_control_assign_actions_to_event(request, policy, action):
+    if type(policy) in CONTROL_POLICIES:
+        event = random.choice(EVENTS)
+        policy.assign_events(event)
+        request.addfinalizer(policy.assign_events)
+    else:
+        prefix = policy.TREE_NODE if not policy.TREE_NODE == "Vm" else policy.TREE_NODE.upper()
+        event = "{} Compliance Check".format(prefix)
+        request.addfinalizer(lambda: policy.assign_actions_to_event(
+            event, {"Mark as Non-Compliant": False}))
+    policy.assign_actions_to_event(event, action)
+    assert str(action) == policy.assigned_actions_to_event(event)[0]
 
 
 @pytest.mark.tier(3)
