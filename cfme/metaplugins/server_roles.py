@@ -46,9 +46,9 @@ see keys of :py:data:`cfme.configure.configuration.server_roles`.
 from markers.meta import plugin
 
 from cfme.utils.conf import cfme_data
-from cfme.utils.appliance import current_appliance
+from cfme.configure.configuration.server_settings import ServerInformation
 
-available_roles = set(current_appliance.server.settings.SERVER_ROLES)
+available_roles = set(ServerInformation.SERVER_ROLES)
 
 
 @plugin("server_roles", keys=["server_roles"])  # Could be omitted but I want to keep it clear
@@ -56,6 +56,8 @@ available_roles = set(current_appliance.server.settings.SERVER_ROLES)
 def add_server_roles(server_roles, server_roles_mode="add"):
     # Disable all server roles
     # and then figure out which ones should be enabled
+    from cfme.utils.appliance import get_or_create_current_appliance
+    current_appliance = get_or_create_current_appliance()
     server_settings = current_appliance.server.settings
     roles_with_vals = {k: False for k in available_roles}
     if server_roles is None:
