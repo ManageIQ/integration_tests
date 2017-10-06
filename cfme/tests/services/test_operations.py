@@ -124,5 +124,5 @@ def test_copy_request(request, generated_request, vm_name, template_name):
     """Check if request gets properly copied."""
     modifications = {'catalog': {'vm_name': fauxfactory.gen_alphanumeric(length=16)}}
     new_request = generated_request.copy_request(values=modifications)
-    request.addfinalizer(new_request.remove_request())
+    request.addfinalizer(new_request.remove_request)
     assert navigate_to(new_request, 'Details')
