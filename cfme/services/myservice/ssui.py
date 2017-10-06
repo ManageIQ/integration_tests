@@ -4,6 +4,7 @@ from widgetastic_manageiq import SSUIlist, SSUIDropdown, SSUIAppendToBodyDropdow
 from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
+from cfme.common.vm import VM
 from cfme.utils.appliance.implementations.ssui import (
     navigator,
     SSUINavigateStep,
@@ -80,8 +81,16 @@ def update(self, updates):
 
 
 @MyService.launch_vm_console.external_implementation_for(ViaSSUI)
-def launch_vm_console(self):
+def launch_vm_console(self, catalog_item):
     navigate_to(self, 'VM Console')
+    # TODO need to remove 001 from the line below and find correct place/way to put it in code
+    vm_obj = VM.factory(catalog_item.provisioning_data.get('vm_name') + '001',
+                catalog_item.provider, template_name=catalog_item.catalog_name)
+    wait_for(
+        func=lambda: vm_obj.vm_console, num_sec=30, delay=2, handle_exception=True,
+        message="waiting for VM Console window to open"
+    )
+    return vm_obj.vm_console
 
 
 @navigator.register(MyService, 'All')

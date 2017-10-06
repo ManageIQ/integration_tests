@@ -79,4 +79,4 @@ def order_catalog_item_in_ops_ui(appliance, provider, provisioning, vm_name, dia
                                                                    partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_finished()
-    return catalog_item.name
+    return catalog_item
