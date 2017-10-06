@@ -180,9 +180,7 @@ class Request(BaseEntity):
             cancel: Whether to cancel the deletion.
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.delete.click()
-        view.browser.handle_alert(cancel=cancel, wait=10.0)
-        view.browser.plugin.ensure_page_safe()
+        view.toolbar.delete.click(handle_alert=True)
 
     @variable(alias='rest')
     def is_finished(self):
@@ -216,8 +214,9 @@ class Request(BaseEntity):
         view.flash.assert_no_error()
         # The way we identify request is a description which is based on vm_name,
         # no need returning Request obj if name is the same => raw request copy
-        if 'vm_name' in values.keys():
-            return Request(description=values['vm_name'], partial_check=True)
+        if 'catalog' in values and 'vm_name' in values['catalog']:
+            return Request(self.collection, description=values['catalog']['vm_name'],
+                           partial_check=True)
 
     def edit_request(self, values, cancel=False):
         """Opens the request for editing and saves or cancels depending on success.
