@@ -2600,7 +2600,6 @@ class DummyAppliance(object):
     build = 'missing :)'
     managed_known_providers = []
 
-
     def set_session_timeout(self, *k):
         pass
 

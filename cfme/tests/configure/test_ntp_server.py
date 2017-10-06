@@ -18,7 +18,7 @@ def ntp_servers_keys(appliance):
     return appliance.server.settings.ntp_servers_fields_keys
 
 
-@pytest.fixture 
+@pytest.fixture
 def empty_ntp_dict(ntp_servers_keys):
     return dict.fromkeys(ntp_servers_keys, '')
 

@@ -3,7 +3,7 @@ import collections
 import pytest
 
 from cfme.utils import log
-from cfme.utils.appliance import get_or_create_current_appliance, DummyAppliance
+from cfme.utils.appliance import get_or_create_current_appliance
 #: A dict of tests, and their state at various test phases
 test_tracking = collections.defaultdict(dict)
 
