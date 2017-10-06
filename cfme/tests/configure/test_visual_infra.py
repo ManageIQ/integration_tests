@@ -186,7 +186,7 @@ def test_infra_report_page_per_item(set_report):
     path = ["Configuration Management", "Virtual Machines", "VMs Snapshot Summary"]
     limit = visual.report_view_limit
     report = CannedSavedReport.new(path)
-    view = report.navigate()
+    view = navigate_to(report, 'Details')
     min_item, max_item, item_amt = view.paginator.paginator.page_info()
     if int(view.paginator.items_amount) >= int(limit):
         assert int(max_item) == int(limit), "Reportview Failed!"
