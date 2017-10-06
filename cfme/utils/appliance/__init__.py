@@ -2300,7 +2300,6 @@ class Appliance(IPAppliance):
 
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
-        from cfme.configure.configuration import set_server_roles, get_server_roles
         with self(browser_steal=True):
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
@@ -2310,10 +2309,9 @@ class Appliance(IPAppliance):
                 self.add_rhev_direct_lun_disk()
 
             log_callback('Enabling smart proxy role...')
-            roles = get_server_roles()
+            roles = self.server.settings.server_roles_db
             if not roles["smartproxy"]:
-                roles["smartproxy"] = True
-                set_server_roles(**roles)
+                self.server.settings.enable_server_roles("smartproxy")
                 # web ui crashes
                 if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
                     try:
