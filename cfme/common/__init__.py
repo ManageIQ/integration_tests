@@ -214,7 +214,8 @@ class WidgetasticTaggable(object):
             tag: tag(str) or Tag object
             cancel: set True to cancel tag assigment
             reset: set True to reset already set up tag
-            details:
+            details (bool): set False if tag should be added for list selection,
+                            default is details page
         """
         if details:
             view = navigate_to(self, 'EditTagsFromDetails')
@@ -261,7 +262,8 @@ class WidgetasticTaggable(object):
             tag: tag(str) or Tag object
             cancel: set True to cancel tag deletion
             reset: set True to reset tag changes
-            details:
+            details (bool): set False if tag should be added for list selection,
+                            default is details page
         """
         if details:
             view = navigate_to(self, 'EditTagsFromDetails')
