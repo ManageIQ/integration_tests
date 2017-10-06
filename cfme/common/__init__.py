@@ -9,7 +9,7 @@ from widgetastic_manageiq import BaseNonInteractiveEntitiesView
 
 from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
-from cfme.configure.configuration import Category, Tag
+from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, BootstrapTreeview, flash, form_buttons, mixins, toolbar
 from cfme.web_ui.timelines import Timelines

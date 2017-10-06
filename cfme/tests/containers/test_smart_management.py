@@ -6,7 +6,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.version import current_version
 from cfme.web_ui import toolbar, AngularSelect, form_buttons
-from cfme.configure.configuration import Tag
+from cfme.configure.configuration.region_settings import Tag
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 from cfme.containers.image import Image
 from cfme.containers.project import Project

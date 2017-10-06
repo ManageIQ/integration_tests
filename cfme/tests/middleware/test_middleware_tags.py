@@ -1,5 +1,5 @@
 import pytest
-from cfme.configure.configuration import Category, Tag
+from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.middleware.datasource import MiddlewareDatasource
 from cfme.middleware.server import MiddlewareServer
 from cfme.middleware.provider.hawkular import HawkularProvider
