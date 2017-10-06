@@ -33,6 +33,7 @@ from cfme.utils.path import get_rel_path
 import sys
 import traceback
 import cfme.utils
+from cfme.utils.appliance import DummyAppliance, get_or_create_current_appliance
 
 # Use a thread-local store for failed soft asserts, making it thread-safe
 # in parallel testing and shared among the functions in this module.
@@ -97,6 +98,9 @@ def _soft_assert_cm():
 
 
 def handle_assert_artifacts(request, fail_message=None):
+    appliance = get_or_create_current_appliance()
+    if isinstance(appliance, DummyAppliance):
+        return
     if not fail_message:
         short_tb = '{}'.format(sys.exc_info()[1])
         short_tb = short_tb.encode('base64')

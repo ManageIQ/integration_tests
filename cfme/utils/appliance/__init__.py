@@ -2597,6 +2597,9 @@ class DummyAppliance(object):
     version = Version('5.8.0')
     is_downstream = True
     is_pod = False
+    build = 'missing :)'
+    managed_known_providers = []
+
 
     def set_session_timeout(self, *k):
         pass

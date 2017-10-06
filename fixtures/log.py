@@ -3,7 +3,7 @@ import collections
 import pytest
 
 from cfme.utils import log
-
+from cfme.utils.appliance import get_or_create_current_appliance, DummyAppliance
 #: A dict of tests, and their state at various test phases
 test_tracking = collections.defaultdict(dict)
 
@@ -40,12 +40,13 @@ def pytest_runtest_logreport(report):
         path, lineno, domaininfo = report.location
         test_status = _test_status(_format_nodeid(report.nodeid, False))
         if test_status == "failed":
+            appliance = get_or_create_current_appliance()
             try:
                 logger().info(
                     "Managed providers: {}".format(
                         ", ".join([
                             prov.key for prov in
-                            pytest.store.current_appliance.managed_known_providers]))
+                            appliance.managed_known_providers]))
                 )
             except KeyError as ex:
                 if 'ext_management_systems' in ex.msg:

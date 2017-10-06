@@ -168,11 +168,11 @@ def pytest_runtest_protocol(item):
     global session_ver
     global session_build
     global session_stream
-
+    appliance = get_or_create_current_appliance()
     if not session_ver:
-        session_ver = str(version.current_version())
-        session_build = store.current_appliance.build
-        session_stream = store.current_appliance.version.stream()
+        session_ver = str(appliance.version)
+        session_build = appliance.build
+        session_stream = appliance.version.stream()
         if str(session_ver) not in session_build:
             session_build = "{}-{}".format(str(session_ver), session_build)
         fire_art_hook(
@@ -194,7 +194,7 @@ def pytest_runtest_protocol(item):
         param_dict = {p: get_name(v) for p, v in params.iteritems()}
     except:
         param_dict = {}
-    ip = get_or_create_current_appliance().address
+    ip = appliance.address
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
