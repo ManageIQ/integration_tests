@@ -254,8 +254,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
     def server_roles_db(self):
         """ Get server roles from Configure / Configuration from DB
 
-        Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
-            accepts as kwargs.
+        Returns: :py:class:`dict` ex.{'cockpit': True}
         """
         return self.appliance.server_roles
 
@@ -276,7 +275,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         self._change_server_roles_state(False, *roles)
 
     def _change_server_roles_state(self, enable, *roles):
-        """ Takes care of setting required roles and then restoring original roles.
+        """ Takes care of setting required roles
 
         Args:
             enable: Whether to enable the roles.
@@ -289,6 +288,7 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
             self.update_server_roles_db(set_roles)
         except Exception:
             self.update_server_roles_db(original_roles)
+
 
 # ============================= VMware Console Form =================================
 
