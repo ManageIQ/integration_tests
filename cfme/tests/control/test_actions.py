@@ -350,8 +350,7 @@ def test_action_stop_virtual_machine_after_starting(request, vm, vm_off, policy_
     [VMwareProvider, RHEVMProvider, OpenStackProvider, AzureProvider],
     scope="module"
 )
-def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off,
-        policy_for_testing):
+def test_action_suspend_virtual_machine_after_starting(request, vm, vm_off, policy_for_testing):
     """ This test tests action 'Suspend Virtual Machine'
 
     This test sets the policy that it suspends the VM when it's turned on. Then it powers on the vm,
@@ -526,7 +525,8 @@ def test_action_power_on_audit(request, vm, vm_off, appliance, policy_for_testin
 
 
 @pytest.mark.provider([VMwareProvider], scope="module")
-def test_action_create_snapshot_and_delete_last(request, vm, vm_on, policy_for_testing):
+def test_action_create_snapshot_and_delete_last(request, action_collection,
+        vm, vm_on, policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -539,7 +539,7 @@ def test_action_create_snapshot_and_delete_last(request, vm, vm_on, policy_for_t
         pytest.skip("This provider does not support snapshots yet!")
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = actions.Action(
+    snapshot_create_action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
@@ -568,7 +568,8 @@ def test_action_create_snapshot_and_delete_last(request, vm, vm_on, policy_for_t
 
 
 @pytest.mark.provider([VMwareProvider], scope="module")
-def test_action_create_snapshots_and_delete_them(request, vm, vm_on, policy_for_testing):
+def test_action_create_snapshots_and_delete_them(request, action_collection, vm, vm_on,
+        policy_for_testing):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
@@ -580,7 +581,7 @@ def test_action_create_snapshots_and_delete_them(request, vm, vm_on, policy_for_
     """
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = actions.Action(
+    snapshot_create_action = action_collection.create(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
