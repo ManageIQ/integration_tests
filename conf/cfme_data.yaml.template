@@ -111,6 +111,8 @@ management_systems:
     ec2:
         name: EC2 US East
         default_name: EC2 US East
+        region: us-west-1
+        region_name: US West
         endpoints:
             default:
                 credentials: aws
@@ -127,6 +129,9 @@ management_systems:
         #    - instance_id_or_name
     openstack:
         name: rhos-01
+        hostname: rhos-01i
+        ipaddress: 10.0.0.4
+        port: 5000
         endpoints:
             default:
                 hostname: rhos-01
@@ -148,6 +153,10 @@ management_systems:
             - pwr-ctl-vm-1-dnd
     hawkular:
         name: hawkular-01
+        type: hawkular
+        credentials: hawkulari
+        hostname: livingontheedge.hawkular.org
+        api_port: 80
         endpoints:
             default:
                 hostname: livingontheedge.hawkular.org
@@ -158,23 +167,15 @@ management_systems:
 
 configuration_managers:
     sat6:
+        type: satellite
         name: Satellite 6
         url: my-satellite.example.com
         ssl: false
-        credentials: satellite_creds
+        credentials: satellite
         provisioning: true
         config_profiles:
             - rhel7
             - rhel6
-    foreman17:
-        name: Foreman 1.7
-        url: 10.0.2.1
-        ssl: false
-        credentials: foreman_creds
-        provisioning: false
-        config_profiles:
-            - centos
-            - fedora
 management_hosts:
     esx:
         name: esx-01

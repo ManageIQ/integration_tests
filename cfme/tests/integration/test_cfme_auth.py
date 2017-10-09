@@ -11,7 +11,9 @@ CREATE_GROUP = 'create_group'
 
 
 def pytest_generate_tests(metafunc):
-    auth_modes = cfme_data['auth_test_data']
+    auth_modes = cfme_data.get('auth_test_data')
+    if not auth_modes:
+        return
     argvalues = [[authmode] for authmode in auth_modes]
     if 'configure_auth' in metafunc.fixturenames:
         metafunc.parametrize(['auth_mode'], argvalues)
