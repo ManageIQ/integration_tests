@@ -16,7 +16,7 @@ management_systems:
         default_name: Virtual Center (10.0.0.2)
         endpoints:
             default:
-                credentials: vsphere5-credential_name_from_credentials.yaml
+                credentials: vsphere5
                 hostname: vsphere5.example.com
                 ipaddress: 10.0.0.1
         host_vnc_port:
@@ -70,7 +70,7 @@ management_systems:
         default_name: RHEV-M (10.0.0.3)
         endpoints:
             default:
-                credentials: rhevm31-credential_name_from_credentials.yaml
+                credentials: rhevm31
                 hostname: rhevm.example.com
                 ipaddress: 10.0.0.1
                 api_port: 3000
