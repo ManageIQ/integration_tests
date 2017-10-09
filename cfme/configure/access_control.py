@@ -77,7 +77,9 @@ class DetailsUserView(ConfigurationView):
     def is_displayed(self):
         return (
             self.title.text == 'EVM User "{}"'.format(self.context['object'].name) and
-            self.accordions.accesscontrol.is_opened
+            self.accordions.accesscontrol.is_opened and
+            (self.accordions.accesscontrol.tree.selected_item.text ==
+                self.context['object'].name)
         )
 
 
@@ -475,7 +477,9 @@ class DetailsGroupView(ConfigurationView):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'EVM Group "{}"'.format(self.context['object'].description)
+            self.title.text == 'EVM Group "{}"'.format(self.context['object'].description) and
+            (self.accordions.accesscontrol.tree.selected_item.text ==
+                self.context['object'].description)
         )
 
 
@@ -955,7 +959,9 @@ class DetailsRoleView(RoleForm):
     def is_displayed(self):
         return (
             self.accordions.accesscontrol.is_opened and
-            self.title.text == 'Role "{}"'.format(self.context['object'].name)
+            self.title.text == 'Role "{}"'.format(self.context['object'].name) and
+            (self.accordions.accesscontrol.tree.selected_item.text ==
+                self.context['object'].name)
         )
 
 
