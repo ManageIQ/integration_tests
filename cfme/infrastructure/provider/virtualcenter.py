@@ -21,8 +21,9 @@ class VMwareProvider(InfraProvider):
     discover_dict = {"vmware": True}
     # xpath locators for elements, to be used by selenium
     _console_connection_status_element = '//*[@id="connection-status"]'
-    _canvas_element = '//*[@id="remote-console" or @id="wmksContainer"]/canvas'
-    _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
+    _canvas_element = ('(//*[@id="remote-console" or @id="wmksContainer"]/canvas|'
+        '//*[@id="noVNC_canvas"])')
+    _ctrl_alt_del_xpath = '(//*[@id="ctrlaltdel"]|//*[@id="sendCtrlAltDelButton"])'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
     bad_credentials_error_msg = 'Cannot complete login due to an incorrect user name or password.'
 
