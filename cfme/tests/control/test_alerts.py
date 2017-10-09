@@ -345,7 +345,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
         test_flag: alerts, provision, metrics_collection
     """
     match_string = fauxfactory.gen_alpha(length=8)
-    alert = alert_collection(
+    alert = alert_collection.create(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
