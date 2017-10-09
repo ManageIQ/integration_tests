@@ -96,7 +96,7 @@ def alert_profile_collection(appliance):
 @pytest.fixture
 def setup_for_alerts(alert_profile_collection, action_collection, policy_collection,
         policy_profile_collection):
-    def _setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
+    def _setup_for_alerts(request, alerts_list, event=None, vm_name=None, provider=None):
         """This function takes alerts and sets up CFME for testing it. If event and further args are
         not specified, it won't create the actions and policy profiles.
 
@@ -108,9 +108,9 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
             provider: funcarg provider
         """
         alert_profile = alert_profile_collection.create(
-            alerts.VMInstanceAlertProfile,
+            alert_profiles.VMInstanceAlertProfile,
             "Alert profile for {}".format(vm_name),
-            alerts
+            alerts_list
         )
         request.addfinalizer(alert_profile.delete)
         alert_profile.assign_to("The Enterprise")
@@ -118,7 +118,7 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
             action = action_collection.create(
                 "Evaluate Alerts for {}".format(vm_name),
                 "Evaluate Alerts",
-                action_values={"alerts_to_evaluate": alerts}
+                action_values={"alerts_to_evaluate": alerts_list}
             )
             request.addfinalizer(action.delete)
             policy = policy_collection.create(
@@ -156,6 +156,8 @@ def setup_candu(appliance):
     appliance.server.settings.enable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     yield
+    appliance.server.settings.disable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     candu.disable_all()
 
 
@@ -345,7 +347,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
         test_flag: alerts, provision, metrics_collection
     """
     match_string = fauxfactory.gen_alpha(length=8)
-    alert = alert_collection(
+    alert = alert_collection.create(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
