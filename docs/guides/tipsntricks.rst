@@ -89,6 +89,11 @@ skipping because of a bug.
 Running commands on another appliance
 -------------------------------------
 
+.. warning:: Though this still works, the stack will be removed in due course. Objects now are
+             linked to an appliance and it is expected that this appliance will be what is used.
+             As this is now the case, it is unlikely that the context manager will be needed for
+             much longer.
+
 We implement a small appliance stack in the framework. When a test first starts it loads up the
 base_url appliance as the first appliance in the stack. From then on, all the browsing operations,
 database operations and ssh commands are run on the top appliance in the stack. From time to time
@@ -138,8 +143,7 @@ Invalidating cached data
 
 In order to speed things up, we cache certain items of data, such as the appliances version and
 configuration details. When these get changed, the cache becomes invalid and we must invalidate
-the cache somehow. It used to be handled with the ``utils.signals`` module which is now gone. You
-need to call an appropriate method on the appliance object like
+the cache somehow. You need to call an appropriate method on the appliance object like
 :py:meth:`utils.appliance.IPAppliance.server_details_changed` which invalidates the data.
 
 pytest store
@@ -163,20 +167,6 @@ When working with the UI, we can actually run a process and expect to have a cer
     provider.credentials['default'] = get_credentials_from_config('bad_credentials')
     with error.expected('Login failed due to a bad username or password.'):
         provider.create(validate_credentials=True)
-
-Appliance object SSH gremlins
------------------------------
-If you get seemingly random SSH errors coming from :py:mod:`utils.appliance`, you might be facing the problem that some of the methods inside of the class does some version picking, or database connection outside of the object scope or whatever that is supposed to touch the target appliance but does not go through the object that you are in, but the :py:class:`utils.appliance.IPAppliance` object itself is not pushed to the appliance stack in :py:mod:`fixtures.pytest_store`. So instead of using the IP address of the appliance the object is pointed to, it uses whatever was set before, either the ``base_url`` one or something that was pushed before. The solution is to wrap that in a ``with`` block, like this (presuming we call this code inside :py:class:`utils.appliance.Appliance`)::
-
-    with self.ipapp as ipapp:
-        ipapp.wait_for_ssh()
-
-        self._i_do_verpicking("and fail randomly when not in with block")
-
-        success("!")
-
-Until we come with a better solution, this will bite us from time to time when we forget about it.
-
 
 Marking your tests with associated product requirements
 =======================================================

@@ -15,20 +15,38 @@ setup and execution scripts.
 Obtaining what you need (Project Setup)
 ----------------------------------------
 
-* create a dedicated folder for working with the integration tests,
-  our automated quickstart has expectations that best work out
-  when it has its own place
-* obtain the ``cfme_tests`` repository
-  (`fork and clone <https://github.com/ManageIQ/integration_tests/fork>`_)
-* if you have access, obtain the ``cfme-qe-yamls`` repository (internal url, please ask the team) and
-  put the ``.yaml_key`` file into the root of the ``cfme_tests`` repository.
-* enter the ``cfme_tests`` repository with your shell and execute ``python -m cfme.scripting.quickstart``
-  which will in turn configure your system, the development environment and the default configuration files
-* activate the development environment by ``. ../cfme_venv/bin/activate``
+* Create a dedicated folder for working with the integration tests,
+  the automated quickstart works best if this is created inside a new folder.
+* Obtain the ``cfme_tests`` repository by working and cloning
+  (`<https://github.com/ManageIQ/integration_tests/fork>`_)
+* You will need some configuration files. You have the choice of either using the templates or
+  if you are internal to the ManageIQ team, you may be able to gain access to the QE YAMLs repo.
+
+    * If you are using the internal repo, you need to obtain the decryption key ``.yaml_key``
+    * If you are using the templates as a starting point, you can just create an empty ``.yaml_key`` file.
+
+* Enter the folder where you cloned the repository with your shell and
+  execute ``python -m cfme.scripting.quickstart`` which will configure your system,
+  the development environment and the default configuration files
+    * If you chose to use the templates, now is a good time to duplicate the ``conf/\*.yaml.template``files
+      to ``conf/\*.yaml`` files.
+
+* Activate the development environment by ``. ../cfme_venv/bin/activate``
 * Set up a local selenium server that opens browser windows somewhere other than your
-  desktop. There is a Docker based solution for the browser, look at the script
-  ``scripts/dockerbot/sel_container.py``. That ensures you have the proper versions of browsers. You
-  can also set everything up in your system using Xvnc - :doc:`guides/vnc_selenium` .
+  desktop. There are three options here:
+
+    * You can create your own virtual framebuffer for this.
+    * If you are internal to the ManageIQ team you can use Wharf, ask someone in your team for access.
+    * Or, there is a Docker based solution for the browser,
+
+        * To use this, you need to have installed docker, - :doc:`guides/vnc_selenium`.
+        * Run ``docker pull cfmeqe/sel_ff_chrome`` to obtain the docker image
+        * Run ``miq selenium-container`` to start up a docker container with the defaults. It should tell
+          you the port numbers it is using and you should be able to VNC to it to see what is happening.
+
+* After all this, you should be able to run ``miq shell`` and or ``miq-runtest --collect-only``. Be
+  aware that you will also have to add your appliance to the ``env.yaml`` in either the
+  ``base_url``(deprecated) section, or in the newer ``appliances`` list.
 
 Appliances in containers
 ------------------------

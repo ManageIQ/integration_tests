@@ -1,5 +1,5 @@
-Gotchas
-=======
+Selenium Gotchas
+================
 
 Selenium has a few quirks which have caused us immense amounts of debugging time. If you
 are facing strange issues with Selenium that you can't explain and this usually boils down
