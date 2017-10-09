@@ -37,7 +37,7 @@ def download_summary(spec_object):
 @pytest.mark.parametrize("objecttype", OBJECTCOLLECTIONS)
 def test_download_lists_base(filetype, objecttype, appliance):
     """ Download the items from base lists. """
-    download(appliance(objecttype), filetype)
+    download(appliance.get(objecttype), filetype)
 
 
 @pytest.mark.meta(blockers=[BZ(1480577, forced_streams=["5.7", "5.8"])])
