@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import datetime
-import re
 
 import fauxfactory
 import pytest
@@ -8,7 +7,6 @@ import pytest
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
-from cfme.automate.explorer.domain import DomainCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.rest.gen_data import (
     _creating_skeleton,
@@ -39,6 +37,9 @@ pytestmark = [
     test_requirements.service,
     pytest.mark.tier(2)
 ]
+
+
+NUM_BUNDLE_ITEMS = 4
 
 
 @pytest.fixture(scope="module")
@@ -107,7 +108,7 @@ def catalog_bundle(request, dialog, service_catalog_obj, appliance, a_provider):
         service_dialog=dialog,
         service_catalog=service_catalog_obj,
         a_provider=a_provider,
-        num=4)
+        num=NUM_BUNDLE_ITEMS)
 
     uid = fauxfactory.gen_alphanumeric()
     bundle_name = 'test_rest_bundle_{}'.format(uid)
@@ -820,8 +821,8 @@ class TestServiceCatalogsRESTAPI(object):
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        service_name = re.search(
-            r'\[({}[0-9-]*)\] '.format(template.name), service_request.message).group(1)
+        service_name = str(service_request.options['dialog']['dialog_service_name'])
+        assert '[{}]'.format(service_name) in service_request.message
         # this fails if the service with the `service_name` doesn't exist
         new_service = appliance.rest_api.collections.services.get(name=service_name)
 
@@ -863,9 +864,8 @@ class TestServiceCatalogsRESTAPI(object):
         for index, result in enumerate(results):
             service_request = appliance.rest_api.get_entity('service_requests', result['id'])
             wait_for(_order_finished, func_args=[service_request], num_sec=180, delay=10)
-            service_name = re.search(
-                r'\[({}[0-9-]*)\] '.format(service_templates[index].name),
-                service_request.message).group(1)
+            service_name = str(service_request.options['dialog']['dialog_service_name'])
+            assert '[{}]'.format(service_name) in service_request.message
             # this fails if the service with the `service_name` doesn't exist
             new_service = appliance.rest_api.collections.services.get(name=service_name)
             new_services.append(new_service)
@@ -897,8 +897,8 @@ class TestServiceCatalogsRESTAPI(object):
 
         wait_for(_order_finished, num_sec=2000, delay=10)
 
-        service_name = re.search(
-            r'\[({}[0-9-]*)\] '.format(catalog_bundle.name), service_request.message).group(1)
+        service_name = str(service_request.options['dialog']['dialog_service_name'])
+        assert '[{}]'.format(service_name) in service_request.message
         # this fails if the service with the `service_name` doesn't exist
         new_service = appliance.rest_api.collections.services.get(name=service_name)
 
@@ -908,9 +908,9 @@ class TestServiceCatalogsRESTAPI(object):
 
         vms = new_service.vms
         vms.reload()
-        assert len(vms) == 4
+        assert len(vms) == NUM_BUNDLE_ITEMS
         children = appliance.rest_api.collections.services.find_by(ancestry=str(new_service.id))
-        assert len(children) == 4
+        assert len(children) == NUM_BUNDLE_ITEMS
 
     @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_catalog_from_detail(self, appliance, service_catalogs, method):
@@ -963,18 +963,22 @@ class TestServiceCatalogsRESTAPI(object):
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
 class TestPendingRequestsRESTAPI(object):
     def _get_instance(self, miq_domain):
-        instance = (miq_domain
-            .namespaces.instantiate(name='Service')
-            .namespaces.instantiate(name='Provisioning')
-            .namespaces.instantiate(name='StateMachines')
-            .classes.instantiate(name='ServiceProvisionRequestApproval')
-            .instances.instantiate(name='Default'))
+        auto_class = (miq_domain
+                      .namespaces.instantiate(name='Service')
+                      .namespaces.instantiate(name='Provisioning')
+                      .namespaces.instantiate(name='StateMachines')
+                      .classes.instantiate(name='ServiceProvisionRequestApproval'))
+        instance = auto_class.instances.instantiate(
+            name='Default',
+            display_name=None,
+            description=None,
+            fields=None)
         return instance
 
     @pytest.fixture(scope='class')
     def new_domain(self, request, appliance):
         """Creates new domain and copy instance from ManageIQ to this domain."""
-        dc = DomainCollection(appliance)
+        dc = appliance.collections.domains
         domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
         request.addfinalizer(domain.delete_if_exists)
         miq_domain = dc.instantiate(name='ManageIQ')
@@ -987,7 +991,7 @@ class TestPendingRequestsRESTAPI(object):
         """Modifies the instance in new domain to change it to manual approval instead of auto."""
         instance = self._get_instance(new_domain)
         with update(instance):
-            instance.fields = {'approval_type ': {'value': 'manual'}}
+            instance.fields = {'approval_type': {'value': 'manual'}}
 
     @pytest.fixture(scope='function')
     def pending_request(
@@ -1092,8 +1096,8 @@ class TestPendingRequestsRESTAPI(object):
 
         wait_for(_order_approved, num_sec=180, delay=10)
 
-        service_name = re.search(
-            r' \[([^\]]+)\] ', pending_request.message).group(1)
+        service_name = str(pending_request.options['dialog']['dialog_service_name'])
+        assert '[{}]'.format(service_name) in pending_request.message
         # this fails if the service with the `service_name` doesn't exist
         new_service = appliance.rest_api.collections.services.get(name=service_name)
 
@@ -1183,8 +1187,8 @@ class TestServiceRequests(object):
 
         wait_for(_order_finished, num_sec=180, delay=10)
 
-        service_name = re.search(
-            r'\[({}[0-9-]*)\] '.format(new_template.name), service_request.message).group(1)
+        service_name = str(service_request.options['dialog']['dialog_service_name'])
+        assert '[{}]'.format(service_name) in service_request.message
         # this fails if the service with the `service_name` doesn't exist
         new_service = appliance.rest_api.collections.services.get(name=service_name)
         request.addfinalizer(new_service.action.delete)
@@ -1619,7 +1623,8 @@ class TestServiceOrderCart(object):
         wait_for(_order_finished, num_sec=180, delay=10)
 
         for sr in service_requests:
-            service_name = re.search(r' \[([^\]]+)\] ', sr.message).group(1)
+            service_name = str(sr.options['dialog']['dialog_service_name'])
+            assert '[{}]'.format(service_name) in sr.message
             # this fails if the service with the `service_name` doesn't exist
             new_service = appliance.rest_api.collections.services.get(name=service_name)
             request.addfinalizer(new_service.action.delete)
