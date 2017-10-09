@@ -294,7 +294,10 @@ def browse_directory(dir_url):
         if key == 'template_upload_openshift':
             # this is necessary because headers don't contain last-modified date for folders
             # todo: remove this along with refactoring script
-            url = name_dict[key] + 'cfme-template.yaml'
+            if '5.8' in name_dict[key]:
+                url = name_dict[key] + 'cfme-template.yaml'
+            else:
+                url = name_dict[key] + 'templates/' + 'cfme-template.yaml'
         else:
             url = name_dict[key]
         date = urlopen(url).info().getdate('last-modified')
