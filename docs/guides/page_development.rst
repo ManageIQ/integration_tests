@@ -1,6 +1,10 @@
 Page Development
 ================
 
+.. warning:: This page is **OUT OF DATE** and will be be replaced soon by a guide to using
+             Widgetastic and how to design views instead. It is being kept here until all
+             of the ``web_ui`` system is removed and we have transitioned over to WT entirely.
+
 Introduction
 ------------
 
