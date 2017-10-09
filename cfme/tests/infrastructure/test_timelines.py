@@ -4,13 +4,13 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.base.ui import Server
+from cfme.common.provider import BaseProvider
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from fixtures.provider import setup_one_or_skip
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
-from cfme.web_ui import InfoBlock
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -19,22 +19,26 @@ from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.tier(2),
-              pytest.mark.usefixtures("setup_provider_modscope")]
-not_scvmm = ProviderFilter(classes=[SCVMMProvider], inverted=True)  # scvmm doesn't provide events
-all_prov = ProviderFilter(classes=[InfraProvider])
-pytest_generate_tests = testgen.generate(gen_func=testgen.providers,
-                                         filters=[not_scvmm, all_prov], scope='module')
+pytestmark = [pytest.mark.tier(2)]
+
+
+@pytest.fixture(scope='module')
+def a_provider(request):
+    BaseProvider.clear_providers()
+    not_scvmm = ProviderFilter(classes=[SCVMMProvider],
+                               inverted=True)  # scvmm doesn't provide events
+    all_prov = ProviderFilter(classes=[InfraProvider])
+    return setup_one_or_skip(request, filters=[not_scvmm, all_prov])
 
 
 @pytest.fixture(scope="module")
-def new_vm(request, provider):
-    vm = VM.factory(random_vm_name("timelines", max_length=16), provider)
+def new_vm(request, a_provider):
+    vm = VM.factory(random_vm_name("timelines", max_length=16), a_provider)
 
     request.addfinalizer(vm.delete_from_provider)
 
-    if not provider.mgmt.does_vm_exist(vm.name):
-        logger.info("deploying %s on provider %s", vm.name, provider.key)
+    if not a_provider.mgmt.does_vm_exist(vm.name):
+        logger.info("deploying %s on provider %s", vm.name, a_provider.key)
         vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     return vm
 
@@ -97,8 +101,8 @@ def test_infra_host_event(gen_events, new_vm):
     Metadata:
         test_flag: timelines, provision
     """
-    new_vm.load_details()
-    host_name = InfoBlock.text('Relationships', 'Host')
+    view = navigate_to(new_vm, "Details")
+    host_name = view.entities.relationships.get_text_of('Host')
     host = Host(name=host_name, provider=new_vm.provider)
     wait_for(count_events, [host, new_vm], timeout='10m', fail_condition=0,
              message="events to appear")

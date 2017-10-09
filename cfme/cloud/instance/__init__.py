@@ -414,7 +414,7 @@ class AllForProvider(CFMENavigateStep):
 @navigator.register(Instance, 'Details')
 class Details(CFMENavigateStep):
     VIEW = InstanceDetailsView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('AllForProvider')
 
     def step(self):
         self.prerequisite_view.toolbar.view_selector.select('List View')
