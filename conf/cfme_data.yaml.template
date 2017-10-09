@@ -79,7 +79,7 @@ management_systems:
             candu:
                 cu_credentials: rhevm31-cu_db_cred_name_from_credentials.yaml
                 api_port:
-                database: ovirt_engine_history:
+                database: ovirt_engine_history
                 hostname: rhevm.example.com
         server_zone: default
         type: rhevm
