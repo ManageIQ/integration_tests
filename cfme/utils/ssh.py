@@ -527,10 +527,7 @@ class SSHClient(paramiko.SSHClient):
                 'Please use .* instead',
                 'key :terminate is duplicated and overwritten',
             ]))
-        if version.current_version() < "5.5":
-            data = self.run_command("systemctl status evmserverd")
-        else:
-            data = self.run_rake_command("evm:status")
+        data = self.run_rake_command("evm:status")
         if data.rc != 0:
             raise Exception("systemctl status evmserverd $?={}".format(data.rc))
         data = data.output.strip().split("\n\n")
@@ -543,8 +540,12 @@ class SSHClient(paramiko.SSHClient):
             raise Exception("Wrong command output:\n{}".format(data.output))
 
         def _process_dict(d):
-            d["PID"] = int(d["PID"])
             d["ID"] = int(d["ID"])
+            try:
+                # this function fails if some server process isn't running. pid will be '' then
+                d["PID"] = int(d["PID"])
+            except ValueError:
+                d["PID"] = None
             try:
                 d["SPID"] = int(d["SPID"])
             except ValueError:
@@ -579,6 +580,11 @@ class SSHClient(paramiko.SSHClient):
                 fields = [f.strip() for f in worker.strip().split("|")]
                 wrk = dict(zip(wrk_headers, fields))
                 _process_dict(wrk)
+                # ansible worker doesn't work in pod in 5.8
+                if (wrk['Worker Type'] == 'EmbeddedAnsibleWorker' and
+                        "5.8" in version.current_version() and
+                        self.run_command('[[ -f Dockerfile ]]').success):
+                    continue
                 workers.append(wrk)
         return {"servers": servers, "workers": workers}
 

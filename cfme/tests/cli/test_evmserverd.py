@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.usefixtures("start_evmserverd_after_module")]
 
 
 @pytest.mark.tier(1)
-def test_evmserverd_stop(appliance):
+def test_evmserverd_stop(appliance, request):
     """Tests whether stopping the evmserverd really stops the CFME server processes.
 
     Steps:
@@ -38,6 +38,7 @@ def test_evmserverd_stop(appliance):
     })
 
     server_names = {server[server_name_key] for server in appliance.ssh_client.status["servers"]}
+    request.addfinalizer(lambda: appliance.ssh_client.run_command("systemctl start evmserverd"))
     assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
 
     @wait_for_decorator(timeout="2m", delay=5)
@@ -50,15 +51,14 @@ def test_evmserverd_stop(appliance):
                 return False
         return True
 
-    if version.current_version() >= "5.5":
-        status = appliance.ssh_client.run_command("systemctl status evmserverd")
-        assert "Stopped EVM server daemon" in status.output
-        assert "code=exited" in status.output
+    status = appliance.ssh_client.run_command("systemctl status evmserverd")
+    assert "Stopped EVM server daemon" in status.output
+    assert "code=exited" in status.output
 
 
 @pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda: version.current_version() >= "5.5")
-def test_evmserverd_start_twice(appliance):
+def test_evmserverd_start_twice(appliance, request):
     """If evmserverd start is ran twice, it will then tell that it is already running.
 
     Steps:
@@ -70,6 +70,7 @@ def test_evmserverd_start_twice(appliance):
         * Extract the PID of the evmserverd from the output from the last command.
         * Verify the process with such PID exists ``kill -0 $PID``.
     """
+    request.addfinalizer(lambda: appliance.ssh_client.run_command("systemctl start evmserverd"))
     assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
     # Start first time
     res = appliance.ssh_client.run_command("systemctl start evmserverd")
