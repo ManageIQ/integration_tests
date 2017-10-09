@@ -152,7 +152,7 @@ def provisioned_instance(provider, testing_instance, appliance):
         provision_request.wait_for_request(method='ui')
     except Exception as e:
         logger.info(
-            "Provision failed {}: {}".format(e, provision_request.row.last_message.text()))
+            "Provision failed {}: {}".format(e, provision_request.request_state))
         raise e
     assert provision_request.is_succeeded(method='ui'), (
         "Provisioning failed with the message {}".format(
