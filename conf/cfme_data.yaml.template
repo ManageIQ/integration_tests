@@ -126,7 +126,7 @@ management_systems:
         network: defaultnetwork
         test_vm_power_control:
             - pwr-ctl-vm-1-dnd
-     hawkular:
+    hawkular:
         name: hawkular-01
         hostname: livingontheedge.hawkular.org
         port: 80
