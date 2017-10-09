@@ -8,10 +8,10 @@ from cfme.utils.wait import wait_for_decorator
 
 @pytest.yield_fixture(scope="module")
 def start_evmserverd_after_module(appliance):
-    appliance.ssh_client.run_command("systemctl start evmserverd")
+    appliance.start_evm_service()
     appliance.wait_for_web_ui()
     yield
-    appliance.ssh_client.run_command("systemctl restart evmserverd")
+    appliance.restart_evm_service()
     appliance.wait_for_web_ui()
 
 
@@ -38,8 +38,8 @@ def test_evmserverd_stop(appliance, request):
     })
 
     server_names = {server[server_name_key] for server in appliance.ssh_client.status["servers"]}
-    request.addfinalizer(lambda: appliance.ssh_client.run_command("systemctl start evmserverd"))
-    assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
+    request.addfinalizer(appliance.start_evm_service)
+    appliance.stop_evm_service()
 
     @wait_for_decorator(timeout="2m", delay=5)
     def servers_stopped():
@@ -70,14 +70,14 @@ def test_evmserverd_start_twice(appliance, request):
         * Extract the PID of the evmserverd from the output from the last command.
         * Verify the process with such PID exists ``kill -0 $PID``.
     """
-    request.addfinalizer(lambda: appliance.ssh_client.run_command("systemctl start evmserverd"))
-    assert appliance.ssh_client.run_command("systemctl stop evmserverd").rc == 0
+    request.addfinalizer(appliance.start_evm_service)
+    appliance.stop_evm_service()
     # Start first time
-    res = appliance.ssh_client.run_command("systemctl start evmserverd")
+    res = appliance.start_evm_service()
     assert "running evm in background" in res.output.lower()
     assert res.rc == 0
     # Start second time
-    res = appliance.ssh_client.run_command("systemctl start evmserverd")
+    res = appliance.start_evm_service()
     assert "evm is already running" in res.output.lower()
     assert res.rc == 0
     # Verify the process is running

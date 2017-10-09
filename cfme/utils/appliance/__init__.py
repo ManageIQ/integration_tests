@@ -1327,6 +1327,12 @@ class IPAppliance(object):
         """
         self._evm_service_command('start', expected_exit_code=0, log_callback=log_callback)
 
+    @logger_wrap("Stop EVM Service: {}")
+    def stop_evm_service(self, log_callback=None):
+        """Stops the ``evmserverd`` service on this appliance
+        """
+        self._evm_service_command('stop', expected_exit_code=0, log_callback=log_callback)
+
     @logger_wrap("Restart EVM Service: {}")
     def restart_evm_service(self, rude=False, log_callback=None):
         """Restarts the ``evmserverd`` service on this appliance
