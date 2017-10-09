@@ -157,6 +157,8 @@ def setup_candu(appliance):
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     yield
     candu.disable_all()
+    appliance.server.settings.disable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
 
 
 @pytest.fixture(scope="function")
