@@ -350,14 +350,15 @@ def test_group_description_required_error_validation():
 
 
 @pytest.mark.tier(3)
-def test_delete_default_group():
+@pytest.mark.parametrize('test_group_name', Group().get_default_group_names())
+def test_delete_default_group(test_group_name):
     """Test for deleting default group EvmGroup-administrator.
 
     Steps:
         * Login as Administrator user
         * Try deleting the group EvmGroup-adminstrator
     """
-    group = Group(description='EvmGroup-administrator')
+    group = Group(description=test_group_name)
 
     with pytest.raises(RBACOperationBlocked):
         group.delete()
@@ -376,14 +377,15 @@ def test_delete_group_with_assigned_user():
 
 
 @pytest.mark.tier(3)
-def test_edit_default_group():
+@pytest.mark.parametrize('test_group_name', Group().get_default_group_names())
+def test_edit_default_group(test_group_name):
     """Test that CFME prevents a user from editing a default group
 
     Steps:
         * Login as Administrator user
         * Try editing the group EvmGroup-adminstrator
     """
-    group = Group(description='EvmGroup-approver')
+    group = Group(description=test_group_name)
 
     group_updates = {}
     with pytest.raises(RBACOperationBlocked):
@@ -456,7 +458,8 @@ def test_rolename_duplicate_validation():
 
 
 @pytest.mark.tier(3)
-def test_delete_default_roles():
+@pytest.mark.parametrize('test_role_name', Role().get_default_role_names())
+def test_delete_default_roles(test_role_name):
     """Test that CFME prevents a user from deleting a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -465,13 +468,14 @@ def test_delete_default_roles():
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-approver
     """
-    role = Role(name='EvmRole-approver')
+    role = Role(name=test_role_name)
     with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 
 @pytest.mark.tier(3)
-def test_edit_default_roles():
+@pytest.mark.parametrize('test_role_name', Role().get_default_role_names())
+def test_edit_default_roles(test_role_name):
     """Test that CFME prevents a user from editing a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -480,7 +484,7 @@ def test_edit_default_roles():
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-auditor
     """
-    role = Role(name='EvmRole-auditor')
+    role = Role(name=test_role_name)
     newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
     role_updates = {'name': newrole_name}
 

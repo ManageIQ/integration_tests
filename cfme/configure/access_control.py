@@ -846,6 +846,27 @@ class Group(Updateable, Pretty, Navigatable):
         except CandidateNotFound:
             return False
 
+    def get_default_group_names(self):
+        if self.appliance.version < '5.8':
+            group_names = [
+                "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
+                "EvmGroup-consumption_administrator", "EvmGroup-desktop", "EvmGroup-operator",
+                "EvmGroup-security", "EvmGroup-super_administrator", "EvmGroup-support",
+                "EvmGroup-tenant_administrator", "EvmGroup-tenant_quota_administrator",
+                "EvmGroup-user", "EvmGroup-user_limited_self_service",
+                "EvmGroup-user_self_service", "EvmGroup-vm_user", ]
+        else:
+            group_names = [
+                "EvmGroup-administrator", "EvmGroup-approver", "EvmGroup-auditor",
+                "EvmGroup-consumption_administrator", "EvmGroup-container_administrator",
+                "EvmGroup-desktop", "EvmGroup-operator", "EvmGroup-security",
+                "EvmGroup-super_administrator", "EvmGroup-support", "EvmGroup-tenant_administrator",
+                "EvmGroup-tenant_quota_administrator", "EvmGroup-user",
+                "EvmGroup-user_limited_self_service", "EvmGroup-user_self_service",
+                "EvmGroup-vm_user", ]
+
+        return group_names
+
 
 @navigator.register(Group, 'All')
 class GroupAll(CFMENavigateStep):
@@ -1135,6 +1156,27 @@ class Role(Updateable, Pretty, Navigatable):
                     view.product_features_tree.uncheck_node(*path)
             feature_update = True
         return feature_update
+
+    def get_default_role_names(self):
+        if self.appliance.version < '5.8':
+            role_names = [
+                "EvmRole-administrator", "EvmRole-approver", "EvmRole-auditor",
+                "EvmRole-consumption_administrator", "EvmRole-desktop", "EvmRole-operator",
+                "EvmRole-security", "EvmRole-super_administrator", "EvmRole-support",
+                "EvmRole-tenant_administrator", "EvmRole-tenant_quota_administrator",
+                "EvmRole-user", "EvmRole-user_limited_self_service",
+                "EvmRole-user_self_service", "EvmRole-vm_user", ]
+        else:
+            role_names = [
+                "EvmRole-administrator", "EvmRole-approver", "EvmRole-auditor",
+                "EvmRole-consumption_administrator", "EvmRole-container_administrator",
+                "EvmRole-desktop", "EvmRole-operator", "EvmRole-security",
+                "EvmRole-super_administrator", "EvmRole-support", "EvmRole-tenant_administrator",
+                "EvmRole-tenant_quota_administrator", "EvmRole-user",
+                "EvmRole-user_limited_self_service", "EvmRole-user_self_service",
+                "EvmRole-vm_user", ]
+
+        return role_names
 
 
 @navigator.register(Role, 'All')
