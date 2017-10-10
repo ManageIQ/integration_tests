@@ -94,7 +94,7 @@ def setup_ha_env(cfme_version, provider, lease):
     apps[0].appliance_console.run_commands(command_set2)
     print("Primary HA node configured {}".format(ip0))
     command_set3 = ('ap', '', rep, '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y',
-        TimedCommand('y', 15), '')
+        TimedCommand('y', 300), '')
     apps[2].appliance_console.run_commands(command_set3)
     print("Secondary HA node provision and configured {}".format(ip2))
     command_set4 = ('ap', '', mon, '1', '')
