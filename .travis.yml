@@ -2,6 +2,9 @@ language: python
 cache: pip
 python:
   - '2.7'
+env:
+  # work around travis being missconfigured
+  - BOTO_CONFIG=/dev/null
 install:
   - pip install -U pip setuptools
   - pip install -Ur requirements/frozen.txt
