@@ -54,7 +54,7 @@ def check_vm_visibility(check=False):
     if vm_name == "<Orphaned>" and check:
         view.sidebar.vmstemplates.tree.click_path("All VMs & Templates", vm_name)
         try:
-            view.entities.get_entities()
+            view.entities.get_first_entity()
         except ItemNotFound:
             pass
     return True
