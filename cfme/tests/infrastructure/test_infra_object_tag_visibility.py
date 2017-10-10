@@ -1,6 +1,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider import BaseProvider
 from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import DatastoreCollection
@@ -15,6 +16,7 @@ pytestmark = [test_requirements.tag, pytest.mark.tier(2)]
 
 @pytest.fixture(scope='module')
 def a_provider(request):
+    BaseProvider.clear_providers()
     prov_filter = ProviderFilter(classes=[InfraProvider])
     return setup_one_or_skip(request, filters=[prov_filter])
 

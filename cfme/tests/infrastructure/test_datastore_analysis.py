@@ -77,7 +77,8 @@ def get_host_data_by_name(provider_key, host_name):
         BZ(1380707)
     ]
 )
-def test_run_datastore_analysis(request, setup_provider, provider, datastore, soft_assert):
+def test_run_datastore_analysis(request, setup_provider, provider, datastore, soft_assert,
+                                has_no_providers):
     """Tests smarthost analysis
 
     Metadata:
