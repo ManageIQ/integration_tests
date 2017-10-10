@@ -10,6 +10,7 @@ from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.web_ui import toolbar as tb
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.exceptions import ItemNotFound
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -41,15 +42,21 @@ def set_and_test_default_view(group_name, view, page):
     DefaultView.set_default_view(group_name, old_default)
 
 
-def check_vm_visibility():
+def check_vm_visibility(check=False):
     view = navigate_to(Vm, 'All')
     value = view.sidebar.vmstemplates.tree.read_contents()
     # Below steps assigns last name of the last list to vm_name variable.
     vm_name = value[-1]
     while isinstance(vm_name, list):
         vm_name = vm_name[-1]
-    if vm_name == "<Orphaned>":
+    if vm_name == "<Orphaned>" and not check:
         return False
+    if vm_name == "<Orphaned>" and check:
+        view.sidebar.vmstemplates.tree.click_path("All VMs & Templates", vm_name)
+        try:
+            view.entities.get_entities()
+        except ItemNotFound:
+            pass
     return True
 
 
@@ -105,4 +112,4 @@ def test_vm_visibility_off():
 
 def test_vm_visibility_on():
     DefaultView.set_default_view_switch_on()
-    assert check_vm_visibility()
+    assert check_vm_visibility(True)
