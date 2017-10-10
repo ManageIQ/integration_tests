@@ -49,3 +49,10 @@ def test_myservice_crud(setup_provider, context, order_catalog_item_in_ops_ui):
         myservice = MyService(appliance, service_name)
         myservice.update({'name': '{}_edited'.format(service_name)})
         # TODO - add rest of myservice crud like delete in next phase.
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
+@pytest.mark.parametrize('context', [ViaSSUI])
+@pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
+def test_vm_console(setup_provider, context, configure_websocket, order_catalog_item_in_ops_ui):
+    pass
