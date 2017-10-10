@@ -3,7 +3,7 @@ from urlparse import urlparse
 import pytest
 
 from fixtures.pytest_store import store
-from cfme.utils.appliance import IPAppliance
+from cfme.utils.appliance import IPAppliance, DummyAppliance
 
 
 def test_ipappliance_from_address():
@@ -21,7 +21,9 @@ def test_ipappliance_from_url():
     assert ip_a.address == address
 
 
-def test_ipappliance_use_baseurl():
+def test_ipappliance_use_baseurl(appliance):
+    if isinstance(appliance, DummyAppliance):
+        pytest.xfail("Dummy appliance cant provide base_url")
     ip_a = IPAppliance()
     ip_a_parsed = urlparse(ip_a.url)
     env_parsed = urlparse(store.base_url)
@@ -29,7 +31,9 @@ def test_ipappliance_use_baseurl():
     assert ip_a.address in store.base_url
 
 
-def test_ipappliance_managed_providers(infra_provider):
+@pytest.mark.skipif(pytest.config.getoption('--dummy-appliance'),
+                    reason="infra_provider cant support dummy instance")
+def test_ipappliance_managed_providers(appliance, infra_provider):
     ip_a = IPAppliance()
     assert infra_provider in ip_a.managed_known_providers
 

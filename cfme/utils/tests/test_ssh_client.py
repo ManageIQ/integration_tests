@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 import pytest
-
+from cfme.utils.appliance import DummyAppliance
 pytestmark = [
     pytest.mark.nondestructive,
     pytest.mark.skip_selenium,
 ]
+
+
+@pytest.fixture(autouse=True)
+def check_appliance(appliance):
+    if isinstance(appliance, DummyAppliance):
+        pytest.skip('Dummy appliance not supported')
 
 
 def test_ssh_client_run_command(appliance):

@@ -13,7 +13,7 @@ def test_datafile_fixture_read(datafile, request):
 
 
 def test_datafile_fixture_read_slash_path(datafile, request):
-    myfile = datafile('/utils/test_datafile_fixture/test_template')
+    myfile = datafile('/cfme/utils/test_datafile_fixture/test_template')
     assert myfile.read() == '$replaceme'
 
 

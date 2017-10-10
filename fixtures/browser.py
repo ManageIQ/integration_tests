@@ -36,7 +36,6 @@ def pytest_runtest_setup(item):
         cfme.utils.browser.ensure_browser_open()
 
 
-
 def pytest_exception_interact(node, call, report):
     from fixtures.pytest_store import store
     from httplib import BadStatusLine
