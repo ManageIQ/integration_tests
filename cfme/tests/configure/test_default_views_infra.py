@@ -4,14 +4,12 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
 from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.virtual_machines import Vm, InfraVmDetailsView
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.web_ui import toolbar as tb
 from cfme.utils.appliance.implementations.ui import navigate_to
-from selenium.common.exceptions import NoSuchElementException
-
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -46,20 +44,14 @@ def set_and_test_default_view(group_name, view, page):
 def check_vm_visibility():
     view = navigate_to(Vm, 'All')
     value = view.sidebar.vmstemplates.tree.read_contents()
-    # Selecting the path and last Vm in the accordion to perform click
-    tree_root = value[0]
-    tree_provider = value[1][0][0]
-    tree_datacenter = value[1][0][1][0][0]
-    length = len(value[1][0][1][0][1])
-    tree_vm = value[1][0][1][0][1][length - 1]
-    view.sidebar.vmstemplates.tree.click_path(tree_root,
-                                              tree_provider, tree_datacenter, tree_vm)
-    vm = Vm(name=tree_vm, provider=tree_provider)
-    view = vm.create_view(InfraVmDetailsView)
-    try:
-        return view.is_displayed
-    except NoSuchElementException:
+    # Below steps assigns last name of the last list to vm_name variable.
+    vm_name = value[-1]
+    while isinstance(vm_name, list):
+        vm_name = vm_name[-1]
+    if vm_name == "<Orphaned>":
         return False
+    return True
+
 
 # BZ 1283118 written against 5.5 has a mix of what default views do and don't work on different
 # pages in different releases
