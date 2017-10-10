@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
 from cfme.utils import version
-from cfme.web_ui import FileInput, Input, Radio, form_buttons
-from cfme.web_ui.tabstrip import TabStripForm
 from cfme.utils import conf
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -107,10 +105,6 @@ class Credential(Pretty, Updateable, FromConfigMixin):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    @property
-    def form(self):
-        return provider_credential_form()
-
 
 class EventsCredential(Credential):
     pass
@@ -180,10 +174,6 @@ class TokenCredential(Pretty, Updateable, FromConfigMixin):
                                           '5.9': None})
         }
 
-    @property
-    def form(self):
-        return provider_credential_form()
-
 
 class ServiceAccountCredential(Pretty, Updateable):
     """
@@ -243,50 +233,3 @@ class ServiceAccountCredential(Pretty, Updateable):
             cert_url=service_data.get('client_x509_cert_url'))
         service_account = '{' + service_account + '}'
         return cls(service_account=service_account)
-
-    @property
-    def form(self):
-        return provider_credential_form()
-
-
-def provider_credential_form():
-    # todo: to remove it when all providers are moved to widgetastic
-    fields = [
-        ('token_secret_55', Input('bearer_token')),
-        ('google_service_account', Input('service_account')),
-    ]
-    tab_fields = {
-        ("Default", ('default_when_no_tabs', )): [
-            ('default_principal', Input("default_userid")),
-            ('default_secret', Input("default_password")),
-            ('default_verify_secret', Input("default_verify")),
-            ('token_secret', Input('default_password')),
-            ('token_verify_secret', Input('default_verify')),
-        ],
-
-        "RSA key pair": [
-            ('ssh_user', Input("ssh_keypair_userid")),
-            ('ssh_key', FileInput("ssh_keypair_password")),
-        ],
-
-        "C & U Database": [
-            ('candu_principal', Input("metrics_userid")),
-            ('candu_secret', Input("metrics_password")),
-            ('candu_verify_secret', Input("metrics_verify")),
-        ],
-
-        "Hawkular": [
-            ('hawkular_validate_btn', form_buttons.validate),
-        ]
-    }
-    fields_end = [
-        ('validate_btn', form_buttons.validate),
-    ]
-
-    tab_fields["Events"] = [
-        ('event_selection', Radio('event_stream_selection')),
-        ('amqp_principal', Input("amqp_userid")),
-        ('amqp_secret', Input("amqp_password")),
-        ('amqp_verify_secret', Input("amqp_verify"))]
-
-    return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
