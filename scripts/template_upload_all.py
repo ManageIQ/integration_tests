@@ -22,6 +22,7 @@ import re
 import datetime
 import sys
 import cfme.utils
+from urlparse import urljoin
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
 
@@ -284,17 +285,17 @@ def browse_directory(dir_url):
     if len(openshift_image_name) is not 0:
         name_dict['template_upload_openshift'] = openshift_image_name[0]
 
-    if not dir_url.endswith('/'):
-        dir_url = dir_url + '/'
-
     for key, val in name_dict.iteritems():
-        name_dict[key] = dir_url + val
+        name_dict[key] = urljoin(dir_url, val)
 
     for key in name_dict.keys():
         if key == 'template_upload_openshift':
             # this is necessary because headers don't contain last-modified date for folders
             # todo: remove this along with refactoring script
-            url = name_dict[key] + 'cfme-template.yaml'
+            if '5.8' in name_dict[key]:
+                url = urljoin(name_dict[key], 'cfme-template.yaml')
+            else:
+                url = urljoin(name_dict[key], 'templates/cfme-template.yaml')
         else:
             url = name_dict[key]
         date = urlopen(url).info().getdate('last-modified')
