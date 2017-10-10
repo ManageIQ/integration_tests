@@ -241,8 +241,8 @@ class InfraVmDetailsView(InfraVmView):
                 return (
                     self.in_infra_vms and
                     self.entities.title.text == 'VM and Instance "{}"'.format(expected_name))
-            self.logger.warning('No "Infrastructure Provider" Relationship, VM details view not '
-                           'displayed')
+            self.logger.warning('No "Infrastructure Provider" Relationship, VM details view not'
+                                ' displayed')
             return False
         return (
             self.in_infra_vms and
