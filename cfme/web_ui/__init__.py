@@ -1208,20 +1208,6 @@ class PagedTable(Table):
                 return row
 
 
-class SplitPagedTable(SplitTable, PagedTable):
-    """:py:class:`SplitTable` with support for paginator
-
-    Args:
-        header_data: See :py:class:`cfme.web_ui.SplitTable`
-        body_data: See :py:class:`cfme.web_ui.SplitTable`
-        header_offset: See :py:class:`cfme.web_ui.Table`
-        body_offset: See :py:class:`cfme.web_ui.Table`
-    """
-    def __init__(self, header_data, body_data):
-        # To limit multiple inheritance surprises, explicitly call out to SplitTable's __init__
-        SplitTable.__init__(self, header_data, body_data)
-
-
 def table_in_object(table_title):
     """If you want to point to tables inside object view, this is what you want to use.
 
