@@ -11,7 +11,7 @@ from widgetastic_manageiq import BreadCrumb, PaginationPane
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
 from widgetastic_manageiq import (
-    Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect,
+    Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
     CheckableManageIQTree, VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity,
     BaseQuadIconEntity, BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
 
@@ -227,8 +227,8 @@ class BasicProvisionFormView(View):
         cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
         num_cpus = BootstrapSelect('hardware__number_of_cpus')
         memory = BootstrapSelect('hardware__vm_memory')
-        # TODO patternfly radio widget, RadioGroup doesn't apply here
-        #  disk_format, hardware__disk_format')
+        schedule_type = RadioGroup(locator=('//div[@id="hardware"]'
+                                            '//div[./div[@class="radio-inline"]]'))
         vm_limit_cpu = Input(name='hardware__cpu_limit')
         vm_limit_memory = Input(name='hardware__memory_limit')
         vm_reserve_cpu = Input(name='hardware__cpu_reserve')
@@ -271,11 +271,12 @@ class BasicProvisionFormView(View):
     class schedule(ProvisionTab):  # noqa
         TAB_NAME = 'Schedule'
         # Common
-        # TODO radio widget # schedule_type = Radio('schedule__schedule_type')
+        schedule_type = RadioGroup(locator=('//div[@id="schedule"]'
+                                            '//div[./div[@class="radio-inline"]]'))
         provision_date = Calendar('miq_date_1')
         provision_start_hour = BootstrapSelect('start_hour')
         provision_start_min = BootstrapSelect('start_min')
-        power_on = Input(name='schedule__vm_auto_start')
+        power_on = Checkbox(name='schedule__vm_auto_start')
         retirement = BootstrapSelect('schedule__retirement')
         retirement_warning = BootstrapSelect('schedule__retirement_warn')
         # Infra

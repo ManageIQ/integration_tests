@@ -680,7 +680,7 @@ class Vm(VM):
 
     def migrate_vm(self, email=None, first_name=None, last_name=None,
                    host_name=None, datastore_name=None):
-        navigate_to(self, 'Migrate')
+        view = navigate_to(self, 'Migrate')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
@@ -689,19 +689,20 @@ class Vm(VM):
         except (KeyError, IndexError):
             raise ValueError("You have to specify the correct options in cfme_data.yaml")
         provisioning_data = {
-            "first_name": first_name,
-            "last_name": last_name,
-            "email": email,
-            "host_name": {"name": prov_data.get("host")},
+            'request': {
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name},
+            'environment': {"host_name": {'name': prov_data.get("host")}},
         }
         if not self.provider.one_of(RHEVMProvider):
-            provisioning_data["datastore_name"] = {"name": prov_data.get("datastore")}
-        from cfme.provisioning import provisioning_form
-        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
+            provisioning_data['environment']["datastore_name"] = {
+                "name": prov_data.get("datastore")}
+        view.form.fill_with(provisioning_data, on_change=view.form.submit)
 
     def clone_vm(self, email=None, first_name=None, last_name=None,
                  vm_name=None, provision_type=None):
-        navigate_to(self, 'Clone')
+        view = navigate_to(self, 'Clone')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
@@ -709,22 +710,23 @@ class Vm(VM):
             prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
         except (KeyError, IndexError):
             raise ValueError("You have to specify the correct options in cfme_data.yaml")
+
         provisioning_data = {
-            "first_name": first_name,
-            "last_name": last_name,
-            "email": email,
-            "provision_type": provision_type,
-            "vm_name": vm_name,
-            "host_name": {"name": prov_data.get("host")},
-            "datastore_name": {"name": prov_data.get("datastore")},
-            "vlan": prov_data.get("vlan")
+            'catalog': {'vm_name': vm_name,
+                        'provision_type': provision_type},
+            'request': {
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name},
+            'environment': {"host_name": {'name': prov_data.get("host")},
+                            "datastore_name": {"name": prov_data.get("datastore")}},
+            'network': {'vlan': prov_data.get("vlan")},
         }
-        from cfme.provisioning import provisioning_form
-        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
+        view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
 
     def publish_to_template(self, template_name, email=None, first_name=None, last_name=None):
-        self.load_details()
-        lcl_btn("Publish this VM to a Template")
+        view = navigate_to(self, 'Details', use_resetter=False)
+        view.toolbar.lifecycle.item_select("Publish this VM to a Template")
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
@@ -734,15 +736,15 @@ class Vm(VM):
             raise ValueError("You have to specify the correct options in cfme_data.yaml")
 
         provisioning_data = {
-            "first_name": first_name,
-            "last_name": last_name,
-            "email": email,
-            "vm_name": template_name,
-            "host_name": {"name": prov_data.get("host")},
-            "datastore_name": {"name": prov_data.get("datastore")},
+            'catalog': {'vm_name': template_name},
+            'request': {
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name},
+            'environment': {"host_name": {'name': prov_data.get("host")},
+                            "datastore_name": {"name": prov_data.get("datastore")}},
         }
-        from cfme.provisioning import provisioning_form
-        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
+        view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
         cells = {'Description': 'Publish from [{}] to [{}]'.format(self.name, template_name)}
         provision_request = self.appliance.collections.requests.instantiate(cells=cells)
         provision_request.wait_for_request()
