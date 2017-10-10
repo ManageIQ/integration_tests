@@ -8,28 +8,36 @@ from cfme.utils.version import Version
 from cfme.utils.log import logger
 from cfme.utils.conf import cfme_data
 from cfme.utils import os
-
-versions = []
+from cfme.utils.appliance import get_or_create_current_appliance
 
 
 def pytest_generate_tests(metafunc):
     """The following lines generate appliance versions based from the current build.
     Appliance version is split and minor_build is picked out for generating each version
     and appending it to the empty versions list"""
+    versions = []
+    version = get_or_create_current_appliance().version
 
-    version = store.current_appliance.version
     split_ver = str(version).split(".")
     try:
         minor_build = split_ver[2]
     except IndexError:
         logger.exception('Caught IndexError generating for test_appliance_update, skipping')
-        pytest.skip('Could not parse minor_build version from: {}'.format(version))
+        versions.append(pytest.param("bad:{:r}".format(version), marks=pytest.mark.skip(
+            'Could not parse minor_build version from: {}'.format(version)
+        )))
+    else:
+        for i in range(int(minor_build) - 1, -1, -1):
+            versions.append("{}.{}.{}".format(split_ver[0], split_ver[1], i))
+    metafunc.parametrize('old_version', versions, indirect=True)
 
-    for i in range(int(minor_build) - 1, -1, -1):
-        versions.append("{}.{}.{}".format(split_ver[0], split_ver[1], i))
+
+@pytest.fixture
+def old_version(request):
+    return request.param
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function", )
 def appliance_preupdate(old_version, appliance):
 
     series = appliance.version.series()
@@ -66,10 +74,8 @@ def appliance_preupdate(old_version, appliance):
     sp.destroy_pool(pool_id)
 
 
-@pytest.mark.parametrize('old_version', versions)
 @pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
 def test_update_yum(appliance_preupdate, appliance):
-
     """Tests appliance update between versions"""
 
     appliance_preupdate.evmserverd.stop()

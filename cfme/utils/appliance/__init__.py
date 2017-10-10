@@ -11,6 +11,8 @@ from tempfile import NamedTemporaryFile
 from time import sleep, time
 from urlparse import ParseResult, urlparse
 
+import attr
+
 import dateutil.parser
 from debtcollector import removals
 import fauxfactory
@@ -2550,8 +2552,9 @@ class ApplianceStack(LocalStack):
         current = self.top
         logger.info(
             "Popped appliance {} from the stack (now there is {})".format(
-                was_before.address, getattr(current, 'address', 'empty')))
-        if was_before.browser_steal:
+                getattr(was_before, 'address', 'empty'),
+                getattr(current, 'address', 'empty')))
+        if getattr(was_before, 'browser_steal', False):
             from cfme.utils import browser
             browser.start()
         return was_before
@@ -2575,11 +2578,30 @@ def load_appliances(appliance_list, global_kwargs):
         kwargs = {}
         kwargs.update(global_kwargs)
         kwargs.update(appliance_kwargs)
+
+        if kwargs.pop('dummy', False):
+            result.append(DummyAppliance(**kwargs))
+            continue
         if not kwargs.get('base_url'):
             raise ValueError('Appliance definition {!r} is missing base_url'.format(kwargs))
 
         result.append(IPAppliance(**{IPAppliance.CONFIG_MAPPING[k]: v for k, v in kwargs.items()}))
     return result
+
+
+@attr.s
+class DummyAppliance(object):
+    """a dummy with minimal attribute set"""
+    address = '0.0.0.0'
+    browser_steal = False
+    version = Version('5.8.0')
+    is_downstream = True
+    is_pod = False
+    build = 'missing :)'
+    managed_known_providers = []
+
+    def set_session_timeout(self, *k):
+        pass
 
 
 def load_appliances_from_config(config):
@@ -2617,6 +2639,7 @@ def load_appliances_from_config(config):
 
 
 def get_or_create_current_appliance():
+    assert stack.top is not None, "we no longer create"
     if stack.top is None:
         stack.push(load_appliances_from_config(conf.env)[0])
     return stack.top

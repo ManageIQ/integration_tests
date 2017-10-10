@@ -55,7 +55,6 @@ from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
 from cfme.utils import at_exit, conf
-from cfme.utils.appliance import IPAppliance, load_appliances_from_config
 from cfme.utils.log import create_sublogger
 from cfme.utils.path import conf_path
 
@@ -77,22 +76,10 @@ def pytest_addhooks(pluginmanager):
 def pytest_configure(config):
     """Configures the parallel session, then fires pytest_parallel_configured."""
     reporter = terminalreporter.reporter()
-    if not config.option.appliances:
-        appliances = load_appliances_from_config(conf.env)
-        reporter.write_line('Retrieved these appliances from the conf.env', red=True)
-    else:
-        appliance_config = {
-            'appliances': [{'base_url': base_url} for base_url in config.option.appliances]}
-        # Grab the possible globals from the conf.env
-        for key, value in (
-                (key, value)
-                for key, value in conf.env.items()
-                if key in IPAppliance.CONFIG_MAPPING and key not in IPAppliance.CONFIG_NONGLOBAL):
-            appliance_config[key] = value
-        appliances = load_appliances_from_config(appliance_config)
-        reporter.write_line('Retrieved these appliances from the --appliance parameters', red=True)
-    for appliance in appliances:
-        reporter.write_line('* {!r}'.format(appliance), cyan=True)
+    holder = config.pluginmanager.get_plugin("appliance-holder")
+
+    appliances = holder.appliances
+
     if len(appliances) > 1:
         session = ParallelSession(config, appliances)
         config.pluginmanager.register(session, "parallel_session")

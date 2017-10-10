@@ -24,6 +24,14 @@ def pytest_namespace():
 
 
 def pytest_runtest_setup(item):
+    from cfme.utils.appliance import (
+        get_or_create_current_appliance,
+        DummyAppliance,
+    )
+    appliance = get_or_create_current_appliance()
+    if isinstance(appliance, DummyAppliance):
+        return
+
     if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
         cfme.utils.browser.ensure_browser_open()
 
@@ -115,7 +123,10 @@ def pytest_sessionfinish(session, exitstatus):
 
 
 @pytest.fixture(scope='session')
-def browser():
+def browser(appliance):
+    from cfme.utils.appliance import DummyAppliance
+    if isinstance(appliance, DummyAppliance):
+        pytest.xfail("browser not supported with DummyAppliance")
     return browser_module.browser
 
 

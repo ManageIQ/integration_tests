@@ -2,7 +2,6 @@ from functools import partial
 
 from cfme import test_requirements
 from datetime import datetime, timedelta
-from cfme.utils.appliance import current_appliance
 from cfme.utils.browser import quit
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
@@ -12,8 +11,16 @@ import pytest
 
 
 pytestmark = [test_requirements.configuration]
-ntp_servers_keys = current_appliance.server.settings.ntp_servers_fields_keys
-empty_ntp_dict = {field_key: '' for field_key in ntp_servers_keys}
+
+
+@pytest.fixture
+def ntp_servers_keys(appliance):
+    return appliance.server.settings.ntp_servers_fields_keys
+
+
+@pytest.fixture
+def empty_ntp_dict(ntp_servers_keys):
+    return dict.fromkeys(ntp_servers_keys, '')
 
 
 def appliance_date(appliance):
@@ -27,7 +34,7 @@ def check_ntp_grep(appliance, clock):
     return not bool(status)
 
 
-def clear_ntp_settings(appliance):
+def clear_ntp_settings(appliance, empty_ntp_dict):
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1]
     appliance.server.settings.update_ntp_servers(empty_ntp_dict)
@@ -36,7 +43,7 @@ def clear_ntp_settings(appliance):
 
 
 @pytest.mark.tier(2)
-def test_ntp_crud(request, appliance):
+def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
     # Adding finalizer
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     """ Insert, Update and Delete the NTP servers """
@@ -51,7 +58,7 @@ def test_ntp_crud(request, appliance):
 
 
 @pytest.mark.tier(3)
-def test_ntp_server_max_character(request, appliance):
+def test_ntp_server_max_character(request, appliance, ntp_servers_keys):
     request.addfinalizer(partial(clear_ntp_settings, appliance))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1]
@@ -62,7 +69,7 @@ def test_ntp_server_max_character(request, appliance):
 
 
 @pytest.mark.tier(3)
-def test_ntp_conf_file_update_check(request, appliance):
+def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_servers_keys):
 
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
@@ -90,7 +97,7 @@ def test_ntp_conf_file_update_check(request, appliance):
 
 
 @pytest.mark.tier(3)
-def test_ntp_server_check(request, appliance):
+def test_ntp_server_check(request, appliance, ntp_servers_keys):
     request.addfinalizer(partial(clear_ntp_settings, appliance))
     orig_date = appliance_date(appliance)
     past_date = orig_date - timedelta(days=10)
@@ -127,5 +134,5 @@ def test_ntp_server_check(request, appliance):
 
 
 @pytest.mark.tier(3)
-def test_clear_ntp_settings(request, appliance):
+def test_clear_ntp_settings(request, appliance, empty_ntp_dict):
     request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
