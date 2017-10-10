@@ -25,7 +25,6 @@
   * :py:class:`InfoBlock`
   * :py:class:`Input`
   * :py:class:`MultiFill`
-  * :py:class:`Quadicon`
   * :py:class:`Radio`
   * :py:class:`ScriptBox`
   * :py:class:`Select`
