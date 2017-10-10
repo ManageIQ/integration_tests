@@ -1,9 +1,11 @@
 language: python
+cache: pip
 python:
   - '2.7'
 install:
   - pip install -U pip setuptools
   - pip install -Ur requirements/frozen.txt
+  - pip install -e .
 script: py.test cfme/utils/tests -v --dummy-appliance
 after_success:
   - coveralls
