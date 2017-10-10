@@ -15,9 +15,9 @@ class Topology(BaseEntity):
         self.elements_obj = []
         self.lines_obj = []
         self.legends_obj = []
-        self.elements_col = TopologyElementCollection(appliance)
-        self.lines_col = TopologyLineCollection(appliance)
-        self.legends_col = TopologyLegendCollection(appliance)
+        self.elements_col = TopologyElementCollection(self, appliance)
+        self.lines_col = TopologyLineCollection(self, appliance)
+        self.legends_col = TopologyLegendCollection(self, appliance)
         self.element_ref = None
         self.display_names = None
         self.view = navigate_to(self, 'All')
@@ -35,8 +35,8 @@ class Topology(BaseEntity):
 
     def reload_elements_and_lines(self):
         self.elements_obj = []
-        self.lines_obj = self.lines_col.all(self)
-        found_elements = self.elements_col.all(self)
+        self.lines_obj = self.lines_col.all()
+        found_elements = self.elements_col.all()
 
         if found_elements:
             self.element_ref = found_elements[-1]
@@ -44,11 +44,11 @@ class Topology(BaseEntity):
             self.elements_obj = found_elements
 
     def reload_legends(self):
-        self.legends_obj = self.legends_col.all(self)
+        self.legends_obj = self.legends_col.all()
         self.display_names = TopologyDisplayNames(self)
 
     def movement_stopped(self):
-        element = self.elements_col.all(self)[-1]
+        element = self.elements_col.all()[-1]
         if element.x == self.element_ref.x and element.y == self.element_ref.y:
             return True
         self.element_ref = element
@@ -78,17 +78,18 @@ class All(CFMENavigateStep):
 
 class TopologyLegendCollection(BaseCollection):
     """Collection object for legends in topology"""
-    def __init__(self, appliance=None):
+    def __init__(self, topology, appliance=None):
         self.appliance = appliance
+        self.topology = topology
 
     def instantiate(self, name, element):
         return TopologyLegend(name=name, element=element)
 
-    def all(self, topology):
+    def all(self):
         final_legends = []
-        legends = topology.browser.elements(topology.view.LEGENDS)
+        legends = self.topology.browser.elements(self.topology.view.LEGENDS)
         for legend in legends:
-            legend_text = topology.browser.text(legend.find_element_by_tag_name('label'))
+            legend_text = self.topology.browser.text(legend.find_element_by_tag_name('label'))
             final_legends.append(self.instantiate(name=legend_text, element=legend))
         return final_legends
 
@@ -129,15 +130,16 @@ class TopologyDisplayNames(BaseEntity):
 
 class TopologyElementCollection(BaseCollection):
     """Collection object for elements in topology"""
-    def __init__(self, appliance=None):
+    def __init__(self, topology, appliance=None):
         self.appliance = appliance
+        self.topology = topology
 
-    def instantiate(self, topology, element):
-        return TopologyElement(obj=topology, element=element)
+    def instantiate(self, element):
+        return TopologyElement(obj=self.topology, element=element)
 
-    def all(self, topology):
-        elements = topology.browser.elements(topology.view.ELEMENTS)
-        return [self.instantiate(topology=self.topology, element=elem) for elem in elements]
+    def all(self):
+        elements = self.topology.browser.elements(self.topology.view.ELEMENTS)
+        return [self.instantiate(element=elem) for elem in elements]
 
 
 class TopologyElement(BaseEntity):
@@ -195,14 +197,15 @@ class TopologyElement(BaseEntity):
 
 class TopologyLineCollection(BaseCollection):
     """Collection object for lines in topology"""
-    def __init__(self, appliance=None):
+    def __init__(self, topology, appliance=None):
         self.appliance = appliance
+        self.topology = topology
 
     def instantiate(self, element):
         return TopologyLine(element=element)
 
-    def all(self, topology):
-        lines = topology.browser.elements(topology.view.LINES)
+    def all(self):
+        lines = self.topology.browser.elements(self.topology.view.LINES)
         return [self.instantiate(element=line) for line in lines]
 
 
