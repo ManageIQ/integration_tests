@@ -149,7 +149,7 @@ LOGIN_METHODS = ['click_on_login', 'press_enter_after_password', '_js_auth_fn']
 
 
 @Server.login.external_implementation_for(ViaUI)
-def login(self, user=None, submit_method=LOGIN_METHODS[-1]):
+def login(self, user=None, method=LOGIN_METHODS[-1]):
     """
     Login to CFME with the given username and password.
     Optionally, submit_method can be press_enter_after_password
@@ -183,14 +183,16 @@ def login(self, user=None, submit_method=LOGIN_METHODS[-1]):
         logger.debug('Logging in as user %s', user.credential.principal)
         login_view.flush_widget_cache()
 
-        login_view.log_in(user, method=submit_method)
+        login_view.log_in(user, method=method)
         logged_in_view.flush_widget_cache()
         user.name = logged_in_view.current_fullname
         try:
+            assert logged_in_view.is_displayed
             assert logged_in_view.logged_in_as_user
             self.appliance.user = user
         except AssertionError:
             login_view.flash.assert_no_error()
+    return logged_in_view
 
 
 @Server.login_admin.external_implementation_for(ViaUI)
@@ -206,7 +208,8 @@ def login_admin(self, **kwargs):
     from cfme.configure.access_control import User
     user = User(credential=cred)
     user.name = 'Administrator'
-    self.login(user, **kwargs)
+    logged_in_page = self.login(user, **kwargs)
+    return logged_in_page
 
 
 @Server.logout.external_implementation_for(ViaUI)
