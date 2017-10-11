@@ -6,7 +6,7 @@ from manageiq_client.api import APIException
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
+from cfme.common import PolicyProfileAssignable, TagPageView
 from cfme.common.host_views import (
     HostAddView,
     HostDetailsView,

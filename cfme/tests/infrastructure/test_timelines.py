@@ -95,7 +95,7 @@ def test_infra_provider_event(gen_events, new_vm):
              message="events to appear")
 
 
-def test_infra_host_event(appliance, provider, gen_events, new_vm):
+def test_infra_host_event(appliance, a_provider, gen_events, new_vm):
     """Tests host event on timelines
 
     Metadata:
@@ -104,7 +104,7 @@ def test_infra_host_event(appliance, provider, gen_events, new_vm):
     view = navigate_to(new_vm, "Details")
     host_name = view.entities.relationships.get_text_of('Host')
     host_collection = appliance.get(HostCollection)
-    host = host_collection.instantiate(name=host_name, provider=provider)
+    host = host_collection.instantiate(name=host_name, provider=a_provider)
     wait_for(count_events, [host, new_vm], timeout='10m', fail_condition=0,
              message="events to appear")
 
