@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
+import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from manageiq_client.api import APIException
@@ -21,7 +22,7 @@ from cfme.common.host_views import (
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.utils import conf
-from cfme.utils.appliance import BaseEntity, BaseCollection
+from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.ipmi import IPMI
 from cfme.utils.log import logger
@@ -30,74 +31,7 @@ from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 
 
-class HostCollection(BaseCollection):
-    """Collection object for the :py:class:`cfme.infrastructure.host.Host`."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, hostname=None, ip_address=None, custom_ident=None,
-                    host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
-                    ipmi_credentials=None, interface_type='lan', provider=None):
-        return Host(self, name=name, hostname=hostname, ip_address=ip_address,
-                    custom_ident=custom_ident, host_platform=host_platform,
-                    ipmi_address=ipmi_address, mac_address=mac_address, credentials=credentials,
-                    ipmi_credentials=ipmi_credentials, interface_type=interface_type,
-                    provider=provider)
-
-    def create(self, name, provider, credentials=None, hostname=None, ip_address=None,
-               host_platform=None, custom_ident=None, ipmi_address=None, mac_address=None,
-               ipmi_credentials=None, cancel=False, validate_credentials=False):
-        """Creates a host in the UI.
-
-        Args:
-           cancel (bool): Whether to cancel out of the creation. The cancel is done after all the
-               information present in the Host has been filled in the UI.
-           validate_credentials (bool): Whether to validate credentials - if True and the
-               credentials are invalid, an error will be raised.
-        """
-        view = navigate_to(self, "Add")
-        view.fill({
-            "name": name,
-            "hostname": hostname or ip_address,
-            "host_platform": host_platform,
-            "custom_ident": custom_ident,
-            "ipmi_address": ipmi_address,
-            "mac_address": mac_address
-        })
-        if credentials is not None:
-            view.endpoints.default.fill(credentials.view_value_mapping)
-            if validate_credentials:
-                view.endpoints.default.validate_button.click()
-        if ipmi_credentials is not None:
-            view.endpoints.ipmi.fill(ipmi_credentials.view_value_mapping)
-            if validate_credentials:
-                view.endpoints.ipmi.validate_button.click()
-        if not cancel:
-            view.add_button.click()
-            flash_message = 'Host / Node " {}" was added'.format(name)
-        else:
-            view.cancel_button.click()
-            flash_message = "Add of new Host / Node was cancelled by the user"
-        host = self.instantiate(name=name, hostname=hostname, ip_address=ip_address,
-                                custom_ident=custom_ident, host_platform=host_platform,
-                                ipmi_address=ipmi_address, mac_address=mac_address,
-                                credentials=credentials, ipmi_credentials=ipmi_credentials,
-                                provider=provider)
-        view = host.create_view(HostsView)
-        assert view.is_displayed
-        view.flash.assert_success_message(flash_message)
-        return host
-
-    def all(self, provider):
-        """returning all Object Store Objects"""
-        view = navigate_to(self, 'All')
-        view.toolbar.view_selector.select("Grid View")
-        hosts = [self.instantiate(name=item, provider=provider)
-                 for item in view.entities.entity_names]
-        return hosts
-
-
+@attr.s
 class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
     """Model of an infrastructure host in cfme.
 
@@ -121,24 +55,17 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
     """
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
-    def __init__(self, collection, name=None, hostname=None, ip_address=None, custom_ident=None,
-                 host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
-                 ipmi_credentials=None, interface_type='lan', provider=None):
-        self.name = name
-        self.quad_name = 'host'
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.custom_ident = custom_ident
-        self.host_platform = host_platform
-        self.ipmi_address = ipmi_address
-        self.mac_address = mac_address
-        self.credentials = credentials
-        self.ipmi_credentials = ipmi_credentials
-        self.interface_type = interface_type
-        self.db_id = None
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
+    name = attr.ib()
+    provider = attr.ib()
+    hostname = attr.ib(default=None)
+    ip_address = attr.ib(default=None)
+    custom_ident = attr.ib(default=None)
+    host_platform = attr.ib(default=None)
+    ipmi_address = attr.ib(default=None)
+    mac_address = attr.ib(default=None)
+    credentials = attr.ib(default=None)
+    ipmi_credentials = attr.ib(default=None)
+    interface_type = attr.ib(default='lan')
 
     class Credential(BaseCredential, Updateable):
         """Provider credentials
@@ -253,7 +180,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
             desired_state (str): 'on' or 'off'
             timeout (int): Specify amount of time (in seconds) to wait until TimedOutError is raised
         """
-        view = navigate_to(self.collection, "All")
+        view = navigate_to(self.parent, "All")
 
         def _looking_for_state_change():
             entity = view.entities.get_entity(by_name=self.name)
@@ -291,7 +218,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
 
         Returns: :py:class:`bool`
         """
-        view = navigate_to(self.collection, "All")
+        view = navigate_to(self.parent, "All")
         try:
             view.entities.get_entity(by_name=self.name, surf_pages=True)
         except ItemNotFound:
@@ -305,7 +232,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
 
         Returns: :py:class:`bool`
         """
-        view = navigate_to(self.collection, "All")
+        view = navigate_to(self.parent, "All")
         entity = view.entities.get_entity(by_name=self.name, surf_pages=True)
         return entity.data['creds'].strip().lower() == "checkmark"
 
@@ -438,7 +365,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
 
     def wait_to_appear(self):
         """Waits for the host to appear in the UI."""
-        view = navigate_to(self.collection, "All")
+        view = navigate_to(self.parent, "All")
         logger.info("Waiting for the host to appear...")
         wait_for(
             lambda: self.exists,
@@ -449,7 +376,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
 
     def wait_for_delete(self):
         """Waits for the host to remove from the UI."""
-        view = navigate_to(self.collection, "All")
+        view = navigate_to(self.parent, "All")
         logger.info("Waiting for a host to delete...")
         wait_for(
             lambda: not self.exists,
@@ -457,6 +384,65 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
             num_sec=500,
             fail_func=view.browser.refresh
         )
+
+
+@attr.s
+class HostCollection(BaseCollection):
+    """Collection object for the :py:class:`cfme.infrastructure.host.Host`."""
+
+    ENTITY = Host
+
+    def create(self, name, provider, credentials=None, hostname=None, ip_address=None,
+               host_platform=None, custom_ident=None, ipmi_address=None, mac_address=None,
+               ipmi_credentials=None, cancel=False, validate_credentials=False):
+        """Creates a host in the UI.
+
+        Args:
+           cancel (bool): Whether to cancel out of the creation. The cancel is done after all the
+               information present in the Host has been filled in the UI.
+           validate_credentials (bool): Whether to validate credentials - if True and the
+               credentials are invalid, an error will be raised.
+        """
+        view = navigate_to(self, "Add")
+        view.fill({
+            "name": name,
+            "hostname": hostname or ip_address,
+            "host_platform": host_platform,
+            "custom_ident": custom_ident,
+            "ipmi_address": ipmi_address,
+            "mac_address": mac_address
+        })
+        if credentials is not None:
+            view.endpoints.default.fill(credentials.view_value_mapping)
+            if validate_credentials:
+                view.endpoints.default.validate_button.click()
+        if ipmi_credentials is not None:
+            view.endpoints.ipmi.fill(ipmi_credentials.view_value_mapping)
+            if validate_credentials:
+                view.endpoints.ipmi.validate_button.click()
+        if not cancel:
+            view.add_button.click()
+            flash_message = 'Host / Node " {}" was added'.format(name)
+        else:
+            view.cancel_button.click()
+            flash_message = "Add of new Host / Node was cancelled by the user"
+        host = self.instantiate(name=name, hostname=hostname, ip_address=ip_address,
+                                custom_ident=custom_ident, host_platform=host_platform,
+                                ipmi_address=ipmi_address, mac_address=mac_address,
+                                credentials=credentials, ipmi_credentials=ipmi_credentials,
+                                provider=provider)
+        view = host.create_view(HostsView)
+        assert view.is_displayed
+        view.flash.assert_success_message(flash_message)
+        return host
+
+    def all(self, provider):
+        """returning all Object Store Objects"""
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select("Grid View")
+        hosts = [self.instantiate(name=item, provider=provider)
+                 for item in view.entities.entity_names]
+        return hosts
 
 
 @navigator.register(HostCollection)
@@ -474,7 +460,7 @@ class All(CFMENavigateStep):
 @navigator.register(Host)
 class Details(CFMENavigateStep):
     VIEW = HostDetailsView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent.parent", "All")
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
@@ -501,7 +487,7 @@ class Add(CFMENavigateStep):
 @navigator.register(Host)
 class Discover(CFMENavigateStep):
     VIEW = HostDiscoverView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent.parent", "All")
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Discover items")

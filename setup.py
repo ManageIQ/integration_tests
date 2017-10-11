@@ -91,6 +91,7 @@ setup(
             'nodes = cfme.containers.node:NodeCollection',
             'dashboards = cfme.dashboard:DashboardCollection',
             'clusters = cfme.infrastructure.cluster:ClusterCollection',
+            'hosts = cfme.infrastructure.host:HostCollection',
             'deployment_roles = cfme.infrastructure.deployment_roles:DeploymentRoleCollection',
             'schedules = cfme.intelligence.reports.schedules:ScheduleCollection',
             'balancers = cfme.networks.balancer:BalancerCollection',
