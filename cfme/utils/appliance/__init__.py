@@ -43,7 +43,7 @@ from .services import SystemdService
 
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
-
+CREATE_IS_PEDANTIC = True  # sidechannel to ease shell use
 # EMS types recognized by IP or credentials
 RECOGNIZED_BY_IP = [
     "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"
@@ -2639,7 +2639,8 @@ def load_appliances_from_config(config):
 
 
 def get_or_create_current_appliance():
-    assert stack.top is not None, "we no longer create"
+    if CREATE_IS_PEDANTIC:
+        assert stack.top is not None, "we no longer create"
     if stack.top is None:
         stack.push(load_appliances_from_config(conf.env)[0])
     return stack.top
