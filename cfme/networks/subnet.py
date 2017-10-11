@@ -173,7 +173,7 @@ class OpenCloudNetworks(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
 
 
 @navigator.register(SubnetCollection, 'Add')

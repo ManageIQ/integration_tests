@@ -289,7 +289,7 @@ class DeploymentRoleCollection(BaseCollection):
         if view.entities.get_all(surf_pages=True) and roles:
             for role in roles:
                 try:
-                    view.entities.get_entity(role.name).check()
+                    view.entities.get_entity(name=role.name).check()
                 except ItemNotFound:
                     raise RoleNotFound("Deployment role {} not found".format(role.name))
 
@@ -325,7 +325,7 @@ class Details(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Navigate to the details page of Role"""
         try:
-            self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+            self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
         except ItemNotFound:
             raise RoleNotFound("Deployment Role {} not found".format(self.obj.name))
@@ -350,6 +350,6 @@ class DetailsFromProvider(CFMENavigateStep):
 
     def step(self):
         try:
-            self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
+            self.prerequisite_view.entities.get_entity(name=self.obj.name).click()
         except ItemNotFound:
             raise RoleNotFound("Deployment Role {} not found".format(self.obj.name))

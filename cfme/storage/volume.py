@@ -293,7 +293,7 @@ class VolumeCollection(BaseCollection):
         if view.entities.get_all():
             for volume in volumes:
                 try:
-                    view.entities.get_entity(volume.name).check()
+                    view.entities.get_entity(name=volume.name).check()
                 except ItemNotFound:
                     raise VolumeNotFound("Volume {} not found".format(volume.name))
 
@@ -324,7 +324,7 @@ class VolumeDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
 
         try:
-            self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+            self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                        surf_pages=True).click()
 
         except ItemNotFound:

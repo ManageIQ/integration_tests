@@ -49,7 +49,7 @@ def test_edit_volume(volume, appliance):
     new_name = fauxfactory.gen_alpha()
     volume.edit(new_name)
     view = navigate_to(appliance.collections.volumes, 'All')
-    assert view.entities.get_entity(by_name=new_name, surf_pages=True)
+    assert view.entities.get_entity(name=new_name, surf_pages=True)
 
 
 @pytest.mark.meta(blockers=[BZ(1502609, forced_streams=["5.9"])])

@@ -328,7 +328,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
             search.normal_search(self.name)
 
         try:
-            return view.entities.get_entity(by_name=self.name, surf_pages=True)
+            return view.entities.get_entity(name=self.name, surf_pages=True)
         except ItemNotFound:
             raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
 

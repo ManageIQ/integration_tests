@@ -10,8 +10,7 @@ from widgetastic.widget import Text
 from widgetastic.xpath import quote
 from widgetastic.utils import Version, VersionPick
 
-from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView,
-                                      click_row)
+from cfme.containers.provider import (ContainerObjectAllBaseView, ContainerObjectDetailsBaseView)
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
@@ -98,8 +97,8 @@ class ContainerDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        click_row(self.prerequisite_view,
-                  name=self.obj.name, pod_name=self.obj.pod)
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   pod_name=self.obj.pod).click()
 
 
 @navigator.register(Container, 'EditTags')

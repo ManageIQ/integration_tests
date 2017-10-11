@@ -123,7 +123,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(CloudProvider, 'Edit')
@@ -132,7 +132,7 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.configuration.item_select('Edit Selected Cloud Provider')
 
 
@@ -151,7 +151,7 @@ class ManagePolicies(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Manage Policies')
 
 
@@ -170,7 +170,7 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 

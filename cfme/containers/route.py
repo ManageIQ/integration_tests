@@ -7,7 +7,7 @@ from wrapanapi.containers.route import Route as ApiRoute
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.containers.provider import (Labelable, ContainerObjectAllBaseView,
-    ContainerObjectDetailsBaseView, click_row)
+    ContainerObjectDetailsBaseView)
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from navmazing import NavigateToAttribute, NavigateToSibling
 from cfme.utils.appliance import Navigatable
@@ -68,8 +68,8 @@ class Details(CFMENavigateStep):
     VIEW = RouteDetailsView
 
     def step(self):
-        click_row(self.prerequisite_view,
-                  name=self.obj.name, project_name=self.obj.project_name)
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   project_name=self.obj.project_name).click()
 
 
 @navigator.register(Route, 'EditTags')
