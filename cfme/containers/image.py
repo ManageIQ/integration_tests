@@ -8,9 +8,9 @@ from wrapanapi.containers.image import Image as ApiImage
 
 from cfme.common import (WidgetasticTaggable, PolicyProfileAssignable,
                          TagPageView)
-from cfme.containers.provider import (Labelable, navigate_and_get_rows,
-    ContainerObjectAllBaseView, ContainerObjectDetailsBaseView, click_row,
-    LoadDetailsMixin, refresh_and_navigate, ContainerObjectDetailsEntities)
+from cfme.containers.provider import (Labelable, navigate_and_get_rows, ContainerObjectAllBaseView,
+                                      ContainerObjectDetailsBaseView, LoadDetailsMixin,
+                                      refresh_and_navigate, ContainerObjectDetailsEntities)
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.appliance import Navigatable
 from cfme.configure import tasks
@@ -137,8 +137,8 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        click_row(self.prerequisite_view,
-            provider=self.obj.provider.name, id=self.obj.id)
+        self.prerequisite_view.entities.get_entity(provider=self.obj.provider.name,
+                                                   id=self.obj.id).click()
 
 
 @navigator.register(Image, 'EditTags')

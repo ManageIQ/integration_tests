@@ -225,7 +225,7 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            item = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+            item = self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                               surf_pages=True)
         except ItemNotFound:
             raise KeyPairNotFound

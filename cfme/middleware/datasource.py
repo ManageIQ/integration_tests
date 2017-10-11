@@ -172,7 +172,7 @@ class MiddlewareDatasource(MiddlewareBase, WidgetasticTaggable, Navigatable, Uti
     @classmethod
     def remove_from_list(cls, datasource):
         view = _get_datasources_page(server=datasource.server)
-        view.entities.get_item(by_name=datasource.name).check()
+        view.entities.get_entity(name=datasource.name).check()
         view.toolbar.configuration.item_select('Remove', handle_alert=True)
         view.flash.assert_success_message('The selected datasources were removed')
 

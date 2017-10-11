@@ -263,7 +263,7 @@ def edit_tags(self, tag, value):
 @MyService.check_vm_add.external_implementation_for(ViaUI)
 def check_vm_add(self, add_vm_name):
     view = navigate_to(self, 'Details')
-    view.entities.get_entity(add_vm_name).click()
+    view.entities.get_entity(name=add_vm_name).click()
     view.flash.assert_no_error()
 
 
@@ -363,4 +363,4 @@ class MyServiceVMDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(self.obj.vm_name).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.vm_name).click()

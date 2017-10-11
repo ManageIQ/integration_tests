@@ -19,7 +19,7 @@ def test_api_port(provider):
 
 def test_credentials_quads(provider):
     view = navigate_to(provider, 'All')
-    prov_item = view.entities.get_entity(by_name=provider.name, surf_pages=True)
+    prov_item = view.entities.get_entity(name=provider.name, surf_pages=True)
     assert prov_item.data.get('creds') and 'checkmark' in prov_item.data['creds']
 
 

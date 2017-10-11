@@ -184,7 +184,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         view = navigate_to(self.parent, "All")
 
         def _looking_for_state_change():
-            entity = view.entities.get_entity(by_name=self.name)
+            entity = view.entities.get_entity(name=self.name)
             return "currentstate-{}".format(desired_state) in entity.data['state']
 
         return wait_for(
@@ -221,7 +221,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         """
         view = navigate_to(self.parent, "All")
         try:
-            view.entities.get_entity(by_name=self.name, surf_pages=True)
+            view.entities.get_entity(name=self.name, surf_pages=True)
         except ItemNotFound:
             return False
         else:
@@ -234,7 +234,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
         Returns: :py:class:`bool`
         """
         view = navigate_to(self.parent, "All")
-        entity = view.entities.get_entity(by_name=self.name, surf_pages=True)
+        entity = view.entities.get_entity(name=self.name, surf_pages=True)
         return entity.data['creds'].strip().lower() == "checkmark"
 
     def update_credentials_rest(self, credentials):
@@ -400,7 +400,7 @@ class HostCollection(BaseCollection):
 
         for host in hosts:
             try:
-                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
+                view.entities.get_entity(name=host.name, surf_pages=True).check()
                 checked_hosts.append(host)
             except ItemNotFound:
                 raise ItemNotFound('Could not find host {} in the UI'.format(host.name))
@@ -500,7 +500,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(Host)

@@ -278,7 +278,7 @@ class DatastoreCollection(BaseCollection):
 
         for datastore in datastores:
             try:
-                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
+                view.entities.get_entity(name=datastore.name, surf_pages=True).check()
                 checked_datastores.append(datastore)
             except ItemNotFound:
                 raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
@@ -301,7 +301,7 @@ class DatastoreCollection(BaseCollection):
 
         for datastore in datastores:
             try:
-                view.entities.get_entity(by_name=datastore.name, surf_pages=True).check()
+                view.entities.get_entity(name=datastore.name, surf_pages=True).check()
                 checked_datastores.append(datastore)
             except ItemNotFound:
                 raise ValueError('Could not find datastore {} in the UI'.format(datastore.name))
@@ -341,7 +341,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name, surf_pages=True).click()
 
 
 @navigator.register(Datastore, 'DetailsFromProvider')

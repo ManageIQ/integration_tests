@@ -13,7 +13,6 @@ from widgetastic.widget import Text, View, TextInput
 from widgetastic_manageiq import (
     SummaryTable, BreadCrumb, Accordion, ManageIQTree
 )
-from widgetastic.exceptions import RowNotFound
 
 from wrapanapi.utils import eval_strings
 
@@ -336,7 +335,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(self.obj.name,
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=True).click()
 
     def resetter(self):
@@ -358,7 +357,8 @@ class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
+                                                   surf_pages=True).check()
         self.prerequisite_view.toolbar.configuration.item_select(
             'Edit Selected Containers Provider')
 
@@ -377,7 +377,7 @@ class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.entities.get_entity(self.obj.name,
+        self.prerequisite_view.entities.get_entity(name=self.obj.name,
                                                    surf_pages=True).click()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
@@ -640,23 +640,6 @@ def navigate_and_get_rows(provider, obj, count, silent_failure=False):
         return []
 
     return sample(rows, min(count, len(rows)))
-
-
-def click_row(view, **filters):
-    """Since we still unable to get entity by multiple elements (not only by name),
-    We have this workaround for the navigation to details page.
-    Args:
-        view (ContainerObjectAllBaseView): the prerequisite view of the details view.
-        filters: the filters, the elements of this object.
-    """
-    view.toolbar.view_selector.select('List View')
-    for _ in view.paginator.pages():
-        try:
-            row = view.table.row(**filters)
-            row.click()
-            break
-        except RowNotFound:
-            pass
 
 
 def refresh_and_navigate(*args, **kwargs):

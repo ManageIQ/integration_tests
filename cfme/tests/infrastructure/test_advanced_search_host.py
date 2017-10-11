@@ -28,9 +28,9 @@ def hosts_with_vm_count(hosts, host_collection):
     hosts_with_vm_count = []
     view = navigate_to(host_collection, 'All')
     view.toolbar.view_selector.select("Grid View")
-    for hostname in hosts:
-        entity = view.entities.get_entity(by_name=hostname)
-        hosts_with_vm_count.append((hostname, entity.data['no_vm']))
+    for host in hosts:
+        entity = view.entities.get_entity(name=host.name)
+        hosts_with_vm_count.append((host.name, entity.data['no_vm']))
     return sorted(hosts_with_vm_count, key=lambda tup: tup[1])
 
 

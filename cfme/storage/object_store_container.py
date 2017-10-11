@@ -145,7 +145,7 @@ class Details(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         try:
-            self.prerequisite_view.entities.get_entity(self.obj.key,
+            self.prerequisite_view.entities.get_entity(name=self.obj.key,
                                                        surf_pages=True).click()
         except ItemNotFound:
             raise ItemNotFound('Could not locate container {}'.format(self.obj.key))
