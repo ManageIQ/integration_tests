@@ -447,12 +447,13 @@ class EditManagementEngineRelationship(CFMENavigateStep):
         configuration.item_select('Edit Management Engine Relationship')
 
 
-@navigator.register(Instance, 'EditTagsFromDetails')
+@navigator.register(Instance, 'EditTags')
 class EditTags(CFMENavigateStep):
     VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('AllForProvider')
 
-    def step(self, *args, **kwargs):
+    def step(self):
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 

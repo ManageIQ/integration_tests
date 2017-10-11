@@ -73,3 +73,13 @@ def test_tagvis_infra_object(testing_vis_object, check_item_visibility, visibili
         4. Login as restricted user, iten is not visible for user
     """
     check_item_visibility(testing_vis_object, visibility)
+
+
+@pytest.mark.parametrize('tag_place', [True, False], ids=['visible', 'notVisible'])
+def test_object_add_tag_details(testing_vis_object, tag, tag_place):
+    if tag_place:
+        testing_vis_object.add_tag(tag)
+    else:
+        testing_vis_object.add_tag_list(tag)
+    actual_tags = testing_vis_object.get_tags()
+    assert '{}: {}'.format(tag.category.display_name, tag.display_name) == actual_tags

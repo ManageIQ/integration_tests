@@ -247,10 +247,16 @@ class Add(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Key Pair')
 
 
-@navigator.register(KeyPair, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
+@navigator.register(KeyPair, 'EditTags')
+class EditTags(CFMENavigateStep):
     VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToAttribute('collection', 'All')
 
-    def step(self):
+    def step(self, *args, **kwargs):
+        try:
+            item = self.prerequisite_view.entities.get_entity(by_name=self.obj.name,
+                                                              surf_pages=True)
+        except ItemNotFound:
+            raise KeyPairNotFound
+        item.check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

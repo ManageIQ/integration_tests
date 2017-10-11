@@ -379,11 +379,13 @@ class TenantEdit(CFMENavigateStep):
             raise DestinationNotFound('Cannot edit Cloud Tenants in CFME < 5.7')
 
 
-@navigator.register(Tenant, 'EditTagsFromDetails')
+@navigator.register(Tenant, 'EditTags')
 class TenantEditTags(CFMENavigateStep):
     VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
+    prerequisite = NavigateToSibling('All')
 
     def step(self, *args, **kwargs):
         """Navigate to the edit tags page"""
+        self.prerequisite_view.toolbar.view_selector.select('List View')
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

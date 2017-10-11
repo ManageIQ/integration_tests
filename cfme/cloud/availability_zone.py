@@ -2,18 +2,17 @@
 """
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
-from cfme.exceptions import AvailabilityZoneNotFound
+from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
     TimelinesView, ItemsToolBarViewSelector, Text, Table, Search, PaginationPane, BreadCrumb,
-    SummaryTable, Accordion, ManageIQTree)
+    SummaryTable, Accordion, ManageIQTree, BaseEntitiesView)
 
 
 class AvailabilityZoneToolBar(View):
@@ -78,7 +77,7 @@ class AvailabilityZoneAllView(AvailabilityZoneView):
             self.entities.title.text == 'Availability Zones')
 
     toolbar = View.nested(AvailabilityZoneToolBar)
-    entities = View.nested(AvailabilityZoneEntities)
+    including_entities = View.include(BaseEntitiesView, use_parent=True)
     paginator = PaginationPane()
 
 
@@ -134,11 +133,8 @@ class AvailabilityZoneDetails(CFMENavigateStep):
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.view_selector.select('List View')
         try:
-            row = self.prerequisite_view.paginator.find_row_on_pages(
-                self.prerequisite_view.entities.table,
-                name=self.obj.name,
-                cloud_provider=self.obj.provider.name)
-        except NoSuchElementException:
+            row = self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True)
+        except ItemNotFound:
             raise AvailabilityZoneNotFound('Could not locate Availability Zone "{}" on provider {}'
                                            .format(self.obj.name, self.obj.provider.name))
         row.click()
@@ -150,6 +146,16 @@ class AvailabilityZoneEditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
+
+
+@navigator.register(AvailabilityZone, 'EditTags')
+class AvailabilityZoneEditTagsList(CFMENavigateStep):
+    VIEW = TagPageView
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).check()
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
