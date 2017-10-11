@@ -30,7 +30,6 @@ from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
 from threading import RLock
-from cfme.utils.appliance import get_or_create_current_appliance
 from cfme.utils.blockers import BZ, Blocker
 from cfme.utils.conf import env, credentials
 from cfme.utils.log import logger
@@ -165,10 +164,11 @@ def fire_art_test_hook(node, hook, **hook_args):
 
 @pytest.mark.hookwrapper
 def pytest_runtest_protocol(item):
+    holder = item.config.pluginmanager.getplugin('appliance-holder')
     global session_ver
     global session_build
     global session_stream
-    appliance = get_or_create_current_appliance()
+    appliance = holder.held_appliance
     if not session_ver:
         session_ver = str(appliance.version)
         session_build = appliance.build
@@ -221,7 +221,8 @@ def pytest_runtest_protocol(item):
 
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
-    app = get_or_create_current_appliance()
+    holder = item.config.pluginmanager.getplugin('appliance-holder')
+    app = holder.held_appliance
     ip = app.address
     fire_art_test_hook(
         item, 'finish_test',
@@ -285,6 +286,8 @@ lock = RLock()
 
 
 def shutdown(config):
+    holder = config.pluginmanager.getplugin('appliance-holder')
+    app = holder.held_appliance
     with lock:
         proc = config._art_proc
         if proc:
@@ -292,7 +295,7 @@ def shutdown(config):
                 write_line('collecting artifacts')
                 fire_art_hook(config, 'finish_session')
             fire_art_hook(config, 'teardown_merkyl',
-                          ip=get_or_create_current_appliance().address)
+                          ip=app.address)
             if not store.slave_manager:
                 config._art_client.terminate()
                 proc = config._art_proc
