@@ -210,8 +210,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         """
         view = navigate_to(self, 'Details')
 
-        view.basic_information.fill(updates)
-        self._save_action(view, updates, reset)
+        updated = view.basic_information.fill(updates)
+        self._save_action(view, updated, reset)
 
     @property
     def basic_information_values(self):
@@ -236,8 +236,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         # cockpit_ws element is not present for downstream version
         if self.appliance.version != self.appliance.version.latest() and 'cockpit_ws' in updates:
             updates.pop('cockpit_ws')
-        view.server_roles.fill(updates)
-        self._save_action(view, updates, reset)
+        updated = view.server_roles.fill(updates)
+        self._save_action(view, updated, reset)
 
     def update_server_roles_db(self, roles):
         """ Set server roles on Configure / Configuration pages.
@@ -311,8 +311,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
                         product_name=self.appliance.product_name,
                         version=self.appliance.version
                     )
-        view.vmware_console.fill(updates)
-        self._save_action(view, updates, reset)
+        updated = view.vmware_console.fill(updates)
+        self._save_action(view, updated, reset)
 
     @property
     def vmware_console_values(self):
@@ -331,8 +331,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
 
         """
         view = navigate_to(self, 'Details')
-        view.ntp_servers.fill(updates)
-        self._save_action(view, updates, reset)
+        updated = view.ntp_servers.fill(updates)
+        self._save_action(view, updated, reset)
 
     @property
     def ntp_servers_values(self):
@@ -356,10 +356,15 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
         view = navigate_to(self, 'Details')
-        view.smtp_server.fill(updates)
+        try:
+            updated = view.smtp_server.fill(updates)
+        except Exception:
+            # workaround for 5.7 version as sometimes throws Exception
+            view = navigate_to(self, 'Details', use_resetter=True)
+            updated = view.smtp_server.fill(updates)
         if view.smtp_server.verify.active:
             view.smtp_server.verify.click()
-        self._save_action(view, updates, reset)
+        self._save_action(view, updated, reset)
 
     def send_test_email(self, email=None):
         """ Send a testing e-mail on specified address. Needs configured SMTP. """
@@ -385,8 +390,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
         view = navigate_to(self, 'Details')
-        view.web_services.fill(updates)
-        self._save_action(view, updates, reset)
+        updated = view.web_services.fill(updates)
+        self._save_action(view, updated, reset)
 
     @property
     def web_services_values(self):
@@ -404,8 +409,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
         view = navigate_to(self, 'Details')
-        view.web_services.fill(updates)
-        self._save_action(view, updates, reset)
+        updated = view.web_services.fill(updates)
+        self._save_action(view, updated, reset)
 
     @property
     def logging_values(self):
@@ -423,8 +428,8 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
              reset: By default(False) changes will not be reset, if True changes will be reset
         """
         view = navigate_to(self, 'Details')
-        view.custom_support_url.fill(updates)
-        self._save_action(view, updates, reset)
+        updated = view.custom_support_url.fill(updates)
+        self._save_action(view, updated, reset)
 
     @property
     def custom_support_url_values(self):
@@ -432,15 +437,15 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
         view = navigate_to(self, 'Details')
         return view.custom_support_url.read()
 
-    def _save_action(self, view, updates, reset):
+    def _save_action(self, view, updated_result, reset):
         """ Take care of actions to do after updates """
         if reset:
             try:
                 view.reset_button.click()
-                flash_message = 'All changes have been reset'
+                view.flash.assert_message('All changes have been reset')
             except Exception:
                 logger.warning('No values was changed')
-        else:
+        elif updated_result:
             view.save_button.click()
             self.appliance.server_details_changed()
             flash_message = (
@@ -449,7 +454,9 @@ class ServerInformation(Updateable, Pretty, NavigatableMixin):
                     self.appliance.server_name(),
                     self.appliance.server_id(),
                     self.appliance.server.zone.name))
-        view.flash.assert_message(flash_message)
+            view.flash.assert_message(flash_message)
+        else:
+            logger.info('Settings were not changed')
 
 
 @navigator.register(ServerInformation, 'Details')
@@ -459,6 +466,10 @@ class DetailsServer(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.server.select()
+
+    def resetter(self):
+        self.view.authentication.select()
+        self.view.server.select()
 
 
 # ============================= AUTHENTICATION TAB ===================================
