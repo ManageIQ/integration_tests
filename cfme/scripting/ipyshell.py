@@ -9,7 +9,7 @@ IMPORTS = [
     'from cfme.utils import conf',
     'from fixtures.pytest_store import store',
     'from cfme.utils.appliance.implementations.ui import navigate_to',
-    'from cfme.utils import providers'
+    'from cfme.utils import providers',
 ]
 
 
@@ -19,6 +19,8 @@ def main():
     quickstart.main(quickstart.parser.parse_args(['--mk-virtualenv', sys.prefix]))
     print('Welcome to IPython designed for running CFME QE code.')
     ipython = TerminalInteractiveShell.instance()
+    from cfme.utils import appliance
+    appliance.CREATE_IS_PEDANTIC = False
     for code_import in IMPORTS:
         print('> {}'.format(code_import))
         ipython.run_cell(code_import)
