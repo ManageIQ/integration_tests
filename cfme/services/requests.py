@@ -74,7 +74,7 @@ class Request(BaseEntity):
 
     def get_request_row_from_ui(self):
         """Opens CFME UI and return table_row object"""
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
         self.row = view.find_request(self.rest.description, partial_check=False)
         return self.row
 
@@ -106,7 +106,7 @@ class Request(BaseEntity):
         Request might be removed from CFME UI but present in DB
 
         """
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
         return bool(view.find_request(self.cells, self.partial_check))
 
     @variable(alias='rest')
@@ -119,7 +119,7 @@ class Request(BaseEntity):
 
     @update.variant('ui')
     def update_ui(self):
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
         view.toolbar.reload.click()
         self.row = view.find_request(cells=self.cells, partial_check=self.partial_check)
 
@@ -202,7 +202,7 @@ class Request(BaseEntity):
         # The way we identify request is a description which is based on vm_name,
         # no need returning Request obj if name is the same => raw request copy
         if 'catalog' in values and 'vm_name' in values['catalog']:
-            return Request(self.collection, description=values['catalog']['vm_name'],
+            return Request(self.parent, description=values['catalog']['vm_name'],
                            partial_check=True)
 
     def edit_request(self, values, cancel=False):
