@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+import attr
+
 from copy import copy
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -13,7 +15,7 @@ from widgetastic.widget import Checkbox, Table, Text, TextInput, View
 from . import ControlExplorerView
 from actions import Action
 from cfme.utils import ParamClassName
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -222,39 +224,7 @@ class EditEventView(ControlExplorerView):
         )
 
 
-class PolicyCollection(BaseCollection):
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, policy_class, description, active=True, scope=None, notes=None):
-        return policy_class(self, description, active=active, scope=scope, notes=notes)
-
-    def create(self, policy_class, description, active=True, scope=None, notes=None):
-        policy = self.instantiate(policy_class, description, active=active, scope=scope,
-            notes=notes)
-        view = navigate_to(policy, "Add")
-        view.fill({
-            "description": policy.description,
-            "active": policy.active,
-            "scope": policy.scope,
-            "notes": policy.notes
-        })
-        view.add_button.click()
-        view = policy.create_view(PolicyDetailsView)
-        assert view.is_displayed
-        view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
-        return policy
-
-    def all(self):
-        raise NotImplementedError
-
-    def delete(self, *policies):
-        for policy in policies:
-            if policy.exists:
-                policy.delete()
-
-
+@attr.s
 class BasePolicy(BaseEntity, Updateable, Pretty):
     """This class represents a Policy.
 
@@ -278,13 +248,10 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
     PRETTY = None
     _param_name = ParamClassName('description')
 
-    def __init__(self, collection, description, active=True, scope=None, notes=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.description = description
-        self.active = active
-        self.scope = scope
-        self.notes = notes
+    description = attr.ib()
+    active = attr.ib(default=None)
+    scope = attr.ib(default=None)
+    notes = attr.ib(default=None)
 
     def __str__(self):
         return self.description
@@ -477,6 +444,41 @@ class BasePolicy(BaseEntity, Updateable, Pretty):
         except NoSuchElementException:
             false_actions = []
         return true_actions + false_actions
+
+
+@attr.s
+class PolicyCollection(BaseCollection):
+
+    ENTITY = BasePolicy
+
+    # A rare collection override of instantiate
+    def instantiate(self, policy_class, description, active=True, scope=None, notes=None):
+        return policy_class.from_collection(
+            self, description, active=active, scope=scope, notes=notes)
+
+    def create(self, policy_class, description, active=True, scope=None, notes=None):
+        policy = self.instantiate(policy_class, description, active=active, scope=scope,
+            notes=notes)
+        view = navigate_to(policy, "Add")
+        view.fill({
+            "description": policy.description,
+            "active": policy.active,
+            "scope": policy.scope,
+            "notes": policy.notes
+        })
+        view.add_button.click()
+        view = policy.create_view(PolicyDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Policy "{}" was added'.format(policy.description))
+        return policy
+
+    def all(self):
+        raise NotImplementedError
+
+    def delete(self, *policies):
+        for policy in policies:
+            if policy.exists:
+                policy.delete()
 
 
 @navigator.register(PolicyCollection, "All")

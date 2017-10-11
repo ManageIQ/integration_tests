@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.containers.node import NodeCollection
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
@@ -29,7 +28,7 @@ def test_cockpit_button_access(provider, appliance, soft_assert):
 
     """
 
-    collection = appliance.get(NodeCollection)
+    collection = appliance.collections.nodes
     nodes = collection.all()
     node = [node for node in nodes if 'master' in node.name][0]
     navigate_to(node, 'Details')

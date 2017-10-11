@@ -233,6 +233,12 @@ class IPAppliance(object):
     def __init__(
             self, address=None, browser_steal=False, container=None, openshift_creds=None,
             db_host=None, db_port=None, ssh_port=None):
+        self._server = None
+        self.browser = ViaUI(owner=self)
+        self.ssui = ViaSSUI(owner=self)
+        self.context = ImplementationContext.from_instances(
+            [self.browser, self.ssui])
+
         from cfme.modeling.base import ApplianceCollections
         self.collections = ApplianceCollections(self)
         self.ssh_port = ssh_port or ports.SSH
@@ -257,25 +263,7 @@ class IPAppliance(object):
         self._user = None
         self.appliance_console = ApplianceConsole(self)
         self.appliance_console_cli = ApplianceConsoleCli(self)
-        self.browser = ViaUI(owner=self)
-        self.ssui = ViaSSUI(owner=self)
-        self.context = ImplementationContext.from_instances(
-            [self.browser, self.ssui])
-        self._server = None
         self.is_pod = False
-
-    def get(self, cls, *args, **kwargs):
-        """A generic getter for instantiation of Collection classes
-
-        This generic getter will supply an appliance (self) to an object and instantiate
-        it with the supplied args/kwargs e.g.::
-
-          my_appliance.get(NodeCollection)
-
-        This will return a NodeCollection object that is bound to the appliance.
-        """
-        assert 'appliance' not in kwargs
-        return cls(appliance=self, *args, **kwargs)
 
     def unregister(self):
         """ unregisters appliance from RHSM/SAT6 """

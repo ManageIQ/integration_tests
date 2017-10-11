@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Ansible/Repositories"""
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, Checkbox, Fillable
 from widgetastic.exceptions import NoSuchElementException
@@ -9,7 +11,7 @@ from widgetastic_manageiq import Table, PaginationPane
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.wait import wait_for
 from .playbooks import PlaybooksCollection
@@ -86,24 +88,98 @@ class RepositoryEditView(RepositoryFormView):
         )
 
 
+@attr.s
+class Repository(BaseEntity, Fillable):
+    """A class representing one Embedded Ansible repository in the UI."""
+
+    name = attr.ib()
+    url = attr.ib()
+    description = attr.ib(default="")
+    scm_credentials = attr.ib(default=None)
+    scm_branch = attr.ib(default=False)
+    clean = attr.ib(default=False)
+    delete_on_update = attr.ib(default=False)
+
+    _collections = {'playbooks': PlaybooksCollection}
+
+    @property
+    def db_object(self):
+        table = self.appliance.db.client["configuration_script_sources"]
+        return self.appliance.db.client.sessionmaker(autocommit=True).query(table).filter(
+            table.name == self.name).first()
+
+    @property
+    def playbooks(self):
+        return self.collections.playbooks
+
+    @property
+    def as_fill_value(self):
+        """For use when selecting this repo in the UI forms"""
+        return self.name
+
+    def update(self, updates):
+        """Update the repository in the UI.
+
+        Args:
+            updates (dict): :py:class:`dict` of the updates.
+        """
+        original_updated_at = self.db_object.updated_at
+        view = navigate_to(self, "Edit")
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(RepositoryAllView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message(
+                'Edit of Repository "{}" was successfully initialized.'.format(
+                    updates.get("name", self.name)))
+
+            def _wait_until_changes_applied():
+                changed_updated_at = self.db_object.updated_at
+                return not original_updated_at == changed_updated_at
+
+            wait_for(_wait_until_changes_applied, delay=10, timeout="5m")
+        else:
+            view.flash.assert_message(
+                'Edit of Repository "{}" cancelled by the user.'.format(self.name))
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, "Details")
+            return True
+        except ItemNotFound:
+            return False
+
+    def delete(self):
+        """Delete the repository in the UI."""
+        view = navigate_to(self, "Details")
+        view.configuration.item_select("Remove this Repository", handle_alert=True)
+        repo_list_page = self.create_view(RepositoryAllView)
+        assert repo_list_page.is_displayed
+        repo_list_page.flash.assert_no_error()
+        repo_list_page.flash.assert_message(
+            'Delete of Repository "{}" was successfully initiated.'.format(self.name))
+        wait_for(lambda: not self.exists, delay=10,
+            fail_func=repo_list_page.browser.selenium.refresh)
+
+    def refresh(self):
+        """Perform a refresh to update the repository."""
+        view = navigate_to(self, "Details")
+        view.configuration.item_select("Refresh this Repository", handle_alert=True)
+        view.flash.assert_no_error()
+        view.flash.assert_message("Embedded Ansible refresh has been successfully initiated")
+
+
+@attr.s
 class RepositoryCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.ansible.repositories.Repository`."""
 
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, url, description=None, scm_credentials=None,
-                    scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
-        return Repository(
-            self,
-            name,
-            url,
-            description=description,
-            scm_credentials=scm_credentials,
-            scm_branch=scm_branch,
-            clean=clean,
-            delete_on_update=delete_on_update,
-            update_on_launch=update_on_launch)
+    ENTITY = Repository
 
     def create(self, name, url, description=None, scm_credentials=None, scm_branch=None,
                clean=None, delete_on_update=None, update_on_launch=None):
@@ -208,98 +284,6 @@ class RepositoryCollection(BaseCollection):
         for repository in checked_repositories:
             view.flash.assert_message(
                 'Delete of Repository "{}" was successfully initiated.'.format(repository.name))
-
-
-class Repository(BaseEntity, Fillable):
-    """A class representing one Embedded Ansible repository in the UI."""
-
-    def __init__(self, collection, name, url, description=None, scm_credentials=None,
-                 scm_branch=None, clean=None, delete_on_update=None, update_on_launch=None):
-        self.name = name
-        self.url = url
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.description = description or ""
-        self.scm_credentials = scm_credentials
-        self.scm_branch = scm_branch or ""
-        self.clean = clean or False
-        self.delete_on_update = delete_on_update or False
-        self.update_on_launch = update_on_launch or False
-
-    @property
-    def db_object(self):
-        table = self.appliance.db.client["configuration_script_sources"]
-        return self.appliance.db.client.sessionmaker(autocommit=True).query(table).filter(
-            table.name == self.name).first()
-
-    @property
-    def as_fill_value(self):
-        """For use when selecting this repo in the UI forms"""
-        return self.name
-
-    def update(self, updates):
-        """Update the repository in the UI.
-
-        Args:
-            updates (dict): :py:class:`dict` of the updates.
-        """
-        original_updated_at = self.db_object.updated_at
-        view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(RepositoryAllView)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Edit of Repository "{}" was successfully initialized.'.format(
-                    updates.get("name", self.name)))
-
-            def _wait_until_changes_applied():
-                changed_updated_at = self.db_object.updated_at
-                return not original_updated_at == changed_updated_at
-
-            wait_for(_wait_until_changes_applied, delay=10, timeout="5m")
-        else:
-            view.flash.assert_message(
-                'Edit of Repository "{}" cancelled by the user.'.format(self.name))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, "Details")
-            return True
-        except ItemNotFound:
-            return False
-
-    def delete(self):
-        """Delete the repository in the UI."""
-        view = navigate_to(self, "Details")
-        view.configuration.item_select("Remove this Repository", handle_alert=True)
-        repo_list_page = self.create_view(RepositoryAllView)
-        assert repo_list_page.is_displayed
-        repo_list_page.flash.assert_no_error()
-        repo_list_page.flash.assert_message(
-            'Delete of Repository "{}" was successfully initiated.'.format(self.name))
-        wait_for(lambda: not self.exists, delay=10,
-            fail_func=repo_list_page.browser.selenium.refresh)
-
-    def refresh(self):
-        """Perform a refresh to update the repository."""
-        view = navigate_to(self, "Details")
-        view.configuration.item_select("Refresh this Repository", handle_alert=True)
-        view.flash.assert_no_error()
-        view.flash.assert_message("Embedded Ansible refresh has been successfully initiated")
-
-    @property
-    def playbooks(self):
-        return PlaybooksCollection(self.appliance, self)
-
-    def as_fill_value(self):
-        return self.name
 
 
 @navigator.register(RepositoryCollection, 'All')

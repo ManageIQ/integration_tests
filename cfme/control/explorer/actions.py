@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+import attr
+
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 
@@ -9,7 +11,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Input
 from widgetastic.widget import Checkbox, Text, View
 
 from . import ControlExplorerView
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -112,47 +114,7 @@ class ActionDetailsView(ControlExplorerView):
         )
 
 
-class ActionCollection(BaseCollection):
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, description, action_type, action_values=None):
-        return Action(self, description, action_type, action_values=action_values)
-
-    def create(self, description, action_type, action_values=None):
-        """Create an Action in the UI."""
-        action_values = action_values or {}
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": description,
-            "action_type": action_type,
-            "snapshot_name": action_values.get("snapshot_name"),
-            "analysis_profile": action_values.get("analysis_profile"),
-            "snapshot_age": action_values.get("snapshot_age"),
-            "alerts_to_evaluate": action_values.get("alerts_to_evaluate"),
-            "parent_type": action_values.get("parent_type"),
-            "categories": action_values.get("categories"),
-            "cpu_number": action_values.get("cpu_number"),
-            "memory_amount": action_values.get("memory_amount"),
-            "email_sender": action_values.get("email_sender"),
-            "email_recipient": action_values.get("email_recipient"),
-            "vcenter_attr_name": action_values.get("vcenter_attr_name"),
-            "vcenter_attr_value": action_values.get("vcenter_attr_value"),
-            "tag": action_values.get("tag"),
-            "remove_tag": action_values.get("remove_tag"),
-            "run_ansible_playbook": action_values.get("run_ansible_playbook")
-        })
-        # todo: check whether we can remove ensure_page_safe later
-        self.browser.plugin.ensure_page_safe()
-        view.add_button.click()
-        action = self.instantiate(description, action_type, action_values=action_values)
-        view = action.create_view(ActionDetailsView)
-        assert view.is_displayed
-        view.flash.assert_success_message('Action "{}" was added'.format(action.description))
-        return action
-
-
+@attr.s
 class Action(BaseEntity, Updateable, Pretty):
     """This class represents one Action.
 
@@ -169,12 +131,12 @@ class Action(BaseEntity, Updateable, Pretty):
         description: Action name.
         action_type: Type of the action, value from the dropdown select.
     """
-    def __init__(self, collection, description, action_type, action_values=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        action_values = action_values or {}
-        self.description = description
-        self.action_type = action_type
+    description = attr.ib()
+    action_type = attr.ib()
+    action_values = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        action_values = self.action_values or {}
         self.snapshot_name = action_values.get("snapshot_name")
         self.analysis_profile = action_values.get("analysis_profile")
         self.snapshot_age = action_values.get("snapshot_age")
@@ -256,6 +218,44 @@ class Action(BaseEntity, Updateable, Pretty):
     def delete_if_exists(self):
         if self.exists:
             self.delete()
+
+
+@attr.s
+class ActionCollection(BaseCollection):
+
+    ENTITY = Action
+
+    def create(self, description, action_type, action_values=None):
+        """Create an Action in the UI."""
+        action_values = action_values or {}
+        view = navigate_to(self, "Add")
+        view.fill({
+            "description": description,
+            "action_type": action_type,
+            "snapshot_name": action_values.get("snapshot_name"),
+            "analysis_profile": action_values.get("analysis_profile"),
+            "snapshot_age": action_values.get("snapshot_age"),
+            "alerts_to_evaluate": action_values.get("alerts_to_evaluate"),
+            "parent_type": action_values.get("parent_type"),
+            "categories": action_values.get("categories"),
+            "cpu_number": action_values.get("cpu_number"),
+            "memory_amount": action_values.get("memory_amount"),
+            "email_sender": action_values.get("email_sender"),
+            "email_recipient": action_values.get("email_recipient"),
+            "vcenter_attr_name": action_values.get("vcenter_attr_name"),
+            "vcenter_attr_value": action_values.get("vcenter_attr_value"),
+            "tag": action_values.get("tag"),
+            "remove_tag": action_values.get("remove_tag"),
+            "run_ansible_playbook": action_values.get("run_ansible_playbook")
+        })
+        # todo: check whether we can remove ensure_page_safe later
+        self.browser.plugin.ensure_page_safe()
+        view.add_button.click()
+        action = self.instantiate(description, action_type, action_values=action_values)
+        view = action.create_view(ActionDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Action "{}" was added'.format(action.description))
+        return action
 
 
 @navigator.register(ActionCollection, "All")

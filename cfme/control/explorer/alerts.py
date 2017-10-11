@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+import attr
+
 from copy import copy
 from navmazing import NavigateToAttribute, NavigateToSibling
 
@@ -8,7 +10,7 @@ from widgetastic_manageiq import AlertEmail, SNMPForm, SummaryForm
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -112,35 +114,7 @@ class AlertDetailsView(ControlExplorerView):
         )
 
 
-class AlertCollection(BaseCollection):
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, description, active=None, based_on=None, evaluate=None,
-            driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
-            timeline_event=None, mgmt_event=None):
-        return Alert(self, description, active=active, based_on=based_on, evaluate=evaluate,
-            driving_event=driving_event, notification_frequency=notification_frequency,
-            snmp_trap=snmp_trap, emails=emails, timeline_event=timeline_event,
-            mgmt_event=mgmt_event)
-
-    def create(self, description, active=None, based_on=None, evaluate=None,
-            driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
-            timeline_event=None, mgmt_event=None):
-        alert = self.instantiate(description, active=active, based_on=based_on, evaluate=evaluate,
-            driving_event=driving_event, notification_frequency=notification_frequency,
-            snmp_trap=snmp_trap, emails=emails, timeline_event=timeline_event,
-            mgmt_event=mgmt_event)
-        view = navigate_to(self, "Add")
-        alert._fill(view)
-        view.add_button.click()
-        view = alert.create_view(AlertDetailsView)
-        assert view.is_displayed
-        view.flash.assert_success_message('Alert "{}" was added'.format(alert.description))
-        return alert
-
-
+@attr.s
 class Alert(BaseEntity, Updateable, Pretty):
     """Alert representation object.
     Example:
@@ -173,21 +147,16 @@ class Alert(BaseEntity, Updateable, Pretty):
 
     pretty_attrs = ["description", "evaluate"]
 
-    def __init__(self, collection, description, active=None, based_on=None, evaluate=None,
-            driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
-            timeline_event=None, mgmt_event=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.description = description
-        self.active = active
-        self.based_on = based_on
-        self.evaluate = evaluate
-        self.driving_event = driving_event
-        self.notification_frequency = notification_frequency
-        self.snmp_trap = snmp_trap
-        self.emails = emails
-        self.timeline_event = timeline_event
-        self.mgmt_event = mgmt_event
+    description = attr.ib()
+    active = attr.ib(default=None)
+    based_on = attr.ib(default=None)
+    evaluate = attr.ib(default=None),
+    driving_event = attr.ib(default=None)
+    notification_frequency = attr.ib(default=None)
+    snmp_trap = attr.ib(default=None)
+    emails = attr.ib(default=None),
+    timeline_event = attr.ib(default=None)
+    mgmt_event = attr.ib(default=None)
 
     def __str__(self):
         """Conversion to string used when assigning in multibox selector."""
@@ -201,8 +170,8 @@ class Alert(BaseEntity, Updateable, Pretty):
             cancel: Whether to cancel the update (default False).
         """
         view = navigate_to(self, "Edit")
-        for attr, value in updates.items():
-            setattr(self, attr, value)
+        for attrib, value in updates.items():
+            setattr(self, attrib, value)
         changed = self._fill(view)
         if changed:
             view.save_button.click()
@@ -248,8 +217,8 @@ class Alert(BaseEntity, Updateable, Pretty):
             view.add_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(new_alert, attr, value)
+        for attrib, value in updates.items():
+            setattr(new_alert, attrib, value)
         view = new_alert.create_view(AlertDetailsView)
         assert view.is_displayed
         view.flash.assert_no_error()
@@ -306,6 +275,26 @@ class Alert(BaseEntity, Updateable, Pretty):
             .query(alerts.description)\
             .filter(alerts.description == self.description)\
             .count() > 0
+
+
+class AlertCollection(BaseCollection):
+
+    ENTITY = Alert
+
+    def create(self, description, active=None, based_on=None, evaluate=None,
+            driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
+            timeline_event=None, mgmt_event=None):
+        alert = self.instantiate(description, active=active, based_on=based_on, evaluate=evaluate,
+            driving_event=driving_event, notification_frequency=notification_frequency,
+            snmp_trap=snmp_trap, emails=emails, timeline_event=timeline_event,
+            mgmt_event=mgmt_event)
+        view = navigate_to(self, "Add")
+        alert._fill(view)
+        view.add_button.click()
+        view = alert.create_view(AlertDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Alert "{}" was added'.format(alert.description))
+        return alert
 
 
 @navigator.register(AlertCollection, "All")

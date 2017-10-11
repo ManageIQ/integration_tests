@@ -228,32 +228,32 @@ ALERT_PROFILES = [
 
 @pytest.fixture(scope="module")
 def policy_profile_collection(appliance):
-    return appliance.get(policy_profiles.PolicyProfileCollection)
+    return appliance.collections.policy_profiles
 
 
 @pytest.fixture(scope="module")
 def policy_collection(appliance):
-    return appliance.get(policies.PolicyCollection)
+    return appliance.collections.policies
 
 
 @pytest.fixture(scope="module")
 def condition_collection(appliance):
-    return appliance.get(conditions.ConditionCollection)
+    return appliance.collections.conditions
 
 
 @pytest.fixture(scope="module")
 def action_collection(appliance):
-    return appliance.get(actions.ActionCollection)
+    return appliance.collections.actions
 
 
 @pytest.fixture(scope="module")
 def alert_collection(appliance):
-    return appliance.get(alerts.AlertCollection)
+    return appliance.collections.alerts
 
 
 @pytest.fixture(scope="module")
 def alert_profile_collection(appliance):
-    return appliance.get(alert_profiles.AlertProfileCollection)
+    return appliance.collections.alert_profiles
 
 
 @pytest.yield_fixture

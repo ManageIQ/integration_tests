@@ -1,26 +1,17 @@
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox
-from widgetastic_manageiq import ManageIQTree
+from widgetastic.widget import Text
 from widgetastic.utils import Fillable
-from widgetastic_patternfly import CandidateNotFound, Button, Input, Dropdown
+from widgetastic_patternfly import CandidateNotFound
 from cached_property import cached_property
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
-from . import AutomateCustomizationView
-
-
-class DialogForm(AutomateCustomizationView):
-    title = Text('#explorer_title_text')
-
-    plus_btn = Dropdown('Add')
-    label = Input(name='label')
-    description = Input(name="description")
-
-    submit_button = Checkbox(name='chkbx_submit')
-    cancel_button = Checkbox(name='chkbx_cancel')
+from . import AutomateCustomizationView, AddDialogView, EditDialogView
+from .dialog_tab import TabCollection
 
 
 class DialogsView(AutomateCustomizationView):
@@ -35,33 +26,6 @@ class DialogsView(AutomateCustomizationView):
             self.service_dialogs.tree.currently_selected == ["All Dialogs"])
 
 
-class AddDialogView(DialogForm):
-
-    add_button = Button("Add")
-    plus_btn = Dropdown('Add')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_customization and self.service_dialogs.is_opened and
-            self.title.text == "Adding a new Dialog [Dialog Information]"
-        )
-
-
-class EditDialogView(DialogForm):
-    element_tree = ManageIQTree('dialog_edit_treebox')
-
-    save_button = Button('Save')
-    reset_button = Button('Reset')
-
-    @property
-    def is_displayed(self):
-        return (
-            self.in_customization and self.service_dialogs.is_opened and
-            self.title.text == "Editing Dialog {}".format(self.label)
-        )
-
-
 class DetailsDialogView(AutomateCustomizationView):
     title = Text("#explorer_title_text")
 
@@ -73,62 +37,30 @@ class DetailsDialogView(AutomateCustomizationView):
         )
 
 
-class DialogCollection(BaseCollection):
-    """Collection object for the :py:class:`Dialog`."""
-
-    tree_path = ['All Dialogs']
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, label, description=None, submit=False, cancel=False):
-        return Dialog(self, label, description=description, submit=submit, cancel=cancel)
-
-    def create(self, label=None, description=None, submit=False, cancel=False):
-        """ Create dialog label method """
-        view = navigate_to(self, 'Add')
-        # filling label twice to avoid the selenium field bug
-        fill_dict = {
-            k: v
-            for k, v in {'label': label, 'description': description,
-                         'submit_button': submit, 'cancel_button': cancel}.items()
-            if v is not None}
-        view.fill(fill_dict)
-        view.fill({'label': label})
-        return self.instantiate(
-            label=label, description=description, submit=submit, cancel=cancel)
-
-
+@attr.s
 class Dialog(BaseEntity, Fillable):
     """A class representing one Domain in the UI."""
-    def __init__(
-            self, collection, label, description=None, submit=False, cancel=False):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.label = label
-        self.description = description
-        self.submit = submit
-        self.cancel = cancel
+    label = attr.ib()
+    description = attr.ib(default=None)
+    submit = attr.ib(default=False)
+    cancel = attr.ib(default=False)
+
+    _collections = {'tabs': TabCollection}
 
     def as_fill_value(self):
         return self.label
-
-    @property
-    def parent(self):
-        return self.collection
 
     @property
     def dialog(self):
         return self
 
     @cached_property
-    def tabs(self, ):
-        from .dialog_tab import TabCollection
-        return TabCollection(self.appliance, self)
+    def tabs(self):
+        return self.collections.tabs
 
     @property
     def tree_path(self):
-        return self.collection.tree_path + [self.label]
+        return self.parent.tree_path + [self.label]
 
     def update(self, updates):
         """ Update dialog method"""
@@ -170,6 +102,28 @@ class Dialog(BaseEntity, Fillable):
     def delete_if_exists(self):
         if self.exists:
             self.delete()
+
+
+@attr.s
+class DialogCollection(BaseCollection):
+    """Collection object for the :py:class:`Dialog`."""
+
+    tree_path = ['All Dialogs']
+    ENTITY = Dialog
+
+    def create(self, label=None, description=None, submit=False, cancel=False):
+        """ Create dialog label method """
+        view = navigate_to(self, 'Add')
+        # filling label twice to avoid the selenium field bug
+        fill_dict = {
+            k: v
+            for k, v in {'label': label, 'description': description,
+                         'submit_button': submit, 'cancel_button': cancel}.items()
+            if v is not None}
+        view.fill(fill_dict)
+        view.fill({'label': label})
+        return self.instantiate(
+            label=label, description=description, submit=submit, cancel=cancel)
 
 
 @navigator.register(DialogCollection)

@@ -1,5 +1,6 @@
 """ Page functions for Tenant pages
 """
+import attr
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick
@@ -13,7 +14,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
 from cfme.web_ui import match_location
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
@@ -168,14 +169,76 @@ class TenantEditView(TenantView):
             self.entities.breadcrumb.active_location == expected_title)
 
 
+@attr.s
+class Tenant(BaseEntity, WidgetasticTaggable):
+    """Tenant Class
+
+    """
+    _param_name = 'Tenant'
+
+    name = attr.ib()
+    provider = attr.ib()
+
+    def wait_for_disappear(self, timeout=300):
+        self.provider.refresh_provider_relationships()
+        try:
+            return wait_for(lambda: self.exists,
+                            fail_condition=True,
+                            timeout=timeout,
+                            message='Wait for cloud tenant to disappear',
+                            delay=10,
+                            fail_func=self.browser.refresh)
+        except TimedOutError:
+            logger.error('Timed out waiting for tenant to disappear, continuing')
+
+    def wait_for_appear(self, timeout=600):
+        self.provider.refresh_provider_relationships()
+        return wait_for(lambda: self.exists, timeout=timeout, delay=10,
+                        message='Wait for cloud tenant to appear', fail_func=self.browser.refresh)
+
+    def update(self, updates):
+        view = navigate_to(self, 'Edit')
+        updated_name = updates.get('name', self.name + '_edited')
+        view.form.fill({'name': updated_name})
+        view.form.save_button.click()
+        self.provider.refresh_provider_relationships()
+        return wait_for(lambda: self.exists, fail_condition=False, timeout=600,
+                        message='Wait for cloud tenant to appear', delay=10,
+                        fail_func=self.browser.refresh)
+
+    def delete(self, wait=True):
+        """Delete the tenant"""
+
+        try:
+            view = navigate_to(self, 'Details')
+        except NoSuchElementException as ex:
+            # Catch general navigation exceptions and raise
+            raise TenantNotFound(
+                'Exception while navigating to Tenant details: {}'.format(ex))
+        view.toolbar.configuration.item_select('Delete Cloud Tenant')
+
+        result = view.entities.flash.assert_success_message(
+            'Delete initiated for 1 Cloud Tenant.')
+        if wait:
+            self.provider.refresh_provider_relationships()
+            result = self.wait_for_disappear(600)
+        return result
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+        except NoSuchElementException:
+            return False
+        else:
+            return True
+
+
+@attr.s
 class TenantCollection(BaseCollection):
     """Collection object for the :py:class:`cfme.cloud.tenant.Tenant`."""
 
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider):
-        return Tenant(self, name, provider)
+    ENTITY = Tenant
 
     def create(self, name, provider, wait=True):
         """Add a cloud Tenant from the UI and return the Tenant object"""
@@ -249,74 +312,6 @@ class TenantCollection(BaseCollection):
 
         # TODO: Assert deletion flash message for selected tenants
         # it is not shown in current UI, so not asserting
-
-
-class Tenant(BaseEntity, WidgetasticTaggable):
-    """Tenant Class
-
-    """
-    _param_name = 'Tenant'
-
-    def __init__(self, collection, name, provider):
-        """Base class for a Tenant"""
-        self.name = name
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
-
-    def wait_for_disappear(self, timeout=300):
-        self.provider.refresh_provider_relationships()
-        try:
-            return wait_for(lambda: self.exists,
-                            fail_condition=True,
-                            timeout=timeout,
-                            message='Wait for cloud tenant to disappear',
-                            delay=10,
-                            fail_func=self.browser.refresh)
-        except TimedOutError:
-            logger.error('Timed out waiting for tenant to disappear, continuing')
-
-    def wait_for_appear(self, timeout=600):
-        self.provider.refresh_provider_relationships()
-        return wait_for(lambda: self.exists, timeout=timeout, delay=10,
-                        message='Wait for cloud tenant to appear', fail_func=self.browser.refresh)
-
-    def update(self, updates):
-        view = navigate_to(self, 'Edit')
-        updated_name = updates.get('name', self.name + '_edited')
-        view.form.fill({'name': updated_name})
-        view.form.save_button.click()
-        self.provider.refresh_provider_relationships()
-        return wait_for(lambda: self.exists, fail_condition=False, timeout=600,
-                        message='Wait for cloud tenant to appear', delay=10,
-                        fail_func=self.browser.refresh)
-
-    def delete(self, wait=True):
-        """Delete the tenant"""
-
-        try:
-            view = navigate_to(self, 'Details')
-        except NoSuchElementException as ex:
-            # Catch general navigation exceptions and raise
-            raise TenantNotFound(
-                'Exception while navigating to Tenant details: {}'.format(ex))
-        view.toolbar.configuration.item_select('Delete Cloud Tenant')
-
-        result = view.entities.flash.assert_success_message(
-            'Delete initiated for 1 Cloud Tenant.')
-        if wait:
-            self.provider.refresh_provider_relationships()
-            result = self.wait_for_disappear(600)
-        return result
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-        except NoSuchElementException:
-            return False
-        else:
-            return True
 
 
 @navigator.register(TenantCollection, 'All')

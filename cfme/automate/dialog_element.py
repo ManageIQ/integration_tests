@@ -1,14 +1,15 @@
+import attr
+
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Checkbox, Image, Text
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 from widgetastic_manageiq import ManageIQTree, Table, TextInput
 from widgetastic.xpath import quote
 
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
-from .dialog_box import AddBoxView
-from . import AutomateCustomizationView
+from . import AutomateCustomizationView, AddBoxView
 
 
 class ElementForm(AddBoxView):
@@ -74,77 +75,20 @@ class DetailsDialogView(AutomateCustomizationView):
         )
 
 
-class ElementCollection(BaseCollection):
-    def __init__(self, appliance, parent):
-        self.parent = parent
-        self.appliance = appliance
+@attr.s
+class Element(BaseEntity):
+    """A class representing one Element of a dialog."""
+    element_data = attr.ib()
 
     @property
     def tree_path(self):
         return self.parent.tree_path
 
-    def instantiate(self, element_data=None):
-        return Element(self,
-            element_data=element_data)
-
-    def create(self, element_data=None):
-        for element in element_data:
-            view = navigate_to(self, "Add")
-            if(view.ele_label.value != ""):
-                view.plus_btn.item_select("Add a new Element to this Box")
-            view.fill(element)
-            self.set_element_type(view, element)
-        view.add_button.click()
-        view.flash.assert_no_error()
-        view.flash.assert_message('Dialog "{}" was added'.
-            format(self.parent.tab.label))
-        view.flash.assert_no_error()
-        return self.instantiate(element_data=element_data)
-
-    def set_element_type(self, view, element):
-        """ Method to add element type.Depending on their type the subfields varies.
-
-        Args:
-            each_element: subfields depending on element type.
-        """
-        choose_type = element.get("choose_type")
-        dynamic_chkbox = element.get("dynamic_chkbox")
-        element_type = ['Drop Down List', 'Radio Button']
-        if choose_type in element_type:
-            if not dynamic_chkbox:
-                row = view.entry_table.row(Value='<New Entry>')
-                row.click()
-                view.fill({'entry_value': "Yes",
-                           'entry_description': "entry_desc"})
-                view.add_entry_button.click()
-            else:
-                node1 = "InspectMe"
-                view.fill({'field_entry_point': 'b'})
-                view.bt_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
-                view.apply_btn.click()
-                view.fill({'field_show_refresh_button': True})
-        if choose_type == "Text Area Box":
-            view.fill({'text_area': 'Default text'})
-
-
-class Element(BaseEntity):
-    """A class representing one Element of a dialog."""
-    def __init__(self, collection, element_data):
-        self.collection = collection
-        self.element_data = element_data
-        self.appliance = self.collection.appliance
-
-    @property
-    def parent(self):
-        return self.collection.parent
-
-    @property
-    def tree_path(self):
-        return self.collection.tree_path
-
     @property
     def dialog(self):
-        return self.parent.tab
+        """ Returns parent object - Dialog"""
+        from .service_dialogs import Dialog
+        return parent_of_type(self, Dialog)
 
     def element_loc(self, element_data):
         return self.browser.element('//div[@class="panel-heading"]'
@@ -186,11 +130,60 @@ class Element(BaseEntity):
         view.flash.assert_no_error()
 
 
+@attr.s
+class ElementCollection(BaseCollection):
+
+    ENTITY = Element
+
+    @property
+    def tree_path(self):
+        return self.parent.tree_path
+
+    def create(self, element_data=None):
+        for element in element_data:
+            view = navigate_to(self, "Add")
+            if(view.ele_label.value != ""):
+                view.plus_btn.item_select("Add a new Element to this Box")
+            view.fill(element)
+            self.set_element_type(view, element)
+        view.add_button.click()
+        view.flash.assert_no_error()
+        view.flash.assert_message('Dialog "{}" was added'.
+            format(self.parent.tab.dialog.label))
+        view.flash.assert_no_error()
+        return self.instantiate(element_data=element_data)
+
+    def set_element_type(self, view, element):
+        """ Method to add element type.Depending on their type the subfields varies.
+
+        Args:
+            each_element: subfields depending on element type.
+        """
+        choose_type = element.get("choose_type")
+        dynamic_chkbox = element.get("dynamic_chkbox")
+        element_type = ['Drop Down List', 'Radio Button']
+        if choose_type in element_type:
+            if not dynamic_chkbox:
+                row = view.entry_table.row(Value='<New Entry>')
+                row.click()
+                view.fill({'entry_value': "Yes",
+                           'entry_description': "entry_desc"})
+                view.add_entry_button.click()
+            else:
+                node1 = "InspectMe"
+                view.fill({'field_entry_point': 'b'})
+                view.bt_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
+                view.apply_btn.click()
+                view.fill({'field_show_refresh_button': True})
+        if choose_type == "Text Area Box":
+            view.fill({'text_area': 'Default text'})
+
+
 @navigator.register(ElementCollection)
 class Add(CFMENavigateStep):
     VIEW = AddElementView
 
-    prerequisite = NavigateToAttribute('parent.collection', 'Add')
+    prerequisite = NavigateToAttribute('parent.parent', 'Add')
 
     def step(self):
         self.prerequisite_view.plus_btn.item_select("Add a new Element to this Box")

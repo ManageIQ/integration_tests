@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput
 from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -70,30 +72,6 @@ class PolicyProfilesAllView(ControlExplorerView):
         )
 
 
-class PolicyProfileCollection(BaseCollection):
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, collection, description, policies, notes=None):
-        return PolicyProfile(self, description, policies, notes=notes)
-
-    def create(self, description, policies, notes=None):
-        policy_profile = self.instantiate(self, description, policies, notes=notes)
-        view = navigate_to(self, "Add")
-        view.fill({
-            "description": policy_profile.description,
-            "notes": policy_profile.notes,
-            "policies": [policy.name_for_policy_profile for policy in policy_profile.policies]
-        })
-        view.add_button.click()
-        view = policy_profile.create_view(PolicyProfileDetailsView)
-        assert view.is_displayed
-        view.flash.assert_success_message('Policy Profile "{}" was added'.format(
-            policy_profile.description))
-        return policy_profile
-
-
 class PolicyProfile(BaseEntity, Updateable, Pretty):
 
     def __init__(self, collection, description, policies, notes=None):
@@ -156,6 +134,27 @@ class PolicyProfile(BaseEntity, Updateable, Pretty):
             .filter(
                 miq_sets.description == self.description and miq_sets.set_type == "MiqPolicySet")\
             .count() > 0
+
+
+@attr.s
+class PolicyProfileCollection(BaseCollection):
+
+    ENTITY = PolicyProfile
+
+    def create(self, description, policies, notes=None):
+        policy_profile = self.instantiate(self, description, policies, notes=notes)
+        view = navigate_to(self, "Add")
+        view.fill({
+            "description": policy_profile.description,
+            "notes": policy_profile.notes,
+            "policies": [policy.name_for_policy_profile for policy in policy_profile.policies]
+        })
+        view.add_button.click()
+        view = policy_profile.create_view(PolicyProfileDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Policy Profile "{}" was added'.format(
+            policy_profile.description))
+        return policy_profile
 
 
 @navigator.register(PolicyProfileCollection, "All")

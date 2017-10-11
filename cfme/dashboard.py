@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import attr
+
 import re
 
 from cached_property import cached_property
 from navmazing import NavigateToAttribute
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.timeutil import parsetime
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.wait import wait_for
@@ -218,124 +220,7 @@ class ParticularDashboardView(DashboardView):
             self.dashboards(title=self.obj.name).is_active)
 
 
-class DashboardCollection(BaseCollection):
-    """Represents the Dashboard page and can jump around various dashboards present."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    @property
-    def default(self):
-        """Returns an instance of the ``Default Dashboard``"""
-        return self.instantiate('Default Dashboard')
-
-    def instantiate(self, name):
-        return Dashboard(collection=self, name=name)
-
-    def all(self):
-        view = navigate_to(self.appliance.server, 'Dashboard')
-        result = []
-        # TODO: Idiomatize the following line
-        for (dashboard_name, ) in view.dashboards.view_class.all(view.browser):
-            result.append(self.instantiate(dashboard_name))
-        return result
-
-    def refresh(self):
-        """Refreshes the dashboard view by forcibly clicking the navigation again."""
-        view = navigate_to(self.appliance.server, 'Dashboard')
-        view.navigation.select('Cloud Intel', 'Dashboard')
-
-    @property
-    def zoomed_name(self):
-        """Grabs the name of the currently zoomed widget."""
-        view = navigate_to(self.appliance.server, 'Dashboard')
-        if not view.zoomed.is_displayed:
-            return None
-        return view.zoomed.title.text
-
-    def close_zoom(self):
-        """Closes any zoomed widget."""
-        navigate_to(self.appliance.server, 'Dashboard').ensure_zoom_closed()
-
-
-class Dashboard(BaseEntity):
-    def __init__(self, collection, name):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-
-    @property
-    def dashboard_view(self):
-        """Returns a view pointed at a particular dashboard."""
-        return navigate_to(self, 'Details').dashboards(title=self.name)
-
-    @cached_property
-    def widgets(self):
-        return DashboardWidgetCollection(self.appliance, self)
-
-    def drag_and_drop(self, dragged_widget_or_name, dropped_widget_or_name):
-        """Drags and drops widgets onto each other."""
-        if isinstance(dragged_widget_or_name, DashboardWidget):
-            dragged_widget_or_name = dragged_widget_or_name.name
-        if isinstance(dropped_widget_or_name, DashboardWidget):
-            dropped_widget_object = dropped_widget_or_name
-            dropped_widget_or_name = dropped_widget_or_name.name
-        else:
-            dropped_widget_object = self.widgets.instantiate(dropped_widget_or_name)
-        view = self.dashboard_view
-        first_widget = view.widgets(title=dragged_widget_or_name).title
-        if dropped_widget_object.last_in_column:
-            # Different behaviour
-            dropped_widget = view.widgets(title=dropped_widget_or_name)
-            middle = view.browser.middle_of(dropped_widget)
-            position = view.browser.location_of(dropped_widget)
-            size = view.browser.size_of(dropped_widget)
-
-            drop_x = middle.x
-            drop_y = position.x + size.height + 10
-            view.browser.drag_and_drop_to(first_widget, to_x=drop_x, to_y=drop_y)
-        else:
-            second_widget = view.widgets(title=dropped_widget_or_name).footer
-            view.browser.drag_and_drop(first_widget, second_widget)
-        view.browser.plugin.ensure_page_safe()
-
-
-@navigator.register(Dashboard, 'Details')
-class DashboardDetails(CFMENavigateStep):
-    VIEW = ParticularDashboardView
-    prerequisite = NavigateToAttribute('appliance.server', 'Dashboard')
-
-    def step(self):
-        self.prerequisite_view.dashboards(title=self.obj.name).select()
-
-
-class DashboardWidgetCollection(BaseCollection):
-    def __init__(self, appliance, dashboard):
-        self.appliance = appliance
-        self.dashboard = dashboard
-
-    @property
-    def dashboard_view(self):
-        return self.dashboard.dashboard_view
-
-    def instantiate(self, name):
-        return DashboardWidget(self, name)
-
-    def all(self, content_type=None):  # widgets
-        view = self.dashboard_view
-        result = []
-        # TODO: Idiomatize the following line
-        for (widget_name, ) in view.widgets.view_class.all(view.browser):
-            w = self.instantiate(widget_name)
-            if content_type is None or w.content_type == content_type:
-                result.append(self.instantiate(widget_name))
-        return result
-
-    def reset(self, cancel=False):
-        """Clicks the Reset widgets button."""
-        navigate_to(self.dashboard, 'Details').reset_widgets()
-
-
+@attr.ib
 class DashboardWidget(BaseEntity):
     """Represents a single UI dashboard widget.
 
@@ -343,14 +228,11 @@ class DashboardWidget(BaseEntity):
         name: Name of the widget as displayed in the title.
         widget_collection: The widget collection linked to a dashboard
     """
-    def __init__(self, collection, name):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
+    name = attr.ib()
 
     @property
     def dashboard(self):
-        return self.collection.dashboard
+        return self.parent.parent
 
     @property
     def widget_view(self):
@@ -474,3 +356,111 @@ class DashboardWidget(BaseEntity):
         view = self.create_view(DashboardView)
         if view.is_displayed:
             view.ensure_zoom_closed()
+
+
+@attr.s
+class DashboardWidgetCollection(BaseCollection):
+
+    ENTITY = DashboardWidget
+
+    @property
+    def dashboard_view(self):
+        return self.parent.dashboard_view
+
+    def all(self, content_type=None):  # widgets
+        view = self.dashboard_view
+        result = []
+        # TODO: Idiomatize the following line
+        for (widget_name, ) in view.widgets.view_class.all(view.browser):
+            w = self.instantiate(widget_name)
+            if content_type is None or w.content_type == content_type:
+                result.append(self.instantiate(widget_name))
+        return result
+
+    def reset(self, cancel=False):
+        """Clicks the Reset widgets button."""
+        navigate_to(self.parent, 'Details').reset_widgets()
+
+
+@attr.s
+class Dashboard(BaseEntity):
+    name = attr.ib()
+
+    _collections = {'widgets': DashboardWidgetCollection}
+
+    @property
+    def dashboard_view(self):
+        """Returns a view pointed at a particular dashboard."""
+        return navigate_to(self, 'Details').dashboards(title=self.name)
+
+    def drag_and_drop(self, dragged_widget_or_name, dropped_widget_or_name):
+        """Drags and drops widgets onto each other."""
+        if isinstance(dragged_widget_or_name, DashboardWidget):
+            dragged_widget_or_name = dragged_widget_or_name.name
+        if isinstance(dropped_widget_or_name, DashboardWidget):
+            dropped_widget_object = dropped_widget_or_name
+            dropped_widget_or_name = dropped_widget_or_name.name
+        else:
+            dropped_widget_object = self.widgets.instantiate(dropped_widget_or_name)
+        view = self.dashboard_view
+        first_widget = view.widgets(title=dragged_widget_or_name).title
+        if dropped_widget_object.last_in_column:
+            # Different behaviour
+            dropped_widget = view.widgets(title=dropped_widget_or_name)
+            middle = view.browser.middle_of(dropped_widget)
+            position = view.browser.location_of(dropped_widget)
+            size = view.browser.size_of(dropped_widget)
+
+            drop_x = middle.x
+            drop_y = position.x + size.height + 10
+            view.browser.drag_and_drop_to(first_widget, to_x=drop_x, to_y=drop_y)
+        else:
+            second_widget = view.widgets(title=dropped_widget_or_name).footer
+            view.browser.drag_and_drop(first_widget, second_widget)
+        view.browser.plugin.ensure_page_safe()
+
+
+@attr.s
+class DashboardCollection(BaseCollection):
+    """Represents the Dashboard page and can jump around various dashboards present."""
+
+    ENTITY = Dashboard
+
+    @property
+    def default(self):
+        """Returns an instance of the ``Default Dashboard``"""
+        return self.instantiate('Default Dashboard')
+
+    def all(self):
+        view = navigate_to(self.appliance.server, 'Dashboard')
+        result = []
+        # TODO: Idiomatize the following line
+        for (dashboard_name, ) in view.dashboards.view_class.all(view.browser):
+            result.append(self.instantiate(dashboard_name))
+        return result
+
+    def refresh(self):
+        """Refreshes the dashboard view by forcibly clicking the navigation again."""
+        view = navigate_to(self.appliance.server, 'Dashboard')
+        view.navigation.select('Cloud Intel', 'Dashboard')
+
+    @property
+    def zoomed_name(self):
+        """Grabs the name of the currently zoomed widget."""
+        view = navigate_to(self.appliance.server, 'Dashboard')
+        if not view.zoomed.is_displayed:
+            return None
+        return view.zoomed.title.text
+
+    def close_zoom(self):
+        """Closes any zoomed widget."""
+        navigate_to(self.appliance.server, 'Dashboard').ensure_zoom_closed()
+
+
+@navigator.register(Dashboard, 'Details')
+class DashboardDetails(CFMENavigateStep):
+    VIEW = ParticularDashboardView
+    prerequisite = NavigateToAttribute('appliance.server', 'Dashboard')
+
+    def step(self):
+        self.prerequisite_view.dashboards(title=self.obj.name).select()

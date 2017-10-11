@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from cached_property import cached_property
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.xpath import quote
@@ -9,7 +11,7 @@ from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
 from cfme.utils import clear_property_cache
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView
@@ -82,20 +84,199 @@ class DomainEditView(DomainForm):
             self.title.text == 'Editing Automate Domain "{}"'.format(self.obj.name))
 
 
+class Domain(BaseEntity, Fillable):
+    """A class representing one Domain in the UI."""
+
+    def __init__(
+            self, collection, name, description, enabled=None, locked=None,
+            git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None):
+        super(Domain, self).__init__(collection)
+        self.name = name
+        self.description = description
+        if db_id is not None:
+            self.db_id = db_id
+        if git_repository is not None:
+            self.git_repository = git_repository
+        if git_checkout_type is not None:
+            self.git_checkout_type = git_checkout_type
+        if git_checkout_value is not None:
+            self.git_checkout_value = git_checkout_value
+        if enabled is not None:
+            self.enabled = enabled
+        if locked is not None:
+            self.locked = locked
+
+    __repr__ = object.__repr__
+
+    def as_fill_value(self):
+        return self.name
+
+    @cached_property
+    def db_id(self):
+        table = self.appliance.db.client['miq_ae_namespaces']
+        try:
+            return self.appliance.db.client.session.query(table.id).filter(
+                table.name == self.name,
+                table.parent_id == None)[0]  # noqa
+        except IndexError:
+            raise ItemNotFound('Domain named {} not found in the database'.format(self.name))
+
+    @cached_property
+    def git_repository(self):
+        """Returns an associated git repository object. None if no git repo associated."""
+        dbo = self.db_object
+        if dbo.git_repository_id is None:
+            return None
+        from cfme.automate.import_export import AutomateGitRepository
+        return AutomateGitRepository.from_db(dbo.git_repository_id, appliance=self.appliance)
+
+    @cached_property
+    def git_checkout_type(self):
+        return self.db_object.ref_type
+
+    @cached_property
+    def git_checkout_value(self):
+        return self.db_object.ref
+
+    @property
+    def db_object(self):
+        if self.db_id is None:
+            return None
+        table = self.appliance.db.client['miq_ae_namespaces']
+        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
+
+    @cached_property
+    def _enabled(self):
+        return self.db_object.enabled
+
+    @cached_property
+    def _locked(self):
+        if self.browser.product_version < '5.7':
+            return self.db_object.system
+        else:
+            return self.db_object.source in {'user_locked', 'system', 'remote'}
+
+    @property
+    def domain(self):
+        return self
+
+    @cached_property
+    def namespaces(self):
+        from .namespace import NamespaceCollection
+        return NamespaceCollection(self.appliance, self)
+
+    @property
+    def tree_display_name(self):
+        if self.git_repository:
+            name = '{name} ({ref}) ({name})'.format(name=self.name, ref=self.git_checkout_value)
+        else:
+            name = self.name
+
+        if self.locked and not self.enabled:
+            return '{} (Locked & Disabled)'.format(name)
+        elif self.locked and self.enabled:
+            return '{} (Locked)'.format(name)
+        elif not self.locked and not self.enabled:
+            return '{} (Disabled)'.format(name)
+        else:
+            return name
+
+    @property
+    def table_display_name(self):
+        if self.git_repository:
+            name = '{name} ({ref})'.format(name=self.name, ref=self.git_checkout_value)
+        else:
+            name = self.name
+
+        if self.locked and not self.enabled:
+            return '{} (Locked & Disabled)'.format(name)
+        elif self.locked and self.enabled:
+            return '{} (Locked)'.format(name)
+        elif not self.locked and not self.enabled:
+            return '{} (Disabled)'.format(name)
+        else:
+            return name
+
+    @property
+    def tree_path(self):
+        return self.parent.tree_path + [self.tree_display_name]
+
+    def delete(self, cancel=False):
+        # Ensure this has correct data
+        self.description
+        # Do it!
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Remove this Domain', handle_alert=not cancel)
+        if cancel:
+            assert details_page.is_displayed
+            details_page.flash.assert_no_error()
+        else:
+            domains_view = self.create_view(DomainListView)
+            assert domains_view.is_displayed
+            domains_view.flash.assert_no_error()
+            domains_view.flash.assert_message(
+                'Automate Domain "{}": Delete successful'.format(self.description or self.name))
+
+    def lock(self):
+        # Ensure this has correct data
+        self.description
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Lock this Domain')
+        details_page.flash.assert_no_error()
+        details_page.flash.assert_message('The selected Automate Domain were marked as Locked')
+        clear_property_cache(self, 'locked')
+        assert self.locked
+
+    def unlock(self):
+        # Ensure this has correct data
+        self.description
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Unlock this Domain')
+        details_page.flash.assert_no_error()
+        details_page.flash.assert_message('The selected Automate Domain were marked as Unlocked')
+        clear_property_cache(self, 'locked')
+        assert not self.locked
+
+    def update(self, updates):
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(DomainDetailsView, override=updates)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            if self.appliance.version >= '5.8.2':
+                text = (
+                    updates.get('description', self.description) or
+                    updates.get('name', self.name))
+            else:
+                text = updates.get('name', self.name)
+            view.flash.assert_message('Automate Domain "{}" was saved'.format(text))
+        else:
+            view.flash.assert_message(
+                'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except (CandidateNotFound, ItemNotFound):
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
+
+@attr.s
 class DomainCollection(BaseCollection):
     """Collection object for the :py:class:`Domain`."""
     tree_path = ['Datastore']
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(
-            self, name, description=None, enabled=None, git_repository=None, git_checkout_type=None,
-            git_checkout_value=None, db_id=None, locked=None):
-        return Domain(self,
-            name=name, description=description, enabled=enabled, locked=None,
-            git_repository=git_repository, git_checkout_type=git_checkout_type,
-            git_checkout_value=git_checkout_value, db_id=db_id)
+    ENTITY = Domain
 
     def create(self, name=None, description=None, enabled=None, cancel=False):
         add_page = navigate_to(self, 'Add')
@@ -247,196 +428,6 @@ class DomainDetailsView(AutomateExplorerView):
             self.in_explorer and
             self.title.text == 'Automate Domain "{}"'.format(
                 self.context['object'].table_display_name))
-
-
-class Domain(BaseEntity, Fillable):
-    """A class representing one Domain in the UI."""
-    def __init__(
-            self, collection, name, description, enabled=None, locked=None,
-            git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None):
-        if db_id is not None:
-            self.db_id = db_id
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.description = description
-        if git_repository is not None:
-            self.git_repository = git_repository
-        if git_checkout_type is not None:
-            self.git_checkout_type = git_checkout_type
-        if git_checkout_value is not None:
-            self.git_checkout_value = git_checkout_value
-        if enabled is not None:
-            self.enabled = enabled
-        if locked is not None:
-            self.locked = locked
-
-    def as_fill_value(self):
-        return self.name
-
-    @cached_property
-    def db_id(self):
-        table = self.appliance.db.client['miq_ae_namespaces']
-        try:
-            return self.appliance.db.client.session.query(table.id).filter(
-                table.name == self.name,
-                table.parent_id == None)[0]  # noqa
-        except IndexError:
-            raise ItemNotFound('Domain named {} not found in the database'.format(self.name))
-
-    @cached_property
-    def git_repository(self):
-        """Returns an associated git repository object. None if no git repo associated."""
-        dbo = self.db_object
-        if dbo.git_repository_id is None:
-            return None
-        from cfme.automate.import_export import AutomateGitRepository
-        return AutomateGitRepository.from_db(dbo.git_repository_id, appliance=self.appliance)
-
-    @cached_property
-    def git_checkout_type(self):
-        return self.db_object.ref_type
-
-    @cached_property
-    def git_checkout_value(self):
-        return self.db_object.ref
-
-    @property
-    def db_object(self):
-        if self.db_id is None:
-            return None
-        table = self.appliance.db.client['miq_ae_namespaces']
-        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
-
-    @cached_property
-    def enabled(self):
-        return self.db_object.enabled
-
-    @cached_property
-    def locked(self):
-        if self.browser.product_version < '5.7':
-            return self.db_object.system
-        else:
-            return self.db_object.source in {'user_locked', 'system', 'remote'}
-
-    @property
-    def parent(self):
-        return self.collection
-
-    @property
-    def domain(self):
-        return self
-
-    @cached_property
-    def namespaces(self):
-        from .namespace import NamespaceCollection
-        return NamespaceCollection(self.appliance, self)
-
-    @property
-    def tree_display_name(self):
-        if self.git_repository:
-            name = '{name} ({ref}) ({name})'.format(name=self.name, ref=self.git_checkout_value)
-        else:
-            name = self.name
-
-        if self.locked and not self.enabled:
-            return '{} (Locked & Disabled)'.format(name)
-        elif self.locked and self.enabled:
-            return '{} (Locked)'.format(name)
-        elif not self.locked and not self.enabled:
-            return '{} (Disabled)'.format(name)
-        else:
-            return name
-
-    @property
-    def table_display_name(self):
-        if self.git_repository:
-            name = '{name} ({ref})'.format(name=self.name, ref=self.git_checkout_value)
-        else:
-            name = self.name
-
-        if self.locked and not self.enabled:
-            return '{} (Locked & Disabled)'.format(name)
-        elif self.locked and self.enabled:
-            return '{} (Locked)'.format(name)
-        elif not self.locked and not self.enabled:
-            return '{} (Disabled)'.format(name)
-        else:
-            return name
-
-    @property
-    def tree_path(self):
-        return self.collection.tree_path + [self.tree_display_name]
-
-    def delete(self, cancel=False):
-        # Ensure this has correct data
-        self.description
-        # Do it!
-        details_page = navigate_to(self, 'Details')
-        details_page.configuration.item_select('Remove this Domain', handle_alert=not cancel)
-        if cancel:
-            assert details_page.is_displayed
-            details_page.flash.assert_no_error()
-        else:
-            domains_view = self.create_view(DomainListView)
-            assert domains_view.is_displayed
-            domains_view.flash.assert_no_error()
-            domains_view.flash.assert_message(
-                'Automate Domain "{}": Delete successful'.format(self.description or self.name))
-
-    def lock(self):
-        # Ensure this has correct data
-        self.description
-        details_page = navigate_to(self, 'Details')
-        details_page.configuration.item_select('Lock this Domain')
-        details_page.flash.assert_no_error()
-        details_page.flash.assert_message('The selected Automate Domain were marked as Locked')
-        clear_property_cache(self, 'locked')
-        assert self.locked
-
-    def unlock(self):
-        # Ensure this has correct data
-        self.description
-        details_page = navigate_to(self, 'Details')
-        details_page.configuration.item_select('Unlock this Domain')
-        details_page.flash.assert_no_error()
-        details_page.flash.assert_message('The selected Automate Domain were marked as Unlocked')
-        clear_property_cache(self, 'locked')
-        assert not self.locked
-
-    def update(self, updates):
-        view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(DomainDetailsView, override=updates)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        if changed:
-            if self.appliance.version >= '5.8.2':
-                text = (
-                    updates.get('description', self.description) or
-                    updates.get('name', self.name))
-            else:
-                text = updates.get('name', self.name)
-            view.flash.assert_message('Automate Domain "{}" was saved'.format(text))
-        else:
-            view.flash.assert_message(
-                'Edit of Automate Domain "{}" was cancelled by the user'.format(self.name))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except (CandidateNotFound, ItemNotFound):
-            return False
-
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
 
 
 @navigator.register(Domain)

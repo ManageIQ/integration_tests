@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from cfme.utils.pretty import Pretty
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -7,7 +9,7 @@ from widgetastic.widget import Text, TextInput, Widget
 from widgetastic_patternfly import Button, Input
 
 from . import ControlExplorerView
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.update import Updateable
 from cfme.utils import ParamClassName
 
@@ -156,34 +158,7 @@ class ConditionPolicyDetailsView(ControlExplorerView):
         )
 
 
-class ConditionCollection(BaseCollection):
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, condition_class, description, expression=None, scope=None, notes=None):
-        return condition_class(self, description, expression=expression, scope=scope, notes=notes)
-
-    def create(self, condition_class, description, expression=None, scope=None, notes=None):
-        condition = condition_class(self, description, expression=expression, scope=scope,
-            notes=notes)
-        view = navigate_to(condition, "Add")
-        view.fill({
-            "description": condition.description,
-            "expression": condition.expression,
-            "scope": condition.scope,
-            "notes": condition.notes
-        })
-        view.add_button.click()
-        view = condition.create_view(ConditionDetailsView)
-        assert view.is_displayed
-        view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
-        return condition
-
-    def all(self):
-        raise NotImplementedError
-
-
+@attr.s
 class BaseCondition(BaseEntity, Updateable, Pretty):
 
     TREE_NODE = None
@@ -191,13 +166,10 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
     FIELD_VALUE = None
     _param_name = ParamClassName('description')
 
-    def __init__(self, collection, description, expression=None, scope=None, notes=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.description = description
-        self.expression = expression
-        self.scope = scope
-        self.notes = notes
+    description = attr.ib()
+    expression = attr.ib(default=None)
+    scope = attr.ib(default=None)
+    notes = attr.ib(default=None)
 
     def update(self, updates):
         """Update this Condition in UI.
@@ -255,6 +227,31 @@ class BaseCondition(BaseEntity, Updateable, Pretty):
             .count() > 0
 
 
+@attr.s
+class ConditionCollection(BaseCollection):
+
+    ENTITY = BaseCondition
+
+    def create(self, condition_class, description, expression=None, scope=None, notes=None):
+        condition = condition_class(self, description, expression=expression, scope=scope,
+            notes=notes)
+        view = navigate_to(condition, "Add")
+        view.fill({
+            "description": condition.description,
+            "expression": condition.expression,
+            "scope": condition.scope,
+            "notes": condition.notes
+        })
+        view.add_button.click()
+        view = condition.create_view(ConditionDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message('Condition "{}" was added'.format(condition.description))
+        return condition
+
+    def all(self):
+        raise NotImplementedError
+
+
 @navigator.register(ConditionCollection, "All")
 class AllConditions(CFMENavigateStep):
     VIEW = ConditionsAllView
@@ -267,7 +264,7 @@ class AllConditions(CFMENavigateStep):
 @navigator.register(BaseCondition, "Add")
 class ConditionNew(CFMENavigateStep):
     VIEW = NewConditionView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.conditions.tree.click_path(
@@ -295,7 +292,7 @@ class ConditionEdit(CFMENavigateStep):
 @navigator.register(BaseCondition, "Details")
 class ConditionDetails(CFMENavigateStep):
     VIEW = ConditionDetailsView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.conditions.tree.click_path(

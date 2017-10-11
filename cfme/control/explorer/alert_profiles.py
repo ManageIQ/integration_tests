@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, TextInput
 from widgetastic_manageiq import CheckableManageIQTree, MultiBoxSelect
@@ -6,7 +8,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
 from cfme.utils import version, ParamClassName
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
@@ -98,43 +100,16 @@ class AlertProfilesEditAssignmentsView(ControlExplorerView):
         )
 
 
-class AlertProfileCollection(BaseCollection):
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, alert_profile_class, description, alerts=None, notes=None):
-        return alert_profile_class(self, description, alerts=alerts, notes=notes)
-
-    def create(self, alert_profile_class, description, alerts=None, notes=None):
-        alert_profile = self.instantiate(alert_profile_class, description, alerts=alerts,
-            notes=notes)
-        view = navigate_to(alert_profile, "Add")
-        view.fill({
-            "description": alert_profile.description,
-            "notes": alert_profile.notes,
-            "alerts": [str(alert) for alert in alert_profile.alerts]
-        })
-        view.add_button.click()
-        view = alert_profile.create_view(AlertProfileDetailsView)
-        assert view.is_displayed
-        view.flash.assert_success_message(
-            'Alert Profile "{}" was added'.format(alert_profile.description))
-        return alert_profile
-
-
+@attr.s
 class BaseAlertProfile(BaseEntity, Updateable, Pretty):
 
     TYPE = None
     _param_name = ParamClassName('description')
     pretty_attrs = ["description", "alerts"]
 
-    def __init__(self, collection, description, alerts=None, notes=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.description = description
-        self.notes = notes
-        self.alerts = alerts
+    description = attr.ib()
+    alerts = attr.ib(default=None)
+    notes = attr.ib(default=None)
 
     def update(self, updates):
         """Update this Alert Profile in UI.
@@ -149,8 +124,8 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
+        for attrib, value in updates.items():
+            setattr(self, attrib, value)
         view = self.create_view(AlertProfileDetailsView)
         assert view.is_displayed
         view.flash.assert_no_error()
@@ -225,6 +200,28 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
         else:
             view.flash.assert_message(
                 'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
+
+
+@attr.s
+class AlertProfileCollection(BaseCollection):
+
+    ENTITY = BaseAlertProfile
+
+    def create(self, alert_profile_class, description, alerts=None, notes=None):
+        alert_profile = self.instantiate(alert_profile_class, description, alerts=alerts,
+            notes=notes)
+        view = navigate_to(alert_profile, "Add")
+        view.fill({
+            "description": alert_profile.description,
+            "notes": alert_profile.notes,
+            "alerts": [str(alert) for alert in alert_profile.alerts]
+        })
+        view.add_button.click()
+        view = alert_profile.create_view(AlertProfileDetailsView)
+        assert view.is_displayed
+        view.flash.assert_success_message(
+            'Alert Profile "{}" was added'.format(alert_profile.description))
+        return alert_profile
 
 
 @navigator.register(AlertProfileCollection, "All")

@@ -1,6 +1,8 @@
 """ A model of an Infrastructure Cluster in CFME
 
 """
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic_manageiq import (Accordion, BreadCrumb, ItemsToolBarViewSelector, ManageIQTree,
@@ -10,7 +12,7 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for, TimedOutError
@@ -116,49 +118,7 @@ class ClusterTimelinesView(TimelinesView, ClusterView):
             super(TimelinesView, self).is_displayed)
 
 
-class ClusterCollection(BaseCollection):
-    """Collection object for the :py:class:`cfme.infrastructure.cluster.Cluster`."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider):
-        return Cluster(self, name, provider)
-
-    def delete(self, *clusters):
-        """Delete one or more Clusters from the list of the Clusters
-
-        Args:
-            list of the `cfme.infrastructure.cluster.Cluster` objects
-        """
-        clusters = list(clusters)
-        checked_clusters = []
-        view = navigate_to(self, 'All')
-        view.toolbar.view_selector.select('List View')
-
-        # todo: replace with get_all later
-        if not view.entities.elements.is_displayed:
-            raise ValueError('No Clusters found')
-
-        for row in view.entities.elements:
-            for cluster in clusters:
-                if cluster.name == row.name.text:
-                    checked_clusters.append(cluster)
-                    row[0].check()
-                    break
-            if set(clusters) == set(checked_clusters):
-                break
-        if set(clusters) != set(checked_clusters):
-            raise ValueError('Some Clusters were not found in the UI')
-        view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
-        view.entities.flash.assert_no_error()
-        flash_msg = ('Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.
-            format(len(clusters)))
-        view.flash.assert_message(flash_msg)
-        for cluster in clusters:
-            cluster.wait_for_disappear()
-
-
+@attr.s
 class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
     """ Model of an infrastructure cluster in cfme
 
@@ -171,21 +131,22 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
         of the direct path through ``Infrastructure/Clusters``.
     """
     pretty_attrs = ['name', 'provider']
+    quad_name = 'cluster'
 
-    def __init__(self, collection, name, provider):
-        self.name = name
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self._short_name = self.name.split('in')[0].strip()
-        self.quad_name = 'cluster'
+    name = attr.ib()
+    provider = attr.ib()  # TODO : Replace this with a walk when the provider can give us clusters
 
+    def __attrs_post_init__(self):
         col = self.appliance.rest_api.collections
         self._id = [
             cl.id
             for cl in col.clusters
             if cl.name in (self._short_name, self.name) and cl.ems_id == self.provider.id
         ][-1]
+
+    @property
+    def short_name(self):
+        return self.name.split('in')[0].strip()
 
     def delete(self, cancel=True, wait=False):
         """
@@ -265,17 +226,52 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
         """extracts cluster id for this cluster"""
         return self._id
 
-    @property
-    def short_name(self):
-        """returns only cluster's name exactly how it is stored in DB (without datacenter part)"""
-        return self._short_name
-
     def run_smartstate_analysis(self):
         """Run SmartState analysis"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Perform SmartState Analysis', invokes_alert=True)
         view.entities.flash.assert_message_contain('Cluster / Deployment Role: scan successfully '
                                                    'initiated')
+
+
+@attr.s
+class ClusterCollection(BaseCollection):
+    """Collection object for the :py:class:`cfme.infrastructure.cluster.Cluster`."""
+
+    ENTITY = Cluster
+
+    def delete(self, *clusters):
+        """Delete one or more Clusters from the list of the Clusters
+
+        Args:
+            list of the `cfme.infrastructure.cluster.Cluster` objects
+        """
+        clusters = list(clusters)
+        checked_clusters = []
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+
+        # todo: replace with get_all later
+        if not view.entities.elements.is_displayed:
+            raise ValueError('No Clusters found')
+
+        for row in view.entities.elements:
+            for cluster in clusters:
+                if cluster.name == row.name.text:
+                    checked_clusters.append(cluster)
+                    row[0].check()
+                    break
+            if set(clusters) == set(checked_clusters):
+                break
+        if set(clusters) != set(checked_clusters):
+            raise ValueError('Some Clusters were not found in the UI')
+        view.toolbar.configuration.item_select('Remove selected items', handle_alert=True)
+        view.entities.flash.assert_no_error()
+        flash_msg = ('Delete initiated for {} Clusters / Deployment Roles from the CFME Database'.
+            format(len(clusters)))
+        view.flash.assert_message(flash_msg)
+        for cluster in clusters:
+            cluster.wait_for_disappear()
 
 
 @navigator.register(ClusterCollection, 'All')

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
     Accordion,
@@ -24,7 +26,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound, ItemNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError
 
@@ -165,54 +167,15 @@ class VolumeAddView(VolumeView):
     form = View.nested(VolumeAddForm)
 
 
-class VolumeCollection(BaseCollection):
-    """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider):
-        return Volume(self, name, provider)
-
-    def delete(self, *volumes):
-        """Delete one or more Volumes from list of Volumes
-
-        Args:
-            One or Multiple 'cfme.storage.volume.Volume' objects
-        """
-
-        view = navigate_to(self, 'All')
-
-        if view.entities.get_all():
-            for volume in volumes:
-                try:
-                    view.entities.get_entity(volume.name).check()
-                except ItemNotFound:
-                    raise VolumeNotFound("Volume {} not found".format(volume.name))
-
-            view.toolbar.configuration.item_select('Delete selected Cloud Volumes',
-                                                   handle_alert=True)
-
-            for volume in volumes:
-                volume.wait_for_disappear()
-        else:
-            raise VolumeNotFound('No Cloud Volume for Deletion')
-
-
+@attr.s
 class Volume(BaseEntity):
     # Navigation menu option
     nav = VersionPick({
         Version.lowest(): ['Storage', 'Volumes'],
         '5.8': ['Storage', 'Block Storage', 'Volumes']})
 
-    def __init__(self, collection, name, provider):
-        self.name = name
-        # TODO add storage provider parameter, needed for accurate details nav
-        # the storage providers have different names then cloud providers
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1455270
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
+    name = attr.ib()
+    provider = attr.ib()
 
     def wait_for_disappear(self, timeout=300):
         def refresh():
@@ -247,6 +210,36 @@ class Volume(BaseEntity):
             return True
         except ItemNotFound:
             return False
+
+
+@attr.s
+class VolumeCollection(BaseCollection):
+    """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
+    ENTITY = Volume
+
+    def delete(self, *volumes):
+        """Delete one or more Volumes from list of Volumes
+
+        Args:
+            One or Multiple 'cfme.storage.volume.Volume' objects
+        """
+
+        view = navigate_to(self, 'All')
+
+        if view.entities.get_all():
+            for volume in volumes:
+                try:
+                    view.entities.get_entity(volume.name).check()
+                except ItemNotFound:
+                    raise VolumeNotFound("Volume {} not found".format(volume.name))
+
+            view.toolbar.configuration.item_select('Delete selected Cloud Volumes',
+                                                   handle_alert=True)
+
+            for volume in volumes:
+                volume.wait_for_disappear()
+        else:
+            raise VolumeNotFound('No Cloud Volume for Deletion')
 
 
 @navigator.register(VolumeCollection, 'All')

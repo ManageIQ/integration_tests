@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
     Accordion,
@@ -15,7 +17,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import TagPageView, WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 
 
 class ObjectStoreContainerToolbar(View):
@@ -93,24 +95,6 @@ class ObjectStoreContainerDetailsView(ObjectStoreContainerView):
     entities = View.nested(ObjectStoreContainerDetailsEntities)
 
 
-class ObjectStoreContainerCollection(BaseCollection):
-    """Collection object for :py:class:'cfme.storage.object_store_container.ObjectStoreContainer'
-    """
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, key, provider):
-        return ObjectStoreContainer(self, key, provider)
-
-    def all(self, provider):
-        """returning all containers objects"""
-        view = navigate_to(self, 'All')
-        containers = [self.instantiate(key=item, provider=provider)
-                      for item in view.entities.all_entity_names]
-        return containers
-
-
 class ObjectStoreContainer(BaseEntity, WidgetasticTaggable):
     """ Model of an Storage Object Store Containers in cfme
 
@@ -118,13 +102,23 @@ class ObjectStoreContainer(BaseEntity, WidgetasticTaggable):
         key: key of the container.
         provider: provider
     """
-    def __init__(self, collection, key, provider):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.key = key
-        self.provider = provider
-
+    key = attr.ib()
+    provider = attr.ib()
     # TODO add create method after BZ 1490320 fix
+
+
+@attr.s
+class ObjectStoreContainerCollection(BaseCollection):
+    """Collection object for :py:class:'cfme.storage.object_store_container.ObjectStoreContainer'
+    """
+    ENTITY = ObjectStoreContainer
+
+    def all(self):
+        """returning all containers objects"""
+        view = navigate_to(self, 'All')
+        containers = [self.instantiate(key=item, provider=self.filters.get('provider'))
+                      for item in view.entities.all_entity_names]
+        return containers
 
 
 @navigator.register(ObjectStoreContainerCollection, 'All')

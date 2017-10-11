@@ -7,11 +7,9 @@ from cfme import test_requirements
 from cfme.base import Server
 from cfme.common.vm import VM
 from cfme.exceptions import CFMEExceptionOccured
-from cfme.control.explorer.policy_profiles import PolicyProfileCollection
-from cfme.control.explorer.policies import PolicyCollection, VMCompliancePolicy, VMControlPolicy
-from cfme.control.explorer.actions import ActionCollection
-from cfme.control.explorer.alerts import AlertCollection, AlertDetailsView
-from cfme.control.explorer.conditions import ConditionCollection, VMCondition
+from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
+from cfme.control.explorer.alerts import AlertDetailsView
+from cfme.control.explorer.conditions import VMCondition
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
@@ -28,27 +26,27 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def policy_profile_collection(appliance):
-    return appliance.get(PolicyProfileCollection)
+    return appliance.collcetions.policy_profiles
 
 
 @pytest.fixture(scope="module")
 def policy_collection(appliance):
-    return appliance.get(PolicyCollection)
+    return appliance.collections.policies
 
 
 @pytest.fixture(scope="module")
 def condition_collection(appliance):
-    return appliance.get(ConditionCollection)
+    return appliance.collections.conditions
 
 
 @pytest.fixture(scope="module")
 def action_collection(appliance):
-    return appliance.get(ActionCollection)
+    return appliance.collections.actions
 
 
 @pytest.fixture(scope="module")
 def alert_collection(appliance):
-    return appliance.get(AlertCollection)
+    return appliance.collections.alerts
 
 
 def create_policy(request, collection):

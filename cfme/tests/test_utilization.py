@@ -6,7 +6,6 @@ import time
 from cfme import test_requirements
 from fixtures.pytest_store import store
 
-from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.middleware.provider import MiddlewareProvider
@@ -34,7 +33,7 @@ pytestmark = [
 
 @pytest.yield_fixture(scope="module")
 def enable_candu(appliance):
-    candu = appliance.get(CANDUCollection)
+    candu = appliance.collections.candus
     original_roles = appliance.server.settings.server_roles_db
     try:
         appliance.server.settings.enable_server_roles(

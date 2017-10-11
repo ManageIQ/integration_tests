@@ -1,31 +1,16 @@
+import attr
+
 from navmazing import NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import CloudNetworkDetailsView, CloudNetworkView
 from cfme.utils import providers, version
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
-class CloudNetworkCollection(BaseCollection):
-    """Collection object for Cloud Network object"""
-    def __init__(self, appliance, parent_provider=None):
-        self.appliance = appliance
-        self.parent = parent_provider
-
-    def instantiate(self, name):
-        return CloudNetwork(collection=self, name=name)
-
-    def all(self):
-        if self.parent:
-            view = navigate_to(self.parent, 'CloudNetworks')
-        else:
-            view = navigate_to(self, 'All')
-        list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=n.name) for n in list_networks_obj]
-
-
+@attr.s
 class CloudNetwork(WidgetasticTaggable, BaseEntity):
     """Class representing cloud networks in cfme database"""
     in_version = ('5.8', version.LATEST)
@@ -35,11 +20,12 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     quad_name = None
     db_types = ['CloudNetwork']
 
-    def __init__(self, collection, name, provider=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.provider = provider
+    name = attr.ib()
+
+    @property
+    def provider(self):
+        from cfme.networks.provider import NetworkProvider
+        return parent_of_type(self, NetworkProvider)
 
     @property
     def parent_provider(self):
@@ -57,18 +43,31 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     @property
     def network_provider(self):
         """ Returns network provider """
-        from cfme.networks.provider import NetworkProviderCollection
-        # cloud network collection contains reference to provider
-        if self.collection.parent:
-            return self.collection.parent
+        # security group collection contains reference to provider
+        if self.provider:
+            return self.provider
         # otherwise get provider name from ui
         view = navigate_to(self, 'Details')
         try:
             prov_name = view.entities.relationships.get_text_of("Network Manager")
-            collection = NetworkProviderCollection(appliance=self.appliance)
+            collection = self.appliance.collections.network_provider
             return collection.instantiate(name=prov_name)
         except ItemNotFound:  # BZ 1480577
             return None
+
+
+@attr.s
+class CloudNetworkCollection(BaseCollection):
+    """Collection object for Cloud Network object"""
+    ENTITY = CloudNetwork
+
+    def all(self):
+        if self.filters.get('parent'):
+            view = navigate_to(self.filters.get('parent'), 'CloudNetworks')
+        else:
+            view = navigate_to(self, 'All')
+        list_networks_obj = view.entities.get_all(surf_pages=True)
+        return [self.instantiate(name=n.name) for n in list_networks_obj]
 
 
 @navigator.register(CloudNetworkCollection, 'All')

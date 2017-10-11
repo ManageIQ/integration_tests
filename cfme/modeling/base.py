@@ -20,8 +20,6 @@ class ApplianceCollections(object):
         self.appliance = appliance
         if not self._collection_classes:
             self.load_collections()
-        for collection, cls in self._collection_classes.items():
-            self._collection_cache[collection] = cls(self.appliance)
 
     def load_collections(self):
         """Loads the collection definitions from the entrypoints system"""
@@ -31,10 +29,12 @@ class ApplianceCollections(object):
         }
 
     def __getattr__(self, name):
-        try:
-            return self._collection_cache[name]
-        except KeyError:
+        if name not in self._collection_classes:
             raise AttributeError('Collection [{}] not known to applinace'.format(name))
+        if name not in self._collection_cache:
+            cls = self._collection_classes[name]
+            self._collection_cache[name] = cls(self.appliance)
+        return self._collection_cache[name]
 
 
 class ObjectCollections(ApplianceCollections):
@@ -53,7 +53,7 @@ class ObjectCollections(ApplianceCollections):
                 cls = cls_and_or_filter[0]
             else:
                 cls = cls_and_or_filter
-            collection_instance = cls(self.appliance, filters=filter)
+            collection_instance = cls(self.parent, filters=filter)
             self._collection_cache[collection] = collection_instance
 
 
@@ -72,7 +72,7 @@ class BaseCollection(NavigatableMixin):
 
     ENTITY = None
 
-    parent = attr.ib()
+    parent = attr.ib(repr=False)
     filters = attr.ib(default=attr.Factory(dict))
 
     @property
@@ -116,7 +116,7 @@ class BaseEntity(NavigatableMixin):
     argument names have been used.
     """
 
-    parent = attr.ib(repr=False)  # This is the collection
+    parent = attr.ib(repr=False)  # This is the collection or not
 
     @property
     def appliance(self):
@@ -141,3 +141,22 @@ class CollectionProperty(object):
         if not isinstance(self.type_or_get_type, type):
             self.type_or_get_type = self.type_or_get_type()
         return self.type_or_get_type.for_entity_with_filter(instance, {'parent': instance})
+
+
+def _walk_to_obj_root(obj):
+    old = None
+    while True:
+        if old is obj:
+            break
+        yield obj
+        old = obj
+        try:
+            obj = obj.parent
+        except AttributeError:
+            pass
+
+
+def parent_of_type(obj, klass):
+    for x in _walk_to_obj_root(obj):
+        if isinstance(x, klass):
+            return x

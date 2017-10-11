@@ -1,5 +1,7 @@
 """ A model of an Infrastructure Datastore in CFME
 """
+import attr
+
 from navmazing import NavigateToAttribute
 from widgetastic.widget import View, Text
 from cfme.exceptions import ItemNotFound
@@ -18,7 +20,7 @@ from widgetastic.utils import Version, VersionPick
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.common.host_views import HostsView
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
@@ -159,6 +161,7 @@ class RegisteredHostsView(HostsView):
         return False
 
 
+@attr.s
 class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
     """ Model of an infrastructure datastore in cfme
 
@@ -169,12 +172,9 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
 
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, collection, name, provider, type=None):
-        self.name = name
-        self.type = type
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
+    name = attr.ib()
+    provider = attr.ib()
+    type = attr.ib(default=None)
 
     def delete(self, cancel=True):
         """
@@ -262,15 +262,10 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
                                            'initiated'.format(self.name)))
 
 
+@attr.s
 class DatastoreCollection(BaseCollection):
     """Collection class for `cfme.infrastructure.datastore.Datastore`"""
     ENTITY = Datastore
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider, type=None):
-        return Datastore(self, name, provider, type=type)
 
     def delete(self, *datastores):
         """
@@ -343,7 +338,7 @@ class All(CFMENavigateStep):
 @navigator.register(Datastore, 'Details')
 class Details(CFMENavigateStep):
     VIEW = DatastoreDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
 from functools import partial
+import attr
 import random
 import itertools
 from cached_property import cached_property
@@ -18,7 +19,7 @@ from cfme.containers.provider import ContainersProvider, Labelable,\
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, InfoBlock, match_location
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 
 
@@ -48,30 +49,6 @@ class NodeView(ContainerObjectAllBaseView, LoggingableView):
         )
 
 
-class NodeCollection(BaseCollection):
-    """Collection object for :py:class:`Node`."""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider):
-        return Node(self, name=name, provider=provider)
-
-    def all(self):
-        # container_nodes table has ems_id, join with ext_mgmgt_systems on id for provider name
-        node_table = self.appliance.db.client['container_nodes']
-        ems_table = self.appliance.db.client['ext_management_systems']
-        node_query = self.appliance.db.client.session.query(node_table.name, ems_table.name)\
-            .join(ems_table, node_table.ems_id == ems_table.id)
-        nodes = []
-        for name, provider_name in node_query.all():
-            # Hopefully we can get by with just provider name?
-            nodes.append(self.instantiate(name=name,
-                                          provider=ContainersProvider(name=provider_name,
-                                                                      appliance=self.appliance)))
-        return nodes
-
-
 class NodeAllView(NodeView):
     @property
     def is_displayed(self):
@@ -83,15 +60,13 @@ class NodeAllView(NodeView):
     paginator = PaginationPane()
 
 
+@attr.s
 class Node(Taggable, Labelable, SummaryMixin, BaseEntity):
 
     PLURAL = 'Nodes'
 
-    def __init__(self, collection, name, provider):
-        self.name = name
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
+    name = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -119,6 +94,27 @@ class Node(Taggable, Labelable, SummaryMixin, BaseEntity):
         collection = NodeCollection(appliance)
         return [collection.instantiate(obj.name, provider)
                 for obj in itertools.islice(node_list, count)]
+
+
+@attr.s
+class NodeCollection(BaseCollection):
+    """Collection object for :py:class:`Node`."""
+
+    ENTITY = Node
+
+    def all(self):
+        # container_nodes table has ems_id, join with ext_mgmgt_systems on id for provider name
+        node_table = self.appliance.db.client['container_nodes']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        node_query = self.appliance.db.client.session.query(node_table.name, ems_table.name)\
+            .join(ems_table, node_table.ems_id == ems_table.id)
+        nodes = []
+        for name, provider_name in node_query.all():
+            # Hopefully we can get by with just provider name?
+            nodes.append(self.instantiate(name=name,
+                                          provider=ContainersProvider(name=provider_name,
+                                                                      appliance=self.appliance)))
+        return nodes
 
 
 # Still registering Node to keep on consistency on container objects navigations

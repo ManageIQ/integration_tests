@@ -1,3 +1,5 @@
+import attr
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic.exceptions import NoSuchElementException
@@ -10,7 +12,7 @@ from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import CandidateNotFound
 from cfme.web_ui import match_location
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
 from cfme.utils.wait import wait_for
@@ -216,48 +218,14 @@ class StackResourcesView(StackView):
             self.entities.breadcrumb.active_location == expected_title)
 
 
-class StackCollection(BaseCollection):
-    """Collection class for cfme.cloud.stack.Stack"""
-
-    def __init__(self, appliance):
-        self.appliance = appliance
-
-    def instantiate(self, name, provider, quad_name=None):
-        return Stack(self, name, provider, quad_name=quad_name)
-
-    def delete(self, *stacks):
-        stacks = list(stacks)
-        checked_stacks = list()
-
-        view = navigate_to(self, 'All')
-        view.toolbar.view_selector.select('List View')
-
-        for stack in stacks:
-            try:
-                row = view.paginator.find_row_on_pages(view.table, name=stack.name)
-                row[0].check()
-                checked_stacks.append(stack)
-            except NoSuchElementException:
-                break
-
-        if set(stacks) == set(checked_stacks):
-            view.toolbar.configuration.item_select('Remove Orchestration Stacks', handle_alert=True)
-            view.entities.flash.assert_no_error()
-            flash_msg = \
-                'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
-                    len(stacks))
-            view.entities.flash.assert_success_message(flash_msg)
-
-            for stack in stacks:
-                wait_for(lambda: not stack.exists, num_sec=15 * 60,
-                     delay=30, message='Wait for stack to be deleted')
-        else:
-            raise ValueError('Some Stacks not found in the UI')
-
-
+@attr.s
 class Stack(Pretty, BaseEntity, WidgetasticTaggable):
     _param_name = "Stack"
     pretty_attrs = ['name']
+
+    name = attr.ib()
+    provider = attr.ib()
+    quad_name = attr.ib(default='stack')
 
     def __init__(self, collection, name, provider, quad_name=None):
         self.name = name
@@ -325,6 +293,42 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
 
             wait_for(lambda: not self.exists, fail_condition=False, fail_func=refresh, delay=30,
                      num_sec=15 * 60, message='Wait for stack to be deleted')
+
+
+@attr.s
+class StackCollection(BaseCollection):
+    """Collection class for cfme.cloud.stack.Stack"""
+
+    ENTITY = Stack
+
+    def delete(self, *stacks):
+        stacks = list(stacks)
+        checked_stacks = list()
+
+        view = navigate_to(self, 'All')
+        view.toolbar.view_selector.select('List View')
+
+        for stack in stacks:
+            try:
+                row = view.paginator.find_row_on_pages(view.table, name=stack.name)
+                row[0].check()
+                checked_stacks.append(stack)
+            except NoSuchElementException:
+                break
+
+        if set(stacks) == set(checked_stacks):
+            view.toolbar.configuration.item_select('Remove Orchestration Stacks', handle_alert=True)
+            view.entities.flash.assert_no_error()
+            flash_msg = \
+                'Delete initiated for {} Orchestration Stacks from the CFME Database'.format(
+                    len(stacks))
+            view.entities.flash.assert_success_message(flash_msg)
+
+            for stack in stacks:
+                wait_for(lambda: not stack.exists, num_sec=15 * 60,
+                     delay=30, message='Wait for stack to be deleted')
+        else:
+            raise ValueError('Some Stacks not found in the UI')
 
 
 @navigator.register(StackCollection, 'All')

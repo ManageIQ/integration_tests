@@ -5,7 +5,6 @@ from cfme.exceptions import ItemNotFound
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.storage.volume import VolumeCollection
 
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -23,7 +22,7 @@ pytestmark = [pytest.mark.tier(3),
 def test_volume_navigation(openstack_provider, appliance):
     # grab a volume name, the table returns a generator so use next
 
-    collection = VolumeCollection(appliance=appliance)
+    collection = appliance.collections.volume
     view = navigate_to(collection, 'All')
 
     try:
@@ -44,7 +43,7 @@ def test_volume_navigation(openstack_provider, appliance):
 
 @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
 def test_volume_collective_crud(openstack_provider, appliance):
-    collection = VolumeCollection(appliance=appliance)
+    collection = appliance.collections.volume
     view = navigate_to(collection, 'All')
 
     volumes = [collection.instantiate(name=item.name, provider=openstack_provider)

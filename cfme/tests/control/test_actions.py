@@ -213,12 +213,12 @@ def policy_profile_name(name_suffix):
 
 @pytest.fixture(scope="module")
 def action_collection(appliance):
-    return appliance.get(actions.ActionCollection)
+    return appliance.collections.actions
 
 
 @pytest.fixture(scope="module")
 def compliance_condition(appliance):
-    condition_collection = appliance.get(conditions.ConditionCollection)
+    condition_collection = appliance.collections.conditions
     return condition_collection.create(
         conditions.VMCondition,
         fauxfactory.gen_alpha(),
@@ -228,7 +228,7 @@ def compliance_condition(appliance):
 
 @pytest.fixture(scope="module")
 def policy_collection(appliance):
-    return appliance.get(policies.PolicyCollection)
+    return appliance.collections.policies
 
 
 @pytest.fixture(scope="module")
@@ -250,7 +250,7 @@ def policy_for_testing(provider, vm_name, policy_name, policy_profile_name, comp
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
     )
-    policy_profile_collection = appliance.get(policy_profiles.PolicyProfileCollection)
+    policy_profile_collection = appliance.collections.policy_profiles
     policy_profile = policy_profile_collection.create(
         policy_profile_name,
         policies=[control_policy, compliance_policy]

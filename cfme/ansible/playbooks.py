@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Automation/Anisble/Playbooks"""
+import attr
+
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
 from widgetastic_manageiq import (
@@ -18,7 +20,7 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from cfme.base import Server
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
 
@@ -97,35 +99,26 @@ class PlaybooksView(PlaybookBaseView):
         )
 
 
+@attr.s
 class PlaybooksCollection(BaseCollection):
     """Collection object for the :py:class:`Playbook`."""
-
-    def __init__(self, appliance, parent_repository):
-        self.appliance = appliance
-        self.parent = parent_repository
-
-    def instantiate(self, name, repository):
-        return Playbook(self, name, repository)
 
     def all(self):
         view = navigate_to(Server, "AnsiblePlaybooks")
         playbooks = []
         for entity in view.entities.get_all(surf_pages=True):
-            if entity.data["Repository"] == self.parent.name:
-                playbooks.append(
-                    self.instantiate(entity.data["Name"], entity.data["Repository"])
-                )
+            parent = self.filters.get('parent', None)
+            if (parent and entity.data["Repository"] == parent.name) or not parent:
+                playbooks.append(self.instantiate(entity.data["Name"], entity.data["Repository"]))
         return playbooks
 
 
+@attr.s
 class Playbook(BaseEntity):
     """A class representing one Embedded Ansible playbook in the UI."""
 
-    def __init__(self, collection, name, repository):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        self.repository = repository
+    name = attr.ib()
+    repository = attr.ib()
 
     @property
     def exists(self):
