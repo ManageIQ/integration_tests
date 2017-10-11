@@ -12,7 +12,7 @@ from cfme.exceptions import (
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Select, fill, flash,
-    form_buttons, toolbar, PagedTable, SplitPagedTable, search, CheckboxTable,
+    form_buttons, toolbar, PagedTable, search, CheckboxTable,
     DriftGrid, BootstrapTreeview
 )
 import cfme.web_ui.toolbar as tb
@@ -171,12 +171,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
 
     @property
     def paged_table(self):
-        _paged_table_template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-        return version.pick({
-            version.LOWEST: SplitPagedTable(header_data=(_paged_table_template.format("xhdr"), 1),
-                                            body_data=(_paged_table_template.format("objbox"), 0)),
-            "5.5": PagedTable('//table'),
-        })
+        return PagedTable('//table')
 
     ###
     # Methods
