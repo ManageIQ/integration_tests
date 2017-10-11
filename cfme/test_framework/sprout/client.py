@@ -95,7 +95,7 @@ class SproutClient(object):
 
     def provision_appliances(
             self, count=1, preconfigured=False, version=None, stream=None, provider=None,
-            lease_time=120, ram=None, cpu=None):
+            lease_time=120, ram=None, cpu=None, timeout=300):
         # If we specify version, stream is ignored because we will get that specific version
         if version:
             stream = get_stream(version)
@@ -111,7 +111,7 @@ class SproutClient(object):
             group=stream, provider=provider, lease_time=lease_time, ram=ram, cpu=cpu, count=count
         )
         wait_for(
-            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300,
+            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=timeout,
             message='provision {} appliance(s) from sprout'.format(count))
         data = self.call_method('request_check', str(request_id))
         logger.debug(data)
