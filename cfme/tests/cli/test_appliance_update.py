@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
         minor_build = split_ver[2]
     except IndexError:
         logger.exception('Caught IndexError generating for test_appliance_update, skipping')
-        versions.append(pytest.param("bad:{:r}".format(version), marks=pytest.mark.skip(
+        versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.skip(
             'Could not parse minor_build version from: {}'.format(version)
         )))
     else:
