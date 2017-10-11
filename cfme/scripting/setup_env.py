@@ -39,7 +39,8 @@ def main():
 @click.option('--cfme-version', required=True)
 @click.option('--provider', default=None, help='Specify sprout provider')
 @click.option('--lease', default='3h', help='Set pool lease time, example: 1d4h30m')
-@click.option('--sprout-timeout', default=None, help='Set Sprout client timeout in seconds: example 300')
+@click.option('--sprout-timeout', default=None,
+              help='Set Sprout client timeout in seconds: example 300')
 def setup_distributed_env(cfme_version, provider, lease, sprout_timeout):
     lease_time = tot_time(lease)
     """multi appliance single region configuration (distributed setup, 1st appliance has
@@ -88,7 +89,8 @@ def setup_ha_env(cfme_version, provider, lease):
     apps[0].appliance_console.run_commands(command_set0)
     wait_for(lambda: apps[0].db.is_dedicated_active)
     print("Dedicated database provisioned and configured {}".format(ip0))
-    command_set1 = ('ap', '', opt, '1', '2', '1', 'y') + port + ('', '', pwd, TimedCommand(pwd, 360), '')
+    command_set1 = \
+        ('ap', '', opt, '1', '2', '1', 'y') + port + ('', '', pwd, TimedCommand(pwd, 360), '')
     apps[1].appliance_console.run_commands(command_set1)
     apps[1].wait_for_evm_service()
     apps[1].wait_for_web_ui()
@@ -110,7 +112,8 @@ def setup_ha_env(cfme_version, provider, lease):
 @click.option('--cfme-version', required=True)
 @click.option('--provider', default=None, help='Specify sprout provider')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
-@click.option('--sprout-timeout', default='600', help='Set Sprout client timeout in seconds: example 300')
+@click.option('--sprout-timeout', default='600',
+              help='Set Sprout client timeout in seconds: example 300')
 def setup_replication_env(cfme_version, provider, lease, sprout_timeout):
     lease_time = tot_time(lease)
     """Multi appliance setup with multi region and replication from remote to global"""
