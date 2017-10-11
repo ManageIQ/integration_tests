@@ -1,7 +1,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import WidgetasticTaggable
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import ItemNotFound
 from cfme.networks.balancer import BalancerCollection
@@ -209,12 +209,3 @@ class OpenTopologyFromDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.overview.click_at('Topology')
-
-
-@navigator.register(NetworkProvider, 'EditTagsFromDetails')
-class EditTags(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

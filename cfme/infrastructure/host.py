@@ -6,7 +6,7 @@ from manageiq_client.api import APIException
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.common import PolicyProfileAssignable, WidgetasticTaggable, TagPageView
+from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
 from cfme.common.host_views import (
     HostAddView,
     HostDetailsView,
@@ -476,15 +476,6 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.monitoring.item_select("Timelines")
-
-
-@navigator.register(Host)
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling("Details")
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 def get_credentials_from_config(credential_config_name):

@@ -7,7 +7,7 @@ from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
     SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView)
 
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import KeyPairNotFound
 
@@ -245,12 +245,3 @@ class Add(CFMENavigateStep):
     def step(self, *args, **kwargs):
         """Raises DropdownItemDisabled from widgetastic_patternfly if no RHOS provider present"""
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Key Pair')
-
-
-@navigator.register(KeyPair, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

@@ -6,7 +6,6 @@ from widgetastic_patternfly import Dropdown, Button
 from widgetastic_manageiq import ManageIQTree, TimelinesView, Accordion
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TagPageView
 from cfme.common.vm import VM
 from cfme.common.vm_views import (
     ProvisionView, VMToolbar, VMEntities, VMDetailsEntities, RetirementView, EditView,
@@ -445,15 +444,6 @@ class EditManagementEngineRelationship(CFMENavigateStep):
     def step(self, *args, **kwargs):
         configuration = self.prerequisite_view.toolbar.configuration
         configuration.item_select('Edit Management Engine Relationship')
-
-
-@navigator.register(Instance, 'EditTagsFromDetails')
-class EditTags(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(Instance, 'ManagePolicies')

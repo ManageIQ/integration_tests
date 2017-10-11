@@ -6,7 +6,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.login import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import AvailabilityZoneNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import Navigatable
@@ -142,15 +142,6 @@ class AvailabilityZoneDetails(CFMENavigateStep):
             raise AvailabilityZoneNotFound('Could not locate Availability Zone "{}" on provider {}'
                                            .format(self.obj.name, self.obj.provider.name))
         row.click()
-
-
-@navigator.register(AvailabilityZone, 'EditTagsFromDetails')
-class AvailabilityZoneEditTags(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(AvailabilityZone, 'Timelines')

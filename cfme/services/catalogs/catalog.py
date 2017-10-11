@@ -4,7 +4,7 @@ from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 from navmazing import NavigateToAttribute, NavigateToSibling
 
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
 from cfme.utils.appliance import Navigatable
@@ -183,12 +183,3 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Edit this Item')
-
-
-@navigator.register(Catalog, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

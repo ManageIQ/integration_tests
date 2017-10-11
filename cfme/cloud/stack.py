@@ -7,7 +7,7 @@ from widgetastic_manageiq import (
     SummaryTable, Table, Text, BaseEntitiesView)
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import CandidateNotFound
 from cfme.web_ui import match_location
 from cfme.utils.appliance import BaseCollection, BaseEntity
@@ -354,16 +354,6 @@ class Details(CFMENavigateStep):
         row = self.prerequisite_view.paginator.find_row_on_pages(
             self.prerequisite_view.table, name=self.obj.name)
         row.click()
-
-
-@navigator.register(Stack, 'EditTagsFromDetails')
-class EditTags(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self, *args, **kwargs):
-        """Go to the edit tags screen"""
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
 @navigator.register(Stack, 'RelationshipSecurityGroups')

@@ -1,6 +1,6 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
 
-from cfme.common import WidgetasticTaggable, TagPageView
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import NetworkPortDetailsView, NetworkPortView
 from cfme.utils import version
@@ -99,12 +99,3 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
-
-
-@navigator.register(NetworkPort, 'EditTagsFromDetails')
-class EditTags(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')

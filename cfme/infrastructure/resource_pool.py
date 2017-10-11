@@ -10,7 +10,7 @@ from widgetastic.exceptions import NoSuchElementException
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 
 from cfme.base.ui import BaseLoggedInPage
-from cfme.common import TagPageView, WidgetasticTaggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ResourcePoolNotFound
 from cfme.web_ui import match_location
 from cfme.utils.pretty import Pretty
@@ -250,12 +250,3 @@ class Details(CFMENavigateStep):
         except NoSuchElementException:
             raise ResourcePoolNotFound('Resource pool {} not found'.format(self.obj.name))
         row.click()
-
-
-@navigator.register(ResourcePool, 'EditTagsFromDetails')
-class EditTagsFromDetails(CFMENavigateStep):
-    VIEW = TagPageView
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
