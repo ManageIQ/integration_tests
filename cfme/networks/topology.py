@@ -41,7 +41,7 @@ class Topology(BaseEntity):
         if found_elements:
             self.element_ref = found_elements[-1]
             wait_for(lambda: self.movement_stopped(), delay=2, num_sec=30)
-            self.elements_obj = found_elements
+            self.elements_obj = self.elements_col.all()
 
     def reload_legends(self):
         self.legends_obj = self.legends_col.all()
