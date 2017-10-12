@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -7,7 +9,7 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
@@ -66,17 +68,129 @@ class NamespaceEditView(NamespaceForm):
             self.title.text == 'Editing Automate Namespace "{}"'.format(self.obj.name))
 
 
+class Namespace(BaseEntity):
+
+    def __init__(self, collection, name, description):
+        from .klass import ClassCollection
+        self._collections = {
+            'namespaces': NamespaceCollection,
+            'classes': ClassCollection
+        }
+        super(Namespace, self).__init__(collection)
+        self.name = name
+        if description is not None:
+            self.description = description
+
+    __repr__ = object.__repr__
+
+    @cached_property
+    def description(self):
+        return self.db_object.description
+
+    @cached_property
+    def db_id(self):
+        table = self.appliance.db.client['miq_ae_namespaces']
+        try:
+            return self.appliance.db.client.session.query(table.id).filter(
+                table.name == self.name,
+                table.parent_id == self.parent_obj.db_id)[0]  # noqa
+        except IndexError:
+            raise ItemNotFound('Namespace named {} not found in the database'.format(self.name))
+
+    @property
+    def db_object(self):
+        table = self.appliance.db.client['miq_ae_namespaces']
+        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
+
+    @property
+    def parent_obj(self):
+        return self.parent.parent
+
+    @property
+    def domain(self):
+        return self.parent_obj.domain
+
+    @property
+    def tree_path(self):
+        return self.parent_obj.tree_path + [self.name]
+
+    @cached_property
+    def namespaces(self):
+        return self.collections.namespaces
+
+    @cached_property
+    def classes(self):
+        return self.collections.classes
+
+    def delete(self, cancel=False):
+        # Ensure this has correct data
+        self.description
+        # Do it!
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Remove this Namespace', handle_alert=not cancel)
+        if cancel:
+            assert details_page.is_displayed
+            details_page.flash.assert_no_error()
+        else:
+            if self.browser.product_version < '5.7':
+                # Domain list in 5.6 and lower
+                from .domain import DomainCollection, DomainListView
+                dc = DomainCollection(self.appliance)
+                result_view = self.create_view(DomainListView, dc)
+            elif isinstance(self.parent_obj, Domain):
+                result_view = self.create_view(DomainDetailsView, self.parent_obj)
+            else:
+                result_view = self.create_view(NamespaceDetailsView, self.parent_obj)
+            assert result_view.is_displayed
+            result_view.flash.assert_no_error()
+            result_view.flash.assert_message(
+                'Automate Namespace "{}": Delete successful'.format(self.description or self.name))
+
+    def update(self, updates):
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(NamespaceDetailsView, override=updates)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            if self.appliance.version >= '5.8.2':
+                text = (
+                    updates.get('description', self.description) or
+                    updates.get('name', self.name))
+                view.flash.assert_message(
+                    'Automate Namespace "{}" was saved'.format(text))
+            else:
+                view.flash.assert_message(
+                    'Automate Namespace "{}" was saved'.format(updates.get('name', self.name)))
+        else:
+            view.flash.assert_message(
+                'Edit of Automate Namespace "{}" was cancelled by the user'.format(self.name))
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
+
+@attr.s
 class NamespaceCollection(BaseCollection):
-    def __init__(self, appliance, parent):
-        self.parent = parent
-        self.appliance = appliance
+
+    ENTITY = Namespace
 
     @property
     def tree_path(self):
         return self.parent.tree_path
-
-    def instantiate(self, name=None, description=None):
-        return Namespace(self, name=name, description=description)
 
     def create(self, name=None, description=None, cancel=False):
         add_page = navigate_to(self, 'Add')
@@ -145,115 +259,6 @@ class Add(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Add a New Namespace')
-
-
-class Namespace(BaseEntity):
-    def __init__(self, collection, name, description):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        if description is not None:
-            self.description = description
-
-    @cached_property
-    def description(self):
-        return self.db_object.description
-
-    @cached_property
-    def db_id(self):
-        table = self.appliance.db.client['miq_ae_namespaces']
-        try:
-            return self.appliance.db.client.session.query(table.id).filter(
-                table.name == self.name,
-                table.parent_id == self.parent.db_id)[0]  # noqa
-        except IndexError:
-            raise ItemNotFound('Namespace named {} not found in the database'.format(self.name))
-
-    @property
-    def db_object(self):
-        table = self.appliance.db.client['miq_ae_namespaces']
-        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
-
-    @property
-    def parent(self):
-        return self.collection.parent
-
-    @property
-    def domain(self):
-        return self.parent.domain
-
-    @property
-    def tree_path(self):
-        return self.parent.tree_path + [self.name]
-
-    @cached_property
-    def namespaces(self):
-        return NamespaceCollection(self.appliance, self)
-
-    @cached_property
-    def classes(self):
-        from .klass import ClassCollection
-        return ClassCollection(self.appliance, self)
-
-    def delete(self, cancel=False):
-        # Ensure this has correct data
-        self.description
-        # Do it!
-        details_page = navigate_to(self, 'Details')
-        details_page.configuration.item_select('Remove this Namespace', handle_alert=not cancel)
-        if cancel:
-            assert details_page.is_displayed
-            details_page.flash.assert_no_error()
-        else:
-            if self.browser.product_version < '5.7':
-                # Domain list in 5.6 and lower
-                from .domain import DomainCollection, DomainListView
-                dc = DomainCollection(self.appliance)
-                result_view = self.create_view(DomainListView, dc)
-            elif isinstance(self.parent, Domain):
-                result_view = self.create_view(DomainDetailsView, self.parent)
-            else:
-                result_view = self.create_view(NamespaceDetailsView, self.parent)
-            assert result_view.is_displayed
-            result_view.flash.assert_no_error()
-            result_view.flash.assert_message(
-                'Automate Namespace "{}": Delete successful'.format(self.description or self.name))
-
-    def update(self, updates):
-        view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(NamespaceDetailsView, override=updates)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        if changed:
-            if self.appliance.version >= '5.8.2':
-                text = (
-                    updates.get('description', self.description) or
-                    updates.get('name', self.name))
-                view.flash.assert_message(
-                    'Automate Namespace "{}" was saved'.format(text))
-            else:
-                view.flash.assert_message(
-                    'Automate Namespace "{}" was saved'.format(updates.get('name', self.name)))
-        else:
-            view.flash.assert_message(
-                'Edit of Automate Namespace "{}" was cancelled by the user'.format(self.name))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
 
 
 @navigator.register(Namespace)

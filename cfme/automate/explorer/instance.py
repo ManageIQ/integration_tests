@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 import re
 
 from cached_property import cached_property
@@ -10,7 +12,7 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
@@ -138,22 +140,123 @@ class InstanceEditView(AutomateExplorerView):
             self.title.text == 'Editing Automate Instance "{}"'.format(self.obj.name))
 
 
+class Instance(BaseEntity, Copiable):
+    def __init__(self, collection, name, display_name, description, fields):
+        super(Instance, self).__init__(collection)
+
+        self.name = name
+        if display_name is not None:
+            self.display_name = display_name
+        if description is not None:
+            self.description = description
+        self.fields = fields
+
+    __repr__ = object.__repr__
+
+    @cached_property
+    def display_name(self):
+        return self.db_object.display_name
+
+    @cached_property
+    def description(self):
+        return self.db_object.description
+
+    @cached_property
+    def db_id(self):
+        table = self.appliance.db.client['miq_ae_instances']
+        try:
+            return self.appliance.db.client.session.query(table.id).filter(
+                table.name == self.name,
+                table.class_id == self.klass.db_id)[0]  # noqa
+        except IndexError:
+            raise ItemNotFound('Instance named {} not found in the database'.format(self.name))
+
+    @property
+    def db_object(self):
+        table = self.appliance.db.client['miq_ae_instances']
+        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
+
+    @property
+    def klass(self):
+        return self.parent_obj
+
+    @property
+    def namespace(self):
+        return self.klass.namespace
+
+    @property
+    def parent_obj(self):
+        return self.parent.parent
+
+    @property
+    def domain(self):
+        return self.parent_obj.domain
+
+    @property
+    def tree_path(self):
+        if self.display_name:
+            return self.parent_obj.tree_path + ['{} ({})'.format(self.display_name, self.name)]
+        else:
+            return self.parent_obj.tree_path + [self.name]
+
+    @property
+    def tree_path_name_only(self):
+        return self.parent_obj.tree_path_name_only + [self.name]
+
+    def update(self, updates):
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(InstanceDetailsView, override=updates)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message(
+                'Automate Instance "{}" was saved'.format(updates.get('name', self.name)))
+        else:
+            view.flash.assert_message(
+                'Edit of Automate Instance "{}" was cancelled by the user'.format(self.name))
+
+    def delete(self, cancel=False):
+        # Ensure this has correct data
+        self.description
+        # Do it!
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Remove this Instance', handle_alert=not cancel)
+        if cancel:
+            assert details_page.is_displayed
+            details_page.flash.assert_no_error()
+        else:
+            result_view = self.create_view(ClassDetailsView, self.parent_obj)
+            assert result_view.is_displayed
+            result_view.flash.assert_no_error()
+            result_view.flash.assert_message(
+                'Automate Instance "{}": Delete successful'.format(self.description or self.name))
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
+
+@attr.s
 class InstanceCollection(BaseCollection):
-    def __init__(self, appliance, parent_class):
-        self.parent = parent_class
-        self.appliance = appliance
+
+    ENTITY = Instance
 
     @property
     def tree_path(self):
         return self.parent.tree_path
-
-    def instantiate(self, name=None, display_name=None, description=None, fields=None):
-        return Instance(
-            self,
-            name=name,
-            display_name=display_name,
-            description=description,
-            fields=fields)
 
     def create(self, name=None, display_name=None, description=None, fields=None, cancel=False):
         add_page = navigate_to(self, 'Add')
@@ -227,113 +330,6 @@ class Add(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.instances.select()
         self.prerequisite_view.configuration.item_select('Add a New Instance')
-
-
-class Instance(BaseEntity, Copiable):
-    def __init__(self, collection, name, display_name, description, fields):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        if display_name is not None:
-            self.display_name = display_name
-        if description is not None:
-            self.description = description
-        self.fields = fields
-
-    @cached_property
-    def display_name(self):
-        return self.db_object.display_name
-
-    @cached_property
-    def description(self):
-        return self.db_object.description
-
-    @cached_property
-    def db_id(self):
-        table = self.appliance.db.client['miq_ae_instances']
-        try:
-            return self.appliance.db.client.session.query(table.id).filter(
-                table.name == self.name,
-                table.class_id == self.klass.db_id)[0]  # noqa
-        except IndexError:
-            raise ItemNotFound('Instance named {} not found in the database'.format(self.name))
-
-    @property
-    def db_object(self):
-        table = self.appliance.db.client['miq_ae_instances']
-        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
-
-    @property
-    def klass(self):
-        return self.parent
-
-    @property
-    def namespace(self):
-        return self.klass.namespace
-
-    @property
-    def parent(self):
-        return self.collection.parent
-
-    @property
-    def domain(self):
-        return self.parent.domain
-
-    @property
-    def tree_path(self):
-        if self.display_name:
-            return self.parent.tree_path + ['{} ({})'.format(self.display_name, self.name)]
-        else:
-            return self.parent.tree_path + [self.name]
-
-    @property
-    def tree_path_name_only(self):
-        return self.parent.tree_path_name_only + [self.name]
-
-    def update(self, updates):
-        view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(InstanceDetailsView, override=updates)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        if changed:
-            view.flash.assert_message(
-                'Automate Instance "{}" was saved'.format(updates.get('name', self.name)))
-        else:
-            view.flash.assert_message(
-                'Edit of Automate Instance "{}" was cancelled by the user'.format(self.name))
-
-    def delete(self, cancel=False):
-        # Ensure this has correct data
-        self.description
-        # Do it!
-        details_page = navigate_to(self, 'Details')
-        details_page.configuration.item_select('Remove this Instance', handle_alert=not cancel)
-        if cancel:
-            assert details_page.is_displayed
-            details_page.flash.assert_no_error()
-        else:
-            result_view = self.create_view(ClassDetailsView, self.parent)
-            assert result_view.is_displayed
-            result_view.flash.assert_no_error()
-            result_view.flash.assert_message(
-                'Automate Instance "{}": Delete successful'.format(self.description or self.name))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
 
 
 @navigator.register(Instance)
