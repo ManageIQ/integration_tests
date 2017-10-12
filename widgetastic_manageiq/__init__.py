@@ -1204,6 +1204,18 @@ class SSUIDropdown(Dropdown):
         self.text = text
 
 
+class SSUIAppendToBodyDropdown(Dropdown):
+    """This is a special dropdown where the dropdown options
+       are appended to the body and not to the dropdown."""
+
+    ITEMS_LOCATOR = '//ul[contains(@class, "dropdown-menu")]/li/a'
+    ITEM_LOCATOR = '//ul[contains(@class, "dropdown-menu")]/li/a[normalize-space(.)={}]'
+
+    def __init__(self, parent, text, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.text = text
+
+
 class SSUIPrimarycard(Widget, ClickableMixin):
     """Represents a primary card on dashboard like Total Service or Total Requests."""
 

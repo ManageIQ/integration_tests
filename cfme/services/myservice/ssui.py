@@ -1,6 +1,6 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
-from widgetastic_manageiq import SSUIlist, SSUIDropdown
+from widgetastic_manageiq import SSUIlist, SSUIDropdown, SSUIAppendToBodyDropdown
 from widgetastic_patternfly import Input, Button
 
 from cfme.base.ssui import SSUIBaseLoggedInPage
@@ -40,7 +40,8 @@ class DetailsMyServiceView(MyServicesView):
     configuration = SSUIDropdown('Configuration')
     policy_btn = SSUIDropdown('Policy')
     lifecycle_btn = SSUIDropdown('Lifecycle')
-    power_operations = SSUIDropdown('Download')
+    power_operations = SSUIDropdown('Power Operations')
+    access_dropdown = SSUIAppendToBodyDropdown('Access')
 
 
 class ServiceEditForm(MyServicesView):
@@ -78,6 +79,11 @@ def update(self, updates):
     # TODO - implement notifications and then assert.
 
 
+@MyService.launch_vm_console.external_implementation_for(ViaSSUI)
+def launch_vm_console(self):
+    navigate_to(self, 'VM Console')
+
+
 @navigator.register(MyService, 'All')
 class MyServiceAll(SSUINavigateStep):
     VIEW = MyServicesView
@@ -106,3 +112,13 @@ class MyServiceEdit(SSUINavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Edit')
+
+
+@navigator.register(MyService, 'VM Console')
+class LaunchVMConsole(SSUINavigateStep):
+    VIEW = EditMyServiceView
+
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.access_dropdown.item_select('VM Console')
