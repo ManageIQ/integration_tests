@@ -327,7 +327,7 @@ class AlertEdit(CFMENavigateStep):
 @navigator.register(Alert, "Details")
 class AlertDetails(CFMENavigateStep):
     VIEW = AlertDetailsView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.alerts.tree.click_path("All Alerts", self.obj.description)

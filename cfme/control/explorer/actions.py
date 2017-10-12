@@ -288,7 +288,7 @@ class ActionEdit(CFMENavigateStep):
 @navigator.register(Action, "Details")
 class ActionDetails(CFMENavigateStep):
     VIEW = ActionDetailsView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.actions.tree.click_path("All Actions", self.obj.description)
