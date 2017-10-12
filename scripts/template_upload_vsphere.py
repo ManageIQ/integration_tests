@@ -100,14 +100,16 @@ def add_disk(client, name, provider):
     logger.info("VSPHERE:%r Adding disk to %r", provider, name)
 
     # adding disk #1 (base disk is 0)
-    result = client.add_disk_to_vm(vm_name=name, capacity_in_kb=8388608, provision_type='thin')
+    result, msg = client.add_disk_to_vm(vm_name=name,
+                                        capacity_in_kb=8388608,
+                                        provision_type='thin')
 
-    if result.success:
+    if result:
         logger.info('VSPHERE:%r Added disk to vm %r', provider, name)
     else:
-        logger.error(" VSPHERE:%r Failure adding disk: %r", provider, result)
+        logger.error(" VSPHERE:%r Failure adding disk: %r", provider, msg)
 
-    return result.success
+    return result
 
 
 def check_kwargs(**kwargs):
