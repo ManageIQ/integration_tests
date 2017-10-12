@@ -6,7 +6,6 @@ from cfme.common.provider import cleanup_vm
 from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils import testgen
 from cfme.utils.log import logger
@@ -70,7 +69,7 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     request_description = item_name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()

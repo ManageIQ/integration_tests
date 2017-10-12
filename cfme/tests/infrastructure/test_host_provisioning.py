@@ -4,7 +4,6 @@ from cfme.infrastructure import host
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.infrastructure.provider import InfraProvider
 from cfme.provisioning import provisioning_form
-from cfme.services.requests import RequestCollection
 from cfme.web_ui import flash, fill
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
@@ -165,7 +164,7 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
         "Host Request was Submitted, you will be notified when your Hosts are ready")
 
     request_description = 'PXE install on [{}] from image [{}]'.format(prov_host_name, pxe_image)
-    host_request = RequestCollection(appliance).instantiate(request_description)
+    host_request = appliance.collections.requests.instantiate(request_description)
     host_request.wait_for_request(method='ui')
     assert host_request.row.last_message.text == 'Host Provisioned Successfully'
     assert host_request.row.status.text != 'Error'

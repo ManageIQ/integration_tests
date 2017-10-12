@@ -9,7 +9,6 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import cleanup_vm
-from cfme.services.requests import RequestCollection
 from cfme.utils import testgen
 from cfme.utils.log import logger
 from cfme.utils.blockers import BZ
@@ -106,7 +105,7 @@ def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_ite
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()

@@ -5,7 +5,6 @@ from datetime import datetime
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.services.requests import RequestCollection
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.myservice.ui import MyServiceDetailView
@@ -57,8 +56,8 @@ def myservice(appliance, setup_provider, provider, catalog_item, request):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     request_description = catalog_item.name
-    service_request = RequestCollection(appliance).instantiate(request_description,
-                                                               partial_check=True)
+    service_request = appliance.collections.requests.instantiate(request_description,
+                                                                 partial_check=True)
     service_request.wait_for_request()
     assert service_request.is_succeeded()
 

@@ -18,7 +18,6 @@ from functools import partial
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.control.explorer import actions, conditions, policies, policy_profiles
-from cfme.services.requests import RequestCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -789,8 +788,8 @@ def test_action_cancel_clone(appliance, request, provider, vm_name, vm_big, poli
 
     vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
     request_description = clone_vm_name
-    clone_request = RequestCollection(appliance).instantiate(description=request_description,
-                                                             partial_check=True)
+    clone_request = appliance.collections.requests.instantiate(description=request_description,
+                                                               partial_check=True)
     clone_request.wait_for_request(method='ui')
     assert clone_request.status == "Error"
 

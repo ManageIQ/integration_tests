@@ -8,7 +8,6 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services.requests import RequestCollection
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.stack import StackCollection
@@ -181,8 +180,8 @@ def test_provision_stack(appliance, setup_provider, provider, provisioning, cata
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
@@ -205,8 +204,8 @@ def test_reconfigure_service(appliance, provider, provisioning, catalog, catalog
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
@@ -229,7 +228,7 @@ def test_remove_template_provisioning(appliance, provider, provisioning, catalog
     template.delete()
     request_description = 'Provisioning Service [{}] from [{}]'.format(catalog_item.name,
                                                                        catalog_item.name)
-    provision_request = RequestCollection(appliance).instantiate(request_description)
+    provision_request = appliance.collections.requests.instantiate(request_description)
     provision_request.wait_for_request(method='ui')
     assert (provision_request.row.last_message.text == 'Service_Template_Provisioning failed' or
             provision_request.row.status.text == "Error")
@@ -250,8 +249,8 @@ def test_retire_stack(appliance, provider, provisioning, catalog, catalog_item, 
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
     stack = StackCollection(appliance).instantiate(stack_data['stack_name'], provider=provider)

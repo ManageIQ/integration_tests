@@ -7,7 +7,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for_decorator
@@ -47,8 +46,8 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
@@ -100,8 +99,8 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(bundle_name))
     request_description = bundle_name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_succeeded()
 
@@ -148,8 +147,8 @@ def test_request_with_orphaned_template(appliance, provider, setup_provider, cat
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provider.delete(cancel=False)
     provider.wait_for_delete()
     provision_request.wait_for_request(method='ui')
