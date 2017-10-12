@@ -227,16 +227,9 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
     provider = attr.ib()
     quad_name = attr.ib(default='stack')
 
-    def __init__(self, collection, name, provider, quad_name=None):
-        self.name = name
-        self.quad_name = quad_name or 'stack'
-        self.provider = provider
-        self.collection = collection
-        self.appliance = self.collection.appliance
-
     @property
     def exists(self):
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select('List View')
         try:
             view.paginator.find_row_on_pages(view.table, name=self.name)
@@ -262,7 +255,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
 
     def wait_for_exists(self):
         """Wait for the row to show up"""
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
 
         def refresh():
             """Refresh the view"""
@@ -275,7 +268,7 @@ class Stack(Pretty, BaseEntity, WidgetasticTaggable):
                  delay=30, message='Wait for stack to exist')
 
     def retire_stack(self, wait=True):
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
         view.toolbar.view_selector.select('List View')
         row = view.paginator.find_row_on_pages(view.table, name=self.name)
         row[0].check()
