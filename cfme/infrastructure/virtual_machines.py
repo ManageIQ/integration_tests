@@ -599,8 +599,16 @@ class Vm(VM):
             toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             if not cancel:
-                flash.assert_message_match('Remove Snapshot initiated for 1 '
-                                           'VM and Instance from the CFME Database')
+                flash_message = version.pick({
+                    version.LOWEST: "Remove Snapshot initiated for 1 "
+                                    "VM and Instance from the CFME Database",
+                    version.UPSTREAM: "Delete Snapshot initiated for 1 "
+                                      "VM and Instance from the ManageIQ Database",
+                    '5.9': "Delete Snapshot initiated for 1 VM and Instance from the CFME Database"
+                })
+
+                flash.assert_message_match(flash_message)
+
             wait_for(lambda: not self.exists, num_sec=300, delay=20, fail_func=sel.refresh)
 
         def delete_all(self, cancel=False):
@@ -608,8 +616,15 @@ class Vm(VM):
             toolbar.select('Delete Snapshots', 'Delete All Existing Snapshots', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             if not cancel:
-                flash.assert_message_match('Remove All Snapshots initiated for 1 VM and '
-                                           'Instance from the CFME Database')
+                flash_message = version.pick({
+                    version.LOWEST: "Remove All Snapshots initiated for 1 VM and "
+                                    "Instance from the CFME Database",
+                    version.UPSTREAM: "Delete All Snapshots initiated for 1 VM "
+                                      "and Instance from the ManageIQ Database",
+                    '5.9': "Delete All Snapshots initiated for 1 VM "
+                           "and Instance from the CFME Database"})
+
+                flash.assert_message_match(flash_message)
 
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
