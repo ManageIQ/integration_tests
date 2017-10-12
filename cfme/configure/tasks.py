@@ -14,6 +14,7 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.web_ui import toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
+from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -86,7 +87,7 @@ def is_vm_analysis_finished(name, **kwargs):
 
 
 def is_host_analysis_finished(name, **kwargs):
-    return is_analysis_finished(name=name, task_type='host', **kwargs)
+    return is_analysis_finished(name=name, task_type=task_type, **kwargs)
 
 
 def is_datastore_analysis_finished(name, **kwargs):
@@ -203,7 +204,8 @@ class TasksView(BaseLoggedInPage):
 
         @View.nested
         class myothertasks(Tab):  # noqa
-            TAB_NAME = "My Other UI Tasks"
+            TAB_NAME = version.pick({'5.9': 'My Tasks',
+                                     version.LOWEST: 'My Other UI Tasks'})
             table = Table(table_loc)
 
         @View.nested
