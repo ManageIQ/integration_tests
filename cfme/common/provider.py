@@ -322,7 +322,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             cancel: Whether to cancel the deletion, defaults to True
         """
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Remove this {} Provider'.format(self.string_name),
+        item_title = version.pick({'5.9': 'Remove this {} Provider from Inventory',
+                                   version.LOWEST: 'Remove this {} Provider'})
+        view.toolbar.configuration.item_select(item_title.format(self.string_name),
                                                handle_alert=not cancel)
         if not cancel:
             msg = ('Delete initiated for 1 {} Provider from '
