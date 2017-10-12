@@ -83,7 +83,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Balancer, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = BalancerDetailsView
 
     def step(self):

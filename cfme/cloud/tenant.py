@@ -334,7 +334,7 @@ class TenantAll(CFMENavigateStep):
 @navigator.register(Tenant, 'Details')
 class TenantDetails(CFMENavigateStep):
     VIEW = TenantDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the details page"""

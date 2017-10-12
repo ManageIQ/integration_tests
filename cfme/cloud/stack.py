@@ -343,7 +343,7 @@ class All(CFMENavigateStep):
 @navigator.register(Stack, 'Details')
 class Details(CFMENavigateStep):
     VIEW = StackDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         """Go to the details page"""

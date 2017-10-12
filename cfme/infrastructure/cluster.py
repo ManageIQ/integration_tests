@@ -189,7 +189,7 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
 
     def wait_for_exists(self):
         """Wait for the cluster to be refreshed"""
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
 
         def refresh():
             if self.provider:
@@ -214,7 +214,7 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
 
     @property
     def exists(self):
-        view = navigate_to(self.collection, 'All')
+        view = navigate_to(self.parent, 'All')
         try:
             view.entities.get_entity(by_name=self.name, surf_pages=True)
             return True
@@ -293,7 +293,7 @@ class All(CFMENavigateStep):
 @navigator.register(Cluster, 'Details')
 class Details(CFMENavigateStep):
     VIEW = ClusterDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""

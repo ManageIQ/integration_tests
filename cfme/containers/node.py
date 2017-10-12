@@ -154,7 +154,7 @@ class NodeDetailsView(NodeView):
 @navigator.register(Node, 'Details')
 class Details(CFMENavigateStep):
     VIEW = NodeDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         # Need to account for paged view
