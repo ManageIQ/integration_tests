@@ -2,7 +2,6 @@ import pytest
 from collections import namedtuple
 
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.node import Node
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
 from cfme.containers.project import Project
@@ -24,14 +23,16 @@ pytest_generate_tests = testgen.generate(
 DataSet = namedtuple('DataSet', ['object', 'name'])
 
 
-# TDOD: Add Image, Container, ImageRegistry
-tested_objects = (Node, Project, Pod, Service, Route, ContainersProvider)
+# TODO: Add Image, Container, ImageRegistry
+# TODO Add Node back into the list when other classes are updated to use WT views and widgets.
+tested_objects = (Project, Pod, Service, Route, ContainersProvider)
 
 
 def get_api_object_counts(appliance):
     out = {
         ContainersProvider: 0,
-        Node: 0,
+        # TODO Add back in with Node.
+        # Node: 0,
         Pod: 0,
         Service: 0,
         Project: 0,
@@ -40,7 +41,8 @@ def get_api_object_counts(appliance):
     for provider in appliance.managed_known_providers:
         if isinstance(provider, ContainersProvider):
             out[ContainersProvider] += 1
-            out[Node] += len(provider.mgmt.list_node())
+            # TODO Add back in with Node
+            # out[Node] += len(provider.mgmt.list_node())
             out[Pod] += len(provider.mgmt.list_container_group())
             out[Service] += len(provider.mgmt.list_service())
             out[Project] += len(provider.mgmt.list_project())

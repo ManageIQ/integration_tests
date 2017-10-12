@@ -8,7 +8,6 @@ import fauxfactory
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
-from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
 from cfme.containers.image import Image
 from cfme.containers.project import Project
@@ -26,8 +25,8 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 
-
-TEST_OBJECTS = (Image, Pod, Service, Route, Template, Node, Replicator, Project)
+# TODO Add Node back into the list when other classes are updated to use WT views and widgets.
+TEST_OBJECTS = (Image, Pod, Service, Route, Template, Replicator, Project)
 
 
 def check_labels_in_ui(instance, name, expected_value):

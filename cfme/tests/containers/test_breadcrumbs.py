@@ -12,7 +12,6 @@ from cfme.containers.project import Project
 from cfme.containers.pod import Pod
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.image import Image
-from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
 from cfme.containers.template import Template
 from cfme.containers.volume import Volume
@@ -39,7 +38,8 @@ DATA_SETS = [
     DataSet(Image, 'image'),
     DataSet(ContainersProvider, 'provider'),
     DataSet(ImageRegistry, 'image regist'),
-    DataSet(Node, 'node'),
+    # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
+    # DataSet(Node, 'node'),
     DataSet(Replicator, 'replicator'),
     DataSet(Template, 'template'),
     DataSet(Volume, 'volume')

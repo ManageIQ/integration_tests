@@ -10,7 +10,6 @@ from cfme.containers.project import Project
 from cfme.containers.pod import Pod
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
-from cfme.containers.node import Node
 from cfme.web_ui import StatusBox
 
 from cfme.utils import testgen
@@ -22,7 +21,8 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
-tested_objects = [Service, Route, Project, Pod, Image, Container, ImageRegistry, Node]
+# TODO Add Node back into the list when other classes are updated to use WT views and widgets.
+tested_objects = [Service, Route, Project, Pod, Image, Container, ImageRegistry]
 
 
 @pytest.mark.polarion('CMP-10575')
