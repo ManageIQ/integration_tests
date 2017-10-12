@@ -72,14 +72,12 @@ class PolicyProfilesAllView(ControlExplorerView):
         )
 
 
+@attr.s
 class PolicyProfile(BaseEntity, Updateable, Pretty):
 
-    def __init__(self, collection, description, policies, notes=None):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.description = description
-        self.notes = notes
-        self.policies = policies
+    description = attr.ib()
+    policies = attr.ib()
+    notes = attr.ib(default=None)
 
     def update(self, updates):
         """Update this Policy Profile in UI.
@@ -142,7 +140,7 @@ class PolicyProfileCollection(BaseCollection):
     ENTITY = PolicyProfile
 
     def create(self, description, policies, notes=None):
-        policy_profile = self.instantiate(self, description, policies, notes=notes)
+        policy_profile = self.instantiate(description, policies, notes=notes)
         view = navigate_to(self, "Add")
         view.fill({
             "description": policy_profile.description,
@@ -187,7 +185,7 @@ class PolicyProfileEdit(CFMENavigateStep):
 @navigator.register(PolicyProfile, "Details")
 class PolicyProfileDetails(CFMENavigateStep):
     VIEW = PolicyProfileDetailsView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.policy_profiles.tree.click_path(
