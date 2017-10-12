@@ -16,6 +16,12 @@ from widgetastic_manageiq import (
     BaseQuadIconEntity, BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
 
 
+class ProvisionTab(Tab):
+    """Workaround for testing purposes only"""
+    def after_fill(self, was_change):
+        self.click()
+
+
 class InstanceQuadIconEntity(BaseQuadIconEntity):
     """ Provider child of Quad Icon entity
 
@@ -164,7 +170,7 @@ class VMDetailsEntities(View):
 
 class BasicProvisionFormView(View):
     @View.nested
-    class request(Tab):  # noqa
+    class request(ProvisionTab):  # noqa
         TAB_NAME = 'Request'
         email = Input(name='requester__owner_email')
         first_name = Input(name='requester__owner_first_name')
@@ -173,12 +179,12 @@ class BasicProvisionFormView(View):
         manager_name = Input(name='requester__owner_manager')
 
     @View.nested
-    class purpose(Tab):  # noqa
+    class purpose(ProvisionTab):  # noqa
         TAB_NAME = 'Purpose'
         apply_tags = CheckableBootstrapTreeview('all_tags_treebox')
 
     @View.nested
-    class catalog(Tab):  # noqa
+    class catalog(ProvisionTab):  # noqa
         TAB_NAME = 'Catalog'
         vm_name = Input(name='service__vm_name')
         vm_description = Input(name='service__vm_description')
@@ -192,7 +198,7 @@ class BasicProvisionFormView(View):
         iso_file = SelectTable('//div[@id="prov_iso_img_div"]/table')
 
     @View.nested
-    class environment(Tab):  # noqa
+    class environment(ProvisionTab):  # noqa
         TAB_NAME = 'Environment'
         automatic_placement = Checkbox(id='environment__placement_auto')
         # Cloud
@@ -215,7 +221,7 @@ class BasicProvisionFormView(View):
         datastore_name = SelectTable('//div[@id="prov_ds_div"]/table')
 
     @View.nested
-    class hardware(Tab):  # noqa
+    class hardware(ProvisionTab):  # noqa
         TAB_NAME = 'Hardware'
         num_sockets = BootstrapSelect('hardware__number_of_sockets')
         cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
@@ -229,12 +235,12 @@ class BasicProvisionFormView(View):
         vm_reserve_memory = Input(name='hardware__memory_reserve')
 
     @View.nested
-    class network(Tab):  # noqa
+    class network(ProvisionTab):  # noqa
         TAB_NAME = 'Network'
         vlan = BootstrapSelect('network__vlan')
 
     @View.nested
-    class properties(Tab):  # noqa
+    class properties(ProvisionTab):  # noqa
         TAB_NAME = 'Properties'
         instance_type = BootstrapSelect('hardware__instance_type')
         guest_keypair = BootstrapSelect('hardware__guest_access_key_pair')
@@ -244,7 +250,7 @@ class BasicProvisionFormView(View):
         is_preemtible = Input(name='hardware__is_preemptible')
 
     @View.nested
-    class customize(Tab):  # noqa
+    class customize(ProvisionTab):  # noqa
         TAB_NAME = 'Customize'
         # Common
         dns_servers = Input(name='customize__dns_servers')
@@ -262,7 +268,7 @@ class BasicProvisionFormView(View):
         hostname = Input(name='customize__hostname')
 
     @View.nested
-    class schedule(Tab):  # noqa
+    class schedule(ProvisionTab):  # noqa
         TAB_NAME = 'Schedule'
         # Common
         # TODO radio widget # schedule_type = Radio('schedule__schedule_type')
