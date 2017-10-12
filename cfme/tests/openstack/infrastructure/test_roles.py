@@ -21,8 +21,8 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
 
 @pytest.yield_fixture(scope="module")
 def roles(appliance, provider):
-    collection = DeploymentRoleCollection(appliance=appliance).filter({'provider': provider})
-    roles = collection.all(provider)
+    collection = DeploymentRoleCollection(appliance).filter({'provider': provider})
+    roles = collection.all()
 
     # TODO: remove test skip after introducing deployment role creation method.
     yield roles if roles else pytest.skip("No Roles Available")

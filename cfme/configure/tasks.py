@@ -87,7 +87,7 @@ def is_vm_analysis_finished(name, **kwargs):
 
 
 def is_host_analysis_finished(name, **kwargs):
-    return is_analysis_finished(name=name, task_type=task_type, **kwargs)
+    return is_analysis_finished(name=name, task_type='host', **kwargs)
 
 
 def is_datastore_analysis_finished(name, **kwargs):
