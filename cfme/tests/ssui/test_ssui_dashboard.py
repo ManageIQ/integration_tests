@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-
+import cfme.intelligence.chargeback.rates as rates
+import cfme.intelligence.chargeback.assignments as cb
+import fauxfactory
 import pytest
 
 from cfme.infrastructure.provider import InfraProvider
@@ -8,7 +10,7 @@ from cfme import test_requirements
 
 from cfme.utils import testgen
 from cfme.utils.version import current_version
-from cfme.utils.appliance import get_or_create_current_appliance, ViaSSUI
+from cfme.utils.appliance import ViaSSUI
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -25,6 +27,53 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
     ['provisioning', 'host'],
     ['provisioning', 'datastore']
 ], scope="module")
+
+
+@pytest.yield_fixture(scope="module")
+def new_compute_rate():
+    # Create a new Compute Chargeback rate
+    try:
+        desc = 'custom_' + fauxfactory.gen_alphanumeric()
+        compute = rates.ComputeRate(description=desc,
+                    fields={'Used CPU':
+                            {'per_time': 'Hourly', 'variable_rate': '3'},
+                            'Used Disk I/O':
+                            {'per_time': 'Hourly', 'variable_rate': '2'},
+                            'Used Memory':
+                            {'per_time': 'Hourly', 'variable_rate': '2'}})
+        compute.create()
+        storage = rates.StorageRate(description=desc,
+                    fields={'Used Disk Storage':
+                            {'per_time': 'Hourly', 'variable_rate': '3'}})
+        storage.create()
+        yield desc
+    finally:
+        compute.delete()
+        storage.delete()
+
+
+@pytest.yield_fixture(scope="module")
+def assign_custom_rate(new_compute_rate, provider):
+    # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
+    description = new_compute_rate
+    enterprise = cb.Assign(
+        assign_to="The Enterprise",
+        selections={
+            'Enterprise': {'Rate': description}
+        })
+    enterprise.computeassign()
+    enterprise.storageassign()
+
+    yield
+
+    # Resetting the Chargeback rate assignment
+    enterprise = cb.Assign(
+        assign_to="The Enterprise",
+        selections={
+            'Enterprise': {'Rate': '<Nothing>'}
+        })
+    enterprise.computeassign()
+    enterprise.storageassign()
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
@@ -68,13 +117,14 @@ def test_retired_service(appliance, context):
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_monthly_charges(appliance, context):
+def test_monthly_charges(appliance, context, order_catalog_item_in_ops_ui):
     """Tests chargeback data"""
 
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        dashboard.monthly_charges()
+        monthly_charges = dashboard.monthly_charges()
+        assert monthly_charges > 0
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
