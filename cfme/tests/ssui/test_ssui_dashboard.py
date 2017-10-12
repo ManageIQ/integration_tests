@@ -37,14 +37,20 @@ def new_compute_rate():
         compute = rates.ComputeRate(description=desc,
                     fields={'Used CPU':
                             {'per_time': 'Hourly', 'variable_rate': '3'},
+                            'Allocated CPU Count':
+                            {'per_time': 'Hourly', 'fixed_rate': '2'},
                             'Used Disk I/O':
                             {'per_time': 'Hourly', 'variable_rate': '2'},
+                            'Allocated Memory':
+                            {'per_time': 'Hourly', 'fixed_rate': '1'},
                             'Used Memory':
                             {'per_time': 'Hourly', 'variable_rate': '2'}})
         compute.create()
         storage = rates.StorageRate(description=desc,
                     fields={'Used Disk Storage':
-                            {'per_time': 'Hourly', 'variable_rate': '3'}})
+                            {'per_time': 'Hourly', 'variable_rate': '3'},
+                            'Allocated Disk Storage':
+                            {'per_time': 'Hourly', 'fixed_rate': '3'}})
         storage.create()
         yield desc
     finally:
@@ -53,7 +59,7 @@ def new_compute_rate():
 
 
 @pytest.yield_fixture(scope="module")
-def assign_custom_rate(new_compute_rate, provider):
+def assign_chargeback_rate(new_compute_rate):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
     enterprise = cb.Assign(
@@ -74,6 +80,13 @@ def assign_custom_rate(new_compute_rate, provider):
         })
     enterprise.computeassign()
     enterprise.storageassign()
+
+
+@pytest.fixture(scope="module")
+def run_service_chargeback_report(provider, appliance, assign_chargeback_rate):
+    rc, out = appliance.ssh_client.run_rails_command(
+        'Service.queue_chargeback_reports')
+    assert rc == 0, "Failed to run Service Chargeback report".format(out)
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
@@ -117,7 +130,8 @@ def test_retired_service(appliance, context):
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
-def test_monthly_charges(appliance, context, order_catalog_item_in_ops_ui):
+def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_in_ops_ui,
+        run_service_chargeback_report):
     """Tests chargeback data"""
 
     with appliance.context.use(context):
