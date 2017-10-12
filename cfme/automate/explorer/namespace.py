@@ -9,7 +9,7 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
-from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path

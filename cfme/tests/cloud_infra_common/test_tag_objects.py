@@ -14,7 +14,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import mixins
-from cfme.utils.appliance import BaseCollection
+from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.exceptions import ItemNotFound
 
