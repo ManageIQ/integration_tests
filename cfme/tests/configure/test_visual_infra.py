@@ -132,11 +132,12 @@ def test_infra_grid_page_per_item(request, page, set_grid):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
-    navigate_to(page, 'All')
-    tb.select('Grid View')
-    from cfme.web_ui import paginator
-    if int(paginator.rec_total()) >= int(limit):
-        assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
+    view = navigate_to(page, 'All', use_resetter=False)
+    view.toolbar.view_selector.select("Grid View")
+    min_item, max_item, item_amt = view.paginator.paginator.page_info()
+    if int(view.paginator.items_amount) >= int(limit):
+        assert int(max_item) == int(limit), "Gridview Failed for page {}!".format(page)
+    assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.meta(blockers=[1267148])
@@ -149,11 +150,12 @@ def test_infra_tile_page_per_item(request, page, set_tile):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
-    navigate_to(page, 'All')
-    tb.select('Tile View')
-    from cfme.web_ui import paginator
-    if int(paginator.rec_total()) >= int(limit):
-        assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
+    view = navigate_to(page, 'All', use_resetter=False)
+    view.toolbar.view_selector.select('Tile View')
+    min_item, max_item, item_amt = view.paginator.paginator.page_info()
+    if int(view.paginator.items_amount) >= int(limit):
+        assert int(max_item) == int(limit), "Tileview Failed for page {}!".format(page)
+    assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.meta(blockers=[1267148])
@@ -166,11 +168,12 @@ def test_infra_list_page_per_item(request, page, set_list):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
-    navigate_to(page, 'All')
-    tb.select('List View')
-    from cfme.web_ui import paginator
-    if int(paginator.rec_total()) >= int(limit):
-        assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
+    view = navigate_to(page, 'All', use_resetter=False)
+    view.toolbar.view_selector.select('List View')
+    min_item, max_item, item_amt = view.paginator.paginator.page_info()
+    if int(view.paginator.items_amount) >= int(limit):
+        assert int(max_item) == int(limit), "Listview Failed for page {}!".format(page)
+    assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
@@ -183,10 +186,11 @@ def test_infra_report_page_per_item(set_report):
     path = ["Configuration Management", "Virtual Machines", "VMs Snapshot Summary"]
     limit = visual.report_view_limit
     report = CannedSavedReport.new(path)
-    report.navigate()
-    from cfme.web_ui import paginator
-    if int(paginator.rec_total()) >= int(limit):
-        assert int(paginator.rec_end()) == int(limit), "Reportview Failed!"
+    view = navigate_to(report, 'Details')
+    min_item, max_item, item_amt = view.paginator.paginator.page_info()
+    if int(view.paginator.items_amount) >= int(limit):
+        assert int(max_item) == int(limit), "Reportview Failed!"
+    assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.uncollect('Needs to be fixed after menu removed')

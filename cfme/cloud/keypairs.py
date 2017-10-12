@@ -7,7 +7,7 @@ from widgetastic.utils import VersionPick, Version
 from widgetastic_patternfly import Dropdown, Button, FlashMessages
 from widgetastic_manageiq import (
     ItemsToolBarViewSelector, Text, TextInput, Accordion, ManageIQTree, BreadCrumb,
-    SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView)
+    SummaryTable, BootstrapSelect, ItemNotFound, BaseEntitiesView, PaginationPane)
 
 from cfme.common import WidgetasticTaggable
 from cfme.base.ui import BaseLoggedInPage
@@ -83,6 +83,7 @@ class KeyPairAllView(KeyPairView):
             self.in_keypair and
             self.entities.title.text == 'Key Pairs')
 
+    paginator = PaginationPane()
     toolbar = View.nested(KeyPairToolbar)
     including_entities = View.include(BaseEntitiesView, use_parent=True)
 

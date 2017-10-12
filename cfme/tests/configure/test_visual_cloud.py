@@ -90,13 +90,12 @@ def test_cloud_grid_page_per_item(request, page, set_grid, appliance):
         page = page(appliance)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
-    navigate_to(page, 'All')
-    tb.select('Grid View')
-    from cfme.web_ui import paginator
-    if paginator.rec_total() is not None:
-        if int(paginator.rec_total()) >= int(limit):
-            assert int(paginator.rec_end()) == int(limit), \
-                "Gridview Failed for page {}!".format(page)
+    view = navigate_to(page, 'All')
+    view.toolbar.view_selector.select('Grid View')
+    min_item, max_item, item_amt = view.paginator.paginator.page_info()
+    if view.paginator.items_amount is not None and int(view.paginator.items_amount) >= int(limit):
+        assert int(max_item) == int(limit), "Gridview Failed for page {}!".format(page)
+    assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
@@ -110,13 +109,12 @@ def test_cloud_tile_page_per_item(request, page, set_tile, appliance):
         page = page(appliance)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
-    navigate_to(page, 'All')
-    tb.select('Tile View')
-    from cfme.web_ui import paginator
-    if paginator.rec_total() is not None:
-        if int(paginator.rec_total()) >= int(limit):
-            assert int(paginator.rec_end()) == int(limit), \
-                "Tileview Failed for page {}!".format(page)
+    view = navigate_to(page, 'All')
+    view.toolbar.view_selector.select('Tile View')
+    min_item, max_item, item_amt = view.paginator.paginator.page_info()
+    if view.paginator.items_amount is not None and int(view.paginator.items_amount) >= int(limit):
+        assert int(max_item) == int(limit), "Tileview Failed for page {}!".format(page)
+    assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
@@ -130,13 +128,12 @@ def test_cloud_list_page_per_item(request, page, set_list, appliance):
         page = page(appliance)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
-    navigate_to(page, 'All')
-    tb.select('List View')
-    from cfme.web_ui import paginator
-    if paginator.rec_total() is not None:
-        if int(paginator.rec_total()) >= int(limit):
-            assert int(paginator.rec_end()) == int(limit), \
-                "Listview Failed for page {}!".format(page)
+    view = navigate_to(page, 'All')
+    view.toolbar.view_selector.select('List View')
+    min_item, max_item, item_amt = view.paginator.paginator.page_info()
+    if view.paginator.items_amount is not None and int(view.paginator.items_amount) >= int(limit):
+        assert int(max_item) == int(limit), "Listview Failed for page {}!".format(page)
+    assert int(max_item) <= int(item_amt)
 
 
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")

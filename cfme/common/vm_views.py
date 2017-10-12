@@ -5,7 +5,8 @@ from time import sleep
 from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, FlashMessages, Tab, Input, CheckableBootstrapTreeview)
-from widgetastic_manageiq import BreadCrumb
+from widgetastic_manageiq import BreadCrumb, PaginationPane
+
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.exceptions import TemplateNotFound
@@ -135,6 +136,7 @@ class VMEntities(BaseEntitiesView):
     def entity_class(self):
         return InstanceEntity().pick(self.browser.product_version)
 
+    paginator = PaginationPane()
     adv_search_clear = Text('//div[@id="main-content"]//h1//span[@id="clear_search"]/a')
 
 
