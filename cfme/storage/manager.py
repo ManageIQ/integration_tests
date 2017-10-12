@@ -208,7 +208,7 @@ class StorageManagerAll(CFMENavigateStep):
 @navigator.register(StorageManager, 'Details')
 class StorageManagerDetails(CFMENavigateStep):
     VIEW = StorageManagerDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         try:

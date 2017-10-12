@@ -150,7 +150,7 @@ class KeyPair(BaseEntity, WidgetasticTaggable):
                 view.browser.refresh()
                 view.flush_widget_cache()
 
-            view = navigate_to(self.collection, 'All')
+            view = navigate_to(self.parent, 'All')
 
             wait_for(
                 lambda: self.name in view.entities.all_entity_names,
@@ -222,7 +222,7 @@ class CloudKeyPairs(CFMENavigateStep):
 @navigator.register(KeyPair, 'Details')
 class Details(CFMENavigateStep):
     VIEW = KeyPairDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         try:

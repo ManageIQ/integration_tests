@@ -81,7 +81,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(CloudNetwork, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = CloudNetworkDetailsView
 
     def step(self):

@@ -70,7 +70,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(SecurityGroup, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = SecurityGroupDetailsView
 
     def step(self):

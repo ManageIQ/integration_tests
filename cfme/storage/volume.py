@@ -255,7 +255,7 @@ class VolumeAll(CFMENavigateStep):
 @navigator.register(Volume, 'Details')
 class VolumeDetails(CFMENavigateStep):
     VIEW = VolumeDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
 

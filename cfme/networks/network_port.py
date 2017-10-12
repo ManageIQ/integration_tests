@@ -94,7 +94,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(NetworkPort, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = NetworkPortDetailsView
 
     def step(self):

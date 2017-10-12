@@ -84,7 +84,7 @@ class All(CFMENavigateStep):
 @navigator.register(Subnet, 'Details')
 class OpenCloudNetworks(CFMENavigateStep):
     VIEW = SubnetDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()

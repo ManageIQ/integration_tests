@@ -70,7 +70,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(NetworkRouter, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = NetworkRouterDetailsView
 
     def step(self):

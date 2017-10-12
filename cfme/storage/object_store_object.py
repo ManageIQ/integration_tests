@@ -152,7 +152,7 @@ class ObjectStoreObjectAll(CFMENavigateStep):
 @navigator.register(ObjectStoreObject, 'Details')
 class ObjectStoreObjectDetails(CFMENavigateStep):
     VIEW = ObjectStoreObjectDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self, *args, **kwargs):
         try:
