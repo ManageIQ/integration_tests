@@ -493,7 +493,7 @@ class PolicyAll(CFMENavigateStep):
 @navigator.register(BasePolicy, "Add")
 class PolicyNew(CFMENavigateStep):
     VIEW = NewPolicyView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.policies.tree.click_path(
@@ -517,7 +517,7 @@ class PolicyEdit(CFMENavigateStep):
 @navigator.register(BasePolicy, "Details")
 class PolicyDetails(CFMENavigateStep):
     VIEW = PolicyDetailsView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.policies.tree.click_path(

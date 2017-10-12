@@ -236,7 +236,7 @@ class AlertProfilesAll(CFMENavigateStep):
 @navigator.register(BaseAlertProfile, "Add")
 class AlertProfileNew(CFMENavigateStep):
     VIEW = NewAlertProfileView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
@@ -266,7 +266,7 @@ class AlertProfileEditAssignments(CFMENavigateStep):
 @navigator.register(BaseAlertProfile, "Details")
 class AlertProfileDetails(CFMENavigateStep):
     VIEW = AlertProfileDetailsView
-    prerequisite = NavigateToAttribute("collection", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.alert_profiles.tree.click_path("All Alert Profiles",
