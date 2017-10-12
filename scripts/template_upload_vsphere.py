@@ -196,6 +196,8 @@ def upload_template(client, hostname, username, password,
         if not check_kwargs(**kwargs):
             return False
         if name in client.list_template():
+            logger.info("VSPHERE:%r template %r already exists", provider, name)
+        else:
             if kwargs.get('upload'):
                 # Wrapper for ovftool - sometimes it just won't work
                 for i in range(0, NUM_OF_TRIES_OVFTOOL):
@@ -233,8 +235,7 @@ def upload_template(client, hostname, username, password,
             if not provider_data:
                 logger.info("VSPHERE:%r Adding template %r to trackerbot", provider, name)
                 trackerbot.trackerbot_add_provider_template(stream, provider, name)
-        else:
-            logger.info("VSPHERE:%r template %r already exists", provider, name)
+
         if provider_data and name in client.list_template():
             logger.info("VSPHERE:%r Template and provider_data exist, Deploy %r", provider, name)
             vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
