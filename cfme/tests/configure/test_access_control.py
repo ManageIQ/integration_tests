@@ -57,7 +57,7 @@ def new_user(group=usergrp):
         value_assign='Database')
 
     # Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
-    if user.appliance.version == '5.8.2.0' and uppercase_username_bug:
+    if '5.8.2' <= user.appliance.version < '5.9' and uppercase_username_bug:
         user.credential.principal = user.credential.principal.lower()
 
     return user
