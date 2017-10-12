@@ -99,6 +99,7 @@ class Repository(BaseEntity, Fillable):
     scm_branch = attr.ib(default=False)
     clean = attr.ib(default=False)
     delete_on_update = attr.ib(default=False)
+    update_on_launch = attr.ib(default=None)
 
     _collections = {'playbooks': PlaybooksCollection}
 
