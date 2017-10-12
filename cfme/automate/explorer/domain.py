@@ -88,7 +88,7 @@ class Domain(BaseEntity, Fillable):
     """A class representing one Domain in the UI."""
 
     def __init__(
-            self, collection, name, description, enabled=None, locked=None,
+            self, collection, name, description=None, enabled=None, locked=None,
             git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None):
         from .namespace import NamespaceCollection
         self._collections = {'namespaces': NamespaceCollection}
