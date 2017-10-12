@@ -117,7 +117,7 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
             renamed_host_name1 = "{} ({})".format('IPMI', host_provisioning['ipmi_address'])
             renamed_host_name2 = "{} ({})".format('VMware ESXi', host_provisioning['ip_addr'])
 
-            host_collection = appliance.get(host.HostCollection)
+            host_collection = appliance.collections.hosts
             host_list_ui = host_collection.all(provider=provider)
             if host_provisioning['hostname'] in host_list_ui:
                 test_host.delete(cancel=False)

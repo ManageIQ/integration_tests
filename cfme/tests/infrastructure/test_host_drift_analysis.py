@@ -47,7 +47,7 @@ def test_host_drift_analysis(appliance, request, setup_provider, provider, host,
     Metadata:
         test_flag: host_drift_analysis
     """
-    host_collection = appliance.get(host_obj.HostCollection)
+    host_collection = appliance.collections.hosts
     test_host = host_collection.instantiate(name=host['name'], provider=provider)
     wait_for(lambda: test_host.exists, delay=20, num_sec=120, fail_func=sel.refresh,
              message="hosts_exists")

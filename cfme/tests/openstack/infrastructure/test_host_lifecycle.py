@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.exceptions import HostNotFound
-from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.openstack_node import OpenstackNode
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils import testgen
@@ -64,7 +63,7 @@ def test_delete_host(appliance, host, provider, has_mistral_service):
     wait_for(is_host_disappeared, timeout=300, delay=5)
     wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
     host.browser.refresh()
-    host_collection = appliance.get(HostCollection)
+    host_collection = appliance.collections.hosts
     assert host.name not in host_collection.all(provider)
 
 

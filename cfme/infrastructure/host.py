@@ -7,7 +7,7 @@ from manageiq_client.api import APIException
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.base.credential import Credential as BaseCredential
-from cfme.common import PolicyProfileAssignable, TagPageView
+from cfme.common import PolicyProfileAssignable, WidgetasticTaggable
 from cfme.common.host_views import (
     HostAddView,
     HostDetailsView,
@@ -66,6 +66,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
     credentials = attr.ib(default=None)
     ipmi_credentials = attr.ib(default=None)
     interface_type = attr.ib(default='lan')
+    db_id = None
 
     class Credential(BaseCredential, Updateable):
         """Provider credentials
@@ -444,6 +445,71 @@ class HostCollection(BaseCollection):
                  for item in view.entities.entity_names]
         return hosts
 
+    def run_smartstate_analysis(self, *hosts):
+        hosts = list(hosts)
+        checked_hosts = list()
+        view = navigate_to(self, 'All')
+
+        for host in hosts:
+            try:
+                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
+                checked_hosts.append(host)
+            except ItemNotFound:
+                raise ValueError('Could not find host {} in the UI'.format(host.name))
+
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        for host in hosts:
+            view.flash.assert_success_message(
+                '"{}": Analysis successfully initiated'.format(host.name))
+
+    def delete(self, *hosts):
+        """Deletes this host from CFME."""
+        hosts = list(hosts)
+        checked_hosts = list()
+        view = navigate_to(self, 'All')
+
+        for host in hosts:
+            try:
+                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
+                checked_hosts.append(host)
+            except ItemNotFound:
+                raise ValueError('Could not find host {} in the UI'.format(host.name))
+
+        view.toolbar.configuration.item_select('Remove items from Inventory', handle_alert=True)
+        view.entities.flash.assert_success_message('The selected Hosts / Nodes was deleted')
+
+        for host in hosts:
+            wait_for(lambda: not host.exists, num_sec=600, delay=30,
+                     message='Wait for Host to be deleted')
+
+    def power_on(self, *hosts):
+        hosts = list(hosts)
+        checked_hosts = list()
+        view = navigate_to(self, 'All')
+
+        for host in hosts:
+            try:
+                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
+                checked_hosts.append(host)
+            except ItemNotFound:
+                raise ValueError('Could not find host {} in the UI'.format(host.name))
+
+        view.toolbar.power.item_select("Power On", handle_alert=True)
+
+    def power_off(self, *hosts):
+        hosts = list(hosts)
+        checked_hosts = list()
+        view = navigate_to(self, 'All')
+
+        for host in hosts:
+            try:
+                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
+                checked_hosts.append(host)
+            except ItemNotFound:
+                raise ValueError('Could not find host {} in the UI'.format(host.name))
+
+        view.toolbar.power.item_select("Power Off", handle_alert=True)
+
 
 @navigator.register(HostCollection)
 class All(CFMENavigateStep):
@@ -460,7 +526,7 @@ class All(CFMENavigateStep):
 @navigator.register(Host)
 class Details(CFMENavigateStep):
     VIEW = HostDetailsView
-    prerequisite = NavigateToAttribute("parent.parent", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
@@ -487,7 +553,7 @@ class Add(CFMENavigateStep):
 @navigator.register(Host)
 class Discover(CFMENavigateStep):
     VIEW = HostDiscoverView
-    prerequisite = NavigateToAttribute("parent.parent", "All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Discover items")

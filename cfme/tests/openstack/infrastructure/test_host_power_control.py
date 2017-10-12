@@ -1,6 +1,5 @@
 import pytest
 
-from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils import testgen
 from cfme.utils.version import current_version
@@ -14,7 +13,7 @@ pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 
 @pytest.fixture(scope="module")
 def host_collection(appliance):
-    return appliance.get(HostCollection)
+    return appliance.collections.hosts
 
 
 @pytest.fixture(scope='module')

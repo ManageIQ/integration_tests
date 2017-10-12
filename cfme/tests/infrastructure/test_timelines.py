@@ -5,7 +5,6 @@ import pytest
 from cfme.base.ui import Server
 from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
-from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.rest.gen_data import a_provider as _a_provider
@@ -103,7 +102,7 @@ def test_infra_host_event(appliance, a_provider, gen_events, new_vm):
     """
     view = navigate_to(new_vm, "Details")
     host_name = view.entities.relationships.get_text_of('Host')
-    host_collection = appliance.get(HostCollection)
+    host_collection = appliance.collections.hosts
     host = host_collection.instantiate(name=host_name, provider=a_provider)
     wait_for(count_events, [host, new_vm], timeout='10m', fail_condition=0,
              message="events to appear")

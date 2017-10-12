@@ -4,7 +4,6 @@ import fauxfactory
 import pytest
 from itertools import dropwhile
 
-from cfme.infrastructure.host import HostCollection
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
@@ -13,7 +12,7 @@ from cfme.utils.appliance.implementations.ui import navigate_to
 
 @pytest.fixture(scope='module')
 def host_collection(appliance):
-    return appliance.get(HostCollection)
+    return appliance.collections.hosts
 
 
 @pytest.fixture(scope="function")

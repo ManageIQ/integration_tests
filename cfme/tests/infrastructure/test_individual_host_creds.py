@@ -39,7 +39,7 @@ def test_host_good_creds(appliance, request, setup_provider, provider):
     """
     test_host = random.choice(provider.get_yaml_data()["hosts"])
     host_data = get_host_data_by_name(provider.key, test_host.name)
-    host_collection = appliance.get(host.HostCollection)
+    host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
 
     # Remove creds after test
@@ -61,7 +61,7 @@ def test_host_bad_creds(appliance, request, setup_provider, provider):
     Tests host credentialing  with bad credentials
     """
     test_host = random.choice(provider.get_yaml_data()["hosts"])
-    host_collection = appliance.get(host.HostCollection)
+    host_collection = appliance.collections.hosts
     host_obj = host_collection.instantiate(name=test_host.name, provider=provider)
 
     with error.expected(msgs[provider.type]):

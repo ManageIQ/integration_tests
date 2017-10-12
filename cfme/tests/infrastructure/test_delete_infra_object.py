@@ -38,7 +38,7 @@ def test_delete_host_appear_after_refresh(appliance, setup_provider, provider):
     Metadata:
         test_flag: delete_object
     """
-    host_collection = appliance.get(host.HostCollection)
+    host_collection = appliance.collections.hosts
     host_name = provider.data['remove_test']['host']
     test_host = host_collection.instantiate(name=host_name, provider=provider)
     test_host.delete(cancel=False)

@@ -144,7 +144,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
 
 def set_host_credentials(appliance, request, provider, vm_analysis_data):
     # Add credentials to host
-    host_collection = appliance.get(host.HostCollection)
+    host_collection = appliance.collections.hosts
     test_host = host_collection.instantiate(name=vm_analysis_data['host'], provider=provider)
     wait_for(lambda: test_host.exists, delay=10, num_sec=120)
 
@@ -354,7 +354,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
         host_names = [h.name for h in test_datastore.get_hosts()]
         for host_name in host_names:
-            host_collection = appliance.get(host.HostCollection)
+            host_collection = appliance.collections.hosts
             test_host = host_collection.instantiate(name=host_name, provider=provider)
             hosts_data = [x for x in host_list if x.name == host_name]
             if len(hosts_data) > 0:

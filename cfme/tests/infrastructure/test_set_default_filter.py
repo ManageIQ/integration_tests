@@ -6,7 +6,6 @@ from cfme.web_ui.search import search_box
 from cfme.utils import version
 from cfme.web_ui import listaccordion as list_acc
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.datastore import DatastoreCollection
 
 
@@ -15,7 +14,7 @@ pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("virtualcenter_provid
 
 def test_set_default_host_filter(request, appliance):
     """ Test for setting default filter for hosts."""
-    host_collection = appliance.get(HostCollection)
+    host_collection = appliance.collections.hosts
 
     # Add cleanup finalizer
     def unset_default_host_filter():
@@ -36,7 +35,7 @@ def test_set_default_host_filter(request, appliance):
 
 def test_clear_host_filter_results(appliance):
     """ Test for clearing filter results for hosts."""
-    host_collection = appliance.get(HostCollection)
+    host_collection = appliance.collections.hosts
 
     # TODO many parts of this test and others in this file need to be replaced with WT calls
     view = navigate_to(host_collection, 'All')

@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.configure.tasks import is_host_analysis_finished
-from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import toolbar
 from cfme.utils import testgen
@@ -16,7 +15,7 @@ pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 @pytest.fixture(scope="module")
 def host_collection(appliance):
-    return appliance.get(HostCollection)
+    return appliance.collections.hosts
 
 
 def test_host_configuration(host_collection, provider, soft_assert):

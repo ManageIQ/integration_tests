@@ -100,7 +100,7 @@ def test_run_datastore_analysis(appliance, request, setup_provider, provider, da
                 continue
 
             found_host = True
-            host_collection = appliance.get(host.HostCollection)
+            host_collection = appliance.collections.hosts
             test_host = host_collection.instantiate(name=host_entity.name, provider=provider)
 
             # Add them to the host

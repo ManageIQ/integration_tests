@@ -63,7 +63,7 @@ def test_run_host_analysis(appliance, request, setup_provider, provider, host_ty
     """
     # Add credentials to host
     host_data = get_host_data_by_name(provider.key, host_name)
-    host_collection = appliance.get(host.HostCollection)
+    host_collection = appliance.collections.hosts
     test_host = host_collection.instantiate(name=host_name, provider=provider)
 
     wait_for(lambda: test_host.exists, delay=10, num_sec=120)

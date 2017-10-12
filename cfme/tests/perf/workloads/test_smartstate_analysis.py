@@ -68,7 +68,7 @@ def test_workload_smartstate_analysis(appliance, request, scenario):
     # Add host credentials and set CFME relationship for RHEVM SSA
     for provider in scenario['providers']:
         for api_host in appliance.rest_api.collections.hosts.all:
-            host_collection = appliance.get(host.HostCollection)
+            host_collection = appliance.collections.hosts
             test_host = host_collection.instantiate(name=api_host.name, provider=provider)
             host_data = get_host_data_by_name(get_crud(provider), api_host.name)
             credentials = host.get_credentials_from_config(host_data['credentials'])
