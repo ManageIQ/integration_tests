@@ -174,12 +174,12 @@ def run(**kwargs):
         if new_template_name is None:
             new_template_name = os.path.basename(url)[:-4]
 
-        logger.info("SCVMM:{} Make Template out of the VHD {}", provider, new_template_name)
+        logger.info("SCVMM:%s Make Template out of the VHD %s", provider, new_template_name)
 
         # use_library is either user input or we use the cfme_data value
         library = kwargs.get('library', mgmt_sys['template_upload'].get('vhds', None))
 
-        logger.info("SCVMM:{} Template Library: {}", provider, library)
+        logger.info("SCVMM:%s Template Library: %s", provider, library)
 
         #  The VHD name changed, match the template_name.
         new_vhd_name = new_template_name + '.vhd'
@@ -192,10 +192,10 @@ def run(**kwargs):
         # Uses PowerShell Get-SCVMTemplate to return a list of  templates and aborts if exists.
         if not client.does_template_exist(new_template_name):
             if kwargs.get('upload'):
-                logger.info("SCVMM:{} Uploading VHD image to Library VHD folder.", provider)
+                logger.info("SCVMM:%s Uploading VHD image to Library VHD folder.", provider)
                 upload_vhd(client, url, library, new_vhd_name)
             if kwargs.get('template'):
-                logger.info("SCVMM:{} Make Template out of the VHD {}", provider, new_template_name)
+                logger.info("SCVMM:%s Make Template out of the VHD %s", provider, new_template_name)
 
                 make_template(
                     client,
@@ -211,13 +211,13 @@ def run(**kwargs):
             try:
                 wait_for(lambda: client.does_template_exist(new_template_name),
                          fail_condition=False, delay=5)
-                logger.info("SCVMM:{} template {} uploaded success", provider, new_template_name)
-                logger.info("SCVMM:{} Add template {} to trackerbot", provider, new_template_name)
+                logger.info("SCVMM:%s template %s uploaded success", provider, new_template_name)
+                logger.info("SCVMM:%s Add template %s to trackerbot", provider, new_template_name)
                 trackerbot.trackerbot_add_provider_template(kwargs.get('stream'),
                                                             provider,
                                                             kwargs.get('template_name'))
             except Exception:
-                logger.exception("SCVMM:{} Exception verifying the template {}",
+                logger.exception("SCVMM:%s Exception verifying the template %s",
                                  provider, new_template_name)
         else:
             logger.info("SCVMM: A Template with that name already exists in the SCVMMLibrary")
@@ -226,7 +226,7 @@ def run(**kwargs):
 if __name__ == "__main__":
     logger.info("Start SCVMM Template upload")
     args = parse_cmd_line()
-    logger.info("Args: {}", str(args))
+    logger.info("Args: %s", str(args))
     kwargs = cfme_data['template_upload']['template_upload_scvmm']
 
     final_kwargs = make_kwargs(args, **kwargs)
