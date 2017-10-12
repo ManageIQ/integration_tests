@@ -1379,7 +1379,7 @@ class AppliancePool(MetadataMixin):
             if all(group in provider.user_groups.all() for provider in providers):
                 common_groups.add(group)
         return User.objects\
-            .filter(groups__in=common_groups)\
+            .filter(groups__in=common_groups, is_active=True)\
             .exclude(pk=self.owner.pk)\
             .order_by("last_name", "first_name", 'username')
 

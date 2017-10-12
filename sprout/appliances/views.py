@@ -557,6 +557,29 @@ def kill_pool(request, pool_id):
 
 
 @only_authenticated
+def kill_all_pools(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        messages.warning(request, 'User with ID {} does not exist!.'.format(user_id))
+        return go_back_or_home(request)
+    if user != request.user and not (user.is_staff or user.is_superuser):
+        messages.warning(request, 'You cannot operate other users pools.')
+        return go_back_or_home(request)
+    for pool in AppliancePool.objects.filter(owner=user):
+        pool_id = pool.id
+        try:
+            pool.kill()
+        except Exception as e:
+            messages.warning(
+                request, "Exception during pool {} kill: {}: {}".format(
+                    pool_id, type(e).__name__, str(e)))
+        else:
+            messages.success(request, 'Kill of pool {} successfully initiated'.format(pool_id))
+    return go_back_or_home(request)
+
+
+@only_authenticated
 def delete_pool(request, pool_id):
     try:
         pool = AppliancePool.objects.get(id=pool_id)

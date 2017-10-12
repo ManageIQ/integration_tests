@@ -48,6 +48,7 @@ urlpatterns = [
     url(r'^pool/clone$', views.clone_pool, name="clone_pool"),
     url(r'^pool/transfer$', views.transfer_pool, name="transfer_pool"),
     url(r'^pool/kill/(?P<pool_id>\d+)$', views.kill_pool, name="kill_pool"),
+    url(r'^pool/kill_all/(?P<user_id>\d+)$', views.kill_all_pools, name="kill_all_pools"),
     url(r'^pool/delete/(?P<pool_id>\d+)$', views.delete_pool, name="delete_pool"),
     url(r'^vms$', views.vms, name="vms_default"),
     url(r'^vms/(?P<current_provider>[a-z_A-Z0-9-]+)$', views.vms, name="vms_at_provider"),
