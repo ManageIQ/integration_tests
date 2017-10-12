@@ -298,7 +298,7 @@ class AnsibleRepositories(CFMENavigateStep):
 @navigator.register(Repository, 'Details')
 class Details(CFMENavigateStep):
     VIEW = RepositoryDetailsView
-    prerequisite = NavigateToAttribute('collection', 'All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         try:
