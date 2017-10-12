@@ -249,10 +249,10 @@ Other useful code style guidelines:
 * `PEP 20 - The Zen of Python <http://www.python.org/dev/peps/pep-0020>`_
 * `PEP 257 - Docstring Conventions <http://www.python.org/dev/peps/pep-0257>`_
 
-cfme_tests
-----------
+UI modeling
+-----------
 
-For page development, please refer to :doc:`page_development`.
+For a guide on how to model the UI representation in our framework, please see :doc:`ui_modeling`.
 
 Layout
 ^^^^^^
