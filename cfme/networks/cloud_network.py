@@ -76,8 +76,8 @@ class CloudNetworkCollection(BaseCollection):
     def create(self, name, tenant, provider, network_manager, network_type, is_external=False,
                admin_state='up', is_shared=False):
         view = navigate_to(self, 'Add')
-        view.network_manager.item_select(network_manager)
-        view.cloud_tenant.item_select(tenant)
+        view.network_manager.fill(network_manager)
+        view.cloud_tenant.fill(tenant)
         view.network_type.fill(network_type)
         view.network_name.fill(name)
         if is_external:

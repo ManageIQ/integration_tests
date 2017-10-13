@@ -34,5 +34,6 @@ def network(provider, appliance):
     network.delete()
 
 
-def test_create_network(network):
-    assert network.network_type == 'VXLAN'
+def test_create_network(network, provider):
+    assert network.parent_provider.name == provider.name
+    assert network.cloud_tenant == provider.get_yaml_data()['tenant']
