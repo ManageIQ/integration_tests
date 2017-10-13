@@ -46,7 +46,6 @@ function replaceSelectContents(name, data, submit_handling) {
 
 $(document).ready(function() {
     // UI setup
-    $('select.select2').select2({ width: '100%' });
     $('select.selectpicker').selectpicker();
 
     // Description setting
@@ -150,7 +149,7 @@ $(document).ready(function() {
     <h2>Listing and operation of {% if show_user == "my" %}my{% else %}{{ show_user }}'s{% endif %} appliances</h2>
     <h3>Switch to:</h3>
     <div style="width: 320px; margin: 10px 10px 10px 10px;">
-        <select id="view_user" class="select2">
+        <select id="view_user" class="selectpicker" data-live-search="true" data-size="6">
             <option value="">Select an user ...</option>
         {% if show_user != "my" %}
             <option value="{% url 'my_appliances' %}">My appliances</option>
@@ -166,6 +165,12 @@ $(document).ready(function() {
         </select>
     </div>
 {% endif %}
+
+{% if can_order_pool %}
+    <p><button class="btn btn-success{% if not new_pool_possible %} disabled{% endif %}" {% if new_pool_possible %}data-toggle="modal" data-target="#myModal"{% endif %}{% if not new_pool_possible %} title="You reached the limit of your account, no more pools"{% endif %}><span class="glyphicon glyphicon-plus"></span> Request appliances</button>
+    <a href="{% url 'kill_all_pools' user.id %}" class="btn btn-danger{% if not pools %} disabled{% endif %}" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove"></span> Terminate all pools.</a></p>
+{% endif %}
+
 {% if pools_paginator.num_pages > 1 %}
 <h4>{{per_page}} pools per page.</h4>
 <ul class="pagination">
@@ -201,13 +206,6 @@ $(document).ready(function() {
 </ul>
 {% endif %}
 
-{% if can_order_pool %}
-    {% if new_pool_possible %}
-        <p><button class="btn btn-success" data-toggle="modal" data-target="#myModal">Request appliances</button></p>
-    {% else %}
-        <h6>You reached the limit of your account, no more pools</h3>
-    {% endif %}
-{% endif %}
 
 {% for pool in pools_paged %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
@@ -465,7 +463,7 @@ $(document).ready(function() {
                             <input type="hidden" name="pool_id" value="{{ pool.id }}">
                             <label for="pool-own-{{ pool.id }}" class="col-sm-1 control-label">Transfer ownership:</label>
                             <div class="col-sm-2">
-                                <select name="user_id" class='select-user'>
+                                <select name="user_id" class='select-user selectpicker' data-live-search="true" data-size="6">
                                 {% for user in pool.possible_other_owners %}
                                     <option value="{{ user.id }}">{{ user|user_repr }}</option>
                                 {% endfor %}
@@ -533,9 +531,9 @@ $(document).ready(function() {
         <form action="{% url 'request_pool' %}" method="POST" class="form-horizontal">
             {% csrf_token %}
             <div class="form-group">
-              <label for="stream" class="col-sm-4 control-label">Select stream:</label>
+              <label for="stream" class="col-sm-3 control-label">Select stream:</label>
               <div class="col-sm-8">
-                  <select class="form-control selectpicker" id="stream" name="stream">
+                  <select class="form-control selectpicker" id="stream" name="stream" data-live-search="true" data-size="6">
                     <option value="<None>">Please select ...</option>
                     {% for date, group in group_tuples %}
                     <option value="{{ group.id }}">{{ group.id }} ({{ date}})</option>
@@ -544,18 +542,16 @@ $(document).ready(function() {
               </div>
             </div>
             <div class="form-group">
-                <label for="preconfigured" class="col-sm-4 control-label">Preconfigured?:</label>
-                <div class="col-sm-8">
+                <label for="preconfigured" class="col-sm-3 control-label">Preconfigured?:</label>
+                <div class="col-sm-2">
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" class="form-control" id="preconfigured" name="preconfigured" value="true" checked>
                       </label>
                     </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="container" class="col-sm-4 control-label">Container?:</label>
-                <div class="col-sm-8">
+                <label for="container" class="col-sm-2 control-label">Container?:</label>
+                <div class="col-sm-2">
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" class="form-control" id="container" name="container" value="true">
@@ -564,7 +560,7 @@ $(document).ready(function() {
                 </div>
             </div>
             <div class="form-group">
-                <label for="yum_update" class="col-sm-4 control-label">YUM updated?:</label>
+                <label for="yum_update" class="col-sm-3 control-label">YUM updated?:</label>
                 <div class="col-sm-8">
                     <div class="checkbox">
                       <label>
@@ -574,59 +570,53 @@ $(document).ready(function() {
                 </div>
             </div>
             <div class="form-group">
-              <label for="version" class="col-sm-4 control-label">Select version:</label>
-              <div class="col-sm-8">
-                  <select class="form-control selectpicker" id="version" name="version">
+              <label for="version" class="col-sm-3 control-label">Select version:</label>
+              <div class="col-sm-3">
+                  <select class="form-control selectpicker" id="version" name="version" data-live-search="true" data-size="6">
                     <option value="latest">Latest</option>
                   </select>
-                  <em>If applicable</em>
                 </div>
-            </div>
-            <div class="form-group">
-              <label for="date" class="col-sm-4 control-label">Select build date:</label>
-              <div class="col-sm-8">
-                  <select class="form-control selectpicker" id="date" name="date">
+              <label for="date" class="col-sm-2 control-label">Build date:</label>
+              <div class="col-sm-3">
+                  <select class="form-control selectpicker" id="date" name="date" data-live-search="true" data-size="6">
                     <option value="latest">Latest</option>
                   </select>
-                  <em>If applicable</em>
               </div>
             </div>
             <div class="form-group">
-              <label for="provider" class="col-sm-4 control-label">Select specific provider:</label>
+              <label for="provider" class="col-sm-3 control-label">Select specific provider:</label>
               <div class="col-sm-8">
-                  <select class="form-control selectpicker" id="provider" name="provider">
+                  <select class="form-control selectpicker" id="provider" name="provider" data-live-search="true" data-size="6">
                     <option value="any">Any provider (recommended option!)</option>
                   </select>
                   <em>The meaning of the numbers in parentheses are: Remaining provisioning slots, Remaining appliance slots and Number of such appliances in shepherd. Use only in the case when you really need a specific provider. In every other case, leave the choice to Sprout!</em>
                 </div>
             </div>
             <div class="form-group">
-              <label for="count" class="col-sm-4 control-label">Number of appliances wanted:</label>
+              <label for="count" class="col-sm-3 control-label">Number of appliances wanted:</label>
               <div class="col-sm-8">
                 <input type="number" class="form-control" id="count" name="count" min="1" value="1" {% if per_pool_quota_enabled %}max="{{per_pool_quota}}"{% endif %}>
               </div>
             </div>
             <div class="form-group" {% if not can_change_hw %}onclick="alert('You need special permissions for changing HW params.');"{% endif %}>
-              <label for="ram" class="col-sm-4 control-label">Change RAM:</label>
-              <div class="col-sm-2">
+              <label for="ram" class="col-sm-3 control-label">Change RAM:</label>
+              <div class="col-sm-1">
                 <input type="checkbox" class="form-control" id="enabled_ram" name="enabled_ram" {% if not can_change_hw %}disabled{% endif %}>
               </div>
-              <div class="col-sm-6">
+              <div class="col-sm-2">
                 <input type="number" class="form-control" id="ram" name="ram" min="8192" value="8192" disabled>
               </div>
-            </div>
-            <div class="form-group" {% if not can_change_hw %}onclick="alert('You need special permissions for changing HW params.');"{% endif %}>
-              <label for="cpu" class="col-sm-4 control-label">Change CPU:</label>
-              <div class="col-sm-2">
+              <label for="cpu" class="col-sm-1 control-label">CPU:</label>
+              <div class="col-sm-1">
                 <input type="checkbox" class="form-control" id="enabled_cpu" name="enabled_cpu" {% if not can_change_hw %}disabled{% endif %}>
               </div>
-              <div class="col-sm-6">
+              <div class="col-sm-2">
                 <input type="number" class="form-control" id="cpu" name="cpu" min="2" value="4" disabled>
               </div>
             </div>
             <div class="form-group">
-              <label for="exp_hours" class="col-sm-4 control-label">Expiration:</label>
-              <div class="col-sm-8" ng-controller="EditExpiration">
+              <label for="exp_hours" class="col-sm-3 control-label">Expiration:</label>
+              <div class="col-sm-9" ng-controller="EditExpiration">
                 Default? <input type="checkbox" id="exp_default" name="exp_default" ng-model="defaultTimeout"><br>
                 <input type="number" id="exp_days" name="exp_days" min="0" max="7" ng-model="expDays" ng-disabled="defaultTimeout" ng-change="updateForm()"> D
                 <input type="number" id="exp_hours" name="exp_hours" min="0" max="24" ng-model="expHours" ng-disabled="defaultTimeout" ng-change="updateForm()"> H
