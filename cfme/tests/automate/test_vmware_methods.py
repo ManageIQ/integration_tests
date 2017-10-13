@@ -44,7 +44,7 @@ def domain(request, domain_collection):
 
 @pytest.fixture(scope="module")
 def cls(request, domain):
-    original_class = domain.collection\
+    original_class = domain.parent\
         .instantiate(name='ManageIQ')\
         .namespaces.instantiate(name='System')\
         .classes.instantiate(name='Request')

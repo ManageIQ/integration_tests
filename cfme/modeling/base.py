@@ -30,7 +30,7 @@ class ApplianceCollections(object):
 
     def __getattr__(self, name):
         if name not in self._collection_classes:
-            raise AttributeError('Collection [{}] not known to applinace'.format(name))
+            raise AttributeError('Collection [{}] not known to object'.format(name))
         if name not in self._collection_cache:
             cls = self._collection_classes[name]
             self._collection_cache[name] = cls(self.appliance)
@@ -43,18 +43,21 @@ class ObjectCollections(ApplianceCollections):
         self.parent = parent
         self.appliance = self.parent.appliance
         self.collections = self.parent._collections
-        self.load_collections()
 
-    def load_collections(self):
-        for collection, cls_and_or_filter in self.collections.items():
+    def __getattr__(self, name):
+        if name not in self.collections:
+            raise AttributeError('Collection [{}] not known to object'.format(name))
+        if name not in self._collection_cache:
             filter = {'parent': self.parent}
+            cls_and_or_filter = self.collections[name]
             if isinstance(cls_and_or_filter, tuple):
                 filter.update(cls_and_or_filter[1])
                 cls = cls_and_or_filter[0]
             else:
                 cls = cls_and_or_filter
-            collection_instance = cls(self.parent, filters=filter)
-            self._collection_cache[collection] = collection_instance
+            cls = self.collections[name]
+            self._collection_cache[name] = cls(self.parent, filters=filter)
+        return self._collection_cache[name]
 
 
 @attr.s

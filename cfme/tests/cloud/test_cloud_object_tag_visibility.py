@@ -10,7 +10,7 @@ from cfme.cloud.keypairs import KeyPairCollection
 from cfme.cloud.stack import StackCollection
 from cfme.cloud.provider import CloudProvider
 from cfme.utils import version
-from cfme.utils.appliance import BaseCollection
+from cfme.modeling.base import BaseCollection
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from fixtures.provider import setup_one_or_skip

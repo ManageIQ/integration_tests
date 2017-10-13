@@ -2,7 +2,7 @@ from random import choice
 import pytest
 
 from cfme.utils import testgen
-from cfme.utils.appliance import BaseCollection
+from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui import toolbar as tb
 from cfme.configure.settings import DefaultView

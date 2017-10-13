@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 import re
 from cached_property import cached_property
 from copy import copy
@@ -10,7 +12,8 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import BootstrapSelect, CandidateNotFound, Input, Button, Tab
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity, Navigatable
+from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
@@ -92,17 +95,149 @@ class ClassEditView(ClassForm):
             self.title.text == 'Editing Class "{}"'.format(self.obj.name))
 
 
+class Class(BaseEntity, Copiable):
+    def __init__(self, collection, name, display_name=None, description=None):
+        from .instance import InstanceCollection
+        from .method import MethodCollection
+        self._collections = {
+            'instances': InstanceCollection,
+            'methods': MethodCollection
+        }
+        super(Class, self).__init__(collection)
+
+        self.name = name
+        if display_name is not None:
+            self.display_name = display_name
+        if description is not None:
+            self.description = description
+
+    __repr__ = object.__repr__
+
+    @cached_property
+    def display_name(self):
+        return self.db_object.display_name
+
+    @cached_property
+    def description(self):
+        return self.db_object.description
+
+    @cached_property
+    def db_id(self):
+        table = self.appliance.db.client['miq_ae_classes']
+        try:
+            return self.appliance.db.client.session.query(table.id).filter(
+                table.name == self.name,
+                table.namespace_id == self.namespace.db_id)[0]  # noqa
+        except IndexError:
+            raise ItemNotFound('Class named {} not found in the database'.format(self.name))
+
+    @property
+    def db_object(self):
+        table = self.appliance.db.client['miq_ae_classes']
+        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
+
+    @property
+    def parent_obj(self):
+        return self.parent.parent
+
+    @property
+    def namespace(self):
+        return self.parent_obj
+
+    @property
+    def instances(self):
+        return self.collections.instances
+
+    @property
+    def methods(self):
+        return self.collections.methods
+
+    @property
+    def domain(self):
+        return self.parent_obj.domain
+
+    @property
+    def tree_path(self):
+        if self.display_name:
+            return self.parent_obj.tree_path + ['{} ({})'.format(self.display_name, self.name)]
+        else:
+            return self.parent_obj.tree_path + [self.name]
+
+    @property
+    def tree_path_name_only(self):
+        return self.parent_obj.tree_path + [self.name]
+
+    @property
+    def pure_tree_path(self):
+        return self.parent_obj.tree_path[1:] + [self.name]
+
+    @property
+    def fqdn(self):
+        return '/' + '/'.join(self.pure_tree_path)
+
+    @cached_property
+    def schema(self):
+        return ClassSchema(self)
+
+    def delete(self, cancel=False):
+        # Ensure this has correct data
+        self.description
+        # Do it!
+        details_page = navigate_to(self, 'Details')
+        details_page.configuration.item_select('Remove this Class', handle_alert=not cancel)
+        if cancel:
+            assert details_page.is_displayed
+            details_page.flash.assert_no_error()
+        else:
+            result_view = self.create_view(NamespaceDetailsView, self.parent_obj)
+            assert result_view.is_displayed
+            result_view.flash.assert_no_error()
+            result_view.flash.assert_message(
+                'Automate Class "{}": Delete successful'.format(self.description or self.name))
+
+    def update(self, updates):
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(ClassDetailsView, override=updates)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            # When updating, class FQDN is used
+            if 'name' in updates:
+                # Replace the last component with a new name
+                fqdn = self.fqdn.rsplit('/', 1)[0] + '/{}'.format(updates['name'])
+            else:
+                fqdn = self.fqdn
+            view.flash.assert_message('Automate Class "{}" was saved'.format(fqdn))
+        else:
+            view.flash.assert_message(
+                'Edit of Automate Class "{}" was cancelled by the user'.format(self.name))
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
+
+
+@attr.s
 class ClassCollection(BaseCollection):
-    def __init__(self, appliance, parent_namespace):
-        self.parent = parent_namespace
-        self.appliance = appliance
+
+    ENTITY = Class
 
     @property
     def tree_path(self):
         return self.parent.tree_path
-
-    def instantiate(self, name=None, display_name=None, description=None):
-        return Class(self, name=name, display_name=display_name, description=description)
 
     def create(self, name=None, display_name=None, description=None, cancel=False):
         add_page = navigate_to(self, 'Add')
@@ -168,135 +303,6 @@ class Add(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.configuration.item_select('Add a New Class')
-
-
-class Class(BaseEntity, Copiable):
-    def __init__(self, collection, name, display_name, description):
-        self.collection = collection
-        self.appliance = self.collection.appliance
-        self.name = name
-        if display_name is not None:
-            self.display_name = display_name
-        if description is not None:
-            self.description = description
-
-    @cached_property
-    def display_name(self):
-        return self.db_object.display_name
-
-    @cached_property
-    def description(self):
-        return self.db_object.description
-
-    @cached_property
-    def db_id(self):
-        table = self.appliance.db.client['miq_ae_classes']
-        try:
-            return self.appliance.db.client.session.query(table.id).filter(
-                table.name == self.name,
-                table.namespace_id == self.namespace.db_id)[0]  # noqa
-        except IndexError:
-            raise ItemNotFound('Class named {} not found in the database'.format(self.name))
-
-    @property
-    def db_object(self):
-        table = self.appliance.db.client['miq_ae_classes']
-        return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
-
-    @property
-    def parent(self):
-        return self.collection.parent
-
-    @property
-    def namespace(self):
-        return self.parent
-
-    @property
-    def domain(self):
-        return self.parent.domain
-
-    @property
-    def tree_path(self):
-        if self.display_name:
-            return self.parent.tree_path + ['{} ({})'.format(self.display_name, self.name)]
-        else:
-            return self.parent.tree_path + [self.name]
-
-    @property
-    def tree_path_name_only(self):
-        return self.parent.tree_path + [self.name]
-
-    @property
-    def pure_tree_path(self):
-        return self.parent.tree_path[1:] + [self.name]
-
-    @property
-    def fqdn(self):
-        return '/' + '/'.join(self.pure_tree_path)
-
-    @cached_property
-    def instances(self):
-        from .instance import InstanceCollection
-        return InstanceCollection(self.appliance, self)
-
-    @cached_property
-    def methods(self):
-        from .method import MethodCollection
-        return MethodCollection(self.appliance, self)
-
-    @cached_property
-    def schema(self):
-        return ClassSchema(self)
-
-    def delete(self, cancel=False):
-        # Ensure this has correct data
-        self.description
-        # Do it!
-        details_page = navigate_to(self, 'Details')
-        details_page.configuration.item_select('Remove this Class', handle_alert=not cancel)
-        if cancel:
-            assert details_page.is_displayed
-            details_page.flash.assert_no_error()
-        else:
-            result_view = self.create_view(NamespaceDetailsView, self.parent)
-            assert result_view.is_displayed
-            result_view.flash.assert_no_error()
-            result_view.flash.assert_message(
-                'Automate Class "{}": Delete successful'.format(self.description or self.name))
-
-    def update(self, updates):
-        view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
-        if changed:
-            view.save_button.click()
-        else:
-            view.cancel_button.click()
-        view = self.create_view(ClassDetailsView, override=updates)
-        assert view.is_displayed
-        view.flash.assert_no_error()
-        if changed:
-            # When updating, class FQDN is used
-            if 'name' in updates:
-                # Replace the last component with a new name
-                fqdn = self.fqdn.rsplit('/', 1)[0] + '/{}'.format(updates['name'])
-            else:
-                fqdn = self.fqdn
-            view.flash.assert_message('Automate Class "{}" was saved'.format(fqdn))
-        else:
-            view.flash.assert_message(
-                'Edit of Automate Class "{}" was cancelled by the user'.format(self.name))
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Details')
-            return True
-        except CandidateNotFound:
-            return False
-
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
 
 
 @navigator.register(Class)

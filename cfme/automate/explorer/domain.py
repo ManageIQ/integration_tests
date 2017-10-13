@@ -88,8 +88,10 @@ class Domain(BaseEntity, Fillable):
     """A class representing one Domain in the UI."""
 
     def __init__(
-            self, collection, name, description, enabled=None, locked=None,
+            self, collection, name, description=None, enabled=None, locked=None,
             git_repository=None, git_checkout_type=None, git_checkout_value=None, db_id=None):
+        from .namespace import NamespaceCollection
+        self._collections = {'namespaces': NamespaceCollection}
         super(Domain, self).__init__(collection)
         self.name = name
         self.description = description
@@ -107,6 +109,10 @@ class Domain(BaseEntity, Fillable):
             self.locked = locked
 
     __repr__ = object.__repr__
+
+    # TODO this needs replacing with something better
+    def __hash__(self):
+        return hash((self.name, id(self.parent)))
 
     def as_fill_value(self):
         return self.name
@@ -146,12 +152,12 @@ class Domain(BaseEntity, Fillable):
         return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
 
     @cached_property
-    def _enabled(self):
+    def enabled(self):
         return self.db_object.enabled
 
     @cached_property
-    def _locked(self):
-        if self.browser.product_version < '5.7':
+    def locked(self):
+        if self.appliance.version < '5.7':
             return self.db_object.system
         else:
             return self.db_object.source in {'user_locked', 'system', 'remote'}
@@ -162,8 +168,7 @@ class Domain(BaseEntity, Fillable):
 
     @cached_property
     def namespaces(self):
-        from .namespace import NamespaceCollection
-        return NamespaceCollection(self.appliance, self)
+        return self.collections.namespaces
 
     @property
     def tree_display_name(self):

@@ -11,7 +11,7 @@ from cfme.cloud.keypairs import KeyPairCollection, KeyPairAllView
 from cfme.cloud.stack import StackCollection, StackAllView
 from cfme.cloud.tenant import TenantCollection, TenantAllView
 from cfme.web_ui import toolbar as tb
-from cfme.utils.appliance import BaseCollection
+from cfme.modeling.base import BaseCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import attr
+
 from cached_property import cached_property
 
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -7,7 +9,7 @@ from widgetastic_manageiq import Table
 from widgetastic_patternfly import CandidateNotFound, Input, Button
 
 from cfme.exceptions import ItemNotFound
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 from . import AutomateExplorerView, check_tree_path
@@ -66,94 +68,20 @@ class NamespaceEditView(NamespaceForm):
             self.title.text == 'Editing Automate Namespace "{}"'.format(self.obj.name))
 
 
-class NamespaceCollection(BaseCollection):
-    def __init__(self, appliance, parent):
-        self.parent = parent
-        self.appliance = appliance
-
-    @property
-    def tree_path(self):
-        return self.parent.tree_path
-
-    def instantiate(self, name=None, description=None):
-        return Namespace(self, name=name, description=description)
-
-    def create(self, name=None, description=None, cancel=False):
-        add_page = navigate_to(self, 'Add')
-        fill_dict = {
-            k: v
-            for k, v in {'name': name, 'description': description}.items()
-            if v is not None}
-        add_page.fill(fill_dict)
-        if cancel:
-            add_page.cancel_button.click()
-            add_page.flash.assert_no_error()
-            add_page.flash.assert_message('Add of new Automate Namespace was cancelled by the user')
-            return None
-        else:
-            add_page.add_button.click()
-            add_page.flash.assert_no_error()
-            if self.appliance.version >= '5.8.2':
-                add_page.flash.assert_message(
-                    'Automate Namespace "{}" was added'.format(description or name))
-            else:
-                add_page.flash.assert_message('Automate Namespace "{}" was added'.format(name))
-            return self.instantiate(name=name, description=description)
-
-    def delete(self, *namespaces):
-        all_page = navigate_to(self.parent, 'Details')
-        namespaces = list(namespaces)
-        parents = set()
-        # Check if the parent is the same
-        for namespace in namespaces:
-            parents.add(namespace.parent)
-        if len(parents) > 1:
-            raise ValueError('You passed namespaces that are not under one parent.')
-        checked_namespaces = []
-        if not all_page.namespaces.is_displayed:
-            raise ValueError('No namespace found!')
-        all_page.namespaces.uncheck_all()
-        for row in all_page.namespaces.rows(_row__attr_startswith=('data-click-id', 'aen-')):
-            name = row[2].text
-            for namespace in namespaces:
-                if namespace.name == name:
-                    checked_namespaces.append(namespace)
-                    row[0].check()
-                    break
-
-            if set(namespaces) == set(checked_namespaces):
-                break
-
-        if set(namespaces) != set(checked_namespaces):
-            raise ValueError('Some of the namespaces were not found in the UI.')
-
-        if isinstance(self.parent, Domain):
-            all_page.configuration.item_select('Remove Namespaces', handle_alert=True)
-        else:
-            all_page.configuration.item_select('Remove selected Items', handle_alert=True)
-        all_page.flash.assert_no_error()
-        for namespace in checked_namespaces:
-            all_page.flash.assert_message(
-                'Automate Namespace "{}": Delete successful'.format(
-                    namespace.description or namespace.name))
-
-
-@navigator.register(NamespaceCollection)
-class Add(CFMENavigateStep):
-    VIEW = NamespaceAddView
-    prerequisite = NavigateToAttribute('parent', 'Details')
-
-    def step(self):
-        self.prerequisite_view.configuration.item_select('Add a New Namespace')
-
-
 class Namespace(BaseEntity):
-    def __init__(self, collection, name, description):
-        self.collection = collection
-        self.appliance = self.collection.appliance
+
+    def __init__(self, collection, name, description=None):
+        from .klass import ClassCollection
+        self._collections = {
+            'namespaces': NamespaceCollection,
+            'classes': ClassCollection
+        }
+        super(Namespace, self).__init__(collection)
         self.name = name
         if description is not None:
             self.description = description
+
+    __repr__ = object.__repr__
 
     @cached_property
     def description(self):
@@ -165,7 +93,7 @@ class Namespace(BaseEntity):
         try:
             return self.appliance.db.client.session.query(table.id).filter(
                 table.name == self.name,
-                table.parent_id == self.parent.db_id)[0]  # noqa
+                table.parent_id == self.parent_obj.db_id)[0]  # noqa
         except IndexError:
             raise ItemNotFound('Namespace named {} not found in the database'.format(self.name))
 
@@ -175,25 +103,24 @@ class Namespace(BaseEntity):
         return self.appliance.db.client.session.query(table).filter(table.id == self.db_id).first()
 
     @property
-    def parent(self):
-        return self.collection.parent
+    def parent_obj(self):
+        return self.parent.parent
 
     @property
     def domain(self):
-        return self.parent.domain
+        return self.parent_obj.domain
 
     @property
     def tree_path(self):
-        return self.parent.tree_path + [self.name]
+        return self.parent_obj.tree_path + [self.name]
 
     @cached_property
     def namespaces(self):
-        return NamespaceCollection(self.appliance, self)
+        return self.collections.namespaces
 
     @cached_property
     def classes(self):
-        from .klass import ClassCollection
-        return ClassCollection(self.appliance, self)
+        return self.collections.classes
 
     def delete(self, cancel=False):
         # Ensure this has correct data
@@ -210,10 +137,10 @@ class Namespace(BaseEntity):
                 from .domain import DomainCollection, DomainListView
                 dc = DomainCollection(self.appliance)
                 result_view = self.create_view(DomainListView, dc)
-            elif isinstance(self.parent, Domain):
-                result_view = self.create_view(DomainDetailsView, self.parent)
+            elif isinstance(self.parent_obj, Domain):
+                result_view = self.create_view(DomainDetailsView, self.parent_obj)
             else:
-                result_view = self.create_view(NamespaceDetailsView, self.parent)
+                result_view = self.create_view(NamespaceDetailsView, self.parent_obj)
             assert result_view.is_displayed
             result_view.flash.assert_no_error()
             result_view.flash.assert_message(
@@ -254,6 +181,84 @@ class Namespace(BaseEntity):
     def delete_if_exists(self):
         if self.exists:
             self.delete()
+
+
+@attr.s
+class NamespaceCollection(BaseCollection):
+
+    ENTITY = Namespace
+
+    @property
+    def tree_path(self):
+        return self.parent.tree_path
+
+    def create(self, name=None, description=None, cancel=False):
+        add_page = navigate_to(self, 'Add')
+        fill_dict = {
+            k: v
+            for k, v in {'name': name, 'description': description}.items()
+            if v is not None}
+        add_page.fill(fill_dict)
+        if cancel:
+            add_page.cancel_button.click()
+            add_page.flash.assert_no_error()
+            add_page.flash.assert_message('Add of new Automate Namespace was cancelled by the user')
+            return None
+        else:
+            add_page.add_button.click()
+            add_page.flash.assert_no_error()
+            if self.appliance.version >= '5.8.2':
+                add_page.flash.assert_message(
+                    'Automate Namespace "{}" was added'.format(description or name))
+            else:
+                add_page.flash.assert_message('Automate Namespace "{}" was added'.format(name))
+            return self.instantiate(name=name, description=description)
+
+    def delete(self, *namespaces):
+        all_page = navigate_to(self.parent_obj, 'Details')
+        namespaces = list(namespaces)
+        parents = set()
+        # Check if the parent is the same
+        for namespace in namespaces:
+            parents.add(namespace.parent_obj)
+        if len(parents) > 1:
+            raise ValueError('You passed namespaces that are not under one parent.')
+        checked_namespaces = []
+        if not all_page.namespaces.is_displayed:
+            raise ValueError('No namespace found!')
+        all_page.namespaces.uncheck_all()
+        for row in all_page.namespaces.rows(_row__attr_startswith=('data-click-id', 'aen-')):
+            name = row[2].text
+            for namespace in namespaces:
+                if namespace.name == name:
+                    checked_namespaces.append(namespace)
+                    row[0].check()
+                    break
+
+            if set(namespaces) == set(checked_namespaces):
+                break
+
+        if set(namespaces) != set(checked_namespaces):
+            raise ValueError('Some of the namespaces were not found in the UI.')
+
+        if isinstance(self.parent, Domain):
+            all_page.configuration.item_select('Remove Namespaces', handle_alert=True)
+        else:
+            all_page.configuration.item_select('Remove selected Items', handle_alert=True)
+        all_page.flash.assert_no_error()
+        for namespace in checked_namespaces:
+            all_page.flash.assert_message(
+                'Automate Namespace "{}": Delete successful'.format(
+                    namespace.description or namespace.name))
+
+
+@navigator.register(NamespaceCollection)
+class Add(CFMENavigateStep):
+    VIEW = NamespaceAddView
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        self.prerequisite_view.configuration.item_select('Add a New Namespace')
 
 
 @navigator.register(Namespace)
