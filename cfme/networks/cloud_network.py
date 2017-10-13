@@ -22,34 +22,6 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
 
     name = attr.ib()
 
-    def __init__(self, name, tenant, network_type, is_external=False, administrative_state='Up',
-                 is_shared=False):
-        self.name = name
-        self.tenant = tenant
-        self.type = network_type
-        self.is_external = is_external
-        self.administrative_state = administrative_state
-        self.is_shared = is_shared
-
-    def create(self):
-        view = navigate_to(self, 'Add')
-        view.network_manager.fill(self.network_provider)
-        view.cloud_tenant.fill(self.tenant)
-        view.network_type.fill(self.type)
-        view.network_name.fill(self.name)
-        if self.is_external:
-            view.ext_router.click()
-        if self.administrative_state == 'Down':
-            view.administrative_state.click()
-        if self.is_shared:
-            view.shared.click()
-        view.save.click()
-        view.flash.assert_success_message('Cloud Network "{}" created'.format(self.name))
-
-    def delete(self):
-        view = navigate_to(self, 'Details')
-        view.configuration.item_select('Delete this Cloud Network', handle_alert=True)
-
     @property
     def provider(self):
         from cfme.networks.provider import NetworkProvider
@@ -89,6 +61,23 @@ class CloudNetworkCollection(BaseCollection):
     """Collection object for Cloud Network object"""
     ENTITY = CloudNetwork
 
+    def create(self, name, tenant, provider, network_manager, network_type, is_external=False,
+               admin_state='up', is_shared=False):
+        view = navigate_to(self, 'Add')
+        view.network_manager.fill(network_manager)
+        view.cloud_tenant.fill(tenant)
+        view.network_type.fill(network_type)
+        view.network_name.fill(name)
+        if is_external:
+            view.ext_router.click()
+        if admin_state.lower() == 'down':
+            view.administrative_state.click()
+        if is_shared:
+            view.shared.click()
+        view.save.click()
+        view.flash.assert_success_message('Cloud Network "{}" created'.format(self.name))
+        return self.instantiate(name, provider)
+
     def all(self):
         if self.filters.get('parent'):
             view = navigate_to(self.filters.get('parent'), 'CloudNetworks')
@@ -116,7 +105,7 @@ class Details(CFMENavigateStep):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
 
 
-@navigator.register(CloudNetwork, 'Add')
+@navigator.register(CloudNetworkCollection, 'Add')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToAttribute('parent', 'All')
     VIEW = CloudNetworkAddView
