@@ -5,7 +5,6 @@ from collections import namedtuple
 from cfme.utils.conf import credentials, cfme_data
 from wait_for import wait_for
 
-
 TimedCommand = namedtuple('TimedCommand', ['command', 'timeout'])
 pwd = credentials['database']['password']
 
@@ -15,7 +14,7 @@ def tot_time(string):
     mtch = re.match('^((?P<days>\d+)+d)?\s?((?P<hours>\d+)+h)?\s?((?P<minutes>\d+)+m)?\s?', string)
     tot = int(mtch.group('days') or 0) * 24 * 60
     tot += int(mtch.group('hours') or 0) * 60
-    tot += int(mtch.group('minutes')or 0)
+    tot += int(mtch.group('minutes') or 0)
     return tot
 
 
@@ -55,8 +54,8 @@ def setup_distributed_env(cfme_version, provider, lease):
     vmdb_appliance.wait_for_evm_service()
     vmdb_appliance.wait_for_web_ui()
     print("VMDB appliance provisioned and configured {}".format(vmdb_appliance.address))
-    command_set1 = ('ap', '', opt, '2', vmdb_appliance.address, '', pwd, '', '3') + port + ('', '',
-        pwd, TimedCommand(pwd, 360), '')
+    command_set1 = ('ap', '', opt, '2', vmdb_appliance.address, '', pwd, '', '3') + port + \
+                   ('', '', pwd, TimedCommand(pwd, 360), '')
     node_appliance.appliance_console.run_commands(command_set1)
     node_appliance.wait_for_evm_service()
     node_appliance.wait_for_web_ui()
@@ -67,14 +66,15 @@ def setup_distributed_env(cfme_version, provider, lease):
 @main.command('ha', help='Sets up high availability environment')
 @click.option('--cfme-version', required=True)
 @click.option('--provider', default=cfme_data.get('basic_info', {}).get('ha_provider'),
-    help='Specify sprout provider, must not be RHOS')
+              help='Specify sprout provider, must not be RHOS')
 @click.option('--lease', default='3h', help='set pool lease time, example: 1d4h30m')
 def setup_ha_env(cfme_version, provider, lease):
     lease_time = tot_time(lease)
     """multi appliance setup consisting of dedicated primary and standy databases with a single
     UI appliance."""
     print("Provisioning and configuring HA environment")
-    apps = provision_appliances(count=3, cfme_version=cfme_version, provider=provider, lease_time=lease_time)
+    apps = provision_appliances(
+        count=3, cfme_version=cfme_version, provider=provider, lease_time=lease_time)
     ip0 = apps[0].address
     ip1 = apps[1].address
     ip2 = apps[2].address
@@ -96,7 +96,7 @@ def setup_ha_env(cfme_version, provider, lease):
     apps[0].appliance_console.run_commands(command_set2)
     print("Primary HA node configured {}".format(ip0))
     command_set3 = ('ap', '', rep, '2', '1', '2', '', '', pwd, pwd, ip0, ip2, 'y',
-        TimedCommand('y', 300), '')
+                    TimedCommand('y', 300), '')
     apps[2].appliance_console.run_commands(command_set3)
     print("Secondary HA node provision and configured {}".format(ip2))
     command_set4 = ('ap', '', mon, '1', '')
@@ -118,7 +118,8 @@ def setup_replication_env(cfme_version, provider, lease, remote_worker=False):
     if remote_worker:
         app_count = 3
 
-    apps = provision_appliances(count=app_count, cfme_version=cfme_version, provider=provider,lease_time=lease_time)
+    apps = provision_appliances(count=app_count, cfme_version=cfme_version,
+                                provider=provider, lease_time=lease_time)
 
     global_region_appliance = apps[0]
     remote_region_appliance = apps[1]
@@ -132,14 +133,16 @@ def setup_replication_env(cfme_version, provider, lease, remote_worker=False):
     global_region_appliance.appliance_console.run_commands(command_set0)
     global_region_appliance.wait_for_evm_service()
     global_region_appliance.wait_for_web_ui()
-    print("Global region appliance provisioned and configured {}".format(global_region_appliance.address))
+    print("Global region appliance provisioned and configured {}"
+          .format(global_region_appliance.address))
 
-    command_set1 = ('ap', '', opt, '2', global_region_appliance.address, '', pwd, '', '1', 'y', '1', 'n', '1', pwd,
-                    TimedCommand(pwd, 360), '')
+    command_set1 = ('ap', '', opt, '2', global_region_appliance.address,
+                    '', pwd, '', '1', 'y', '1', 'n', '1', pwd, TimedCommand(pwd, 360), '')
     remote_region_appliance.appliance_console.run_commands(command_set1)
     remote_region_appliance.wait_for_evm_service()
     remote_region_appliance.wait_for_web_ui()
-    print("Remote region appliance provisioned and configured {}".format(remote_region_appliance.address))
+    print("Remote region appliance provisioned and configured {}"
+          .format(remote_region_appliance.address))
     print("Setup - Replication on remote appliance")
     remote_region_appliance.set_pglogical_replication(replication_type=':remote')
     print("Setup - Replication on global appliance")
@@ -147,9 +150,10 @@ def setup_replication_env(cfme_version, provider, lease, remote_worker=False):
     global_region_appliance.add_pglogical_replication_subscription(remote_region_appliance.address)
 
     if remote_worker:
-        port = (remote_region_appliance.address, '') if cfme_version >= "5.8" else (remote_region_appliance.address,)
+        port = (remote_region_appliance.address, '') \
+            if cfme_version >= "5.8" else (remote_region_appliance.address,)
         command_set2 = ('ap', '', opt, '2', remote_region_appliance.address, '',
-                        pwd, '', '3') + port + ('', '',pwd, TimedCommand(pwd, 360), '')
+                        pwd, '', '3') + port + ('', '', pwd, TimedCommand(pwd, 360), '')
         remote_worker_appliance.appliance_console.run_commands(command_set2)
         remote_worker_appliance.wait_for_evm_service()
         remote_worker_appliance.wait_for_web_ui()
