@@ -36,4 +36,4 @@ def network(provider, appliance):
 
 def test_create_network(network, provider):
     assert network.parent_provider.name == provider.name
-    assert network.cloud_tenant == provider.get_yaml_data()['tenant']
+    assert network.cloud_tenant == network.tenant
