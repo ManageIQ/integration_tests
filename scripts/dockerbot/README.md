@@ -22,15 +22,7 @@ you are using SELinux.
 `sudo chcon -Rt svirt_sandbox_file_t /path/to/log_depot/`
 
 ### Building the pytestbase image
-
-We then need to build the pytest docker container. To do this we need to change directory to the
-pytestbase folder which is contained in this repo and run the following.
-
-`docker build -t py_test_base .`
-
-This can be run multiple times if required to update the pip requirements from master.
-You may need to use the `--no-cache=true` to tell the build not to use the cached versions
-of the previous steps.
+`python scripts/dockerbot/build-container.py`
 
 ### Obtaining the sel_ff_chrome image
 
