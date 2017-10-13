@@ -29,6 +29,7 @@ setup(
             'cloud = cfme.cloud.provider:CloudProvider',
             'middleware = cfme.middleware.provider:MiddlewareProvider',
             'containers = cfme.containers.provider:ContainersProvider',
+            'physical = cfme.physical.provider:PhysicalProvider',
         ],
         'manageiq.provider_types.infra': [
             'virtualcenter = cfme.infrastructure.provider.virtualcenter:VMwareProvider',
@@ -48,6 +49,9 @@ setup(
         'manageiq.provider_types.containers': [
             'kubernetes = cfme.containers.provider.kubernetes:KubernetesProvider',
             'openshift = cfme.containers.provider.openshift:OpenshiftProvider',
+        ],
+        'manageiq.provider_types.physical': [
+            'lenovo = cfme.physical.provider.lenovo:LenovoProvider'
         ],
         'manageiq.vm_categories':
         [
