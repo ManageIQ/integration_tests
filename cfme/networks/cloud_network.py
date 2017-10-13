@@ -22,6 +22,8 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     db_types = ['CloudNetwork']
 
     name = attr.ib()
+    provider = attr.ib()
+    tenant = attr.ib()
 
     @property
     def provider(self):
@@ -88,7 +90,7 @@ class CloudNetworkCollection(BaseCollection):
             view.shared.click()
         view.add.click()
         view.flash.assert_success_message('Cloud Network "{}" created'.format(name))
-        network = self.instantiate(name, provider)
+        network = self.instantiate(name, provider, tenant)
         # Refresh provider's relationships to have new network displayed
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         return network
