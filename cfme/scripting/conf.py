@@ -10,7 +10,6 @@ Usage:
 import StringIO
 
 import click
-
 import yaycl_crypt
 
 from cfme.utils import conf
@@ -81,10 +80,20 @@ def encrypt(conf_name, delete):
 @click.argument('conf_name', default='credentials')
 @click.option('--delete', default=False, is_flag=True,
               help='If supplied delete the encrypted config of the same name.')
-def decrypt(conf_name, delete):
+@click.option('--skip/--no-skip', default=True,
+              help='If supplied raise exception if decrypted file already exists')
+def decrypt(conf_name, delete, skip):
     """Function to decrypt a given conf file"""
     conf_name = conf_name.strip()
-    yaycl_crypt.decrypt_yaml(conf, conf_name, delete=delete)
+    try:
+        yaycl_crypt.decrypt_yaml(conf, conf_name, delete=delete)
+    except yaycl_crypt.YayclCryptError as ex:
+        if skip and 'overwrite' in ex.message:
+            print('{} conf decrypt skipped, decrypted file already exists'.format(conf_name))
+            return
+        else:
+            raise
+
     print('{} conf decrypted'.format(conf_name))
 
 
