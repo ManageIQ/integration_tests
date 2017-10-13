@@ -46,6 +46,10 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
         view.save.click()
         view.flash.assert_success_message('Cloud Network "{}" created'.format(self.name))
 
+    def delete(self):
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Delete this Cloud Network', handle_alert=True)
+
     @property
     def provider(self):
         from cfme.networks.provider import NetworkProvider
@@ -118,4 +122,4 @@ class Details(CFMENavigateStep):
     VIEW = CloudNetworkAddView
 
     def step(self):
-        self.prerequisite_view.configuration.select('Add a new Cloud Network')
+        self.prerequisite_view.configuration.item_select('Add a new Cloud Network')
