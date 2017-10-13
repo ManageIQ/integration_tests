@@ -21,23 +21,18 @@ pytest_generate_tests = testgen.generate([OpenStackProvider],
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-@pytest.mark.yield_fixture(scope='function')
-def network(provider):
-    network = CloudNetwork(name=fauxfactory.gen_alpha(),
-                           tenant=provider.get_yaml_data()['tenant'],
-                           network_type='VXLAN')
-    network.create()
+@pytest.yield_fixture(scope='function')
+def network(provider, appliance):
+    collection = CloudNetworkCollection(appliance)
+    network = collection.create(name=fauxfactory.gen_alpha(),
+                                tenant=provider.get_yaml_data()['tenant'],
+                                provider=provider,
+                                network_type='VXLAN',
+                                network_manager='{} Network Manager'.format(provider.name))
     yield network
     # TODO: replace this with neutron client request
     network.delete()
 
 
-def test_list_networks(provider, appliance):
-    networks = provider.mgmt.list_network()
-    displayed_networks = CloudNetworkCollection(appliance).all()
-    for n in networks:
-        assert n in displayed_networks
-
-
 def test_create_network(network):
-    assert network.network_type == network.type
+    assert network.network_type == 'VXLAN'
