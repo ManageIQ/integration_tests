@@ -141,7 +141,7 @@ class Cluster(Pretty, BaseEntity, WidgetasticTaggable):
         self._id = [
             cl.id
             for cl in col.clusters
-            if cl.name in (self._short_name, self.name) and cl.ems_id == self.provider.id
+            if cl.name in (self.short_name, self.name) and cl.ems_id == self.provider.id
         ][-1]
 
     @property
