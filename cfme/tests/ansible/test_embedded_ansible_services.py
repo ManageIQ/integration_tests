@@ -9,7 +9,6 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services.requests import RequestCollection
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 
@@ -110,7 +109,7 @@ def service_catalog(appliance, ansible_catalog_item, catalog):
 @pytest.yield_fixture
 def service_request(appliance, ansible_catalog_item):
     request_descr = "Provisioning Service [{0}] from [{0}]".format(ansible_catalog_item.name)
-    service_request_ = RequestCollection(appliance).instantiate(description=request_descr)
+    service_request_ = appliance.collections.requests.instantiate(description=request_descr)
     yield service_request_
 
     if service_request_.exists:
@@ -202,7 +201,7 @@ def test_service_ansible_playbook_provision_in_requests(appliance, ansible_catal
     service_catalog.order()
     cat_item_name = ansible_catalog_item.name
     request_descr = "Provisioning Service [{0}] from [{0}]".format(cat_item_name)
-    service_request = RequestCollection(appliance).instantiate(description=request_descr)
+    service_request = appliance.collections.requests.instantiate(description=request_descr)
     assert service_request.exists()
 
 

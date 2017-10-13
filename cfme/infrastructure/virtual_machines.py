@@ -28,7 +28,6 @@ from cfme.exceptions import (
     VmOrInstanceNotFound)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.services.requests import RequestCollection
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Tree, fill, flash, form_buttons,
     match_location, Table, toolbar, Calendar, Select, Input, CheckboxTable,
@@ -730,7 +729,7 @@ class Vm(VM):
         from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         cells = {'Description': 'Publish from [{}] to [{}]'.format(self.name, template_name)}
-        provision_request = RequestCollection(self.appliance).instantiate(cells=cells)
+        provision_request = self.appliance.collections.requests.instantiate(cells=cells)
         provision_request.wait_for_request()
         return Template(template_name, self.provider)
 

@@ -15,7 +15,6 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.services.requests import RequestCollection
 from cfme.utils import testgen
 from cfme.utils.conf import credentials
 from cfme.utils.rest import assert_response
@@ -147,7 +146,7 @@ def provisioned_instance(provider, testing_instance, appliance):
     instance.create(**inst_args)
     logger.info('Waiting for cfme provision request for vm %s', instance.name)
     request_description = 'Provision from [{}] to [{}]'.format(image, instance.name)
-    provision_request = RequestCollection(appliance).instantiate(request_description)
+    provision_request = appliance.collections.requests.instantiate(request_description)
     try:
         provision_request.wait_for_request(method='ui')
     except Exception as e:

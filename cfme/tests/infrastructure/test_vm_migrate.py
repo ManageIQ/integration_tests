@@ -4,7 +4,6 @@ import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 
 from cfme.utils.generators import random_vm_name
@@ -47,7 +46,7 @@ def test_vm_migrate(appliance, new_vm, provider):
     new_vm.migrate_vm("email@xyz.com", "first", "last", host_name=migrate_to)
     request_description = new_vm.name
     cells = {'Description': request_description, 'Request Type': 'Migrate'}
-    migrate_request = RequestCollection(appliance).instantiate(request_description,
-                                                               cells=cells, partial_check=True)
+    migrate_request = appliance.collections.requests.instantiate(request_description, cells=cells,
+                                                                 partial_check=True)
     migrate_request.wait_for_request(method='ui')
     assert migrate_request.is_succeeded(method='ui')

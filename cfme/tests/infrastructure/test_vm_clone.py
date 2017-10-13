@@ -9,7 +9,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.services.requests import RequestCollection
 from cfme.utils import testgen
 from cfme.utils.log import logger
 from cfme.utils import version
@@ -65,7 +64,8 @@ def create_vm(appliance, provider, setup_provider, catalog_item, request):
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     request_description = catalog_item.name
-    request_row = RequestCollection(appliance).instantiate(request_description, partial_check=True)
+    request_row = appliance.collections.requests.instantiate(request_description,
+                                                             partial_check=True)
     request_row.wait_for_request()
     assert request_row.is_succeeded()
     return vm_name
@@ -85,6 +85,7 @@ def test_vm_clone(appliance, provider, clone_vm_name, request, create_vm):
         provision_type = 'VMware'
     vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
     request_description = clone_vm_name
-    request_row = RequestCollection(appliance).instantiate(request_description, partial_check=True)
+    request_row = appliance.collections.requests.instantiate(request_description,
+                                                             partial_check=True)
     request_row.wait_for_request(method='ui')
     assert request_row.is_succeeded(method='ui')

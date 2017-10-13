@@ -6,7 +6,6 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
-from cfme.services.requests import RequestCollection
 from cfme.utils import normalize_text, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
@@ -142,7 +141,7 @@ def test_provision_approval(appliance, setup_provider, provider, vm_name, smtp_t
         num_sec=90, delay=5)
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
-    provision_request = RequestCollection(appliance).instantiate(cells=cells)
+    provision_request = appliance.collections.requests.instantiate(cells=cells)
     navigate_to(provision_request, 'Details')
     if edit:
         # Automatic approval after editing the request to conform

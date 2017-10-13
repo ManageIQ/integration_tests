@@ -4,7 +4,6 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.services.requests import RequestCollection
 from cfme import test_requirements
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -29,7 +28,7 @@ def test_copy_request(appliance, setup_provider, provider, catalog_item, request
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
     request_description = catalog_item.name
-    service_request = RequestCollection(appliance).instantiate(request_description,
-                                                               partial_check=True)
+    service_request = appliance.collections.requests.instantiate(request_description,
+                                                                 partial_check=True)
     service_request.wait_for_request()
     assert navigate_to(service_request, 'Details')

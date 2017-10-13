@@ -7,7 +7,6 @@ from cfme.rest.gen_data import dialog as _dialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
-from cfme.services.requests import RequestCollection
 from cfme.utils.log import logger
 
 
@@ -76,8 +75,8 @@ def order_catalog_item_in_ops_ui(appliance, provider, provisioning, vm_name, dia
     service_catalogs.order()
     logger.info("Waiting for cfme provision request for service {}".format(catalog_item.name))
     request_description = catalog_item.name
-    provision_request = RequestCollection(appliance).instantiate(request_description,
-                                                                 partial_check=True)
+    provision_request = appliance.collections.requests.instantiate(request_description,
+                                                                   partial_check=True)
     provision_request.wait_for_request()
     assert provision_request.is_finished()
     return catalog_item.name
