@@ -96,7 +96,7 @@ class ClassEditView(ClassForm):
 
 
 class Class(BaseEntity, Copiable):
-    def __init__(self, collection, name, display_name, description):
+    def __init__(self, collection, name, display_name=None, description=None):
         from .instance import InstanceCollection
         from .method import MethodCollection
         self._collections = {
@@ -143,6 +143,14 @@ class Class(BaseEntity, Copiable):
     @property
     def namespace(self):
         return self.parent_obj
+
+    @property
+    def instances(self):
+        return self.collections.instances
+
+    @property
+    def methods(self):
+        return self.collections.methods
 
     @property
     def domain(self):

@@ -110,6 +110,10 @@ class Domain(BaseEntity, Fillable):
 
     __repr__ = object.__repr__
 
+    # TODO this needs replacing with something better
+    def __hash__(self):
+        return hash((self.name, id(self.parent)))
+
     def as_fill_value(self):
         return self.name
 

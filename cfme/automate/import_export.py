@@ -107,8 +107,7 @@ class AutomateGitRepository(Navigatable):
                     git_type == 'tag' and tag == git_type_value):
                 continue
             # We have the domain
-            from cfme.automate.explorer.domain import DomainCollection
-            dc = DomainCollection(appliance=self.appliance)
+            dc = self.appliance.collections.domains
             return dc.instantiate(
                 db_id=id, name=name, description=description, git_checkout_type=git_type,
                 git_checkout_value=git_type_value)

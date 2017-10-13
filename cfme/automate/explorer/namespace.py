@@ -70,7 +70,7 @@ class NamespaceEditView(NamespaceForm):
 
 class Namespace(BaseEntity):
 
-    def __init__(self, collection, name, description):
+    def __init__(self, collection, name, description=None):
         from .klass import ClassCollection
         self._collections = {
             'namespaces': NamespaceCollection,
@@ -215,12 +215,12 @@ class NamespaceCollection(BaseCollection):
             return self.instantiate(name=name, description=description)
 
     def delete(self, *namespaces):
-        all_page = navigate_to(self.parent, 'Details')
+        all_page = navigate_to(self.parent_obj, 'Details')
         namespaces = list(namespaces)
         parents = set()
         # Check if the parent is the same
         for namespace in namespaces:
-            parents.add(namespace.parent)
+            parents.add(namespace.parent_obj)
         if len(parents) > 1:
             raise ValueError('You passed namespaces that are not under one parent.')
         checked_namespaces = []
