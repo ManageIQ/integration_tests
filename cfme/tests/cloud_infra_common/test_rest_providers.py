@@ -27,14 +27,16 @@ def delete_provider(appliance, name):
     # workaround for BZ1501941
     if current_version() >= '5.9' and BZ(1501941, forced_streams=['5.9', 'upstream']).blocks:
         prov.action.edit(enabled=False)
-        prov.action.delete()
-        prov.wait_not_exists(num_sec=15, silent_failure=True)
-        if prov.exists:
+        for __ in range(3):
+            if not prov.exists:
+                break
             prov.action.delete()
+            prov.wait_not_exists(num_sec=20, silent_failure=True)
+        else:
+            prov.wait_not_exists(num_sec=10)
     else:
         prov.action.delete()
-
-    prov.wait_not_exists(num_sec=30)
+        prov.wait_not_exists(num_sec=30)
 
 
 @pytest.fixture(scope="function")
