@@ -1,7 +1,7 @@
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
                                  BaseEntitiesView)
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, Button, TextInput
-from widgetastic.widget import View, Text
+from widgetastic.widget import View, Text, Select
 
 from cfme.base.login import BaseLoggedInPage
 
@@ -233,14 +233,14 @@ class CloudNetworkAddView(BaseLoggedInPage):
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
-    network_manager = Dropdown(text='Network Manager')
-    cloud_tenant = Dropdown(text='Cloud Tenant')
-    network_type = Dropdown(text='Provider Network Type')
+    network_manager = Select(id='ems_id')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    network_type = Select(name='provider_network_type')
     network_name = TextInput(name='name')
     ext_router = Button(id='cloud_network_external_facing')
     administrative_state = Button(id='cloud_network_enabled')
-    shared = Button(text='Shared')
-    save = Button(text='Add')
+    shared = Button(id='cloud_network_shared')
+    add = Button('Add')
 
 
 class NetworkPortToolBar(View):

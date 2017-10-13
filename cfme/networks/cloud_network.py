@@ -1,6 +1,6 @@
 import attr
 
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
@@ -8,6 +8,7 @@ from cfme.networks.views import CloudNetworkAddView, CloudNetworkDetailsView, Cl
 from cfme.utils import providers, version
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
 
 
 @attr.s
@@ -39,6 +40,17 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
         """ Return type of network """
         view = navigate_to(self, 'Details')
         return view.entities.properties.get_text_of('Type')
+
+    @property
+    def cloud_tenant(self):
+        """ Return tenant that network belongs to"""
+        view = navigate_to(self, 'Details')
+        return view.entities.properties.get_text_of('Cloud tenant')
+
+    def delete(self):
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Delete this Cloud Network')
+        view.flash.assert_no_error()
 
     @property
     def network_provider(self):
@@ -74,9 +86,12 @@ class CloudNetworkCollection(BaseCollection):
             view.administrative_state.click()
         if is_shared:
             view.shared.click()
-        view.save.click()
-        view.flash.assert_success_message('Cloud Network "{}" created'.format(self.name))
-        return self.instantiate(name, provider)
+        view.add.click()
+        view.flash.assert_success_message('Cloud Network "{}" created'.format(name))
+        network = self.instantiate(name, provider)
+        # Refresh provider's relationships to have new network displayed
+        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        return network
 
     def all(self):
         if self.filters.get('parent'):
@@ -107,8 +122,8 @@ class Details(CFMENavigateStep):
 
 @navigator.register(CloudNetworkCollection, 'Add')
 class Add(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToSibling('All')
     VIEW = CloudNetworkAddView
 
     def step(self):
-        self.prerequisite_view.configuration.item_select('Add a new Cloud Network')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Network')
