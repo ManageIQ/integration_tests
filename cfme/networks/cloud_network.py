@@ -4,7 +4,7 @@ from navmazing import NavigateToAttribute
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
-from cfme.networks.views import CloudNetworkDetailsView, CloudNetworkView
+from cfme.networks.views import CloudNetworkAddView, CloudNetworkDetailsView, CloudNetworkView
 from cfme.utils import providers, version
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -21,6 +21,30 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     db_types = ['CloudNetwork']
 
     name = attr.ib()
+
+    def __init__(self, name, tenant, network_type, is_external=False, administrative_state='Up',
+                 is_shared=False):
+        self.name = name
+        self.tenant = tenant
+        self.type = network_type
+        self.is_external = is_external
+        self.administrative_state = administrative_state
+        self.is_shared = is_shared
+
+    def create(self):
+        view = navigate_to(self, 'Add')
+        view.network_manager.fill(self.network_provider)
+        view.cloud_tenant.fill(self.tenant)
+        view.network_type.fill(self.type)
+        view.network_name.fill(self.name)
+        if self.is_external:
+            view.ext_router.click()
+        if self.administrative_state == 'Down':
+            view.administrative_state.click()
+        if self.is_shared:
+            view.shared.click()
+        view.save.click()
+        view.flash.assert_success_message('Cloud Network "{}" created'.format(self.name))
 
     @property
     def provider(self):
@@ -86,3 +110,12 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
+
+
+@navigator.register(CloudNetwork, 'Add')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'All')
+    VIEW = CloudNetworkAddView
+
+    def step(self):
+        self.prerequisite_view.configuration.select('Add a new Cloud Network')
