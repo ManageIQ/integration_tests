@@ -163,7 +163,8 @@ management_systems:
                 api_port: 80
                 credentials: hawkular
                 security_protocol: Non-SSL
-
+    lenovo:
+        name: lenovo
 
 configuration_managers:
     sat6:
