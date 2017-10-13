@@ -78,7 +78,7 @@ explained later.
 
 Some caveats:
 
-* There is a big difference between an :py:class:`int` and :py:class:`str`. If you insert a numeric
+* There is a big difference between ``int`` and ``str``. If you insert a numeric
   value into an ordinary input, you need to have it as a string. Of course if you use a widget where
   the only sensible values are numbers, then it will be operating with integers. But if values come
   eg. from YAML, then the numeric value is automatically considered a number unless quoted.
