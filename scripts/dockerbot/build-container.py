@@ -1,18 +1,25 @@
 from __future__ import print_function, absolute_import
 import subprocess
-import py
+import argparse
+from pathlib2 import Path
+import shutil
 import sys
 
-HERE = py.path.local(__file__).dirpath()
-BASE = HERE.join('pytestbase')
 
-REPO = BASE.join('temporary_git_repo/integration_tests')
-CWD = py.path.local()
+parser = argparse.ArgumentParser()
+parser.add_argument('--no-cache', action='store_true')
+
+
+HERE = Path(__file__).resolve().parent
+BASE = HERE / 'pytestbase'
+
+REPO = BASE / 'temporary_git_repo/integration_tests'
+CWD = Path.cwd()
 
 
 def cwdstr(maybe_path):
-    if isinstance(maybe_path, py.path.local):
-        return maybe_path.relto(CWD) or '.'  # fragile
+    if isinstance(maybe_path, Path) and CWD in maybe_path.parents:
+        return str(maybe_path.relative_to(CWD))
     else:
         return str(maybe_path)
 
@@ -46,26 +53,31 @@ def build_image(dockerfile, context_dir, tag=None, no_cache=False):
 
 
 def re_setup_repo():
-    if REPO.check(dir=True):
-        REPO.remove()
+    if REPO.exists():
+        shutil.rmtree(str(REPO))
     return call(
-        ['git', 'clone', HERE.dirpath().dirpath(), REPO]
+        ['git', 'clone', HERE.parent.parent, REPO]
     ) or call(
         ['git', 'checkout', '-b', 'master'],
         cwd=REPO,
     )
 
 
-sys.exit(
-    re_setup_repo() or
+def main(options):
+    sys.exit(
+        re_setup_repo() or
 
-    build_image(
-        BASE / "Dockerfile.base", context_dir=BASE,
-        tag='cfmeqe/dockerbot-base') or
-    build_image(
-        BASE / "Dockerfile.checkouts",
-        context_dir=BASE, tag='cfmeqe/dockerbot-checkouts', no_cache=True) or
-    build_image(
-        BASE / "Dockerfile",
-        context_dir=BASE, tag='py_test_base', no_cache=True)
-)
+        build_image(
+            BASE / "Dockerfile.base", context_dir=BASE,
+            tag='cfmeqe/dockerbot-base', no_cache=options.no_cache) or
+        build_image(
+            BASE / "Dockerfile.checkouts",
+            context_dir=BASE, tag='cfmeqe/dockerbot-checkouts', no_cache=True) or
+        build_image(
+            BASE / "Dockerfile",
+            context_dir=BASE, tag='py_test_base', no_cache=True)
+    )
+
+
+if __name__ == '__main__':
+    main(parser.parse_args())
