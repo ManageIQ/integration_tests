@@ -7,7 +7,7 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.utils import error, testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
-from cfme.utils.version import current_version, pick
+from cfme.utils.version import pick
 from cfme.utils.wait import wait_for
 
 
@@ -25,15 +25,19 @@ def delete_provider(appliance, name):
     prov = provs[0]
 
     # workaround for BZ1501941
-    if current_version() >= '5.9' and BZ(1501941, forced_streams=['5.9', 'upstream']).blocks:
-        prov.action.edit(enabled=False)
-        for __ in range(3):
-            if not prov.exists:
-                break
+    def _delete():
+        try:
             prov.action.delete()
-            prov.wait_not_exists(num_sec=20, silent_failure=True)
-        else:
-            prov.wait_not_exists(num_sec=10)
+        except Exception as exc:
+            if 'ActiveRecord::RecordNotFound' in str(exc):
+                return True
+            raise
+        retval = prov.wait_not_exists(num_sec=20, silent_failure=True)
+        return bool(retval)
+
+    if appliance.version >= '5.9' and BZ(1501941, forced_streams=['5.9', 'upstream']).blocks:
+        prov.action.edit(enabled=False)
+        wait_for(_delete, num_sec=80)
     else:
         prov.action.delete()
         prov.wait_not_exists(num_sec=30)
