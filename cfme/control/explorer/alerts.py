@@ -150,11 +150,11 @@ class Alert(BaseEntity, Updateable, Pretty):
     description = attr.ib()
     active = attr.ib(default=None)
     based_on = attr.ib(default=None)
-    evaluate = attr.ib(default=None),
+    evaluate = attr.ib(default=None)
     driving_event = attr.ib(default=None)
     notification_frequency = attr.ib(default=None)
     snmp_trap = attr.ib(default=None)
-    emails = attr.ib(default=None),
+    emails = attr.ib(default=None)
     timeline_event = attr.ib(default=None)
     mgmt_event = attr.ib(default=None)
 
