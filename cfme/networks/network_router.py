@@ -29,7 +29,7 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
 
     def delete(self):
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Delete this Router')
+        view.toolbar.configuration.item_select('Delete this Router', handle_alert=True)
         view.flash.assert_success_message('Delete initiated for 1 Network Router.')
 
     def edit(self, name=None, change_external_gw=False, ext_network=None, ext_network_subnet=None):

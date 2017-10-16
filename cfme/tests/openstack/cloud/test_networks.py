@@ -1,4 +1,4 @@
-"""Tests for Openstack cloud networks and subnets"""
+"""Tests for Openstack cloud networks, subnets and routers"""
 
 import fauxfactory
 import pytest
@@ -22,22 +22,63 @@ pytest_generate_tests = testgen.generate([OpenStackProvider],
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-@pytest.yield_fixture(scope='function')
-def network(provider, appliance):
+def delete_entity(entity):
+    # TODO: replace this with neutron client request
+    try:
+        if entity.exists:
+            entity.delete()
+    except Exception:
+        logger.warning('Exception during network entity deletion - skipping..')
+
+
+def create_network(appliance, provider, is_external):
     collection = appliance.collections.cloud_networks
     network = collection.create(name=fauxfactory.gen_alpha(),
                                 tenant=provider.get_yaml_data()['tenant'],
                                 provider=provider,
                                 network_type='VXLAN',
                                 network_manager='{} Network Manager'.format(provider.name),
-                                is_external=True)
+                                is_external=is_external)
+    return network
+
+
+def create_subnet(appliance, provider, network, cidr):
+    collection = appliance.collections.network_subnets
+    subnet = collection.create(name=fauxfactory.gen_alpha(),
+                               tenant=provider.get_yaml_data()['tenant'],
+                               provider=provider,
+                               network_manager='{} Network Manager'.format(provider.name),
+                               network_name=network.name,
+                               cidr=cidr)
+    return subnet
+
+
+def create_router(appliance, provider, ext_gw, ext_network=None, ext_subnet=None):
+    collection = appliance.collections.network_routers
+    router = collection.create(name=fauxfactory.gen_alpha(),
+                               tenant=provider.get_yaml_data()['tenant'],
+                               provider=provider,
+                               network_manager='{} Network Manager'.format(provider.name),
+                               has_external_gw=ext_gw,
+                               ext_network=ext_network,
+                               ext_network_subnet=ext_subnet)
+    return router
+
+
+@pytest.yield_fixture(scope='function')
+def network(provider, appliance):
+    """Create cloud network"""
+    network = create_network(appliance, provider, is_external=False)
     yield network
-    # TODO: replace this with neutron client request
-    try:
-        if network.exists:
-            network.delete()
-    except Exception:
-        logger.warning('Exception during network deletion - skipping..')
+    delete_entity(network)
+
+
+@pytest.yield_fixture(scope='function')
+def ext_network(provider, appliance):
+    """Create external cloud network"""
+    network = create_network(appliance, provider, is_external=True)
+    yield network
+    delete_entity(network)
 
 
 @pytest.fixture(scope='module')
@@ -47,39 +88,35 @@ def subnet_cidr():
 
 @pytest.yield_fixture(scope='function')
 def subnet(provider, appliance, network, subnet_cidr):
-    collection = appliance.collections.network_subnets
-    subnet = collection.create(name=fauxfactory.gen_alpha(),
-                               tenant=provider.get_yaml_data()['tenant'],
-                               provider=provider,
-                               network_manager='{} Network Manager'.format(provider.name),
-                               network_name=network.name,
-                               cidr=subnet_cidr)
+    """Creates subnet for the given network"""
+    subnet = create_subnet(appliance, provider, network, subnet_cidr)
     yield subnet
-    # TODO: replace this with neutron client request
-    try:
-        if subnet.exists:
-            subnet.delete()
-    except Exception:
-        logger.warning('Exception during network subnet deletion - skipping..')
+    delete_entity(subnet)
 
 
 @pytest.yield_fixture(scope='function')
-def router(provider, appliance, subnet):
-    collection = appliance.collections.network_routers
-    router = collection.create(name=fauxfactory.gen_alpha(),
-                               tenant=provider.get_yaml_data()['tenant'],
-                               provider=provider,
-                               network_manager='{} Network Manager'.format(provider.name),
-                               has_external_gw=True,
-                               ext_network=subnet.network,
-                               ext_network_subnet=subnet.name)
+def ext_subnet(provider, appliance, ext_network, subnet_cidr):
+    """Creates subnet for the given external network"""
+    subnet = create_subnet(appliance, provider, ext_network, subnet_cidr)
+    yield subnet
+    delete_entity(subnet)
+
+
+@pytest.yield_fixture(scope='function')
+def router(provider, appliance):
+    """Creates network router"""
+    router = create_router(appliance, provider, ext_gw=False)
     yield router
-    # TODO: replace this with neutron client request
-    try:
-        if router.exists:
-            router.delete()
-    except Exception:
-        logger.warning('Exception during router deletion - skipping..')
+    delete_entity(router)
+
+
+@pytest.yield_fixture(scope='function')
+def router_with_gw(provider, appliance, ext_subnet):
+    """Creates network router with external network as a gateway"""
+    router = create_router(appliance, provider, ext_gw=True, ext_network=ext_subnet.network,
+                           ext_subnet=ext_subnet.name)
+    yield router
+    delete_entity(router)
 
 
 def test_create_network(network, provider):
@@ -132,7 +169,12 @@ def test_delete_subnet(subnet):
 def test_create_router(router, provider):
     assert router.exists
     assert router.cloud_tenant == provider.get_yaml_data()['tenant']
-    assert router.cloud_network == router.ext_network
+
+
+def test_create_router_with_gateway(router_with_gw, provider):
+    assert router_with_gw.exists
+    assert router_with_gw.cloud_tenant == provider.get_yaml_data()['tenant']
+    assert router_with_gw.cloud_network == router_with_gw.ext_network
 
 
 def test_edit_router(router):
