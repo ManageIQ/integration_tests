@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.common.provider import CloudInfraProvider
 from cfme.utils import error, testgen
+from cfme.utils.blockers import BZ
 from cfme.utils.rest import assert_response
 from cfme.utils.version import pick
 from cfme.utils.wait import wait_for
@@ -22,8 +23,24 @@ def delete_provider(appliance, name):
         return
 
     prov = provs[0]
-    prov.action.delete()
-    prov.wait_not_exists(num_sec=30)
+
+    # workaround for BZ1501941
+    def _delete():
+        try:
+            prov.action.delete()
+        except Exception as exc:
+            if 'ActiveRecord::RecordNotFound' in str(exc):
+                return True
+            raise
+        retval = prov.wait_not_exists(num_sec=20, silent_failure=True)
+        return bool(retval)
+
+    if appliance.version >= '5.9' and BZ(1501941, forced_streams=['5.9', 'upstream']).blocks:
+        prov.action.edit(enabled=False)
+        wait_for(_delete, num_sec=80)
+    else:
+        prov.action.delete()
+        prov.wait_not_exists(num_sec=30)
 
 
 @pytest.fixture(scope="function")
@@ -183,6 +200,7 @@ def test_provider_edit(request, provider_rest, appliance):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1501941, forced_streams=['5.9', 'upstream'])])
 @pytest.mark.parametrize("method", ["post", "delete"], ids=["POST", "DELETE"])
 def test_provider_delete_from_detail(provider_rest, appliance, method):
     """Tests deletion of the provider from detail using REST API.
@@ -204,6 +222,7 @@ def test_provider_delete_from_detail(provider_rest, appliance, method):
 
 
 @pytest.mark.tier(1)
+@pytest.mark.meta(blockers=[BZ(1501941, forced_streams=['5.9', 'upstream'])])
 def test_provider_delete_from_collection(provider_rest, appliance):
     """Tests deletion of the provider from collection using REST API.
 
