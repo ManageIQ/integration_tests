@@ -5,7 +5,8 @@ from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
-from cfme.networks.views import NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView
+from cfme.networks.views import (NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView,
+                                 NetworkRouterEditView)
 from cfme.utils import version
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -25,6 +26,28 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
     name = attr.ib()
     provider_obj = attr.ib()
     ext_network = attr.ib()
+
+    def delete(self):
+        view = navigate_to(self, 'Details')
+        view.toolbar.configuration.item_select('Delete this Router')
+        view.flash.assert_success_message('Delete initiated for 1 Network Router.')
+
+    def edit(self, name=None, change_external_gw=False, ext_network=None, ext_network_subnet=None):
+        view = navigate_to(self, 'Edit')
+        if name:
+            view.router_name.fill(name)
+        if change_external_gw:
+            view.ext_gateway.click()
+            if not self.ext_network:
+                view.network_name.fill(ext_network)
+                view.subnet_name.fill(ext_network_subnet)
+        view.save.click()
+        view.flash.assert_success_message('Network Router "{}" updated'.format(name))
+        self.name = name
+        if change_external_gw and not self.ext_network:
+            self.ext_network = ext_network
+        elif change_external_gw and self.ext_network:
+            self.ext_network = None
 
     @property
     def exists(self):
@@ -127,3 +150,12 @@ class AddRouter(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Router')
+
+
+@navigator.register(NetworkRouter, 'Edit')
+class EditRouter(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+    VIEW = NetworkRouterEditView
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Router')

@@ -133,11 +133,19 @@ def test_create_router(router, provider):
     assert router.exists
     assert router.cloud_tenant == provider.get_yaml_data()['tenant']
     assert router.cloud_network == router.ext_network
-#
-# def test_connect_inteface_to_router():
-#
-# def test_edit_router()
-#
-#
-# def test_delete_router()
-#
+
+
+def test_edit_router(router):
+    router.edit(name=fauxfactory.gen_alpha())
+    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=1), timeout=600,
+             delay=15)
+    router.browser.refresh()
+    assert router.exists
+
+
+def test_delete_router(router, appliance):
+    router.delete()
+    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=1), timeout=600,
+             delay=15)
+    navigate_to(appliance.collections.network_routers, 'All')
+    assert not router.exists

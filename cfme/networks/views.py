@@ -419,8 +419,6 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
 
 class NetworkRouterAddView(BaseLoggedInPage):
     """ Represents Add NetworkRouters page """
-    # flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
-    #                       'contains(@class, "flash_text_div")]')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     network_manager = Select(id='ems_id')
@@ -432,6 +430,23 @@ class NetworkRouterAddView(BaseLoggedInPage):
     subnet_name = Select(name='cloud_subnet_id')
     cloud_tenant = Select(name='cloud_tenant_id')
     add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class NetworkRouterEditView(BaseLoggedInPage):
+    """ Represents Edit NetworkRouters page """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    router_name = TextInput(name='name')
+    ext_gateway = Checkbox(
+        locator='//div[contains(@class, "network_router_external_gateway")]//'
+                'span[contains(@class, "switch-label")]')
+    network_name = Select(name='cloud_network_id')
+    subnet_name = Select(name='cloud_subnet_id')
+    save = Button('Save')
 
     @property
     def is_displayed(self):
