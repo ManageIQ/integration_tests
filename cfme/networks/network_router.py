@@ -6,7 +6,7 @@ from widgetastic.exceptions import NoSuchElementException
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
 from cfme.networks.views import (NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView,
-                                 NetworkRouterEditView)
+                                 NetworkRouterEditView, NetworkRouterAddInterfaceView)
 from cfme.utils import version
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -27,6 +27,14 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
     provider_obj = attr.ib()
     ext_network = attr.ib()
 
+    def add_interface(self, subnet_name):
+        view = navigate_to(self, 'AddInterface')
+        view.subnet_name.fill(subnet_name)
+        view.add.click()
+        success_msg = 'Subnet "{subnet}" added to Router "{router}"'.format(subnet=subnet_name,
+                                                                            router=self.name)
+        view.flash.assert_success_message(success_msg)
+
     def delete(self):
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Router', handle_alert=True)
@@ -42,7 +50,8 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
                 view.network_name.fill(ext_network)
                 view.subnet_name.fill(ext_network_subnet)
         view.save.click()
-        view.flash.assert_success_message('Network Router "{}" updated'.format(name))
+        success_msg = 'Network Router "{}" updated'.format(name if name else self.name)
+        view.flash.assert_success_message(success_msg)
         self.name = name
         if change_external_gw and not self.ext_network:
             self.ext_network = ext_network
@@ -159,3 +168,12 @@ class EditRouter(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Edit this Router')
+
+
+@navigator.register(NetworkRouter, 'AddInterface')
+class AddInterface(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+    VIEW = NetworkRouterAddInterfaceView
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Add Interface to this Router')

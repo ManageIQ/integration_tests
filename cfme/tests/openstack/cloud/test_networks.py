@@ -2,17 +2,11 @@
 
 import fauxfactory
 import pytest
-from selenium.common.exceptions import TimeoutException
-from wait_for import TimedOutError
 
-from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.exceptions import ItemNotFound
-from cfme.networks.cloud_network import CloudNetwork, CloudNetworkCollection
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 
@@ -191,3 +185,31 @@ def test_delete_router(router, appliance):
              delay=15)
     navigate_to(appliance.collections.network_routers, 'All')
     assert not router.exists
+
+
+def test_clear_router_gateway(router_with_gw):
+    router_with_gw.edit(change_external_gw=True)
+    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=1), timeout=600,
+             delay=15)
+    router_with_gw.browser.refresh()
+    view = navigate_to(router_with_gw, 'Details')
+    assert 'Cloud Network' not in view.entities.relationships.items
+
+
+def test_add_gateway_to_router(router, ext_subnet):
+    router.edit(change_external_gw=True, ext_network=ext_subnet.network, ext_subnet=ext_subnet.name)
+    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=1), timeout=600,
+             delay=15)
+    router.browser.refresh()
+    assert router.cloud_network == ext_subnet.network
+
+
+def test_add_interface_to_router(router, subnet):
+    router.add_interface(subnet.name)
+    wait_for(router.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=1), timeout=600,
+             delay=15)
+    router.browser.refresh()
+    # TODO: verify the exact entities' names and relationships, not only count
+    view = navigate_to(router, 'Details')
+    subnets_count = int(view.entities.relationships.get_text_of('Cloud Subnets'))
+    assert subnets_count == 1  # Compare to '1' because clean router was used initially

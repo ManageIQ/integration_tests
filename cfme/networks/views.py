@@ -453,6 +453,18 @@ class NetworkRouterEditView(BaseLoggedInPage):
         return False
 
 
+class NetworkRouterAddInterfaceView(BaseLoggedInPage):
+    """ Represents Add Interface to Network Router page """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    subnet_name = Select(id='cloud_subnet_id')
+    add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
 class SecurityGroupToolBar(View):
     """ Represents provider toolbar and its controls """
     configuration = Dropdown(text='Configuration')
