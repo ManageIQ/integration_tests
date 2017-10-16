@@ -39,6 +39,29 @@ def network(provider, appliance):
         logger.warning('Exception during network deletion - skipping..')
 
 
+@pytest.fixture(scope='module')
+def subnet_cidr():
+    return '11.11.11.0/24'
+
+
+@pytest.yield_fixture(scope='function')
+def subnet(provider, appliance, network, subnet_cidr):
+    collection = appliance.collections.network_subnets
+    subnet = collection.create(name=fauxfactory.gen_alpha(),
+                               tenant=provider.get_yaml_data()['tenant'],
+                               provider=provider,
+                               network_manager='{} Network Manager'.format(provider.name),
+                               network_name=network.name,
+                               cidr=subnet_cidr)
+    yield subnet
+    # TODO: replace this with neutron client request
+    try:
+        if subnet.exists:
+            subnet.delete()
+    except Exception:
+        logger.warning('Exception during network subnet deletion - skipping..')
+
+
 def test_create_network(network, provider):
     assert network.exists
     assert network.parent_provider.name == provider.name
@@ -48,21 +71,27 @@ def test_create_network(network, provider):
 def test_edit_network(network):
     network.edit(name=fauxfactory.gen_alpha())
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
+             delay=15)
     network.browser.refresh()
     assert network.exists
 
 
-def test_delete_network(network):
+def test_delete_network(network, appliance):
     network.delete()
     wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
-             delay=10)
-    network.browser.refresh()
+             delay=15)
+    navigate_to(appliance.collections.cloud_networks, 'All')
     assert not network.exists
 
-# def test_create_subnet():
-#
-#
+
+def test_create_subnet(subnet, subnet_cidr, provider):
+    assert subnet.exists
+    assert subnet.parent_provider.name == provider.name
+    assert subnet.cloud_tenant == provider.get_yaml_data()['tenant']
+    assert subnet.cidr == subnet_cidr
+    assert subnet.cloud_network == subnet.network
+    assert subnet.net_protocol == 'ipv4'
+
 # def test_create_router():
 #
 # def test_connect_inteface_to_router():

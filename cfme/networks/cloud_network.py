@@ -68,15 +68,14 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
             view.administrative_state.click()
         if change_shared:
             view.shared.click()
-        view.add.click()
+        view.save.click()
         view.flash.assert_success_message('Cloud Network "{}" updated'.format(name))
         self.name = name
 
     def delete(self):
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Cloud Network', handle_alert=True)
-        # TODO: add particular message verification once BZ#1502736 is resolved
-        view.flash.assert_no_error()
+        view.flash.assert_success_message('The selected Cloud Network was deleted')
 
     @property
     def network_provider(self):
@@ -158,7 +157,7 @@ class Add(CFMENavigateStep):
 
 @navigator.register(CloudNetwork, 'Edit')
 class Edit(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('parent', 'Details')
+    prerequisite = NavigateToSibling('Details')
     VIEW = CloudNetworkEditView
 
     def step(self):

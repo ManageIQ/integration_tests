@@ -242,6 +242,10 @@ class CloudNetworkAddView(BaseLoggedInPage):
     shared = Button(id='cloud_network_shared')
     add = Button('Add')
 
+    @property
+    def is_displayed(self):
+        return False
+
 
 class CloudNetworkEditView(BaseLoggedInPage):
     """ Represents detail view of cloud network """
@@ -252,7 +256,11 @@ class CloudNetworkEditView(BaseLoggedInPage):
     ext_router = Button(id='cloud_network_external_facing')
     administrative_state = Button(id='cloud_network_enabled')
     shared = Button(id='cloud_network_shared')
-    save = Button('save')
+    save = Button('Save')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class NetworkPortToolBar(View):
@@ -487,8 +495,27 @@ class SubnetToolBar(View):
 
 class SubnetDetailsToolBar(View):
     """ Represents provider details toolbar """
+    configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
+
+
+class SubnetAddView(BaseLoggedInPage):
+    """ Represents detail view of cloud network """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    network_manager = Select(id='ems_id')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    network = Select(name='cloud_network_id')
+    subnet_name = TextInput(name='name')
+    subnet_cidr = TextInput(name='cidr')
+    gateway = TextInput(name='gateway_ip')
+    add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class SubnetSideBar(View):
