@@ -41,7 +41,7 @@ from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
     BootstrapSelect, Button, CheckableBootstrapTreeview,
     CandidateNotFound, Dropdown, Input, FlashMessages,
-    NavDropdown, VerticalNavigation)
+    NavDropdown, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
@@ -3366,6 +3366,8 @@ class FonticonPicker(Widget):
             var scope = angular.element(arguments[0]).scope();
             return scope.$ctrl.selected;
         '''), self.browser.element(self))
+        if not selected:
+            return None
         return selected.rsplit(' ', 1)[-1] or None
 
     def read(self):
@@ -3383,3 +3385,12 @@ class FonticonPicker(Widget):
         '''), self.browser.element(self), value)
         self.browser.plugin.ensure_page_safe()
         return True
+
+
+class PotentiallyInvisibleTab(Tab):
+    """Tab, that can be potentially invisible."""
+    def select(self):
+        if not self.is_displayed:
+            self.logger.info('Tab not present and ignoring turned on - not touching the tab.')
+            return
+        return super(PotentiallyInvisibleTab, self).select()

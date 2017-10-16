@@ -5,7 +5,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic.utils import VersionPick
 from widgetastic.widget import Text, Checkbox
-from widgetastic_manageiq import SummaryFormItem, FonticonPicker
+from widgetastic_manageiq import SummaryFormItem, FonticonPicker, PotentiallyInvisibleTab
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from widgetastic_patternfly import CandidateNotFound
@@ -248,15 +248,27 @@ class ButtonGroupEdit(CFMENavigateStep):
 
 # Button
 class ButtonFormCommon(AutomateCustomizationView):
-    text = Input(name='name')
-    display = Checkbox(name='display')
-    hover = Input(name='description')
-    image = BootstrapSelect('button_image')
-    dialog = BootstrapSelect('dialog_id')
-    system = BootstrapSelect('instance_name')
-    message = Input(name='object_message')
-    request = Input(name='object_request')
-    # TODO: AVP and Visibility
+
+    class options(PotentiallyInvisibleTab):
+        type = BootstrapSelect('button_type')
+        # TODO: Add the Ansible fields.
+        text = Input(name='name')
+        display = Checkbox(name='display')
+        hover = Input(name='description')
+        image = VersionPick({
+            Version.lowest(): BootstrapSelect('button_image'),
+            '5.9': FonticonPicker('button_icon')})
+        dialog = BootstrapSelect('dialog_id')
+        open_url = Checkbox('open_url')
+        # TODO: Display for, Submit by after converted to BootstrapSelect
+
+    class advanced(PotentiallyInvisibleTab):
+        # TODO: Enablement & Visibility
+        system = BootstrapSelect('instance_name')
+        message = Input(name='object_message')
+        request = Input(name='object_request')
+        # TODO: AVP and Visibility
+        # TODO: Role Access
 
     cancel = Button('Cancel')
 
@@ -301,9 +313,11 @@ class ButtonDetailView(AutomateCustomizationView):
     title = Text('#explorer_title_text')
 
     text = SummaryFormItem(
-        'Basic Information', 'Button Text',
+        'Basic Information', VersionPick({Version.lowest(): 'Button Text', '5.9': 'Text'}),
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
-    hover = SummaryFormItem('Basic Information', 'Button Hover Text')
+    hover = SummaryFormItem(
+        'Basic Information',
+        VersionPick({Version.lowest(): 'Button Hover Text', '5.9': 'Hover Text'}))
     dialog = SummaryFormItem('Basic Information', 'Dialog')
 
     system = SummaryFormItem('Object Details', 'System/Process/')
@@ -336,10 +350,21 @@ class Button(Updateable, Navigatable):
         dialog: The dialog to be selected for a button.
         system: System or Processes , DropDown to choose Automation/Request.
     """
+    TAB_MAPPING = {
+        # Options
+        'text': 'options',
+        'hover': 'options',
+        'dialog': 'options',
+        'image': 'options',
+        'open_url': 'options',
+        # Advanced
+        'system': 'advanced',
+        'request': 'advanced',
+    }
 
     def __init__(self, group=None, text=None,
                  hover=None, dialog=None,
-                 system=None, request=None, appliance=None):
+                 system=None, request=None, image=None, open_url=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.group = group
         self.text = text
@@ -347,37 +372,70 @@ class Button(Updateable, Navigatable):
         self.dialog = dialog
         self.system = system
         self.request = request
+        if image:
+            self.image = image
+        elif self.appliance.version < '5.9':
+            self.image = 'Button Image 1'
+        else:
+            self.image = 'fa-user'
+        self.open_url = open_url
+
+    @classmethod
+    def _categorize_fill_dict(cls, d):
+        """This method uses ``TAB_MAPPING`` to categorize fields to appropriate tabs.
+
+        For DRY purposes.
+        """
+        result = {}
+        for key, value in d.items():
+            try:
+                placement = cls.TAB_MAPPING[key]
+            except KeyError:
+                raise KeyError('Unknown key name {} for Button'.format(key))
+            if placement not in result:
+                result[placement] = {}
+            result[placement][key] = value
+        return result
 
     def create(self):
         view = navigate_to(self, 'Add')
-        view.fill({
+        view.fill(self._categorize_fill_dict({
             'text': self.text,
             'hover': self.hover,
             'dialog': self.dialog,
+            'image': self.image,
+            'open_url': self.open_url,
             'system': self.system,
             'request': self.request,
-            'image': 'Button Image 1'
-        })
+        }))
         view.add_button.click()
         view = self.create_view(ButtonGroupDetailView, self.group)
         # TODO: Enable this
         # assert view.is_displayed
         view.flash.assert_no_error()
-        view.flash.assert_message('Button "{}" was added'.format(self.hover))
+        if self.appliance.version < '5.9':
+            view.flash.assert_message('Button "{}" was added'.format(self.hover))
+        else:
+            view.flash.assert_message('Custom Button "{}" was added'.format(self.hover))
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
-        changed = view.fill(updates)
+        changed = view.fill(self._categorize_fill_dict(updates))
         if changed:
             view.save_button.click()
         else:
             view.cancel_button.click()
         view = self.create_view(ButtonDetailView)
-        assert view.is_displayed
+        # TODO: Enable this
+        # assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            view.flash.assert_message(
-                'Button "{}" was saved'.format(updates.get('hover', self.hover)))
+            if self.appliance.version < '5.9':
+                view.flash.assert_message(
+                    'Button "{}" was saved'.format(updates.get('hover', self.hover)))
+            else:
+                view.flash.assert_message(
+                    'Custom Button "{}" was saved'.format(updates.get('hover', self.hover)))
         else:
             view.flash.assert_message(
                 'Edit of Button "{}" was cancelled by the user'.format(self.text))
