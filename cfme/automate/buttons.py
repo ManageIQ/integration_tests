@@ -3,14 +3,17 @@ import re
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from widgetastic.utils import VersionPick
 from widgetastic.widget import Text, Checkbox
-from widgetastic_manageiq import SummaryFormItem
+from widgetastic_manageiq import SummaryFormItem, FonticonPicker
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from widgetastic_patternfly import CandidateNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.blockers import BZ
 from cfme.utils.update import Updateable
+from cfme.utils.version import Version
 
 from . import AutomateCustomizationView
 
@@ -40,9 +43,11 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     title = Text('#explorer_title_text')
 
     text = SummaryFormItem(
-        'Basic Information', 'Button Text',
+        'Basic Information', VersionPick({Version.lowest(): 'Button Text', '5.9': 'Text'}),
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
-    hover = SummaryFormItem('Basic Information', 'Button Hover Text')
+    hover = SummaryFormItem(
+        'Basic Information',
+        VersionPick({Version.lowest(): 'Button Hover Text', '5.9': 'Hover Text'}))
 
     @property
     def is_displayed(self):
@@ -59,7 +64,9 @@ class ButtonGroupFormCommon(AutomateCustomizationView):
     text = Input(name='name')
     display = Checkbox(name='display')
     hover = Input(name='description')
-    image = BootstrapSelect('button_image')
+    image = VersionPick({
+        Version.lowest(): BootstrapSelect('button_image'),
+        '5.9': FonticonPicker('button_icon')})
 
     cancel_button = Button('Cancel')
 
@@ -112,24 +119,34 @@ class ButtonGroup(Updateable, Navigatable):
     TEMPLATE = "VM Template and Image"
     VM_INSTANCE = "VM and Instance"
 
-    def __init__(self, text=None, hover=None, type=None, appliance=None):
+    def __init__(self, text=None, hover=None, type=None, image=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.text = text
         self.hover = hover
         self.type = type
+        if image:
+            self.image = image
+        elif self.appliance.version < '5.9':
+            self.image = 'Button Image 1'
+        else:
+            self.image = 'fa-user'
 
     def create(self):
         view = navigate_to(self, 'Add')
         view.fill({
             'text': self.text,
             'hover': self.hover,
-            'image': 'Button Image 1',
+            'image': self.image,
         })
         view.add_button.click()
         view = self.create_view(ButtonGroupObjectTypeView)
-        assert view.is_displayed
+        if not BZ(1500176, forced_streams=['5.9']).blocks:
+            assert view.is_displayed
         view.flash.assert_no_error()
-        view.flash.assert_message('Buttons Group "{}" was added'.format(self.hover))
+        if self.appliance.version < '5.9':
+            view.flash.assert_message('Buttons Group "{}" was added'.format(self.hover))
+        else:
+            view.flash.assert_message('Button Group "{}" was added'.format(self.hover))
 
     def update(self, updates):
         view = navigate_to(self, 'Edit')
@@ -139,11 +156,16 @@ class ButtonGroup(Updateable, Navigatable):
         else:
             view.cancel_button.click()
         view = self.create_view(ButtonGroupDetailView, override=updates)
-        assert view.is_displayed
+        if not BZ(1500176, forced_streams=['5.9']).blocks:
+            assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
-            view.flash.assert_message(
-                'Buttons Group "{}" was saved'.format(updates.get('hover', self.hover)))
+            if self.appliance.version < '5.9':
+                view.flash.assert_message(
+                    'Buttons Group "{}" was saved'.format(updates.get('hover', self.hover)))
+            else:
+                view.flash.assert_message(
+                    'Button Group "{}" was saved'.format(updates.get('hover', self.hover)))
         else:
             view.flash.assert_message(
                 'Edit of Buttons Group "{}" was cancelled by the user'.format(self.text))
@@ -156,9 +178,14 @@ class ButtonGroup(Updateable, Navigatable):
             view.flash.assert_no_error()
         else:
             view = self.create_view(ButtonGroupObjectTypeView)
-            assert view.is_displayed
+            if not BZ(1500176, forced_streams=['5.9']).blocks:
+                assert view.is_displayed
             view.flash.assert_no_error()
-            view.flash.assert_message('Buttons Group "{}": Delete successful'.format(self.hover))
+            if self.appliance.version < '5.9':
+                view.flash.assert_message(
+                    'Buttons Group "{}": Delete successful'.format(self.hover))
+            else:
+                view.flash.assert_message('Button Group "{}": Delete successful'.format(self.hover))
 
     @property
     def exists(self):
