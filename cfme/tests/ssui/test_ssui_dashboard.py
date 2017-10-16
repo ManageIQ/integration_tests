@@ -8,9 +8,12 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.dashboard import Dashboard
 from cfme import test_requirements
 
+from cfme.utils.log import logger
 from cfme.utils import testgen
 from cfme.utils.version import current_version
 from cfme.utils.appliance import ViaSSUI
+from cfme.utils.wait import wait_for
+from datetime import date
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -30,7 +33,22 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.yield_fixture(scope="module")
-def new_compute_rate():
+def enable_candu(provider, appliance):
+    candu = appliance.collections.candus
+    server_info = appliance.server.settings
+    original_roles = server_info.server_roles_db
+    server_info.enable_server_roles(
+        'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
+    candu.enable_all()
+
+    yield
+
+    server_info.update_server_roles_db(original_roles)
+    candu.disable_all()
+
+
+@pytest.yield_fixture(scope="module")
+def new_compute_rate(provider, enable_candu):
     # Create a new Compute Chargeback rate
     try:
         desc = 'custom_' + fauxfactory.gen_alphanumeric()
@@ -59,7 +77,7 @@ def new_compute_rate():
 
 
 @pytest.yield_fixture(scope="module")
-def assign_chargeback_rate(new_compute_rate):
+def assign_chargeback_rate(provider, new_compute_rate):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
     enterprise = cb.Assign(
@@ -69,6 +87,7 @@ def assign_chargeback_rate(new_compute_rate):
         })
     enterprise.computeassign()
     enterprise.storageassign()
+    logger.info('Assigning CUSTOM Compute rate')
 
     yield
 
@@ -82,8 +101,39 @@ def assign_chargeback_rate(new_compute_rate):
     enterprise.storageassign()
 
 
-@pytest.fixture(scope="module")
-def run_service_chargeback_report(provider, appliance, assign_chargeback_rate):
+@pytest.fixture(scope="function")
+def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
+        order_catalog_item_in_ops_ui):
+    catalog_item = order_catalog_item_in_ops_ui
+    vmname = catalog_item.provisioning_data["vm_name"] + '0001'
+
+    def verify_records_rollups_table(appliance, provider):
+        # Verify that hourly rollups are present in the metric_rollups table.
+
+        ems = appliance.db.client['ext_management_systems']
+        rollups = appliance.db.client['metric_rollups']
+        with appliance.db.client.transaction:
+            result = (
+                appliance.db.client.session.query(rollups.id)
+                .join(ems, rollups.parent_ems_id == ems.id)
+                .filter(rollups.capture_interval_name == 'hourly', rollups.resource_name == vmname,
+                ems.name == provider.name, rollups.timestamp >= date.today())
+            )
+
+        for record in appliance.db.client.session.query(rollups).filter(
+                rollups.id.in_(result.subquery())):
+            if (record.cpu_usagemhz_rate_average or
+                    record.cpu_usage_rate_average or
+                    record.derived_memory_used or
+                    record.net_usage_rate_average or
+                    record.disk_usage_rate_average):
+                    return True
+
+        return False
+
+    wait_for(verify_records_rollups_table, [appliance, provider], timeout=3600,
+        fail_condition=False, message='Waiting for hourly rollups')
+
     rc, out = appliance.ssh_client.run_rails_command(
         'Service.queue_chargeback_reports')
     assert rc == 0, "Failed to run Service Chargeback report".format(out)
@@ -133,12 +183,11 @@ def test_retired_service(appliance, context):
 def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_in_ops_ui,
         run_service_chargeback_report):
     """Tests chargeback data"""
-
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
         monthly_charges = dashboard.monthly_charges()
-        assert monthly_charges > 0
+        assert monthly_charges != '$0'
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
