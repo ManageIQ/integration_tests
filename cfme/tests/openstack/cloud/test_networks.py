@@ -24,7 +24,7 @@ pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 @pytest.yield_fixture(scope='function')
 def network(provider, appliance):
-    collection = CloudNetworkCollection(appliance)
+    collection = appliance.collections.cloud_networks
     network = collection.create(name=fauxfactory.gen_alpha(),
                                 tenant=provider.get_yaml_data()['tenant'],
                                 provider=provider,
@@ -40,22 +40,24 @@ def network(provider, appliance):
 
 
 def test_create_network(network, provider):
+    assert network.exists
     assert network.parent_provider.name == provider.name
     assert network.cloud_tenant == provider.get_yaml_data()['tenant']
 
 
 def test_edit_network(network):
     network.edit(name=fauxfactory.gen_alpha())
-    wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
+             delay=10)
     network.browser.refresh()
-    view = navigate_to(network, 'Details')
-    name = view.entities.properties.get_text_of('Name')
-    assert network.name == name
+    assert network.exists
 
 
-def test_delete_network():
+def test_delete_network(network):
     network.delete()
-    wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    wait_for(network.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
+             delay=10)
+    network.browser.refresh()
     assert not network.exists
 
 # def test_create_subnet():

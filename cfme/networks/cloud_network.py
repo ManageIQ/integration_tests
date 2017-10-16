@@ -1,10 +1,12 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
-from cfme.networks.views import CloudNetworkAddView, CloudNetworkDetailsView, CloudNetworkView
+from cfme.networks.views import (CloudNetworkAddView, CloudNetworkEditView, CloudNetworkDetailsView,
+                                 CloudNetworkView)
 from cfme.utils import providers, version
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -22,12 +24,21 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     db_types = ['CloudNetwork']
 
     name = attr.ib()
-    provider = attr.ib()
+    provider_obj = attr.ib()
 
     @property
     def provider(self):
         from cfme.networks.provider import NetworkProvider
         return parent_of_type(self, NetworkProvider)
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+        except (ItemNotFound, NoSuchElementException):
+            return False
+        else:
+            return True
 
     @property
     def parent_provider(self):
@@ -46,11 +57,25 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
     def cloud_tenant(self):
         """ Return tenant that network belongs to"""
         view = navigate_to(self, 'Details')
-        return view.entities.properties.get_text_of('Cloud tenant')
+        return view.entities.relationships.get_text_of('Cloud tenant')
+
+    def edit(self, name, change_external=False, change_admin_state=False, change_shared=False):
+        view = navigate_to(self, 'Edit')
+        view.network_name.fill(name)
+        if change_external:
+            view.ext_router.click()
+        if change_admin_state:
+            view.administrative_state.click()
+        if change_shared:
+            view.shared.click()
+        view.add.click()
+        view.flash.assert_success_message('Cloud Network "{}" updated'.format(name))
+        self.name = name
 
     def delete(self):
         view = navigate_to(self, 'Details')
-        view.toolbar.configuration.item_select('Delete this Cloud Network')
+        view.toolbar.configuration.item_select('Delete this Cloud Network', handle_alert=True)
+        # TODO: add particular message verification once BZ#1502736 is resolved
         view.flash.assert_no_error()
 
     @property
@@ -92,7 +117,7 @@ class CloudNetworkCollection(BaseCollection):
         network = self.instantiate(name, provider)
         # Refresh provider's relationships to have new network displayed
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        network.browser.refresh()
+        wait_for(lambda: network.exists, timeout=100, fail_func=network.browser.refresh)
         return network
 
     def all(self):
@@ -129,3 +154,12 @@ class Add(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Network')
+
+
+@navigator.register(CloudNetwork, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+    VIEW = CloudNetworkEditView
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Network')

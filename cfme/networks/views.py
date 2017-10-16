@@ -243,6 +243,18 @@ class CloudNetworkAddView(BaseLoggedInPage):
     add = Button('Add')
 
 
+class CloudNetworkEditView(BaseLoggedInPage):
+    """ Represents detail view of cloud network """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    network_name = TextInput(name='name')
+    ext_router = Button(id='cloud_network_external_facing')
+    administrative_state = Button(id='cloud_network_enabled')
+    shared = Button(id='cloud_network_shared')
+    save = Button('save')
+
+
 class NetworkPortToolBar(View):
     """ Represents provider toolbar and its controls """
     policy = Dropdown(text='Policy')
