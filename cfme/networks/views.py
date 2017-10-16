@@ -237,9 +237,15 @@ class CloudNetworkAddView(BaseLoggedInPage):
     cloud_tenant = Select(name='cloud_tenant_id')
     network_type = Select(name='provider_network_type')
     network_name = TextInput(name='name')
-    ext_router = Checkbox(id='cloud_network_external_facing')
-    administrative_state = Checkbox(id='cloud_network_enabled')
-    shared = Checkbox(id='cloud_network_shared')
+    ext_router = Checkbox(
+        locator='//div[contains(@class, "cloud_network_external_facing")]//'
+                'span[contains(@class, "switch-label")]')
+    administrative_state = Checkbox(
+        locator='//div[contains(@class, "cloud_network_enabled")]//'
+                'span[contains(@class, "switch-label")]')
+    shared = Checkbox(
+        locator='//div[contains(@class, "cloud_network_shared")]//'
+                'span[contains(@class, "switch-label")]')
     add = Button('Add')
 
     @property
@@ -413,11 +419,15 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
 
 class NetworkRouterAddView(BaseLoggedInPage):
     """ Represents Add NetworkRouters page """
-    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+    # flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+    #                       'contains(@class, "flash_text_div")]')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     network_manager = Select(id='ems_id')
     router_name = TextInput(name='name')
-    ext_gateway = Checkbox(id='network_router_external_gateway')
+    ext_gateway = Checkbox(
+        locator='//div[contains(@class, "network_router_external_gateway")]//'
+                'span[contains(@class, "switch-label")]')
     network_name = Select(name='cloud_network_id')
     subnet_name = Select(name='cloud_subnet_id')
     cloud_tenant = Select(name='cloud_tenant_id')
