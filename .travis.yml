@@ -9,6 +9,6 @@ install:
   - pip install -U pip setuptools
   - pip install -Ur requirements/frozen.txt
   - pip install -e .
-script: py.test cfme/utils/tests -v --dummy-appliance
+script: py.test cfme/utils/tests cfme/modeling/tests -v --dummy-appliance
 after_success:
   - coveralls

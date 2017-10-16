@@ -17,11 +17,15 @@ class ApplianceCollections(object):
 
     def __init__(self, appliance):
         self._collection_cache = {}
-        self.appliance = appliance
+        self._appliance = appliance
         if not self._collection_classes:
-            self.load_collections()
+            self._load_collections()
 
-    def load_collections(self):
+    def __dir__(self):
+        internal_dir = dir(super(ApplianceCollections, self))
+        return internal_dir + self._collection_classes.keys()
+
+    def _load_collections(self):
         """Loads the collection definitions from the entrypoints system"""
         from pkg_resources import iter_entry_points
         ApplianceCollections._collection_classes = {
@@ -33,30 +37,34 @@ class ApplianceCollections(object):
             raise AttributeError('Collection [{}] not known to object'.format(name))
         if name not in self._collection_cache:
             cls = self._collection_classes[name]
-            self._collection_cache[name] = cls(self.appliance)
+            self._collection_cache[name] = cls(self._appliance)
         return self._collection_cache[name]
 
 
 class ObjectCollections(ApplianceCollections):
     def __init__(self, parent):
         self._collection_cache = {}
-        self.parent = parent
-        self.appliance = self.parent.appliance
-        self.collections = self.parent._collections
+        self._parent = parent
+        self._appliance = self._parent.appliance
+        self._collections = self._parent._collections
+
+    def __dir__(self):
+        internal_dir = dir(super(ObjectCollections, self))
+        return internal_dir + self._collections.keys()
 
     def __getattr__(self, name):
-        if name not in self.collections:
+        if name not in self._collections:
             raise AttributeError('Collection [{}] not known to object'.format(name))
         if name not in self._collection_cache:
-            filter = {'parent': self.parent}
-            cls_and_or_filter = self.collections[name]
+            filter = {'parent': self._parent}
+            cls_and_or_filter = self._collections[name]
             if isinstance(cls_and_or_filter, tuple):
                 filter.update(cls_and_or_filter[1])
                 cls = cls_and_or_filter[0]
             else:
                 cls = cls_and_or_filter
-            cls = self.collections[name]
-            self._collection_cache[name] = cls(self.parent, filters=filter)
+            cls = self._collections[name]
+            self._collection_cache[name] = cls(self._parent, filters=filter)
         return self._collection_cache[name]
 
 
