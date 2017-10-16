@@ -126,7 +126,7 @@ class SubnetCollection(BaseCollection):
         view.add.click()
         view.flash.assert_success_message('Cloud Subnet "{}" created'.format(name))
         subnet = self.instantiate(name, provider, network_name)
-        # Refresh provider's relationships to have new network displayed
+        # Refresh provider's relationships to have new subnet displayed
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
         wait_for(lambda: subnet.exists, timeout=100, fail_func=subnet.browser.refresh)
         return subnet

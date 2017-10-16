@@ -29,7 +29,8 @@ def network(provider, appliance):
                                 tenant=provider.get_yaml_data()['tenant'],
                                 provider=provider,
                                 network_type='VXLAN',
-                                network_manager='{} Network Manager'.format(provider.name))
+                                network_manager='{} Network Manager'.format(provider.name),
+                                is_external=True)
     yield network
     # TODO: replace this with neutron client request
     try:
@@ -60,6 +61,25 @@ def subnet(provider, appliance, network, subnet_cidr):
             subnet.delete()
     except Exception:
         logger.warning('Exception during network subnet deletion - skipping..')
+
+
+@pytest.yield_fixture(scope='function')
+def router(provider, appliance, subnet):
+    collection = appliance.collections.network_routers
+    router = collection.create(name=fauxfactory.gen_alpha(),
+                               tenant=provider.get_yaml_data()['tenant'],
+                               provider=provider,
+                               network_manager='{} Network Manager'.format(provider.name),
+                               has_external_gw=True,
+                               ext_network=subnet.network,
+                               ext_network_subnet=subnet.name)
+    yield router
+    # TODO: replace this with neutron client request
+    try:
+        if router.exists:
+            router.delete()
+    except Exception:
+        logger.warning('Exception during router deletion - skipping..')
 
 
 def test_create_network(network, provider):
@@ -103,12 +123,16 @@ def test_edit_subnet(subnet):
 
 def test_delete_subnet(subnet):
     subnet.delete()
-    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
+    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=1), timeout=600,
              delay=15)
     subnet.browser.refresh()
     assert not subnet.exists
 
-# def test_create_router():
+
+def test_create_router(router, provider):
+    assert router.exists
+    assert router.cloud_tenant == provider.get_yaml_data()['tenant']
+    assert router.cloud_network == router.ext_network
 #
 # def test_connect_inteface_to_router():
 #

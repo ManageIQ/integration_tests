@@ -1,13 +1,15 @@
 import attr
 
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
+from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
-from cfme.networks.views import NetworkRouterDetailsView, NetworkRouterView
+from cfme.networks.views import NetworkRouterDetailsView, NetworkRouterView, NetworkRouterAddView
 from cfme.utils import version
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.wait import wait_for
 
 
 @attr.s
@@ -21,6 +23,29 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
     db_types = ['NetworkRouter']
 
     name = attr.ib()
+    provider_obj = attr.ib()
+    ext_network = attr.ib()
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+        except (ItemNotFound, NoSuchElementException):
+            return False
+        else:
+            return True
+
+    @property
+    def cloud_network(self):
+        """ Return network that router connected to"""
+        view = navigate_to(self, 'Details')
+        return view.entities.relationships.get_text_of('Cloud Network')
+
+    @property
+    def cloud_tenant(self):
+        """ Return tenant that router belongs to"""
+        view = navigate_to(self, 'Details')
+        return view.entities.relationships.get_text_of('Cloud Tenant')
 
     @property
     def provider(self):
@@ -50,6 +75,24 @@ class NetworkRouterCollection(BaseCollection):
 
     ENTITY = NetworkRouter
 
+    def create(self, name, provider, tenant, network_manager, has_external_gw=False,
+               ext_network=None, ext_network_subnet=None):
+        view = navigate_to(self, 'Add')
+        view.network_manager.fill(network_manager)
+        view.router_name.fill(name)
+        if has_external_gw:
+            view.ext_gateway.click()
+            view.network_name.fill(ext_network)
+            view.subnet_name.fill(ext_network_subnet)
+        view.cloud_tenant.fill(tenant)
+        view.add.click()
+        view.flash.assert_success_message('Network Router "{}" created'.format(name))
+        router = self.instantiate(name, provider, ext_network)
+        # Refresh provider's relationships to have new router displayed
+        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        wait_for(lambda: router.exists, timeout=100, fail_func=router.browser.refresh)
+        return router
+
     def all(self):
         if self.filters.get('parent'):
             view = navigate_to(self.filters.get('parent'), 'NetworkRouters')
@@ -75,3 +118,12 @@ class Details(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name).click()
+
+
+@navigator.register(NetworkRouterCollection, 'Add')
+class AddRouter(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+    VIEW = NetworkRouterAddView
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new Router')

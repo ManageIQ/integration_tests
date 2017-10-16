@@ -1,7 +1,7 @@
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
                                  BaseEntitiesView)
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, Button, TextInput
-from widgetastic.widget import View, Text, Select
+from widgetastic.widget import View, Text, Select, Checkbox
 
 from cfme.base.login import BaseLoggedInPage
 
@@ -237,9 +237,9 @@ class CloudNetworkAddView(BaseLoggedInPage):
     cloud_tenant = Select(name='cloud_tenant_id')
     network_type = Select(name='provider_network_type')
     network_name = TextInput(name='name')
-    ext_router = Button(id='cloud_network_external_facing')
-    administrative_state = Button(id='cloud_network_enabled')
-    shared = Button(id='cloud_network_shared')
+    ext_router = Checkbox(id='cloud_network_external_facing')
+    administrative_state = Checkbox(id='cloud_network_enabled')
+    shared = Checkbox(id='cloud_network_shared')
     add = Button('Add')
 
     @property
@@ -346,6 +346,7 @@ class NetworkRouterToolBar(View):
 
 class NetworkRouterDetailsToolBar(View):
     """ Represents provider toolbar and its controls """
+    configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Button(title='Download')
 
@@ -408,6 +409,23 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+
+
+class NetworkRouterAddView(BaseLoggedInPage):
+    """ Represents Add NetworkRouters page """
+    flash = FlashMessages('.//div[@div="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    network_manager = Select(id='ems_id')
+    router_name = TextInput(name='name')
+    ext_gateway = Checkbox(id='network_router_external_gateway')
+    network_name = Select(name='cloud_network_id')
+    subnet_name = Select(name='cloud_subnet_id')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class SecurityGroupToolBar(View):
