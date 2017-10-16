@@ -249,7 +249,7 @@ class ButtonGroupEdit(CFMENavigateStep):
 # Button
 class ButtonFormCommon(AutomateCustomizationView):
 
-    class options(PotentiallyInvisibleTab):
+    class options(PotentiallyInvisibleTab):  # noqa
         type = BootstrapSelect('button_type')
         # TODO: Add the Ansible fields.
         text = Input(name='name')
@@ -262,7 +262,7 @@ class ButtonFormCommon(AutomateCustomizationView):
         open_url = Checkbox('open_url')
         # TODO: Display for, Submit by after converted to BootstrapSelect
 
-    class advanced(PotentiallyInvisibleTab):
+    class advanced(PotentiallyInvisibleTab):  # noqa
         # TODO: Enablement & Visibility
         system = BootstrapSelect('instance_name')
         message = Input(name='object_message')
