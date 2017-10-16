@@ -28,7 +28,7 @@ def main():
 @click.option('--timeout', default=60, help='How many minutes is the lease timeout')
 @click.option('--provision-timeout', default=60,
               help='How many minutes to wait for appliances provisioned')
-@click.option('--group', default=None, help='Which stream to use')
+@click.option('--group', required=True, help='Which stream to use')
 @click.option('--version', default=None, help='Which version to use')
 @click.option('--date', default=None, help='Which date to use')
 @click.option('--desc', default=None, help='Set description of the pool')
