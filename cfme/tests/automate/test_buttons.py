@@ -10,9 +10,10 @@ from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 
 
-pytestmark = [test_requirements.automate,
+pytestmark = [
+    test_requirements.automate,
     pytest.mark.usefixtures('uses_infra_providers'),
-    pytest.mark.ignore_stream("upstream")]
+]
 
 
 # IMPORTANT: This is a canonical test. It shows how a proper test should look like under new order.

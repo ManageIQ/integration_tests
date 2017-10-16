@@ -43,11 +43,18 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     title = Text('#explorer_title_text')
 
     text = SummaryFormItem(
-        'Basic Information', VersionPick({Version.lowest(): 'Button Text', '5.9': 'Text'}),
+        'Basic Information',
+        VersionPick({
+            Version.lowest(): 'Button Text',
+            '5.8': 'Button Group Text',
+            '5.9': 'Text'}),
         text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
     hover = SummaryFormItem(
         'Basic Information',
-        VersionPick({Version.lowest(): 'Button Hover Text', '5.9': 'Hover Text'}))
+        VersionPick({
+            Version.lowest(): 'Button Hover Text',
+            '5.8': 'Button Group Hover Text',
+            '5.9': 'Hover Text'}))
 
     @property
     def is_displayed(self):
