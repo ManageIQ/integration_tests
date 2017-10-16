@@ -1,11 +1,11 @@
 import attr
 
-from navmazing import NavigateToAttribute
+from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
 
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ItemNotFound
-from cfme.networks.views import SubnetDetailsView, SubnetView, SubnetAddView
+from cfme.networks.views import SubnetDetailsView, SubnetView, SubnetAddView, SubnetEditView
 from cfme.utils import providers, version
 from cfme.modeling.base import BaseCollection, BaseEntity, parent_of_type
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -34,6 +34,15 @@ class Subnet(WidgetasticTaggable, BaseEntity):
             return False
         else:
             return True
+
+    def edit(self, new_name, gateway=None):
+        view = navigate_to(self, 'Edit')
+        view.subnet_name.fill(new_name)
+        if gateway:
+            view.gateway.fill(gateway)
+        view.save.click()
+        view.flash.assert_success_message('Network Subnet "{}" updated'.format(new_name))
+        self.name = new_name
 
     def delete(self):
         view = navigate_to(self, 'Details')
@@ -152,7 +161,16 @@ class OpenCloudNetworks(CFMENavigateStep):
 @navigator.register(SubnetCollection, 'Add')
 class AddSubnet(CFMENavigateStep):
     VIEW = SubnetAddView
-    prerequisite = NavigateToAttribute('parent', 'All')
+    prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.prerequisite_view.toolbar_configuration.item_select('Add a new Cloud Subnet')
+        self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Subnet')
+
+
+@navigator.register(Subnet, 'Edit')
+class EditSubnet(CFMENavigateStep):
+    VIEW = SubnetEditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Subnet')

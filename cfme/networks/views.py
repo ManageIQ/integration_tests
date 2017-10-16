@@ -229,7 +229,7 @@ class CloudNetworkDetailsView(BaseLoggedInPage):
 
 
 class CloudNetworkAddView(BaseLoggedInPage):
-    """ Represents detail view of cloud network """
+    """ Represents Add view of cloud network """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -248,7 +248,7 @@ class CloudNetworkAddView(BaseLoggedInPage):
 
 
 class CloudNetworkEditView(BaseLoggedInPage):
-    """ Represents detail view of cloud network """
+    """ Represents Edit view of cloud network """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -501,7 +501,7 @@ class SubnetDetailsToolBar(View):
 
 
 class SubnetAddView(BaseLoggedInPage):
-    """ Represents detail view of cloud network """
+    """ Represents Add view of subnet """
     title = Text('//div[@id="main-content"]//h1')
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
@@ -512,6 +512,20 @@ class SubnetAddView(BaseLoggedInPage):
     subnet_cidr = TextInput(name='cidr')
     gateway = TextInput(name='gateway_ip')
     add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class SubnetEditView(BaseLoggedInPage):
+    """ Represents Edit view of subnet """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    subnet_name = TextInput(name='name')
+    gateway = TextInput(name='gateway_ip')
+    save = Button('Save')
 
     @property
     def is_displayed(self):

@@ -92,19 +92,28 @@ def test_create_subnet(subnet, subnet_cidr, provider):
     assert subnet.cloud_network == subnet.network
     assert subnet.net_protocol == 'ipv4'
 
+
+def test_edit_subnet(subnet):
+    subnet.edit(new_name=fauxfactory.gen_alpha())
+    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
+             delay=15)
+    subnet.browser.refresh()
+    assert subnet.exists
+
+
+def test_delete_subnet(subnet):
+    subnet.delete()
+    wait_for(subnet.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600,
+             delay=15)
+    subnet.browser.refresh()
+    assert not subnet.exists
+
 # def test_create_router():
 #
 # def test_connect_inteface_to_router():
 #
 # def test_edit_router()
 #
-#
-#
-# def test_edit_subnet()
-#
-#
-#
-# def test_delete_subnet()
 #
 # def test_delete_router()
 #
