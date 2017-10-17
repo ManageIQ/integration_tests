@@ -34,8 +34,8 @@ def get_parameter(view):
     parameter = itertools.product(value, grid_pages)
     return parameter
 
-report_parameter = visual.report_view_read
 
+report_parameter = visual.report_view_read
 
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
