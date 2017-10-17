@@ -44,9 +44,11 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
     service_name = order_catalog_item_in_ops_ui
     with appliance.context.use(context):
         appliance.server.login()
-        myservice = MyService(appliance, service_name)
-        myservice.update({'name': '{}_edited'.format(service_name)})
-        # TODO - add rest of myservice crud like delete in next phase.
+        my_service = MyService(appliance, service_name)
+        my_service.set_ownership("Administrator", "EvmGroup-administrator")
+        my_service.update({'description': '{}_edited'.format(service_name)})
+        my_service.edit_tags("Cost Center", "Cost Center 001")
+        my_service.delete()
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
