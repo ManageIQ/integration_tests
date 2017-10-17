@@ -12,14 +12,12 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.provisioning import provisioning_form
-from cfme.web_ui import InfoBlock, fill, flash
+from cfme.web_ui import flash
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, TimedOutError
 
 pytestmark = [
@@ -52,25 +50,26 @@ def vm_name():
 @pytest.fixture(scope="function")
 def prov_data(provisioning, provider):
     data = {
-        "first_name": fauxfactory.gen_alphanumeric(),
-        "last_name": fauxfactory.gen_alphanumeric(),
-        "email": "{}@{}.test".format(
-            fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
-        "manager_name": "{} {}".format(
-            fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
-        "vlan": provisioning.get("vlan"),
-        # "datastore_create": False,
-        "datastore_name": {"name": provisioning["datastore"]},
-        "host_name": {"name": provisioning["host"]},
-        # "catalog_name": provisioning["catalog_item_type"],
+        'request': {
+            'email': "{}@{}.test".format(fauxfactory.gen_alphanumeric(),
+                                         fauxfactory.gen_alphanumeric()),
+            'first_name': fauxfactory.gen_alphanumeric(),
+            'last_name': fauxfactory.gen_alphanumeric(),
+            'manager_name': '{} {}'.format(fauxfactory.gen_alphanumeric(),
+                                           fauxfactory.gen_alphanumeric())},
+        'network': {'vlan': provisioning.get('vlan')},
+        'environment': {'datastore_name': {'name': provisioning['datastore']},
+                        'host_name': {'name': provisioning['host']}},
+        'catalog': {},
+        'hardware': {},
+        'schedule': {},
+        'purpose': {},
     }
-
     if provider.one_of(RHEVMProvider):
-        data['provision_type'] = 'Native Clone'
+        data['catalog']['provision_type'] = 'Native Clone'
     elif provider.one_of(VMwareProvider):
-        data['provision_type'] = 'VMware'
+        data['catalog']['provision_type'] = 'VMware'
     # Otherwise just leave it alone
-
     return data
 
 
@@ -80,9 +79,7 @@ def provisioner(appliance, request, setup_provider, provider, vm_name):
     def _provisioner(template, provisioning_data, delayed=None):
         vm = Vm(name=vm_name, provider=provider, template_name=template)
         view = navigate_to(vm, 'Provision')
-        view.form.before_fill(provisioning_data)
-
-        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
+        view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
         flash.assert_no_errors()
 
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
@@ -129,13 +126,10 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = vm_name
-    if provider.one_of(SCVMMProvider) and current_version() == "5.6":
-        prov_data["num_cpus"] = "4"
-    else:
-        prov_data["num_sockets"] = "4"
-        prov_data["cores_per_socket"] = "1" if not provider.one_of(SCVMMProvider) else None
-    prov_data["memory"] = "4096"
+    prov_data['catalog']["vm_name"] = vm_name
+    prov_data['hardware']["num_sockets"] = "4"
+    prov_data['hardware']["cores_per_socket"] = "1" if not provider.one_of(SCVMMProvider) else None
+    prov_data['hardware']["memory"] = "4096"
     template_name = provider.data['provisioning']['template']
     vm = provisioner(template_name, prov_data)
 
@@ -183,20 +177,20 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_na
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = vm_name
-    prov_data["disk_format"] = disk_format
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['hardware']["disk_format"] = disk_format
     template_name = provider.data['provisioning']['template']
 
     vm = provisioner(template_name, prov_data)
 
     # Go to the VM info
+    view = navigate_to(vm, 'Details')
+    thin = view.entities.datastore_allocation.get_text_of('Thin Provisioning Used').strip().lower()
     vm.load_details(refresh=True)
-    thin = InfoBlock.text(
-        "Datastore Allocation Summary", "Thin Provisioning Used").strip().lower() == "true"
     if disk_format == "thin":
-        assert thin, "The disk format should be Thin"
+        assert thin == 'true', "The disk format should be Thin"
     else:
-        assert not thin, "The disk format should not be Thin"
+        assert thin != 'true', "The disk format should not be Thin"
 
 
 @pytest.mark.parametrize("started", [True, False])
@@ -216,8 +210,8 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = vm_name
-    prov_data["power_on"] = started
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['schedule']["power_on"] = started
     template_name = provider.data['provisioning']['template']
 
     provisioner(template_name, prov_data)
@@ -245,8 +239,8 @@ def test_tag(provisioner, prov_data, provider, vm_name):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = vm_name
-    prov_data["apply_tags"] = [(["Service Level *", "Gold"], True)]
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['purpose']["apply_tags"] = ("Service Level *", "Gold")
     template_name = provider.data['provisioning']['template']
 
     vm = provisioner(template_name, prov_data)
@@ -274,17 +268,17 @@ def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
         test_flag: provision
     """
     now = datetime.utcnow()
-    prov_data["vm_name"] = vm_name
-    prov_data["schedule_type"] = "schedule"
-    prov_data["provision_date"] = now.strftime("%m/%d/%Y")
+    prov_data['catalog']['vm_name'] = vm_name
+    prov_data['schedule']["schedule_type"] = "Schedule"
+    prov_data['schedule']["provision_date"] = now.strftime("%m/%d/%Y")
     STEP = 5
     minutes_diff = (STEP - (now.minute % STEP))
     # To have some gap for automation
     if minutes_diff <= 3:
         minutes_diff += 5
     provision_time = timedelta(minutes=minutes_diff) + now
-    prov_data["provision_start_hour"] = str(provision_time.hour)
-    prov_data["provision_start_min"] = str(provision_time.minute)
+    prov_data['schedule']["provision_start_hour"] = str(provision_time.hour)
+    prov_data['schedule']["provision_start_min"] = str(provision_time.minute)
 
     template_name = provider.data['provisioning']['template']
 

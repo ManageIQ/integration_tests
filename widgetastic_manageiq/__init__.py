@@ -1800,7 +1800,9 @@ class RadioGroup(Widget):
         radio_group = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
         radio_group.select(radio_group.button_names()[-1])
     """
-    BUTTONS = './/label[input[@type="radio"]]'
+    LABELS = ('.//*[(self::label or (self::div and @class="radio-inline")) '
+              'and input[@type="radio"]]')
+    BUTTON = './/input[@type="radio"]'
 
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent=parent, logger=logger)
@@ -1809,20 +1811,21 @@ class RadioGroup(Widget):
     def __locator__(self):
         return self.locator
 
-    def _get_button(self, name):
+    def _get_parent_label(self, name):
         br = self.browser
-        return next(btn for btn in br.elements(self.BUTTONS) if br.text(btn) == name)
+        return next(btn for btn in br.elements(self.LABELS) if br.text(btn) == name)
 
     @property
     def button_names(self):
-        return [self.browser.text(btn) for btn in self.browser.elements(self.BUTTONS)]
+        return [self.browser.text(btn) for btn in self.browser.elements(self.LABELS)]
 
     @property
     def selected(self):
         names = self.button_names
         for name in names:
-            if 'ng-valid-parse' in self.browser.classes('.//input[@type="radio"]',
-                                                        parent=self._get_button(name)):
+            bttn = self.browser.element(self.BUTTON, parent=self._get_parent_label(name))
+            if ('ng-valid-parse' in self.browser.classes(bttn) or
+                    bttn.get_attribute('checked') is not None):
                 return name
 
         else:
@@ -1831,9 +1834,8 @@ class RadioGroup(Widget):
             return names[0]
 
     def select(self, name):
-        button = self._get_button(name)
         if self.selected != name:
-            button.click()
+            self.browser.element(self.BUTTON, parent=self._get_parent_label(name)).click()
             return True
         return False
 

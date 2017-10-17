@@ -7,7 +7,6 @@ from widgetastic_manageiq import Table, ManageIQTree
 
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.fixtures import pytest_selenium as sel
-from cfme.provisioning import provisioning_form as request_form
 from cfme.web_ui import tabstrip
 from cfme.utils.update import Updateable
 from cfme.utils.pretty import Pretty
@@ -236,6 +235,7 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
             tabstrip.select_tab("Catalog")
             row = view.template_table.row(name=self.catalog_name, provider=self.provider.name)
             row.click()
+            from cfme.provisioning import provisioning_form as request_form
             request_form.fill(self.provisioning_data)
         view.add_button.click()
         view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(self.name))
