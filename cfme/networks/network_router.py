@@ -52,7 +52,8 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
         view.save.click()
         success_msg = 'Network Router "{}" updated'.format(name if name else self.name)
         view.flash.assert_success_message(success_msg)
-        self.name = name
+        if name:
+            self.name = name
         if change_external_gw and not self.ext_network:
             self.ext_network = ext_network
         elif change_external_gw and self.ext_network:
