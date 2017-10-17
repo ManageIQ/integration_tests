@@ -24,14 +24,15 @@ def main():
 
 
 @main.command('checkout', help='Checkout appliance and start keepalive daemon')
-@click.option('--appliances', default=1, help='How many appliances to provision')
+@click.option('--appliances', envvar="SPROUT_APPLIANCES", default=1,
+              help='How many appliances to provision')
 @click.option('--timeout', default=60, help='How many minutes is the lease timeout')
 @click.option('--provision-timeout', default=60,
               help='How many minutes to wait for appliances provisioned')
-@click.option('--group', required=True, help='Which stream to use')
+@click.option('--group', required=True, envvar='SPROUT_GROUP', help='Which stream to use')
 @click.option('--version', default=None, help='Which version to use')
 @click.option('--date', default=None, help='Which date to use')
-@click.option('--desc', default=None, help='Set description of the pool')
+@click.option('--desc', default=None, envvar='SPROUT_DESC', help='Set description of the pool')
 @click.option('--override-ram', default=0, help='Override RAM (MB). 0 means no override')
 @click.option('--override-cpu', default=0,
               help='Override CPU core count. 0 means no override')
