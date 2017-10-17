@@ -171,6 +171,17 @@ class VolumeAddView(VolumeView):
     form = View.nested(VolumeAddForm)
 
 
+class VolumeEditView(VolumeView):
+    @property
+    def is_displayed(self):
+        return False
+
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    volume_name = TextInput(name='name')
+    save = Button('Save')
+
+
 @attr.s
 class Volume(BaseEntity):
     # Navigation menu option
@@ -195,6 +206,14 @@ class Volume(BaseEntity):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
+    def edit(self, name):
+        """Edit cloud volume"""
+        view = navigate_to(self, 'Edit')
+        view.volume_name.fill(name)
+        view.save.click()
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
+        self.name = name
+
     def delete(self, wait=True):
         """Delete the Volume"""
 
@@ -214,6 +233,16 @@ class Volume(BaseEntity):
             return True
         except ItemNotFound:
             return False
+
+    @property
+    def size(self):
+        view = navigate_to(self, 'Details')
+        return view.entities.properties.get_text_of('Size')
+
+    @property
+    def tenant(self):
+        view = navigate_to(self, 'Details')
+        return view.entities.relationships.get_text_of('Cloud Tenants')
 
 
 @attr.s
@@ -294,3 +323,12 @@ class VolumeAdd(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Volume')
+
+
+@navigator.register(Volume, 'Edit')
+class VolumeEdit(CFMENavigateStep):
+    VIEW = VolumeEditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Volume')
