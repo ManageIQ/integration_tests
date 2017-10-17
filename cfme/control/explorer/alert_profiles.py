@@ -205,7 +205,10 @@ class BaseAlertProfile(BaseEntity, Updateable, Pretty):
 @attr.s
 class AlertProfileCollection(BaseCollection):
 
-    ENTITY = BaseAlertProfile
+    def instantiate(self, *args, **kwargs):
+        alert_profile_class = args[0]
+        args = args[1:]
+        return alert_profile_class.from_collection(self, *args, **kwargs)
 
     def create(self, alert_profile_class, description, alerts=None, notes=None):
         alert_profile = self.instantiate(alert_profile_class, description, alerts=alerts,
