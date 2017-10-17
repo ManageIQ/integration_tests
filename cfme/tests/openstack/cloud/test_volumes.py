@@ -7,6 +7,7 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
+from cfme.utils import version
 from cfme.utils.wait import wait_for
 
 
@@ -20,9 +21,11 @@ VOLUME_SIZE = 1
 @pytest.yield_fixture(scope='function')
 def volume(appliance, provider):
     collection = appliance.collections.volumes
+    storage_manager = version.pick({'5.8': '{} Cinder Manager'.format(provider.name),
+                                    version.LOWEST: None})
     volume = collection.create(name=fauxfactory.gen_alpha(),
-                               storage_manager='{} Cinder Manager'.format(provider.name),
-                               tenant=provider.data.get('tenant'),
+                               storage_manager=storage_manager,
+                               tenant=provider.data['provisioning']['cloud_tenant'],
                                size=VOLUME_SIZE,
                                provider=provider)
     yield volume
@@ -37,7 +40,7 @@ def volume(appliance, provider):
 def test_create_volume(volume, provider):
     assert volume.exists
     assert volume.size == '{} GB'.format(VOLUME_SIZE)
-    assert volume.tenant == provider.data.get('tenant')
+    assert volume.tenant == provider.data['provisioning']['cloud_tenant']
 
 
 def test_edit_volume(volume, appliance):

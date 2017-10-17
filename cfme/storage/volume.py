@@ -8,12 +8,12 @@ from widgetastic_manageiq import (
     BaseListEntity,
     BaseQuadIconEntity,
     BaseTileIconEntity,
+    BootstrapSelect,
     BreadCrumb,
     ItemsToolBarViewSelector,
     JSBaseEntity,
     ManageIQTree,
     NonJSBaseEntity,
-    Select,
     SummaryTable,
     TextInput,
     Version,
@@ -147,10 +147,10 @@ class VolumeAddEntities(View):
 
 
 class VolumeAddForm(View):
-    storage_manager = Select(name='storage_manager_id')
+    storage_manager = BootstrapSelect(name='storage_manager_id')
     volume_name = TextInput(name='name')
     size = TextInput(name='size')
-    tenant = Select(name='cloud_tenant_id')
+    tenant = BootstrapSelect(name='cloud_tenant_id')
     add = Button('Add')
     cancel = Button('Cancel')
 
