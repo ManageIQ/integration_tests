@@ -13,19 +13,16 @@ pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
 
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
-
-@pytest.fixture(scope='module')
-def volume_size():
-    return 1
+VOLUME_SIZE = 1
 
 
 @pytest.yield_fixture(scope='function')
-def volume(appliance, provider, volume_size):
+def volume(appliance, provider):
     collection = appliance.collections.volumes
     volume = collection.create(name=fauxfactory.gen_alpha(),
                                storage_manager='{} Cinder Manager'.format(provider.name),
-                               tenant=provider.get_yaml_data()['tenant'],
-                               size=volume_size,
+                               tenant=provider.data.get('tenant'),
+                               size=VOLUME_SIZE,
                                provider=provider)
     yield volume
 
@@ -36,15 +33,15 @@ def volume(appliance, provider, volume_size):
         logger.warning('Exception during volume deletion - skipping..')
 
 
-def test_create_volume(volume, volume_size, provider):
+def test_create_volume(volume, provider):
     assert volume.exists
-    assert volume.size == '{} GB'.format(volume_size)
-    assert volume.tenant == provider.get_yaml_data()['tenant']
+    assert volume.size == '{} GB'.format(VOLUME_SIZE)
+    assert volume.tenant == provider.data.get('tenant')
 
 
 def test_edit_volume(volume):
     volume.edit(fauxfactory.gen_alpha())
-    wait_for(volume.provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+    wait_for(volume.provider.is_refreshed, func_kwargs=dict(refresh_delta=5), timeout=600)
     assert volume.exists
 
 

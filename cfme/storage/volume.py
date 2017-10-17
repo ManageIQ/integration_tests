@@ -164,8 +164,6 @@ class VolumeAddView(VolumeView):
             self.entities.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title)
 
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     entities = View.nested(VolumeAddEntities)
     form = View.nested(VolumeAddForm)
 
@@ -175,8 +173,6 @@ class VolumeEditView(VolumeView):
     def is_displayed(self):
         return False
 
-    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
-                          'contains(@class, "flash_text_div")]')
     volume_name = TextInput(name='name')
     save = Button('Save')
 
