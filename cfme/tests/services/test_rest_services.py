@@ -24,6 +24,7 @@ from cfme.rest.gen_data import (
 )
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from fixtures.provider import setup_one_or_skip
+from fixtures.pytest_store import store
 from cfme.utils import error, version
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
@@ -522,7 +523,24 @@ class TestServiceRESTAPI(object):
         parent = collection.action.create(service_body())[0]
         request.addfinalizer(parent.action.delete)
         child = collection.action.create(service_body())[0]
-        child.action.edit(ancestry=str(parent.id))
+        child.action.edit(parent_service=parent._ref_repr())
+        assert_response(appliance)
+        child.reload()
+        assert child.ancestry == str(parent.id)
+
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.8')
+    @pytest.mark.meta(blockers=[BZ(1496936)])
+    def test_add_child_resource(self, request, appliance):
+        """Tests adding parent reference to already existing service using add_resource.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = appliance.rest_api.collections.services
+        parent = collection.action.create(service_body())[0]
+        request.addfinalizer(parent.action.delete)
+        child = collection.action.create(service_body())[0]
+        parent.action.add_resource(resource=child._ref_repr())
         assert_response(appliance)
         child.reload()
         assert child.ancestry == str(parent.id)
@@ -542,7 +560,7 @@ class TestServiceRESTAPI(object):
         request.addfinalizer(service.action.delete)
         child = collection.get(name=service_data['service_name'])
         vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
-        child.action.edit(ancestry=str(service.id))
+        child.action.edit(parent_service=service._ref_repr())
         child.reload()
 
         def _action_and_check(action, resulting_state):
@@ -556,8 +574,9 @@ class TestServiceRESTAPI(object):
         _action_and_check('suspend', 'suspended')
         _action_and_check('start', 'on')
 
-    @pytest.mark.meta(blockers=[BZ(1441412, forced_streams=['5.8', 'upstream'])])
-    def test_retire_parent_service_now(self, appliance, service_data):
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.8')
+    @pytest.mark.meta(blockers=[BZ(1496936)])
+    def test_retire_parent_service_now(self, request, appliance):
         """Tests that child service is retired together with a parent service.
 
         Metadata:
@@ -565,16 +584,16 @@ class TestServiceRESTAPI(object):
         """
         collection = appliance.rest_api.collections.services
         parent = collection.action.create(service_body())[0]
-        child = collection.get(name=service_data['service_name'])
-        vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
-        child.action.edit(ancestry=str(parent.id))
-        child.reload()
+        request.addfinalizer(parent.action.delete)
+        child = collection.action.create(service_body())[0]
+        parent.action.add_resource(resource=child._ref_repr())
+        assert_response(appliance)
 
         parent.action.retire()
         assert_response(appliance)
 
+        wait_for_retired(parent)
         wait_for_retired(child)
-        wait_for_retired(vm)
 
 
 class TestServiceDialogsRESTAPI(object):
