@@ -259,9 +259,15 @@ class CloudNetworkEditView(BaseLoggedInPage):
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     network_name = TextInput(name='name')
-    ext_router = Button(id='cloud_network_external_facing')
-    administrative_state = Button(id='cloud_network_enabled')
-    shared = Button(id='cloud_network_shared')
+    ext_router = Checkbox(
+        locator='//div[contains(@class, "cloud_network_external_facing")]//'
+                'span[contains(@class, "switch-label")]')
+    administrative_state = Checkbox(
+        locator='//div[contains(@class, "cloud_network_enabled")]//'
+                'span[contains(@class, "switch-label")]')
+    shared = Checkbox(
+        locator='//div[contains(@class, "cloud_network_shared")]//'
+                'span[contains(@class, "switch-label")]')
     save = Button('Save')
 
     @property
