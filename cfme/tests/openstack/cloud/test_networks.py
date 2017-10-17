@@ -16,6 +16,9 @@ pytest_generate_tests = testgen.generate([OpenStackProvider],
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
+SUBNET_CIDR = '11.11.11.0/24'
+
+
 def delete_entity(entity):
     # TODO: replace this with neutron client request
     try:
@@ -36,14 +39,14 @@ def create_network(appliance, provider, is_external):
     return network
 
 
-def create_subnet(appliance, provider, network, cidr):
+def create_subnet(appliance, provider, network):
     collection = appliance.collections.network_subnets
     subnet = collection.create(name=fauxfactory.gen_alpha(),
                                tenant=provider.get_yaml_data()['tenant'],
                                provider=provider,
                                network_manager='{} Network Manager'.format(provider.name),
                                network_name=network.name,
-                               cidr=cidr)
+                               cidr=SUBNET_CIDR)
     return subnet
 
 
@@ -75,23 +78,18 @@ def ext_network(provider, appliance):
     delete_entity(network)
 
 
-@pytest.fixture(scope='module')
-def subnet_cidr():
-    return '11.11.11.0/24'
-
-
 @pytest.yield_fixture(scope='function')
-def subnet(provider, appliance, network, subnet_cidr):
+def subnet(provider, appliance, network):
     """Creates subnet for the given network"""
-    subnet = create_subnet(appliance, provider, network, subnet_cidr)
+    subnet = create_subnet(appliance, provider, network)
     yield subnet
     delete_entity(subnet)
 
 
 @pytest.yield_fixture(scope='function')
-def ext_subnet(provider, appliance, ext_network, subnet_cidr):
+def ext_subnet(provider, appliance, ext_network):
     """Creates subnet for the given external network"""
-    subnet = create_subnet(appliance, provider, ext_network, subnet_cidr)
+    subnet = create_subnet(appliance, provider, ext_network)
     yield subnet
     delete_entity(subnet)
 
@@ -137,12 +135,12 @@ def test_delete_network(network):
     assert not network.exists
 
 
-def test_create_subnet(subnet, subnet_cidr, provider):
+def test_create_subnet(subnet, provider):
     """Creates private subnet and verifies it's relationships"""
     assert subnet.exists
     assert subnet.parent_provider.name == provider.name
     assert subnet.cloud_tenant == provider.get_yaml_data()['tenant']
-    assert subnet.cidr == subnet_cidr
+    assert subnet.cidr == SUBNET_CIDR
     assert subnet.cloud_network == subnet.network
     assert subnet.net_protocol == 'ipv4'
 
@@ -197,7 +195,7 @@ def test_delete_router(router, appliance):
 
 def test_clear_router_gateway(router_with_gw):
     """Deletes a gateway from the router"""
-    router_with_gw.edit(change_external_gw=True)
+    router_with_gw.edit(change_external_gw=False)
     wait_for(router_with_gw.provider_obj.is_refreshed, func_kwargs=dict(refresh_delta=10),
              timeout=600, delay=10)
     router_with_gw.browser.refresh()

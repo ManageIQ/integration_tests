@@ -59,13 +59,13 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud tenant')
 
-    def edit(self, name, change_external=False, change_admin_state=False, change_shared=False):
+    def edit(self, name, change_external=None, change_admin_state=None, change_shared=None):
         """
         Edit cloud network
         :param name: (str) new network name
-        :param change_external: (bool) if True swithes 'external gateway' checkbox
-        :param change_admin_state: (bool) if True swithes 'administrative state' checkbox
-        :param change_shared: (bool) if True swithes 'shared' checkbox
+        :param change_external: (bool) is network external
+        :param change_admin_state: (bool) network's administrative state, 'Up' or 'Down'
+        :param change_shared: (bool) is network shared, 'Yes' or 'No'
         """
         view = navigate_to(self, 'Edit')
         view.fill({'network_name': name,
@@ -104,7 +104,7 @@ class CloudNetworkCollection(BaseCollection):
     ENTITY = CloudNetwork
 
     def create(self, name, tenant, provider, network_manager, network_type, is_external=False,
-               admin_state='up', is_shared=False):
+               admin_state=True, is_shared=False):
         """
         Create cloud network
         :param name: (str) name of the network
@@ -112,14 +112,13 @@ class CloudNetworkCollection(BaseCollection):
         :param provider: crud object of Openstack Cloud provider
         :param network_manager: (str) name of network manager
         :param network_type: (str) type of network, such as 'VXLAN', 'VLAN', 'GRE' etc.
-        :param is_external: (bool) if True creates network as an external one
-        :param admin_state: (bool) if True create network with administrative state 'Down'.
-                            Default to 'Up'
-        :param is_shared: (bool) if True makes network to be shared
+        :param is_external: (bool) is network external
+        :param admin_state: (bool) network's initial administrative state, True stands for 'Up',
+                            False - 'Down'
+        :param is_shared: (bool) is network shared
         :return: instance of cfme.networks.cloud_network.CloudNetwork
         """
         view = navigate_to(self, 'Add')
-        admin_state = True if admin_state.lower() == 'down' else False
         view.fill({'network_manager': network_manager,
                    'cloud_tenant': tenant,
                    'network_type': network_type,
@@ -141,7 +140,7 @@ class CloudNetworkCollection(BaseCollection):
         else:
             view = navigate_to(self, 'All')
         list_networks_obj = view.entities.get_all(surf_pages=True)
-        return [self.instantiate(name=n.name) for n in list_networks_obj]
+        return [self.instantiate(name=n.name, provider_obj=None) for n in list_networks_obj]
 
 
 @navigator.register(CloudNetworkCollection, 'All')

@@ -1,7 +1,8 @@
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                 BaseEntitiesView)
-from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, Button, TextInput
-from widgetastic.widget import View, Text, Select, Checkbox
+                                  BaseEntitiesView)
+from widgetastic_patternfly import (Dropdown, Accordion, FlashMessages, Button, TextInput,
+                                    BootstrapSwitch)
+from widgetastic.widget import View, Text, Select
 
 from cfme.base.login import BaseLoggedInPage
 
@@ -237,15 +238,9 @@ class CloudNetworkAddView(BaseLoggedInPage):
     cloud_tenant = Select(name='cloud_tenant_id')
     network_type = Select(name='provider_network_type')
     network_name = TextInput(name='name')
-    ext_router = Checkbox(
-        locator='//div[contains(@class, "cloud_network_external_facing")]//'
-                'span[contains(@class, "switch-label")]')
-    administrative_state = Checkbox(
-        locator='//div[contains(@class, "cloud_network_enabled")]//'
-                'span[contains(@class, "switch-label")]')
-    shared = Checkbox(
-        locator='//div[contains(@class, "cloud_network_shared")]//'
-                'span[contains(@class, "switch-label")]')
+    ext_router = BootstrapSwitch(id='cloud_network_external_facing')
+    administrative_state = BootstrapSwitch(id='cloud_network_enabled')
+    shared = BootstrapSwitch(id='cloud_network_shared')
     add = Button('Add')
 
     @property
@@ -259,15 +254,9 @@ class CloudNetworkEditView(BaseLoggedInPage):
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     network_name = TextInput(name='name')
-    ext_router = Checkbox(
-        locator='//div[contains(@class, "cloud_network_external_facing")]//'
-                'span[contains(@class, "switch-label")]')
-    administrative_state = Checkbox(
-        locator='//div[contains(@class, "cloud_network_enabled")]//'
-                'span[contains(@class, "switch-label")]')
-    shared = Checkbox(
-        locator='//div[contains(@class, "cloud_network_shared")]//'
-                'span[contains(@class, "switch-label")]')
+    ext_router = BootstrapSwitch(id='cloud_network_external_facing')
+    administrative_state = BootstrapSwitch(id='cloud_network_enabled')
+    shared = BootstrapSwitch(id='cloud_network_shared')
     save = Button('Save')
 
     @property
@@ -429,9 +418,7 @@ class NetworkRouterAddView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     network_manager = Select(id='ems_id')
     router_name = TextInput(name='name')
-    ext_gateway = Checkbox(
-        locator='//div[contains(@class, "network_router_external_gateway")]//'
-                'span[contains(@class, "switch-label")]')
+    ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
     network_name = Select(name='cloud_network_id')
     subnet_name = Select(name='cloud_subnet_id')
     cloud_tenant = Select(name='cloud_tenant_id')
@@ -447,9 +434,7 @@ class NetworkRouterEditView(BaseLoggedInPage):
     flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
                           'contains(@class, "flash_text_div")]')
     router_name = TextInput(name='name')
-    ext_gateway = Checkbox(
-        locator='//div[contains(@class, "network_router_external_gateway")]//'
-                'span[contains(@class, "switch-label")]')
+    ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
     network_name = Select(name='cloud_network_id')
     subnet_name = Select(name='cloud_subnet_id')
     save = Button('Save')
