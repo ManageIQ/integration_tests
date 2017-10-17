@@ -8,7 +8,6 @@ from widgetastic_patternfly import Dropdown, Button
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import AvailabilityZoneNotFound
-from cfme.web_ui import match_location
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
@@ -65,8 +64,8 @@ class AvailabilityZoneView(BaseLoggedInPage):
     def in_availability_zones(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Availability Zones'] and
-            match_location(controller='availability_zone', title='Availability Zones'))
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Availability Zones']
+        )
 
 
 class AvailabilityZoneAllView(AvailabilityZoneView):

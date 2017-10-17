@@ -12,7 +12,7 @@ from cfme.common.vm_views import (
     SetOwnershipView, ManagementEngineView, ManagePoliciesView,
     PolicySimulationView)
 from cfme.exceptions import InstanceNotFound, ItemNotFound
-from cfme.web_ui import flash, match_location
+from cfme.web_ui import flash
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
@@ -62,9 +62,10 @@ class CloudInstanceView(BaseLoggedInPage):
     """Base view for header/nav check, inherit for navigatable views"""
     @property
     def in_cloud_instance(self):
-        return (self.logged_in_as_current_user and
-                self.navigation.currently_selected == ['Compute', 'Clouds', 'Instances'] and
-                match_location(controller='vm_cloud', title='Instances'))
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Instances']
+        )
 
 
 class InstanceAllView(CloudInstanceView):

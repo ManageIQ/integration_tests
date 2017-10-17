@@ -1,8 +1,5 @@
 """ A model of a Cloud Provider in CFME
 """
-
-from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import TimelinesView
 
@@ -17,15 +14,12 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         )
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider
-from cfme.web_ui import InfoBlock, match_location
+from cfme.web_ui import InfoBlock
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
-
-
-match_page = partial(match_location, controller='ems_cloud', title='Cloud Providers')
 
 
 class CloudProviderTimelinesView(TimelinesView, BaseLoggedInPage):
@@ -195,7 +189,7 @@ class Instances(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
-        return match_page(summary='{} (All Instances)'.format(self.obj.name))
+        return self.entities.title.text == '{} (All Instances)'.format(self.obj.name)
 
     def step(self, *args, **kwargs):
         sel.click(InfoBlock.element('Relationships', 'Instances'))
@@ -206,7 +200,7 @@ class Images(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
-        return match_page(summary='{} (All Images)'.format(self.obj.name))
+        return self.entities.title.text == '{} (All Images)'.format(self.obj.name)
 
     def step(self, *args, **kwargs):
         sel.click(InfoBlock.element('Relationships', 'Images'))

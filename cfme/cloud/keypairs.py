@@ -13,7 +13,6 @@ from cfme.common import WidgetasticTaggable
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import KeyPairNotFound
 
-from cfme.web_ui import match_location
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.wait import wait_for
@@ -72,8 +71,8 @@ class KeyPairView(BaseLoggedInPage):
     def in_keypair(self):
         return(
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Key Pairs'] and
-            match_location(controller='auth_key_pair_cloud', title='Key Pairs'))
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Key Pairs']
+        )
 
 
 class KeyPairAllView(KeyPairView):
