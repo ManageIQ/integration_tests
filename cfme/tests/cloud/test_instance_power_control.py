@@ -8,19 +8,18 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
-pytest_generate_tests = testgen.generate(
-    [CloudProvider], scope='function', required_fields=['test_power_control'])
-
-pytestmark = [pytest.mark.tier(2),
-              pytest.mark.long_running,
-              test_requirements.power]
+pytestmark = [
+    pytest.mark.tier(2),
+    pytest.mark.long_running,
+    test_requirements.power,
+    pytest.mark.provider([CloudProvider], scope='function', required_fields=['test_power_control'])
+]
 
 
 @pytest.yield_fixture(scope="function")

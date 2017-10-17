@@ -3,12 +3,11 @@ import pytest
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils.update import update
 from cfme.cloud.tenant import TenantCollection
-from cfme.utils import testgen
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 
 
-pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
+pytestmark = [pytest.mark.provider([OpenStackProvider], scope='module')]
 
 
 @pytest.yield_fixture(scope='function')

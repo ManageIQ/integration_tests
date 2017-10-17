@@ -11,7 +11,6 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import flash, toolbar
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -20,13 +19,9 @@ pytestmark = [
     test_requirements.automate,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.tier(3)]
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [VMwareProvider], required_fields=[['provisioning', 'template']])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
+    pytest.mark.tier(3),
+    pytest.mark.provider([VMwareProvider], required_fields=[['provisioning', 'template']])
+]
 
 
 @pytest.fixture(scope="module")

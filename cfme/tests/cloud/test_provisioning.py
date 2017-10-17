@@ -15,7 +15,6 @@ from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen
 from cfme.utils.conf import credentials
 from cfme.utils.rest import assert_response
 from cfme.utils.generators import random_vm_name
@@ -25,12 +24,13 @@ from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, RefreshTimer
 
 
-pytestmark = [pytest.mark.meta(server_roles="+automate"),
-              test_requirements.provision, pytest.mark.tier(2)]
-
-
-pytest_generate_tests = testgen.generate(
-    [CloudProvider], required_fields=[['provisioning', 'image']], scope="function")
+pytestmark = [
+    pytest.mark.meta(server_roles="+automate"),
+    test_requirements.provision, pytest.mark.tier(2),
+    pytest.mark.provider(
+        [CloudProvider], required_fields=[['provisioning', 'image']], scope="function"
+    )
+]
 
 
 @pytest.yield_fixture(scope="function")

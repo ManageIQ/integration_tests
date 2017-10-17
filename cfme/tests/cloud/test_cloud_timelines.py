@@ -8,7 +8,7 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.utils import testgen, version
+from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
@@ -16,12 +16,13 @@ from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.tier(2),
-              pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider) and
-                                      version.current_version() < '5.8'),
-              pytest.mark.usefixtures("setup_provider_modscope")]
-pytest_generate_tests = testgen.generate([AzureProvider, OpenStackProvider, EC2Provider],
-                                         scope="module")
+pytestmark = [
+    pytest.mark.tier(2),
+    pytest.mark.uncollectif(lambda provider: provider.one_of(EC2Provider) and
+                            version.current_version() < '5.8'),
+    pytest.mark.usefixtures("setup_provider_modscope"),
+    pytest.mark.provider([AzureProvider, OpenStackProvider, EC2Provider], scope="module")
+]
 
 
 def ec2_sleep():
