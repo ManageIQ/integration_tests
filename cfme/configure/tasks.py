@@ -5,6 +5,7 @@
 from functools import partial
 
 from navmazing import NavigateToAttribute
+from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 from widgetastic_patternfly import Dropdown, Tab, FlashMessages
@@ -14,7 +15,6 @@ from cfme.base.login import BaseLoggedInPage
 from cfme.web_ui import toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
-from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -204,8 +204,7 @@ class TasksView(BaseLoggedInPage):
 
         @View.nested
         class myothertasks(Tab):  # noqa
-            TAB_NAME = version.pick({'5.9': 'My Tasks',
-                                     version.LOWEST: 'My Other UI Tasks'})
+            TAB_NAME = VersionPick({'5.9': 'My Tasks', Version.lowest(): 'My Other UI Tasks'})
             table = Table(table_loc)
 
         @View.nested
