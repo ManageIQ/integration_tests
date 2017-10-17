@@ -2,11 +2,10 @@
 
 from copy import copy
 import pytest
-
+import itertools
 from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
-from cfme.web_ui import toolbar as tb
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -20,10 +19,23 @@ pytestmark = [pytest.mark.tier(3),
 # todo: infrastructure hosts, pools, stores, cluster are removed due to changing
 # navigation to navmazing. all items have to be put back once navigation change is fully done
 
-grid_pages = [
-    InfraProvider,
-    vms.Vm,
-]
+
+def get_parameter(view):
+    grid_pages = [
+        InfraProvider,
+        vms.Vm,
+    ]
+    if "grid" in view:
+        value = visual.grid_view_read
+    elif "tile" in view:
+        value = visual.tile_view_read
+    else:
+        value = visual.list_view_read
+    parameter = itertools.product(value, grid_pages)
+    return parameter
+
+report_parameter = visual.report_view_read
+
 
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
@@ -49,7 +61,6 @@ landing_pages = [
 @pytest.yield_fixture(scope="module")
 def set_grid():
     gridlimit = visual.grid_view_limit
-    visual.grid_view_limit = 5
     yield
     visual.grid_view_limit = gridlimit
 
@@ -57,7 +68,6 @@ def set_grid():
 @pytest.yield_fixture(scope="module")
 def set_tile():
     tilelimit = visual.tile_view_limit
-    visual.tile_view_limit = 5
     yield
     visual.tile_view_limit = tilelimit
 
@@ -65,7 +75,6 @@ def set_tile():
 @pytest.yield_fixture(scope="module")
 def set_list():
     listlimit = visual.list_view_limit
-    visual.list_view_limit = 5
     yield
     visual.list_view_limit = listlimit
 
@@ -73,7 +82,6 @@ def set_list():
 @pytest.yield_fixture(scope="module")
 def set_report():
     reportlimit = visual.report_view_limit
-    visual.report_view_limit = 5
     yield
     visual.report_view_limit = reportlimit
 
@@ -83,8 +91,8 @@ def set_default_page():
 
 
 def go_to_grid(page):
-    navigate_to(page, 'All')
-    tb.select('Grid View')
+    view = navigate_to(page, 'All')
+    view.toolbar.view_selector.select('Grid View')
 
 
 @pytest.yield_fixture(scope="module")
@@ -123,13 +131,15 @@ def set_template_quad():
 
 
 @pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_infra_grid_page_per_item(request, page, set_grid):
+@pytest.mark.parametrize("value, page", get_parameter("grid"), scope="module")
+def test_infra_grid_page_per_item(request, page, value, set_grid):
     """ Tests grid items per page
 
     Metadata:
         test_flag: visuals
     """
+    if visual.grid_view_limit != value:
+        visual.grid_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
@@ -141,13 +151,15 @@ def test_infra_grid_page_per_item(request, page, set_grid):
 
 
 @pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_infra_tile_page_per_item(request, page, set_tile):
+@pytest.mark.parametrize("value, page", get_parameter("tile"), scope="module")
+def test_infra_tile_page_per_item(request, page, value, set_tile):
     """ Tests tile items per page
 
     Metadata:
         test_flag: visuals
     """
+    if visual.tile_view_limit != value:
+        visual.tile_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
@@ -159,13 +171,15 @@ def test_infra_tile_page_per_item(request, page, set_tile):
 
 
 @pytest.mark.meta(blockers=[1267148])
-@pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_infra_list_page_per_item(request, page, set_list):
+@pytest.mark.parametrize("value, page", get_parameter("list"), scope="module")
+def test_infra_list_page_per_item(request, page, value, set_list):
     """ Tests list items per page
 
     Metadata:
         test_flag: visuals
     """
+    if visual.list_view_limit != value:
+        visual.list_view_limit = int(value)
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
     view = navigate_to(page, 'All', use_resetter=False)
@@ -177,12 +191,14 @@ def test_infra_list_page_per_item(request, page, set_list):
 
 
 @pytest.mark.meta(blockers=[1267148, 1273529])
-def test_infra_report_page_per_item(set_report):
+@pytest.mark.parametrize("value", report_parameter, scope="module")
+def test_infra_report_page_per_item(value, set_report):
     """ Tests report items per page
 
     Metadata:
         test_flag: visuals
     """
+    visual.report_view_limit = value
     path = ["Configuration Management", "Virtual Machines", "VMs Snapshot Summary"]
     limit = visual.report_view_limit
     report = CannedSavedReport.new(path)
