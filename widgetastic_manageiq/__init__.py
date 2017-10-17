@@ -41,7 +41,7 @@ from widgetastic_patternfly import (
     Accordion as PFAccordion, BootstrapSwitch, BootstrapTreeview,
     BootstrapSelect, Button, CheckableBootstrapTreeview,
     CandidateNotFound, Dropdown, Input, FlashMessages,
-    NavDropdown, VerticalNavigation)
+    NavDropdown, VerticalNavigation, Tab)
 
 from cfme.exceptions import ItemNotFound, ManyEntitiesFound
 
@@ -3341,3 +3341,56 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
             return self.entity_class(parent=self, name=name)
 
         raise ItemNotFound("No Entities found on this page")
+
+
+class FonticonPicker(Widget):
+    """Widget, designed for the icon picker.
+
+    Works around the need to open the modal by executing some JavaScript interacting with the
+    relevant Angular scope.
+
+    Kudos to @himdel for getting me the right steps to do this.
+
+    Args:
+        name: Value of the ``input-name`` of ``miq-fonticon-picker``.
+    """
+    ROOT = ParametrizedLocator('.//miq-fonticon-picker[@input-name={@name|quote}]/*')
+
+    def __init__(self, parent, name, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.name = name
+
+    @property
+    def value(self):
+        selected = self.browser.execute_script(jsmin('''
+            var scope = angular.element(arguments[0]).scope();
+            return scope.$ctrl.selected;
+        '''), self.browser.element(self))
+        if not selected:
+            return None
+        return selected.rsplit(' ', 1)[-1] or None
+
+    def read(self):
+        return self.value
+
+    def fill(self, value):
+        if value == self.value:
+            return False
+
+        self.browser.execute_script(jsmin('''
+            var scope = angular.element(arguments[0]).scope();
+            scope.$ctrl.selected = 'fa ' + arguments[1];
+            scope.$apply();
+            scope.$ctrl.iconChanged({ selected: scope.$ctrl.selected });
+        '''), self.browser.element(self), value)
+        self.browser.plugin.ensure_page_safe()
+        return True
+
+
+class PotentiallyInvisibleTab(Tab):
+    """Tab, that can be potentially invisible."""
+    def select(self):
+        if not self.is_displayed:
+            self.logger.info('Tab not present and ignoring turned on - not touching the tab.')
+            return
+        return super(PotentiallyInvisibleTab, self).select()
