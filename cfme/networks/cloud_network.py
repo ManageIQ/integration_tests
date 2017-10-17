@@ -55,24 +55,29 @@ class CloudNetwork(WidgetasticTaggable, BaseEntity):
 
     @property
     def cloud_tenant(self):
-        """ Return tenant that network belongs to"""
+        """Return name of tenant that network belongs to"""
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud tenant')
 
     def edit(self, name, change_external=False, change_admin_state=False, change_shared=False):
+        """
+        Edit cloud network
+        :param name: (str) new network name
+        :param change_external: (bool) if True swithes 'external gateway' checkbox
+        :param change_admin_state: (bool) if True swithes 'administrative state' checkbox
+        :param change_shared: (bool) if True swithes 'shared' checkbox
+        """
         view = navigate_to(self, 'Edit')
-        view.network_name.fill(name)
-        if change_external:
-            view.ext_router.click()
-        if change_admin_state:
-            view.administrative_state.click()
-        if change_shared:
-            view.shared.click()
+        view.fill({'network_name': name,
+                   'ext_router': change_external,
+                   'administrative_state': change_admin_state,
+                   'shared': change_shared})
         view.save.click()
         view.flash.assert_success_message('Cloud Network "{}" updated'.format(name))
         self.name = name
 
     def delete(self):
+        """Delete this cloud network"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Cloud Network', handle_alert=True)
         view.flash.assert_success_message('The selected Cloud Network was deleted')
@@ -100,17 +105,28 @@ class CloudNetworkCollection(BaseCollection):
 
     def create(self, name, tenant, provider, network_manager, network_type, is_external=False,
                admin_state='up', is_shared=False):
+        """
+        Create cloud network
+        :param name: (str) name of the network
+        :param tenant: (str) name of cloud tenant to place network to
+        :param provider: crud object of Openstack Cloud provider
+        :param network_manager: (str) name of network manager
+        :param network_type: (str) type of network, such as 'VXLAN', 'VLAN', 'GRE' etc.
+        :param is_external: (bool) if True creates network as an external one
+        :param admin_state: (bool) if True create network with administrative state 'Down'.
+                            Default to 'Up'
+        :param is_shared: (bool) if True makes network to be shared
+        :return: instance of cfme.networks.cloud_network.CloudNetwork
+        """
         view = navigate_to(self, 'Add')
-        view.network_manager.fill(network_manager)
-        view.cloud_tenant.fill(tenant)
-        view.network_type.fill(network_type)
-        view.network_name.fill(name)
-        if is_external:
-            view.ext_router.click()
-        if admin_state.lower() == 'down':
-            view.administrative_state.click()
-        if is_shared:
-            view.shared.click()
+        admin_state = True if admin_state.lower() == 'down' else False
+        view.fill({'network_manager': network_manager,
+                   'cloud_tenant': tenant,
+                   'network_type': network_type,
+                   'network_name': name,
+                   'ext_router': is_external,
+                   'administrative_state': admin_state,
+                   'shared': is_shared})
         view.add.click()
         view.flash.assert_success_message('Cloud Network "{}" created'.format(name))
         network = self.instantiate(name, provider)

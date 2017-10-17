@@ -28,6 +28,10 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
     ext_network = attr.ib()
 
     def add_interface(self, subnet_name):
+        """
+        Adds subnet as an interface to current router
+        :param subnet_name: (str) name of the subnet to be added
+        """
         view = navigate_to(self, 'AddInterface')
         view.subnet_name.fill(subnet_name)
         view.add.click()
@@ -36,19 +40,33 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
         view.flash.assert_success_message(success_msg)
 
     def delete(self):
+        """Deletes current cloud router"""
         view = navigate_to(self, 'Details')
         view.toolbar.configuration.item_select('Delete this Router', handle_alert=True)
         view.flash.assert_success_message('Delete initiated for 1 Network Router.')
 
     def edit(self, name=None, change_external_gw=False, ext_network=None, ext_network_subnet=None):
+        """
+        Edit this router
+        :param name: (str) new name of router
+        :param change_external_gw: (bool) if True switches 'external gateway' checkbox
+        :param ext_network: (str) name of external network to be connected as gateway to router.
+                            Is used only if change_external_gw==True,
+                            appliacable if method switches 'external gateway' from 'No' to 'Yes'
+        :param ext_network_subnet: (str) name of subnet of ext_network.
+                            Is used only if change_external_gw==True,
+                            appliacable if method switches 'external gateway' from 'No' to 'Yes'
+        """
         view = navigate_to(self, 'Edit')
+        form_params = dict()
         if name:
-            view.router_name.fill(name)
+            form_params['router_name'] = name
         if change_external_gw:
-            view.ext_gateway.click()
+            form_params['ext_gateway'] = True
             if not self.ext_network:
-                view.network_name.fill(ext_network)
-                view.subnet_name.fill(ext_network_subnet)
+                form_params['network_name'] = ext_network
+                form_params['subnet_name'] = ext_network_subnet
+        view.fill(form_params)
         view.save.click()
         success_msg = 'Network Router "{}" updated'.format(name if name else self.name)
         view.flash.assert_success_message(success_msg)
@@ -70,13 +88,13 @@ class NetworkRouter(WidgetasticTaggable, BaseEntity):
 
     @property
     def cloud_network(self):
-        """ Return network that router connected to"""
+        """ Return name of network that router connected to"""
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Network')
 
     @property
     def cloud_tenant(self):
-        """ Return tenant that router belongs to"""
+        """ Return name of tenant that router belongs to"""
         view = navigate_to(self, 'Details')
         return view.entities.relationships.get_text_of('Cloud Tenant')
 
@@ -110,14 +128,29 @@ class NetworkRouterCollection(BaseCollection):
 
     def create(self, name, provider, tenant, network_manager, has_external_gw=False,
                ext_network=None, ext_network_subnet=None):
+        """
+        Create network router
+        :param name: (str) name of router
+        :param provider: crud object of OpenStack cloud provider
+        :param tenant: (str) name of tenant to place router to
+        :param network_manager: (str) name of network manager
+        :param has_external_gw: (bool) represents if router has external gateway or not
+        :param ext_network: (str) name of the external cloud network
+                            to be connected as a gateway to the router.
+                            Is used if has_external_gw==True
+        :param ext_network_subnet: (str) name of the subnet of ext_network.
+                            Is used if has_external_gw==True
+        :return: instance of cfme.networks.network_router.NetworkRouter
+        """
         view = navigate_to(self, 'Add')
-        view.network_manager.fill(network_manager)
-        view.router_name.fill(name)
+        form_params = {'network_manager': network_manager,
+                       'router_name': name,
+                       'cloud_tenant': tenant}
         if has_external_gw:
-            view.ext_gateway.click()
-            view.network_name.fill(ext_network)
-            view.subnet_name.fill(ext_network_subnet)
-        view.cloud_tenant.fill(tenant)
+            form_params.update({'ext_gateway': True,
+                                'network_name': ext_network,
+                                'subnet_name': ext_network_subnet})
+        view.fill(form_params)
         view.add.click()
         view.flash.assert_success_message('Network Router "{}" created'.format(name))
         router = self.instantiate(name, provider, ext_network)
