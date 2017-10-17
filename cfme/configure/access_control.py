@@ -908,7 +908,7 @@ class EditGroupSequence(CFMENavigateStep):
 @navigator.register(Group, 'Details')
 class GroupDetails(CFMENavigateStep):
     VIEW = DetailsGroupView
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.accordions.accesscontrol.tree.click_path(
