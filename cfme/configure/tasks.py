@@ -2,8 +2,6 @@
 
 """ Module dealing with Configure/Tasks section.
 """
-from functools import partial
-
 from navmazing import NavigateToAttribute
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
@@ -14,7 +12,7 @@ from cfme import web_ui as ui
 from cfme.base.login import BaseLoggedInPage
 from cfme.web_ui import toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Region, CheckboxTable, fill, match_location
+from cfme.web_ui import Form, Region, CheckboxTable, fill
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.log import logger
@@ -43,8 +41,6 @@ filter_form = Form(
 )
 
 table_loc = '//div[@id="records_div"]/table'
-
-match_page = partial(match_location, controller='miq_task')
 
 tasks_table = CheckboxTable(
     table_locator='//div[@id="records_div"]/table[thead]',
@@ -239,7 +235,7 @@ class MyTasks(CFMENavigateStep):
         self.view.tabs.mytasks.select()
 
     def am_i_here(self):
-        return match_page(title='My Tasks') and self.view.tabs.mytasks.is_active()
+        return self.view.tabs.mytasks.is_active()
 
 
 @navigator.register(Tasks, 'MyOtherTasks')
@@ -251,7 +247,7 @@ class MyOtherTasks(CFMENavigateStep):
         self.view.tabs.myothertasks.select()
 
     def am_i_here(self):
-        return match_page(title='My UI Tasks') and self.view.tabs.myothertasks.is_active()
+        return self.view.tabs.myothertasks.is_active()
 
 
 @navigator.register(Tasks, 'AllTasks')
@@ -263,7 +259,7 @@ class AllTasks(CFMENavigateStep):
         self.view.tabs.alltasks.select()
 
     def am_i_here(self):
-        return match_page(title='All Tasks') and self.view.tabs.alltasks.is_active()
+        return self.view.tabs.alltasks.is_active()
 
 
 @navigator.register(Tasks, 'AllOtherTasks')
@@ -275,4 +271,4 @@ class AllOtherTasks(CFMENavigateStep):
         self.view.tabs.allothertasks.select()
 
     def am_i_here(self):
-        return match_page(title='All UI Tasks') and self.view.tabs.allothertasks.is_active()
+        return self.view.tabs.allothertasks.is_active()
