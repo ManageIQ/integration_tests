@@ -5,6 +5,7 @@
 from functools import partial
 
 from navmazing import NavigateToAttribute
+from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
 from widgetastic_manageiq import BootstrapSelect, Button, CheckboxSelect, Table
 from widgetastic_patternfly import Dropdown, Tab, FlashMessages
@@ -203,7 +204,7 @@ class TasksView(BaseLoggedInPage):
 
         @View.nested
         class myothertasks(Tab):  # noqa
-            TAB_NAME = "My Other UI Tasks"
+            TAB_NAME = VersionPick({'5.9': 'My Tasks', Version.lowest(): 'My Other UI Tasks'})
             table = Table(table_loc)
 
         @View.nested

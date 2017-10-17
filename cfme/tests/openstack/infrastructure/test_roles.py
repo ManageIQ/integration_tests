@@ -2,7 +2,6 @@ import pytest
 from random import choice
 
 from cfme.configure.tasks import is_host_analysis_finished
-from cfme.infrastructure.deployment_roles import DeploymentRoleCollection
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils import testgen
@@ -21,8 +20,8 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
 
 @pytest.yield_fixture(scope="module")
 def roles(appliance, provider):
-    collection = DeploymentRoleCollection(appliance=appliance).filter({'provider': provider})
-    roles = collection.all(provider)
+    collection = appliance.collections.deployment_roles.filter({'provider': provider})
+    roles = collection.all()
 
     # TODO: remove test skip after introducing deployment role creation method.
     yield roles if roles else pytest.skip("No Roles Available")
