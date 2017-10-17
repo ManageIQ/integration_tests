@@ -147,7 +147,7 @@ class ButtonGroup(Updateable, Navigatable):
         })
         view.add_button.click()
         view = self.create_view(ButtonGroupObjectTypeView)
-        if not BZ(1500176, forced_streams=['5.9']).blocks:
+        if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
             assert view.is_displayed
         view.flash.assert_no_error()
         if self.appliance.version < '5.9':
@@ -163,7 +163,7 @@ class ButtonGroup(Updateable, Navigatable):
         else:
             view.cancel_button.click()
         view = self.create_view(ButtonGroupDetailView, override=updates)
-        if not BZ(1500176, forced_streams=['5.9']).blocks:
+        if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
             assert view.is_displayed
         view.flash.assert_no_error()
         if changed:
@@ -185,7 +185,7 @@ class ButtonGroup(Updateable, Navigatable):
             view.flash.assert_no_error()
         else:
             view = self.create_view(ButtonGroupObjectTypeView)
-            if not BZ(1500176, forced_streams=['5.9']).blocks:
+            if not BZ(1500176, forced_streams=['5.9', 'upstream']).blocks:
                 assert view.is_displayed
             view.flash.assert_no_error()
             if self.appliance.version < '5.9':
