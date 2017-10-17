@@ -11,6 +11,8 @@ normally be placed in main function, are located in function run(**kwargs).
 
 import argparse
 import fauxfactory
+import ovirtsdk4 as sdk
+import ovirtsdk4.types as types
 import re
 import sys
 from threading import Lock, Thread
@@ -55,6 +57,40 @@ def parse_cmd_line():
                         help="Rhevm provider (to look for in cfme_data)", default=None)
     args = parser.parse_args()
     return args
+
+
+def add_glance():
+    connection = sdk.Connection(
+    url='https://xx.yy.zz.com/ovirt-engine/api',
+    username='admin@internal',
+    password='yyyyyyy',
+    ca_file='/etc/pki/ovirt-engine/ca.pem',
+
+    # Get the root of the services tree:
+    system_service = connection.system_service()
+
+    # Get the list of OpenStack image providers (a.k.a. Glance providers)
+    # that match the name that we want to use:
+    providers_service = system_service.openstack_image_providers_service()
+    providers = [
+        provider for provider in providers_service.list()
+        if provider.name == name
+    ]
+
+    # If there is no such provider, then add it:
+    if len(providers) == 0:
+        providers_service.add(
+            provider=types.OpenStackImageProvider(
+                name=name,
+                description='glance11',
+                url='http://xx.y.zz.aa:9292',
+                requires_authentication=True,
+                authentication_url='http://xx.y.zz.aa:35357/v2.0',
+                username='admin',
+                password='987654',
+                tenant_name='admin'
+            )
+        )
 
 
 def make_ssh_client(rhevip, sshname, sshpass):
