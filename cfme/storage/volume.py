@@ -251,10 +251,10 @@ class VolumeCollection(BaseCollection):
     def create(self, name, storage_manager, tenant, size, provider):
         """Create new storage volume"""
         view = navigate_to(self, 'Add')
-        view.form.storage_manager.fill(storage_manager)
-        view.form.tenant.fill(tenant)
-        view.form.volume_name.fill(name)
-        view.form.size.fill(size)
+        view.form.fill({'storage_manager': storage_manager,
+                        'tenant': tenant,
+                        'volume_name': name,
+                        'size': size})
         view.form.add.click()
         view.flash.assert_success_message('Cloud Volume "{}" created'.format(name))
 
