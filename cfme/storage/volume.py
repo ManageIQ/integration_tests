@@ -14,6 +14,7 @@ from widgetastic_manageiq import (
     JSBaseEntity,
     ManageIQTree,
     NonJSBaseEntity,
+    Select,
     SummaryTable,
     TextInput,
     Version,
@@ -147,6 +148,7 @@ class VolumeAddEntities(View):
 
 
 class VolumeAddForm(View):
+    storage_manager = Select(name='storage_manager_id')
     volume_name = TextInput(name='name')
     size = TextInput(name='size')
     tenant = BootstrapSelect(id='cloud_tenant_id')
@@ -163,6 +165,8 @@ class VolumeAddView(VolumeView):
             self.entities.title.text == expected_title and
             self.entities.breadcrumb.active_location == expected_title)
 
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
     entities = View.nested(VolumeAddEntities)
     form = View.nested(VolumeAddForm)
 
@@ -216,6 +220,22 @@ class Volume(BaseEntity):
 class VolumeCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
+
+    def create(self, name, storage_manager, tenant, size, provider):
+        """Create new storage volume"""
+        view = navigate_to(self, 'Add')
+        view.form.storage_manager.fill(storage_manager)
+        view.form.tenant.fill(tenant)
+        view.form.volume_name.fill(name)
+        view.form.size.fill(size)
+        view.form.add.click()
+        view.flash.assert_success_message('Cloud Volume "{}" created'.format(name))
+
+        volume = self.instantiate(name, provider)
+        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        wait_for(lambda: volume.exists, timeout=100, fail_func=volume.browser.refresh)
+
+        return volume
 
     def delete(self, *volumes):
         """Delete one or more Volumes from list of Volumes
