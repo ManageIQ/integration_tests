@@ -27,7 +27,9 @@ from cfme.utils.update import update
 from cfme.utils import version
 
 
-usergrp = Group(description='EvmGroup-user')
+#DELETE
+#usergrp = Group(description='EvmGroup-user')
+usergrp = None
 
 
 pytestmark = test_requirements.rbac
@@ -63,11 +65,14 @@ def new_user(group=usergrp):
     return user
 
 
+@pytest.fixture(scope='function')
+def group_collection(appliance):
+    return appliance.collections.groups
+
 def new_group(role='EvmRole-approver'):
     return Group(
         description='grp' + fauxfactory.gen_alphanumeric(),
         role=role)
-
 
 def new_role():
     return Role(
@@ -269,9 +274,10 @@ def test_tagvis_user(user_restricted, check_item_visibility):
 
 @pytest.mark.tier(2)
 # Group test cases
-def test_group_crud():
-    group = new_group()
-    group.create()
+def test_group_crud(group_collection):
+    role = 'EvmRole-administrator'
+    group = group_collection.create(
+            description='grp' + fauxfactory.gen_alphanumeric(), role=role)
     with update(group):
         group.description = group.description + "edited"
     group.delete()
