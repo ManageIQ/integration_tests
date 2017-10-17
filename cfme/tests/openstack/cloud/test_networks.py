@@ -31,7 +31,7 @@ def delete_entity(entity):
 def create_network(appliance, provider, is_external):
     collection = appliance.collections.cloud_networks
     network = collection.create(name=fauxfactory.gen_alpha(),
-                                tenant=provider.get_yaml_data()['tenant'],
+                                tenant=provider.data['provisioning']['cloud_tenant'],
                                 provider=provider,
                                 network_type='VXLAN',
                                 network_manager='{} Network Manager'.format(provider.name),
@@ -42,7 +42,7 @@ def create_network(appliance, provider, is_external):
 def create_subnet(appliance, provider, network):
     collection = appliance.collections.network_subnets
     subnet = collection.create(name=fauxfactory.gen_alpha(),
-                               tenant=provider.get_yaml_data()['tenant'],
+                               tenant=provider.data['provisioning']['cloud_tenant'],
                                provider=provider,
                                network_manager='{} Network Manager'.format(provider.name),
                                network_name=network.name,
