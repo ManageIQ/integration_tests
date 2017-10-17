@@ -12,7 +12,6 @@ from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import ResourcePoolNotFound
-from cfme.web_ui import match_location
 from cfme.utils.pretty import Pretty
 from cfme.utils.providers import get_crud
 from cfme.utils.wait import wait_for
@@ -76,9 +75,7 @@ class ResourcePoolView(BaseLoggedInPage):
         nav_chain = ['Compute', 'Infrastructure', 'Resource Pools']
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav_chain and
-            # TODO: Also needs to be converted to Widgetastic
-            match_location(controller='resource_pool', title='Resource Pools'))
+            self.navigation.currently_selected == nav_chain)
 
 
 class ResourcePoolAllView(ResourcePoolView):

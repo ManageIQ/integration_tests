@@ -13,7 +13,6 @@ from widgetastic_manageiq import (
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import TenantNotFound, DestinationNotFound
-from cfme.web_ui import match_location
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.utils.log import logger
@@ -86,9 +85,7 @@ class TenantView(BaseLoggedInPage):
         """Determine if the Tenants page is currently open"""
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Tenants'] and
-            # TODO: Needs to be converted once there's a Widgetastic alternative
-            match_location(controller='cloud_tenant', title='Cloud Tenants'))
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Tenants'])
 
 
 class TenantAllView(TenantView):
