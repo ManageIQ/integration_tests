@@ -5,6 +5,7 @@ import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
@@ -39,10 +40,12 @@ def test_create_volume(volume, provider):
     assert volume.tenant == provider.data.get('tenant')
 
 
-def test_edit_volume(volume):
-    volume.edit(fauxfactory.gen_alpha())
+def test_edit_volume(volume, appliance):
+    new_name = fauxfactory.gen_alpha()
+    volume.edit(new_name)
     wait_for(volume.provider.is_refreshed, func_kwargs=dict(refresh_delta=5), timeout=600)
-    assert volume.exists
+    view = navigate_to(appliance.collections.volumes, 'All')
+    assert view.entities.get_entity(by_name=new_name, surf_pages=True)
 
 
 def test_delete_volume(volume):
