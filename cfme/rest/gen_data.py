@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
-
 import fauxfactory
 
 from cfme.exceptions import OptionNotAvailable
@@ -209,8 +207,8 @@ def services(request, appliance, a_provider, service_dialog=None, service_catalo
     assert 'error' not in service_request.message.lower(), \
         'Provisioning failed with the message `{}`'.format(service_request.message)
 
-    service_name = re.search(
-        r'\[({}[0-9-]*)\] '.format(template_subcollection.name), service_request.message).group(1)
+    service_name = str(service_request.options['dialog']['dialog_service_name'])
+    assert '[{}]'.format(service_name) in service_request.message
     provisioned_service = appliance.rest_api.collections.services.get(name=service_name)
 
     @request.addfinalizer

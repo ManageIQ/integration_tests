@@ -105,7 +105,9 @@ class InstanceEditView(AutomateExplorerView):
     @ParametrizedView.nested
     class fields(ParametrizedView):  # noqa
         PARAMETERS = ('name', )
-        ROOT = ParametrizedLocator('.//tr[./td[1][contains(normalize-space(.), "({name})")]]')
+        ROOT = ParametrizedLocator('//h3[normalize-space(.)="Fields"]'
+                                   '/following-sibling::table'
+                                   '//tr[./td[1][contains(normalize-space(.), "({name})")]]')
         ALL_FIELDS = './/table//tr/td[1]'
 
         @cached_property
