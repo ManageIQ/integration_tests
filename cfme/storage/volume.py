@@ -226,11 +226,10 @@ class Volume(BaseEntity):
 
     @property
     def exists(self):
-        view = navigate_to(self.collection, 'All')
         try:
-            view.entities.get_entity(by_name=self.name, surf_pages=True)
+            navigate_to(self, 'Details')
             return True
-        except ItemNotFound:
+        except VolumeNotFound:
             return False
 
     @property

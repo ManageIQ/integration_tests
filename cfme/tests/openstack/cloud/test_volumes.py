@@ -31,7 +31,7 @@ def volume(appliance, provider, volume_size):
 
     try:
         if volume.exists:
-            volume.delete()
+            volume.delete(wait=False)
     except Exception:
         logger.warning('Exception during volume deletion - skipping..')
 
