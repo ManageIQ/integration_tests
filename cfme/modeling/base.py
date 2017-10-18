@@ -129,6 +129,10 @@ class BaseEntity(NavigatableMixin):
 
     parent = attr.ib(repr=False)  # This is the collection or not
 
+    # TODO This needs removing as we need proper __eq__ on objects, but it is part of a
+    #      much larger discussion
+    __hash__ = object.__hash__
+
     @property
     def appliance(self):
         return self.parent.appliance
