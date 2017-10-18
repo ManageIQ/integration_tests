@@ -24,6 +24,7 @@ from cfme.rest.gen_data import (
 )
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from fixtures.provider import setup_one_or_skip
+from fixtures.pytest_store import store
 from cfme.utils import error, version
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
@@ -1497,8 +1498,8 @@ class TestServiceOrderCart(object):
         assert second_cart.state == 'cart'
 
     @pytest.mark.tier(3)
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.8')
-    @pytest.mark.meta(blockers=[BZ(1493785, forced_streams=['5.8', 'upstream'])])
+    # not testing on version < 5.9 due to BZ1493785 that was fixed only in 5.9
+    @pytest.mark.uncollectif(lambda: store.current_appliance.version < '5.9')
     def test_create_cart(self, appliance, service_templates):
         """Tests creating a cart with service requests.
 
@@ -1510,6 +1511,7 @@ class TestServiceOrderCart(object):
         href = appliance.rest_api.collections.service_orders._href
         response = appliance.rest_api.post(href, **body)
         assert_response(appliance)
+        response = response['results'].pop()
         cart_dict = appliance.rest_api.get('{}/cart'.format(href))
         assert response['id'] == cart_dict['id']
 
