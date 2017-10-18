@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """A generalized framowork for handling test blockers.
 
-Currently handling Bugzilla nad GitHub issues. For extensions, see this file and
-:py:mod:`utils.blockers`.
+Currently handling Bugzilla, GitHub and JIRA issues. For extensions, see this file and
+:py:mod:`cfme.utils.blockers`.
 
 If you want to mark test with blockers, use meta mark ``blockers`` and specify a list of the
-blockers. The blockers can be directly the objects of :py:class:`utils.blockers.Blocker` subclasses,
-but you can use just plain strings that will get resolved into the objects when required.
+blockers. The blockers can be directly the objects of :py:class:`cfme.utils.blockers.Blocker`
+subclasses, but you can use just plain strings that will get resolved into the objects when
+required.
 
 Example comes:
 
@@ -24,6 +25,7 @@ Example comes:
             "GH#owner/repo:123",    # Will resolve to GH
             # Shortcut writing
             123456,                 # Will resolve to BZ
+            'FOO-42',               # Will resolve to JIRA
         ]
     )
 

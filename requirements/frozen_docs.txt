@@ -45,6 +45,7 @@ ipywidgets==6.0.0
 iso8601==0.1.11
 itsdangerous==0.24
 Jinja2==2.9.6
+jira==1.0.10
 jsmin==2.2.2
 jsonschema==2.6.0
 jupyter==1.0.0
