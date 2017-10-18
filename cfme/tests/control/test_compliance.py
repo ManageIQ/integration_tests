@@ -154,7 +154,8 @@ def test_check_package_presence(request, compliance_vm, analysis_profile, policy
     assert compliance_vm.check_compliance()
 
 
-def test_check_files(request, compliance_vm, analysis_profile, condition_collection):
+def test_check_files(request, compliance_vm, analysis_profile, condition_collection,
+        policy_collection, policy_profile_collection):
     """This test checks presence and contents of a certain file. Due to caching, an existing file
     is checked.
     """
