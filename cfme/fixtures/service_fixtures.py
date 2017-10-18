@@ -26,6 +26,7 @@ def catalog():
 
 @pytest.fixture(scope="function")
 def catalog_item(provider, provisioning, vm_name, dialog, catalog):
+    # fixme: check that this fixture obtains correct data
     catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
     return catalog_item
 
@@ -38,6 +39,7 @@ def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, consol
         logger.info("Console template name : {}".format(console_template.name))
         template = console_template.name
     item_name = dialog.label
+    #fixme: fix provisioning data
     provisioning_data = dict(
         vm_name=vm_name,
         host_name={'name': [host]},
@@ -68,7 +70,7 @@ def order_catalog_item_in_ops_ui(appliance, provider, provisioning, vm_name, dia
             console_template if 'console_test' in request.param else None)
     else:
         catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm("{}0001".format(vm_name), provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)

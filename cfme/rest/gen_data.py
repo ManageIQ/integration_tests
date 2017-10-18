@@ -306,6 +306,7 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
                 provisioning_data['provision_type'] = 'VMware'
                 provisioning_data['vlan'] = vlan
 
+            #fixme: fix provisioning data
             provisioning_args = dict(
                 catalog_name=template,
                 provider=a_provider,

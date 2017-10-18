@@ -35,6 +35,7 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     image = provisioning['image']['name']
     item_name = fauxfactory.gen_alphanumeric()
+    # fixme : provisioning data
     provisioning_data = dict(
         vm_name=vm_name,
         instance_type=provisioning['instance_type'],

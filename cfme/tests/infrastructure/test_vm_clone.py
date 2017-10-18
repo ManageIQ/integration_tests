@@ -30,6 +30,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
+    #fixme: fix provisioning data
     provisioning_data = {
         'vm_name': vm_name,
         'host_name': {'name': [host]},
@@ -58,7 +59,7 @@ def clone_vm_name():
 
 @pytest.fixture
 def create_vm(appliance, provider, setup_provider, catalog_item, request):
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.name)
     service_catalogs.order()
