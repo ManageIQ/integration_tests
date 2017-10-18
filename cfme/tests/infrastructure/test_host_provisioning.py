@@ -3,8 +3,7 @@ import pytest
 from cfme.infrastructure import host
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.infrastructure.provider import InfraProvider
-from cfme.provisioning import provisioning_form
-from cfme.web_ui import flash, fill
+from cfme.web_ui import flash
 from cfme.utils.conf import cfme_data
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -137,29 +136,34 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
 
     request.addfinalizer(cleanup_host)
 
-    navigate_to(test_host, 'Provision')
+    view = navigate_to(test_host, 'Provision')
 
     note = ('Provisioning host {} on provider {}'.format(prov_host_name, provider.key))
     provisioning_data = {
-        'email': 'template_provisioner@example.com',
-        'first_name': 'Template',
-        'last_name': 'Provisioner',
-        'notes': note,
-        'pxe_server': pxe_server,
-        'pxe_image': {'name': [pxe_image]},
-        'provider_name': provider.name,
-        'cluster': "{} / {}".format(datacenter, cluster),
-        'datastore_name': {'name': datastores},
-        'root_password': root_password,
-        'prov_host_name': prov_host_name,
-        'ip_address': ip_addr,
-        'subnet_mask': subnet_mask,
-        'gateway': gateway,
-        'dns_servers': dns,
-        'custom_template': {'name': [pxe_kickstart]},
+        'request': {
+            'email': 'template_provisioner@example.com',
+            'first_name': 'Template',
+            'last_name': 'Provisioner',
+            'notes': note
+        },
+        'catalog': {'pxe_server': pxe_server,
+                    'pxe_image': {'name': [pxe_image]}
+                    },
+        'environment': {'provider_name': provider.name,
+                        'datastore_name': {'name': datastores},
+                        'cluster': "{} / {}".format(datacenter, cluster),
+                        'host_name': prov_host_name
+                        },
+        'customize': {'root_password': root_password,
+                      'ip_address': ip_addr,
+                      'subnet_mask': subnet_mask,
+                      'gateway': gateway,
+                      'dns_servers': dns,
+                      'custom_template': {'name': [pxe_kickstart]},
+                      },
     }
 
-    fill(provisioning_form, provisioning_data, action=provisioning_form.host_submit_button)
+    view.form.fill_with(provisioning_data, on_change=view.form.submit_button)
     flash.assert_success_message(
         "Host Request was Submitted, you will be notified when your Hosts are ready")
 
