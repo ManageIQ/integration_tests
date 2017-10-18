@@ -83,15 +83,19 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
         )
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
-        'provision_type': 'PXE',
-        'pxe_server': pxe_server,
-        'pxe_image': {'name': [pxe_image]},
-        'custom_template': {'name': [pxe_kickstart]},
-        'root_password': pxe_root_password,
-        'vlan': pxe_vlan,
+        'catalog': {'vm_name': vm_name,
+                    'pxe_server': pxe_server,
+                    'pxe_image': {'name': [pxe_image]},
+                    'provision_type': 'PXE',
+                    },
+        'environment': {'datastore_name': {'name': [datastore]},
+                        'host_name': {'name': [host]},
+                        },
+        'customize': {'root_password': pxe_root_password,
+                      'custom_template': {'name': [pxe_kickstart]},
+                      },
+        'network': {'vlan': pxe_vlan,
+                    },
     }
 
     item_name = fauxfactory.gen_alphanumeric()
@@ -109,7 +113,7 @@ def test_pxe_servicecatalog(appliance, setup_provider, provider, catalog_item, r
     Metadata:
         test_flag: pxe, provision
     """
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
