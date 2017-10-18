@@ -8,7 +8,7 @@ from cfme.utils.wait import TimedOutError
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.providers([OpenStackProvider], scope="module")
+    pytest.mark.provider([OpenStackProvider], scope="module")
 ]
 
 
