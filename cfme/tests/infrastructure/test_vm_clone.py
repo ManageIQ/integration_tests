@@ -30,19 +30,21 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
-    #fixme: fix provisioning data
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]}
+        'catalog': {'vm_name': vm_name,
+                    },
+        'environment': {'host_name': {'name': [host]},
+                        'datastore_name': {'name': [datastore]},
+                        },
+        'network': {},
     }
 
     if provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
-        provisioning_data['vlan'] = provisioning['vlan']
+        provisioning_data['catalog']['provision_type'] = 'Native Clone'
+        provisioning_data['network']['vlan'] = provisioning['vlan']
         catalog_item_type = "RHEV"
     elif provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
+        provisioning_data['catalog']['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
