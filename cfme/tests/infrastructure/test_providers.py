@@ -103,20 +103,6 @@ def test_host_name_required_validation():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1209756])
-@pytest.mark.uncollectif(lambda: version.current_version() > "5.4.0.0.24")
-def test_ip_required_validation():
-    """Test to validate the ip address while adding a provider"""
-    prov = VMwareProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=None)
-
-    with error.expected("IP Address can't be blank"):
-        prov.create()
-
-
-@pytest.mark.tier(3)
 @test_requirements.provider_discovery
 def test_name_max_character_validation(request, infra_provider):
     """Test to validate max character for name field"""
