@@ -215,10 +215,10 @@ class BZ(Blocker):
 
 class JIRA(Blocker):
     @classproperty
-    def jira(cls):
+    def jira(cls):  # noqa
         if not hasattr(cls, "_jira"):
             try:
-                from jira import JIRA as JiraClient
+                from jira import JIRA as JiraClient  # noqa
                 cls._jira = JiraClient(conf.env.jira_url, options={'verify': False})
             except KeyError:
                 return None
