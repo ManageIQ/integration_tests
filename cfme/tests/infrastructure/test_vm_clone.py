@@ -33,8 +33,8 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     provisioning_data = {
         'catalog': {'vm_name': vm_name,
                     },
-        'environment': {'host_name': {'name': [host]},
-                        'datastore_name': {'name': [datastore]},
+        'environment': {'host_name': {'name': host},
+                        'datastore_name': {'name': datastore},
                         },
         'network': {},
     }
