@@ -252,7 +252,10 @@ class VolumeCollection(BaseCollection):
                         'volume_name': name,
                         'size': size})
         view.form.add.click()
-        view.flash.assert_success_message('Cloud Volume "{}" created'.format(name))
+        base_message = VersionPick({
+            Version.lowest(): 'Creating Cloud Volume "{}"',
+            '5.8': 'Cloud Volume "{}" created'}).pick(self.appliance.version)
+        view.flash.assert_success_message(base_message.format(name))
 
         volume = self.instantiate(name, provider)
         wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
