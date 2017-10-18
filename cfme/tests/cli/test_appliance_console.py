@@ -85,14 +85,13 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
 
 def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
-    confirm db reset, '1' db region number + wait 360 secs, '' continue, '' clear info screen,
-    '15/19' start evm and 'y' confirm start."""
+    confirm db reset, '1' db region number + wait 360 secs, '' continue"""
 
-    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     opt = '5' if temp_appliance_preconfig_funcscope.version >= "5.8" else '8'
+    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     command_set = ('ap', '', opt, '4', 'y', TimedCommand('1', 360), '')
-    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.wait_for_evm_service()
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
 
