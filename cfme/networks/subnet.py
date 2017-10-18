@@ -36,10 +36,11 @@ class Subnet(WidgetasticTaggable, BaseEntity):
             return True
 
     def edit(self, new_name, gateway=None):
-        """
-        Edit cloud subnet
-        :param new_name: (str) new name of subnet
-        :param gateway: (str) IP of new gateway, for example: 11.11.11.1
+        """Edit cloud subnet
+
+        Args:
+            new_name: (str) new name of subnet
+            gateway: (str) IP of new gateway, for example: 11.11.11.1
         """
         view = navigate_to(self, 'Edit')
         view.fill({'subnet_name': new_name,
@@ -120,16 +121,18 @@ class SubnetCollection(BaseCollection):
     ENTITY = Subnet
 
     def create(self, name, tenant, provider, network_manager, network_name, cidr, gateway=None):
-        """
-        Create subnet
-        :param name: (str) name of the subnet
-        :param tenant: (str) name of the tenant to place subnet to
-        :param provider: crud object of Openstack cloud provider
-        :param network_manager: (str) name of network manager
-        :param network_name: (str) name of the network to create subnet under
-        :param cidr: (str) CIDR of subnet, for example: 192.168.12.2/24
-        :param gateway: (str) gateway of subnet, if None - appliance will set it automatically
-        :return: instance of cfme.newtorks.subnet.Subnet
+        """Create subnet
+
+        Args:
+            name: (str) name of the subnet
+            tenant: (str) name of the tenant to place subnet to
+            provider: crud object of Openstack cloud provider
+            network_manager: (str) name of network manager
+            network_name: (str) name of the network to create subnet under
+            cidr: (str) CIDR of subnet, for example: 192.168.12.2/24
+            gateway: (str) gateway of subnet, if None - appliance will set it automatically
+
+        Returns: instance of cfme.newtorks.subnet.Subnet
         """
         view = navigate_to(self, 'Add')
         view.fill({'network_manager': network_manager,
