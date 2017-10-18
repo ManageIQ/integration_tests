@@ -65,7 +65,7 @@ def test_service_manual_approval(appliance, provider, setup_provider, modify_ins
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
 

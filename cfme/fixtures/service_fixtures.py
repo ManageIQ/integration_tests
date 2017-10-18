@@ -26,7 +26,6 @@ def catalog():
 
 @pytest.fixture(scope="function")
 def catalog_item(provider, provisioning, vm_name, dialog, catalog):
-    # fixme: check that this fixture obtains correct data
     catalog_item = create_catalog_item(provider, provisioning, vm_name, dialog, catalog)
     return catalog_item
 
@@ -39,18 +38,21 @@ def create_catalog_item(provider, provisioning, vm_name, dialog, catalog, consol
         logger.info("Console template name : {}".format(console_template.name))
         template = console_template.name
     item_name = dialog.label
-    #fixme: fix provisioning data
-    provisioning_data = dict(
-        vm_name=vm_name,
-        host_name={'name': [host]},
-        datastore_name={'name': [datastore]},
-        vlan=vlan
-    )
+
+    provisioning_data = {
+        'catalog': {'vm_name': vm_name,
+                    },
+        'environment': {'host_name': {'name': [host]},
+                        'datastore_name': {'name': [datastore]},
+                        },
+        'network': {'vlan': vlan,
+                    },
+    }
 
     if provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
+        provisioning_data['catalog']['provision_type'] = 'Native Clone'
     elif provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
+        provisioning_data['catalog']['provision_type'] = 'VMware'
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
         description="my catalog", display_in=True, catalog=catalog,
         dialog=dialog, catalog_name=template,
