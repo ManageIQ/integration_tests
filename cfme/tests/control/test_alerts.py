@@ -411,8 +411,8 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
 
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES)
-def test_alert_hardware_reconfigured(request, appliance, alert_collection, setup_for_alerts, vm,
-        smtp_test, configure_fleecing):
+def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collection, vm, smtp_test,
+        setup_for_alerts):
     """Tests alert based on "Hardware Reconfigured" evaluation.
 
     According https://bugzilla.redhat.com/show_bug.cgi?id=1396544 Hardware Reconfigured alerts
@@ -443,13 +443,12 @@ def test_alert_hardware_reconfigured(request, appliance, alert_collection, setup
     )
     request.addfinalizer(alert.delete)
     setup_for_alerts(request, [alert], vm_name=vm.name)
-    vm.load_details()
-    wait_for_ssa_enabled()
+    wait_for_ssa_enabled(vm)
     do_scan(vm)
     sockets_count = vm.configuration.hw.sockets
     vm.reconfigure(changes={"cpu": True, "sockets": sockets_count + 1})
     do_scan(vm)
-    vm.reconfigure(changes={"cpu": True, "sockets": sockets_count})
+    vm.reconfigure(changes={"cpu": True, "sockets": sockets_count + 2})
     wait_for_alert(
         smtp_test,
         alert,

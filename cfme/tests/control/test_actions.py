@@ -433,8 +433,7 @@ def test_action_prevent_ssa(request, appliance, configure_fleecing, vm, vm_on, p
     policy_for_testing.assign_actions_to_event("VM Analysis Request",
         ["Prevent current event from proceeding"])
     request.addfinalizer(policy_for_testing.assign_events)
-    vm.crud.load_details()
-    wait_for_ssa_enabled()
+    wait_for_ssa_enabled(vm.crud)
     try:
         do_scan(vm.crud)
     except TimedOutError:
@@ -635,8 +634,7 @@ def test_action_initiate_smartstate_analysis(request, configure_fleecing, vm, vm
     request.addfinalizer(policy_for_testing.assign_events)
     # Start the VM
     vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False, from_details=True)
-    vm.crud.load_details()
-    wait_for_ssa_enabled()
+    wait_for_ssa_enabled(vm.crud)
     try:
         do_scan(vm.crud)
     except TimedOutError:
