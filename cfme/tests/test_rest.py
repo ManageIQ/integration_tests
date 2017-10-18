@@ -470,9 +470,6 @@ PAGING_DATA = [
 @pytest.mark.uncollectif(lambda: current_version() < '5.9')
 @pytest.mark.parametrize(
     'paging', PAGING_DATA, ids=['{},{}'.format(d[0], d[1]) for d in PAGING_DATA])
-@pytest.mark.meta(blockers=[
-    BZ(1489885, forced_streams=['5.9', 'upstream'], unblock=lambda paging: paging[0] != 0),
-])
 def test_rest_paging(appliance, paging):
     """Tests paging when offset and limit are specified.
 
@@ -483,7 +480,13 @@ def test_rest_paging(appliance, paging):
     url_string = '{}{}'.format(
         appliance.rest_api.collections.features._href,
         '?limit={}&offset={}'.format(limit, offset))
-    response = appliance.rest_api.get(url_string)
+    if limit == 0:
+        # testing BZ1489885
+        with error.expected('Api::BadRequestError'):
+            appliance.rest_api.get(url_string)
+        return
+    else:
+        response = appliance.rest_api.get(url_string)
 
     if response['count'] <= offset:
         expected_subcount = 0
