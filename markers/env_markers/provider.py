@@ -193,7 +193,7 @@ class ProviderEnvironmentMarker(EnvironmentMarker):
     def process_env_mark(self, metafunc):
         if hasattr(metafunc.function, self.NAME):
             args = getattr(metafunc.function, self.NAME).args
-            kwargs = getattr(metafunc.function, self.NAME).kwargs
+            kwargs = getattr(metafunc.function, self.NAME).kwargs.copy()
 
             scope = kwargs.pop('scope', 'function')
             indirect = kwargs.pop('indirect', False)
