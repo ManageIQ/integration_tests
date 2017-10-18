@@ -83,10 +83,10 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
         )
 
     provisioning_data = {
-        'catalog': {'vm_name': vm_name,
+        'catalog': {'provision_type': 'PXE',
                     'pxe_server': pxe_server,
                     'pxe_image': {'name': [pxe_image]},
-                    'provision_type': 'PXE',
+                    'vm_name': vm_name,
                     },
         'environment': {'datastore_name': {'name': [datastore]},
                         'host_name': {'name': [host]},
