@@ -851,7 +851,8 @@ class TestServiceCatalogsRESTAPI(object):
         results = results['results']
         assert_response(appliance)
 
-        if not BZ(1480281, forced_streams=['5.7', '5.8', 'upstream']).blocks:
+        # testing BZ 1480281 that was fixed only for versions >= 5.9
+        if appliance.version >= '5.9':
             assert 'href' in results[0], "BZ 1480281 doesn't seem to be fixed"
 
         def _order_finished(service_request):
@@ -861,13 +862,19 @@ class TestServiceCatalogsRESTAPI(object):
                 service_request.request_state.lower() == 'finished')
 
         new_services = []
-        for index, result in enumerate(results):
+        for result in results:
             service_request = appliance.rest_api.get_entity('service_requests', result['id'])
             wait_for(_order_finished, func_args=[service_request], num_sec=180, delay=10)
+
+            # service name check
             service_name = str(service_request.options['dialog']['dialog_service_name'])
             assert '[{}]'.format(service_name) in service_request.message
-            # this fails if the service with the `service_name` doesn't exist
-            new_service = appliance.rest_api.collections.services.get(name=service_name)
+
+            # Service name can no longer be used to uniquely identify service when multiple
+            # services are using the same dialog (all services have the same name).
+            # Using service template id instead.
+            source_id = str(service_request.source_id)
+            new_service = appliance.rest_api.collections.services.get(service_template_id=source_id)
             new_services.append(new_service)
 
         @request.addfinalizer
