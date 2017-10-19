@@ -545,7 +545,9 @@ class TestServiceRESTAPI(object):
         child.reload()
         assert child.ancestry == str(parent.id)
 
-    @pytest.mark.meta(blockers=[BZ(1416903, forced_streams=['5.7', '5.8', 'upstream'])])
+    @pytest.mark.skipif(
+        store.current_appliance.version < '5.9',
+        reason='BZ 1416903 was fixed only for versions >= 5.9')
     def test_power_parent_service(self, request, appliance, service_data):
         """Tests that power operations triggered on service parent affects child service.
 
@@ -560,8 +562,8 @@ class TestServiceRESTAPI(object):
         request.addfinalizer(service.action.delete)
         child = collection.get(name=service_data['service_name'])
         vm = appliance.rest_api.collections.vms.get(name=service_data['vm_name'])
-        child.action.edit(parent_service=service._ref_repr())
-        child.reload()
+        service.action.add_resource(resource=child._ref_repr())
+        assert_response(appliance)
 
         def _action_and_check(action, resulting_state):
             getattr(service.action, action)()
