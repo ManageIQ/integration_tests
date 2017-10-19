@@ -319,11 +319,11 @@ def reply_status(reply):
 
 
 def config_formatter():
-    print("The base URL is: " + conf.env.get("base_url", None))
-    if "https://" in conf.env.get("base_url", None):
+    print("The base URL is: " + conf.env.appliances[0].base_url)
+    if "https://" in conf.env.appliances[0].base_url:
         return conf.env.get("base_url", None)
     else:
-        return "https://" + conf.env.get("base_url", None)
+        return "https://" + conf.env.appliances[0].base_url
 
 
 def remove_tmp_files():
