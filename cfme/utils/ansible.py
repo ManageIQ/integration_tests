@@ -280,7 +280,8 @@ def run_ansible(script):
     script_path = path.join(basic_yml_path, script + ".yml")
     temp_file_to_debug = path.join(debug_yml_path, script + ".yml")
     # for debugging the jenkins problem. delete later
-    mkdir(debug_yml_path)
+    if not path.isdir(debug_yml_path):
+        mkdir(debug_yml_path)
     copy(script_path, temp_file_to_debug)
     cmd = '{}{} {}'.format(ansible_playbook_cmd, interpreter_path, script_path)
     return run_cmd(cmd)
