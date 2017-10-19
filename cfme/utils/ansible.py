@@ -20,6 +20,7 @@ random_token = str(gen_alphanumeric(906))
 random_miq_user = str(gen_alphanumeric(8))
 pulled_repo_library_path = path.join(local_git_repo, 'library')
 remote_git_repo_url = "git://github.com/dkorn/manageiq-ansible-module.git"
+debug_yml_path = '/tmp/debugtmp'
 
 
 def create_tmp_directory():
@@ -277,6 +278,10 @@ def run_ansible(script):
     ansible_playbook_cmd = "ansible-playbook -e ansible_python_interpreter="
     interpreter_path = sys.executable
     script_path = path.join(basic_yml_path, script + ".yml")
+    temp_file_to_debug = path.join(debug_yml_path, script + ".yml")
+    # for debugging the jenkins problem. delete later
+    mkdir(debug_yml_path)
+    copy(script_path, temp_file_to_debug)
     cmd = '{}{} {}'.format(ansible_playbook_cmd, interpreter_path, script_path)
     return run_cmd(cmd)
 
