@@ -156,6 +156,7 @@ def test_black_console_extend_storage(fqdn_appliance):
     wait_for(is_storage_extended, func_args=[fqdn_appliance])
 
 
+@pytest.skip('No IPA servers currently available')
 def test_black_console_ipa(ipa_creds, fqdn_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
     + wait 40 secs and '' finish."""
@@ -173,6 +174,7 @@ def test_black_console_ipa(ipa_creds, fqdn_appliance):
     assert return_code == 0
 
 
+@pytest.skip('No IPA servers currently available')
 @pytest.mark.parametrize('auth_type', [
     LoginOption('sso', 'sso_enabled', '1'),
     LoginOption('saml', 'saml_enabled', '2'),
@@ -206,6 +208,7 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
+@pytest.skip('No IPA servers currently available')
 def test_black_console_external_auth_all(app_creds, ipa_crud):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
