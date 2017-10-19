@@ -289,7 +289,7 @@ def policy_profile(request, appliance, instance):
     analysis_profile.create()
     request.addfinalizer(analysis_profile.delete)
 
-    action = ActionCollection(appliance=appliance).create(
+    action = appliance.collections.actions.create(
         'ssa_action_{}'.format(fauxfactory.gen_alpha()),
         "Assign Profile to Analysis Task",
         dict(analysis_profile=analysis_profile_name))
@@ -297,7 +297,7 @@ def policy_profile(request, appliance, instance):
         action.delete()
     request.addfinalizer(action.delete)
 
-    policy = PolicyCollection(appliance=appliance).create(
+    policy = appliance.collections.policies.create(
         VMControlPolicy,
         'ssa_policy_{}'.format(fauxfactory.gen_alpha())
     )
@@ -309,7 +309,7 @@ def policy_profile(request, appliance, instance):
     request.addfinalizer(policy.assign_events)
     policy.assign_actions_to_event("VM Analysis Start", action)
 
-    profile = PolicyProfileCollection(appliance=appliance).create(
+    profile = appliance.collections.policy_profiles.create(
         'ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()), policies=[policy])
     if profile.exists:
         profile.delete()
@@ -348,7 +348,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
     # Set credentials to all hosts set for this datastore
     if provider.type in ['virtualcenter', 'rhevm']:
         datastore_name = vm_analysis_data['datastore']
-        datastore_collection = datastore.DatastoreCollection(appliance=appliance)
+        datastore_collection = appliance.collections.datastores
         test_datastore = datastore_collection.instantiate(name=datastore_name, provider=provider)
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
         host_names = [h.name for h in test_datastore.get_hosts()]

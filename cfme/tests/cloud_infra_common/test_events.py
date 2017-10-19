@@ -53,13 +53,13 @@ def test_vm_create(request, appliance, vm_crud, provider, register_event):
     Metadata:
         test_flag: provision
     """
-    action = ActionCollection(appliance=appliance).create(
+    action = appliance.collections.actions.create(
         fauxfactory.gen_alpha(),
         "Tag",
         dict(tag=("My Company Tags", "Environment", "Development")))
     request.addfinalizer(action.delete)
 
-    policy = PolicyCollection(appliance=appliance).create(
+    policy = appliance.collections.policies.create(
         VMControlPolicy,
         fauxfactory.gen_alpha()
     )
@@ -69,7 +69,7 @@ def test_vm_create(request, appliance, vm_crud, provider, register_event):
     request.addfinalizer(policy.assign_events)
     policy.assign_actions_to_event("VM Create Complete", action)
 
-    profile = PolicyProfileCollection(appliance=appliance).create(
+    profile = appliance.collections.policy_profiles.create(
         fauxfactory.gen_alpha(), policies=[policy])
     request.addfinalizer(profile.delete)
 

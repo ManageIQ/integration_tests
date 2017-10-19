@@ -95,7 +95,7 @@ def test_delete_datastore_appear_after_refresh(setup_provider, provider, applian
     Metadata:
         test_flag: delete_object
     """
-    datastore_collection = datastore.DatastoreCollection(appliance=appliance)
+    datastore_collection = appliance.collections.datastores
     data_store = provider.data['remove_test']['datastore']
     test_datastore = datastore_collection.instantiate(name=data_store, provider=provider)
     details_view = navigate_to(test_datastore, 'Details')

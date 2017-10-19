@@ -9,4 +9,4 @@ def dashboards(appliance):
 
 @pytest.fixture(scope="function")
 def objects(appliance):
-    return appliance.collections.object_stores
+    return appliance.collections.object_store_objects
