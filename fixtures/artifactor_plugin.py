@@ -22,6 +22,7 @@ already been used, it will die
 """
 import atexit
 import os
+import subprocess
 
 import diaper
 import pytest
@@ -35,7 +36,7 @@ from cfme.utils.conf import env, credentials
 from cfme.utils.log import logger
 from cfme.utils.net import random_port, net_check
 from cfme.utils.wait import wait_for
-from cfme.utils import version
+
 
 UNDER_TEST = False  # set to true for artifactor using tests
 
@@ -105,6 +106,7 @@ def spawn_server(config, art_client):
 session_ver = None
 session_build = None
 session_stream = None
+session_fw_version = None
 
 
 def pytest_addoption(parser):
@@ -175,11 +177,19 @@ def pytest_runtest_protocol(item):
         session_stream = appliance.version.stream()
         if str(session_ver) not in session_build:
             session_build = "{}-{}".format(str(session_ver), session_build)
+        try:
+            proc = subprocess.Popen(['git', 'describe'], stdout=subprocess.PIPE)
+            proc.wait()
+            session_fw_version = proc.stdout.read().strip()
+        except:
+            session_fw_version = None
         fire_art_hook(
             item.config, 'session_info',
             version=session_ver,
             build=session_build,
-            stream=session_stream)
+            stream=session_stream,
+            fw_version=session_fw_version
+        )
 
     tier = item.get_marker('tier')
     if tier:
