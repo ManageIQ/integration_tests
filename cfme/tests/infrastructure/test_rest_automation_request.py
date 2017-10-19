@@ -10,7 +10,6 @@ from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.wait import wait_for
 from cfme.utils.version import current_version
-from cfme.utils.blockers import BZ
 
 
 pytestmark = [test_requirements.rest]
@@ -258,8 +257,7 @@ class TestAutomationRequestsCommonRESTAPI(object):
         body = {'options': {'arbitrary_key_allowed': 'test_rest'}}
 
         if from_detail:
-            if BZ('1418331', forced_streams=['5.7', 'upstream']).blocks:
-                pytest.skip("Affected by BZ1418331, cannot test.")
+            # testing BZ 1418331
             for request in requests_pending:
                 request.action.edit(**body)
                 assert appliance.rest_api.response.status_code == 200
