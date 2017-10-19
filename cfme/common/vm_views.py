@@ -205,6 +205,7 @@ class BasicProvisionFormView(View):
         availability_zone = BootstrapSelect('environment__placement_availability_zone')
         cloud_network = BootstrapSelect('environment__cloud_network')
         cloud_subnet = BootstrapSelect('environment__cloud_subnet')
+        cloud_tenant = BootstrapSelect('environment__cloud_tenant')  # exists for azure in catalogs
         security_groups = BootstrapSelect('environment__security_groups')
         resource_groups = BootstrapSelect('environment__resource_group')
         public_ip_address = BootstrapSelect('environment__floating_ip_address')

@@ -67,16 +67,19 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type', 'vlan'))
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
-        'vlan': vlan
+        'catalog': {'vm_name': vm_name,
+                    },
+        'environment': {'host_name': {'name': host},
+                        'datastore_name': {'name': datastore},
+                        },
+        'network': {'vlan': vlan,
+                    },
     }
 
     if provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
+        provisioning_data['catalog']['provision_type'] = 'Native Clone'
     elif provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
+        provisioning_data['catalog']['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
@@ -93,7 +96,7 @@ def test_tagdialog_catalog_item(appliance, provider, setup_provider, catalog_ite
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     dialog_values = {

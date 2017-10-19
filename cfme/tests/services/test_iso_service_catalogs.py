@@ -71,14 +71,18 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
                                 'iso_root_password', 'iso_image_type', 'vlan'))
 
     provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
-        'provision_type': 'ISO',
-        'iso_file': {'name': [iso_file]},
-        'custom_template': {'name': [iso_kickstart]},
-        'root_password': iso_root_password,
-        'vlan': vlan
+        'catalog': {'vm_name': vm_name,
+                    'provision_type': 'ISO',
+                    'iso_file': {'name': iso_file},
+                    },
+        'environment': {'host_name': {'name': host},
+                        'datastore_name': {'name': datastore},
+                        },
+        'customize': {'custom_template': {'name': iso_kickstart},
+                      'root_password': iso_root_password,
+                      },
+        'network': {'vlan': vlan,
+                    },
     }
 
     item_name = fauxfactory.gen_alphanumeric()
@@ -97,7 +101,7 @@ def test_rhev_iso_servicecatalog(appliance, setup_provider, provider, catalog_it
     Metadata:
         test_flag: iso, provision
     """
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)

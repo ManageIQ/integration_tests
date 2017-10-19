@@ -35,7 +35,7 @@ def test_order_catalog_item(appliance, provider, setup_provider, catalog_item, r
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
 
@@ -59,7 +59,7 @@ def test_order_catalog_item_via_rest(
     Metadata:
         test_flag: provision, rest
     """
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     request.addfinalizer(catalog_item.delete)
@@ -87,7 +87,7 @@ def test_order_catalog_bundle(appliance, provider, setup_provider, catalog_item,
         test_flag: provision
     """
 
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data['catalog']["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     bundle_name = fauxfactory.gen_alphanumeric()

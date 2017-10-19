@@ -5,6 +5,7 @@ from widgetastic.widget import Text, Checkbox, View
 from widgetastic_patternfly import Button, Input, BootstrapSelect, CandidateNotFound, Tab
 from widgetastic_manageiq import Table, ManageIQTree
 
+from cfme.common.vm_views import BasicProvisionFormView
 from cfme.common import WidgetasticTaggable, TagPageView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import tabstrip
@@ -235,8 +236,9 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
             tabstrip.select_tab("Catalog")
             row = view.template_table.row(name=self.catalog_name, provider=self.provider.name)
             row.click()
-            from cfme.provisioning import provisioning_form as request_form
-            request_form.fill(self.provisioning_data)
+            provisioning_view = self.create_view(BasicProvisionFormView)
+            provisioning_view.fill_with(self.provisioning_data)
+
         view.add_button.click()
         view.flash.assert_success_message('Service Catalog Item "{}" was added'.format(self.name))
         view = self.create_view(AllCatalogItemView)

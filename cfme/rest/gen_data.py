@@ -292,19 +292,23 @@ def service_templates_ui(request, appliance, service_dialog=None, service_catalo
                 ('template', 'host', 'datastore', 'vlan', 'catalog_item_type'))
 
             vm_name = 'test_rest_{}'.format(fauxfactory.gen_alphanumeric())
+
             provisioning_data = {
-                'vm_name': vm_name,
-                'host_name': {'name': [host]},
-                'datastore_name': {'name': [datastore]}
+                'catalog': {'vm_name': vm_name,
+                            },
+                'environment': {'host_name': {'name': host},
+                                'datastore_name': {'name': datastore},
+                                },
+                'network': {},
             }
 
             if a_provider.one_of(RHEVMProvider):
-                provisioning_data['provision_type'] = 'Native Clone'
-                provisioning_data['vlan'] = vlan
+                provisioning_data['catalog']['provision_type'] = 'Native Clone'
+                provisioning_data['network']['vlan'] = vlan
                 catalog_item_type = 'RHEV'
             elif a_provider.one_of(VMwareProvider):
-                provisioning_data['provision_type'] = 'VMware'
-                provisioning_data['vlan'] = vlan
+                provisioning_data['catalog']['provision_type'] = 'VMware'
+                provisioning_data['network']['vlan'] = vlan
 
             provisioning_args = dict(
                 catalog_name=template,

@@ -35,26 +35,30 @@ def test_cloud_catalog_item(appliance, setup_provider, provider, dialog, catalog
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     image = provisioning['image']['name']
     item_name = fauxfactory.gen_alphanumeric()
-    provisioning_data = dict(
-        vm_name=vm_name,
-        instance_type=provisioning['instance_type'],
-        security_groups=[provisioning['security_group']],
-    )
+    provisioning_data = {
+        'catalog': {'vm_name': vm_name,
+                    },
+        'properties': {'instance_type': provisioning['instance_type'],
+                       },
+        'environment': {'security_groups': [provisioning['security_group']],
+                        },
+    }
+
     if provider.type == "azure":
-        updates = dict(
-            virtual_private_cloud=provisioning['virtual_private_cloud'],
+        env_updates = dict(
+            cloud_network=provisioning['virtual_private_cloud'],
             cloud_subnet=provisioning['cloud_subnet'],
-            resource_group=[provisioning['resource_group']],
+            resource_groups=[provisioning['resource_group']],
         )
     else:
-        updates = dict(
+        provisioning_data['properties']['guest_keypair'] = provisioning['guest_keypair']
+        provisioning_data['properties']['boot_disk_size'] = provisioning['boot_disk_size']
+        env_updates = dict(
             availability_zone=provisioning['availability_zone'],
             cloud_tenant=provisioning['cloud_tenant'],
-            cloud_network=provisioning['cloud_network'],
-            guest_keypair=provisioning['guest_keypair'],
-            boot_disk_size=provisioning['boot_disk_size']
-        )
-    provisioning_data.update(updates)
+            cloud_network=provisioning['cloud_network'])
+
+    provisioning_data['environment'].update(env_updates)
     catalog_item = CatalogItem(item_type=provisioning['item_type'],
                                name=item_name,
                                description="my catalog",
