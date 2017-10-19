@@ -39,6 +39,7 @@ class Blocker(object):
         return {
             'GH': GH,
             'BZ': BZ,
+            'JIRA': JIRA,
         }
 
     @classmethod
@@ -57,6 +58,10 @@ class Blocker(object):
                         "{} is a wrong engine specification for blocker! ({} available)".format(
                             engine, ", ".join(cls.all_blocker_engines().keys())))
                 return engine_class(spec, **kwargs)
+            match = re.match('^[A-Z][A-Z0-9]+-[0-9]+$', blocker)
+            if match is not None:
+                # React to the typical JIRA format of FOO-42
+                return JIRA(blocker)
             # EXTEND: If someone has other ideas, put them here
             raise ValueError("Could not parse blocker {}".format(blocker))
         else:
@@ -206,3 +211,39 @@ class BZ(Blocker):
 
     def __str__(self):
         return "Bugzilla bug {} (or one of its copies)".format(self.get_bug_url())
+
+
+class JIRA(Blocker):
+    @classproperty
+    def jira(cls):  # noqa
+        if not hasattr(cls, "_jira"):
+            try:
+                from jira import JIRA as JiraClient  # noqa
+                cls._jira = JiraClient(conf.env.jira_url, options={'verify': False})
+            except KeyError:
+                return None
+        return cls._jira
+
+    def __init__(self, jira_id, **kwargs):
+        super(JIRA, self).__init__(**kwargs)
+        self.jira_id = jira_id
+
+    @property
+    def url(self):
+        try:
+            jira_url = conf.env.jira_url
+        except KeyError:
+            return None
+        return '{}/browse/{}'.format(jira_url.rstrip('/'), self.jira_id)
+
+    @property
+    def blocks(self):
+        jira = self.jira
+        if jira is None:
+            # JIRA unspecified, shut up and don't block
+            return False
+        issue = jira.issue(self.jira_id, fields='status')
+        return issue.fields.status.name.lower() != 'done'
+
+    def __str__(self):
+        return 'Jira card {}'.format(self.url)

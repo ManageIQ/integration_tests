@@ -21,6 +21,7 @@ GitPython>=2.1.5
 ipython
 iso8601
 Jinja2
+jira>=1.0.10
 jsmin
 jupyter
 kwargify
