@@ -104,6 +104,7 @@ setup(
             'volumes = cfme.storage.volume:VolumeCollection',
             'block_managers = cfme.storage.manager:BlockManagerCollection',
             'object_managers = cfme.storage.manager:ObjectManagerCollection',
+            'object_stores = cfme.storage.object_store_object:ObjectStoreObjectCollection',
             'zones = cfme.base:ZoneCollection'
         ],
         'pytest11':

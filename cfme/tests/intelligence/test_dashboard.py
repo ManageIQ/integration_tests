@@ -28,9 +28,9 @@ AVAILABLE_WIDGETS = [
 
 @pytest.yield_fixture(scope='function')
 def widgets(dashboards):
-    yield dashboards.default.widgets.all()
+    yield dashboards.default.collections.widgets.all()
     dashboards.close_zoom()
-    dashboards.default.widgets.reset()
+    dashboards.default.collections.widgets.reset()
 
 
 @pytest.mark.meta(blockers=[1476305])
@@ -107,11 +107,11 @@ def test_verify_rss_links(dashboards):
         * Try making a request on the provided URLs, should make sense
     """
     wait_for(
-        lambda: not any(widget.blank for widget in dashboards.default.widgets.all()),
+        lambda: not any(widget.blank for widget in dashboards.default.collections.widgets.all()),
         delay=2,
         timeout=120,
         fail_func=dashboards.refresh)
-    for widget in dashboards.default.widgets.all(content_type="rss"):
+    for widget in dashboards.default.collections.widgets.all(content_type="rss"):
         for row in widget.contents:
             onclick = row.browser.get_attribute('onclick', row)
             url = re.sub(r'^window.location="([^"]+)";$', '\\1', onclick.strip())
@@ -131,13 +131,13 @@ def test_widgets_reorder(dashboards, soft_assert, request):
         * Reorder first two widgets in the first column using drag&drop
         * Assert that the widgets order is changed
     """
-    request.addfinalizer(dashboards.default.widgets.reset)
-    previous_state = dashboards.default.widgets.all()
+    request.addfinalizer(dashboards.default.collections.widgets.reset)
+    previous_state = dashboards.default.collections.widgets.all()
     previous_names = [w.name for w in previous_state]
     first_widget = previous_state[0]
     second_widget = previous_state[1]
     dashboards.default.drag_and_drop(first_widget, second_widget)
-    new_state = dashboards.default.widgets.all()
+    new_state = dashboards.default.collections.widgets.all()
     new_names = [w.name for w in new_state]
     assert previous_names[2:] == new_names[2:]
     assert previous_names[0] == new_names[1]
@@ -157,7 +157,7 @@ def test_drag_and_drop_widget_to_the_bottom_of_another_column(dashboards, reques
         * Drag a left upper widget and drop it under the bottom widget of the near column
         * Assert that the widgets order is changed
     """
-    request.addfinalizer(dashboards.default.widgets.reset)
+    request.addfinalizer(dashboards.default.collections.widgets.reset)
     first_column = dashboards.default.dashboard_view.column_widget_names(1)
     second_column = dashboards.default.dashboard_view.column_widget_names(2)
 
