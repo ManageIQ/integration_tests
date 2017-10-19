@@ -95,6 +95,7 @@ class ObjectStoreContainerDetailsView(ObjectStoreContainerView):
     entities = View.nested(ObjectStoreContainerDetailsEntities)
 
 
+@attr.s
 class ObjectStoreContainer(BaseEntity, WidgetasticTaggable):
     """ Model of an Storage Object Store Containers in cfme
 
