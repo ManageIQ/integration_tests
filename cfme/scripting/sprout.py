@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+
 """Script to checkout a sprout appliance
 
 Usage:
@@ -61,7 +63,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
             time.sleep(10)
         sm.reset_timer()
         for app in appliance_data:
-            print "{}: {}".format(app['name'], app['ip_address'])
+            print("{}: {}".format(app['name'], app['ip_address']))
         if populate_yaml:
             file_name = conf_path.join('env.local.yaml').strpath
             if os.path.exists(file_name):
