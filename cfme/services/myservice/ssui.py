@@ -83,8 +83,8 @@ def update(self, updates):
 @MyService.launch_vm_console.external_implementation_for(ViaSSUI)
 def launch_vm_console(self, catalog_item):
     navigate_to(self, 'VM Console')
-    # TODO need to remove 001 from the line below and find correct place/way to put it in code
-    vm_obj = VM.factory(catalog_item.provisioning_data.get('vm_name') + '001',
+    # TODO need to remove 0001 from the line below and find correct place/way to put it in code
+    vm_obj = VM.factory(catalog_item.provisioning_data['catalog']['vm_name'] + '0001',
                 catalog_item.provider, template_name=catalog_item.catalog_name)
     wait_for(
         func=lambda: vm_obj.vm_console, num_sec=30, delay=2, handle_exception=True,
