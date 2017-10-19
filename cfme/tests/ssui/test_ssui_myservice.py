@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Test Service Details page functionality."""
 import pytest
 
 from cfme.infrastructure.provider import InfraProvider
@@ -25,8 +26,8 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 @pytest.fixture(scope="module")
 def configure_websocket(appliance):
-    """
-    Enable websocket role if it is disabled.
+    """Enable websocket role if it is disabled.
+
     Currently the fixture cfme/fixtures/base.py:27,
     disables the websocket role to avoid intrusive popups.
     """
@@ -40,8 +41,8 @@ def configure_websocket(appliance):
 @pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_in_ops_ui):
-    """Tests Myservice crud in SSUI."""
-    service_name = order_catalog_item_in_ops_ui
+    """Test Myservice crud in SSUI."""
+    service_name = order_catalog_item_in_ops_ui.name
     with appliance.context.use(context):
         appliance.server.login()
         myservice = MyService(appliance, service_name)
@@ -54,9 +55,10 @@ def test_myservice_crud(appliance, setup_provider, context, order_catalog_item_i
 @pytest.mark.parametrize('order_catalog_item_in_ops_ui', [['console_test']], indirect=True)
 def test_vm_console(appliance, setup_provider, context, configure_websocket,
         order_catalog_item_in_ops_ui):
-    """Tests Myservice VM Console in SSUI."""
-    service_name = order_catalog_item_in_ops_ui
+    """Test Myservice VM Console in SSUI."""
+    catalog_item = order_catalog_item_in_ops_ui
+    service_name = catalog_item.name
     with appliance.context.use(context):
         appliance.server.login()
         myservice = MyService(appliance, service_name)
-        myservice.launch_vm_console()
+        myservice.launch_vm_console(catalog_item)

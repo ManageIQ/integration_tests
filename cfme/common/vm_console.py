@@ -18,7 +18,7 @@ from wait_for import wait_for, TimedOutError
 
 
 class VMConsole(Pretty):
-    """Class to manage the VM Console.   Presently, only support HTML5 Console."""
+    """Class to manage the VM Console. Presently, only support HTML5/WebMKS Console."""
 
     pretty_attrs = ['appliance_handle', 'browser', 'console_handle', 'name']
 
