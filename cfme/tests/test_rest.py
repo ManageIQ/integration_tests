@@ -509,7 +509,10 @@ def test_rest_paging(appliance, paging):
     assert 'limit={}&offset={}'.format(limit, expected_last_offset) in links['last']
 
 
-COLLECTIONS_BUGGY_HREF_SLUG = {'policy_actions', 'automate_domains'}
+# BZ 1503852
+COLLECTIONS_BUGGY_HREF_SLUG = {'requests', 'service_requests'}
+# BZ 1485310 was not fixed for versions < 5.9
+COLLECTIONS_BUGGY_HREF_SLUG_IN_58 = {'policy_actions', 'automate_domains'}
 
 
 @pytest.mark.tier(3)
@@ -517,12 +520,13 @@ COLLECTIONS_BUGGY_HREF_SLUG = {'policy_actions', 'automate_domains'}
 @pytest.mark.uncollectif(
     lambda collection_name:
         collection_name == 'automate' or  # doesn't have 'href'
+        (collection_name in COLLECTIONS_BUGGY_HREF_SLUG_IN_58 and current_version() < '5.9') or
         (collection_name in COLLECTIONS_ADDED_IN_58 and current_version() < '5.8') or
         (collection_name in COLLECTIONS_REMOVED_IN_59 and current_version() >= '5.9')
 )
 @pytest.mark.meta(blockers=[BZ(
-    1485310,
-    forced_streams=['5.8', 'upstream'],
+    1503852,
+    forced_streams=['5.8', '5.9', 'upstream'],
     unblock=lambda collection_name: collection_name not in COLLECTIONS_BUGGY_HREF_SLUG)])
 def test_attributes_present(appliance, collection_name):
     """Tests that the expected attributes are present in all collections.
