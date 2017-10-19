@@ -3,7 +3,6 @@ import pytest
 import random
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.storage.object_store_container import ObjectStoreContainerCollection
 from cfme.utils import testgen
 
 
@@ -15,8 +14,8 @@ pytest_generate_tests = testgen.generate([OpenStackProvider], scope="module")
 
 @pytest.yield_fixture(scope="module")
 def containers(appliance, provider):
-    collection = ObjectStoreContainerCollection(appliance=appliance).filter({'provider': provider})
-    containers = collection.all(provider)
+    collection = appliance.collections.object_store_containers.filter({'provider': provider})
+    containers = collection.all()
     # TODO add create method and remove pytest skip as BZ 1490320 fix
     yield containers if containers else pytest.skip("No Containers Available")
 

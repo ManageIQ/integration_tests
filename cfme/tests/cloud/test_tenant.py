@@ -13,7 +13,7 @@ pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
 
 @pytest.yield_fixture(scope='function')
 def tenant(provider, setup_provider, appliance):
-    collection = TenantCollection(appliance=appliance)
+    collection = appliance.collections.tenants
     tenant = collection.create(name=fauxfactory.gen_alphanumeric(8), provider=provider)
 
     yield tenant
