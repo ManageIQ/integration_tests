@@ -43,7 +43,7 @@ def setup_distributed_env(cfme_version, provider, lease):
     a local database and workers, 2nd appliance has workers pointing at 1st appliance)"""
     print("Provisioning and configuring distributed environment")
     apps = provision_appliances(
-        count=2, cfme_version=cfme_version, provider=provider,lease_time=lease_time
+        count=2, cfme_version=cfme_version, provider=provider, lease_time=lease_time
     )
 
     vmdb_appliance = apps[0]
