@@ -42,7 +42,7 @@ def main():
 @click.option('--provider', default=None, help="Which provider to use")
 def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
              override_ram, override_cpu, populate_yaml, provider):
-    """Function to show the given credentials, takes either a provider key or a credential key"""
+    """checks out a sprout provisioning request, and returns it on exit"""
     override_cpu = override_cpu or None
     override_ram = override_ram or None
     sr = SproutProvisioningRequest(group=group, count=appliances, version=version, date=date,
@@ -65,28 +65,7 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
         for app in appliance_data:
             print("{}: {}".format(app['name'], app['ip_address']))
         if populate_yaml:
-            file_name = conf_path.join('env.local.yaml').strpath
-            if os.path.exists(file_name):
-                with open(file_name) as f:
-                    y_data = yaml.load(f)
-                if not y_data:
-                    y_data = {}
-            else:
-                y_data = {}
-            if y_data:
-                with open(conf_path.join('env.local.backup').strpath, 'w') as f:
-                    yaml.dump(y_data, f, default_flow_style=False)
-
-            y_data['appliances'] = []
-            for app in appliance_data:
-                y_data['appliances'].append({'base_url': 'https://{}/'.format(app['ip_address'])})
-            with open(file_name, 'w') as f:
-                try:
-                    del y_data['base_url']
-                except KeyError:
-                    pass
-                yaml.dump(y_data, f, default_flow_style=False)
-
+            populate_config_from_appliances(appliance_data)
         print("Appliance checked out, hit ctrl+c to checkin")
 
         while True:
@@ -97,6 +76,35 @@ def checkout(appliances, timeout, provision_timeout, group, version, date, desc,
             sm.destroy_pool()
         except:
             print("Error in pool destroy")
+
+
+def populate_config_from_appliances(appliance_data):
+    """populates env.local.yaml with the appliances just obtained
+
+    args:
+        appliance_data: the data of the appliances as taken from sprout
+    """
+    file_name = conf_path.join('env.local.yaml').strpath
+    if os.path.exists(file_name):
+        with open(file_name) as f:
+            y_data = yaml.load(f)
+        if not y_data:
+            y_data = {}
+    else:
+        y_data = {}
+    if y_data:
+        with open(conf_path.join('env.local.backup').strpath, 'w') as f:
+            yaml.dump(y_data, f, default_flow_style=False)
+
+    y_data['appliances'] = []
+    for app in appliance_data:
+        y_data['appliances'].append({'base_url': 'https://{}/'.format(app['ip_address'])})
+    with open(file_name, 'w') as f:
+        try:
+            del y_data['base_url']
+        except KeyError:
+            pass
+        yaml.dump(y_data, f, default_flow_style=False)
 
 
 if __name__ == "__main__":
