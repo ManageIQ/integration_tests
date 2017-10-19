@@ -58,11 +58,11 @@ def clean_tags(provider):
 
 @pytest.mark.polarion('CMP-11111')
 @pytest.mark.usefixtures('setup_provider')
-def test_add_tags(ansible_tags, provider):
+def test_add_tags(ansible_tags, provider, appliance):
     """This test adds tags to the Containers Provider
     and verifies in GUI they were added successfully
         """
-    setup_ansible_script(provider, script='add_tags',
+    setup_ansible_script(provider, appliance, script='add_tags',
                          values_to_update=tags_to_add,
                          script_type='tags')
     run_ansible('add_tags')
@@ -74,11 +74,11 @@ def test_add_tags(ansible_tags, provider):
 
 @pytest.mark.polarion('CMP-11112')
 @pytest.mark.usefixtures('setup_provider')
-def test_remove_tags(ansible_tags, provider):
+def test_remove_tags(ansible_tags, provider, appliance):
     """This test removes tags from the Containers Provider
     and verifies in GUI they were removed successfully
         """
-    setup_ansible_script(provider, script='remove_tags',
+    setup_ansible_script(provider, appliance, script='remove_tags',
                          values_to_update=tags_to_add,
                          script_type='tags')
     run_ansible('remove_tags')

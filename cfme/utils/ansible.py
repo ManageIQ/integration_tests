@@ -20,7 +20,10 @@ random_token = str(gen_alphanumeric(906))
 random_miq_user = str(gen_alphanumeric(8))
 pulled_repo_library_path = path.join(local_git_repo, 'library')
 remote_git_repo_url = "git://github.com/dkorn/manageiq-ansible-module.git"
-debug_yml_path = '/tmp/debugtmp'
+
+
+def get_appliance_hostname(appliance):
+    return appliance.hostname
 
 
 def create_tmp_directory():
@@ -42,24 +45,20 @@ def fetch_miq_ansible_module():
     if path.isdir(library_path_to_copy_to):
         rmtree(library_path_to_copy_to)
     mkdir(library_path_to_copy_to)
-    print('Ymls path: ' + yml_path)
-    print('Library path to copy to: ' + library_path_to_copy_to)
     Repo.clone_from(remote_git_repo_url, local_git_repo)
     src_files = listdir(pulled_repo_library_path)
-    print('Repo library path: ' + pulled_repo_library_path)
     for file_name in src_files:
         full_file_name = path.join(pulled_repo_library_path, file_name)
-        print('File name is: ' + full_file_name)
         if path.isfile(full_file_name):
             copy(full_file_name, library_path_to_copy_to)
     rmtree(local_git_repo)
 
 
-def get_values_for_providers_test(provider):
+def get_values_for_providers_test(provider, appliance):
     return {
         'name': provider.name,
         'state': 'present',
-        'miq_url': config_formatter(),
+        'miq_url': config_formatter(appliance),
         'miq_username': conf.credentials['default'].username,
         'miq_password': conf.credentials['default'].password,
         'provider_api_hostname': providers_data[provider.name]['endpoints']['default'].hostname,
@@ -70,24 +69,24 @@ def get_values_for_providers_test(provider):
     }
 
 
-def get_values_for_users_test():
+def get_values_for_users_test(appliance):
     return {
         'fullname': 'MIQUser',
         'name': 'MIQU',
         'password': 'smartvm',
         'state': 'present',
-        'miq_url': config_formatter(),
+        'miq_url': config_formatter(appliance),
         'miq_username': conf.credentials['default'].username,
         'miq_password': conf.credentials['default'].password,
     }
 
 
-def get_values_for_custom_attributes_test(provider):
+def get_values_for_custom_attributes_test(provider, appliance):
     return {
         'entity_type': 'provider',
         'entity_name': conf.cfme_data.get('management_systems', {})
         [provider.key].get('name', []),
-        'miq_url': config_formatter(),
+        'miq_url': config_formatter(appliance),
         'miq_username': conf.credentials['default'].username,
         'miq_password': conf.credentials['default'].password,
     }
@@ -103,13 +102,13 @@ def get_values_for_tags_test(provider):
     }
 
 
-def get_values_from_conf(provider, script_type):
+def get_values_from_conf(provider, script_type, appliance):
     if script_type == 'providers':
-        return get_values_for_providers_test(provider)
+        return get_values_for_providers_test(provider, appliance)
     if script_type == 'users':
-        return get_values_for_users_test()
+        return get_values_for_users_test(appliance)
     if script_type == 'custom_attributes':
-        return get_values_for_custom_attributes_test(provider)
+        return get_values_for_custom_attributes_test(provider, appliance)
     if script_type == 'tags':
         return get_values_for_tags_test(provider)
 
@@ -127,13 +126,13 @@ def get_yml_value(script, value):
     return doc[0]['tasks'][0]['manageiq_provider'][value]
 
 
-def setup_basic_script(provider, script_type):
+def setup_basic_script(provider, script_type, appliance):
     script_path_source = path.join(yml_templates_path, script_type + "_" + basic_script)
     script_path = path.join(basic_yml_path, script_type + "_" + basic_script)
     copyfile(script_path_source, script_path)
     with open(script_path, 'rw') as f:
         doc = load(f)
-        values_dict = get_values_from_conf(provider, script_type)
+        values_dict = get_values_from_conf(provider, script_type, appliance)
     for key in values_dict:
         if script_type == 'providers':
             doc[0]['tasks'][0]['manageiq_provider'][key] = values_dict[key]
@@ -159,10 +158,10 @@ def write_yml(script, doc):
         f.write(dump(doc))
 
 
-def setup_ansible_script(provider, script, script_type=None, values_to_update=None):
+def setup_ansible_script(provider, appliance, script, script_type=None, values_to_update=None):
     # This function prepares the ansible scripts to work with the correct
     # appliance configs that will be received from Jenkins
-    setup_basic_script(provider, script_type)
+    setup_basic_script(provider, script_type, appliance)
     doc = open_yml(script, script_type)
     if script == 'add_provider':
         write_yml(script, doc)
@@ -278,24 +277,18 @@ def run_ansible(script):
     ansible_playbook_cmd = "ansible-playbook -e ansible_python_interpreter="
     interpreter_path = sys.executable
     script_path = path.join(basic_yml_path, script + ".yml")
-    temp_file_to_debug = path.join(debug_yml_path, script + ".yml")
-    # for debugging the jenkins problem. delete later
-    if not path.isdir(debug_yml_path):
-        mkdir(debug_yml_path)
-    copy(script_path, temp_file_to_debug)
     cmd = '{}{} {}'.format(ansible_playbook_cmd, interpreter_path, script_path)
     return run_cmd(cmd)
 
 
 def run_cmd(cmd):
     try:
-        print("This is the command that runs: " + cmd)
         response = check_output(cmd, shell=True, stderr=STDOUT)
     except CalledProcessError as exc:
-        print("Status : FAIL", exc.returncode, exc.output, "This is the command that runs : " + cmd)
+        print("Status : FAIL", exc.returncode, exc.output)
         return exc.output
     else:
-        print("Output: \n{}\n".format(response), "This is the command that runs: " + cmd)
+        print("Output: \n{}\n".format(response))
 
 
 # TODO For further usage with reply statuses test. Not being used at the moment
@@ -319,12 +312,13 @@ def reply_status(reply):
         return 'No Change', message_status, ok_status
 
 
-def config_formatter():
-    print("The base URL is: " + conf.env.appliances[0].base_url)
-    if "https://" in conf.env.appliances[0].base_url:
-        return conf.env.get("base_url", None)
+def config_formatter(appliance):
+    appliance_hostname = get_appliance_hostname(appliance)
+    print("This is the hostname: " + appliance_hostname)
+    if "https://" in appliance_hostname:
+        return appliance_hostname
     else:
-        return "https://" + conf.env.appliances[0].base_url
+        return "https://" + appliance_hostname
 
 
 def remove_tmp_files():
