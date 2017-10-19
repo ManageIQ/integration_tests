@@ -41,10 +41,14 @@ def fetch_miq_ansible_module():
     if path.isdir(library_path_to_copy_to):
         rmtree(library_path_to_copy_to)
     mkdir(library_path_to_copy_to)
+    print('Ymls path: ' + yml_path)
+    print('Library path to copy to: ' + library_path_to_copy_to)
     Repo.clone_from(remote_git_repo_url, local_git_repo)
     src_files = listdir(pulled_repo_library_path)
+    print('Repo library path: ' + pulled_repo_library_path)
     for file_name in src_files:
         full_file_name = path.join(pulled_repo_library_path, file_name)
+        print('File name is: ' + full_file_name)
         if path.isfile(full_file_name):
             copy(full_file_name, library_path_to_copy_to)
     rmtree(local_git_repo)
