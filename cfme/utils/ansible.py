@@ -319,6 +319,7 @@ def reply_status(reply):
 
 
 def config_formatter():
+    print("The base URL is: " + conf.env.get("base_url", None))
     if "https://" in conf.env.get("base_url", None):
         return conf.env.get("base_url", None)
     else:
