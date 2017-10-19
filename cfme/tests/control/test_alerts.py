@@ -94,6 +94,11 @@ def alert_profile_collection(appliance):
     return appliance.collections.alert_profiles
 
 
+@pytest.fixture(scope="module")
+def requests_collection(appliance):
+    return appliance.collections.requests
+
+
 @pytest.fixture(scope="function")
 def vddk_url(provider):
     try:
@@ -412,7 +417,7 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
 
 @pytest.mark.provider(CANDU_PROVIDER_TYPES)
 def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collection, vm, smtp_test,
-        setup_for_alerts):
+        requests_collection, setup_for_alerts):
     """Tests alert based on "Hardware Reconfigured" evaluation.
 
     According https://bugzilla.redhat.com/show_bug.cgi?id=1396544 Hardware Reconfigured alerts
@@ -427,6 +432,8 @@ def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collecti
     trigger the event.
     """
     email = fauxfactory.gen_email()
+    service_request_desc = ("VM Reconfigure for: {0} - Processor Sockets: {1}, "
+        "Processor Cores Per Socket: 1, Total Processors: {1}")
     alert = alert_collection.create(
         "Trigger by hardware reconfigured {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
@@ -444,11 +451,14 @@ def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collecti
     request.addfinalizer(alert.delete)
     setup_for_alerts(request, [alert], vm_name=vm.name)
     wait_for_ssa_enabled(vm)
-    do_scan(vm)
     sockets_count = vm.configuration.hw.sockets
-    vm.reconfigure(changes={"cpu": True, "sockets": sockets_count + 1})
-    do_scan(vm)
-    vm.reconfigure(changes={"cpu": True, "sockets": sockets_count + 2})
+    vm.power_control_from_provider("Power Off")
+    for i in range(1, 3):
+        do_scan(vm, rediscover=False)
+        vm.reconfigure(changes={"cpu": True, "sockets": str(sockets_count + i), "disks": ()})
+        service_request = requests_collection.instantiate(
+            description=service_request_desc.format(vm.name, sockets_count + i))
+        service_request.wait_for_request(method="ui", num_sec=300, delay=10)
     wait_for_alert(
         smtp_test,
         alert,
