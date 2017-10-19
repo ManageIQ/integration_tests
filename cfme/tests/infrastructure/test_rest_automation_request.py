@@ -10,6 +10,7 @@ from cfme.rest.gen_data import automation_requests_data as _automation_requests_
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
+from fixtures.pytest_store import store
 
 
 pytestmark = [test_requirements.rest]
@@ -199,6 +200,9 @@ class TestAutomationRequestsRESTAPI(object):
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
     @pytest.mark.tier(3)
+    @pytest.mark.skipif(
+        store.current_appliance.version < '5.9',
+        reason='BZ 1418338 was fixed only for versions >= 5.9')
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
