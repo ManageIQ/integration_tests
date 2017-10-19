@@ -292,8 +292,8 @@ class TestProvidersRESTAPI(object):
                 entity.action.delete.POST()
             assert appliance.rest_api.response.status_code == 404
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    @pytest.mark.meta(blockers=[BZ(1422596, forced_streams=['5.7', '5.8', 'upstream'])])
+    # BZ 1422596 was not fixed for versions < 5.9
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.9')
     @pytest.mark.tier(3)
     @test_requirements.rest
     def test_delete_custom_attributes_from_detail_delete(self, appliance, custom_attributes):
