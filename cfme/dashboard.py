@@ -220,7 +220,7 @@ class ParticularDashboardView(DashboardView):
             self.dashboards(title=self.obj.name).is_active)
 
 
-@attr.ib
+@attr.s
 class DashboardWidget(BaseEntity):
     """Represents a single UI dashboard widget.
 
@@ -401,7 +401,7 @@ class Dashboard(BaseEntity):
             dropped_widget_object = dropped_widget_or_name
             dropped_widget_or_name = dropped_widget_or_name.name
         else:
-            dropped_widget_object = self.widgets.instantiate(dropped_widget_or_name)
+            dropped_widget_object = self.collections.widgets.instantiate(dropped_widget_or_name)
         view = self.dashboard_view
         first_widget = view.widgets(title=dragged_widget_or_name).title
         if dropped_widget_object.last_in_column:
