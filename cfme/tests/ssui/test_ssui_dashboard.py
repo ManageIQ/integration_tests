@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import cfme.intelligence.chargeback.rates as rates
-import cfme.intelligence.chargeback.assignments as cb
 import fauxfactory
 import pytest
+import cfme.intelligence.chargeback.assignments as cb
+import cfme.intelligence.chargeback.rates as rates
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.dashboard import Dashboard
@@ -33,7 +33,7 @@ pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
 
 
 @pytest.yield_fixture(scope="module")
-def enable_candu(provider, appliance):
+def enable_candu(appliance):
     candu = appliance.collections.candus
     server_info = appliance.server.settings
     original_roles = server_info.server_roles_db
@@ -48,36 +48,30 @@ def enable_candu(provider, appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def new_compute_rate(provider, enable_candu):
+def new_compute_rate(enable_candu):
     # Create a new Compute Chargeback rate
     try:
-        desc = 'custom_' + fauxfactory.gen_alphanumeric()
-        compute = rates.ComputeRate(description=desc,
-                    fields={'Used CPU':
-                            {'per_time': 'Hourly', 'variable_rate': '3'},
-                            'Allocated CPU Count':
-                            {'per_time': 'Hourly', 'fixed_rate': '2'},
-                            'Used Disk I/O':
-                            {'per_time': 'Hourly', 'variable_rate': '2'},
-                            'Allocated Memory':
-                            {'per_time': 'Hourly', 'fixed_rate': '1'},
-                            'Used Memory':
-                            {'per_time': 'Hourly', 'variable_rate': '2'}})
+        desc = '{}custom_'.format(fauxfactory.gen_alphanumeric())
+        compute = rates.ComputeRate(description=desc, fields={
+            'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
+            'Allocated CPU Count': {'per_time': 'Hourly', 'fixed_rate': '2'},
+            'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
+            'Allocated Memory': {'per_time': 'Hourly', 'fixed_rate': '1'},
+            'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}})
         compute.create()
-        storage = rates.StorageRate(description=desc,
-                    fields={'Used Disk Storage':
-                            {'per_time': 'Hourly', 'variable_rate': '3'},
-                            'Allocated Disk Storage':
-                            {'per_time': 'Hourly', 'fixed_rate': '3'}})
+        storage = rates.StorageRate(description=desc, fields={
+            'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'},
+            'Allocated Disk Storage': {'per_time': 'Hourly', 'fixed_rate': '3'}})
         storage.create()
         yield desc
+
     finally:
         compute.delete()
         storage.delete()
 
 
 @pytest.yield_fixture(scope="module")
-def assign_chargeback_rate(provider, new_compute_rate):
+def assign_chargeback_rate(new_compute_rate):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
     description = new_compute_rate
     enterprise = cb.Assign(
@@ -87,7 +81,7 @@ def assign_chargeback_rate(provider, new_compute_rate):
         })
     enterprise.computeassign()
     enterprise.storageassign()
-    logger.info('Assigning CUSTOM Compute rate')
+    logger.info('Assigning CUSTOM Compute and Storage rates')
 
     yield
 
@@ -105,10 +99,11 @@ def assign_chargeback_rate(provider, new_compute_rate):
 def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
         order_catalog_item_in_ops_ui):
     catalog_item = order_catalog_item_in_ops_ui
-    vmname = catalog_item.provisioning_data["vm_name"] + '0001'
+    vmname = '{}0001'.format(catalog_item.provisioning_data['catalog']["vm_name"])
 
     def verify_records_rollups_table(appliance, provider):
-        # Verify that hourly rollups are present in the metric_rollups table.
+        # Verify that hourly rollups are present in the metric_rollups table
+        # before running Service Chargeback report.
 
         ems = appliance.db.client['ext_management_systems']
         rollups = appliance.db.client['metric_rollups']
@@ -122,12 +117,12 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
         for record in appliance.db.client.session.query(rollups).filter(
                 rollups.id.in_(result.subquery())):
-            if (record.cpu_usagemhz_rate_average or
-                    record.cpu_usage_rate_average or
-                    record.derived_memory_used or
-                    record.net_usage_rate_average or
-                    record.disk_usage_rate_average):
-                    return True
+            if (record.cpu_usagemhz_rate_average is not None or
+               record.cpu_usage_rate_average is not None or
+               record.derived_memory_used is not None or
+               record.net_usage_rate_average is not None or
+               record.disk_usage_rate_average):
+                return True
 
         return False
 
@@ -187,6 +182,7 @@ def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_
         appliance.server.login()
         dashboard = Dashboard(appliance)
         monthly_charges = dashboard.monthly_charges()
+        logger.info('Monthly charges is {}'.format(monthly_charges))
         assert monthly_charges != '$0'
 
 
