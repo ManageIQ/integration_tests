@@ -1,7 +1,8 @@
 from widgetastic_manageiq import (ManageIQTree, SummaryTable, ItemsToolBarViewSelector,
-                                 BaseEntitiesView)
-from widgetastic_patternfly import Dropdown, Accordion, FlashMessages, Button
-from widgetastic.widget import View, Text
+                                  BaseEntitiesView)
+from widgetastic_patternfly import (Dropdown, Accordion, FlashMessages, Button, TextInput,
+                                    BootstrapSwitch)
+from widgetastic.widget import View, Text, Select
 
 from cfme.base.login import BaseLoggedInPage
 
@@ -228,6 +229,41 @@ class CloudNetworkDetailsView(BaseLoggedInPage):
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
 
 
+class CloudNetworkAddView(BaseLoggedInPage):
+    """ Represents Add view of cloud network """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    network_manager = Select(id='ems_id')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    network_type = Select(name='provider_network_type')
+    network_name = TextInput(name='name')
+    ext_router = BootstrapSwitch(id='cloud_network_external_facing')
+    administrative_state = BootstrapSwitch(id='cloud_network_enabled')
+    shared = BootstrapSwitch(id='cloud_network_shared')
+    add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class CloudNetworkEditView(BaseLoggedInPage):
+    """ Represents Edit view of cloud network """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    network_name = TextInput(name='name')
+    ext_router = BootstrapSwitch(id='cloud_network_external_facing')
+    administrative_state = BootstrapSwitch(id='cloud_network_enabled')
+    shared = BootstrapSwitch(id='cloud_network_shared')
+    save = Button('Save')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
 class NetworkPortToolBar(View):
     """ Represents provider toolbar and its controls """
     policy = Dropdown(text='Policy')
@@ -311,6 +347,7 @@ class NetworkRouterToolBar(View):
 
 class NetworkRouterDetailsToolBar(View):
     """ Represents provider toolbar and its controls """
+    configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Button(title='Download')
 
@@ -373,6 +410,50 @@ class NetworkRouterDetailsView(BaseLoggedInPage):
         return (super(BaseLoggedInPage, self).is_displayed and
                 self.navigation.currently_selected == ['Networks', 'Providers'] and
                 self.title.text == '{name} (Summary)'.format(name=self.context['object'].name))
+
+
+class NetworkRouterAddView(BaseLoggedInPage):
+    """ Represents Add NetworkRouters page """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    network_manager = Select(id='ems_id')
+    router_name = TextInput(name='name')
+    ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
+    network_name = Select(name='cloud_network_id')
+    subnet_name = Select(name='cloud_subnet_id')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class NetworkRouterEditView(BaseLoggedInPage):
+    """ Represents Edit NetworkRouters page """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    router_name = TextInput(name='name')
+    ext_gateway = BootstrapSwitch(id='network_router_external_gateway')
+    network_name = Select(name='cloud_network_id')
+    subnet_name = Select(name='cloud_subnet_id')
+    save = Button('Save')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class NetworkRouterAddInterfaceView(BaseLoggedInPage):
+    """ Represents Add Interface to Network Router page """
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    subnet_name = Select(id='cloud_subnet_id')
+    add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class SecurityGroupToolBar(View):
@@ -460,8 +541,41 @@ class SubnetToolBar(View):
 
 class SubnetDetailsToolBar(View):
     """ Represents provider details toolbar """
+    configuration = Dropdown(text='Configuration')
     policy = Dropdown(text='Policy')
     download = Button(title='Download summary in PDF format')
+
+
+class SubnetAddView(BaseLoggedInPage):
+    """ Represents Add view of subnet """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    network_manager = Select(id='ems_id')
+    cloud_tenant = Select(name='cloud_tenant_id')
+    network = Select(name='cloud_network_id')
+    subnet_name = TextInput(name='name')
+    subnet_cidr = TextInput(name='cidr')
+    gateway = TextInput(name='gateway_ip')
+    add = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return False
+
+
+class SubnetEditView(BaseLoggedInPage):
+    """ Represents Edit view of subnet """
+    title = Text('//div[@id="main-content"]//h1')
+    flash = FlashMessages('.//div[@id="flash_msg_div"]/div[@id="flash_text_div" or '
+                          'contains(@class, "flash_text_div")]')
+    subnet_name = TextInput(name='name')
+    gateway = TextInput(name='gateway_ip')
+    save = Button('Save')
+
+    @property
+    def is_displayed(self):
+        return False
 
 
 class SubnetSideBar(View):
