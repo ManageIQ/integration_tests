@@ -65,8 +65,8 @@ def overall_test_status(statuses):
 
 
 class ReporterBase(object):
-    def _run_report(self, old_artifacts, artifact_dir, version=None):
-        template_data = self.process_data(old_artifacts, artifact_dir, version)
+    def _run_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
+        template_data = self.process_data(old_artifacts, artifact_dir, version, fw_version)
 
         if hasattr(self, 'only_failed') and self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
@@ -74,9 +74,9 @@ class ReporterBase(object):
 
         self.render_report(template_data, 'report', artifact_dir, 'test_report.html')
 
-    def _run_provider_report(self, old_artifacts, artifact_dir, version=None):
+    def _run_provider_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
         for mgmt in cfme_data['management_systems'].keys():
-            template_data = self.process_data(old_artifacts, artifact_dir, version,
+            template_data = self.process_data(old_artifacts, artifact_dir, version, fw_version,
                 name_filter=mgmt)
 
             self.render_report(template_data, "report_{}".format(mgmt), artifact_dir,
@@ -95,12 +95,13 @@ class ReporterBase(object):
         except OSError:
             pass
 
-    def process_data(self, artifacts, log_dir, version, name_filter=None):
+    def process_data(self, artifacts, log_dir, version, fw_version, name_filter=None):
         tb_errors = []
         blocker_skip_count = 0
         provider_skip_count = 0
         template_data = {'tests': [], 'qa': []}
         template_data['version'] = version
+        template_data['fw_version'] = fw_version
         log_dir = local(log_dir).strpath + "/"
         counts = {
             'passed': 0,
@@ -391,13 +392,15 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
             test_when: (test_outcome, test_xfail)}}}}
 
     @ArtifactorBasePlugin.check_configured
-    def session_info(self, version=None, build=None, stream=None):
-        return None, {'build': build, 'stream': stream, 'version': version}
+    def session_info(self, version=None, build=None, stream=None, fw_version=None):
+        return None, {
+            'build': build, 'stream': stream, 'version': version, 'fw_version': fw_version
+        }
 
     @ArtifactorBasePlugin.check_configured
-    def run_report(self, old_artifacts, artifact_dir, version=None):
-        self._run_report(old_artifacts, artifact_dir, version)
+    def run_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
+        self._run_report(old_artifacts, artifact_dir, version, fw_version)
 
     @ArtifactorBasePlugin.check_configured
-    def run_provider_report(self, old_artifacts, artifact_dir, version=None):
-        self._run_provider_report(old_artifacts, artifact_dir, version)
+    def run_provider_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):
+        self._run_provider_report(old_artifacts, artifact_dir, version, fw_version)
