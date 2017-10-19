@@ -50,8 +50,12 @@ class CustomReportFormCommon(CloudIntelReportsView):
     class filter(Tab):  # noqa
         filter_show_costs = BootstrapSelect("cb_show_typ")
         filter_owner = BootstrapSelect("cb_owner_id")
+        filter_provider = BootstrapSelect("cb_provider_id")
+        filter_project = BootstrapSelect("cb_entity_id")
         filter_tag_cat = BootstrapSelect("cb_tag_cat")
         filter_tag_value = BootstrapSelect("cb_tag_value")
+        interval = BootstrapSelect("cb_interval")
+        interval_size = BootstrapSelect("cb_interval_size")
         interval_end = BootstrapSelect("cb_end_interval_offset")
         primary_filter = ExpressionEditor()
         secondary_filter = ExpressionEditor()
@@ -185,6 +189,22 @@ class CustomReport(Updateable, Navigatable):
         "formatting": None,
         "styling": None,
         "filter": None,
+        "filter_show_costs": None,
+        "filter_owner": None,
+        "filter_tag_cat": None,
+        "filter_tag_value": None,
+        "interval": None,
+        "interval_size": None,
+        "interval_end": None,
+        "sort": None,
+        "chart_type": None,
+        "top_values": None,
+        "sum_other": None,
+        "base_timeline_on": None,
+        "band_units": None,
+        "event_position": None,
+        "show_event_unit": None,
+        "show_event_count": None,
         "summary": None,
         "charts": None,
         "timeline": None
@@ -354,6 +374,9 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
         Returns: :py:class:`SavedReportData`.
         """
         view = navigate_to(self, "Details")
+        if 'No records found for this report' in view.flash.read():
+            # No data found
+            return SavedReportData([], [])
         view.paginator.set_items_per_page(1000)
         try:
             headers = tuple([hdr.encode("utf-8") for hdr in view.table.headers])

@@ -1597,7 +1597,6 @@ class NonJSPaginationPane(View):
 
     def set_items_per_page(self, value):
         """Selects number of items to be displayed on page.
-
         Args:
             value: Ideally value is a positive int
         """
@@ -1605,11 +1604,11 @@ class NonJSPaginationPane(View):
             int(value)
         except ValueError:
             raise ValueError("Value should be integer and not {}".format(value))
-
-        items_text = VersionPick({
-            Version.lowest(): '{} items'.format(value),
-            '5.7.4': str(value),
-        }).pick(self.browser.product_version)
+        version = self.browser.product_version
+        if (version >= '5.7.4' and version < '5.8') or version >= '5.8.2':
+            items_text = str(value)
+        else:
+            items_text = '{} items'.format(value)
         self.items_on_page.select_by_visible_text(items_text)
 
     def _parse_pages(self):
