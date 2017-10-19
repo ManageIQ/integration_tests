@@ -143,7 +143,7 @@ class InstanceEditView(AutomateExplorerView):
 
 
 class Instance(BaseEntity, Copiable):
-    def __init__(self, collection, name, display_name, description, fields):
+    def __init__(self, collection, name, display_name=None, description=None, fields=None):
         super(Instance, self).__init__(collection)
 
         self.name = name
