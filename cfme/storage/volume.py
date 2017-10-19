@@ -24,7 +24,6 @@ from widgetastic.widget import View, Text, ParametrizedView
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound, ItemNotFound
-from cfme.web_ui import match_location
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.log import logger
@@ -105,8 +104,7 @@ class VolumeView(BaseLoggedInPage):
         nav = Volume.nav.pick(self.context['object'].appliance.version)
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == nav and
-            match_location(controller='cloud_volume', title='Cloud Volumes'))
+            self.navigation.currently_selected == nav)
 
 
 class VolumeAllView(VolumeView):

@@ -11,7 +11,6 @@ from widgetastic_manageiq import (
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.exceptions import CandidateNotFound
-from cfme.web_ui import match_location
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from cfme.utils.pretty import Pretty
@@ -121,9 +120,7 @@ class StackView(BaseLoggedInPage):
         """Determine if the Stacks page is currently open"""
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Compute', 'Clouds', 'Stacks'] and
-            # TODO: Needs to be converted once there's a Widgetastic alternative
-            match_location(controller='orchestration_stack', title='Stacks'))
+            self.navigation.currently_selected == ['Compute', 'Clouds', 'Stacks'])
 
 
 class StackAllView(StackView):
