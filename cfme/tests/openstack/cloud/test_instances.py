@@ -181,7 +181,7 @@ def test_list_vms_infra_node(appliance, provider, soft_assert):
 
     # Skip non-compute nodes
     hosts = [host for host in host_collection.all(provider) if 'Compute' in host.name]
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         host_ip = host.get_detail('Properties', 'IP Address')
         vms = int(host.get_detail('Relationships', 'VMs'))

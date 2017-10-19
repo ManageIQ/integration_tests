@@ -20,7 +20,7 @@ def host_collection(appliance):
 
 def test_host_configuration(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         host.run_smartstate_analysis()
         wait_for(is_host_analysis_finished, [host.name], delay=15,
@@ -33,7 +33,7 @@ def test_host_configuration(host_collection, provider, soft_assert):
 
 def test_host_cpu_resources(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         fields = ['Number of CPUs', 'Number of CPU Cores',
                   'CPU Cores Per Socket']
@@ -44,7 +44,7 @@ def test_host_cpu_resources(host_collection, provider, soft_assert):
 
 def test_host_auth(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         navigate_to(host, 'Details')
         auth_status = host.get_detail('Authentication Status', 'SSH Key Pair Credentials')
@@ -54,14 +54,14 @@ def test_host_auth(host_collection, provider, soft_assert):
 
 def test_host_devices(host_collection, provider):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         assert int(host.get_detail("Properties", "Devices")) > 0
 
 
 def test_host_hostname(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         result = host.get_detail("Properties", "Hostname")
         soft_assert(result, "Missing hostname in: " + str(result))
@@ -69,7 +69,7 @@ def test_host_hostname(host_collection, provider, soft_assert):
 
 def test_host_memory(host_collection, provider):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         result = int(host.get_detail("Properties", "Memory").split()[0])
         assert result > 0
@@ -77,7 +77,7 @@ def test_host_memory(host_collection, provider):
 
 def test_host_security(host_collection, provider, soft_assert):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         soft_assert(
             int(host.get_detail("Security", "Users")) > 0,
@@ -91,7 +91,7 @@ def test_host_security(host_collection, provider, soft_assert):
 def test_host_smbios_data(host_collection, provider, soft_assert):
     """Checks that Manufacturer/Model values are shown for each infra node"""
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         navigate_to(host, 'Details')
         res = host.get_detail('Properties', 'Manufacturer / Model')
@@ -101,7 +101,7 @@ def test_host_smbios_data(host_collection, provider, soft_assert):
 
 def test_host_zones_assigned(host_collection, provider):
     hosts = host_collection.all(provider)
-    assert len(hosts) > 0
+    assert hosts
     for host in hosts:
         result = host.get_detail('Relationships', 'Availability Zone')
         assert result, "Availability zone doesn't specified"

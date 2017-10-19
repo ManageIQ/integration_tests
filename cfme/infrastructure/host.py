@@ -393,6 +393,19 @@ class HostCollection(BaseCollection):
 
     ENTITY = Host
 
+    def check_hosts(self, hosts):
+        hosts = list(hosts)
+        checked_hosts = list()
+        view = navigate_to(self, 'All')
+
+        for host in hosts:
+            try:
+                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
+                checked_hosts.append(host)
+            except ItemNotFound:
+                raise ItemNotFound('Could not find host {} in the UI'.format(host.name))
+        return view
+
     def create(self, name, provider, credentials=None, hostname=None, ip_address=None,
                host_platform=None, custom_ident=None, ipmi_address=None, mac_address=None,
                ipmi_credentials=None, cancel=False, validate_credentials=False):
@@ -438,25 +451,14 @@ class HostCollection(BaseCollection):
         return host
 
     def all(self, provider):
-        """returning all Object Store Objects"""
+        """returning all hosts objects"""
         view = navigate_to(self, 'All')
-        view.toolbar.view_selector.select("Grid View")
         hosts = [self.instantiate(name=item, provider=provider)
                  for item in view.entities.entity_names]
         return hosts
 
     def run_smartstate_analysis(self, *hosts):
-        hosts = list(hosts)
-        checked_hosts = list()
-        view = navigate_to(self, 'All')
-
-        for host in hosts:
-            try:
-                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
-                checked_hosts.append(host)
-            except ItemNotFound:
-                raise ValueError('Could not find host {} in the UI'.format(host.name))
-
+        view = self.check_hosts(hosts)
         view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
         for host in hosts:
             view.flash.assert_success_message(
@@ -464,50 +466,19 @@ class HostCollection(BaseCollection):
 
     def delete(self, *hosts):
         """Deletes this host from CFME."""
-        hosts = list(hosts)
-        checked_hosts = list()
-        view = navigate_to(self, 'All')
-
-        for host in hosts:
-            try:
-                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
-                checked_hosts.append(host)
-            except ItemNotFound:
-                raise ValueError('Could not find host {} in the UI'.format(host.name))
-
+        view = self.check_hosts(hosts)
         view.toolbar.configuration.item_select('Remove items from Inventory', handle_alert=True)
         view.entities.flash.assert_success_message('The selected Hosts / Nodes was deleted')
-
         for host in hosts:
             wait_for(lambda: not host.exists, num_sec=600, delay=30,
                      message='Wait for Host to be deleted')
 
     def power_on(self, *hosts):
-        hosts = list(hosts)
-        checked_hosts = list()
-        view = navigate_to(self, 'All')
-
-        for host in hosts:
-            try:
-                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
-                checked_hosts.append(host)
-            except ItemNotFound:
-                raise ValueError('Could not find host {} in the UI'.format(host.name))
-
+        view = self.check_hosts(hosts)
         view.toolbar.power.item_select("Power On", handle_alert=True)
 
     def power_off(self, *hosts):
-        hosts = list(hosts)
-        checked_hosts = list()
-        view = navigate_to(self, 'All')
-
-        for host in hosts:
-            try:
-                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
-                checked_hosts.append(host)
-            except ItemNotFound:
-                raise ValueError('Could not find host {} in the UI'.format(host.name))
-
+        view = self.check_hosts(hosts)
         view.toolbar.power.item_select("Power Off", handle_alert=True)
 
 
