@@ -626,7 +626,7 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
             ex. auth_settings.update_form({"hours_timeout": hours, "mode": "Amazon"}, reset=True)
         """
         view = navigate_to(self, self.auth_mode)
-        view.fill(updates)
+        changed = view.fill(updates)
         try:
             view.validate.click()
             view.flash.assert_message(
@@ -637,7 +637,8 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
         if reset:
             view.reset_button.click()
             view.flash.assert_message('All changes have been reset')
-        else:
+        # Can't save the form if nothing was changed
+        elif changed:
             view.save_button.click()
             flash_message = (
                 'Authentication settings saved for {} Server "{} [{}]" in Zone "{}"'.format(
@@ -646,6 +647,8 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
                     self.appliance.server_id(),
                     self.appliance.server.zone.name))
             view.flash.assert_message(flash_message)
+        else:
+            logger.info('No authentication settings changed, not saving form.')
 
     @property
     def auth_settings(self):
