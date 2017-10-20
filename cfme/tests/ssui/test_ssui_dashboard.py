@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from datetime import date
+
 import fauxfactory
 import pytest
-from datetime import date
 
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
