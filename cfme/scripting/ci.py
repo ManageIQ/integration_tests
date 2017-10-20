@@ -4,15 +4,17 @@ click commands for ci testing
 import sys
 import os
 import subprocess
+import contextlib
 from functools import partial
 import re
 
 import click
 from click import secho
-from utils import conf
-from utils import path
-from utils import safe_string
-from utils.trackerbot import post_task_result
+from cfme.utils import conf
+from cfme.utils import path
+from cfme.utils import safe_string
+from cfme.utils.trackerbot import post_task_result
+from cfme.utils.wait import wait_for
 
 from . import quickstart
 
@@ -21,6 +23,18 @@ GIT_NO_SSL = dict(GIT_SSL_NO_VERIFY='true')
 
 def qe_yaml_path(path):
     return path.dirpath().join('cfme-qe-yamls')
+
+
+def appliances_configured():
+    return 'appliances:' in path.conf_path.join('env.local.yaml')
+
+
+@contextlib.contextmanager
+def managed_miq_sprout_checkout():
+    checkout_process = Popen(['miq', 'sprout', 'checkout'])
+    try:
+        wait_for(appliances_configured):
+)
 
 
 @click.group(help='Functions for test and ci related actions')
@@ -233,6 +247,7 @@ def run_tests(pytest_command):
 @click.option('--appliance', envvar="APPLIANCE")
 @click.option('--json', envvar="JSON")
 @click.option('--smtp', envvar="SMTP")
+@click.option('--use-sprout', envvar="USE_SPROUT", default="no", choices=)
 @click.argument('pytest_command', envvar='PYTEST')
 @click.pass_context
 def full(ctx,
