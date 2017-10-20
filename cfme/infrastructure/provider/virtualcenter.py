@@ -20,7 +20,7 @@ class VMwareProvider(InfraProvider):
     endpoints_form = VirtualCenterEndpointForm
     discover_dict = {"vmware": True}
     # xpath locators for elements, to be used by selenium
-    _console_connection_status_element = '//*[@id="connection-status"]'
+    _console_connection_status_element = '//*[@id="connection-status"]|//*[@id="noVNC_status"]'
     _canvas_element = ('(//*[@id="remote-console" or @id="wmksContainer"]/canvas|'
         '//*[@id="noVNC_canvas"])')
     _ctrl_alt_del_xpath = '(//*[@id="ctrlaltdel"]|//*[@id="sendCtrlAltDelButton"])'

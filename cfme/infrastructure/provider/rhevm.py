@@ -50,7 +50,7 @@ class RHEVMProvider(InfraProvider):
     endpoints_form = RHEVMEndpointForm
     discover_dict = {"rhevm": True}
     # xpath locators for elements, to be used by selenium
-    _console_connection_status_element = '//*[@id="connection-status"]'
+    _console_connection_status_element = '//*[@id="connection-status"]|//*[@id="message-div"]'
     _canvas_element = '(//*[@id="remote-console"]/canvas|//*[@id="spice-screen"]/canvas)'
     _ctrl_alt_del_xpath = '//*[@id="ctrlaltdel"]'
     _fullscreen_xpath = '//*[@id="fullscreen"]'
