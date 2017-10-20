@@ -154,7 +154,7 @@ management_systems:
     hawkular:
         name: hawkular-01
         type: hawkular
-        credentials: hawkulari
+        credentials: hawkular
         hostname: livingontheedge.hawkular.org
         api_port: 80
         endpoints:
