@@ -26,6 +26,7 @@ def qe_yaml_path(path):
 
 
 def appliances_configured():
+    """check if the appliances config was taken in from sprout"""
     return 'appliances:' in path.conf_path.join('env.local.yaml').read()
 
 
@@ -47,6 +48,7 @@ def managed_miq_sprout_checkout():
 
 @click.group(help='Functions for test and ci related actions')
 def main():
+    """command group for the ci commands"""
     pass
 
 
@@ -141,6 +143,8 @@ def verify_commit(commit):
 @click.option('--verify/--no-verify', default=True)
 def prepare_workdir_checkout(ctx, cfme_repo, cfme_pr,
                              branch, base_branch, verify):
+    """prepare the current checkout
+    """
     secho("preparing checkout", fg="yellow")
     extra_env = {
         'CFME_PR': cfme_pr,
@@ -257,6 +261,7 @@ def full(ctx,
          cfme_repo, cfme_pr, branch, base_branch, verify,
          browser, wharf, appliance, json, smtp,
          pytest_command, use_sprout):
+    """runs each component of the ci in order"""
     ctx.invoke(fetch_credentials,
                credentials_repo=credentials_repo)
     ctx.invoke(prepare_workdir_checkout,
@@ -291,6 +296,7 @@ def run_quickstart():
 @click.argument('extra_args', nargs=-1)
 @click.option('--post-task', default=None, envvar="POST_TASK")
 def run_logged(logfile, extra_args, post_task):
+    """backward compatibility hack to ensure legacy logging and result posting"""
     tee = subprocess.Popen(
         ['tee', '-a', logfile],
         stdin=subprocess.PIPE,
