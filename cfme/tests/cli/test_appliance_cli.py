@@ -42,6 +42,7 @@ def test_configure_appliance_external_create(
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
+@pytest.mark.skip('No IPA servers currently available')
 @pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],
     ids=['sso', 'saml', 'local_login'])
 def test_external_auth(request, auth_type, ipa_crud, app_creds):
@@ -67,6 +68,7 @@ def test_external_auth(request, auth_type, ipa_crud, app_creds):
     evm_tail.validate_logs()
 
 
+@pytest.mark.skip('No IPA servers currently available')
 def test_ipa_crud(request, ipa_creds, fqdn_appliance):
     fqdn_appliance.appliance_console_cli.configure_ipa(ipa_creds['ipaserver'],
         ipa_creds['username'], ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])

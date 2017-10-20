@@ -85,14 +85,13 @@ def test_black_console_internal_db(app_creds, temp_appliance_unconfig_funcscope)
 
 def test_black_console_internal_db_reset(app_creds, temp_appliance_preconfig_funcscope):
     """'ap' launch appliance_console, '' clear info screen, '5/8' setup db, '4' reset db, 'y'
-    confirm db reset, '1' db region number + wait 360 secs, '' continue, '' clear info screen,
-    '15/19' start evm and 'y' confirm start."""
+    confirm db reset, '1' db region number + wait 360 secs, '' continue"""
 
-    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     opt = '5' if temp_appliance_preconfig_funcscope.version >= "5.8" else '8'
+    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl stop evmserverd')
     command_set = ('ap', '', opt, '4', 'y', TimedCommand('1', 360), '')
-    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.appliance_console.run_commands(command_set)
+    temp_appliance_preconfig_funcscope.ssh_client.run_command('systemctl start evmserverd')
     temp_appliance_preconfig_funcscope.wait_for_evm_service()
     temp_appliance_preconfig_funcscope.wait_for_web_ui()
 
@@ -157,6 +156,7 @@ def test_black_console_extend_storage(fqdn_appliance):
     wait_for(is_storage_extended, func_args=[fqdn_appliance])
 
 
+@pytest.mark.skip('No IPA servers currently available')
 def test_black_console_ipa(ipa_creds, fqdn_appliance):
     """'ap' launches appliance_console, '' clears info screen, '11/14' setup IPA, 'y' confirm setup
     + wait 40 secs and '' finish."""
@@ -174,6 +174,7 @@ def test_black_console_ipa(ipa_creds, fqdn_appliance):
     assert return_code == 0
 
 
+@pytest.mark.skip('No IPA servers currently available')
 @pytest.mark.parametrize('auth_type', [
     LoginOption('sso', 'sso_enabled', '1'),
     LoginOption('saml', 'saml_enabled', '2'),
@@ -207,6 +208,7 @@ def test_black_console_external_auth(auth_type, app_creds, ipa_crud):
     evm_tail.validate_logs()
 
 
+@pytest.mark.skip('No IPA servers currently available')
 def test_black_console_external_auth_all(app_creds, ipa_crud):
     """'ap' launches appliance_console, '' clears info screen, '12/15' change ext auth options,
     'auth_type' auth type to change, '4' apply changes."""
