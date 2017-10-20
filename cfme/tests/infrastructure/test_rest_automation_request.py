@@ -5,11 +5,12 @@ import pytest
 from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
-from cfme.rest.gen_data import automation_requests_data as _automation_requests_data
 from cfme.rest.gen_data import a_provider as _a_provider
+from cfme.rest.gen_data import automation_requests_data as _automation_requests_data
 from cfme.rest.gen_data import vm as _vm
+from cfme.utils.rest import assert_response
 from cfme.utils.wait import wait_for
-from cfme.utils.version import current_version
+from fixtures.pytest_store import store
 
 
 pytestmark = [test_requirements.rest]
@@ -39,7 +40,7 @@ def wait_for_requests(requests):
 def gen_pending_requests(collection, rest_api, vm, requests=False):
     requests_data = _automation_requests_data(vm, approve=False, requests_collection=requests)
     response = collection.action.create(*requests_data[:2])
-    assert rest_api.response.status_code == 200
+    assert_response(rest_api)
     assert len(response) == 2
     for resource in response:
         assert resource.request_state == 'pending'
@@ -52,7 +53,7 @@ def create_requests(collection, rest_api, automation_requests_data, multiple):
     else:
         requests = collection.action.create(
             automation_requests_data[0])
-    assert rest_api.response.status_code == 200
+    assert_response(rest_api)
 
     wait_for_requests(requests)
 
@@ -80,7 +81,7 @@ def create_pending_requests(collection, rest_api, requests_pending):
         request.reload()
         assert request.approval_state == 'pending_approval'
         resource = collection.get(id=request.id)
-        assert rest_api.response.status_code == 200
+        assert_response(rest_api)
         assert resource.type == 'AutomationRequest'
 
 
@@ -91,7 +92,7 @@ def approve_requests(collection, rest_api, requests_pending, from_detail):
     else:
         collection.action.approve(
             reason="I said so", *requests_pending)
-    assert rest_api.response.status_code == 200
+    assert_response(rest_api)
 
     wait_for_requests(requests_pending)
 
@@ -107,13 +108,34 @@ def deny_requests(collection, rest_api, requests_pending, from_detail):
     else:
         collection.action.deny(
             reason="I said so", *requests_pending)
-    assert rest_api.response.status_code == 200
+    assert_response(rest_api)
 
     wait_for_requests(requests_pending)
 
     for request in requests_pending:
         request.reload()
         assert request.approval_state == 'denied'
+
+
+def edit_requests(collection, rest_api, requests_pending, from_detail):
+    body = {'options': {'arbitrary_key_allowed': 'test_rest'}}
+
+    if from_detail:
+        # testing BZ 1418331
+        for request in requests_pending:
+            request.action.edit(**body)
+            assert_response(rest_api)
+    else:
+        identifiers = []
+        for i, resource in enumerate(requests_pending):
+            loc = ({'id': resource.id}, {'href': '{}/{}'.format(collection._href, resource.id)})
+            identifiers.append(loc[i % 2])
+        collection.action.edit(*identifiers, **body)
+        assert_response(rest_api)
+
+    for request in requests_pending:
+        request.reload()
+        assert request.options['arbitrary_key_allowed'] == 'test_rest'
 
 
 class TestAutomationRequestsRESTAPI(object):
@@ -177,6 +199,22 @@ class TestAutomationRequestsRESTAPI(object):
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
+    @pytest.mark.tier(3)
+    @pytest.mark.skipif(
+        store.current_appliance.version < '5.9',
+        reason='BZ 1418338 was fixed only for versions >= 5.9')
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_edit_requests(self, collection, appliance, requests_pending, from_detail):
+        """Tests editing requests using /api/automation_requests.
+
+        Metadata:
+            test_flag: rest, requests
+        """
+        # testing BZ 1418338
+        edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
+
 
 class TestAutomationRequestsCommonRESTAPI(object):
     """Tests using /api/requests (common collection for all requests types)."""
@@ -194,7 +232,6 @@ class TestAutomationRequestsCommonRESTAPI(object):
         return gen_pending_requests(
             appliance.rest_api.collections.requests, appliance.rest_api, vm, requests=True)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'multiple', [False, True],
@@ -207,7 +244,6 @@ class TestAutomationRequestsCommonRESTAPI(object):
         """
         create_requests(collection, appliance.rest_api, automation_requests_data, multiple)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     def test_create_pending_requests(self, collection, appliance, requests_pending):
         """Tests creating pending requests using /api/requests.
@@ -217,7 +253,6 @@ class TestAutomationRequestsCommonRESTAPI(object):
         """
         create_pending_requests(collection, appliance.rest_api, requests_pending)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
@@ -230,7 +265,6 @@ class TestAutomationRequestsCommonRESTAPI(object):
         """
         approve_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
@@ -243,7 +277,6 @@ class TestAutomationRequestsCommonRESTAPI(object):
         """
         deny_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         'from_detail', [True, False],
@@ -254,26 +287,8 @@ class TestAutomationRequestsCommonRESTAPI(object):
         Metadata:
             test_flag: rest, requests
         """
-        body = {'options': {'arbitrary_key_allowed': 'test_rest'}}
+        edit_requests(collection, appliance.rest_api, requests_pending, from_detail)
 
-        if from_detail:
-            # testing BZ 1418331
-            for request in requests_pending:
-                request.action.edit(**body)
-                assert appliance.rest_api.response.status_code == 200
-        else:
-            identifiers = []
-            for i, resource in enumerate(requests_pending):
-                loc = ({'id': resource.id}, {'href': '{}/{}'.format(collection._href, resource.id)})
-                identifiers.append(loc[i % 2])
-            collection.action.edit(*identifiers, **body)
-            assert appliance.rest_api.response.status_code == 200
-
-        for request in requests_pending:
-            request.reload()
-            assert request.options['arbitrary_key_allowed'] == 'test_rest'
-
-    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_create_requests_parallel(self, appliance):
         """Create automation requests in parallel.
 
