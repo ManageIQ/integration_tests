@@ -4,6 +4,7 @@ import pytest
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 from cfme.utils.net import ip_address, resolve_hostname
 from cfme.utils.providers import get_crud_by_name
 from cfme.utils import testgen
@@ -88,6 +89,7 @@ def test_cluster_relationships(soft_assert):
 @pytest.mark.tier(3)
 @test_requirements.report
 @pytest.mark.usefixtures('setup_provider')
+@pytest.mark.meta(blockers=[BZ(1504010, forced_streams=['5.7', '5.8', 'upstream'])])
 def test_operations_vm_on(soft_assert, appliance):
 
     adb = appliance.db.client
@@ -109,7 +111,11 @@ def test_operations_vm_on(soft_assert, appliance):
                     vms.power_state == 'on').order_by(vms.name).all()
 
     assert len(vms_in_db) == len(list(report.data.rows))
+    vm_names = [vm.vm_name for vm in vms_in_db]
     for vm in vms_in_db:
+        # Following check is based on BZ 1504010
+        assert vm_names.count(vm.vm_name) == 1, \
+            'There is a duplicate entry in DB for VM {}'.format(vm.vm_name)
         store_path = '{}/{}'.format(vm.storages_name.encode('utf8'),
                                     vm.vm_location.encode('utf8'))
         for item in report.data.rows:
