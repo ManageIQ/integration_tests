@@ -1335,7 +1335,8 @@ class Notification(Widget, ClickableMixin):
         notification_bell = Text('.//li/a[contains(@title, "notifications")]/i')
         events = Text(".//h4[contains(@class, 'panel-title')]")
         find_event = Text(ParametrizedLocator('.//div[contains(@class, "drawer-pf-notification")]'
-                                         '/div/span[normalize-space(.)={message|quote}]'))
+                                              '/div/span'
+                                              '[contains(normalize-space(.), {message|quote})]'))
 
         def click_bell(self):
             """Opens and closes the notification bell at the Nav bar"""
@@ -1346,6 +1347,9 @@ class Notification(Widget, ClickableMixin):
             self.click_bell()
             self.events.click()
             self.find_event.click()
+            # close events and bell
+            self.events.click()
+            self.click_bell()
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
