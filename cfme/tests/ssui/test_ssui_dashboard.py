@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from datetime import date
+
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
-
 from cfme.infrastructure.provider import InfraProvider
 from cfme.services.dashboard import Dashboard
 from cfme import test_requirements
-
 from cfme.utils.log import logger
 from cfme.utils import testgen
 from cfme.utils.version import current_version
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.wait import wait_for
-from datetime import date
+
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -40,9 +40,7 @@ def enable_candu(appliance):
     server_info.enable_server_roles(
         'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor')
     candu.enable_all()
-
     yield
-
     server_info.update_server_roles_db(original_roles)
     candu.disable_all()
 
@@ -50,41 +48,36 @@ def enable_candu(appliance):
 @pytest.yield_fixture(scope="module")
 def new_compute_rate(enable_candu):
     # Create a new Compute Chargeback rate
-    try:
-        desc = '{}custom_'.format(fauxfactory.gen_alphanumeric())
-        compute = rates.ComputeRate(description=desc, fields={
-            'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
-            'Allocated CPU Count': {'per_time': 'Hourly', 'fixed_rate': '2'},
-            'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
-            'Allocated Memory': {'per_time': 'Hourly', 'fixed_rate': '1'},
-            'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}})
-        compute.create()
-        storage = rates.StorageRate(description=desc, fields={
-            'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'},
-            'Allocated Disk Storage': {'per_time': 'Hourly', 'fixed_rate': '3'}})
-        storage.create()
-        yield desc
-
-    finally:
-        compute.delete()
-        storage.delete()
+    desc = '{}custom_'.format(fauxfactory.gen_alphanumeric())
+    compute = rates.ComputeRate(description=desc, fields={
+        'Used CPU': {'per_time': 'Hourly', 'variable_rate': '3'},
+        'Allocated CPU Count': {'per_time': 'Hourly', 'fixed_rate': '2'},
+        'Used Disk I/O': {'per_time': 'Hourly', 'variable_rate': '2'},
+        'Allocated Memory': {'per_time': 'Hourly', 'fixed_rate': '1'},
+        'Used Memory': {'per_time': 'Hourly', 'variable_rate': '2'}})
+    compute.create()
+    storage = rates.StorageRate(description=desc, fields={
+        'Used Disk Storage': {'per_time': 'Hourly', 'variable_rate': '3'},
+        'Allocated Disk Storage': {'per_time': 'Hourly', 'fixed_rate': '3'}})
+    storage.create()
+    yield desc
+    compute.delete()
+    storage.delete()
 
 
 @pytest.yield_fixture(scope="module")
 def assign_chargeback_rate(new_compute_rate):
     # Assign custom Compute rate to the Enterprise and then queue the Chargeback report.
-    description = new_compute_rate
+    # description = new_compute_rate
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
-            'Enterprise': {'Rate': description}
+            'Enterprise': {'Rate': new_compute_rate}
         })
     enterprise.computeassign()
     enterprise.storageassign()
     logger.info('Assigning CUSTOM Compute and Storage rates')
-
     yield
-
     # Resetting the Chargeback rate assignment
     enterprise = cb.Assign(
         assign_to="The Enterprise",
@@ -117,17 +110,18 @@ def run_service_chargeback_report(provider, appliance, assign_chargeback_rate,
 
         for record in appliance.db.client.session.query(rollups).filter(
                 rollups.id.in_(result.subquery())):
+            # It's okay for these values to be '0'.
             if (record.cpu_usagemhz_rate_average is not None or
                record.cpu_usage_rate_average is not None or
                record.derived_memory_used is not None or
                record.net_usage_rate_average is not None or
-               record.disk_usage_rate_average):
+               record.disk_usage_rate_average is not None):
                 return True
 
         return False
 
     wait_for(verify_records_rollups_table, [appliance, provider], timeout=3600,
-        fail_condition=False, message='Waiting for hourly rollups')
+        message='Waiting for hourly rollups')
 
     rc, out = appliance.ssh_client.run_rails_command(
         'Service.queue_chargeback_reports')
