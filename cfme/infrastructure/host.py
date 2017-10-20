@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """A model of an Infrastructure Host in CFME."""
+import attr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from manageiq_client.api import APIException
@@ -21,7 +22,7 @@ from cfme.common.host_views import (
 from cfme.exceptions import ItemNotFound
 from cfme.infrastructure.datastore import HostAllDatastoresView
 from cfme.utils import conf
-from cfme.utils.appliance import Navigatable
+from cfme.modeling.base import BaseEntity, BaseCollection
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from cfme.utils.ipmi import IPMI
 from cfme.utils.log import logger
@@ -30,7 +31,8 @@ from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 
 
-class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, WidgetasticTaggable):
+@attr.s
+class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticTaggable):
     """Model of an infrastructure host in cfme.
 
     Args:
@@ -53,23 +55,18 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, Widgetastic
     """
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
-    def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
-                 host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
-                 ipmi_credentials=None, interface_type='lan', provider=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
-        self.name = name
-        self.quad_name = 'host'
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.custom_ident = custom_ident
-        self.host_platform = host_platform
-        self.ipmi_address = ipmi_address
-        self.mac_address = mac_address
-        self.credentials = credentials
-        self.ipmi_credentials = ipmi_credentials
-        self.interface_type = interface_type
-        self.db_id = None
-        self.provider = provider
+    name = attr.ib()
+    provider = attr.ib()
+    hostname = attr.ib(default=None)
+    ip_address = attr.ib(default=None)
+    custom_ident = attr.ib(default=None)
+    host_platform = attr.ib(default=None)
+    ipmi_address = attr.ib(default=None)
+    mac_address = attr.ib(default=None)
+    credentials = attr.ib(default=None)
+    ipmi_credentials = attr.ib(default=None)
+    interface_type = attr.ib(default='lan')
+    db_id = None
 
     class Credential(BaseCredential, Updateable):
         """Provider credentials
@@ -80,42 +77,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, Widgetastic
         def __init__(self, **kwargs):
             super(Host.Credential, self).__init__(**kwargs)
             self.ipmi = kwargs.get('ipmi')
-
-    def create(self, cancel=False, validate_credentials=False):
-        """Creates a host in the UI.
-
-        Args:
-           cancel (bool): Whether to cancel out of the creation. The cancel is done after all the
-               information present in the Host has been filled in the UI.
-           validate_credentials (bool): Whether to validate credentials - if True and the
-               credentials are invalid, an error will be raised.
-        """
-        view = navigate_to(self, "Add")
-        view.fill({
-            "name": self.name,
-            "hostname": self.hostname or self.ip_address,
-            "host_platform": self.host_platform,
-            "custom_ident": self.custom_ident,
-            "ipmi_address": self.ipmi_address,
-            "mac_address": self.mac_address
-        })
-        if self.credentials is not None:
-            view.endpoints.default.fill(self.credentials.view_value_mapping)
-            if validate_credentials:
-                view.endpoints.default.validate_button.click()
-        if self.ipmi_credentials is not None:
-            view.endpoints.ipmi.fill(self.ipmi_credentials.view_value_mapping)
-            if validate_credentials:
-                view.endpoints.ipmi.validate_button.click()
-        if not cancel:
-            view.add_button.click()
-            flash_message = 'Host / Node " {}" was added'.format(self.name)
-        else:
-            view.cancel_button.click()
-            flash_message = "Add of new Host / Node was cancelled by the user"
-        view = self.create_view(HostsView)
-        assert view.is_displayed
-        view.flash.assert_success_message(flash_message)
 
     def update(self, updates, validate_credentials=False):
         """Updates a host in the UI. Better to use utils.update.update context manager than call
@@ -220,7 +181,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, Widgetastic
             desired_state (str): 'on' or 'off'
             timeout (int): Specify amount of time (in seconds) to wait until TimedOutError is raised
         """
-        view = navigate_to(self, "All")
+        view = navigate_to(self.parent, "All")
 
         def _looking_for_state_change():
             entity = view.entities.get_entity(by_name=self.name)
@@ -258,7 +219,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, Widgetastic
 
         Returns: :py:class:`bool`
         """
-        view = navigate_to(self, "All")
+        view = navigate_to(self.parent, "All")
         try:
             view.entities.get_entity(by_name=self.name, surf_pages=True)
         except ItemNotFound:
@@ -272,7 +233,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, Widgetastic
 
         Returns: :py:class:`bool`
         """
-        view = navigate_to(self, "All")
+        view = navigate_to(self.parent, "All")
         entity = view.entities.get_entity(by_name=self.name, surf_pages=True)
         return entity.data['creds'].strip().lower() == "checkmark"
 
@@ -403,8 +364,125 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable, Widgetastic
             drift_analysis_view.toolbar.all_attributes.click()
         return drift_analysis_view.drift_analysis(drift_section).is_changed
 
+    def wait_to_appear(self):
+        """Waits for the host to appear in the UI."""
+        view = navigate_to(self.parent, "All")
+        logger.info("Waiting for the host to appear...")
+        wait_for(
+            lambda: self.exists,
+            message="Wait for the host to appear",
+            num_sec=1000,
+            fail_func=view.browser.refresh
+        )
 
-@navigator.register(Host)
+    def wait_for_delete(self):
+        """Waits for the host to remove from the UI."""
+        view = navigate_to(self.parent, "All")
+        logger.info("Waiting for a host to delete...")
+        wait_for(
+            lambda: not self.exists,
+            message="Wait for the host to disappear",
+            num_sec=500,
+            fail_func=view.browser.refresh
+        )
+
+
+@attr.s
+class HostCollection(BaseCollection):
+    """Collection object for the :py:class:`cfme.infrastructure.host.Host`."""
+
+    ENTITY = Host
+
+    def check_hosts(self, hosts):
+        hosts = list(hosts)
+        checked_hosts = list()
+        view = navigate_to(self, 'All')
+
+        for host in hosts:
+            try:
+                view.entities.get_entity(by_name=host.name, surf_pages=True).check()
+                checked_hosts.append(host)
+            except ItemNotFound:
+                raise ItemNotFound('Could not find host {} in the UI'.format(host.name))
+        return view
+
+    def create(self, name, provider, credentials=None, hostname=None, ip_address=None,
+               host_platform=None, custom_ident=None, ipmi_address=None, mac_address=None,
+               ipmi_credentials=None, cancel=False, validate_credentials=False):
+        """Creates a host in the UI.
+
+        Args:
+           cancel (bool): Whether to cancel out of the creation. The cancel is done after all the
+               information present in the Host has been filled in the UI.
+           validate_credentials (bool): Whether to validate credentials - if True and the
+               credentials are invalid, an error will be raised.
+        """
+        view = navigate_to(self, "Add")
+        view.fill({
+            "name": name,
+            "hostname": hostname or ip_address,
+            "host_platform": host_platform,
+            "custom_ident": custom_ident,
+            "ipmi_address": ipmi_address,
+            "mac_address": mac_address
+        })
+        if credentials is not None:
+            view.endpoints.default.fill(credentials.view_value_mapping)
+            if validate_credentials:
+                view.endpoints.default.validate_button.click()
+        if ipmi_credentials is not None:
+            view.endpoints.ipmi.fill(ipmi_credentials.view_value_mapping)
+            if validate_credentials:
+                view.endpoints.ipmi.validate_button.click()
+        if not cancel:
+            view.add_button.click()
+            flash_message = 'Host / Node " {}" was added'.format(name)
+        else:
+            view.cancel_button.click()
+            flash_message = "Add of new Host / Node was cancelled by the user"
+        host = self.instantiate(name=name, hostname=hostname, ip_address=ip_address,
+                                custom_ident=custom_ident, host_platform=host_platform,
+                                ipmi_address=ipmi_address, mac_address=mac_address,
+                                credentials=credentials, ipmi_credentials=ipmi_credentials,
+                                provider=provider)
+        view = host.create_view(HostsView)
+        assert view.is_displayed
+        view.flash.assert_success_message(flash_message)
+        return host
+
+    def all(self, provider):
+        """returning all hosts objects"""
+        view = navigate_to(self, 'All')
+        hosts = [self.instantiate(name=item, provider=provider)
+                 for item in view.entities.entity_names]
+        return hosts
+
+    def run_smartstate_analysis(self, *hosts):
+        view = self.check_hosts(hosts)
+        view.toolbar.configuration.item_select('Perform SmartState Analysis', handle_alert=True)
+        for host in hosts:
+            view.flash.assert_success_message(
+                '"{}": Analysis successfully initiated'.format(host.name))
+
+    def delete(self, *hosts):
+        """Deletes this host from CFME."""
+        view = self.check_hosts(hosts)
+        view.toolbar.configuration.item_select('Remove items from Inventory', handle_alert=True)
+        view.entities.flash.assert_success_message('The selected Hosts / Nodes was deleted')
+        for host in hosts:
+            wait_for(lambda: not host.exists, num_sec=600, delay=30,
+                     message='Wait for Host to be deleted')
+
+    def power_on(self, *hosts):
+        view = self.check_hosts(hosts)
+        view.toolbar.power.item_select("Power On", handle_alert=True)
+
+    def power_off(self, *hosts):
+        view = self.check_hosts(hosts)
+        view.toolbar.power.item_select("Power Off", handle_alert=True)
+
+
+@navigator.register(HostCollection)
 class All(CFMENavigateStep):
     VIEW = HostsView
     prerequisite = NavigateToAttribute("appliance.server", "LoggedIn")
@@ -419,7 +497,7 @@ class All(CFMENavigateStep):
 @navigator.register(Host)
 class Details(CFMENavigateStep):
     VIEW = HostDetailsView
-    prerequisite = NavigateToSibling("All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.entities.get_entity(by_name=self.obj.name, surf_pages=True).click()
@@ -434,7 +512,7 @@ class Edit(CFMENavigateStep):
         self.prerequisite_view.toolbar.configuration.item_select("Edit this item")
 
 
-@navigator.register(Host)
+@navigator.register(HostCollection)
 class Add(CFMENavigateStep):
     VIEW = HostAddView
     prerequisite = NavigateToSibling("All")
@@ -446,7 +524,7 @@ class Add(CFMENavigateStep):
 @navigator.register(Host)
 class Discover(CFMENavigateStep):
     VIEW = HostDiscoverView
-    prerequisite = NavigateToSibling("All")
+    prerequisite = NavigateToAttribute("parent", "All")
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select("Discover items")
@@ -508,58 +586,3 @@ def get_from_config(provider_config_name):
         credentials=credentials,
         ipmi_credentials=ipmi_credentials
     )
-
-
-def wait_for_a_host():
-    """Waits for any host to appear in the UI."""
-    view = navigate_to(Host, "All")
-    logger.info("Waiting for a host to appear...")
-    wait_for(
-        lambda: int(view.paginator.items_amount),
-        fail_condition=0,
-        message="Wait for any host to appear",
-        num_sec=1000,
-        fail_func=view.browser.refresh
-    )
-
-
-def wait_for_host_delete(host):
-    """Waits for the host to remove from the UI.
-
-    Args:
-        host (Host): host object
-    """
-    view = navigate_to(Host, "All")
-    logger.info("Waiting for a host to delete...")
-    wait_for(
-        lambda: not host.exists,
-        message="Wait for the host to disappear",
-        num_sec=500,
-        fail_func=view.browser.refresh
-    )
-
-
-def wait_for_host_to_appear(host):
-    """Waits for the host to appear in the UI.
-
-    Args:
-        host (Host): host object
-    """
-    view = navigate_to(Host, "All")
-    logger.info("Waiting for the host to appear...")
-    wait_for(
-        lambda: host.exists,
-        message="Wait for the host to appear",
-        num_sec=1000,
-        fail_func=view.browser.refresh
-    )
-
-
-def get_all_hosts():
-    """Returns names list of all hosts.
-
-    Returns:
-        list: names list of all hosts
-    """
-    view = navigate_to(Host, "All")
-    return [entity.name for entity in view.entities.get_all(surf_pages=True)]

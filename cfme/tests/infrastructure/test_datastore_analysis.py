@@ -77,8 +77,8 @@ def get_host_data_by_name(provider_key, host_name):
         BZ(1380707)
     ]
 )
-def test_run_datastore_analysis(request, setup_provider, provider, datastore, soft_assert,
-                                has_no_providers):
+def test_run_datastore_analysis(appliance, request, setup_provider, provider, datastore,
+                                soft_assert, has_no_providers):
     """Tests smarthost analysis
 
     Metadata:
@@ -100,7 +100,8 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore, so
                 continue
 
             found_host = True
-            test_host = host.Host(name=host_entity.name, provider=provider)
+            host_collection = appliance.collections.hosts
+            test_host = host_collection.instantiate(name=host_entity.name, provider=provider)
 
             # Add them to the host
             wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)

@@ -10,7 +10,7 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.tenant import TenantCollection
 from cfme.infrastructure.cluster import ClusterCollection
 from cfme.infrastructure.datastore import DatastoreCollection
-from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import mixins
@@ -24,7 +24,7 @@ param_classes = {
     'Infra Providers': InfraProvider,
     'Infra VMs': Vm,
     'Infra Templates': Template,
-    'Infra Hosts': Host,
+    'Infra Hosts': HostCollection,
     'Infra Clusters': ClusterCollection,
     'Infra Stores': DatastoreCollection,
 

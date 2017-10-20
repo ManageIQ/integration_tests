@@ -174,6 +174,7 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
         provider according to the YAML
         """
         result = []
+        host_collection = self.appliance.collections.hosts
         for host in self.get_yaml_data().get("hosts", []):
             creds = conf.credentials.get(host["credentials"], {})
             cred = Host.Credential(
@@ -181,9 +182,9 @@ class InfraProvider(Pretty, CloudInfraProvider, Fillable):
                 secret=creds["password"],
                 verify_secret=creds["password"],
             )
-            result.append(Host(name=host["name"],
-                               credentials=cred,
-                               provider=self))
+
+            result.append(host_collection.instantiate(name=host["name"], credentials=cred,
+                                                      provider=self))
         return result
 
     def get_clusters(self):

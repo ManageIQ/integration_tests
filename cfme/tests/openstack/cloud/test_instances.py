@@ -8,7 +8,6 @@ from wait_for import TimedOutError
 from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.exceptions import ItemNotFound
-from cfme.infrastructure.host import Host
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.log import logger
@@ -172,18 +171,18 @@ def test_delete_instance(new_instance):
         pass
 
 
-def test_list_vms_infra_node(provider, soft_assert):
+def test_list_vms_infra_node(appliance, provider, soft_assert):
     if not getattr(provider, 'infra_provider', None):
         pytest.skip("Provider {prov} doesn't have infra provider set".format(prov=provider.name))
 
-    view = navigate_to(provider.infra_provider, 'ProviderNodes')
+    host_collection = appliance.collections.hosts
     # Match hypervisors by IP with count of running VMs
     hvisors = {hv.host_ip: hv.running_vms for hv in provider.mgmt.api.hypervisors.list()}
 
     # Skip non-compute nodes
-    host_names = [e for e in view.entities.all_entity_names if 'Compute' in e]
-    for host_name in host_names:
-        host = Host(host_name, provider=provider.infra_provider)
+    hosts = [host for host in host_collection.all(provider) if 'Compute' in host.name]
+    assert hosts
+    for host in hosts:
         host_ip = host.get_detail('Properties', 'IP Address')
         vms = int(host.get_detail('Relationships', 'VMs'))
         soft_assert(vms == hvisors[host_ip],

@@ -2,13 +2,11 @@
 import fauxfactory
 import pytest
 
-from cfme.common.vm import VM
 from cfme.base.ui import Server
 from cfme.common.provider import BaseProvider
-from cfme.infrastructure.host import Host
+from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from fixtures.provider import setup_one_or_skip
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -17,6 +15,7 @@ from cfme.utils.generators import random_vm_name
 from cfme.utils.log import logger
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.wait import wait_for
+from fixtures.provider import setup_one_or_skip
 
 
 pytestmark = [pytest.mark.tier(2)]
@@ -95,7 +94,7 @@ def test_infra_provider_event(gen_events, new_vm):
              message="events to appear")
 
 
-def test_infra_host_event(gen_events, new_vm):
+def test_infra_host_event(appliance, a_provider, gen_events, new_vm):
     """Tests host event on timelines
 
     Metadata:
@@ -103,7 +102,8 @@ def test_infra_host_event(gen_events, new_vm):
     """
     view = navigate_to(new_vm, "Details")
     host_name = view.entities.relationships.get_text_of('Host')
-    host = Host(name=host_name, provider=new_vm.provider)
+    host_collection = appliance.collections.hosts
+    host = host_collection.instantiate(name=host_name, provider=a_provider)
     wait_for(count_events, [host, new_vm], timeout='10m', fail_condition=0,
              message="events to appear")
 

@@ -8,10 +8,9 @@ from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import toolbar as tb
 from cfme.infrastructure import virtual_machines as vms  # NOQA
+from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.infrastructure.host import Host
-from cfme.infrastructure.datastore import DatastoreCollection
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
@@ -227,12 +226,13 @@ def test_infraprovider_noquads(request, set_infra_provider_quad):
     assert view.entities.get_first_entity().data is None
 
 
-def test_host_noquads(request, set_host_quad):
+def test_host_noquads(appliance, request, set_host_quad):
     """
         This test checks that Host Quadrant when switched off from Mysetting page under
         Visual Tab under "Show Host Quadrants" option works properly.
     """
-    view = navigate_to(Host, 'All')
+    host_collection = appliance.collections.hosts
+    view = navigate_to(host_collection, 'All')
     view.toolbar.view_selector.select("Grid View")
     # Here get_first_entity() method will return None when the Quadrants option is deactivated.
     assert view.entities.get_first_entity().data is None

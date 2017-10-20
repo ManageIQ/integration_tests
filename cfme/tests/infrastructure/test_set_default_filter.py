@@ -6,7 +6,6 @@ from cfme.web_ui.search import search_box
 from cfme.utils import version
 from cfme.web_ui import listaccordion as list_acc
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import DatastoreCollection
 
 
@@ -15,29 +14,31 @@ pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("virtualcenter_provid
 
 def test_set_default_host_filter(request, appliance):
     """ Test for setting default filter for hosts."""
+    host_collection = appliance.collections.hosts
 
     # Add cleanup finalizer
     def unset_default_host_filter():
-        navigate_to(Host, 'All')
+        navigate_to(host_collection, 'All')
         list_acc.select('Filters', 'ALL', by_title=False)
         pytest.sel.click(host.default_host_filter_btn)
     request.addfinalizer(unset_default_host_filter)
 
-    navigate_to(Host, 'All')
+    navigate_to(host_collection, 'All')
     list_acc.select('Filters', 'Status / Running', by_title=False)
     pytest.sel.click(host.default_host_filter_btn)
     appliance.server.logout()
     appliance.server.login_admin()
-    navigate_to(Host, 'All')
+    navigate_to(host_collection, 'All')
     assert list_acc.is_selected('Filters', 'Status / Running (Default)', by_title=False),\
         'Status / Running filter not set as default'
 
 
-def test_clear_host_filter_results():
+def test_clear_host_filter_results(appliance):
     """ Test for clearing filter results for hosts."""
+    host_collection = appliance.collections.hosts
 
     # TODO many parts of this test and others in this file need to be replaced with WT calls
-    view = navigate_to(Host, 'All')
+    view = navigate_to(host_collection, 'All')
     list_acc.select('Filters', 'Status / Stopped', by_title=False)
     pytest.sel.click(search_box.clear_advanced_search)
     page_title = view.title.text

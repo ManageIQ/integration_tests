@@ -3,7 +3,7 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.cluster import ClusterCollection
-from cfme.infrastructure.host import Host
+from cfme.infrastructure.host import HostCollection
 from cfme.infrastructure.datastore import DatastoreCollection
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
@@ -24,7 +24,7 @@ def a_provider(request):
 test_items = [
     ('providers', InfraProvider),
     ('clusters', ClusterCollection),
-    ('hosts', Host),
+    ('hosts', HostCollection),
     ('data_stores', DatastoreCollection),
     ('vms', Vm),
     ('templates', Template)

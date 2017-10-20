@@ -117,18 +117,21 @@ def test_host_provisioning(appliance, setup_provider, cfme_data, host_provisioni
             renamed_host_name1 = "{} ({})".format('IPMI', host_provisioning['ipmi_address'])
             renamed_host_name2 = "{} ({})".format('VMware ESXi', host_provisioning['ip_addr'])
 
-            host_list_ui = host.get_all_hosts()
+            host_collection = appliance.collections.hosts
+            host_list_ui = host_collection.all(provider=provider)
             if host_provisioning['hostname'] in host_list_ui:
                 test_host.delete(cancel=False)
-                host.wait_for_host_delete(test_host)
-            elif renamed_host_name1 in host_list_ui:
-                host_renamed_obj1 = host.Host(name=renamed_host_name1, provider=provider)
+                test_host.wait_for_delete()
+            elif renamed_host_name1 in [h.name for h in host_list_ui]:
+                host_renamed_obj1 = host_collection.instantiate(name=renamed_host_name1,
+                                                                provider=provider)
                 host_renamed_obj1.delete(cancel=False)
-                host.wait_for_host_delete(host_renamed_obj1)
-            elif renamed_host_name2 in host_list_ui:
-                host_renamed_obj2 = host.Host(name=renamed_host_name2, provider=provider)
+                host_renamed_obj1.wait_for_delete()
+            elif renamed_host_name2 in [h.name for h in host_list_ui]:
+                host_renamed_obj2 = host_collection.instantiate(name=renamed_host_name2,
+                                                                provider=provider)
                 host_renamed_obj2.delete(cancel=False)
-                host.wait_for_host_delete(host_renamed_obj2)
+                host_renamed_obj2.wait_for_delete()
         except:
             # The mgmt_sys classes raise Exception :\
             logger.warning('Failed to clean up host %s on provider %s',

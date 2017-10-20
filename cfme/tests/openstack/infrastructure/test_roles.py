@@ -2,7 +2,6 @@ import pytest
 from random import choice
 
 from cfme.configure.tasks import is_host_analysis_finished
-from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -27,12 +26,11 @@ def roles(appliance, provider):
     yield roles if roles else pytest.skip("No Roles Available")
 
 
-def test_host_role_association(provider, soft_assert):
-    view = navigate_to(provider, 'ProviderNodes')
-    nodes = [q.name for q in view.entities.get_all()]
-
-    for node in nodes:
-        host = Host(node, provider=provider)
+def test_host_role_association(appliance, provider, soft_assert):
+    host_collection = appliance.collections.hosts
+    hosts = host_collection.all(provider)
+    assert len(hosts) > 0
+    for host in hosts:
         host.run_smartstate_analysis()
 
         wait_for(is_host_analysis_finished, [host.name], delay=15,
