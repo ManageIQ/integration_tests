@@ -26,15 +26,23 @@ def qe_yaml_path(path):
 
 
 def appliances_configured():
-    return 'appliances:' in path.conf_path.join('env.local.yaml')
+    return 'appliances:' in path.conf_path.join('env.local.yaml').read()
 
 
 @contextlib.contextmanager
 def managed_miq_sprout_checkout():
-    checkout_process = Popen(['miq', 'sprout', 'checkout'])
+    """contextmanager to invoke miq sprout checkout
+
+    it presumes all configuration is passed in the environment
+    """
+    checkout_process = subprocess.Popen(['miq', 'sprout', 'checkout'])
     try:
-        wait_for(appliances_configured):
-)
+        wait_for(appliances_configured,
+                 delay="10s", timeout="5m")
+        yield
+    finally:
+        checkout_process.kill()
+        checkout_process.wait()
 
 
 @click.group(help='Functions for test and ci related actions')
@@ -227,11 +235,6 @@ def prepare_workdir_configfiles(browser, wharf, appliance, json, smtp):
 
 @main.command()
 def run_tests(pytest_command):
-    quickstart.run_for_current_env()
-    import sys
-    sys.stdout.flush()
-    sys.stderr.flush()
-
     sys.exit(subprocess.call(pytest_command, shell=True))
 
 
@@ -247,14 +250,14 @@ def run_tests(pytest_command):
 @click.option('--appliance', envvar="APPLIANCE")
 @click.option('--json', envvar="JSON")
 @click.option('--smtp', envvar="SMTP")
-@click.option('--use-sprout', envvar="USE_SPROUT", default="no", choices=)
+@click.option('--use-sprout', envvar="USE_SPROUT", default="no", type=click.Choice(['yes', 'no']))
 @click.argument('pytest_command', envvar='PYTEST')
 @click.pass_context
 def full(ctx,
          credentials_repo,
          cfme_repo, cfme_pr, branch, base_branch, verify,
          browser, wharf, appliance, json, smtp,
-         pytest_command):
+         pytest_command, use_sprout):
     ctx.invoke(fetch_credentials,
                credentials_repo=credentials_repo)
     ctx.invoke(prepare_workdir_checkout,
@@ -265,7 +268,23 @@ def full(ctx,
                browser=browser, wharf=wharf,
                appliance=appliance,
                json=json, smtp=smtp)
-    ctx.invoke(run_tests, pytest_command=pytest_command)
+
+    run_quickstart()
+
+    if use_sprout == 'yes':
+        with managed_miq_sprout_checkout():
+            ctx.invoke(run_tests, pytest_command=pytest_command)
+    else:
+        ctx.invoke(run_tests, pytest_command=pytest_command)
+
+
+def run_quickstart():
+    """runs quickstart against the current environment
+    """
+    quickstart.run_for_current_env()
+    import sys
+    sys.stdout.flush()
+    sys.stderr.flush()
 
 
 @main.command()
