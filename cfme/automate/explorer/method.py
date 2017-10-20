@@ -107,7 +107,7 @@ class MethodEditView(AutomateExplorerView):
 
 
 class Method(BaseEntity, Copiable):
-    def __init__(self, collection, name, display_name, location, script, data):
+    def __init__(self, collection, name, display_name=None, location=None, script=None, data=None):
         super(Method, self).__init__(collection)
 
         self.name = name
