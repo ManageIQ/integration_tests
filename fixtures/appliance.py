@@ -32,7 +32,7 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180, stream=None):
     try:
         sprout_client = SproutClient.from_config()
         apps, request_id = sprout_client.provision_appliances(
-            count=count, lease_time=lease_time, preconfigured=preconfigured)
+            count=count, lease_time=lease_time, preconfigured=preconfigured, stream=stream)
         yield apps
     finally:
         for app in apps:
@@ -69,6 +69,7 @@ def temp_appliance_preconfig_funcscope():
 def temp_appliance_preconfig_funcscope_upgrade(appliance):
     stream = (int(''.join([i for i in get_stream(appliance.version)
         if i.isdigit()])) - 1)
+    stream = "downstream-{}z".format(stream)
     with temp_appliances(preconfigured=True, stream=stream) as appliances:
         yield appliances[0]
 
