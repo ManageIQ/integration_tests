@@ -291,17 +291,16 @@ def test_tagvis_user(user_restricted, check_item_visibility):
 
 @pytest.mark.tier(2)
 # Group test cases
-def test_group_crud(appliance):
+def test_group_crud(appliance, group_collection):
     role = 'EvmRole-administrator'
-    group = appliance.collections.groups.create(
-        description='grp' + fauxfactory.gen_alphanumeric(), role=role)
+    group = group_collection.create(description='grp' + fauxfactory.gen_alphanumeric(), role=role)
     with update(group):
         group.description = group.description + "edited"
     group.delete()
 
 
 @pytest.mark.tier(2)
-def test_group_crud_with_tag(a_provider, category, tag, appliance):
+def test_group_crud_with_tag(a_provider, category, tag, appliance, group_collection):
     """Test for verifying group create with tag defined
 
     Steps:
@@ -311,7 +310,7 @@ def test_group_crud_with_tag(a_provider, category, tag, appliance):
         * Set tag
         * Save group
     """
-    group = appliance.collections.groups.create(
+    group = group_collection.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role='EvmRole-approver',
         tag=[category.display_name, tag.display_name],
@@ -524,6 +523,8 @@ def test_edit_default_roles():
 def test_delete_roles_with_assigned_group(group_collection):
     role = new_role()
     role.create()
+    group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group = group_collection.create(description=group_description, role=role.name)
 
     with pytest.raises(RBACOperationBlocked):
         role.delete()
@@ -699,13 +700,13 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions, group
         appliance.server.login_admin()
 
 
-def single_task_permission_test(appliance, product_features, actions):
+def single_task_permission_test(appliance, product_features, actions, group_collection):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
     # Enable only specified product features
     test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=test_prod_features), actions, {})
+                              product_features=test_prod_features), actions, {}, group_collection)
 
     # Enable everything but specified product features
     test_prod_features = [(['Everything'], True)]
@@ -717,20 +718,20 @@ def single_task_permission_test(appliance, product_features, actions):
 
     test_prod_features += [(f, False) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=test_prod_features), {}, actions)
+                              product_features=test_prod_features), {}, actions, group_collection)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1262764])
-def test_permissions_role_crud(appliance):
+def test_permissions_role_crud(appliance, group_collection):
     single_task_permission_test(appliance,
                                 [['Everything', 'Settings', 'Configuration'],
                                  ['Everything', 'Services', 'Catalogs Explorer']],
-                                {'Role CRUD': test_role_crud})
+                                {'Role CRUD': test_role_crud}, group_collection)
 
 
 @pytest.mark.tier(3)
-def test_permissions_vm_provisioning(appliance):
+def test_permissions_vm_provisioning(appliance, group_collection):
     features = [
         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
         ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
@@ -740,7 +741,8 @@ def test_permissions_vm_provisioning(appliance):
     single_task_permission_test(
         appliance,
         features,
-        {'Provision VM': _test_vm_provision}
+        {'Provision VM': _test_vm_provision},
+        group_collection
     )
 
 
