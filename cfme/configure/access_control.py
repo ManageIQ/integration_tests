@@ -801,7 +801,7 @@ class Group(BaseEntity):
 
     @property
     def group_order(self):
-        view = navigate_to(Group, 'EditGroupSequence')
+        view = navigate_to(self, 'EditGroupSequence')
         return view.group_order_selector.items
 
     @property
@@ -898,7 +898,8 @@ class GroupAdd(CFMENavigateStep):
 @navigator.register(Group, 'EditGroupSequence')
 class EditGroupSequence(CFMENavigateStep):
     VIEW = EditGroupSequenceView
-    prerequisite = NavigateToSibling('All')
+    #prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):
         self.prerequisite_view.toolbar.configuration.item_select(
