@@ -20,7 +20,9 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.tier(3),
-    pytest.mark.provider([VMwareProvider], required_fields=[['provisioning', 'template']])
+    pytest.mark.provider(
+        [VMwareProvider], required_fields=[['provisioning', 'template']],
+        scope="module")
 ]
 
 
