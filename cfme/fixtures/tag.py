@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import Group, Role, User
+from cfme.configure.access_control import Role, User
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.web_ui import mixins
 from cfme.utils.appliance.implementations.ui import navigate_to
@@ -51,16 +51,15 @@ def role():
 
 
 @pytest.yield_fixture(scope="module")
-def group_with_tag(role, category, tag):
+def group_with_tag(appliance, role, category, tag):
     """
         Returns group object with set up tag filter used in test module
     """
-    group = Group(
+    group = appliance.collections.groups.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role=role.name,
         tag=[category.display_name, tag.display_name]
     )
-    group.create()
     yield group
     group.delete()
 
