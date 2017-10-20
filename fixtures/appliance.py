@@ -70,7 +70,6 @@ def temp_appliance_preconfig_funcscope_upgrade(appliance):
     stream = (int(''.join([i for i in get_stream(appliance.version)
         if i.isdigit()])) - 1)
     stream = "downstream-{}z".format(stream)
-    import pdb; pdb.set_trace()
     with temp_appliances(preconfigured=True, stream=stream) as appliances:
         yield appliances[0]
 
