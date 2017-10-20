@@ -147,9 +147,10 @@ class VolumeAddEntities(View):
 
 
 class VolumeAddForm(View):
+    storage_manager = BootstrapSelect(name='storage_manager_id')
     volume_name = TextInput(name='name')
     size = TextInput(name='size')
-    tenant = BootstrapSelect(id='cloud_tenant_id')
+    tenant = BootstrapSelect(name='cloud_tenant_id')
     add = Button('Add')
     cancel = Button('Cancel')
 
@@ -165,6 +166,15 @@ class VolumeAddView(VolumeView):
 
     entities = View.nested(VolumeAddEntities)
     form = View.nested(VolumeAddForm)
+
+
+class VolumeEditView(VolumeView):
+    @property
+    def is_displayed(self):
+        return False
+
+    volume_name = TextInput(name='name')
+    save = Button('Save')
 
 
 @attr.s
@@ -191,6 +201,14 @@ class Volume(BaseEntity):
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
+    def edit(self, name):
+        """Edit cloud volume"""
+        view = navigate_to(self, 'Edit')
+        view.volume_name.fill(name)
+        view.save.click()
+        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
+        self.name = name
+
     def delete(self, wait=True):
         """Delete the Volume"""
 
@@ -210,11 +228,40 @@ class Volume(BaseEntity):
         except VolumeNotFound:
             return False
 
+    @property
+    def size(self):
+        view = navigate_to(self, 'Details')
+        return view.entities.properties.get_text_of('Size')
+
+    @property
+    def tenant(self):
+        view = navigate_to(self, 'Details')
+        return view.entities.relationships.get_text_of('Cloud Tenants')
+
 
 @attr.s
 class VolumeCollection(BaseCollection):
     """Collection object for the :py:class:'cfme.storage.volume.Volume'. """
     ENTITY = Volume
+
+    def create(self, name, storage_manager, tenant, size, provider):
+        """Create new storage volume"""
+        view = navigate_to(self, 'Add')
+        view.form.fill({'storage_manager': storage_manager,
+                        'tenant': tenant,
+                        'volume_name': name,
+                        'size': size})
+        view.form.add.click()
+        base_message = VersionPick({
+            Version.lowest(): 'Creating Cloud Volume "{}"',
+            '5.8': 'Cloud Volume "{}" created'}).pick(self.appliance.version)
+        view.flash.assert_success_message(base_message.format(name))
+
+        volume = self.instantiate(name, provider)
+        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
+        wait_for(lambda: volume.exists, timeout=100, fail_func=volume.browser.refresh)
+
+        return volume
 
     def delete(self, *volumes):
         """Delete one or more Volumes from list of Volumes
@@ -273,3 +320,12 @@ class VolumeAdd(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.configuration.item_select('Add a new Cloud Volume')
+
+
+@navigator.register(Volume, 'Edit')
+class VolumeEdit(CFMENavigateStep):
+    VIEW = VolumeEditView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.toolbar.configuration.item_select('Edit this Cloud Volume')
