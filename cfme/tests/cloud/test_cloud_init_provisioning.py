@@ -8,20 +8,19 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.pxe import get_template_from_config
-from cfme.utils import testgen, ssh
+from cfme.utils import ssh
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
 
-pytestmark = [pytest.mark.meta(server_roles="+automate")]
-
-
-pytest_generate_tests = testgen.generate(
-    [CloudProvider], required_fields=[
+pytestmark = [
+    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.provider([CloudProvider], required_fields=[
         ['provisioning', 'ci-template'],
         ['provisioning', 'ci-username'],
         ['provisioning', 'ci-pass'],
         ['provisioning', 'image']],
-    scope="module")
+        scope="module")
+]
 
 
 @pytest.fixture(scope="module")

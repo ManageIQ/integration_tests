@@ -3,36 +3,26 @@ import pytest
 from Crypto.PublicKey import RSA
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import TimedOutError
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider', 'openstack_provider')
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.provider([OpenStackProvider], scope="module")
 ]
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [OpenStackProvider])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
-
-
-@pytest.fixture(scope='function')
-def keypairs(appliance):
-    return appliance.collections.keypairs
-
-
 @pytest.mark.tier(3)
-def test_keypair_crud(openstack_provider, keypairs):
+def test_keypair_crud(appliance, provider):
     """ This will test whether it will create new Keypair and then deletes it.
     Steps:
         * Provide Keypair name.
         * Select Cloud Provider.
         * Also delete it.
     """
+    keypairs = appliance.collections.keypairs
     try:
-        keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=openstack_provider)
+        keypair = keypairs.create(name=fauxfactory.gen_alphanumeric(), provider=provider)
     except TimedOutError:
         if BZ(1444520, forced_streams=['5.6', '5.7', 'upstream']).blocks:
             pytest.skip('Timed out creating keypair, BZ1444520')

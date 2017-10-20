@@ -5,14 +5,13 @@ import yaml
 
 from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
-from cfme.utils import testgen
 from cfme.utils.generators import random_vm_name
 
 
 pytestmark = [
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    pytest.mark.provider([AzureProvider], scope='module')
 ]
-pytest_generate_tests = testgen.generate([AzureProvider], scope='module')
 
 
 def test_manage_nsg_group(provider, setup_provider, register_event):

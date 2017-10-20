@@ -10,7 +10,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
 from cfme.web_ui import toolbar
-from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.wait import wait_for
@@ -20,15 +19,12 @@ from cfme.utils.version import pick
 pytestmark = [
     test_requirements.automate,
     pytest.mark.meta(server_roles="+automate"),
-]
-
-
-pytest_generate_tests = testgen.generate(
-    [InfraProvider], required_fields=[
+    pytest.mark.provider([InfraProvider], required_fields=[
         ['provisioning', 'template'],
         ['provisioning', 'host'],
         ['provisioning', 'datastore']
     ], scope="module")
+]
 
 
 @pytest.fixture(scope="function")

@@ -18,13 +18,13 @@ from cfme.common.provider_views import (CloudProviderAddView,
                                         CloudProvidersDiscoverView)
 from cfme import test_requirements
 
-from cfme.utils import testgen, version
+from cfme.utils import version
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 from cfme.rest.gen_data import _creating_skeleton as creating_skeleton
 
-pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
+pytestmark = [pytest.mark.provider([CloudProvider], scope="function")]
 
 
 @pytest.mark.tier(3)

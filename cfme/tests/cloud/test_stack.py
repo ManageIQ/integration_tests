@@ -6,20 +6,14 @@ from cfme import test_requirements
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),
-    test_requirements.stack
+    test_requirements.stack,
+    pytest.mark.provider([EC2Provider], scope='module')
 ]
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc, [EC2Provider])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
 @pytest.yield_fixture(scope="module")

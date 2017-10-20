@@ -6,16 +6,14 @@ from cfme.cloud.instance.image import Image
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import StackCollection
 from cfme.common.vm import VM
-from cfme.utils import testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.wait import TimedOutError
 
-pytest_generate_tests = testgen.generate(
-    [CloudProvider], required_fields=['remove_test'], scope="module")
-
-
-pytestmark = [pytest.mark.tier(2),
-              test_requirements.general_ui]
+pytestmark = [
+    pytest.mark.tier(2),
+    test_requirements.general_ui,
+    pytest.mark.provider([CloudProvider], required_fields=['remove_test'], scope="module")
+]
 
 
 @pytest.fixture(scope="module")
