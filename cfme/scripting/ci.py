@@ -50,7 +50,7 @@ def main():
     pass
 
 
-def do(command, cwd=None, extra_env=None,  shell=False, **kwargs):
+def do(command, cwd=None, extra_env=None, shell=False, **kwargs):
     """convenience to invoke subprocesses
 
     Args:
@@ -73,9 +73,8 @@ def do(command, cwd=None, extra_env=None,  shell=False, **kwargs):
 
 
 @main.command()
-@click.pass_context
 @click.option("--credentials-repo", envvar="CFME_CRED_REPO")
-def fetch_credentials(ctx, credentials_repo):
+def fetch_credentials(credentials_repo):
     """
     fetch the yaml credentials based on the config repo
     """
