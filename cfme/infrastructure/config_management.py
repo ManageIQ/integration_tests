@@ -352,7 +352,11 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         row = view.entities.paginator.find_row_on_pages(view.entities.elements,
                                                         provider_name=self.ui_name)
         row[0].check()
-        view.toolbar.configuration.item_select('Remove selected items', handle_alert=not cancel)
+        remove_item = VersionPick({
+            '5.8': 'Remove selected items',
+            '5.9': 'Remove selected items from Inventory'
+        }).pick(self.appliance.version)
+        view.toolbar.configuration.item_select(remove_item, handle_alert=not cancel)
         if not cancel:
             view.entities.flash.assert_success_message('Delete initiated for 1 Provider')
             if wait_deleted:
