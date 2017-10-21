@@ -15,6 +15,7 @@ from cached_property import cached_property
 from jsmin import jsmin
 from lxml.html import document_fromstring
 from selenium.common.exceptions import WebDriverException
+import cfme.fixtures.pytest_selenium as sel
 from cfme.utils.blockers import BZ
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
@@ -1522,6 +1523,12 @@ class JSPaginationPane(View, ReportDataControllerMixin):
 
             # Adding 1 to pages_amount to include the last page in loop
             for page in range(1, self.pages_amount + 1):
+                # JSPaginatinoPane will wait for elements to load after changing page
+                # miq-tile-selection covers both - Grid and Tile view
+                if sel.is_displayed('//*[@class="miq-data-table"]'):
+                    sel.wait_for_element('//*[@class="miq-data-table"]/table')
+                elif sel.is_displayed('//*[@class="miq-tile-section"]'):
+                    sel.wait_for_element('//*[@class="card-view-pf"]/div')
                 yield self.cur_page
                 if self.cur_page == self.pages_amount:
                     # last or only page, stop looping
