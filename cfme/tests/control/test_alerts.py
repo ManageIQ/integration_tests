@@ -109,7 +109,7 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
         alert_profile = alert_profile_collection.create(
             alert_profiles.VMInstanceAlertProfile,
             "Alert profile for {}".format(vm_name),
-            alerts_list
+            alerts=alerts_list
         )
         request.addfinalizer(alert_profile.delete)
         alert_profile.assign_to("The Enterprise")

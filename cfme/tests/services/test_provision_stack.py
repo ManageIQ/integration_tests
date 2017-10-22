@@ -2,7 +2,6 @@ import pytest
 import fauxfactory
 
 from cfme.configure.settings import DefaultView
-from cfme.automate.service_dialogs import DialogCollection
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
@@ -71,7 +70,7 @@ def dialog(appliance, provider, template):
         choose_type="Text Box",
         default_text_box=service_name
     )
-    dialog = DialogCollection(appliance)
+    dialog = appliance.collections.service_dialogs
     sd = dialog.instantiate(label=dialog_name)
     tab = sd.tabs.instantiate(tab_label="Basic Information")
     box = tab.boxes.instantiate(box_label="Options")
