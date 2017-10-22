@@ -9,7 +9,6 @@ about the collector.
 import logging
 import os
 import pytest
-import signal
 import subprocess
 import time
 
@@ -38,7 +37,7 @@ def smtp_test(request, appliance):
     logger.info("Mind that it needs ports %s and %s open", mail_query_port, mail_server_port)
     appliance.server.settings.update_smtp_server({
         'host': my_ip,
-        'port': mail_server_port,
+        'port': str(mail_server_port),
         'auth': "none"
     })
     server_filename = scripts_path.join('smtp_collector.py').strpath
@@ -54,7 +53,7 @@ def smtp_test(request, appliance):
             return
         logger.info("Sending KeyboardInterrupt to collector")
         try:
-            collector.send_signal(signal.SIGINT)
+            subprocess.call(['pkill', '-INT', '-P', str(collector.pid)])
         except OSError as e:
             # TODO: Better logging.
             logger.exception(e)
@@ -63,18 +62,14 @@ def smtp_test(request, appliance):
         time.sleep(2)
         if collector.poll() is None:
             logger.info("Sending SIGTERM to collector")
-            collector.send_signal(signal.SIGTERM)
+            subprocess.call(['pkill', '-TERM', '-P', str(collector.pid)])
             time.sleep(5)
             if collector.poll() is None:
                 logger.info("Sending SIGKILL to collector")
-                collector.send_signal(signal.SIGKILL)
+                subprocess.call(['pkill', '-KILL', '-P', str(collector.pid)])
         collector.wait()
         logger.info("Collector finished")
         logger.info("Cleaning up smtp setup in CFME")
-        appliance.server.settings.update_smtp_server({
-            'host': '',
-            'port': ''
-        })
     collector = subprocess.Popen(server_command, shell=True)
     request.addfinalizer(_finalize)
     logger.info("Collector pid %s", collector.pid)
