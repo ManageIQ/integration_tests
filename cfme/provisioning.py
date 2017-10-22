@@ -26,7 +26,7 @@ def do_vm_provisioning(appliance, template_name, provider, vm_name, provisioning
     logger.info('Waiting for cfme provision request for vm %s', vm_name)
     request_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     provision_request = appliance.collections.requests.instantiate(request_description)
-    provision_request.wait_for_request(method='ui')
+    provision_request.wait_for_request(method='ui', num_sec=num_sec)
     assert provision_request.is_succeeded(method='ui'), \
         "Provisioning failed with the message {}".format(provision_request.row.last_message.text)
 
