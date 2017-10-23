@@ -64,7 +64,8 @@ def group_user_or_group_owned(appliance, role_user_or_group_owned):
 
 
 def new_credential():
-    if BZ.bugzilla.get_bug(1401912).is_opened:
+    # BZ1487199 - CFME allows usernames with uppercase chars which blocks logins
+    if BZ.bugzilla.get_bug(1487199).is_opened:
         return Credential(principal='uid' + fauxfactory.gen_alphanumeric().lower(), secret='redhat')
     else:
         return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
