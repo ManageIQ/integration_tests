@@ -270,28 +270,28 @@ class Visual(Updateable, Navigatable):
             view.save.click()
 
     @property
-    def grid_view_read(self):
+    def grid_view_entities(self):
         view = navigate_to(self, 'All')
         values = view.visualitem.grid_view.all_options
         text = [value.text for value in values]
         return text
 
     @property
-    def tile_view_read(self):
+    def tile_view_entities(self):
         view = navigate_to(self, 'All')
         values = view.visualitem.tile_view.all_options
         text = [value.text for value in values]
         return text
 
     @property
-    def list_view_read(self):
+    def list_view_entities(self):
         view = navigate_to(self, 'All')
         values = view.visualitem.list_view.all_options
         text = [value.text for value in values]
         return text
 
     @property
-    def report_view_read(self):
+    def report_view_entities(self):
         view = navigate_to(self, 'All')
         values = view.visualitem.reports.all_options
         text = [value.text for value in values]

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from copy import copy
-import pytest
 import itertools
+import pytest
 from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
@@ -26,16 +26,16 @@ def get_parameter(view):
         vms.Vm,
     ]
     if "grid" in view:
-        value = visual.grid_view_read
+        value = visual.grid_view_entities
     elif "tile" in view:
-        value = visual.tile_view_read
+        value = visual.tile_view_entities
     else:
-        value = visual.list_view_read
+        value = visual.list_view_entities
     parameter = itertools.product(value, grid_pages)
     return parameter
 
 
-report_parameter = visual.report_view_read
+report_parameter = visual.report_view_entities
 
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
