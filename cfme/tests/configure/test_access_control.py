@@ -69,8 +69,9 @@ def new_group(role='EvmRole-approver'):
         role=role)
 
 
-def new_role():
-    return Role(
+def new_role(appliance):
+    role_collection = appliance.collections.roles
+    return role_collection.create(
         name='rol' + fauxfactory.gen_alphanumeric(),
         vm_restriction='None')
 
@@ -424,9 +425,8 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 
 # Role test cases
 @pytest.mark.tier(2)
-def test_role_crud():
-    role = new_role()
-    role.create()
+def test_role_crud(appliance):
+    role = new_role(appliance)
     with update(role):
         role.name = role.name + "edited"
     copied_role = role.copy()

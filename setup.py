@@ -92,6 +92,7 @@ setup(
             'tenants = cfme.configure.access_control:TenantCollection',
             'projects = cfme.configure.access_control:ProjectCollection',
             'candus = cfme.configure.configuration.region_settings:CANDUCollection',
+            'roles = cfme.configure.access_control:RoleCollection',
             'nodes = cfme.containers.node:NodeCollection',
             'dashboards = cfme.dashboard:DashboardCollection',
             'clusters = cfme.infrastructure.cluster:ClusterCollection',
