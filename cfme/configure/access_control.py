@@ -754,7 +754,6 @@ class Group(BaseEntity):
         """
         name_column = "Name"
         find_row_kwargs = {name_column: self.description}
-        #TODO: cfme/fixtures/tag.py - Update to use collection
         view = navigate_to(self.parent, 'All')
         row = view.paginator.find_row_on_pages(view.table, **find_row_kwargs)
         original_sequence = row.sequence.text
@@ -898,7 +897,6 @@ class GroupAdd(CFMENavigateStep):
 @navigator.register(Group, 'EditGroupSequence')
 class EditGroupSequence(CFMENavigateStep):
     VIEW = EditGroupSequenceView
-    #prerequisite = NavigateToSibling('All')
     prerequisite = NavigateToAttribute('parent', 'All')
 
     def step(self):

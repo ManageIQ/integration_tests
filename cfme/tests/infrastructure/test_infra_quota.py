@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 
-import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.provisioning import do_vm_provisioning
@@ -37,7 +36,7 @@ def set_group_memory(appliance):
 
 
 @pytest.yield_fixture(scope="module")
-def set_group_cpu():
+def set_group_cpu(appliance):
     group_collection = appliance.collections.groups
     group = group_collection.instantiate(description='EvmGroup-super_administrator')
     group.edit_tags("Quota - Max CPUs *", '2')
