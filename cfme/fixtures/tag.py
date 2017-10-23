@@ -38,14 +38,14 @@ def tag(category):
 
 
 @pytest.yield_fixture(scope="module")
-def role():
+def role(appliance):
     """
         Returns role object used in test module
     """
-    role = Role(
+    role_collection = appliance.collections.roles
+    role = role_collection.create(
         name='role{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')
-    role.create()
     yield role
     role.delete()
 
