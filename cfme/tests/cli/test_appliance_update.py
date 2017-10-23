@@ -21,8 +21,8 @@ def pytest_generate_tests(metafunc):
     split_ver = str(version).split(".")
     try:
         minor_build = split_ver[2]
-        assert minor_build != 0
-    except IndexError, AssertionError:
+        assert int(minor_build) != 0
+    except (IndexError, AssertionError):
         logger.exception(
             'Caught IndexError/AssertError generating for test_appliance_update, skipping'
         )
