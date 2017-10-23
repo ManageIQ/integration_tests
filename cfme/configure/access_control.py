@@ -1117,6 +1117,7 @@ class Role(BaseEntity):
             feature_update = True
         return feature_update
 
+
 @attr.s
 class RoleCollection(BaseCollection):
     ENTITY = Role
@@ -1138,9 +1139,9 @@ class RoleCollection(BaseCollection):
         view = navigate_to(self, 'Add')
 
         role = self.instantiate(
-                name=name,
-                vm_restriction=vm_restriction,
-                product_features=product_features)
+            name=name,
+            vm_restriction=vm_restriction,
+            product_features=product_features)
 
         view.fill({'name_txt': role.name,
                    'vm_restriction_select': role.vm_restriction})

@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 import traceback
 
-from cfme.configure.access_control import User, Group, Role
+from cfme.configure.access_control import User, Group
 from cfme.utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
@@ -446,7 +446,7 @@ def test_rolename_required_error_validation(appliance):
 
 @pytest.mark.tier(3)
 def test_rolename_duplicate_validation(appliance):
-    role_collection = appliance.collections.roles 
+    role_collection = appliance.collections.roles
     role = new_role(appliance)
     with pytest.raises(RBACOperationBlocked):
         role_collection.create(
@@ -469,7 +469,7 @@ def test_delete_default_roles(appliance):
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-approver
     """
-    role_collection = appliance.collections.roles 
+    role_collection = appliance.collections.roles
     role = role_collection.instantiate(name='EvmRole-approver')
 
     with pytest.raises(RBACOperationBlocked):
@@ -497,7 +497,6 @@ def test_edit_default_roles(appliance):
 
 @pytest.mark.tier(3)
 def test_delete_roles_with_assigned_group(appliance):
-    role_collection = appliance.collections.roles
     role = new_role(appliance)
 
     group = new_group(role=role.name)
@@ -509,7 +508,6 @@ def test_delete_roles_with_assigned_group(appliance):
 
 @pytest.mark.tier(3)
 def test_assign_user_to_new_group(appliance):
-    role_collection = appliance.collections.roles
     role = new_role(appliance)  # call function to get role
     group = new_group(role=role.name)
     group.create()
@@ -593,8 +591,10 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
 
     """
     name = name or fauxfactory.gen_alphanumeric()
-    return {'name': name, 'vm_restriction': vm_restriction,
-                        'product_features':product_features}
+    return {
+        'name': name,
+        'vm_restriction': vm_restriction,
+        'product_features': product_features}
 
 
 def _go_to(cls, dest='All'):
