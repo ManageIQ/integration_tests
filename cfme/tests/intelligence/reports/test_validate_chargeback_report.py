@@ -14,7 +14,6 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.common.vm import VM
 from cfme.common.provider import BaseProvider
-from cfme.configure.configuration.region_settings import CANDUCollection
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport

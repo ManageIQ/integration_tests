@@ -545,7 +545,7 @@ def test_delete_roles_with_assigned_group(appliance):
     role.create()
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
     group_collection = appliance.collections.groups
-    group = group_collection.create(description=group_description, role=role.name)
+    group_collection.create(description=group_description, role=role.name)
 
     with pytest.raises(RBACOperationBlocked):
         role.delete()
@@ -728,7 +728,6 @@ def single_task_permission_test(appliance, product_features, actions):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
     # Enable only specified product features
-    group_collection = appliance.collections.groups
     test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
                               product_features=test_prod_features), actions, {})
