@@ -131,8 +131,10 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid):
 
     else:
         print("Provisioning appliances")
-        apps = provision_appliances(count=required_app_count, cfme_version=cfme_version, provider=provider,
-            lease_time=lease_time)
+        apps = provision_appliances(
+            count=required_app_count, cfme_version=cfme_version,
+            provider=provider, lease_time=lease_time
+        )
         print("Appliance pool lease time is {}".format(lease))
 
     print("Configuring replicated environment")
@@ -157,7 +159,6 @@ def setup_replication_env(cfme_version, provider, lease, sprout_poolid):
     apps[0].set_pglogical_replication(replication_type=':global')
     apps[0].add_pglogical_replication_subscription(apps[1].address)
     print("Done!")
-
 
 
 if __name__ == "__main__":
