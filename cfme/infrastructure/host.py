@@ -56,7 +56,7 @@ class Host(BaseEntity, Updateable, Pretty, PolicyProfileAssignable, WidgetasticT
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
     name = attr.ib()
-    provider = attr.ib()
+    provider = attr.ib(default=None)
     hostname = attr.ib(default=None)
     ip_address = attr.ib(default=None)
     custom_ident = attr.ib(default=None)
