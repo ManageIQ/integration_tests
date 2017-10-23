@@ -90,8 +90,9 @@ def check_item_visibility(tag):
 
 # User test cases
 @pytest.mark.tier(2)
-def test_user_crud(group_collection):
+def test_user_crud(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(group)
@@ -105,8 +106,9 @@ def test_user_crud(group_collection):
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
-def test_user_login(group_collection):
+def test_user_login(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(group)
@@ -119,8 +121,9 @@ def test_user_login(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_user_duplicate_name(group_collection):
+def test_user_duplicate_name(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     nu = new_user(group)
@@ -134,8 +137,9 @@ def test_user_duplicate_name(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_username_required_error_validation(group_collection):
+def test_username_required_error_validation(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = User(
@@ -148,8 +152,9 @@ def test_username_required_error_validation(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_userid_required_error_validation(group_collection):
+def test_userid_required_error_validation(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = User(
@@ -166,8 +171,9 @@ def test_userid_required_error_validation(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_user_password_required_error_validation(group_collection):
+def test_user_password_required_error_validation(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = User(
@@ -198,8 +204,9 @@ def test_user_group_error_validation():
 
 
 @pytest.mark.tier(3)
-def test_user_email_error_validation(group_collection):
+def test_user_email_error_validation(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = User(
@@ -212,8 +219,9 @@ def test_user_email_error_validation(group_collection):
 
 
 @pytest.mark.tier(2)
-def test_user_edit_tag(group_collection):
+def test_user_edit_tag(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(group)
@@ -224,8 +232,9 @@ def test_user_edit_tag(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_user_remove_tag(group_collection):
+def test_user_remove_tag(appliance):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(group)
@@ -253,7 +262,7 @@ def test_delete_default_user():
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1090877)])
 @pytest.mark.meta(blockers=[BZ(1408479)], forced_streams=["5.7", "upstream"])
-def test_current_user_login_delete(request, group_collection):
+def test_current_user_login_delete(appliance, request):
     """Test for deleting current user login.
 
     Steps:
@@ -263,6 +272,7 @@ def test_current_user_login_delete(request, group_collection):
         * Try deleting the user
     """
     group_name = "EvmGroup-super_administrator"
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(group)
@@ -291,8 +301,9 @@ def test_tagvis_user(user_restricted, check_item_visibility):
 
 @pytest.mark.tier(2)
 # Group test cases
-def test_group_crud(appliance, group_collection):
+def test_group_crud(appliance):
     role = 'EvmRole-administrator'
+    group_collection = appliance.collections.groups
     group = group_collection.create(description='grp' + fauxfactory.gen_alphanumeric(), role=role)
     with update(group):
         group.description = group.description + "edited"
@@ -300,7 +311,7 @@ def test_group_crud(appliance, group_collection):
 
 
 @pytest.mark.tier(2)
-def test_group_crud_with_tag(a_provider, category, tag, appliance, group_collection):
+def test_group_crud_with_tag(a_provider, category, tag, appliance):
     """Test for verifying group create with tag defined
 
     Steps:
@@ -310,6 +321,7 @@ def test_group_crud_with_tag(a_provider, category, tag, appliance, group_collect
         * Set tag
         * Save group
     """
+    group_collection = appliance.collections.groups
     group = group_collection.create(
         description='grp{}'.format(fauxfactory.gen_alphanumeric()),
         role='EvmRole-approver',
@@ -327,10 +339,11 @@ def test_group_crud_with_tag(a_provider, category, tag, appliance, group_collect
 
 
 @pytest.mark.tier(3)
-def test_group_duplicate_name(group_collection):
+def test_group_duplicate_name(appliance):
     """ Verify that two groups can't have the same name """
     role = 'EvmRole-approver'
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
     with pytest.raises(RBACOperationBlocked):
@@ -343,9 +356,10 @@ def test_group_duplicate_name(group_collection):
 
 
 @pytest.mark.tier(2)
-def test_group_edit_tag(group_collection):
+def test_group_edit_tag(appliance):
     role = 'EvmRole-approver'
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
     group.edit_tags("Cost Center *", "Cost Center 001")
@@ -354,9 +368,10 @@ def test_group_edit_tag(group_collection):
 
 
 @pytest.mark.tier(2)
-def test_group_remove_tag(group_collection):
+def test_group_remove_tag(appliance):
     role = 'EvmRole-approver'
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
 
     navigate_to(group, 'Edit')
@@ -367,8 +382,9 @@ def test_group_remove_tag(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_group_description_required_error_validation(group_collection):
+def test_group_description_required_error_validation(appliance):
     error_text = "Description can't be blank"
+    group_collection = appliance.collections.groups
 
     with error.expected(error_text):
         group_collection.create(description=None, role='EvmRole-approver')
@@ -379,13 +395,14 @@ def test_group_description_required_error_validation(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_default_group(group_collection):
+def test_delete_default_group(appliance):
     """Test for deleting default group EvmGroup-administrator.
 
     Steps:
         * Login as Administrator user
         * Try deleting the group EvmGroup-adminstrator
     """
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description='EvmGroup-administrator')
 
     with pytest.raises(RBACOperationBlocked):
@@ -393,11 +410,12 @@ def test_delete_default_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_group_with_assigned_user(group_collection):
+def test_delete_group_with_assigned_user(appliance):
     """Test that CFME prevents deletion of a group that has users assigned
     """
     role = 'EvmRole-approver'
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role)
     user = new_user(group=group)
     user.create()
@@ -406,13 +424,14 @@ def test_delete_group_with_assigned_user(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_edit_default_group(group_collection):
+def test_edit_default_group(appliance):
     """Test that CFME prevents a user from editing a default group
 
     Steps:
         * Login as Administrator user
         * Try editing the group EvmGroup-adminstrator
     """
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description='EvmGroup-approver')
 
     group_updates = {}
@@ -421,7 +440,7 @@ def test_edit_default_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_edit_sequence_usergroups(request, group_collection):
+def test_edit_sequence_usergroups(appliance, request):
     """Test for editing the sequence of user groups for LDAP lookup.
 
     Steps:
@@ -432,6 +451,7 @@ def test_edit_sequence_usergroups(request, group_collection):
     """
     role_name = 'EvmRole-approver'
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role_name)
     request.addfinalizer(group.delete)
 
@@ -520,10 +540,11 @@ def test_edit_default_roles():
 
 
 @pytest.mark.tier(3)
-def test_delete_roles_with_assigned_group(group_collection):
+def test_delete_roles_with_assigned_group(appliance):
     role = new_role()
     role.create()
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role.name)
 
     with pytest.raises(RBACOperationBlocked):
@@ -531,11 +552,12 @@ def test_delete_roles_with_assigned_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_assign_user_to_new_group(group_collection):
+def test_assign_user_to_new_group(appliance):
     role = new_role()  # call function to get role
     role.create()
 
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
+    group_collection = appliance.collections.groups
     group = group_collection.create(description=group_description, role=role.name)
 
     user = new_user(group=group)
@@ -574,7 +596,7 @@ def _test_vm_removal():
             ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
              'Provision VMs']], },
         _test_vm_provision)])
-def test_permission_edit(appliance, request, product_features, action, group_collection):
+def test_permission_edit(appliance, request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
     Args:
@@ -591,6 +613,7 @@ def test_permission_edit(appliance, request, product_features, action, group_col
                 product_features=[(['Everything'], False)] +  # role_features
                                  [(k, True) for k in product_features])
     role.create()
+    group_collection = appliance.collections.groups
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
     group = group_collection.create(description=group_description, role=role.name)
     user = new_user(group=group)
@@ -651,7 +674,7 @@ def _go_to(cls, dest='All'):
           'automate explorer': _go_to(Server, 'AutomateExplorer')},
       {}]])
 @pytest.mark.meta(blockers=[1262759])
-def test_permissions(appliance, role, allowed_actions, disallowed_actions, group_collection):
+def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     """ Test that that under the specified role the allowed acctions succeed
         and the disallowed actions fail
 
@@ -669,6 +692,7 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions, group
     # create a user and role
     role = role()  # call function to get role
     role.create()
+    group_collection = appliance.collections.groups
     group_description = 'grp' + fauxfactory.gen_alphanumeric()
     group = group_collection.create(description=group_description, role=role.name)
     user = new_user(group=group)
@@ -700,13 +724,14 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions, group
         appliance.server.login_admin()
 
 
-def single_task_permission_test(appliance, product_features, actions, group_collection):
+def single_task_permission_test(appliance, product_features, actions):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
     # Enable only specified product features
+    group_collection = appliance.collections.groups
     test_prod_features = [(['Everything'], False)] + [(f, True) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=test_prod_features), actions, {}, group_collection)
+                              product_features=test_prod_features), actions, {})
 
     # Enable everything but specified product features
     test_prod_features = [(['Everything'], True)]
@@ -718,20 +743,20 @@ def single_task_permission_test(appliance, product_features, actions, group_coll
 
     test_prod_features += [(f, False) for f in product_features]
     test_permissions(appliance, _mk_role(name=fauxfactory.gen_alphanumeric(),
-                              product_features=test_prod_features), {}, actions, group_collection)
+                              product_features=test_prod_features), {}, actions)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1262764])
-def test_permissions_role_crud(appliance, group_collection):
+def test_permissions_role_crud(appliance):
     single_task_permission_test(appliance,
                                 [['Everything', 'Settings', 'Configuration'],
                                  ['Everything', 'Services', 'Catalogs Explorer']],
-                                {'Role CRUD': test_role_crud}, group_collection)
+                                {'Role CRUD': test_role_crud})
 
 
 @pytest.mark.tier(3)
-def test_permissions_vm_provisioning(appliance, group_collection):
+def test_permissions_vm_provisioning(appliance):
     features = [
         ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
         ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
@@ -741,8 +766,7 @@ def test_permissions_vm_provisioning(appliance, group_collection):
     single_task_permission_test(
         appliance,
         features,
-        {'Provision VM': _test_vm_provision},
-        group_collection
+        {'Provision VM': _test_vm_provision}
     )
 
 
@@ -797,8 +821,9 @@ def test_permissions_vm_provisioning(appliance, group_collection):
 
 
 @pytest.mark.tier(2)
-def test_user_change_password(appliance, request, group_collection):
+def test_user_change_password(appliance, request):
     group_name = 'EvmGroup-user'
+    group_collection = appliance.collections.groups
     group = group_collection.instantiate(description=group_name)
 
     user = new_user(group=group)
