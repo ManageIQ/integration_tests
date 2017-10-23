@@ -58,8 +58,8 @@ def test_ntp_crud(request, appliance, empty_ntp_dict, ntp_servers_keys):
 
 
 @pytest.mark.tier(3)
-def test_ntp_server_max_character(request, appliance, ntp_servers_keys):
-    request.addfinalizer(partial(clear_ntp_settings, appliance))
+def test_ntp_server_max_character(request, appliance, ntp_servers_keys, empty_ntp_dict):
+    request.addfinalizer(partial(clear_ntp_settings, appliance, empty_ntp_dict))
     ntp_file_date_stamp = appliance.ssh_client.run_command(
         "stat --format '%y' /etc/chrony.conf")[1]
     appliance.server.settings.update_ntp_servers(dict(zip(
@@ -98,7 +98,7 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 
 @pytest.mark.tier(3)
 def test_ntp_server_check(request, appliance, ntp_servers_keys):
-    request.addfinalizer(partial(clear_ntp_settings, appliance))
+    request.addfinalizer(partial(clear_ntp_settings, appliance, empty_ntp_dict))
     orig_date = appliance_date(appliance)
     past_date = orig_date - timedelta(days=10)
     logger.info("dates: orig_date - %s, past_date - %s", orig_date, past_date)

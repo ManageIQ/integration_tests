@@ -136,7 +136,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
         appliance.install_vddk()
         appliance.browser.quit_browser()
         appliance.browser.open_browser()
-        set_host_credentials(request, provider, vm_analysis_data)
+        set_host_credentials(appliance, request, provider, vm_analysis_data)
 
     # Make sure all roles are set
     appliance.server.settings.enable_server_roles('automate', 'smartproxy', 'smartstate')
