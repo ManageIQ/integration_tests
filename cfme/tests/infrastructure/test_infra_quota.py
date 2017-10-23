@@ -28,8 +28,9 @@ def vm_name():
 
 
 @pytest.yield_fixture(scope="module")
-def set_group_memory():
-    group = ac.Group(description='EvmGroup-super_administrator')
+def set_group_memory(appliance):
+    group_collection = appliance.collections.groups
+    group = group_collection.instantiate(description='EvmGroup-super_administrator')
     group.edit_tags("Quota - Max Memory *", '2GB')
     yield
     group.remove_tag("Quota - Max Memory *", "2GB")
@@ -37,7 +38,8 @@ def set_group_memory():
 
 @pytest.yield_fixture(scope="module")
 def set_group_cpu():
-    group = ac.Group(description='EvmGroup-super_administrator')
+    group_collection = appliance.collections.groups
+    group = group_collection.instantiate(description='EvmGroup-super_administrator')
     group.edit_tags("Quota - Max CPUs *", '2')
     yield
     group.remove_tag("Quota - Max CPUs *", "2")

@@ -66,7 +66,7 @@ def new_credential():
 
 
 @pytest.yield_fixture(scope="module")
-def vm_ownership(enable_candu, clean_setup_provider, provider):
+def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     # In these tests, chargeback reports are filtered on VM owner.So,VMs have to be
     # assigned ownership.
     vm_name = provider.data['cap_and_util']['chargeback_vm']
@@ -77,7 +77,8 @@ def vm_ownership(enable_candu, clean_setup_provider, provider):
         provider.mgmt.start_vm(vm_name)
         provider.mgmt.wait_vm_running(vm_name)
 
-    cb_group = ac.Group(description='EvmGroup-user')
+    group_collection = appliance.collections.groups
+    cb_group = group_collection.instantiate(description='EvmGroup-user')
     user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='abc@example.com',

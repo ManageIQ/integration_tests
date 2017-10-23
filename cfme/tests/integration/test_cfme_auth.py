@@ -2,7 +2,7 @@
 import pytest
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import Group, User
+from cfme.configure.access_control import User
 from cfme.utils.conf import cfme_data
 
 
@@ -28,14 +28,15 @@ def data(request, auth_mode, add_group):
 
 
 @pytest.fixture()
-def group(request, data, auth_mode, add_group):
+def group(request, data, auth_mode, add_group, appliance):
     if not data:
         pytest.skip("No data spcified for user group")
     credentials = Credential(
         principal=data["username"],
         secret=data["password"],
     )
-    user_group = Group(description=data['group_name'], role="EvmRole-user",
+    group_collection = appliance.collections.groups
+    user_group = group_collection.instantiate(description=data['group_name'], role="EvmRole-user",
                        user_to_lookup=data["username"], ldap_credentials=credentials)
     if add_group == RETRIEVE_GROUP:
         if 'ext' in auth_mode:
