@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 import traceback
 
-from cfme.configure.access_control import Role
 from cfme.utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
@@ -31,6 +30,11 @@ pytestmark = test_requirements.rbac
 @pytest.fixture(scope='module')
 def group_collection(appliance):
     return appliance.collections.rbac_groups
+
+
+@pytest.fixture(scope='module')
+def role_collection(appliance):
+    return appliance.collections.rbac_roles
 
 
 @pytest.fixture(scope='module')
@@ -69,9 +73,9 @@ def new_user(user_collection, group):
     return user
 
 
-def new_role():
-    return Role(
-        name='rol{}'.format(fauxfactory.gen_alphanumeric()),
+def new_role(role_collection):
+    return role_collection.create(
+        name='rol' + fauxfactory.gen_alphanumeric(),
         vm_restriction='None')
 
 
@@ -455,39 +459,41 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 
 # Role test cases
 @pytest.mark.tier(2)
-def test_role_crud(appliance):
-    role = new_role()
-    role.create()
+def test_role_crud(role_collection):
+    role = new_role(role_collection)
+
     with update(role):
         role.name = "{}edited".format(role.name)
+
     copied_role = role.copy()
     copied_role.delete()
     role.delete()
 
 
 @pytest.mark.tier(3)
-def test_rolename_required_error_validation():
-    role = Role(
-        name=None,
-        vm_restriction='Only User Owned')
+def test_rolename_required_error_validation(role_collection):
     with error.expected("Name can't be blank"):
-        role.create()
+        role_collection.create(
+            name=None,
+            vm_restriction='Only User Owned')
 
 
 @pytest.mark.tier(3)
-def test_rolename_duplicate_validation():
-    role = new_role()
-    role.create()
+def test_rolename_duplicate_validation(role_collection):
+    role = new_role(role_collection)
     with pytest.raises(RBACOperationBlocked):
-        role.create()
+        role_collection.create(
+            name=role.name,
+            vm_restriction=role.vm_restriction,
+            product_features=role.product_features)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(role.appliance.server, 'Dashboard')
+    navigate_to(role_collection.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
-def test_delete_default_roles():
+def test_delete_default_roles(role_collection):
     """Test that CFME prevents a user from deleting a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -496,13 +502,14 @@ def test_delete_default_roles():
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-approver
     """
-    role = Role(name='EvmRole-approver')
+    role = role_collection.instantiate(name='EvmRole-approver')
+
     with pytest.raises(RBACOperationBlocked):
         role.delete()
 
 
 @pytest.mark.tier(3)
-def test_edit_default_roles():
+def test_edit_default_roles(role_collection):
     """Test that CFME prevents a user from editing a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -511,7 +518,7 @@ def test_edit_default_roles():
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-auditor
     """
-    role = Role(name='EvmRole-auditor')
+    role = role_collection.instantiate(name='EvmRole-auditor')
     newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
     role_updates = {'name': newrole_name}
 
@@ -520,9 +527,8 @@ def test_edit_default_roles():
 
 
 @pytest.mark.tier(3)
-def test_delete_roles_with_assigned_group(group_collection):
-    role = new_role()
-    role.create()
+def test_delete_roles_with_assigned_group(group_collection, role_collection):
+    role = new_role(role_collection)
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group_collection.create(description=group_description, role=role.name)
 
@@ -531,9 +537,8 @@ def test_delete_roles_with_assigned_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_assign_user_to_new_group(group_collection, user_collection):
-    role = new_role()  # call function to get role
-    role.create()
+def test_assign_user_to_new_group(group_collection, role_collection, user_collection):
+    role = new_role(role_collection)  # call function to get role
 
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role.name)
@@ -584,11 +589,10 @@ def test_permission_edit(appliance, request, product_features, action):
     product_features = version.pick(product_features)
     request.addfinalizer(appliance.server.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
-    role = Role(name=role_name,
+    role = role_collection(appliance).create(name=role_name,
                 vm_restriction=None,
                 product_features=[(['Everything'], False)] +  # role_features
                                  [(k, True) for k in product_features])
-    role.create()
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
     user = new_user(user_collection(appliance), group)
@@ -615,9 +619,10 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
 
     """
     name = name or fauxfactory.gen_alphanumeric()
-    return lambda: Role(name=name,
-                        vm_restriction=vm_restriction,
-                        product_features=product_features)
+    return {
+        'name': name,
+        'vm_restriction': vm_restriction,
+        'product_features': product_features}
 
 
 def _go_to(cls_or_obj, dest='All'):
@@ -669,11 +674,11 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
             object: [ { "Action Name": function_reference_action }, ...]
     """
     # create a user and role
-    role = role()  # call function to get role
-    role.create()
+    role = role_collection(appliance).create(**role)
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
     user = new_user(user_collection(appliance), group)
+
     fails = {}
     try:
         with user:
@@ -728,7 +733,8 @@ def test_permissions_role_crud(appliance):
     single_task_permission_test(appliance,
                                 [['Everything', 'Settings', 'Configuration'],
                                  ['Everything', 'Services', 'Catalogs Explorer']],
-                                {'Role CRUD': test_role_crud})
+                                # single_task_permission_test will call lambda w/ appliance arg
+                                {'Role CRUD': lambda app: test_role_crud(role_collection(app))})
 
 
 @pytest.mark.tier(3)
