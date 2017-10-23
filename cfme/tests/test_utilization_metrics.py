@@ -15,24 +15,17 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
 from fixtures.provider import setup_or_skip
 from operator import attrgetter
-from cfme.utils import testgen
 from cfme.utils import conf
 from cfme.utils.blockers import BZ
 from cfme.utils.log import logger
 from cfme.utils.version import current_version
 
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.providers_by_class(
-        metafunc,
-        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider, GCEProvider],
-        required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
-
-
 pytestmark = [
     pytest.mark.tier(1),
-    test_requirements.c_and_u
+    test_requirements.c_and_u,
+    pytest.mark.provider(
+        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider, GCEProvider],
+        required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')], scope="module")
 ]
 
 
