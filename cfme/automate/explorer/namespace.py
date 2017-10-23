@@ -215,12 +215,12 @@ class NamespaceCollection(BaseCollection):
             return self.instantiate(name=name, description=description)
 
     def delete(self, *namespaces):
-        all_page = navigate_to(self.parent_obj, 'Details')
+        all_page = navigate_to(self.parent.parent, 'Details')
         namespaces = list(namespaces)
         parents = set()
         # Check if the parent is the same
         for namespace in namespaces:
-            parents.add(namespace.parent_obj)
+            parents.add(namespace.parent.parent)
         if len(parents) > 1:
             raise ValueError('You passed namespaces that are not under one parent.')
         checked_namespaces = []
