@@ -4,9 +4,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.control.explorer.policy_profiles import PolicyProfileCollection
-from cfme.control.explorer.policies import PolicyCollection, VMControlPolicy
-from cfme.control.explorer.actions import ActionCollection
+from cfme.control.explorer.policies import VMControlPolicy
 from cfme.utils import testgen
 from cfme.utils.blockers import BZ
 from cfme.utils.wait import wait_for

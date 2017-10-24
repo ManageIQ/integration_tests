@@ -358,7 +358,7 @@ def alert_profile(alert_profile_class, alert_collection, alert_profile_collectio
     alert_profile_ = alert_profile_collection.create(
         alert_profile_class,
         fauxfactory.gen_alphanumeric(),
-        [alert.description]
+        alerts=[alert.description]
     )
     yield alert_profile_
     alert_profile_.delete()
@@ -531,7 +531,7 @@ def test_alert_profile_crud(request, alert_profile_class, alert_collection,
     alert_profile = alert_profile_collection.create(
         alert_profile_class,
         fauxfactory.gen_alphanumeric(),
-        [alert.description]
+        alerts=[alert.description]
     )
     with update(alert_profile):
         alert_profile.notes = "Modified!"
