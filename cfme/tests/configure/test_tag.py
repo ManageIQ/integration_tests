@@ -260,6 +260,13 @@ class TestTagsViaREST(object):
 
         response = collection.action.assign_tags(*entities, tags=new_tags)
         assert_response(appliance, results_num=tags_count)
+
+        # testing BZ 1460257
+        results = appliance.rest_api.response.json()['results']
+        entities_hrefs = [e.href for e in entities]
+        for result in results:
+            assert result['href'] in entities_hrefs
+
         for index, entity in enumerate(entities):
             entity.tags.reload()
             response[index].id = entity.id
