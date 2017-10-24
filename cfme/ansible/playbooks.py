@@ -100,20 +100,6 @@ class PlaybooksView(PlaybookBaseView):
 
 
 @attr.s
-class PlaybooksCollection(BaseCollection):
-    """Collection object for the :py:class:`Playbook`."""
-
-    def all(self):
-        view = navigate_to(Server, "AnsiblePlaybooks")
-        playbooks = []
-        for entity in view.entities.get_all(surf_pages=True):
-            parent = self.filters.get('parent', None)
-            if (parent and entity.data["Repository"] == parent.name) or not parent:
-                playbooks.append(self.instantiate(entity.data["Name"], entity.data["Repository"]))
-        return playbooks
-
-
-@attr.s
 class Playbook(BaseEntity):
     """A class representing one Embedded Ansible playbook in the UI."""
 
@@ -127,6 +113,22 @@ class Playbook(BaseEntity):
             return True
         except ItemNotFound:
             return False
+
+
+@attr.s
+class PlaybooksCollection(BaseCollection):
+    """Collection object for the :py:class:`Playbook`."""
+
+    ENTITY = Playbook
+
+    def all(self):
+        view = navigate_to(Server, "AnsiblePlaybooks")
+        playbooks = []
+        for entity in view.entities.get_all(surf_pages=True):
+            parent = self.filters.get('parent', None)
+            if (parent and entity.data["Repository"] == parent.name) or not parent:
+                playbooks.append(self.instantiate(entity.data["Name"], entity.data["Repository"]))
+        return playbooks
 
 
 @navigator.register(Server)

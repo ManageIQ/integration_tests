@@ -26,7 +26,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def policy_profile_collection(appliance):
-    return appliance.collcetions.policy_profiles
+    return appliance.collections.policy_profiles
 
 
 @pytest.fixture(scope="module")

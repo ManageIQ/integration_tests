@@ -1312,9 +1312,10 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
         add_page.add_button.click()
         add_page.flash.assert_no_error()
         add_page.flash.assert_message('Zone "{}" was added'.format(name))
-    return Zone(appliance=self.appliance, region=self.region,
-        name=name, description=description, smartproxy_ip=smartproxy_ip,
-        ntp_servers=ntp_servers, max_scans=max_scans, user=user)
+    return self.instantiate(
+        region=self.region, name=name, description=description, smartproxy_ip=smartproxy_ip,
+        ntp_servers=ntp_servers, max_scans=max_scans, user=user
+    )
 
 
 # AUTOMATE
