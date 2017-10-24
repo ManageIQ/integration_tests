@@ -143,7 +143,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
     ver = '95' if appliance.version >= '5.7' else '94'
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
-        rc, out = ssh.run_command('yum update cfme -y', timeout=3600)
+        rc, out = ssh.run_command('yum update -y', timeout=3600)
         assert rc == 0, "update failed {}".format(out)
         rc, out = ssh.run_command('systemctl restart $APPLIANCE_PG_SERVICE')
         assert rc == 0, "Failed to restart PG: {}".format(out)
