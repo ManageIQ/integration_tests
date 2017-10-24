@@ -4,9 +4,11 @@ import pytest
 from cfme.test_framework.sprout.client import SproutClient, SproutException
 from fixtures.pytest_store import store
 from scripts.repo_gen import process_url, build_file
+from cfme.configure.configuration.region_settings import RedHatUpdates
+from cfme.utils.wait import wait_for
 from cfme.utils.version import Version
 from cfme.utils.log import logger
-from cfme.utils.conf import cfme_data
+from cfme.utils import conf
 from cfme.utils import os
 from cfme.utils.appliance import get_or_create_current_appliance
 
@@ -64,7 +66,7 @@ def appliance_preupdate(old_version, appliance):
         raise SproutException('No provision available')
 
     apps[0].db.extend_partition()
-    urls = process_url(cfme_data['basic_info'][update_url])
+    urls = process_url(conf.cfme_data['basic_info'][update_url])
     output = build_file(urls)
     with tempfile.NamedTemporaryFile('w') as f:
         f.write(output)
@@ -88,3 +90,49 @@ def test_update_yum(appliance_preupdate, appliance):
     appliance_preupdate.evmserverd.start()
     appliance_preupdate.wait_for_web_ui()
     assert appliance.version == appliance_preupdate.version
+
+
+@pytest.fixture(scope="function")
+def enabled_embedded_appliance(appliance_preupdate):
+    """Takes a preconfigured appliance and enables the embedded ansible role"""
+    appliance_preupdate.enable_embedded_ansible_role()
+    assert appliance_preupdate.is_embedded_ansible_running
+    return appliance_preupdate
+
+
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+@pytest.mark.uncollectif(lambda: store.current_appliance.version < "5.8")
+def test_embedded_ansible_update(enabled_embedded_appliance, appliance, old_version):
+    """ Tests updating an appliance which has embedded ansible role enabled, also confirms that the
+        role continues to function correctly after the update has completed"""
+    set_default_repo = True
+    with enabled_embedded_appliance:
+        red_hat_updates = RedHatUpdates(
+            service='rhsm',
+            url=conf.cfme_data['redhat_updates']['registration']['rhsm']['url'],
+            username=conf.credentials['rhsm']['username'],
+            password=conf.credentials['rhsm']['password'],
+            set_default_repository=set_default_repo
+        )
+        red_hat_updates.update_registration(validate=False)
+        red_hat_updates.check_updates()
+        wait_for(
+            func=red_hat_updates.checked_updates,
+            func_args=[appliance.server.name],
+            delay=10,
+            num_sec=100,
+            fail_func=red_hat_updates.refresh
+        )
+        if red_hat_updates.platform_updates_available():
+            red_hat_updates.update_appliances()
+
+    def is_appliance_updated(appliance):
+        """Checks if cfme-appliance has updated"""
+        assert appliance.version == enabled_embedded_appliance.version
+
+    wait_for(is_appliance_updated, func_args=[enabled_embedded_appliance], num_sec=900)
+    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=30)
+    assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
+    assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
+    assert enabled_embedded_appliance.ssh_client.run_command(
+        'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
