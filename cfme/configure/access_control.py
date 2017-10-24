@@ -560,7 +560,7 @@ class GroupEditTagsView(ConfigurationView):
 class Group(BaseEntity):
     """Represents a group in CFME UI
 
-    Args:
+    Properties:
         description: group description
         role: group role
         tenant: group tenant
@@ -823,6 +823,15 @@ class GroupCollection(BaseCollection):
         """ Create group method
 
         Args:
+            description: group description
+            role: group role
+            tenant: group tenant
+            user_to_lookup: ldap user to lookup
+            ldap_credentials: ldap user credentials
+            tag: tag for group restriction
+            host_cluster: host/cluster for group restriction
+            vm_template: vm/template for group restriction
+            appliance: appliance under test
             cancel: True - if you want to cancel group creation,
                     by default group will be created
         Throws:
