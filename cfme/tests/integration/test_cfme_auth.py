@@ -36,16 +36,20 @@ def group(request, data, auth_mode, add_group, appliance):
         secret=data["password"],
     )
     group_collection = appliance.collections.groups
-    user_group = group_collection.instantiate(description=data['group_name'], role="EvmRole-user",
-                       user_to_lookup=data["username"], ldap_credentials=credentials)
+    user_group = None
     if add_group == RETRIEVE_GROUP:
+        user_group = group_collection.instantiate(
+            description=data['group_name'], role="EvmRole-user",
+            user_to_lookup=data["username"], ldap_credentials=credentials)
         if 'ext' in auth_mode:
             user_group.add_group_from_ext_auth_lookup()
         elif 'miq' in auth_mode:
             user_group.add_group_from_ldap_lookup()
         request.addfinalizer(user_group.delete)
     elif add_group == CREATE_GROUP:
-        user_group.create()
+        user_group = group_collection.create(
+            description=data['group_name'], role="EvmRole-user",
+            user_to_lookup=data["username"], ldap_credentials=credentials)
         request.addfinalizer(user_group.delete)
 
 
