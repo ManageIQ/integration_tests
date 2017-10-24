@@ -98,7 +98,7 @@ def test_ntp_conf_file_update_check(request, appliance, empty_ntp_dict, ntp_serv
 
 @pytest.mark.tier(3)
 def test_ntp_server_check(request, appliance, ntp_servers_keys):
-    request.addfinalizer(partial(clear_ntp_settings, appliance, empty_ntp_dict))
+    request.addfinalizer(lambda: appliance.server.settings.update_ntp_servers(empty_ntp_dict))
     orig_date = appliance_date(appliance)
     past_date = orig_date - timedelta(days=10)
     logger.info("dates: orig_date - %s, past_date - %s", orig_date, past_date)
