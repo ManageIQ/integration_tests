@@ -990,7 +990,7 @@ class AllRolesView(ConfigurationView):
 class Role(BaseEntity):
     """ Represents a role in CFME UI
 
-    Args:
+    Properties:
         name: role name
         vm_restriction: restriction used for role
         product_features: product feature to select
@@ -1127,6 +1127,10 @@ class RoleCollection(BaseCollection):
             name=None, vm_restriction=None, product_features=None, cancel=False):
         """ Create role method
             Args:
+                name: role name
+                vm_restriction: restriction used for role
+                product_features: product feature to select
+                appliance: appliance unter test
                 cancel: True - if you want to cancel role creation,
                         by default, role will be created
         Throws:
