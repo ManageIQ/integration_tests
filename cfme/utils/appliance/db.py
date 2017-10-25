@@ -5,7 +5,6 @@ from textwrap import dedent
 
 from cfme.utils import db, conf, clear_property_cache, datafile
 from cfme.utils.path import scripts_path
-from cfme.utils.version import LATEST
 from cfme.utils.wait import wait_for
 
 from .plugin import AppliancePlugin, AppliancePluginException
@@ -140,16 +139,13 @@ class ApplianceDB(AppliancePlugin):
 
         """
         self.logger.info('Starting DB setup')
-        if self.appliance.version != LATEST:
+        if self.appliance.is_downstream:
             # We only execute this on downstream appliances.
-            # TODO: Handle external DB setup. Probably pop the db_address and decide on that one.
             self.enable_internal(**kwargs)
-        else:
-            # Ensure the evmserverd is on on the upstream appliance
-            if not self.appliance.evmserverd.running:
-                self.appliance.evmserverd.start()
-                self.appliance.evmserverd.enable()  # just to be sure here.
-                self.appliance.wait_for_web_ui()
+        elif not self.appliance.evmserverd.running:
+            self.appliance.evmserverd.start()
+            self.appliance.evmserverd.enable()  # just to be sure here.
+            self.appliance.wait_for_web_ui()
 
         # Make sure the database is ready
         wait_for(func=lambda: self.is_ready,
@@ -197,17 +193,20 @@ class ApplianceDB(AppliancePlugin):
         status, out = client.run_command("systemctl restart {scl}-postgresql".format(scl=scl))
         return status
 
-    def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None):
+    def enable_internal(self, region=0, key_address=None, db_password=None, ssh_password=None,
+                        db_disk=None):
         """Enables internal database
 
         Args:
             region: Region number of the CFME appliance.
             key_address: Address of CFME appliance where key can be fetched.
+            db_disk: Path of the db disk for --dbdisk appliance_console_cli. If not specified it
+                     tries to load it from the appliance.
 
         Note:
             If key_address is None, a new encryption key is generated for the appliance.
         """
-        self.logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
+        # self.logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.address = self.appliance.address
         clear_property_cache(self, 'client')
 
@@ -216,19 +215,29 @@ class ApplianceDB(AppliancePlugin):
         # Defaults
         db_password = db_password or conf.credentials['database']['password']
         ssh_password = ssh_password or conf.credentials['ssh']['password']
+        if not db_disk:
+            try:
+                db_disk = self.appliance.unpartitioned_disks[0]
+            except IndexError:
+                db_disk = None
+                self.logger.warning(
+                    'Failed to set --dbdisk from the appliance. On 5.9.0.3+ it will fail.')
 
         if self.appliance.has_cli:
+            base_command = 'appliance_console_cli --region {}'.format(region)
             # use the cli
             if key_address:
-                status, out = client.run_command(
-                    'appliance_console_cli --region {0} --internal --fetch-key {1} -p {2} -a {3}'
-                    .format(region, key_address, db_password, ssh_password)
-                )
+                command_options = ('--internal --fetch-key {key} -p {db_pass} -a {ssh_pass}'
+                                   .format(key=key_address, db_pass=db_password,
+                                           ssh_pass=ssh_password))
+
             else:
-                status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal --force-key -p {}'
-                    .format(region, db_password)
-                )
+                command_options = '--internal --force-key -p {db_pass}'.format(db_pass=db_password)
+
+            if db_disk:
+                command_options = ' '.join([command_options, '--dbdisk {}'.format(db_disk)])
+
+            status, out = client.run_command(' '.join([base_command, command_options]))
         else:
             # no cli, use the enable internal db script
             rbt_repl = {

@@ -612,6 +612,26 @@ class IPAppliance(object):
         parsed_url = urlparse(self.url)
         return parsed_url.hostname
 
+    @property
+    def unpartitioned_disks(self):
+        """Returns a list of disk devices that are not mounted."""
+        disks_and_partitions = self.ssh_client.run_command(
+            "cat /proc/partitions | awk '{ print $4 }' | egrep '^[sv]d[a-z][0-9]?'").output.strip()
+        disks_and_partitions = re.split(r'\s+', disks_and_partitions)
+        partition_regexp = re.compile('^[sv]d[a-z][0-9]$')
+        disks = set()
+        for dp in disks_and_partitions:
+            disks.add(re.sub(r'[0-9]$', '', dp))
+        unpartitioned_disks = set()
+        for disk in disks:
+            add = True
+            for dp in disks_and_partitions:
+                if dp.startswith(disk) and partition_regexp.match(dp) is not None:
+                    add = False
+            if add:
+                unpartitioned_disks.add(disk)
+        return sorted('/dev/{}'.format(disk) for disk in unpartitioned_disks)
+
     @cached_property
     def product_name(self):
         try:
@@ -620,13 +640,23 @@ class IPAppliance(object):
             self.log.exception(
                 'appliance.product_name could not be retrieved from REST, falling back')
             try:
-                # We need to print to a file here because the deprecation warnings make it hard
-                # to get robust output and they do not seem to go to stderr
-                result = self.ssh_client.run_rails_command(
-                    '"File.open(\'/tmp/product_name.txt\', \'w\') '
-                    '{|f| f.write(I18n.t(\'product.name\')) }"')
-                result = self.ssh_client.run_command('cat /tmp/product_name.txt')
-                return result.output
+                # TODO: Review this section. Does not work unconfigured
+                # # We need to print to a file here because the deprecation warnings make it hard
+                # # to get robust output and they do not seem to go to stderr
+                # result = self.ssh_client.run_rails_command(
+                #     '"File.open(\'/tmp/product_name.txt\', \'w\') '
+                #     '{|f| f.write(I18n.t(\'product.name\')) }"')
+                # result = self.ssh_client.run_command('cat /tmp/product_name.txt')
+                # return result.output
+
+                res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+                if res.rc != 0:
+                    raise RuntimeError('Unable to retrieve appliance VMDB version')
+                version_string = res.output.strip()
+                if version_string == 'master':
+                    return 'ManageIQ'
+                else:
+                    return 'CFME'
             except Exception:
                 logger.exception(
                     "Couldn't fetch the product name from appliance, using ManageIQ as default")
