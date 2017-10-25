@@ -1625,7 +1625,7 @@ class IPAppliance(object):
 
     @property
     def has_cli(self):
-        if self.ssh_client.run_command('ls -l /bin/appliance_console_cli')[0] == 0:
+        if self.ssh_client.run_command('hash appliance_console_cli')[0] == 0:
             return True
         else:
             return False
