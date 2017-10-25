@@ -1219,6 +1219,12 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
+@navigator.register(Template, 'ArchivedDetails')
+@navigator.register(Vm, 'ArchivedDetails')
+class VmAllWithTemplatesDetailsArchived(VmAllWithTemplatesDetails):
+    prerequisite = NavigateToSibling('All')
+
+
 @navigator.register(Vm, 'VMsOnly')
 class VmAll(CFMENavigateStep):
     VIEW = VmsOnlyAllView

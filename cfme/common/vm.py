@@ -305,6 +305,24 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         else:
             return False
 
+    def get_state_from_quadicon(self):
+        """Extracts current state from quadicon"""
+        return self.find_quadicon(from_any_provider=True).data['state']
+
+    @property
+    def is_archived(self):
+        """Check from quadicon if VM is archived"""
+        if self.get_state_from_quadicon().startswith(u'currentstate-archived'):
+            return True
+        return False
+
+    @property
+    def is_orphaned(self):
+        """Check from quadicon if VM is orphaned"""
+        if self.get_state_from_quadicon().startswith(u'currentstate-orphaned'):
+            return True
+        return False
+
     def find_quadicon(self, from_any_provider=False, use_search=True):
         """Find and return a quadicon belonging to a specific vm
 
@@ -403,7 +421,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
             VmOrInstanceNotFound:
                 When unable to find the VM passed
         """
-        navigate_to(self, 'Details', use_resetter=False)
+        if self.is_archived or self.is_orphaned:
+            navigate_to(self, 'ArchivedDetails', use_resetter=False)
+        else:
+            navigate_to(self, 'Details', use_resetter=False)
         if refresh:
             toolbar.refresh()
             self.browser.plugin.ensure_page_safe()
@@ -615,7 +636,7 @@ class VM(BaseVM):
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
                                  with_relationship_refresh=True, from_any_provider=False):
-        """Wait for M to come to desired state.
+        """Wait for VM to come to desired state.
 
         This function waits just the needed amount of time thanks to wait_for.
 

@@ -359,13 +359,11 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
 
 
 def test_archived_vm_status(testing_vm, archived_vm):
-    vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
-    assert ('currentstate-archived' in vm_state)
+    assert testing_vm.is_archived
 
 
 def test_orphaned_vm_status(testing_vm, orphaned_vm):
-    vm_state = testing_vm.find_quadicon(from_any_provider=True).data['state']
-    assert ('currentstate-orphaned' in vm_state)
+    assert testing_vm.is_orphaned
 
 
 @pytest.mark.uncollectif(lambda provider: provider.one_of(RHEVMProvider))
