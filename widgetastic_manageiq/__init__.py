@@ -418,6 +418,7 @@ class SummaryFormItem(Widget):
     LOCATOR = (
         './/h3[normalize-space(.)={}]/following-sibling::div/div'
         '//label[normalize-space(.)={}]/following-sibling::div')
+    SINGLE_ITEM_LOCATOR = '//label[normalize-space(.)={}]/following-sibling::div'
 
     def __init__(self, parent, group_title, item_name, text_filter=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -428,7 +429,10 @@ class SummaryFormItem(Widget):
         self.text_filter = text_filter
 
     def __locator__(self):
-        return self.LOCATOR.format(quote(self.group_title), quote(self.item_name))
+        if not self.group_title:
+            return self.SINGLE_ITEM_LOCATOR.format(quote(self.item_name))
+        else:
+            return self.LOCATOR.format(quote(self.group_title), quote(self.item_name))
 
     @property
     def text(self):
