@@ -44,13 +44,12 @@ class EntityCollections(object):
             raise AttributeError('Collection [{}] not known to object'.format(name))
         if name not in self._collection_cache:
             item_filters = self._filters.copy()
-            cls_and_or_filter = self._collections[name]
+            cls_and_or_filter = self._availiable_collections[name]
             if isinstance(cls_and_or_filter, tuple):
                 item_filters.update(cls_and_or_filter[1])
                 cls = cls_and_or_filter[0]
             else:
                 cls = cls_and_or_filter
-            cls = self._collections[name]
             self._collection_cache[name] = cls(self._parent, filters=item_filters)
         return self._collection_cache[name]
 
