@@ -217,7 +217,7 @@ class ApplianceDB(AppliancePlugin):
         ssh_password = ssh_password or conf.credentials['ssh']['password']
         if not db_disk:
             try:
-                db_disk = self.appliance.unmounted_disks[0]
+                db_disk = self.appliance.unpartitioned_disks[0]
             except IndexError:
                 db_disk = None
                 self.logger.warning(

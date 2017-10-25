@@ -613,7 +613,7 @@ class IPAppliance(object):
         return parsed_url.hostname
 
     @property
-    def unmounted_disks(self):
+    def unpartitioned_disks(self):
         """Returns a list of disk devices that are not mounted."""
         disks_and_partitions = self.ssh_client.run_command(
             "cat /proc/partitions | awk '{ print $4 }' | egrep '^[sv]d[a-z][0-9]?'").output.strip()
@@ -622,15 +622,15 @@ class IPAppliance(object):
         disks = set()
         for dp in disks_and_partitions:
             disks.add(re.sub(r'[0-9]$', '', dp))
-        unmounted_disks = set()
+        unpartitioned_disks = set()
         for disk in disks:
             add = True
             for dp in disks_and_partitions:
                 if dp.startswith(disk) and partition_regexp.match(dp) is not None:
                     add = False
             if add:
-                unmounted_disks.add(disk)
-        return sorted('/dev/{}'.format(disk) for disk in unmounted_disks)
+                unpartitioned_disks.add(disk)
+        return sorted('/dev/{}'.format(disk) for disk in unpartitioned_disks)
 
     @cached_property
     def product_name(self):
