@@ -83,7 +83,7 @@ gh_repo: cfme_tests
 Running DockerBot
 -----------------
 
-`$ scripts/dockerbot/docker_bot.py --appliance-name Downstream --pytest 'py.test -k test_bad_password' --watch --browser 'firefox'`
+`$ scripts/dockerbot/dockerbot.py --appliance-name Downstream --pytest 'py.test -k test_bad_password' --watch --browser 'firefox'`
 
 This spawns two containers a "selenium" one and a "pytest" one. The `watch` option fires up a
 VNC viewer. This would run the test against the current master branch as defined in the
@@ -94,7 +94,7 @@ docker.yaml. Read on for more advanced options.
 Using the commanline options, DockerBot can be told to go to a different CFME repository, such
 as your own fork, and run a branch there, an example of this is below.
 
-`$ scripts/docker_bot.py --watch --output --appliance-name Downstream --cfme-repo https://github.com/psav/cfme_tests --branch disable_tracer --pytest 'py.test -k test_bad_password'`
+`$ scripts/dockerbot.py --watch --output --appliance-name Downstream --cfme-repo https://github.com/psav/cfme_tests --branch disable_tracer --pytest 'py.test -k test_bad_password'`
 
 ### PR testing
 
@@ -102,7 +102,7 @@ DockerBot has a **PR** option which allows you to ask it to download a PR instea
 This option will overide the `--branch` option and checkout the latest master and merge the PR
 on top. If this fails, the whole container should fail and the test output will indicate as such.
 
-`$ scripts/docker_bot.py --watch --output --appliance-name Downstream --pr 952 --pytest 'py.test -k test_bad_password'`
+`$ scripts/dockerbot.py --watch --output --appliance-name Downstream --pr 952 --pytest 'py.test -k test_bad_password'`
 
 ### Auto Test Generation
 
