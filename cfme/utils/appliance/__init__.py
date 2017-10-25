@@ -145,21 +145,20 @@ class ApplianceConsoleCli(object):
         self._run("--host {host}".format(host=hostname))
 
     def configure_appliance_external_join(self, dbhostname,
-            username, password, dbname, fetch_key, sshlogin, sshpass, disk):
+            username, password, dbname, fetch_key, sshlogin, sshpass):
         self._run("--hostname {dbhostname} --username {username} --password {password}"
-            " --dbname {dbname} --verbose --dbdisk {dbdisk} --fetch-key {fetch_key} --sshlogin"
-            " {sshlogin} --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
-                password=password, dbname=dbname, disk=disk, fetch_key=fetch_key, sshlogin=sshlogin,
+            " --dbname {dbname} --verbose --fetch-key {fetch_key} --sshlogin {sshlogin}"
+            " --sshpassword {sshpass}".format(dbhostname=dbhostname, username=username,
+                password=password, dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin,
                 sshpass=sshpass))
 
     def configure_appliance_external_create(self, region, dbhostname,
-            username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass):
+            username, password, dbname, fetch_key, sshlogin, sshpass):
         self._run("--region {region} --hostname {dbhostname} --username {username}"
-            " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk} --fetch-key"
+            " --password {password} --dbname {dbname} --verbose --fetch-key"
             " {fetch_key} --sshlogin {sshlogin} --sshpassword {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
-                sshpass=sshpass))
+                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
             username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass):
