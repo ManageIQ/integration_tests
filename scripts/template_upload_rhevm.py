@@ -11,8 +11,6 @@ normally be placed in main function, are located in function run(**kwargs).
 
 import argparse
 import fauxfactory
-import ovirtsdk4 as sdk
-import ovirtsdk4.types as types
 import re
 import sys
 from threading import Lock, Thread
@@ -59,38 +57,49 @@ def parse_cmd_line():
     return args
 
 
-def add_glance():
-    connection = sdk.Connection(
-    url='https://xx.yy.zz.com/ovirt-engine/api',
-    username='admin@internal',
-    password='yyyyyyy',
-    ca_file='/etc/pki/ovirt-engine/ca.pem',
+def add_glance(api, provider):
+    glance_provider = 'glance11-server'
+    provider_dict = cfme_data['management_systems'][glance_provider]
+    creds_key = provider_dict['credentials']
 
-    # Get the root of the services tree:
-    system_service = connection.system_service()
+    def is_glance_added(api, name):
+        for domain in api.openstackimageproviders.list():
+            if domain.get_name() == glance_provider:
+                return True
+        return False
 
     # Get the list of OpenStack image providers (a.k.a. Glance providers)
     # that match the name that we want to use:
-    providers_service = system_service.openstack_image_providers_service()
     providers = [
-        provider for provider in providers_service.list()
-        if provider.name == name
+        domain for domain in api.openstackimageproviders.list()
+        if domain.get_name() == glance_provider
     ]
 
-    # If there is no such provider, then add it:
-    if len(providers) == 0:
-        providers_service.add(
-            provider=types.OpenStackImageProvider(
-                name=name,
-                description='glance11',
-                url='http://xx.y.zz.aa:9292',
-                requires_authentication=True,
-                authentication_url='http://xx.y.zz.aa:35357/v2.0',
-                username='admin',
-                password='987654',
-                tenant_name='admin'
+    try:
+        # If there is no such provider, then add it:
+        if len(providers) == 0:
+            glance_sd = api.openstackimageproviders.add(
+                params.OpenStackImageProvider(
+                    name=glance_provider,
+                    description='My Glance',
+                    url=provider_dict['url'],
+                    requires_authentication=True,
+                    authentication_url=provider_dict['auth_url'],
+                    username=credentials[creds_key]['username'],
+                    password=credentials[creds_key]['password'],
+                    tenant_name=credentials[creds_key]['tenant']
+                )
             )
-        )
+
+        wait_for(is_glance_added, [api, glance_provider],
+            fail_condition=False, delay=5, num_sec=240)
+        if not api.openstackimageproviders.get(name=glance_provider):
+            logger.error("RHV:%s Glance provider %s could not be attached", provider,
+                glance_provider)
+            sys.exit(127)
+        logger.info('RHV:%s Attached Glance provider %s', provider, glance_sd.get_name())
+    except Exception:
+        logger.exception("RHV:%r add_glance failed:", provider)
 
 
 def make_ssh_client(rhevip, sshname, sshpass):
@@ -666,6 +675,10 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             logger.info("RHEVM:%r Found finished template with name %r.", provider, template_name)
             logger.info("RHEVM:%r The script will now end.", provider)
             return True
+        logger.info('RHEVM:%r BEFORE add_glance..', provider)
+        add_glance(api, provider)
+        sys.exit(127)
+
         logger.info("RHEVM:%r Downloading .ova file...", provider)
         with make_ssh_client(rhevip, sshname, sshpass) as ssh_client:
             download_ova(ssh_client, kwargs.get('image_url'))
