@@ -231,16 +231,16 @@ class ApplianceDB(AppliancePlugin):
             # use the cli
             if key_address:
                 command_options = ('--internal --fetch-key {key} -p {db_pass} -a {ssh_pass}'
-                                .format(key=key_address, db_pass=db_password,
-                                        ssh_pass=ssh_password))
+                                   .format(key=key_address, db_pass=db_password,
+                                           ssh_pass=ssh_password))
 
             else:
                 command_options = '--internal --force-key -p {db_pass}'.format(db_pass=db_password)
 
             if db_disk:
-                ' '.join(command_options, '--dbdisk {}'.format(db_disk))
+                command_options = ' '.join([command_options, '--dbdisk {}'.format(db_disk)])
 
-            status, out = client.run_command(' '.join(base_command, command_options))
+            status, out = client.run_command(' '.join([base_command, command_options]))
         else:
             # no cli, use the enable internal db script
             rbt_repl = {
