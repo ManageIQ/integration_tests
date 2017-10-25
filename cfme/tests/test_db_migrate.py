@@ -157,5 +157,6 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
         rc, out = ssh.run_command('systemctl restart rh-postgresql{}-postgresql'.format(ver))
         assert rc == 0, "Failed to restart postgres: {}".format(out)
     appliance_preupdate.start_evm_service()
+    appliance_preupdate.wait_for_evm_service()
     appliance_preupdate.wait_for_web_ui()
     assert appliance.version == appliance_preupdate.version
