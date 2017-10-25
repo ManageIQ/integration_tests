@@ -34,10 +34,9 @@ def service_catalogs(request, rest_api, num=5):
     """Create service catalogs using REST API."""
     scls_data = []
     for _ in range(num):
-        uniq = fauxfactory.gen_alphanumeric()
         scls_data.append({
-            'name': 'name_{}'.format(uniq),
-            'description': 'description_{}'.format(uniq),
+            'name': 'cat_{}'.format(fauxfactory.gen_alphanumeric()),
+            'description': 'my catalog',
             'service_templates': []
         })
 
