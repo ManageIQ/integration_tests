@@ -122,6 +122,12 @@ class MiqBrowserPlugin(DefaultPlugin):
         time.sleep(interval)
         self.browser.plugin.ensure_page_safe()
 
+    def before_keyboard_input(self, element, keyboard_input):
+        # there is an issue in different dialogs
+        # when cfme doesn't see that some input fields have been updated
+        # this is temporary fix until we figure out real reason and fix it
+        sleep(0.3)
+
 
 class MiqBrowser(Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
