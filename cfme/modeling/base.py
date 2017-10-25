@@ -22,9 +22,10 @@ class EntityCollections(object):
     of all known good collections.
     """
     _parent = attr.ib(repr=False, cmp=False, hash=False)
-    _availiable_collections =  attr.ib(repr=False, cmp=False, hash=False)
+    _availiable_collections = attr.ib(repr=False, cmp=False, hash=False)
     _filters = attr.ib(cmp=False, hash=False, default=attr.Factory(dict))
-    _collection_cache = attr.ib(repr=False, cmp=False, hash=False, init=False, default=attr.Factory(dict))
+    _collection_cache = attr.ib(repr=False, cmp=False, hash=False, init=False,
+                                default=attr.Factory(dict))
 
     @classmethod
     def for_appliance(cls, appliance):
@@ -33,7 +34,6 @@ class EntityCollections(object):
     @classmethod
     def for_entity(cls, entity, collections):
         return cls(parent=entity, availiable_collections=collections, filters={'parent': entity})
-
 
     def __dir__(self):
         internal_dir = dir(super(EntityCollections, self))
