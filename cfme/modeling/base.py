@@ -130,7 +130,12 @@ class BaseEntity(NavigatableMixin):
 
     @cached_property
     def collections(self):
-        return EntityCollections.for_entity(self)
+        try:
+            spec = self._collections
+        except AttributeError:
+            raise AttributeError("collections")
+
+        return EntityCollections.for_entity(self, spec)
 
 
 @attr.s
