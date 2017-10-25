@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.rest.gen_data import dialog as _dialog
-from cfme.services.catalogs.catalog import Catalog
+from cfme.rest.gen_data import service_catalog_obj as _catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.service_catalogs import ServiceCatalogs
 from cfme.utils.log import logger
@@ -16,12 +15,8 @@ def dialog(request, appliance):
 
 
 @pytest.yield_fixture(scope="function")
-def catalog():
-    catalog = "cat_" + fauxfactory.gen_alphanumeric()
-    cat = Catalog(name=catalog,
-                  description="my catalog")
-    cat.create()
-    yield cat
+def catalog(request, appliance):
+    return _catalog(request, appliance.rest_api)
 
 
 @pytest.fixture(scope="function")
