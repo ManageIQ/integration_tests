@@ -4,7 +4,7 @@ from time import sleep
 
 from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
 from widgetastic_patternfly import (
-    Dropdown, BootstrapSelect, FlashMessages, Tab, Input, CheckableBootstrapTreeview)
+    Dropdown, BootstrapSelect, Tab, FlashMessages, Input, CheckableBootstrapTreeview)
 from widgetastic_manageiq import BreadCrumb, PaginationPane
 
 
@@ -14,17 +14,6 @@ from widgetastic_manageiq import (
     Calendar, SummaryTable, Button, ItemsToolBarViewSelector, Table, MultiBoxSelect, RadioGroup,
     CheckableManageIQTree, VersionPick, Version, BaseEntitiesView, NonJSBaseEntity, BaseListEntity,
     BaseQuadIconEntity, BaseTileIconEntity, JSBaseEntity, BaseNonInteractiveEntitiesView)
-
-
-class ProvisionTab(Tab):
-    """Workaround for testing purposes only"""
-    def after_fill(self, was_change):
-        self.browser.execute_script("""jQuery.fn.art_click = function () {
-                                    this.each(function (i, e) {
-                                    var evt = new MouseEvent("click");
-                                    e.dispatchEvent(evt);
-                                    });};
-                                    $(arguments[0]).art_click();""", self)
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
@@ -175,7 +164,7 @@ class VMDetailsEntities(View):
 
 class BasicProvisionFormView(View):
     @View.nested
-    class request(ProvisionTab):  # noqa
+    class request(Tab):  # noqa
         TAB_NAME = 'Request'
         email = Input(name='requester__owner_email')
         first_name = Input(name='requester__owner_first_name')
@@ -184,12 +173,12 @@ class BasicProvisionFormView(View):
         manager_name = Input(name='requester__owner_manager')
 
     @View.nested
-    class purpose(ProvisionTab):  # noqa
+    class purpose(Tab):  # noqa
         TAB_NAME = 'Purpose'
         apply_tags = CheckableBootstrapTreeview('all_tags_treebox')
 
     @View.nested
-    class catalog(ProvisionTab):  # noqa
+    class catalog(Tab):  # noqa
         TAB_NAME = 'Catalog'
         vm_name = Input(name='service__vm_name')
         vm_description = Input(name='service__vm_description')
@@ -203,7 +192,7 @@ class BasicProvisionFormView(View):
         iso_file = SelectTable('//div[@id="prov_iso_img_div"]/table')
 
     @View.nested
-    class environment(ProvisionTab):  # noqa
+    class environment(Tab):  # noqa
         TAB_NAME = 'Environment'
         automatic_placement = Checkbox(id='environment__placement_auto')
         # Cloud
@@ -227,7 +216,7 @@ class BasicProvisionFormView(View):
         datastore_name = SelectTable('//div[@id="prov_ds_div"]/table')
 
     @View.nested
-    class hardware(ProvisionTab):  # noqa
+    class hardware(Tab):  # noqa
         TAB_NAME = 'Hardware'
         num_sockets = BootstrapSelect('hardware__number_of_sockets')
         cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
@@ -241,12 +230,12 @@ class BasicProvisionFormView(View):
         vm_reserve_memory = Input(name='hardware__memory_reserve')
 
     @View.nested
-    class network(ProvisionTab):  # noqa
+    class network(Tab):  # noqa
         TAB_NAME = 'Network'
         vlan = BootstrapSelect('network__vlan')
 
     @View.nested
-    class properties(ProvisionTab):  # noqa
+    class properties(Tab):  # noqa
         TAB_NAME = 'Properties'
         instance_type = BootstrapSelect('hardware__instance_type')
         guest_keypair = BootstrapSelect('hardware__guest_access_key_pair')
@@ -256,7 +245,7 @@ class BasicProvisionFormView(View):
         is_preemtible = Input(name='hardware__is_preemptible')
 
     @View.nested
-    class customize(ProvisionTab):  # noqa
+    class customize(Tab):  # noqa
         TAB_NAME = 'Customize'
         # Common
         dns_servers = Input(name='customize__dns_servers')
@@ -274,7 +263,7 @@ class BasicProvisionFormView(View):
         hostname = Input(name='customize__hostname')
 
     @View.nested
-    class schedule(ProvisionTab):  # noqa
+    class schedule(Tab):  # noqa
         TAB_NAME = 'Schedule'
         # Common
         schedule_type = RadioGroup(locator=('//div[@id="schedule"]'

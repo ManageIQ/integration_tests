@@ -122,6 +122,9 @@ class MiqBrowserPlugin(DefaultPlugin):
         time.sleep(interval)
         self.browser.plugin.ensure_page_safe()
 
+    def before_keyboard_input(self, element, keyboard_input):
+        self.browser.plugin.ensure_page_safe()
+
 
 class MiqBrowser(Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
