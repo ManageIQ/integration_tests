@@ -239,8 +239,8 @@ class IPAppliance(object):
         self.context = ImplementationContext.from_instances(
             [self.browser, self.ssui])
 
-        from cfme.modeling.base import ApplianceCollections
-        self.collections = ApplianceCollections(self)
+        from cfme.modeling.base import EntityCollections
+        self.collections = EntityCollections.for_appliance(self)
         self.ssh_port = ssh_port or ports.SSH
         self.db_port = db_port or ports.DB
         if address is not None:
