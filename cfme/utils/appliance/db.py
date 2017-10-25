@@ -139,14 +139,10 @@ class ApplianceDB(AppliancePlugin):
 
         """
         self.logger.info('Starting DB setup')
-        # TODO is this check even needed?
-        # if self.appliance.is_downstream:
+        if self.appliance.is_downstream:
             # We only execute this on downstream appliances.
-            # TODO: Handle external DB setup. Probably pop the db_address and decide on that one.
-        self.enable_internal(**kwargs)
-        # else:
-            # Ensure the evmserverd is on on the upstream appliance
-        if not self.appliance.evmserverd.running:
+            self.enable_internal(**kwargs)
+        elif not self.appliance.evmserverd.running:
             self.appliance.evmserverd.start()
             self.appliance.evmserverd.enable()  # just to be sure here.
             self.appliance.wait_for_web_ui()
@@ -204,7 +200,8 @@ class ApplianceDB(AppliancePlugin):
         Args:
             region: Region number of the CFME appliance.
             key_address: Address of CFME appliance where key can be fetched.
-            db_disk: Path of the db disk for --dbdisk appliance_console_cli
+            db_disk: Path of the db disk for --dbdisk appliance_console_cli. If not specified it
+                     tries to load it from the appliance.
 
         Note:
             If key_address is None, a new encryption key is generated for the appliance.
@@ -220,11 +217,11 @@ class ApplianceDB(AppliancePlugin):
         ssh_password = ssh_password or conf.credentials['ssh']['password']
         if not db_disk:
             try:
-                app_provider = conf.cfme_data.management_systems.get(self.appliance._provider_key)
-                db_disk = app_provider.get('template_upload').get('db_disk')
-            except AttributeError:
+                db_disk = self.appliance.unmounted_disks[0]
+            except IndexError:
                 db_disk = None
-                self.logger.warning('Failed to set a default dbdisk from yaml config')
+                self.logger.warning(
+                    'Failed to set --dbdisk from the appliance. On 5.9.0.3+ it will fail.')
 
         if self.appliance.has_cli:
             base_command = 'appliance_console_cli --region {}'.format(region)
