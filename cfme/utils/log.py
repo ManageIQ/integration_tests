@@ -467,6 +467,7 @@ def _configure_warnings():
     wlog.addFilter(WarningsRelpathFilter())
     wlog.addFilter(WarningsDeduplicationFilter())
     wlog.addHandler(make_file_handler('py.warnings.log'))
+    wlog.addHandler(console_handler(logging.INFO))
     wlog.propagate = False
 
 
