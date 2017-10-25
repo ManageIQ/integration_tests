@@ -54,7 +54,7 @@ def modify_instance(create_domain):
         .classes.instantiate(name='ServiceProvisionRequestApproval')\
         .instances.instantiate(name='Default')
     with update(instance):
-        instance.fields = {"approval_type ": {"value": "manual"}}
+        instance.fields = {"approval_type": {"value": "manual"}}
 
 
 @pytest.mark.ignore_stream("upstream")
