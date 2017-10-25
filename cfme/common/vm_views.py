@@ -19,7 +19,12 @@ from widgetastic_manageiq import (
 class ProvisionTab(Tab):
     """Workaround for testing purposes only"""
     def after_fill(self, was_change):
-        self.click()
+        self.browser.execute_script("""jQuery.fn.art_click = function () {
+                                    this.each(function (i, e) {
+                                    var evt = new MouseEvent("click");
+                                    e.dispatchEvent(evt);
+                                    });};
+                                    $(arguments[0]).art_click();""", self)
 
 
 class InstanceQuadIconEntity(BaseQuadIconEntity):
