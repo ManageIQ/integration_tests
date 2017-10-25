@@ -43,6 +43,15 @@ def get_build_numbers(client, job_name):
 
 
 def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
+    if not jenkins_user or not jenkins_token:
+        try:
+            from cfme.utils import conf
+            jenkins_user = conf.credentials.jenkins_app.user
+            jenkins_token = conf.credentials.jenkins_app.token
+        except (AttributeError, KeyError):
+            raise ValueError(
+                '--jenkins-user and --jenkins-token not provided and credentials yaml does not '
+                'contain the jenkins_app entry with user and token')
     appliance_version = str(appliance.version).strip()
     print('Looking for appliance version {} in {}'.format(appliance_version, job_name))
     client = jenkins.Jenkins(jenkins_url, username=jenkins_user, password=jenkins_token)
@@ -71,6 +80,10 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
             jenkins_user, jenkins_token, jenkins_url, job_name, build_number,
             artifacts['appliance_version']['relativePath']).strip()
 
+        if not build_appliance_version:
+            print('Appliance version unspecified for build {}'.format(build_number))
+            continue
+
         if Version(build_appliance_version) < Version(appliance_version):
             print(
                 'Build {} already has lower version ({})'.format(
@@ -92,7 +105,7 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 
     if not eligible_build_numbers:
         print(
-            'Could not find coverage reports for {} in {}'.format(
+            'Could not find any coverage reports for {} in {}'.format(
                 appliance_version, job_name))
         return 2
 
@@ -169,10 +182,10 @@ def main(appliance, jenkins_url, jenkins_user, jenkins_token, job_name):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_url')
-    parser.add_argument('jenkins_user')
-    parser.add_argument('jenkins_token')
     parser.add_argument('jenkins_job_name')
     parser.add_argument('work_appliance_ip')
+    parser.add_argument('--jenkins-user', default=None)
+    parser.add_argument('--jenkins-token', default=None)
     args = parser.parse_args()
     with IPAppliance(args.work_appliance_ip) as appliance:
         exit(main(
