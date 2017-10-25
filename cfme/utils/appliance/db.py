@@ -139,16 +139,17 @@ class ApplianceDB(AppliancePlugin):
 
         """
         self.logger.info('Starting DB setup')
-        if self.appliance.is_downstream:
+        # TODO is this check even needed?
+        # if self.appliance.is_downstream:
             # We only execute this on downstream appliances.
             # TODO: Handle external DB setup. Probably pop the db_address and decide on that one.
-            self.enable_internal(**kwargs)
-        else:
+        self.enable_internal(**kwargs)
+        # else:
             # Ensure the evmserverd is on on the upstream appliance
-            if not self.appliance.evmserverd.running:
-                self.appliance.evmserverd.start()
-                self.appliance.evmserverd.enable()  # just to be sure here.
-                self.appliance.wait_for_web_ui()
+        if not self.appliance.evmserverd.running:
+            self.appliance.evmserverd.start()
+            self.appliance.evmserverd.enable()  # just to be sure here.
+            self.appliance.wait_for_web_ui()
 
         # Make sure the database is ready
         wait_for(func=lambda: self.is_ready,
@@ -208,7 +209,7 @@ class ApplianceDB(AppliancePlugin):
         Note:
             If key_address is None, a new encryption key is generated for the appliance.
         """
-        self.logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
+        # self.logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.address = self.appliance.address
         clear_property_cache(self, 'client')
 
