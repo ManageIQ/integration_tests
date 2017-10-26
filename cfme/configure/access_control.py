@@ -817,9 +817,8 @@ class GroupCollection(BaseCollection):
     """ Collection object for the :py:class: `cfme.configure.access_control.Group`. """
     ENTITY = Group
 
-    def create(self, description=None, role=None, tenant="My Company",
-               tag=None, host_cluster=None, vm_template=None,
-               cancel=False):
+    def create(self, description=None, role=None, tenant="My Company", ldap_credentials=None,
+            user_to_lookup=None, tag=None, host_cluster=None, vm_template=None, cancel=False):
         """ Create group method
 
         Args:
@@ -850,9 +849,9 @@ class GroupCollection(BaseCollection):
         view = navigate_to(self, 'Add')
 
         group = self.instantiate(
-            description=description, role=role, tenant=tenant,
-            tag=tag, host_cluster=host_cluster, vm_template=vm_template,
-        )
+            description=description, role=role, tenant=tenant, ldap_credentials=ldap_credentials,
+            user_to_lookup=user_to_lookup, tag=tag, host_cluster=host_cluster,
+            vm_template=vm_template)
 
         view.fill({
             'description_txt': group.description,
