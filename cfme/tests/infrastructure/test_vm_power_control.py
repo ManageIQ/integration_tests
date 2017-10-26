@@ -354,7 +354,7 @@ def test_no_power_controls_on_archived_vm(testing_vm, archived_vm, soft_assert):
         * Open the view of VM Details
         * Verify the Power toolbar button is not visible
     """
-    testing_vm.load_details()
+    testing_vm.load_details(from_any_provider=True)
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
