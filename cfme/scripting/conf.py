@@ -13,11 +13,15 @@ import click
 import yaycl_crypt
 
 from cfme.utils import conf
+from . import link_config
 
 
 @click.group(help='Functions affecting configuration files')
 def main():
     pass
+
+
+main.add_command(link_config.main, name='link')
 
 
 @main.command(help='Tests a yaml file')
