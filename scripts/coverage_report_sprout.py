@@ -12,10 +12,10 @@ from coverage_report_jenkins import main as coverage_report_jenkins
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('jenkins_url')
-    parser.add_argument('jenkins_user')
-    parser.add_argument('jenkins_token')
     parser.add_argument('jenkins_job_name')
     parser.add_argument('version')
+    parser.add_argument('--jenkins-user', default=None)
+    parser.add_argument('--jenkins-token', default=None)
     args = parser.parse_args()
     # TODO: Upstream support
     group = 'downstream-' + ''.join(args.version.split('.')[:2]) + 'z'
