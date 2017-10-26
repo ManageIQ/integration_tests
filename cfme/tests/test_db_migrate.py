@@ -140,6 +140,7 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
 
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
     '''Tests appliance upgrade between streams'''
+    ver = '95' if appliance.version > '5.7' else '94'
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
         rc, out = ssh.run_command('yum update -y', timeout=3600)
@@ -153,8 +154,7 @@ def test_upgrade_single_inplace(appliance_preupdate, appliance):
         rc, out = ssh.run_rake_command(
             'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
         assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
-        rc, out = ssh.run_command('systemctl restart rh-postgresql{}-postgresql'.format(
-            appliance_preupdate.db.postgres_version))
+        rc, out = ssh.run_command('systemctl restart rh-postgresql{}-postgresql'.format(ver))
         assert rc == 0, "Failed to restart postgres: {}".format(out)
     appliance_preupdate.start_evm_service()
     appliance_preupdate.wait_for_evm_service()
