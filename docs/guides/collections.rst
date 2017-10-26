@@ -19,7 +19,7 @@ Changes to previous model versions
 Previously, in versions 1 and 2 of the Collection/Entity model we required people to design accomodate
 certain arguments as the first arguments to the collection and entity objects. In version 1 there was no
 checking against the order of these arguments. Version 2 became a little more strict. In version 3, the
-model designer has all of this taken our of their hands as we use the attrs library and subclassing
+model designer has all of this taken out of their hands as we use the attrs library and subclassing
 to design a better Collections/Entity model.
 
 Take the example below
@@ -60,7 +60,7 @@ Collection objects should be obtained via an ``IPAppliance`` object. All base/ro
 is objects which have an appliance as their parent, will be accessible via the ``IPAppliance`` objects
 ``collections`` manager.
 
-.. note:: Not all collections objects are yet available via the ``IPAppliance`` object yet.
+.. note:: Not all collections objects are yet available via the ``IPAppliance`` object.
 
 See the example below which demonstrates how to obtain a Datastore collection, and then instantiate
 a ``Datastore`` object.
