@@ -1737,6 +1737,16 @@ class IPAppliance(object):
             wait_for(lambda: self.server_roles == roles, num_sec=600, delay=15)
         self.wait_for_embedded_ansible()
 
+    def disable_embedded_ansible_role(self):
+        """disables embbeded ansible role"""
+
+        roles = self.server_roles
+        roles['embedded_ansible'] = False
+        try:
+            self.server_roles = roles
+        except TimedOutError:
+            wait_for(lambda: self.server_roles == roles, num_sec=600, delay=15)
+
     def update_server_roles(self, changed_roles):
         server_roles = self.server_roles.copy()
         server_roles.update(changed_roles)
