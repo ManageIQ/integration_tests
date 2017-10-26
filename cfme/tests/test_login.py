@@ -4,7 +4,7 @@ from cfme import test_requirements
 from cfme.base.credential import Credential
 from cfme.configure.access_control import User
 from cfme.utils.appliance import ViaSSUI, ViaUI
-from cfme.utils import conf, error
+from cfme.utils import conf, error, version
 
 pytestmark = pytest.mark.usefixtures('browser')
 
@@ -18,6 +18,8 @@ pytestmark = pytest.mark.usefixtures('browser')
                                              (ViaUI, '_js_auth_fn'),
                                              (ViaSSUI, 'click_on_login'),
                                              (ViaSSUI, 'press_enter_after_password')])
+@pytest.mark.uncollectif(lambda context: context == ViaSSUI and
+                         version.current_version() == version.UPSTREAM)
 def test_login(context, method, appliance):
     """ Tests that the appliance can be logged into and shows dashboard page. """
 
