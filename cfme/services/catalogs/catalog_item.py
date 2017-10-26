@@ -106,7 +106,7 @@ class EditCatalogItemView(BasicInfoForm):
     @property
     def is_displayed(self):
         return self.in_explorer and self.catalog_items.is_opened and \
-            self.title.text == "Editing Service Catalog Item {}".format(self.context['object'].name)
+            self.title.text == 'Editing Service Catalog Item "{}"'.format(self.context['object'].name)
 
 
 class AddButtonGroupView(ButtonGroupForm):
@@ -252,6 +252,12 @@ class CatalogItem(Updateable, Pretty, Navigatable, WidgetasticTaggable):
         else:
             view.cancel_button.click()
         view = self.create_view(DetailsCatalogItemView, override=updates)
+        print('>>>>>>>>PRIVATE<<<<<<<<<<<<<<<<')
+        print('changed: {}'.format(changed))
+        print(vars(view))
+        print(vars(view.context['object']))
+        print(view.is_displayed)
+        print('>>>>>>>>PRIVATE<<<<<<<<<<<<<<<<')
         assert view.is_displayed
         if changed:
             view.flash.assert_message(
