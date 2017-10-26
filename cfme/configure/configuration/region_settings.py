@@ -9,10 +9,11 @@ from widgetastic.widget import Checkbox, Text
 
 from cfme.base.ui import RegionView
 from cfme.modeling.base import BaseCollection
-from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance import NavigatableMixin
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.pretty import Pretty
 from cfme.utils.update import Updateable
+from cfme.utils.log import logger
 
 
 # =====================================CATEGORY===================================
@@ -64,7 +65,7 @@ class CompanyCategoriesEditView(CompanyCategoriesAddView):
         )
 
 
-class Category(Pretty, Navigatable, Updateable):
+class Category(Pretty, NavigatableMixin, Updateable):
     """ Class represents a category in CFME UI
 
         Args:
@@ -81,7 +82,6 @@ class Category(Pretty, Navigatable, Updateable):
 
     def __init__(self, name=None, display_name=None, description=None, show_in_console=True,
                  single_value=True, capture_candu=False, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.display_name = display_name
         self.description = description
@@ -217,7 +217,7 @@ class CompanyTagsEditView(CompanyTagsAddView):
     reset_button = Button('Reset')
 
 
-class Tag(Pretty, Navigatable, Updateable):
+class Tag(Pretty, NavigatableMixin, Updateable):
     """ Class represents a category in CFME UI
         Args:
             name: Name of the tag
@@ -228,7 +228,6 @@ class Tag(Pretty, Navigatable, Updateable):
     pretty_attrs = ['name', 'display_name', 'category']
 
     def __init__(self, name=None, display_name=None, category=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.display_name = display_name
         self.category = category
@@ -326,7 +325,7 @@ class MapTagsEditView(MapTagsAddView):
     reset_button = Button('Reset')
 
 
-class MapTags(Navigatable, Pretty, Updateable):
+class MapTags(NavigatableMixin, Pretty, Updateable):
     """ Class represents a category in CFME UI
 
         Args:
@@ -338,7 +337,6 @@ class MapTags(Navigatable, Pretty, Updateable):
     pretty_attrs = ['entity', 'label', 'category']
 
     def __init__(self, entity=None, label=None, category=None, appliance=None):
-        Navigatable.__init__(self, appliance=appliance)
         self.entity = entity
         self.label = label
         self.category = category
@@ -500,7 +498,7 @@ class RedHatUpdatesEditView(RegionView):
         )
 
 
-class RedHatUpdates(Navigatable, Pretty):
+class RedHatUpdates(NavigatableMixin, Pretty):
     """ Class represents a Red Hat updates tab in CFME UI
 
     Args:
@@ -553,7 +551,6 @@ class RedHatUpdates(Navigatable, Pretty):
         self.proxy_password_verify = proxy_password_verify
         self.set_default_rhsm_address = set_default_rhsm_address
         self.set_default_repository = set_default_repository
-        Navigatable.__init__(self, appliance=appliance)
 
     def update_registration(self, validate=True, cancel=False):
         """ Fill in the registration form, validate and save/cancel
@@ -853,3 +850,81 @@ class CANDUCollectionDetails(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.canducollection.select()
+
+
+# ========================= Replication ================================
+
+
+class ReplicationView(RegionView):
+    """ Replication Tab View """
+    replication_type = BootstrapSelect(id='replication_type')
+    save_button = Button('Save')
+    reset_button = Button('Reset')
+
+    def is_displayed(self):
+            return self.replication_type.is_displayed
+
+
+class ReplicationGlobalView(ReplicationView):
+    """ Replication Global setup View"""
+    add_subscription = Button('Add Subscription')
+    subscription_table = VanillaTable('//form[@id="form_div"]//table[contains(@class, "table")]')
+
+    def is_displayed(self):
+        return self.add_subscription.is_displayed
+
+
+class ReplicationRemoteView(ReplicationView):
+    """ Replication Remote setup View """
+    pass
+    # TODO add widget for "Excluded Tables"
+
+
+class Replication(NavigatableMixin, Pretty):
+    """ Class represents a Replication tab in CFME UI """
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def set_replication(self, replication_type=None, updates=None, reset=False):
+        if replication_type:
+            view = navigate_to(self, Details)
+            view.replication_type.fill('<None>')
+        else:
+            view = navigate_to(self, replication_type.capitalize())
+            view.fill(updates)
+        if reset:
+            view.reset_button.click()
+            view.flash.assert_message('All changes have been reset')
+        else:
+            try:
+                view.save_button.click()
+            except Exception:
+                logger.warning('Nothing was updated, please check the data')
+
+
+@navigator.register(Replication, 'Details')
+class ReplicationDetails(CFMENavigateStep):
+    VIEW = ReplicationView
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self):
+        self.prerequisite_view.replication.select()
+
+
+@navigator.register(Replication, 'Global')
+class ReplicationGlobalSetup(CFMENavigateStep):
+    VIEW = ReplicationGlobalView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.replication_type.fill('Global')
+
+
+@navigator.register(Replication, 'Remote')
+class ReplicationRemoteSetup(CFMENavigateStep):
+    VIEW = ReplicationGlobalView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.replication_type.fill('Remote')
