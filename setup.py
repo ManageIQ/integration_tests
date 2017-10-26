@@ -86,7 +86,7 @@ setup(
             'domains = cfme.automate.explorer.domain:DomainCollection',
             'keypairs = cfme.cloud.keypairs:KeyPairCollection',
             'stacks = cfme.cloud.stack:StackCollection',
-            'tenants = cfme.cloud.tenant:TenantCollection',
+            'cloud_tenants = cfme.cloud.tenant:TenantCollection',
             'candus = cfme.configure.configuration.region_settings:CANDUCollection',
             'nodes = cfme.containers.node:NodeCollection',
             'dashboards = cfme.dashboard:DashboardCollection',
