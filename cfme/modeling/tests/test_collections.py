@@ -2,6 +2,7 @@ import attr
 
 from cfme.modeling.base import (
     BaseCollection, BaseEntity,
+    EntityCollections,
     parent_of_type,
     load_appliance_collections,
 )
@@ -31,6 +32,14 @@ class MyNewEntity(BaseEntity):
     name = attr.ib()
 
     _collections = {'entities': MyCollection}
+
+
+@attr.s
+class MyEntityWithDeclared(BaseEntity):
+
+    collections = EntityCollections.declared(
+        entities=MyCollection,
+    )
 
 
 @attr.s
@@ -95,3 +104,10 @@ def test_parent_walker(dummy_appliance):
     new_obj = obj.collections.entities.instantiate('boop')
     assert parent_of_type(new_obj, MyNewEntity) == obj
     assert parent_of_type(new_obj, DummyApplianceWithCollection) == dummy_appliance
+
+
+def test_declared_entity_collections(dummy_appliance):
+    obj = MyEntityWithDeclared(dummy_appliance)
+    new_obj = obj.collections.entities.instantiate('boop')
+    assert parent_of_type(new_obj, MyEntityWithDeclared) is obj
+    assert parent_of_type(new_obj, DummyApplianceWithCollection) is dummy_appliance

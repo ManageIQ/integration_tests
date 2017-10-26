@@ -35,6 +35,15 @@ class EntityCollections(object):
     def for_entity(cls, entity, collections):
         return cls(parent=entity, availiable_collections=collections, filters={'parent': entity})
 
+    @classmethod
+    def declared(cls, **spec):
+        """returns a cached property named collections for use in entities"""
+        @cached_property
+        def collections(self):
+            return cls.for_entity(self, spec)
+        collections.spec = spec
+        return collections
+
     def __dir__(self):
         internal_dir = dir(super(EntityCollections, self))
         return internal_dir + self._availiable_collections.keys()
