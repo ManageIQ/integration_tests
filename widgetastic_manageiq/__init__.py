@@ -19,7 +19,7 @@ from cfme.utils.blockers import BZ
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
 from widgetastic.utils import ParametrizedLocator, Parameter, ParametrizedString, attributize_string
-from widgetastic.utils import VersionPick, Version
+from widgetastic.utils import VersionPick, Version, Ignore
 from widgetastic.widget import (
     Table as VanillaTable,
     TableColumn as VanillaTableColumn,
@@ -2796,12 +2796,8 @@ class BaseEntitiesView(View):
     """
     should represent the view with different entities like providers
     """
-    @property
-    def entity_class(self):
-        if self.browser.product_version < '5.9':
-            return NonJSBaseEntity
-        else:
-            return JSBaseEntity
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSBaseEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
     entities = ConditionalSwitchableView(reference='parent.toolbar.view_selector',
                                          ignore_bad_reference=True)
@@ -2865,16 +2861,6 @@ class NonJSProviderEntity(NonJSBaseEntity):
     quad_entity = ProviderQuadIconEntity
     list_entity = ProviderListEntity
     tile_entity = ProviderTileIconEntity
-
-
-def ProviderEntity():  # noqa
-    """ Temporary wrapper for Provider Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSProviderEntity,
-        '5.9': JSBaseEntity,
-    })
 
 
 class DashboardWidgetsPicker(View):
@@ -3278,12 +3264,8 @@ class BaseNonInteractiveEntitiesView(View, ReportDataControllerMixin):
     elements = ('//tr[./td/div[@class="quadicon"]]/following-sibling::tr/td/*[self::a or '
                 'self::span]')
 
-    @property
-    def entity_class(self):
-        if self.browser.product_version < '5.9':
-            return NonJSBaseEntity
-        else:
-            return JSBaseEntity
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSBaseEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
     @property
     def entity_names(self):

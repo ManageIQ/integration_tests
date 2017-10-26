@@ -4,6 +4,7 @@ import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text, View
+from widgetastic.utils import Ignore
 from widgetastic_manageiq import (
     BaseEntitiesView,
     BaseListEntity,
@@ -81,9 +82,7 @@ class PlaybookDetailsView(PlaybookBaseView):
 class PlaybookEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
 
-    @property
-    def entity_class(self):
-        return PlaybookEntity
+    entity_class = Ignore(PlaybookEntity)
 
 
 class PlaybooksView(PlaybookBaseView):

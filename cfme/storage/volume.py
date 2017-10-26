@@ -62,20 +62,10 @@ class NonJSVolumeEntity(NonJSBaseEntity):
     tile_entity = VolumeTileIconEntity
 
 
-def VolumeEntity():  # noqa
-    """Temporary wrapper for Volume Entity during transition to JS based Entity """
-    return VersionPick({
-        Version.lowest(): NonJSVolumeEntity,
-        '5.9': JSBaseEntity,
-    })
-
-
 class VolumeEntities(BaseEntitiesView):
     """The entities on the main list of Volume Page"""
-
-    @property
-    def entity_class(self):
-        return VolumeEntity().pick(self.browser.product_version)
+    entity_class = Ignore(VersionPick({Version.lowest(): NonJSVolumeEntity,
+                                       '5.9': JSBaseEntity}))
 
 
 class VolumeDetailsEntities(View):

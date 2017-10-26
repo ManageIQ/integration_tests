@@ -5,7 +5,7 @@ from functools import partial
 
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.exceptions import NoSuchElementException
-from widgetastic.utils import Version, VersionPick
+from widgetastic.utils import Version, VersionPick, Ignore
 from widgetastic.widget import ParametrizedView, View
 from widgetastic_manageiq import (Accordion,
                                   BaseEntitiesView,
@@ -89,20 +89,10 @@ class NonJSDepRoleEntity(NonJSBaseEntity):
     tile_entity = DepRoleTileIconEntity
 
 
-def DeploymentRoleEntity():  # noqa
-    """Temporary wrapper for Deployment Role Entity during transition to JS based Entity """
-    return VersionPick({
-        Version.lowest(): NonJSDepRoleEntity,
-        '5.9': JSBaseEntity,
-    })
-
-
 class DeploymentRoleEntitiesView(BaseEntitiesView):
     """The entities on the main list Deployment Role page"""
-
-    @property
-    def entity_class(self):
-        return DeploymentRoleEntity().pick(self.browser.product_version)
+    entity_class = Ignore(VersionPick({Version.lowest(): NonJSDepRoleEntity,
+                                       '5.9': JSBaseEntity}))
 
 
 class DeploymentRoleDetailsEntities(View):

@@ -3,7 +3,8 @@ from widgetastic.utils import (
     Parameter,
     ParametrizedLocator,
     Version,
-    VersionPick
+    VersionPick,
+    Ignore
 )
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_manageiq import (
@@ -78,16 +79,6 @@ class NonJSHostEntity(NonJSBaseEntity):
     quad_entity = HostQuadIconEntity
     list_entity = HostListEntity
     tile_entity = HostTileIconEntity
-
-
-def HostEntity():  # noqa
-    """ Temporary wrapper for Host Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSHostEntity,
-        '5.9': JSBaseEntity,
-    })
 
 
 class HostDetailsToolbar(View):
@@ -234,9 +225,8 @@ class HostSideBar(View):
 
 class HostEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
-    @property
-    def entity_class(self):
-        return HostEntity().pick(self.browser.product_version)
+    entity_class = Ignore(VersionPick({Version.lowest(): NonJSHostEntity,
+                                       '5.9': JSBaseEntity}))
 
 
 class HostsView(ComputeInfrastructureHostsView):
