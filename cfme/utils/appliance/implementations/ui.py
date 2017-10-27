@@ -86,13 +86,26 @@ class MiqBrowserPlugin(DefaultPlugin):
     )
     DEFAULT_WAIT = .8
 
-    def ensure_page_safe(self, timeout='10s'):
+    def ensure_page_safe(self, timeout='20s'):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
 
         def _check():
-            result = self.browser.execute_script(self.ENSURE_PAGE_SAFE, silent=True)
+            scripts_not_running = self.browser.execute_script(self.ENSURE_PAGE_SAFE, silent=True)
+            # checks whether all the data on page is loaded
+            if self.browser.product_version > '5.9':
+                data_loading_script = """
+                try {
+                        return window.ManageIQ.gtl.loading;
+                } catch(err){
+                        // there are pages in 5.9 where that call ^^ raises error
+                        return false;
+                }
+                """
+                data_loading = self.browser.execute_script(data_loading_script)
+            else:
+                data_loading = False
             # TODO: Logging
-            return bool(result)
+            return bool(scripts_not_running) and not bool(data_loading)
 
         wait_for(_check, timeout=timeout, delay=0.2, silent_failure=True, very_quiet=True)
 
