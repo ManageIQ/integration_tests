@@ -13,13 +13,13 @@ from cfme.rest.gen_data import arbitration_rules as _arbitration_rules
 from cfme.rest.gen_data import arbitration_settings as _arbitration_settings
 from cfme.rest.gen_data import automation_requests_data
 from cfme.rest.gen_data import vm as _vm
-from fixtures.provider import setup_one_or_skip
 from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.rest import assert_response
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for, wait_for_decorator
+from fixtures.provider import setup_one_or_skip
 
 
 pytestmark = [test_requirements.rest]
@@ -585,6 +585,35 @@ def test_collection_class_invalid(appliance):
     with error.expected('Invalid collection_class'):
         appliance.rest_api.collections.vms.query_string(
             collection_class='ManageIQ::Providers::Nonexistent::Vm')
+
+
+@pytest.mark.meta(blockers=[BZ(1504693, forced_streams=['5.7', '5.8', '5.9', 'upstream'])])
+def test_bulk_delete(request, appliance):
+    """Tests bulk delete from collection.
+
+    Bulk delete operation deletes all specified resources that exist. When the
+    resource doesn't exist at the time of deletion, the corresponding result
+    has "success" set to false.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = appliance.rest_api.collections.services
+    data = [{'name': fauxfactory.gen_alphanumeric()} for __ in range(2)]
+    services = collection.action.create(*data)
+
+    @request.addfinalizer
+    def _cleanup():
+        for service in services:
+            if service.exists:
+                service.action.delete()
+
+    services[0].action.delete()
+    collection.action.delete(*services)
+    assert appliance.rest_api.response
+    results = appliance.rest_api.response.json()['results']
+    assert results[0]['success'] is False
+    assert results[1]['success'] is True
 
 
 class TestBulkQueryRESTAPI(object):
