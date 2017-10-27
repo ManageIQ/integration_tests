@@ -6,6 +6,7 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme import test_requirements
 
+from cfme.utils.blockers import BZ
 from cfme.utils.generators import random_vm_name
 from cfme.utils import testgen
 
@@ -34,6 +35,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1478518, forced_streams=['5.7', '5.8', '5.9', 'upstream'])])
 def test_vm_migrate(appliance, new_vm, provider):
     """Tests migration of a vm
 
