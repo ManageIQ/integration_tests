@@ -104,7 +104,7 @@ class TestRESTSnapshots(object):
         Metadata:
             test_flag: rest
         """
-        vm, snapshot = vm_snapshot
+        __, snapshot = vm_snapshot
         if method == 'post':
             del_action = snapshot.action.delete.POST
         else:
@@ -114,6 +114,7 @@ class TestRESTSnapshots(object):
         assert_response(appliance)
         snapshot.wait_not_exists(num_sec=300, delay=5)
 
+        # testing BZ 1466225
         with error.expected('ActiveRecord::RecordNotFound'):
             del_action()
         assert_response(appliance, http_status=404)
@@ -130,6 +131,7 @@ class TestRESTSnapshots(object):
         assert_response(appliance)
         snapshot.wait_not_exists(num_sec=300, delay=5)
 
+        # testing BZ 1466225
         with error.expected('ActiveRecord::RecordNotFound'):
             vm.snapshots.action.delete.POST(snapshot)
         assert_response(appliance, http_status=404)
