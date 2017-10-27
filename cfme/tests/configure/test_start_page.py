@@ -3,7 +3,8 @@ import fauxfactory
 
 from cfme.base.credential import Credential
 from cfme.configure.settings import Visual
-from cfme.configure.access_control import Role, Group, User
+from cfme.fixtures.tag import role  #noqa
+from cfme.configure.access_control import Group, User
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 
@@ -21,11 +22,9 @@ def get_landing_page():
 
 
 @pytest.yield_fixture(scope="module")
-def rbac_user(appliance):
-    role = Role(name='test{}'.format(faux_value))
-    role.create()
-    role_name = 'test' + faux_value
-    group = Group(description='test{}'.format(faux_value), role=role_name)
+def rbac_user(appliance, role):
+    role = role
+    group = Group(description='test{}'.format(faux_value), role=role.name)
     group.create()
     group_user = Group('test{}'.format(faux_value))
     username = 'test{}'.format(faux_value.lower())
@@ -34,41 +33,21 @@ def rbac_user(appliance):
     user = User(name='test{}'.format(faux_value),
                 credential=cred, group=group_user)
     user.create()
-    appliance.server.logout()
-    user_login(user, appliance)
+    login_page = navigate_to(appliance.server, 'LoginScreen')
+    login_page.log_in(user)
     view = navigate_to(Visual, 'All')
-    values = view.visualstartpage.show_at_login.all_options
-    yield user, values
-    appliance.server.logout()
+    landing_pages = view.visualstartpage.show_at_login.all_options
+    start_page = []
+    for landing_page in landing_pages:
+        start_page.append(landing_page.text)
+    yield user, landing_pages
     login_page = navigate_to(appliance.server, 'LoginScreen')
     login_page.login_admin()
     user.delete()
     group.delete()
-    role.delete()
 
 
-def user_login(user, appliance):
-    login_page = navigate_to(appliance.server, 'LoginScreen')
-    login_page.log_in(user)
-
-
-def set_landing_page_rbac(user, values, appliance):
-    # This list contains the list of pages which show some error or alerts after login.
-    # TODO remove all these pages when BZ is closed.
-    page_list = ['Bottlenecks', 'Automate Log', 'Compute / Containers / Containers']
-    for value in values:
-        view = navigate_to(Visual, 'All')
-        if (view.visualstartpage.show_at_login.fill(value.text) and
-                not any(substring in value.text for substring in page_list)):
-            view.save.click()
-            user_login(user, appliance)
-        logged_in_page = navigate_to(appliance.server, 'LoggedIn')
-        if not logged_in_page.is_displayed:
-            return False
-    return True
-
-
-def set_landing_page_admin(value, appliance):
+def set_landing_page(value, appliance, user=None):
     # This list contains the list of pages which show some error or alerts after login.
     # TODO remove all these pages when BZ is closed.
     page_list = ['Bottlenecks', 'Automate Log', 'Compute / Containers / Containers']
@@ -77,7 +56,10 @@ def set_landing_page_admin(value, appliance):
             not any(substring in value for substring in page_list)):
         view.save.click()
         login_page = navigate_to(appliance.server, 'LoginScreen')
-        login_page.login_admin()
+        if user is None:
+            login_page.login_admin()
+        else:
+            login_page.log_in(user)
         logged_in_page = navigate_to(appliance.server, 'LoggedIn')
         if not logged_in_page.is_displayed:
             return False
@@ -90,8 +72,10 @@ def test_start_page_rbac(appliance, rbac_user):
         option on 'Visual' tab of setting page for custom role based users. This test case doesn't
         check the exact page but verifies that all the landing page options works properly.
     """
-    user, start_page = rbac_user
-    assert set_landing_page_rbac(user, start_page, appliance)
+    user, start_pages = rbac_user
+    values = [(user, start_page[0]) for start_page in start_pages]
+    for value in values:
+        assert set_landing_page(value[1], appliance, value[0])
 
 
 @pytest.mark.parametrize('start_page', get_landing_page(), scope="module")
@@ -101,4 +85,4 @@ def test_strat_page_admin(start_page, appliance):
         option on 'Visual' tab of setting page for administrator. This test case doesn't
         check the exact page but verifies that all the landing page options works properly.
     """
-    assert set_landing_page_admin(start_page, appliance)
+    assert set_landing_page(start_page, appliance)
