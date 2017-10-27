@@ -127,7 +127,7 @@ def test_embedded_ansible_update(enabled_embedded_appliance, appliance, old_vers
             red_hat_updates.update_appliances()
 
     def is_appliance_updated(appliance):
-        """Checks if cfme-appliance has updated"""
+        """Checks if cfme-appliance has been updated"""
         assert appliance.version == enabled_embedded_appliance.version
 
     wait_for(is_appliance_updated, func_args=[enabled_embedded_appliance], num_sec=900)
