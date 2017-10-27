@@ -473,6 +473,10 @@ class RoleNotFound(CFMEException):
     """Raised when Deployment role not found"""
 
 
+class BackupNotFound(CFMEException):
+    """Raised when volume backup not found"""
+
+
 class RBACOperationBlocked(CFMEException):
     """
     Raised when a Role Based Access Control operation is blocked from execution due to invalid
