@@ -140,18 +140,20 @@ def test_db_migrate(app_creds, temp_appliance_extended_db, db_url, db_version, d
 
 def test_upgrade_single_inplace(appliance_preupdate, appliance):
     '''Tests appliance upgrade between streams'''
+    ver = '95' if appliance.version >= '5.8' else '94'
     appliance_preupdate.evmserverd.stop()
     with appliance_preupdate.ssh_client as ssh:
         rc, out = ssh.run_command('yum update -y', timeout=3600)
         assert rc == 0, "update failed {}".format(out)
-        rc, out = ssh.run_command('systemctl restart $APPLIANCE_PG_SERVICE')
-        assert rc == 0, "Failed to restart PG: {}".format(out)
         rc, out = ssh.run_rake_command("db:migrate", timeout=300)
         assert rc == 0, "Failed to migrate new database: {}".format(out)
+        rc, out = ssh.run_rake_command("evm:automate:reset", timeout=300)
+        assert rc == 0, "Failed to reset automate: {}".format(out)
         rc, out = ssh.run_rake_command(
             'db:migrate:status 2>/dev/null | grep "^\s*down"', timeout=30)
         assert rc != 0, "Migration failed; migrations in 'down' state found: {}".format(out)
-        rc, out = ssh.run_command('systemctl restart rh-postgresql95-postgresql')
+        rc, out = ssh.run_command('systemctl restart rh-postgresql{}-postgresql'.format(ver))
         assert rc == 0, "Failed to restart postgres: {}".format(out)
     appliance_preupdate.start_evm_service()
+    appliance_preupdate.wait_for_web_ui()
     assert appliance.version == appliance_preupdate.version

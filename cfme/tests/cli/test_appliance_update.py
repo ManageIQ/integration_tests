@@ -21,8 +21,11 @@ def pytest_generate_tests(metafunc):
     split_ver = str(version).split(".")
     try:
         minor_build = split_ver[2]
+        assert int(minor_build) != 0
     except IndexError:
         logger.exception('Caught IndexError generating for test_appliance_update, skipping')
+    except AssertionError:
+        logger.exception('Caught AssertionError: No previous z-stream version to update from')
         versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.skip(
             'Could not parse minor_build version from: {}'.format(version)
         )))
@@ -83,4 +86,5 @@ def test_update_yum(appliance_preupdate, appliance):
         rc, out = ssh.run_command('yum update -y', timeout=3600)
         assert rc == 0, "update failed {}".format(out)
     appliance_preupdate.evmserverd.start()
+    appliance_preupdate.wait_for_web_ui()
     assert appliance.version == appliance_preupdate.version
