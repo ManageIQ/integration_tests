@@ -1,5 +1,6 @@
-import sentaku
+import importscan
 
+import sentaku
 
 from cfme.common import WidgetasticTaggable
 from cfme.utils.appliance import Navigatable
@@ -28,4 +29,6 @@ class ServiceCatalogs(Navigatable, WidgetasticTaggable, Updateable, sentaku.mode
 
 
 from . import ui, ssui  # NOQA last for import cycles
-sentaku.register_external_implementations_in(ui, ssui)
+importscan.scan(ui)
+importscan.scan(ssui)
+
