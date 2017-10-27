@@ -22,10 +22,10 @@ def pytest_generate_tests(metafunc):
     try:
         minor_build = split_ver[2]
         assert int(minor_build) != 0
-    except (IndexError, AssertionError):
-        logger.exception(
-            'Caught IndexError/AssertError generating for test_appliance_update, skipping'
-        )
+    except IndexError:
+        logger.exception('Caught IndexError generating for test_appliance_update, skipping')
+    except AssertionError:
+        logger.exception('Caught AssertionError: No previous z-stream version to update from')
         versions.append(pytest.param("bad:{!r}".format(version), marks=pytest.mark.skip(
             'Could not parse minor_build version from: {}'.format(version)
         )))
