@@ -204,6 +204,7 @@ class Volume(BaseEntity):
         view.volume_name.fill(name)
         view.save.click()
 
+        # Wrong flash for 5.7[BZ-1506992]. As BZ clear 5.7 will consistence with 5.8 and 5.9.
         if self.appliance.version < "5.8":
             view.flash.assert_success_message('Updating Cloud Volume "{}"'.format(self.name))
         else:
