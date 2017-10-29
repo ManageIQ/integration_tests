@@ -101,8 +101,8 @@ def test_delete_datastore_appear_after_refresh(setup_provider, provider, applian
     test_datastore = datastore_collection.instantiate(name=data_store, provider=provider)
     details_view = navigate_to(test_datastore, 'Details')
 
-    host_count = int(details_view.contents.relationships.get_text_of('Hosts'))
-    vm_count = int(details_view.contents.relationships.get_text_of('Managed VMs'))
+    host_count = int(details_view.entities.relationships.get_text_of('Hosts'))
+    vm_count = int(details_view.entities.relationships.get_text_of('Managed VMs'))
     if host_count != "0":
         test_datastore.delete_all_attached_hosts()
     if vm_count != "0":
