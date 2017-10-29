@@ -84,10 +84,10 @@ class OpenstackInfraProvider(InfraProvider):
     def has_nodes(self):
         details_view = navigate_to(self, 'Details')
         try:
-            details_view.contents.relationships.get_text_of('Hosts')
+            details_view.entities.relationships.get_text_of('Hosts')
             return False
         except NameError:
-            return int(details_view.contents.relationships.get_text_of('Hosts / Nodes')) > 0
+            return int(details_view.entities.relationships.get_text_of('Hosts / Nodes')) > 0
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):

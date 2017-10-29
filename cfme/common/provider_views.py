@@ -45,10 +45,10 @@ class ProviderDetailsView(BaseLoggedInPage):
                           'contains(@class, "flash_text_div")]')
     toolbar = View.nested(ProviderDetailsToolBar)
 
-    contents = ConditionalSwitchableView(reference='toolbar.view_selector',
+    entities = ConditionalSwitchableView(reference='toolbar.view_selector',
                                          ignore_bad_reference=True)
 
-    @contents.register('Summary View', default=True)
+    @entities.register('Summary View', default=True)
     class ProviderDetailsSummaryView(View):
         """
         represents Details page when it is switched to Summary aka Tables view
@@ -59,7 +59,7 @@ class ProviderDetailsView(BaseLoggedInPage):
         overview = SummaryTable(title="Overview")
         smart_management = SummaryTable(title="Smart Management")
 
-    @contents.register('Dashboard View')
+    @entities.register('Dashboard View')
     class ProviderDetailsDashboardView(View):
         """
          represents Details page when it is switched to Dashboard aka Widgets view

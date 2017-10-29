@@ -338,9 +338,9 @@ class AllForProvider(CFMENavigateStep):
 
     def step(self):
         try:
-            self.prerequisite_view.contents.relationships.click_at('Deployment Roles')
+            self.prerequisite_view.entities.relationships.click_at('Deployment Roles')
         except NameError:
-            self.prerequisite_view.contents.relationships.click_at('Clusters / Deployment Roles')
+            self.prerequisite_view.entities.relationships.click_at('Clusters / Deployment Roles')
 
 
 @navigator.register(DeploymentRoles, 'DetailsFromProvider')
