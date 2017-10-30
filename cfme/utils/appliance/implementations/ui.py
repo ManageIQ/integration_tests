@@ -74,7 +74,7 @@ class MiqBrowserPlugin(DefaultPlugin):
         }
 
         try {
-            return !(ManageIQ.qe.anythingInFlight() && isDataLoading());
+            return !(ManageIQ.qe.anythingInFlight() || isDataLoading());
         } catch(err) {
             return (
                 ((typeof $ === "undefined") ? true : $.active < 1) &&
