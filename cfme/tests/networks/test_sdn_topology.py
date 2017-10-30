@@ -18,7 +18,7 @@ def test_sdn_topology_names(provider, appliance):
     Recommendation: Run test with maximed browser to be sure everything is visible
     '''
     topology_object = Topology(appliance)
-
+    topology_object.refresh()
     for show_names_state in (True, False):
         topology_object.display_names.enable(show_names_state)
         for elem in topology_object.elements:
@@ -28,6 +28,7 @@ def test_sdn_topology_names(provider, appliance):
 def test_topology_search(provider, appliance):
     '''Testing search functionality in Topology view '''
     topology_object = Topology(appliance)
+    topology_object.refresh()
     topology_object.display_names.enable(True)
 
     wait_for(lambda: len(topology_object.elements) > 0,
@@ -55,6 +56,7 @@ def test_topology_search(provider, appliance):
 def test_topology_toggle_display(provider, appliance):
     '''Testing display functionality in Topology view'''
     topology_object = Topology(appliance)
+    topology_object.refresh()
     for legend in topology_object.legends_obj:
         for state in (True, False):
             legend.set_active(state)
