@@ -3,7 +3,6 @@ import fauxfactory
 
 from cfme.base.credential import Credential
 from cfme.configure.settings import Visual
-from cfme.fixtures.tag import role  #noqa
 from cfme.configure.access_control import Group, User
 from cfme.utils.appliance.implementations.ui import navigate_to
 
