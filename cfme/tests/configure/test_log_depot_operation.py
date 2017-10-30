@@ -11,12 +11,12 @@ import pytest
 import re
 
 from cfme import test_requirements
-from cfme.configure import configuration as configure
 from cfme.utils import conf, testgen
 from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.utils.blockers import BZ
 from cfme.utils.ftp import FTPClient
 from cfme.utils.providers import get_mgmt
+from cfme.utils.update import update
 from cfme.utils.version import current_version
 from cfme.utils.virtual_machines import deploy_template
 
@@ -127,7 +127,7 @@ def configured_external_appliance(temp_appliance_preconfig, app_creds_modscope,
 
 
 @pytest.yield_fixture(scope="function")
-def configured_depot(log_depot, depot_machine_ip):
+def configured_depot(log_depot, depot_machine_ip, appliance):
     """ Configure selected depot provider
 
     This fixture used the trick that the fixtures are cached for given function.
@@ -138,15 +138,15 @@ def configured_depot(log_depot, depot_machine_ip):
     """
     log_depot.machine_ip = depot_machine_ip
     uri = log_depot.machine_ip + log_depot.access_dir
-    log_depot = configure.ServerLogDepot(log_depot.protocol,
-                                         depot_name=fauxfactory.gen_alphanumeric(),
-                                         uri=uri,
-                                         username=log_depot.credentials["username"],
-                                         password=log_depot.credentials["password"]
-                                         )
-    log_depot.create()
-    yield log_depot
-    log_depot.clear()
+    server_log_depot = appliance.server.collect_logs
+    with update(server_log_depot):
+        server_log_depot.depot_type = log_depot.protocol
+        server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
+        server_log_depot.uri = uri
+        server_log_depot.username = log_depot.credentials.username
+        server_log_depot.password = log_depot.credentials.password
+    yield server_log_depot
+    server_log_depot.clear()
 
 
 def check_ftp(ftp, server_name, server_zone_id):
@@ -217,17 +217,18 @@ def test_collect_unconfigured(appliance):
     """ Test checking is collect button enable and disable after log depot was configured
 
     """
-    log_credentials = configure.ServerLogDepot("anon_ftp",
-                                               depot_name=fauxfactory.gen_alphanumeric(),
-                                               uri=fauxfactory.gen_alphanumeric())
+    server_log_depot = appliance.server.collect_logs
+    with update(server_log_depot):
+        server_log_depot.depot_type = 'anon_ftp'
+        server_log_depot.depot_name = fauxfactory.gen_alphanumeric()
+        server_log_depot.uri = fauxfactory.gen_alphanumeric()
 
-    log_credentials.create()
-    view = navigate_to(appliance.server, 'DiagnosticsCollectLogs')
+    view = navigate_to(server_log_depot, 'DiagnosticsCollectLogs')
     # check button is enable after adding log depot
-    assert view.collect.item_enabled('Collect all logs') is True
-    log_credentials.clear()
+    assert view.toolbar.collect.item_enabled('Collect all logs') is True
+    server_log_depot.clear()
     # check button is disable after removing log depot
-    assert view.collect.item_enabled('Collect all logs') is False
+    assert view.toolbar.collect.item_enabled('Collect all logs') is False
 
 
 @pytest.mark.uncollectif(lambda from_slave: from_slave and
@@ -243,6 +244,9 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
 
     appliance = temp_appliance_preconfig
     log_depot.machine_ip = depot_machine_ip
+    collect_logs = (
+        appliance.server.zone.collect_logs if zone_collect else appliance.server.collect_logs)
+    request.addfinalizer(collect_logs.clear)
 
     @request.addfinalizer
     def _clear_ftp():
@@ -259,20 +263,18 @@ def test_collect_multiple_servers(log_depot, temp_appliance_preconfig, depot_mac
 
     with appliance:
         uri = log_depot.machine_ip + log_depot.access_dir
-        depot = configure.ServerLogDepot(log_depot.protocol,
-                                         depot_name=fauxfactory.gen_alphanumeric(),
-                                         uri=uri,
-                                         username=log_depot.credentials["username"],
-                                         password=log_depot.credentials["password"],
-                                         second_server_collect=from_slave,
-                                         zone_collect=zone_collect
-                                         )
-        depot.create()
+        with update(collect_logs):
+            collect_logs.second_server_collect = from_slave
+            collect_logs.depot_type = log_depot.protocol
+            collect_logs.depot_name = fauxfactory.gen_alphanumeric()
+            collect_logs.uri = uri
+            collect_logs.username = log_depot.credentials.username
+            collect_logs.password = log_depot.credentials.password
 
         if collect_type == 'all':
-            depot.collect_all()
+            collect_logs.collect_all()
         else:
-            depot.collect_current()
+            collect_logs.collect_current()
 
     if from_slave and zone_collect:
         check_ftp(log_depot.ftp, appliance.slave_server_name(), appliance.slave_server_zone_id())
@@ -305,18 +307,18 @@ def test_collect_single_servers(log_depot, appliance, depot_machine_ip, request,
         ftp.recursively_delete()
 
     uri = log_depot.machine_ip + log_depot.access_dir
-    depot = configure.ServerLogDepot(log_depot.protocol,
-                                     depot_name=fauxfactory.gen_alphanumeric(),
-                                     uri=uri,
-                                     username=log_depot.credentials["username"],
-                                     password=log_depot.credentials["password"],
-                                     zone_collect=zone_collect
-                                     )
-
-    depot.create()
+    collect_logs = (
+        appliance.server.zone.collect_logs if zone_collect else appliance.server.collect_logs)
+    with update(collect_logs):
+        collect_logs.depot_type = log_depot.protocol
+        collect_logs.depot_name = fauxfactory.gen_alphanumeric()
+        collect_logs.uri = uri
+        collect_logs.username = log_depot.credentials.username
+        collect_logs.password = log_depot.credentials.password
+    request.addfinalizer(collect_logs.clear)
     if collect_type == 'all':
-        depot.collect_all()
+        collect_logs.collect_all()
     else:
-        depot.collect_current()
+        collect_logs.collect_current()
 
     check_ftp(log_depot.ftp, appliance.server_name(), appliance.server_zone_id())

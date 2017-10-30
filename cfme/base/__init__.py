@@ -37,6 +37,11 @@ class Server(Navigatable, sentaku.modeling.ElementMixin):
         auth_settings = AuthenticationSetting(self.appliance)
         return auth_settings
 
+    @property
+    def collect_logs(self):
+        from cfme.configure.configuration.diagnostics_settings import ServerCollectLog
+        return ServerCollectLog(self.appliance)
+
 
 @attr.s
 class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
@@ -63,6 +68,11 @@ class Zone(Pretty, BaseEntity, sentaku.modeling.ElementMixin):
         self.servers = []
         self.region = self.region or self.appliance.server.zone.region
         self.region.zones.append(self)
+
+    @property
+    def collect_logs(self):
+        from cfme.configure.configuration.diagnostics_settings import ZoneCollectLog
+        return ZoneCollectLog(self.appliance)
 
 
 @attr.s
