@@ -43,7 +43,7 @@ class StorageManagerDetailsToolbar(View):
 
 class StorageManagerEntities(View):
     """The entities on the main list Storage Manager or Provider page"""
-    table = Table(".//div[@id='list_grid']/table")
+    table = Table(".//div[@id='list_grid' or @class='miq-data-table']/table")
 
 
 class StorageManagerDetailsEntities(View):
