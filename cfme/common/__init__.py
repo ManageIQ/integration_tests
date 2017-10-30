@@ -30,10 +30,7 @@ class PolicyProfileAssignable(object):
 
     It provides functionality to assign and unassign Policy Profiles
     """
-    manage_policies_tree = deferred_verpick({
-        version.LOWEST: CheckboxTree("//div[@id='protect_treebox']/ul"),
-        "5.7": BootstrapTreeview("protectbox")
-    })
+    manage_policies_tree = BootstrapTreeview("protectbox")
 
     @property
     def assigned_policy_profiles(self):
