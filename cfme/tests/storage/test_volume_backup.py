@@ -3,13 +3,12 @@ import pytest
 import random
 
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.utils import testgen, version
+from cfme.utils import version
 
 
-pytestmark = pytest.mark.usefixtures("setup_provider")
-
-
-pytest_generate_tests = testgen.generate([OpenStackProvider], scope="module")
+pytestmark = [pytest.mark.ignore_stream("upstream"),
+              pytest.mark.usefixtures('setup_provider'),
+              pytest.mark.provider([OpenStackProvider], scope='module')]
 
 
 @pytest.mark.tier(3)
@@ -28,4 +27,4 @@ def test_storage_volume_backup_edit_tag_from_detail(appliance, provider):
     # remove assigned tag
     backup.remove_tag('Department', 'Communication')
     tag_available = backup.get_tags()
-    assert tag_available == []
+    assert not tag_available

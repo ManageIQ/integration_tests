@@ -126,7 +126,7 @@ class VolumeBackup(BaseEntity, WidgetasticTaggable):
         Args:
             name: volume name
         """
-        view = navigate_to(self, 'restore')
+        view = navigate_to(self, 'Restore')
         view.volume_name.fill(name)
         view.save.click()
         view.flash.assert_success_message('Restoring Cloud Volume "{}"'.format(self.name))
@@ -240,7 +240,7 @@ class BackupDetailEditTag(CFMENavigateStep):
         self.prerequisite_view.toolbar.policy.item_select('Edit Tags')
 
 
-@navigator.register(VolumeBackup, 'restore')
+@navigator.register(VolumeBackup, 'Restore')
 class VolumeRestore(CFMENavigateStep):
     VIEW = VolumeRestoreView
     prerequisite = NavigateToSibling('Details')
