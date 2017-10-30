@@ -21,6 +21,7 @@ from widgetastic_manageiq import (
 )
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from widgetastic.widget import View, Text, ParametrizedView
+from widgetastic.utils import Ignore
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound, ItemNotFound
