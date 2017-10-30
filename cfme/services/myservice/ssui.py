@@ -201,7 +201,7 @@ def launch_vm_console(self, catalog_item):
         func=lambda: vm_obj.vm_console, num_sec=30, delay=2, handle_exception=True,
         message="waiting for VM Console window to open"
     )
-    return vm_obj.vm_console
+    return vm_obj
 
 
 @navigator.register(MyService, 'All')
