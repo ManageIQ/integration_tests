@@ -43,8 +43,8 @@ def test_bad_password(context, request, appliance):
     username = conf.credentials['default']['username']
     password = "badpassword@#$"
     cred = Credential(principal=username, secret=password)
-    user = User(credential=cred)
-    user.name = 'Administrator'
+    user_collection = appliance.collections.users
+    user = user_collection.instantiate(name='Administrator', credential=cred)
     if appliance.version.is_in_series('5.7'):
         error_message = "Sorry, the username or password you entered is incorrect."
     else:

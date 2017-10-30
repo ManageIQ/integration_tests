@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import cfme.configure.access_control as ac
+import cfme.configure.access_control import GroupCollection, UserCollection
 import cfme.intelligence.chargeback.rates as rates
 import cfme.intelligence.chargeback.assignments as cb
 import fauxfactory
@@ -76,19 +76,18 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
         provider.mgmt.start_vm(vm_name)
         provider.mgmt.wait_vm_running(vm_name)
 
-    group_collection = appliance.collections.rbac_groups
-    cb_group = group_collection.instantiate(description='EvmGroup-user')
-    user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
-        credential=new_credential(),
-        email='abc@example.com',
-        group=cb_group,
-        cost_center='Workload',
-        value_assign='Database')
+    cb_group = GroupCollection(appliance).instantiate(description='EvmGroup-user')
 
     vm = VM.factory(vm_name, provider)
 
     try:
-        user.create()
+        user = UserCollection(appliance).create(name=provider.name + fauxfactory.gen_alphanumeric(),
+            credential=new_credential(),
+            email='abc@example.com',
+            group=cb_group,
+            cost_center='Workload',
+            value_assign='Database')
+
         vm.set_ownership(user=user.name)
         logger.info('Assigned VM OWNERSHIP for {} running on {}'.format(vm_name, provider.name))
 

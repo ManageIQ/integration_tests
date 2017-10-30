@@ -65,19 +65,19 @@ def group_with_tag(appliance, role, category, tag):
 
 
 @pytest.yield_fixture(scope="module")
-def user_restricted(group_with_tag, new_credential):
+def user_restricted(group_with_tag, new_credential, appliance):
     """
         Returns restricted user object assigned
         to group with tag filter used in test module
     """
-    user = User(
+    user_collection = appliance.collections.users
+    user = user_collection.create(
         name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
         email='xyz@redhat.com',
         group=group_with_tag,
         cost_center='Workload',
         value_assign='Database')
-    user.create()
     yield user
     user.delete()
 

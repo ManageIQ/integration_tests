@@ -377,7 +377,8 @@ class TestUsersViaREST(object):
         user.action.edit(password=new_password)
         assert appliance.rest_api.response.status_code == 200
         cred = Credential(principal=user.userid, secret=new_password)
-        new_user = User(credential=cred)
+        user_collection = appliance.collections.users
+        new_user = user_collection.instantiate(credential=cred)
         appliance.server.login(new_user)
 
     @pytest.mark.tier(3)

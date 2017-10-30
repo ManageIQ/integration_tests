@@ -35,6 +35,11 @@ def group_collection(appliance):
 
 
 @pytest.fixture(scope='module')
+def user_collection(appliance):
+    return appliance.collections.users
+
+
+@pytest.fixture(scope='module')
 def a_provider(request):
     prov_filter = ProviderFilter(classes=[VMwareProvider])
     return setup_one_or_skip(request, filters=[prov_filter])
@@ -44,22 +49,24 @@ def new_credential():
     return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
 
 
-def new_user(group):
+def new_user(appliance, group=usergrp):
     from fixtures.blockers import bug
 
     uppercase_username_bug = bug(1487199)
+    user_creds = new_credential()
 
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=new_credential(),
+    # Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
+    if '5.8.2' <= appliance.version < '5.9' and uppercase_username_bug:
+        user_creds.principal = user_creds.principal.lower()
+
+    user_collection = appliance.collections.users
+    user = user_collection(appliance).create(
+        name='user' + fauxfactory.gen_alphanumeric(),
+        credential=user_creds,
         email='xyz@redhat.com',
         group=group,
         cost_center='Workload',
         value_assign='Database')
-
-    # Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
-    if '5.8.2' <= user.appliance.version < '5.9' and uppercase_username_bug:
-        user.credential.principal = user.credential.principal.lower()
 
     return user
 
@@ -90,12 +97,11 @@ def check_item_visibility(tag):
 
 # User test cases
 @pytest.mark.tier(2)
-def test_user_crud(group_collection):
+def test_user_crud(appliance):
     group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
+    group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance, group)
     with update(user):
         user.name = "{}edited".format(user.name)
     copied_user = user.copy()
@@ -105,28 +111,27 @@ def test_user_crud(group_collection):
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
-def test_user_login(group_collection):
+def test_user_login(appliance):
     group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
+    group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance)
     try:
         with user:
-            navigate_to(Server, 'Dashboard')
+            navigate_to(appliance.server, 'Dashboard')
     finally:
-        user.appliance.server.login_admin()
+        appliance.server.login_admin()
 
 
 @pytest.mark.tier(3)
-def test_user_duplicate_name(group_collection):
+def test_user_duplicate_name(appliance):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    nu = new_user(group)
-    nu.create()
+    nu = new_user(appliance, group)
     with pytest.raises(RBACOperationBlocked):
-        nu.create()
+        user_collection(appliance).create(
+            name=nu.name, credential=nu.credential, group=nu.group, email=nu.email)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
@@ -134,103 +139,94 @@ def test_user_duplicate_name(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_username_required_error_validation(group_collection):
+def test_username_required_error_validation(user_collection, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = User(
-        name="",
-        credential=new_credential(),
-        email='xyz@redhat.com',
-        group=group)
     with error.expected("Name can't be blank"):
-        user.create()
+        user_collection.create(
+            name="",
+            credential=new_credential(),
+            email='xyz@redhat.com',
+            group=group_user)
 
 
 @pytest.mark.tier(3)
-def test_userid_required_error_validation(group_collection):
+def test_userid_required_error_validation(appliance):
     group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
+    group = group_collection(appliance).instantiate(description=group_name)
 
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=Credential(principal='', secret='redhat'),
-        email='xyz@redhat.com',
-        group=group)
     with error.expected("Userid can't be blank"):
-        user.create()
+        user_collection(appliance).create(
+            name='user' + fauxfactory.gen_alphanumeric(),
+            credential=Credential(principal='', secret='redhat'),
+            email='xyz@redhat.com',
+            group=group_user)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(user.appliance.server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
-def test_user_password_required_error_validation(group_collection):
+def test_user_password_required_error_validation(appliance):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
-
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=Credential(
-            principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret=None),
-        email='xyz@redhat.com',
-        group=group)
 
     check = "Password can't be blank"
 
     with error.expected(check):
-        user.create()
+        user_collection(appliance).create(
+            name='user' + fauxfactory.gen_alphanumeric(),
+            credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
+            email='xyz@redhat.com',
+            group=group_user)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(user.appliance.server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
-def test_user_group_error_validation():
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=new_credential(),
-        email='xyz@redhat.com',
-        group='')
+def test_user_group_error_validation(user_collection):
     with error.expected("A User must be assigned to a Group"):
-        user.create()
+        user_collection.create(
+            name='user' + fauxfactory.gen_alphanumeric(),
+            credential=new_credential(),
+            email='xyz@redhat.com',
+            group='')
 
 
 @pytest.mark.tier(3)
-def test_user_email_error_validation(group_collection):
+def test_user_email_error_validation(user_collection, group_collection):
     group_name = 'EvmGroup-user'
     group = group_collection.instantiate(description=group_name)
 
-    user = User(
-        name='user{}'.format(fauxfactory.gen_alphanumeric()),
-        credential=new_credential(),
-        email='xyzdhat.com',
-        group=group)
     with error.expected("Email must be a valid email address"):
-        user.create()
+        user_collection.create(
+            name='user' + fauxfactory.gen_alphanumeric(),
+            credential=new_credential(),
+            email='xyzdhat.com',
+            group=group_user)
 
 
 @pytest.mark.tier(2)
 def test_user_edit_tag(group_collection):
     group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
+    group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance)
     user.edit_tags("Cost Center *", "Cost Center 001")
     assert get_tag() == "Cost Center: Cost Center 001", "User edit tag failed"
     user.delete()
 
 
 @pytest.mark.tier(3)
-def test_user_remove_tag(group_collection):
+def test_user_remove_tag(appliance):
     group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
+    group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance)
     user.edit_tags("Department", "Engineering")
     user.remove_tag("Department", "Engineering")
     navigate_to(user, 'Details')
@@ -239,14 +235,16 @@ def test_user_remove_tag(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_default_user():
+def test_delete_default_user(appliance):
     """Test for deleting default user Administrator.
 
     Steps:
         * Login as Administrator user
         * Try deleting the user
     """
-    user = User(name='Administrator')
+    user_collection = appliance.collections.users
+
+    user = user_collection.instantiate(name='Administrator')
     with pytest.raises(RBACOperationBlocked):
         user.delete()
 
@@ -266,10 +264,9 @@ def test_current_user_login_delete(appliance, request):
     group_name = "EvmGroup-super_administrator"
     group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group)
-    user.create()
+    user = new_user(appliance, group=group_user)
     request.addfinalizer(user.delete)
-    request.addfinalizer(user.appliance.server.login_admin)
+    request.addfinalizer(appliance.server.login_admin)
     with user:
         with pytest.raises(RBACOperationBlocked):
             user.delete()
@@ -395,14 +392,15 @@ def test_delete_default_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_delete_group_with_assigned_user(group_collection):
+def test_delete_group_with_assigned_user(appliance):
     """Test that CFME prevents deletion of a group that has users assigned
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
-    user = new_user(group=group)
-    user.create()
+
+    user = new_user(appliance, group=group)
+
     with pytest.raises(RBACOperationBlocked):
         group.delete()
 
@@ -533,15 +531,14 @@ def test_delete_roles_with_assigned_group(group_collection):
 
 
 @pytest.mark.tier(3)
-def test_assign_user_to_new_group(group_collection):
+def test_assign_user_to_new_group(appliance):
     role = new_role()  # call function to get role
     role.create()
 
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role.name)
 
-    user = new_user(group=group)
-    user.create()
+    user = new_user(appliance, group=group)
 
 
 def _test_vm_provision():
@@ -594,8 +591,7 @@ def test_permission_edit(appliance, request, product_features, action):
     role.create()
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
-    user = new_user(group=group)
-    user.create()
+    user = new_user(appliance, group=group)
     with user:
         try:
             action()
@@ -672,8 +668,7 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
     role.create()
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection(appliance).create(description=group_description, role=role.name)
-    user = new_user(group=group)
-    user.create()
+    user = new_user(appliance, group=group)
     fails = {}
     try:
         with user:
@@ -801,9 +796,8 @@ def test_user_change_password(appliance, request):
     group_name = 'EvmGroup-user'
     group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(group=group)
+    user = new_user(appliance, group=group)
 
-    user.create()
     request.addfinalizer(user.delete)
     request.addfinalizer(appliance.server.login_admin)
     with user:
