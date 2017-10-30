@@ -3,6 +3,7 @@ import json
 import time
 from jsmin import jsmin
 from inspect import isclass
+import os
 
 from cfme.utils.log import logger, create_sublogger
 from cfme import exceptions
@@ -401,14 +402,17 @@ class CFMENavigateStep(NavigateStep):
         str_msg = "[UI-NAV/{}/{}]: {}".format(class_name, self._name, msg)
         getattr(logger, level)(str_msg)
 
-    def construst_message(self, here, resetter, view, duration):
+    def construct_message(self, here, resetter, view, duration, waited):
         str_here = "Already Here" if here else "Needed Navigation"
         str_resetter = "Resetter Used" if resetter else "No Resetter"
         str_view = "View Returned" if view else "No View Available"
-        return "{}/{}/{} (elapsed {}ms)".format(str_here, str_resetter, str_view, duration)
+        str_waited = "Waited on View" if waited else "No Wait on View"
+        return "{}/{}/{}/{} (elapsed {}ms)".format(
+            str_here, str_resetter, str_view, str_waited, duration
+        )
 
     def go(self, _tries=0, *args, **kwargs):
-        nav_args = {'use_resetter': True}
+        nav_args = {'use_resetter': True, 'wait_for_view': False}
         self.log_message("Beginning Navigation...", level="info")
         start_time = time.time()
         if _tries > 2:
@@ -424,6 +428,7 @@ class CFMENavigateStep(NavigateStep):
         self.check_for_badness(self.pre_navigate, _tries, nav_args, *args, **kwargs)
         here = False
         resetter_used = False
+        waited = False
         try:
             here = self.check_for_badness(self.am_i_here, _tries, nav_args, *args, **kwargs)
         except Exception as e:
@@ -439,7 +444,16 @@ class CFMENavigateStep(NavigateStep):
         self.check_for_badness(self.post_navigate, _tries, nav_args, *args, **kwargs)
         view = self.view if self.VIEW is not None else None
         duration = int((time.time() - start_time) * 1000)
-        self.log_message(self.construst_message(here, resetter_used, view, duration), level="info")
+        if view and nav_args['wait_for_view'] and not os.environ.get(
+                'DISABLE_NAVIGATE_ASSERT', False):
+            waited = True
+            wait_for(
+                lambda: view.is_displayed, num_sec=10,
+                message="Waiting for view [{}] to display".format(view.__class__.__name__)
+            )
+        self.log_message(
+            self.construct_message(here, resetter_used, view, duration, waited), level="info"
+        )
         return view
 
 
