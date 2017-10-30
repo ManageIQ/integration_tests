@@ -1,13 +1,13 @@
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
-from widgetastic_manageiq import (
-    ItemsToolBarViewSelector, SummaryTable, ItemNotFound, BaseEntitiesView)
+from widgetastic_manageiq import ItemsToolBarViewSelector, SummaryTable, ItemNotFound
 
 from cfme.exceptions import ImageNotFound
 from cfme.common.vm import Template
 from cfme.common.vm_views import (
-    EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, BasicProvisionFormView)
+    EditView, SetOwnershipView, ManagePoliciesView, PolicySimulationView, BasicProvisionFormView,
+    VMEntities)
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from . import CloudInstanceView, InstanceAccordion
@@ -55,7 +55,7 @@ class ImageAllView(CloudInstanceView):
     """View for the Image collection"""
     toolbar = View.nested(ImageToolbar)
     sidebar = View.nested(InstanceAccordion)
-    including_entities = View.include(BaseEntitiesView, use_parent=True)
+    including_entities = View.include(VMEntities, use_parent=True)
 
     @property
     def is_displayed(self):
@@ -70,7 +70,7 @@ class ImageProviderAllView(CloudInstanceView):
     """View for the Image collection"""
     toolbar = View.nested(ImageToolbar)
     sidebar = View.nested(InstanceAccordion)
-    including_entities = View.include(BaseEntitiesView, use_parent=True)
+    including_entities = View.include(VMEntities, use_parent=True)
 
     @property
     def is_displayed(self):
