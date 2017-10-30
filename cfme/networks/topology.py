@@ -1,9 +1,10 @@
 import re
+import attr
 
 from navmazing import NavigateToAttribute
 
 from cfme.networks.topology_view import TopologyView
-from cfme.utils.appliance import BaseCollection, BaseEntity
+from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from wait_for import wait_for
 
@@ -76,28 +77,10 @@ class All(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Networks', 'Topology')
 
 
-class TopologyLegendCollection(BaseCollection):
-    """Collection object for legends in topology"""
-    def __init__(self, topology, appliance=None):
-        self.appliance = appliance
-        self.topology = topology
-
-    def instantiate(self, name, element):
-        return TopologyLegend(name=name, element=element)
-
-    def all(self):
-        final_legends = []
-        legends = self.topology.browser.elements(self.topology.view.LEGENDS)
-        for legend in legends:
-            legend_text = self.topology.browser.text(legend.find_element_by_tag_name('label'))
-            final_legends.append(self.instantiate(name=legend_text, element=legend))
-        return final_legends
-
-
+@attr.s
 class TopologyLegend(BaseEntity):
-    def __init__(self, name, element):
-        self.legend_name = name
-        self.element = element
+    element = attr.ib()
+    legend_name = attr.ib()
 
     @property
     def name(self):
@@ -110,6 +93,23 @@ class TopologyLegend(BaseEntity):
     def set_active(self, active=True):
         if active != self.is_active:
             self.element.click()
+
+
+@attr.s
+class TopologyLegendCollection(BaseCollection):
+    """Collection object for legends in topology"""
+    ENTITY = TopologyLegend
+
+    def instantiate(self, name, element):
+        return TopologyLegend(legend_name=name, element=element)
+
+    def all(self):
+        final_legends = []
+        legends = self.topology.browser.elements(self.topology.view.LEGENDS)
+        for legend in legends:
+            legend_text = self.topology.browser.text(legend.find_element_by_tag_name('label'))
+            final_legends.append(self.instantiate(name=legend_text, element=legend))
+        return final_legends
 
 
 class TopologyDisplayNames(BaseEntity):
@@ -126,20 +126,6 @@ class TopologyDisplayNames(BaseEntity):
 
     def disable(self):
         self.enable(enable=False)
-
-
-class TopologyElementCollection(BaseCollection):
-    """Collection object for elements in topology"""
-    def __init__(self, topology, appliance=None):
-        self.appliance = appliance
-        self.topology = topology
-
-    def instantiate(self, element):
-        return TopologyElement(obj=self.topology, element=element)
-
-    def all(self):
-        elements = self.topology.browser.elements(self.topology.view.ELEMENTS)
-        return [self.instantiate(element=elem) for elem in elements]
 
 
 class TopologyElement(BaseEntity):
@@ -195,18 +181,17 @@ class TopologyElement(BaseEntity):
             return False
 
 
-class TopologyLineCollection(BaseCollection):
-    """Collection object for lines in topology"""
-    def __init__(self, topology, appliance=None):
-        self.appliance = appliance
-        self.topology = topology
+@attr.s
+class TopologyElementCollection(BaseCollection):
+    """Collection object for elements in topology"""
+    ENTITY = TopologyElement
 
     def instantiate(self, element):
-        return TopologyLine(element=element)
+        return TopologyElement(obj=self.topology, element=element)
 
     def all(self):
-        lines = self.topology.browser.elements(self.topology.view.LINES)
-        return [self.instantiate(element=line) for line in lines]
+        elements = self.topology.browser.elements(self.topology.view.ELEMENTS)
+        return [self.instantiate(element=elem) for elem in elements]
 
 
 class TopologyLine(BaseEntity):
@@ -222,3 +207,16 @@ class TopologyLine(BaseEntity):
     def __repr__(self):
         return "<Topologylines_obj Connection:{}, x1,y1:{},{}, x2,y2:{},{}>".format(
             self.connection, self.x1, self.y1, self.x2, self.y2)
+
+
+@attr.s
+class TopologyLineCollection(BaseCollection):
+    """Collection object for lines in topology"""
+    ENTITY = TopologyLine
+
+    def instantiate(self, element):
+        return TopologyLine(element=element)
+
+    def all(self):
+        lines = self.topology.browser.elements(self.topology.view.LINES)
+        return [self.instantiate(element=line) for line in lines]
