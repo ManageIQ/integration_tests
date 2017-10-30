@@ -393,17 +393,21 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, WidgetasticTaggable,
         """Returns the contents of the ``Last Analysed`` field in summary"""
         return self.get_detail(properties=('Lifecycle', 'Last Analyzed')).strip()
 
-    def load_details(self, refresh=False):
+    def load_details(self, refresh=False, from_any_provider=False):
         """Navigates to an VM's details page.
 
         Args:
             refresh: Refreshes the VM page if already there
+            from_any_provider: Archived/Orphaned VMs need this
 
         Raises:
             VmOrInstanceNotFound:
                 When unable to find the VM passed
         """
-        navigate_to(self, 'Details', use_resetter=False)
+        if from_any_provider:
+            navigate_to(self, 'AnyProviderDetails', use_resetter=False)
+        else:
+            navigate_to(self, 'Details', use_resetter=False)
         if refresh:
             toolbar.refresh()
             self.browser.plugin.ensure_page_safe()
@@ -615,7 +619,7 @@ class VM(BaseVM):
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
                                  with_relationship_refresh=True, from_any_provider=False):
-        """Wait for M to come to desired state.
+        """Wait for VM to come to desired state.
 
         This function waits just the needed amount of time thanks to wait_for.
 

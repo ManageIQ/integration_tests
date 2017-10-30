@@ -1219,6 +1219,18 @@ class VmAllWithTemplatesDetails(CFMENavigateStep):
         self.view.toolbar.reload.click()
 
 
+@navigator.register(Template, 'AnyProviderDetails')
+@navigator.register(Vm, 'AnyProviderDetails')
+class VmAllWithTemplatesDetailsAnyProvider(VmAllWithTemplatesDetails):
+    """
+    Page with details for VM or template.
+    This is required in case you want to get details about archived/orphaned VM/template.
+    In such case, you cannot get to the detail page by navigating from list of VMs for a provider
+    since archived/orphaned VMs has lost its relationship with the original provider.
+    """
+    prerequisite = NavigateToSibling('All')
+
+
 @navigator.register(Vm, 'VMsOnly')
 class VmAll(CFMENavigateStep):
     VIEW = VmsOnlyAllView
