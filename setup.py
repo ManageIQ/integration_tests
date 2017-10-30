@@ -93,6 +93,7 @@ setup(
             'projects = cfme.configure.access_control:ProjectCollection',
             'candus = cfme.configure.configuration.region_settings:CANDUCollection',
             'rbac_groups = cfme.configure.access_control:GroupCollection',
+            'rbac_users = cfme.configure.access_control:UserCollection',
             'nodes = cfme.containers.node:NodeCollection',
             'dashboards = cfme.dashboard:DashboardCollection',
             'clusters = cfme.infrastructure.cluster:ClusterCollection',

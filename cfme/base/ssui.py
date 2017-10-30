@@ -9,7 +9,7 @@ from widgetastic_manageiq import SSUIVerticalNavigation
 from widgetastic.utils import ParametrizedLocator
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import User
+from cfme.configure.access_control import UserCollection
 from cfme.utils import conf
 from cfme.utils.appliance import ViaSSUI
 from cfme.utils.appliance.implementations.ssui import navigator, SSUINavigateStep, navigate_to
@@ -131,7 +131,7 @@ def login(self, user=None, method=LOGIN_METHODS[-1]):
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
-        user = User(credential=cred)
+        user = UserCollection(self.appliance).instantiate(credential=cred)
 
     logged_in_view = self.appliance.ssui.create_view(SSUIBaseLoggedInPage)
 
@@ -161,8 +161,8 @@ def login_admin(self, **kwargs):
     username = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
     cred = Credential(principal=username, secret=password)
-    from cfme.configure.access_control import User
-    user = User(credential=cred)
+    from cfme.configure.access_control import UserCollection
+    user = UserCollection(self.appliance).instantiate(credential=cred)
     user.name = 'Administrator'
     logged_in_view = self.login(user, **kwargs)
     return logged_in_view
