@@ -145,7 +145,7 @@ class ProviderServers(CFMENavigateStep):
     VIEW = ProviderServerAllView
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Middleware Servers')
+        self.prerequisite_view.entities.relationships.click_at('Middleware Servers')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderDatasources')
@@ -154,7 +154,7 @@ class ProviderDatasources(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Middleware Datasources')
+        self.prerequisite_view.entities.relationships.click_at('Middleware Datasources')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderDeployments')
@@ -163,7 +163,7 @@ class ProviderDeployments(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Middleware Deployments')
+        self.prerequisite_view.entities.relationships.click_at('Middleware Deployments')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderDomains')
@@ -172,7 +172,7 @@ class ProviderDomains(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Middleware Domains')
+        self.prerequisite_view.entities.relationships.click_at('Middleware Domains')
 
 
 @navigator.register(MiddlewareProvider, 'ProviderMessagings')
@@ -181,7 +181,7 @@ class ProviderMessagings(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.relationships.click_at('Middleware Messagings')
+        self.prerequisite_view.entities.relationships.click_at('Middleware Messagings')
 
 
 @navigator.register(MiddlewareProvider, 'TopologyFromDetails')
@@ -190,7 +190,7 @@ class TopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        self.prerequisite_view.contents.overview.click_at('Topology')
+        self.prerequisite_view.entities.overview.click_at('Topology')
 
 
 class MiddlewareBase(Validatable):

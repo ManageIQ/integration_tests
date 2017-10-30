@@ -548,7 +548,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         view = self.load_details()
         block, field = ident
-        return getattr(view.contents, block.lower()).get_text_of(field)
+        return getattr(view.entities, block.lower()).get_text_of(field)
 
     @classmethod
     def get_credentials(cls, credential_dict, cred_type=None):
@@ -910,10 +910,10 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
 
         """
         view = navigate_to(self, 'Details')
-        if view.contents.relationships.get_text_of(self.vm_name) == "0":
+        if view.entities.relationships.get_text_of(self.vm_name) == "0":
             return False
         else:
-            view.contents.relationships.click_at(self.vm_name)
+            view.entities.relationships.click_at(self.vm_name)
             return True
 
     def load_all_provider_images(self):
@@ -925,10 +925,10 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable, WidgetasticTagga
         """
         # todo: replace these methods with new nav location
         view = navigate_to(self, 'Details')
-        if view.contents.relationships.get_text_of(self.template_name) == "0":
+        if view.entities.relationships.get_text_of(self.template_name) == "0":
             return False
         else:
-            view.contents.relationships.click_at(self.template_name)
+            view.entities.relationships.click_at(self.template_name)
             return True
 
 

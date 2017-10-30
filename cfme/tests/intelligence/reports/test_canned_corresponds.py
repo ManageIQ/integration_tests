@@ -26,7 +26,7 @@ def test_providers_summary(soft_assert):
         if any(ptype in provider["MS Type"] for ptype in {"ec2", "openstack"}):  # Skip cloud
             continue
         details_view = navigate_to(InfraProvider(name=provider["Name"]), 'Details')
-        props = details_view.contents.properties
+        props = details_view.entities.properties
 
         hostname = ("Host Name", "Hostname")
         soft_assert(props.get_text_of(hostname[0]) == provider[hostname[1]],
