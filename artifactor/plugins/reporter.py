@@ -348,6 +348,7 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
         self.register_plugin_hook('finish_test', self.finish_test)
         self.register_plugin_hook('session_info', self.session_info)
         self.register_plugin_hook('composite_pump', self.composite_pump)
+        self.register_plugin_hook('tb_info', self.tb_info)
 
     def configure(self):
         self.only_failed = self.data.get('only_failed', False)
@@ -396,6 +397,14 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
         return None, {
             'build': build, 'stream': stream, 'version': version, 'fw_version': fw_version
         }
+
+    @ArtifactorBasePlugin.check_configured
+    def tb_info(self, test_location, test_name, exception, file_line, short_tb):
+        test_ident = "{}/{}".format(test_location, test_name)
+        return None, {'artifacts': {test_ident: {
+            'exception':
+                {'file_line': file_line, 'exception': exception, 'short_tb': short_tb}
+        }}}
 
     @ArtifactorBasePlugin.check_configured
     def run_report(self, old_artifacts, artifact_dir, version=None, fw_version=None):

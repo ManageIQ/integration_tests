@@ -5,7 +5,7 @@ import cfme.utils.browser
 from cfme.fixtures.pytest_selenium import ensure_browser_open, take_screenshot
 from fixtures.artifactor_plugin import fire_art_test_hook
 from cfme.utils.datafile import template_env
-from cfme.utils.path import log_path
+from cfme.utils.path import log_path, project_path
 from cfme.utils import browser as browser_module, safe_string
 from cfme.utils.log import logger
 browser_fixtures = {'browser'}
@@ -61,6 +61,17 @@ def pytest_exception_interact(node, call, report):
         description="Short traceback", contents=short_tb, file_type="short_tb",
         display_type="danger", display_glyph="align-justify", group_id="pytest-exception",
         slaveid=store.slaveid)
+    exception_name = call.excinfo.type.__name__
+    exception_lineno = call.excinfo.traceback[-1].lineno
+    exception_filename = call.excinfo.traceback[-1].path.strpath.replace(
+        project_path.strpath + "/", ''
+    )
+    exception_location = "{}:{}".format(exception_filename, exception_lineno)
+    fire_art_test_hook(
+        node, 'tb_info',
+        exception=exception_name, file_line=exception_location,
+        short_tb=short_tb, slave_id=store.slaveid
+    )
 
     # base64 encoded to go into a data uri, same for screenshots
     full_tb = report.longreprtext.encode('base64').strip()
