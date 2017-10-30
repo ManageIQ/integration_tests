@@ -22,7 +22,7 @@ pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 def test_copy_request(appliance, setup_provider, provider, catalog_item, request):
     """Automate BZ 1194479"""
-    vm_name = catalog_item.provisioning_data["vm_name"]
+    vm_name = catalog_item.provisioning_data["catalog"]["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)

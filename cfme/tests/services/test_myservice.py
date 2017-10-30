@@ -49,8 +49,8 @@ def myservice(appliance, setup_provider, provider, catalog_item, request):
         test_flag: provision
     """
     vm_name = version.pick({
-        version.LOWEST: catalog_item.provisioning_data["vm_name"] + '_0001',
-        '5.7': catalog_item.provisioning_data["vm_name"] + '0001'})
+        version.LOWEST: catalog_item.provisioning_data["catalog"]["vm_name"] + '_0001',
+        '5.7': catalog_item.provisioning_data["catalog"]["vm_name"] + '0001'})
     catalog_item.create()
     service_catalogs = ServiceCatalogs(appliance, catalog_item.catalog, catalog_item.name)
     service_catalogs.order()
