@@ -100,19 +100,15 @@ def enabled_embedded_appliance(appliance_preupdate):
     return appliance_preupdate
 
 
-@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
-@pytest.mark.uncollectif(lambda: store.current_appliance.version < "5.8")
-def test_embedded_ansible_update(enabled_embedded_appliance, appliance, old_version):
-    """ Tests updating an appliance which has embedded ansible role enabled, also confirms that the
-        role continues to function correctly after the update has completed"""
-    set_default_repo = True
+@pytest.fixture(scope="function")
+def update_embedded_appliance(enabled_embedded_appliance, appliance):
     with enabled_embedded_appliance:
         red_hat_updates = RedHatUpdates(
             service='rhsm',
             url=conf.cfme_data['redhat_updates']['registration']['rhsm']['url'],
             username=conf.credentials['rhsm']['username'],
             password=conf.credentials['rhsm']['password'],
-            set_default_repository=set_default_repo
+            set_default_repository=True
         )
         red_hat_updates.update_registration(validate=False)
         red_hat_updates.check_updates()
@@ -125,14 +121,21 @@ def test_embedded_ansible_update(enabled_embedded_appliance, appliance, old_vers
         )
         if red_hat_updates.platform_updates_available():
             red_hat_updates.update_appliances()
+        return enabled_embedded_appliance
 
+
+@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+@pytest.mark.uncollectif(lambda: store.current_appliance.version < "5.8")
+def test_embedded_ansible_update(update_embedded_appliance, appliance, old_version):
+    """ Tests updating an appliance which has embedded ansible role enabled, also confirms that the
+        role continues to function correctly after the update has completed"""
     def is_appliance_updated(appliance):
         """Checks if cfme-appliance has been updated"""
-        assert appliance.version == enabled_embedded_appliance.version
+        assert appliance.version == update_embedded_appliance.version
 
-    wait_for(is_appliance_updated, func_args=[enabled_embedded_appliance], num_sec=900)
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_embedded_ansible_running, num_sec=30)
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_rabbitmq_running, num_sec=30)
-    assert wait_for(func=lambda: enabled_embedded_appliance.is_nginx_running, num_sec=30)
-    assert enabled_embedded_appliance.ssh_client.run_command(
+    wait_for(is_appliance_updated, func_args=[update_embedded_appliance], num_sec=900)
+    assert wait_for(func=lambda: update_embedded_appliance.is_embedded_ansible_running, num_sec=30)
+    assert wait_for(func=lambda: update_embedded_appliance.is_rabbitmq_running, num_sec=30)
+    assert wait_for(func=lambda: update_embedded_appliance.is_nginx_running, num_sec=30)
+    assert update_embedded_appliance.ssh_client.run_command(
         'curl -kL https://localhost/ansibleapi | grep "Ansible Tower REST API"')
