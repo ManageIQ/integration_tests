@@ -15,8 +15,9 @@ def test_configure_appliance_internal_fetch_key(
         request, app_creds, temp_appliance_unconfig_funcscope, appliance):
     fetch_key_ip = appliance.address
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal_fetch_key(
-        0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production', '/dev/vdb',
-        fetch_key_ip, app_creds['sshlogin'], app_creds['sshpass'])
+        0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
+        temp_appliance_unconfig_funcscope.unpartitioned_disks[0], fetch_key_ip,
+        app_creds['sshlogin'], app_creds['sshpass'])
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
@@ -25,8 +26,8 @@ def test_configure_appliance_external_join(request, app_creds, appliance,
         temp_appliance_unconfig_funcscope):
     appliance_ip = appliance.address
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_join(
-        appliance_ip, app_creds['username'], app_creds['password'], 'vmdb_production',
-        appliance_ip, app_creds['sshlogin'], app_creds['sshpass'])
+        appliance_ip, app_creds['username'], app_creds['password'], 'vmdb_production', appliance_ip,
+        app_creds['sshlogin'], app_creds['sshpass'])
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
@@ -36,8 +37,8 @@ def test_configure_appliance_external_create(
         request, app_creds, dedicated_db_appliance, temp_appliance_unconfig_funcscope):
     hostname = dedicated_db_appliance.address
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_external_create(5,
-        hostname, app_creds['username'], app_creds['password'], 'vmdb_production',
-        hostname, app_creds['sshlogin'], app_creds['sshpass'])
+        hostname, app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
+        app_creds['sshlogin'], app_creds['sshpass'])
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
