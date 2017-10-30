@@ -314,7 +314,7 @@ class DetailsFromProvider(CFMENavigateStep):
 
     def step(self, *args, **kwargs):
         """Navigate to the correct view"""
-        self.prerequisite_view.contents.relationships.click_at('Clusters')
+        self.prerequisite_view.entities.relationships.click_at('Clusters')
 
 
 @navigator.register(InfraProvider, 'ProviderNodes')  # matching other infra class destinations
@@ -324,7 +324,7 @@ class ProviderNodes(CFMENavigateStep):
 
     def step(self):
         try:
-            self.prerequisite_view.contents.relationships.click_at(self.obj.hosts_menu_item)
+            self.prerequisite_view.entities.relationships.click_at(self.obj.hosts_menu_item)
         except NameError:
             raise DestinationNotFound(
                 "{} aren't present on details page of this provider"

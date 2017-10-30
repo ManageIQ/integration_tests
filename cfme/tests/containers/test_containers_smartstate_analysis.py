@@ -3,7 +3,7 @@ from collections import namedtuple
 
 import pytest
 
-from cfme.containers.image import Image
+from cfme.containers.image import Image, ImageCollection
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 
 from cfme.utils import testgen
@@ -49,8 +49,10 @@ def delete_all_container_tasks():
 
 
 @pytest.fixture(scope='function')
-def random_image_instance(provider):
-    return Image.get_random_instances(provider, count=1).pop()
+def random_image_instance(provider, appliance):
+
+    ic = ImageCollection(appliance)
+    return ic.get_random_instances(count=1).pop()
 
 
 @pytest.mark.polarion('10030')
