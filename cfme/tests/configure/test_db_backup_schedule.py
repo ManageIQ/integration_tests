@@ -2,8 +2,6 @@
 import fauxfactory
 import pytest
 
-from cfme.configure.configuration import DatabaseBackupSchedule
-from cfme.fixtures import pytest_selenium as sel
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from urlparse import urlparse
@@ -158,8 +156,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1099341, 1205898])
-def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
+def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip, appliance):
     """ Test scheduled one-type backup on given machines using smb/nfs
     """
 
@@ -173,27 +170,26 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
         'name': db_backup_data.schedule_name,
         'description': db_backup_data.schedule_description,
         'active': True,
+        'action_type': 'Database Backup',
         'run_type': "Once",
         'run_every': None,
-        'time_zone': "UTC",
+        'time_zone': "(GMT+00:00) UTC",
         'start_date': dt,
         'start_hour': hour,
         'start_min': minute,
-        'depot_name': fauxfactory.gen_alphanumeric(),
+        'depot_name': fauxfactory.gen_alphanumeric()
     }
-
     if db_backup_data.protocol_type == 'smb':
         sched_args.update({
-            'protocol': 'Samba',
+            'backup_type': 'Samba',
             'uri': db_depot_uri,
-            'username': db_backup_data.credentials['username'],
-            'password': db_backup_data.credentials['password'],
-            'password_verify': db_backup_data.credentials['password']
+            'samba_username': db_backup_data.credentials['username'],
+            'samba_password': db_backup_data.credentials['password'],
         })
     else:
         sched_args.update({
-            'protocol': 'Network File System',
-            'uri': db_depot_uri,
+            'backup_type': 'Network File System',
+            'uri': db_depot_uri
         })
 
     if db_backup_data.protocol_type == 'nfs':
@@ -202,8 +198,7 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
         path_on_host = db_backup_data.path_on_host
     full_path = get_full_path_to_file(path_on_host, db_backup_data.schedule_name)
 
-    sched = DatabaseBackupSchedule(**sched_args)
-    sched.create()
+    sched = appliance.collections.system_schedules.create(**sched_args)
     # ----
 
     # ---- Add cleanup finalizer
@@ -218,10 +213,10 @@ def test_db_backup_schedule(request, db_backup_data, db_depot_machine_ip):
     # ---- Wait for schedule to run
     # check last date at schedule's table
     wait_for(
-        lambda: sched.last_date != '',
+        lambda: sched.last_run_date != '',
         num_sec=600,
         delay=30,
-        fail_func=sel.refresh,
+        fail_func=sched.browser.refresh,
         message='Schedule failed to run in 10mins from being set up'
     )
     # ----

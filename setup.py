@@ -94,6 +94,8 @@ setup(
             'hosts = cfme.infrastructure.host:HostCollection',
             'deployment_roles = cfme.infrastructure.deployment_roles:DeploymentRoleCollection',
             'schedules = cfme.intelligence.reports.schedules:ScheduleCollection',
+            ('system_schedules = '
+                'cfme.configure.configuration.system_schedules:SystemSchedulesCollection'),
             'balancers = cfme.networks.balancer:BalancerCollection',
             'cloud_networks = cfme.networks.cloud_network:CloudNetworkCollection',
             'network_ports = cfme.networks.network_port:NetworkPortCollection',
