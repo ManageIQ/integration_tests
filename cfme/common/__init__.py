@@ -11,13 +11,13 @@ from cached_property import cached_property
 from cfme.base.login import BaseLoggedInPage
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTree, BootstrapTreeview, flash, form_buttons, mixins, toolbar
+from cfme.web_ui import BootstrapTreeview, flash, form_buttons, mixins, toolbar
 from cfme.web_ui.timelines import Timelines
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
 from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from cfme.utils import attributize_string, version, deferred_verpick
+from cfme.utils import attributize_string
 from cfme.utils.units import Unit
 from cfme.utils.varmeth import variable
 from cfme.utils.log import logger
@@ -636,49 +636,29 @@ class Validatable(SummaryMixin):
                 ("Property '{}' has wrong value, expected '{}' but was '{}'"
                  .format(property_tuple, expected_value, shown_value))
 
-    def validate_tags(self, tag="My Company Tags", reference_tags=None):
-        """Validation method which check tagging between UI and database.
+    def validate_tags(self, reference_tags):
+        """Validation method which check tagging between UI and provided reference_tags.
 
         To use this method, `self`/`caller` should be extended with `Taggable` class
 
         Args:
-            tag: tag name, default is `My Company Tags`
-            reference_tags: If you want to compare user input with database, pass user input
+            reference_tags: If you want to compare user input with UI, pass user input
                 as `reference_tags`
         """
         if reference_tags and not isinstance(reference_tags, list):
             raise KeyError("'reference_tags' should be an instance of list")
-        # Get tags from UI and DB
-        tags_ui = self.get_tags(method='ui')
-        tags_db = self.get_tags(method='db')
+        tags = self.get_tags()
         # Verify tags
-        assert len(tags_db) == len(tags_ui), \
-            ("Tags count between DB and UI mismatch, expected '{}' but was '{}'"
-             .format(tags_db, tags_ui))
-        if len(tags_ui) > 0:
-            tags_ui = sorted(tags_ui, key=lambda x: (x.category.display_name, x.display_name))
-            tags_db = sorted(tags_db, key=lambda x: (x.category.display_name, x.display_name))
-            for i in range(len(tags_db)):
-                assert \
-                    tags_db[i].category.display_name == tags_ui[i].category.display_name,\
-                    ("Expected category '{}', but was '{}'".format(
-                        tags_db[i].category.display_name,
-                        tags_ui[i].category.display_name))
-                assert tags_db[i].display_name == tags_ui[i].display_name, \
-                    ("Expected tag_name '{}', but was '{}'".format(tags_db[i].display_name,
-                                                                   tags_ui[i].display_name))
-        # if user passed reference tags, validate with database
-        if reference_tags:
-            for ref_tag in reference_tags:
-                found = False
-                for d_tag in tags_db:
-                    if ref_tag.category.display_name == d_tag.category.display_name \
-                            and ref_tag.display_name == d_tag.display_name:
-                        found = True
-                        assert ref_tag.category.single_value == d_tag.category.single_value, \
-                            ("'single_value' of '{}' did not match'"
-                             .format(ref_tag))
-                assert found, ("Tag '{}' not found in database".format(ref_tag))
+        assert len(tags) == len(reference_tags), \
+            ("Tags count between Provided and UI mismatch, expected '{}' but was '{}'"
+             .format(reference_tags, tags))
+        for ref_tag in reference_tags:
+            found = False
+            for tag in tags:
+                if ref_tag.category.display_name == tag.category.display_name \
+                        and ref_tag.display_name == tag.display_name:
+                    found = True
+            assert found, ("Tag '{}' not found in UI".format(ref_tag))
 
 
 class TopologyMixin(object):

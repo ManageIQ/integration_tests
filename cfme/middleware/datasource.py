@@ -3,7 +3,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from wrapanapi.hawkular import CanonicalPath
 
-from cfme.common import Taggable, UtilizationMixin
+from cfme.common import WidgetasticTaggable, UtilizationMixin
 from cfme.exceptions import MiddlewareDatasourceNotFound
 from cfme.middleware.provider import (
     MiddlewareBase, download, get_server_name)
@@ -58,7 +58,7 @@ def _get_datasources_page(provider=None, server=None):
         return navigate_to(MiddlewareDatasource, 'All')
 
 
-class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMixin):
+class MiddlewareDatasource(MiddlewareBase, WidgetasticTaggable, Navigatable, UtilizationMixin):
     """
     MiddlewareDatasource class provides details on datasource page.
     Class methods available to get existing datasources list

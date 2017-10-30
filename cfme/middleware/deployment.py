@@ -4,7 +4,7 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme.common import Taggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import MiddlewareDeploymentNotFound
 from cfme.middleware.provider import Deployable
 from cfme.middleware.provider import MiddlewareBase, download, get_server_name
@@ -54,7 +54,7 @@ def _get_deployments_page(provider, server):
         return navigate_to(MiddlewareDeployment, 'All')
 
 
-class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
+class MiddlewareDeployment(MiddlewareBase, WidgetasticTaggable, Navigatable, Deployable):
     """
     MiddlewareDeployment class provides details on deployment page.
     Class methods available to get existing deployments list

@@ -3,7 +3,7 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
-from cfme.common import Taggable, UtilizationMixin
+from cfme.common import WidgetasticTaggable, UtilizationMixin
 from cfme.exceptions import MiddlewareMessagingNotFound
 from cfme.middleware.provider import MiddlewareBase, download, get_server_name
 from cfme.middleware.provider import parse_properties
@@ -57,7 +57,7 @@ def _get_messagings_page(provider=None, server=None):
         return navigate_to(MiddlewareMessaging, 'All')
 
 
-class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixin):
+class MiddlewareMessaging(MiddlewareBase, Navigatable, WidgetasticTaggable, UtilizationMixin):
     """
     MiddlewareMessaging class provides details on messaging page.
     Class methods available to get existing messagings list
