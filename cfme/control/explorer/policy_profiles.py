@@ -2,7 +2,7 @@
 import attr
 
 from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, TextInput
+from widgetastic.widget import Table, Text, TextInput
 from widgetastic_manageiq import MultiBoxSelect
 from widgetastic_patternfly import Button, Input
 
@@ -63,6 +63,7 @@ class PolicyProfileDetailsView(ControlExplorerView):
 
 class PolicyProfilesAllView(ControlExplorerView):
     title = Text("#explorer_title_text")
+    entities = Table(".//div[@id='main_div']/table")
 
     @property
     def is_displayed(self):
@@ -155,6 +156,11 @@ class PolicyProfileCollection(BaseCollection):
         view.flash.assert_success_message('Policy Profile "{}" was added'.format(
             policy_profile.description))
         return policy_profile
+
+    @property
+    def all_policy_profile_names(self):
+        view = navigate_to(self, "All")
+        return [row[1].text for row in view.entities]
 
 
 @navigator.register(PolicyProfileCollection, "All")
