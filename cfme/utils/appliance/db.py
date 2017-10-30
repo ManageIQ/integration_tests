@@ -260,6 +260,8 @@ class ApplianceDB(AppliancePlugin):
             status, out = client.run_command('ruby {}'.format(remote_file))
             client.run_command('rm {}'.format(remote_file))
 
+        self.logger.info('Output from appliance db configuration: %s', out)
+
         return status, out
 
     def enable_external(self, db_address, region=0, db_name=None, db_username=None,
