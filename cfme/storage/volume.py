@@ -188,16 +188,13 @@ class Volume(BaseEntity):
     provider = attr.ib()
 
     def wait_for_disappear(self, timeout=300):
-        def refresh():
-            self.provider.refresh_provider_relationships()
-            self.browser.refresh()
-
+        """Wait for disappear the volume"""
         try:
             wait_for(lambda: not self.exists,
                      timeout=timeout,
                      message='Wait for cloud Volume to disappear',
                      delay=20,
-                     fail_func=refresh)
+                     fail_func=self.refresh)
         except TimedOutError:
             logger.error('Timed out waiting for Volume to disappear, continuing')
 
@@ -206,8 +203,15 @@ class Volume(BaseEntity):
         view = navigate_to(self, 'Edit')
         view.volume_name.fill(name)
         view.save.click()
-        view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
+
+        # Wrong flash for 5.7[BZ-1506992]. As BZ clear 5.7 will consistence with 5.8 and 5.9.
+        if self.appliance.version < "5.8":
+            view.flash.assert_success_message('Updating Cloud Volume "{}"'.format(self.name))
+        else:
+            view.flash.assert_success_message('Cloud Volume "{}" updated'.format(name))
+
         self.name = name
+        wait_for(lambda: self.exists, delay=20, timeout=500, fail_func=self.refresh)
 
     def delete(self, wait=True):
         """Delete the Volume"""
@@ -219,6 +223,11 @@ class Volume(BaseEntity):
 
         if wait:
             self.wait_for_disappear(500)
+
+    def refresh(self):
+        """Refresh provider relationships and browser"""
+        self.provider.refresh_provider_relationships()
+        self.browser.refresh()
 
     @property
     def exists(self):
@@ -245,7 +254,19 @@ class VolumeCollection(BaseCollection):
     ENTITY = Volume
 
     def create(self, name, storage_manager, tenant, size, provider):
-        """Create new storage volume"""
+        """Create new storage volume
+
+        Args:
+            name: volume name
+            storage_manager: storage manager name
+            tenant: tenant name
+            size: volume size in GB
+            provider: provider
+
+        Returns:
+            object for the :py:class: cfme.storage.volume.Volume
+        """
+
         view = navigate_to(self, 'Add')
         view.form.fill({'storage_manager': storage_manager,
                         'tenant': tenant,
@@ -258,8 +279,7 @@ class VolumeCollection(BaseCollection):
         view.flash.assert_success_message(base_message.format(name))
 
         volume = self.instantiate(name, provider)
-        wait_for(provider.is_refreshed, func_kwargs=dict(refresh_delta=10), timeout=600)
-        wait_for(lambda: volume.exists, timeout=100, fail_func=volume.browser.refresh)
+        wait_for(lambda: volume.exists, delay=20, timeout=500, fail_func=volume.refresh)
 
         return volume
 
