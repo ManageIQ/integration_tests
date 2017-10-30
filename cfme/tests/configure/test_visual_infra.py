@@ -34,7 +34,7 @@ def get_parameter(view):
     return parameter
 
 
-report_parameter = visual.report_view_entities
+report_parameter = ['5', '10', '20', '50', '100', '200', '500', '1000']
 
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
