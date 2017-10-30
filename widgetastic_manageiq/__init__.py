@@ -2682,7 +2682,11 @@ class JSBaseEntity(View, ReportDataControllerMixin):
         data = self._invoke_cmd('get_item', self.name)['item']
         cells = data.pop('cells')
         data.update(cells)
-        return {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+        data_dict = {str(key).replace(' ', '_').lower(): value for key, value in data.items()}
+        # TODO Remove this horrible hack once the data getter allows creds access
+        if 'quadicon' in data_dict:
+            data_dict['creds'] = 'checkmark' if 'checkmark' in data_dict['quadicon'] else 'x'
+        return data_dict
 
     def read(self):
         return self.is_checked
