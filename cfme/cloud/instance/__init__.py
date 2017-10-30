@@ -12,7 +12,7 @@ from cfme.common.vm_views import (
     SetOwnershipView, ManagementEngineView, ManagePoliciesView,
     PolicySimulationView)
 from cfme.exceptions import InstanceNotFound, ItemNotFound
-from cfme.web_ui import flash
+from cfme.services.requests import RequestsView
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from cfme.utils.log import logger
@@ -191,10 +191,11 @@ class Instance(VM, Navigatable):
             view.entities.flash.assert_no_error()
         else:
             view.form.submit_button.click()
-            # TODO this redirects to service.request, create_view on it when it exists for flash
-            wait_for(flash.get_messages, fail_condition=[], timeout=10, delay=2,
+
+            view = self.appliance.browser.create_view(RequestsView)
+            wait_for(lambda: view.flash.messages, fail_condition=[], timeout=10, delay=2,
                      message='wait for Flash Success')
-            flash.assert_success_message(self.PROVISION_START)
+            view.flash.assert_success_message(self.PROVISION_START)
 
     def update(self, values, cancel=False, reset=False):
         """Update cloud instance
