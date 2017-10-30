@@ -66,7 +66,8 @@ def add_glance(api, provider):
         for domain in api.openstackimageproviders.list():
             if domain.get_name() == glance_provider:
                 return True
-        return False
+        else:
+            return False
 
     # Get the list of OpenStack image providers (a.k.a. Glance providers)
     # that match the name that we want to use:
@@ -675,10 +676,6 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             logger.info("RHEVM:%r Found finished template with name %r.", provider, template_name)
             logger.info("RHEVM:%r The script will now end.", provider)
             return True
-        logger.info('RHEVM:%r BEFORE add_glance..', provider)
-        add_glance(api, provider)
-        sys.exit(127)
-
         logger.info("RHEVM:%r Downloading .ova file...", provider)
         with make_ssh_client(rhevip, sshname, sshpass) as ssh_client:
             download_ova(ssh_client, kwargs.get('image_url'))
