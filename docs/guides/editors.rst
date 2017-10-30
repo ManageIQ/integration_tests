@@ -371,3 +371,63 @@ Recommended
 
    Extremely powerful editing tool, best described with `this
    video. <http://emacsrocks.com/e13.html>`_ Package is ``multiple-cursors``.
+
+PyCharm
+-------
+
+PyCharm is a very powerful python IDE. However, it comes with a price - it's also quite resource-heavy.
+It has a `community edition <https://blog.jetbrains.com/pycharm/2013/10/pycharm-3-0-community-edition-source-code-now-available/>`_
+that is open-source since 2013. You can get it `here <https://www.jetbrains.com/pycharm/download/>`_.
+Some of its best out-of-the-box features are:
+
+- Code inspections with PEP8 support
+- Git integration with diff preview and other tools
+- Easy per-project configuration including code style
+- Symbol navigation and code completion
+- Support for html, json, xml and yaml
+- Powerful degugging tool
+- Many others
+
+Following examples and settings were tested on PyCharm Community Edition 2017.2.3
+
+Useful plugins
+^^^^^^^^^^^^^^
+
+PyCharm has a library of many useful plugins. To install them, go to
+``File -> Settings -> Plugins -> Install JetBrains plugin``.
+
+Some plugins you might find useful are:
+
+:BashSupport:
+
+        Supports syntax highlighting, rename refactoring, inspections and many more.
+
+:IdeaVim:
+
+        Very good Vim emulation. If you have been using Vim for some time, you will feel at home.
+
+Code style compliance
+^^^^^^^^^^^^^^^^^^^^^
+
+You can set up PyCharm in such a way that it takes care about code style for you.
+You can go very much in-depth with this, but here are the basics of whay you can do:
+
+:100 characters maximum line length:
+
+        Set ``File -> Settings -> Editor -> Code Style -> Right margin (columns)`` to 100
+
+:PEP 8 revisions:
+
+        Add ``E128`` to ``File -> Settigns -> Editor -> Inspections -> Python -> PEP 8 coding style violation -> Ignore errors``
+
+:Problems with pytest fixtures:
+
+        PyCharm is unfortunately ignorant of pytest inner workings.
+        It means that it will mark fixtures passed to test methods as ununsed parameters.
+        In order to get rid of those warnings, you can disable following inspection:
+        ``File -> Settigns -> Editor -> Inspections -> Python -> Unused local``
+        If a fixture is specified in the same module as your test method, you will get other warning when using it.
+        Disable ``File -> Settigns -> Editor -> Inspections -> Python -> Shadowing names from outer scopes``.
+
+
+Feel free to add any other tips & tricks you come up with.
