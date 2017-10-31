@@ -161,12 +161,13 @@ class ApplianceConsoleCli(object):
                 dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
-            username, password, dbname, fetch_key, sshlogin, sshpass):
+            username, password, dbname, dbdisk, fetch_key, sshlogin, sshpass):
         self._run("--region {region} --internal --hostname {dbhostname} --username {username}"
-            " --password {password} --dbname {dbname} --verbose --fetch-key {fetch_key}"
-            " --sshlogin {sshlogin} --sshpassword {sshpass}".format(
+            " --password {password} --dbname {dbname} --verbose --dbdisk {dbdisk} --fetch-key"
+            " {fetch_key} --sshlogin {sshlogin} --sshpassword {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
-                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
+                dbname=dbname, dbdisk=dbdisk, fetch_key=fetch_key, sshlogin=sshlogin,
+                sshpass=sshpass))
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
         self._run("--ipaserver {ipaserver} --ipaprincipal {username} --ipapassword {password}"

@@ -16,7 +16,8 @@ def test_configure_appliance_internal_fetch_key(
     fetch_key_ip = appliance.address
     temp_appliance_unconfig_funcscope.appliance_console_cli.configure_appliance_internal_fetch_key(
         0, 'localhost', app_creds['username'], app_creds['password'], 'vmdb_production',
-        fetch_key_ip, app_creds['sshlogin'], app_creds['sshpass'])
+        temp_appliance_unconfig_funcscope.unpartitioned_disks[0], fetch_key_ip,
+        app_creds['sshlogin'], app_creds['sshpass'])
     temp_appliance_unconfig_funcscope.wait_for_evm_service()
     temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
