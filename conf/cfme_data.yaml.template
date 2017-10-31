@@ -165,6 +165,12 @@ management_systems:
                 security_protocol: Non-SSL
     lenovo:
         name: lenovo
+        type: lenovo
+        endpoints:
+            default:
+                credentials: lenovo
+                ipaddress: 10.0.0.1
+                api_port: 3000
 
 configuration_managers:
     sat6:
