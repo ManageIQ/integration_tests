@@ -18,7 +18,7 @@ from cfme.utils.version import current_version
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
 ]
 pytest_generate_tests = testgen.generate([MiddlewareProvider], scope='function')
 
@@ -54,7 +54,10 @@ def test_password_mismatch_validation(provider, soft_assert):
         verify_secret=fauxfactory.gen_alphanumeric(6)
     )
     prov.endpoints = endpoints
-    with error.expected('Credential validation was successful'):
+    message = 'Credential validation was successful'
+    if current_version() >= '5.9':
+        message = 'Credential validation was not successful: Invalid credentials'
+    with error.expected(message):
         prov.create()
     add_view = provider.create_view(MiddlewareProviderAddView)
     endp_view = prov.endpoints_form(parent=add_view)

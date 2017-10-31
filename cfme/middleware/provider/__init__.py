@@ -201,7 +201,7 @@ class MiddlewareBase(Validatable):
 
     def download_summary(self):
         view = self.load_details(refresh=False)
-        view.toolbar.download()
+        view.toolbar.download.click()
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock

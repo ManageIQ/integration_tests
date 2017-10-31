@@ -298,10 +298,6 @@ class BaseProvider(WidgetasticTaggable, Updateable, SummaryMixin, Navigatable):
             if updates:
                 self.name = updates.get('name', self.name)
 
-            if BZ.bugzilla.get_bug(1436341).is_opened and version.current_version() > '5.8':
-                logger.warning('Skipping flash message verification because of BZ 1436341')
-                return
-
             success_text = '{} Provider "{}" was saved'.format(self.string_name, self.name)
             if main_view.is_displayed:
                 # since 5.8.1 main view is displayed when edit starts from main view
