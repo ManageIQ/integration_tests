@@ -187,7 +187,8 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, WidgetasticTaggable):
 
     @variable(alias='ui')
     def is_running(self):
-        raise NotImplementedError('This feature not implemented yet')
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "State") == 'Running'
 
     @is_running.variant('db')
     def is_running_in_db(self):
@@ -208,6 +209,11 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, WidgetasticTaggable):
             if mgmt_dmn:
                 return mgmt_dmn.value['Domain State'] == 'running'
         raise MiddlewareDomainNotFound("Domain '{}' not found in MGMT!".format(self.name))
+
+    @variable(alias='ui')
+    def is_stopped(self):
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "State") == 'Stopped'
 
     def shutdown_domain(self):
         view = self.load_details(refresh=True)
