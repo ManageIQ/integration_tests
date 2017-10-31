@@ -15,6 +15,7 @@ Usage on CLI::
     pytest -m 'rhv1'  # Run only tier 1
     pytest -m 'rhv1 or rhv2 or rhv3'  # Run all the tiers
     pytest -m 'not rhv3'  # Run all test methods except for RHV tier 3
+    pytest -m 'not rhv1 and not rhv2 and not rhv3'  # Run everything that is not marked with rhv1-3
 """
 
 
