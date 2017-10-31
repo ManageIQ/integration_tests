@@ -25,6 +25,8 @@ def pytest_collection_modifyitems(session, config, items):
     new_items = []
 
     build = store.current_appliance.build
+    if str(store.current_appliance.version) not in build:
+        build = "{}-{}".format(str(store.current_appliance.version), build)
 
     source = config.getoption('composite_source')
     if not source:
