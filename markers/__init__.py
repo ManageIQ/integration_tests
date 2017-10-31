@@ -16,6 +16,7 @@ pytest_plugins = [
     "markers.meta",
     "markers.stream_excluder",
     "markers.requires",
+    "markers.rhv",
     "markers.sauce",
     "markers.skipper",
     "markers.uses",
