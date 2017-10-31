@@ -5,14 +5,16 @@ Where possible, defaults will come from cfme_data"""
 import argparse
 import sys
 
-import cfme.utils
 from cfme.utils.appliance import Appliance, IPAppliance
-from cfme.utils.conf import cfme_data
-from cfme.utils.conf import credentials as cred
-from cfme.utils.log import logger
+from cfme.utils.conf import cfme_data, credentials as cred, provider_data
+from cfme.utils.log import logger, add_stdout_handler
 from cfme.utils.path import log_path
 from cfme.utils.providers import get_mgmt
 from cfme.utils.wait import wait_for
+
+
+# log to stdout
+add_stdout_handler(logger)
 
 
 def parse_cmd_line():
@@ -86,7 +88,6 @@ def main(**kwargs):
     if kwargs.get('deploy'):
         kwargs['configure'] = True
         kwargs['outfile'] = 'appliance_ip_address_1'
-        provider_data = cfme.utils.conf.provider_data
         providers = provider_data['management_systems']
         provider_dict = provider_data['management_systems'][kwargs['provider']]
         credentials =\
