@@ -57,6 +57,16 @@ class ErrorView(View):
 class MiqBrowserPlugin(DefaultPlugin):
     ENSURE_PAGE_SAFE = jsmin('''\
         function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
+        function isDataLoading() {
+            try {
+                    // checks whether all the data on page is loaded
+                    // actual since 5.9
+                    return window.ManageIQ.gtl.loading;
+                } catch(err){
+                        // there are pages in 5.9 where that call ^^ raises error
+                        return false;
+                };
+        }
 
         try {
             angular.element('error-modal').hide();
@@ -64,7 +74,7 @@ class MiqBrowserPlugin(DefaultPlugin):
         }
 
         try {
-            return ! ManageIQ.qe.anythingInFlight();
+            return !(ManageIQ.qe.anythingInFlight() || isDataLoading());
         } catch(err) {
             return (
                 ((typeof $ === "undefined") ? true : $.active < 1) &&
@@ -74,7 +84,8 @@ class MiqBrowserPlugin(DefaultPlugin):
                 document.readyState == "complete" &&
                 ((typeof checkMiqQE === "undefined") ? true : checkMiqQE('autofocus') < 1) &&
                 ((typeof checkMiqQE === "undefined") ? true : checkMiqQE('debounce') < 1) &&
-                ((typeof checkAllMiqQE === "undefined") ? true : checkAllMiqQE() < 1)
+                ((typeof checkAllMiqQE === "undefined") ? true : checkAllMiqQE() < 1) &&
+                ! isDataLoading()
             );
         }
         ''')
@@ -86,7 +97,7 @@ class MiqBrowserPlugin(DefaultPlugin):
     )
     DEFAULT_WAIT = .8
 
-    def ensure_page_safe(self, timeout='10s'):
+    def ensure_page_safe(self, timeout='20s'):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
 
         def _check():
