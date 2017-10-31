@@ -57,6 +57,52 @@ def parse_cmd_line():
     return args
 
 
+def add_glance(api, provider):
+    glance_provider = 'glance11-server'
+    provider_dict = cfme_data['management_systems'][glance_provider]
+    creds_key = provider_dict['credentials']
+
+    def is_glance_added(api, name):
+        for domain in api.openstackimageproviders.list():
+            if domain.get_name() == glance_provider:
+                return True
+        else:
+            return False
+
+    # Get the list of OpenStack image providers (a.k.a. Glance providers)
+    # that match the name that we want to use:
+    providers = [
+        domain for domain in api.openstackimageproviders.list()
+        if domain.get_name() == glance_provider
+    ]
+
+    try:
+        # If there is no such provider, then add it:
+        if len(providers) == 0:
+            glance_sd = api.openstackimageproviders.add(
+                params.OpenStackImageProvider(
+                    name=glance_provider,
+                    description='My Glance',
+                    url=provider_dict['url'],
+                    requires_authentication=True,
+                    authentication_url=provider_dict['auth_url'],
+                    username=credentials[creds_key]['username'],
+                    password=credentials[creds_key]['password'],
+                    tenant_name=credentials[creds_key]['tenant']
+                )
+            )
+
+        wait_for(is_glance_added, [api, glance_provider],
+            fail_condition=False, delay=5, num_sec=240)
+        if not api.openstackimageproviders.get(name=glance_provider):
+            logger.error("RHV:%s Glance provider %s could not be attached", provider,
+                glance_provider)
+            sys.exit(127)
+        logger.info('RHV:%s Attached Glance provider %s', provider, glance_sd.get_name())
+    except Exception:
+        logger.exception("RHV:%r add_glance failed:", provider)
+
+
 def make_ssh_client(rhevip, sshname, sshpass):
     connect_kwargs = {
         'username': sshname,
