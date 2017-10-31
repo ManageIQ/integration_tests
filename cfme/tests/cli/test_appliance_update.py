@@ -124,7 +124,7 @@ def update_embedded_appliance(enabled_embedded_appliance, appliance):
         return enabled_embedded_appliance
 
 
-@pytest.mark.uncollectif(lambda: not store.current_appliance.is_downstream)
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.uncollectif(lambda: store.current_appliance.version < "5.8")
 def test_embedded_ansible_update(update_embedded_appliance, appliance, old_version):
     """ Tests updating an appliance which has embedded ansible role enabled, also confirms that the
