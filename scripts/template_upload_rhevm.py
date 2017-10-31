@@ -103,6 +103,38 @@ def add_glance(api, provider):
         logger.exception("RHV:%r add_glance failed:", provider)
 
 
+def import_template_from_glance(api, provider, template_name, sdomain, temp_template_name):
+    """Imports template from Glance to storage domain"""
+
+    glance_provider = 'glance11-server'
+
+    # Find the storage domain:
+    sd = api.storagedomains.get(name=glance_provider)
+
+    # Find the image:
+    image = sd.images.get(name=template_name)
+
+    # Import the image:
+    image.import_image(params.Action(
+        import_as_template=True,
+        template=params.Template(
+            name=temp_template_name
+        ),
+        cluster=params.Cluster(
+            name='Default'
+        ),
+        storage_domain=params.StorageDomain(
+            name=sdomain
+        )
+    )
+    )
+
+    if not api.templates.get(temp_template_name):
+        logger.error("RHEVM:%r templatizing temporary VM failed", provider)
+        sys.exit(127)
+        logger.info("RHEVM:%r successfully templatized the temporary VM", provider)
+
+
 def make_ssh_client(rhevip, sshname, sshpass):
     connect_kwargs = {
         'username': sshname,
