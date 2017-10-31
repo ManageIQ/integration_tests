@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 import traceback
 
-from cfme.configure.access_control import User, Role
+from cfme.configure.access_control import Role
 from cfme.utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import test_requirements
@@ -399,8 +399,7 @@ def test_delete_group_with_assigned_user(appliance):
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role)
 
-    user = new_user(appliance, group=group)
-
+    new_user(appliance, group=group)
     with pytest.raises(RBACOperationBlocked):
         group.delete()
 
@@ -538,7 +537,7 @@ def test_assign_user_to_new_group(appliance):
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
     group = group_collection.create(description=group_description, role=role.name)
 
-    user = new_user(appliance, group=group)
+    new_user(appliance, group=group)
 
 
 def _test_vm_provision():

@@ -2,7 +2,7 @@ import fauxfactory
 import pytest
 
 from cfme.base.credential import Credential
-from cfme.configure.access_control import Role, User
+from cfme.configure.access_control import Role
 from cfme.configure.configuration.region_settings import Category, Tag
 from cfme.web_ui import mixins
 from cfme.utils.appliance.implementations.ui import navigate_to

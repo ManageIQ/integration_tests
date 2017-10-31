@@ -72,7 +72,7 @@ class LoginPage(View):
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
         from cfme.configure.access_control import UserCollection
-        user = UserCollection(appliance).instantiate(name='Administrator', credential=cred)
+        user = UserCollection(self.appliance).instantiate(name='Administrator', credential=cred)
         return self.log_in(user, **kwargs)
 
     def submit_login(self, method='click_on_login'):

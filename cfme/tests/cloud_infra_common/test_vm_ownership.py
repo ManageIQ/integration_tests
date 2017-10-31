@@ -98,12 +98,14 @@ def user3(appliance, group_user_or_group_owned):
 
 
 def new_user(appliance, group_only_user_owned):
-    user = ac.UserCollection(appliance).create(name='user_' + fauxfactory.gen_alphanumeric(),
-                   credential=new_credential(),
-                   email='abc@redhat.com',
-                   group=group_only_user_owned,
-                   cost_center='Workload',
-                   value_assign='Database')
+    user = ac.UserCollection(appliance).create(
+        name='user_' + fauxfactory.gen_alphanumeric(),
+        credential=new_credential(),
+        email='abc@redhat.com',
+        group=group_only_user_owned,
+        cost_center='Workload',
+        value_assign='Database')
+
     return user
 
 

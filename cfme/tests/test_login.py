@@ -2,7 +2,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.configure.access_control import User
 from cfme.utils.appliance import ViaSSUI, ViaUI
 from cfme.utils import conf, error, version
 

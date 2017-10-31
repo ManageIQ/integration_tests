@@ -314,7 +314,8 @@ class IPAppliance(object):
                 '%r.user was set to None before, therefore generating an admin user: %s/%s',
                 self, username, password)
             cred = Credential(principal=username, secret=password)
-            self._user = UserCollection(self.appliance).instantiate(credential=cred, name='Administrator')
+            self._user = UserCollection(self.appliance).instantiate(
+                credential=cred, name='Administrator')
         return self._user
 
     @user.setter

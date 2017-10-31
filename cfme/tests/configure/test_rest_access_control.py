@@ -4,7 +4,6 @@ import pytest
 
 from cfme import test_requirements
 from cfme.base.credential import Credential
-from cfme.configure.access_control import User
 from cfme.rest.gen_data import (
     _creating_skeleton,
     groups as _groups,
