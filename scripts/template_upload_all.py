@@ -293,7 +293,7 @@ def browse_directory(dir_url):
             # this is necessary because headers don't contain last-modified date for folders
             #  cfme-template is disposed in templates everywhere except 'latest' in 5.9
             # todo: remove this along with refactoring script
-            if '5.8' in name_dict[key] or '5.9' in name_dict[key] and 'latest' in name_dict[key]:
+            if '5.8' in name_dict[key] or ('5.9' in name_dict[key] and 'latest' in name_dict[key]):
                 url = urljoin(name_dict[key], 'cfme-template.yaml')
             else:
                 url = urljoin(name_dict[key], 'templates/cfme-template.yaml')
