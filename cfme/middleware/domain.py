@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from wrapanapi.hawkular import CanonicalPath
 
-from cfme.common import Taggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import MiddlewareDomainNotFound
 from cfme.middleware.provider import MiddlewareBase, download
 from cfme.middleware.provider import parse_properties
@@ -42,7 +42,7 @@ def _get_domains_page(provider):
         return navigate_to(MiddlewareDomain, 'All')
 
 
-class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
+class MiddlewareDomain(MiddlewareBase, Navigatable, WidgetasticTaggable):
     """
     MiddlewareDomain class provides actions and details on Domain page.
     Class method available to get existing domains list

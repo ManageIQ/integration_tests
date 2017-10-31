@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from wrapanapi.hawkular import CanonicalPath
 
-from cfme.common import Taggable, UtilizationMixin
+from cfme.common import WidgetasticTaggable, UtilizationMixin
 from cfme.exceptions import MiddlewareServerNotFound, \
     MiddlewareServerGroupNotFound
 from cfme.middleware.domain import MiddlewareDomain
@@ -63,7 +63,7 @@ def _get_servers_page(provider=None, server_group=None):
         return navigate_to(MiddlewareServer, 'All')
 
 
-class MiddlewareServer(MiddlewareBase, Taggable, Container, Reportable,
+class MiddlewareServer(MiddlewareBase, WidgetasticTaggable, Container, Reportable,
                        Navigatable, UtilizationMixin):
     """
     MiddlewareServer class provides actions and details on Server page.

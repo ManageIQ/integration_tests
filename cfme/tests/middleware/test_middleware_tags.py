@@ -19,7 +19,6 @@ pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 tags = [
     Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),
-    Tag(category=Category(display_name='Location', single_value=True), display_name='New York'),
     Tag(category=Category(display_name='Workload', single_value=False),
         display_name='Application Servers'),
 ]
@@ -42,10 +41,10 @@ def test_object_tags(provider, objecttype):
 
 def validate_tags(taggable, tags):
     """Remove all tags and add `tags` from user input, validates added tags"""
-    tags_db = taggable.get_tags(method='db')
+    tags_db = taggable.get_tags()
     if len(tags_db) > 0:
         taggable.remove_tags(tags=tags_db)
-        tags_db = taggable.get_tags(method='db')
+        tags_db = taggable.get_tags()
     assert len(tags_db) == 0, "Some of tags still available in database!"
     taggable.add_tags(tags)
     taggable.validate_tags(reference_tags=tags)

@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling
 from selenium.common.exceptions import NoSuchElementException
 from wrapanapi.hawkular import CanonicalPath
 
-from cfme.common import Taggable
+from cfme.common import WidgetasticTaggable
 from cfme.exceptions import (MiddlewareDomainNotFound,
                              MiddlewareServerGroupNotFound)
 from cfme.middleware.domain import MiddlewareDomain
@@ -39,7 +39,7 @@ def _get_server_groups_page(domain):
     return navigate_to(domain, 'DomainServerGroups')
 
 
-class MiddlewareServerGroup(MiddlewareBase, Taggable, Container, Navigatable):
+class MiddlewareServerGroup(MiddlewareBase, WidgetasticTaggable, Container, Navigatable):
     """
     MiddlewareServerGroup class provides actions and details on Server Group page.
     Class method available to get existing server groups list
