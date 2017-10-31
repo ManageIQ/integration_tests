@@ -87,6 +87,8 @@ setup(
             'keypairs = cfme.cloud.keypairs:KeyPairCollection',
             'stacks = cfme.cloud.stack:StackCollection',
             'cloud_tenants = cfme.cloud.tenant:TenantCollection',
+            'tenants = cfme.configure.access_control:TenantCollection',
+            'projects = cfme.configure.access_control:ProjectCollection',
             'candus = cfme.configure.configuration.region_settings:CANDUCollection',
             'nodes = cfme.containers.node:NodeCollection',
             'dashboards = cfme.dashboard:DashboardCollection',
