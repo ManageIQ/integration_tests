@@ -156,6 +156,14 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
                                        ems.updated_on).filter(ems.name == self.name).first()
         return dates.updated_on > dates.created_on
 
+    @variable(alias='ui')
+    def is_valid(self, reload_data=True):
+        self.load_details(refresh=reload_data)
+        if re.match('Valid.*Ok', self.get_detail("Status", "Authentication status")):
+            return True
+        else:
+            return False
+
     @classmethod
     def download(cls, extension):
         view = _get_providers_page()

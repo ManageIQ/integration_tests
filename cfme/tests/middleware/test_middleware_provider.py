@@ -176,3 +176,11 @@ def test_authentication(provider):
     view = provider.create_view(MiddlewareProviderDetailsView)
     view.flash.assert_success_message('Authentication status will be saved'
         ' and workers will be restarted for the selected Middleware Provider')
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.9')
+@pytest.mark.usefixtures('setup_provider')
+def test_auth_status(provider):
+    """Verifies that Authentication status for provider is: Valid - Ok.
+    """
+    assert provider.is_valid(), 'Authentication status should be: Valid - Ok'
