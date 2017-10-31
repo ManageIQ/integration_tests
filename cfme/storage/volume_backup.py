@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import attr
+import random
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import (
@@ -196,13 +197,15 @@ class VolumeBackupCollection(BaseCollection):
 
             view.toolbar.configuration.item_select('Delete selected Backups', handle_alert=True)
 
-            for backup in backups:
-                wait_for(
-                    lambda: backup.name not in view.entities.all_entity_names,
-                    message="Wait backups to disappear",
-                    delay=20,
-                    fail_func=backup.refresh
-                )
+            wait_for(
+                lambda: not bool({backup.name for backup in backups} &
+                             set(view.entities.all_entity_names)),
+                message="Wait backups to disappear",
+                delay=20,
+                timeout=800,
+                fail_func=random.choice(backups).refresh
+            )
+
         else:
             raise BackupNotFound('No Volume Backups for Deletion')
 
