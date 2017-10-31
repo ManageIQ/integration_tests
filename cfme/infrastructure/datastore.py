@@ -5,8 +5,7 @@ from lxml.html import document_fromstring
 from navmazing import NavigateToAttribute
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import Version, VersionPick
-from widgetastic.widget import ParametrizedView
-from widgetastic.widget import View, Text
+from widgetastic.widget import ParametrizedView, View, Text
 from widgetastic_patternfly import Dropdown, Accordion
 
 from cfme.base.login import BaseLoggedInPage
@@ -64,7 +63,7 @@ class DatastoreQuadIconEntity(BaseQuadIconEntity):
                 'no_vm': int(self.browser.text(self.QUADRANT.format(pos="b"))),
                 'no_host': int(self.browser.text(self.QUADRANT.format(pos="c"))),
             }
-        except NoSuchElementException:
+        except (IndexError, NoSuchElementException):
             return {}
 
 

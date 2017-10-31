@@ -324,6 +324,12 @@ class User(Updateable, Pretty, BaseEntity):
     def description(self):
         return self.credential.principal
 
+    @property
+    def my_settings(self):
+        from cfme.configure.settings import MySettings
+        my_settings = MySettings(appliance=self.appliance)
+        return my_settings
+
 
 @attr.s
 class UserCollection(BaseCollection):

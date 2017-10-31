@@ -3,7 +3,6 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown, Button
-from widgetastic_manageiq import BaseEntitiesView
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
@@ -11,7 +10,7 @@ from cfme.exceptions import AvailabilityZoneNotFound, ItemNotFound
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from widgetastic_manageiq import (
-    TimelinesView, ItemsToolBarViewSelector, Text, Table, BreadCrumb,
+    BaseEntitiesView, TimelinesView, ItemsToolBarViewSelector, Text, Table, BreadCrumb,
     SummaryTable, Accordion, ManageIQTree)
 
 

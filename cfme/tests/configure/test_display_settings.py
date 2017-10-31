@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
+
 import pytest
 
 from cfme import test_requirements
-from cfme.configure.settings import Visual
-from cfme.utils.appliance import current_appliance
 from cfme.utils.appliance.implementations.ui import navigate_to
+
+
+TimeZone = namedtuple('TimeZone', ['friendly', 'machine'])
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]
@@ -17,19 +20,15 @@ colors = [
     'ManageIQ-Blue',
     'Black',
 ]
+test_timezone = TimeZone(friendly='(GMT-10:00) Hawaii', machine='-1000')
 
 
-@pytest.fixture(scope="module")
-def visual(appliance):
-    return Visual(appliance=appliance)
-
-
-@pytest.yield_fixture(scope="module")
-def set_timezone(visual):
-    time_zone = visual.timezone
-    visual.timezone = "(GMT-10:00) Hawaii"
+@pytest.yield_fixture(scope='module')
+def set_timezone(appliance):
+    old_time_zone = appliance.user.my_settings.visual.timezone
+    appliance.user.my_settings.visual.timezone = test_timezone.friendly
     yield
-    visual.timezone = time_zone
+    appliance.user.my_settings.visual.timezone = old_time_zone
 
 
 def test_timezone_setting(appliance, set_timezone):
@@ -38,9 +37,5 @@ def test_timezone_setting(appliance, set_timezone):
     Metadata:
         test_flag: visuals
     """
-    locator = ('//label[contains(@class,"control-label") and contains(., "Started On")]'
-               '/../div/p[contains(., "{}")]'.format("-1000"))
-
-    navigate_to(current_appliance.server, 'DiagnosticsDetails')
-
-    assert appliance.browser.widgetastic.is_displayed(locator), "Timezone settings Failed"
+    view = navigate_to(appliance.server, 'DiagnosticsDetails')
+    assert test_timezone.machine in view.summary.started_on.text, 'Timezone settings Failed'

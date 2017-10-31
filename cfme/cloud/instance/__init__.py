@@ -1,9 +1,9 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 from riggerlib import recursive_update
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic_patternfly import CheckableBootstrapTreeview, Dropdown, Button
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, Button
 
 from cfme.base.login import BaseLoggedInPage
 from cfme.common.vm import VM
@@ -58,6 +58,18 @@ class InstanceAccordion(View):
     class images(Accordion):  # noqa
         ACCORDION_NAME = 'Images'
         tree = ManageIQTree()
+
+
+class InstanceCompareAccordion(View):
+    """
+    The accordion on the instance comparison page
+    """
+    @View.nested
+    class comparison_sections(Accordion):  # noqa
+        ACCORDION_NAME = 'Comparison Sections'
+        tree = CheckableBootstrapTreeview()
+
+    apply = Button('Apply')
 
 
 class CloudInstanceView(BaseLoggedInPage):
@@ -135,6 +147,18 @@ class InstanceTimelinesView(TimelinesView, CloudInstanceView):
         return (
             self.in_cloud_instance and
             self.title.text == 'Timelines for Instance "{}"'.format(expected_name))
+
+
+class InstanceCompareView(CloudInstanceView):
+    """
+    The comparison page for instances
+    """
+    @property
+    def is_displayed(self):
+        return self.in_cloud_instance and self.entities.title.text == 'Compare VM or Template'
+
+    toolbar = View.nested(CompareToolBarActionsView)
+    sidebar = View.nested(InstanceCompareAccordion)
 
 
 class Instance(VM, Navigatable):

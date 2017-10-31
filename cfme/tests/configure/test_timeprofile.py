@@ -21,7 +21,7 @@ def test_time_profile_crud(appliance):
         description='time_profile {}'.format(fauxfactory.gen_alphanumeric()),
         scope='Current User',
         days=True, hours=True,
-        timezone="(GMT-10:00) Hawaii")
+        timezone='(GMT-10:00) Hawaii')
     with update(time_profile):
         time_profile.scope = 'All Users'
     collection.delete(False, time_profile)
@@ -37,7 +37,7 @@ def test_time_profile_name_max_character_validation(appliance):
         description=fauxfactory.gen_alphanumeric(50),
         scope='Current User',
         days=True, hours=True,
-        timezone="(GMT-10:00) Hawaii")
+        timezone='(GMT-10:00) Hawaii')
     collection.delete(False, time_profile)
 
 
@@ -52,7 +52,7 @@ def test_days_required_error_validation(appliance, soft_assert):
     with update(time_profile):
         time_profile.days = False
     view = appliance.browser.create_view(TimeProfileEditView)
-    soft_assert(view.form.help_block.text == "At least one day needs to be selected")
+    soft_assert(view.form.help_block.text == 'At least one day needs to be selected')
     soft_assert(view.form.save.disabled)
     view.form.cancel.click()
 
@@ -68,7 +68,7 @@ def test_hours_required_error_validation(appliance, soft_assert):
     with update(time_profile):
         time_profile.hours = False
     view = appliance.browser.create_view(TimeProfileEditView)
-    soft_assert(view.form.help_block.text == "At least one hour needs to be selected")
+    soft_assert(view.form.help_block.text == 'At least one hour needs to be selected')
     soft_assert(view.form.save.disabled)
     view.form.cancel.click()
 
@@ -84,7 +84,7 @@ def test_time_profile_description_required_error_validation(appliance, soft_asse
     with update(time_profile):
         time_profile.description = ''
     view = appliance.browser.create_view(TimeProfileEditView)
-    soft_assert(view.form.description.help_block == "Required")
+    soft_assert(view.form.description.help_block == 'Required')
     soft_assert(view.form.save.disabled)
     view.form.cancel.click()
 
@@ -100,7 +100,7 @@ def test_time_profile_copy(appliance):
         scope='Current User',
         days=True,
         hours=True,
-        timezone="(GMT-10:00) Hawaii")
+        timezone='(GMT-10:00) Hawaii')
     copied_time_profile = time_profile.copy(
-        description="check_copy{}".format(time_profile.description))
+        description='check_copy{}'.format(time_profile.description))
     collection.delete(False, time_profile, copied_time_profile)

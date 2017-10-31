@@ -8,11 +8,11 @@ from widgetastic.utils import (
 )
 from widgetastic.widget import ParametrizedView, Text, View
 from widgetastic_patternfly import (
+    BootstrapNav,
     BootstrapSelect,
     CheckableBootstrapTreeview,
     Dropdown,
     Tab,
-    VerticalNavigation
 )
 
 from cfme.base.login import BaseLoggedInPage
@@ -98,11 +98,6 @@ class JSHostEntity(JSBaseEntity):
             return {}
 
 
-class AccordionNavigationWithoutRoot(VerticalNavigation):
-    DIV_LINKS_MATCHING = './/div/ul/li/a[contains(text(), {txt})]'
-    CURRENTLY_SELECTED = './/li[contains(@class, "active")]/a'
-
-
 def HostEntity():  # noqa
     """ Temporary wrapper for Host Entity during transition to JS based Entity
 
@@ -144,7 +139,7 @@ class HostDetailsView(ComputeInfrastructureHostsView):
     class security_accordion(Accordion):  # noqa
         ACCORDION_NAME = "Security"
 
-        navigation = AccordionNavigationWithoutRoot(locator='#host_sec')
+        navigation = BootstrapNav('.//div/ul')
 
     @property
     def is_displayed(self):
@@ -242,7 +237,7 @@ class HostsView(ComputeInfrastructureHostsView):
     class filters(Accordion):  # noqa
         ACCORDION_NAME = "Filters"
 
-        navigation = AccordionNavigationWithoutRoot(locator='#Host_def_searches')
+        navigation = BootstrapNav('.//div/ul')
         tree = ManageIQTree()
 
     default_filter_btn = Button(title="Set the current filter as my default")
