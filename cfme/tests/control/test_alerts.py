@@ -9,17 +9,19 @@ from cfme.control.explorer import alert_profiles, policies
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from markers.env_markers.provider import providers
 from cfme.utils import ports
 from cfme.utils.blockers import BZ
-from cfme.utils.conf import credentials
+from cfme.utils.conf import cfme_data, credentials
 from cfme.utils.generators import random_vm_name
+from cfme.utils.hosts import setup_host_creds
 from cfme.utils.log import logger
 from cfme.utils.net import net_check
 from cfme.utils.providers import ProviderFilter
 from cfme.utils.ssh import SSHClient
 from cfme.utils.update import update
 from cfme.utils.wait import wait_for
+from markers.env_markers.provider import providers
+from . import do_scan, wait_for_ssa_enabled
 
 
 pf1 = ProviderFilter(classes=[InfraProvider])
@@ -29,7 +31,7 @@ CANDU_PROVIDER_TYPES = [VMwareProvider]  # TODO: rhevm
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.meta(server_roles=["+automate", "+notifier"]),
+    pytest.mark.meta(server_roles=["+automate", "+smartproxy", "+notifier"]),
     pytest.mark.uncollectif(BZ(1491576, forced_streams=['5.7']).blocks, 'BZ 1491576'),
     pytest.mark.tier(3),
     test_requirements.alert
@@ -92,6 +94,35 @@ def alert_profile_collection(appliance):
     return appliance.collections.alert_profiles
 
 
+@pytest.fixture(scope="module")
+def requests_collection(appliance):
+    return appliance.collections.requests
+
+
+@pytest.fixture(scope="function")
+def vddk_url(provider):
+    try:
+        major, minor = str(provider.version).split(".")
+    except ValueError:
+        major = str(provider.version)
+        minor = "0"
+    vddk_version = "v{}_{}".format(major, minor)
+    try:
+        return cfme_data.get("basic_info").get("vddk_url").get(vddk_version)
+    except AttributeError:
+        pytest.skip("There is no vddk url for this VMware provider version")
+
+
+@pytest.yield_fixture(scope="function")
+def configure_fleecing(appliance, provider, vm, vddk_url):
+    host = vm.get_detail(properties=("Relationships", "Host"))
+    setup_host_creds(provider.key, host)
+    appliance.install_vddk(vddk_url=vddk_url)
+    yield
+    appliance.uninstall_vddk()
+    setup_host_creds(provider.key, host, remove_creds=True)
+
+
 @pytest.fixture
 def setup_for_alerts(alert_profile_collection, action_collection, policy_collection,
         policy_profile_collection):
@@ -101,7 +132,7 @@ def setup_for_alerts(alert_profile_collection, action_collection, policy_collect
 
         Args:
             request: py.test funcarg request
-            alerts: Alert objects
+            alerts_list: list of alert objects
             event: Event to hook on (VM Power On, ...)
             vm_name: VM name to use for policy filtering
             provider: funcarg provider
@@ -382,3 +413,55 @@ def test_alert_snmp(request, appliance, provider, setup_snmp, setup_candu, vm, w
             return False
 
     wait_for(_snmp_arrived, timeout="30m", delay=60, message="SNMP trap arrived.")
+
+
+@pytest.mark.provider(CANDU_PROVIDER_TYPES)
+def test_alert_hardware_reconfigured(request, configure_fleecing, alert_collection, vm, smtp_test,
+        requests_collection, setup_for_alerts):
+    """Tests alert based on "Hardware Reconfigured" evaluation.
+
+    According https://bugzilla.redhat.com/show_bug.cgi?id=1396544 Hardware Reconfigured alerts
+    require drift history. So here are the steps for triggering hardware reconfigured alerts based
+    on CPU Count:
+        1. Run VM smart state analysis.
+        2. Change CPU count.
+        3. Run VM smart state analysis again.
+        4. Run VM reconfigure again.
+    Then the alert for CPU count change should be triggered. It is either CPU increased or decreased
+    depending on what has been done in your step 2, not the result of step 4. Step 4 is just to
+    trigger the event.
+    """
+    email = fauxfactory.gen_email()
+    service_request_desc = ("VM Reconfigure for: {0} - Processor Sockets: {1}, "
+        "Processor Cores Per Socket: 1, Total Processors: {1}")
+    alert = alert_collection.create(
+        "Trigger by hardware reconfigured {}".format(fauxfactory.gen_alpha(length=4)),
+        active=True,
+        based_on="VM and Instance",
+        evaluate=(
+            "Hardware Reconfigured",
+            {
+                "hardware_attribute": "Number of CPU Cores",
+                "operator": "Increased",
+            }
+        ),
+        notification_frequency="1 Minute",
+        emails=email
+    )
+    request.addfinalizer(alert.delete)
+    setup_for_alerts(request, [alert], vm_name=vm.name)
+    wait_for_ssa_enabled(vm)
+    sockets_count = vm.configuration.hw.sockets
+    vm.power_control_from_provider("Power Off")
+    for i in range(1, 3):
+        do_scan(vm, rediscover=False)
+        vm.reconfigure(changes={"cpu": True, "sockets": str(sockets_count + i), "disks": ()})
+        service_request = requests_collection.instantiate(
+            description=service_request_desc.format(vm.name, sockets_count + i))
+        service_request.wait_for_request(method="ui", num_sec=300, delay=10)
+    wait_for_alert(
+        smtp_test,
+        alert,
+        delay=30 * 60,
+        additional_checks={"text": vm.name, "from_address": email}
+    )
