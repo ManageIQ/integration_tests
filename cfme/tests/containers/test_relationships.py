@@ -10,7 +10,6 @@ from cfme.containers.pod import Pod
 from cfme.containers.provider import ContainersProvider,\
     ContainersTestItem
 from cfme.containers.service import Service
-from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
 from cfme.containers.image import Image
 from cfme.containers.project import Project
@@ -36,7 +35,8 @@ TEST_ITEMS = [
     pytest.mark.polarion('CMP-9947')(ContainersTestItem(Container, 'CMP-9947')),
     pytest.mark.polarion('CMP-9929')(ContainersTestItem(Pod, 'CMP-9929')),
     pytest.mark.polarion('CMP-10564')(ContainersTestItem(Service, 'CMP-10564')),
-    pytest.mark.polarion('CMP-9962')(ContainersTestItem(Node, 'CMP-9962')),
+    # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
+    # pytest.mark.polarion('CMP-9962')(ContainersTestItem(Node, 'CMP-9962')),
     pytest.mark.polarion('CMP-10565')(ContainersTestItem(Replicator, 'CMP-10565')),
     pytest.mark.polarion('CMP-9980')(ContainersTestItem(Image, 'CMP-9980')),
     pytest.mark.polarion('CMP-9994')(ContainersTestItem(ImageRegistry, 'CMP-9994')),

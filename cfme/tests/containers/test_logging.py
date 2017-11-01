@@ -3,7 +3,6 @@ import pytest
 from cfme.utils import testgen
 from cfme.utils.version import current_version
 from cfme.utils.appliance.implementations.ui import navigate_to
-from cfme.containers.node import Node
 
 from cfme.containers.provider import ContainersProvider, ContainersTestItem
 
@@ -16,8 +15,9 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 TEST_ITEMS = [
-    pytest.mark.polarion('CMP-10634')(ContainersTestItem(ContainersProvider, 'CMP-10634')),
-    pytest.mark.polarion('CMP-10635')(ContainersTestItem(Node, 'CMP-10635'))
+    pytest.mark.polarion('CMP-10634')(ContainersTestItem(ContainersProvider, 'CMP-10634'))
+    # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
+    # pytest.mark.polarion('CMP-10635')(ContainersTestItem(Node, 'CMP-10635'))
 ]
 
 

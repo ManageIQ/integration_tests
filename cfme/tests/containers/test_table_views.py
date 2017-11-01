@@ -10,7 +10,6 @@ from cfme.configure.settings import DefaultView
 from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
-from cfme.containers.node import NodeCollection
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.service import Service
 from cfme.containers.replicator import Replicator
@@ -33,7 +32,8 @@ objects_mapping = OrderedDict({  # <object> : <ui name>
     ImageRegistry: 'Image Registries',
     Project: 'Projects',
     Route: 'Routes',
-    NodeCollection: 'Nodes',
+    # TODO Add Node back into the list when other classes are updated to use WT views and widgets.
+    # NodeCollection: 'Nodes',
     Pod: 'Pods',
     Service: 'Services',
     Container: 'Containers',
