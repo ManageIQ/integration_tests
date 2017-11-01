@@ -17,17 +17,17 @@ pytestmark = [pytest.mark.tier(3),
               pytest.mark.usefixtures('openstack_provider', 'setup_provider')]
 
 
-COLLECTION_CLASS_AND_TYPE = [
-    (ObjectManagerCollection, 'Swift Manager'),
-    (BlockManagerCollection, 'Cinder Manager')
-]
+MANAGER_TYPE = ['Swift Manager', 'Cinder Manager']
 
 
-@pytest.yield_fixture(params=COLLECTION_CLASS_AND_TYPE,
+@pytest.yield_fixture(params=MANAGER_TYPE,
                       ids=['object_manager', 'block_manager'])
 def collection_manager(request, openstack_provider, appliance):
-    collection = request.param[0](appliance=appliance)
-    manager_name = '{0} {1}'.format(openstack_provider.name, request.param[1])
+    if request.param == 'Swift Manager':
+        collection = appliance.collections.object_managers
+    else:
+        collection = appliance.collections.block_managers
+    manager_name = '{0} {1}'.format(openstack_provider.name, request.param)
     manager = collection.instantiate(name=manager_name, provider=openstack_provider)
     yield collection, manager
 
