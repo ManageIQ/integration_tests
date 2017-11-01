@@ -28,7 +28,7 @@ def vm_name():
 
 @pytest.yield_fixture(scope="module")
 def set_group_memory(appliance):
-    group_collection = appliance.collections.groups
+    group_collection = appliance.collections.rbac_groups
     group = group_collection.instantiate(description='EvmGroup-super_administrator')
     group.edit_tags("Quota - Max Memory *", '2GB')
     yield
@@ -37,7 +37,7 @@ def set_group_memory(appliance):
 
 @pytest.yield_fixture(scope="module")
 def set_group_cpu(appliance):
-    group_collection = appliance.collections.groups
+    group_collection = appliance.collections.rbac_groups
     group = group_collection.instantiate(description='EvmGroup-super_administrator')
     group.edit_tags("Quota - Max CPUs *", '2')
     yield

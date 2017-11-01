@@ -11,7 +11,7 @@ from widgetastic.widget import Checkbox, View, Text
 
 from cfme.base.credential import Credential
 from cfme.base.ui import ConfigurationView
-from cfme.exceptions import OptionNotAvailable, RBACOperationBlocked
+from cfme.exceptions import RBACOperationBlocked
 from cfme.modeling.base import BaseCollection, BaseEntity
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -173,7 +173,7 @@ class User(Updateable, Pretty, Navigatable):
                 for currently selected role
         """
         if self.appliance.version < "5.8":
-            user_blocked_msg = ("Userid has already been taken")
+            user_blocked_msg = "Userid has already been taken"
         else:
             user_blocked_msg = ("Userid is not unique within region {}".format(
                 self.appliance.server_region()))
