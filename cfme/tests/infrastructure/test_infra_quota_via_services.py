@@ -67,10 +67,10 @@ def max_quota_test_instance(appliance, test_domain):
 def max_field_method(request, max_quota_test_instance):
     field, value = request.param
     with update(max_quota_test_instance):
-        max_quota_test_instance.fields = { field: {'value': value} }
+        max_quota_test_instance.fields = {field: {'value': value}}
     yield
     with update(max_quota_test_instance):
-        max_quota_test_instance.fields = { field: {'value': ''} }
+        max_quota_test_instance.fields = {field: {'value': ''}}
 
 
 def create_dialog(appliance, element_data, label=None):
@@ -114,6 +114,7 @@ def vmware_catalog_item(provider, vm_name, template, catalog, number_of_vms_dial
                                prov_data=prov_data)
     catalog_item.create()
     return catalog_item
+
 
 @pytest.mark.meta(blockers=[BZ(1497912, forced_streams=['5.7', '5.8', '5.9', 'upstream'])])
 @pytest.mark.parametrize(
