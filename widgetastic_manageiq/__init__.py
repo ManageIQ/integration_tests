@@ -1172,8 +1172,8 @@ class SSUIlist(Widget, ClickableMixin):
     @ParametrizedView.nested
     class list(ParametrizedView):  # noqa
         PARAMETERS = ("list_name", "item_name",)
-        list_item = Text(ParametrizedLocator('.//div[@id={list_name|quote}]/../div'
-            '//a[normalize-space(.)={item_name|quote}]'))
+        list_item = Text(
+            ParametrizedLocator('.//div[@id={list_name|quote}]/../div//*[normalize-space(.)={item_name|quote}]'))
 
         def list_click(self):
             """Clicks the list item with this name."""
@@ -1226,9 +1226,8 @@ class SSUIPrimarycard(Widget, ClickableMixin):
     @ParametrizedView.nested
     class primary_card(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
-        card = Text(ParametrizedLocator('.//div[@class="ss-dashboard__card-primary__count"]'
-            '/h3[normalize-space(.)={item_name|quote}]'))
-        count = Text(ParametrizedLocator('.//div[@class="ss-dashboard__card-primary__count"]/h2'
+
+        card = Text(ParametrizedLocator('.//div[@class="ss-dashboard__card-primary__count"]/h2'
             '[./following-sibling::h3[normalize-space(.)={item_name|quote}]]'))
 
         def card_click(self):
@@ -1239,7 +1238,7 @@ class SSUIPrimarycard(Widget, ClickableMixin):
         def card_count(self):
             """Gets the count displayed on card"""
 
-            return self.browser.text(self.count)
+            return self.browser.text(self.card)
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1261,6 +1260,11 @@ class SSUIPrimarycard(Widget, ClickableMixin):
         """
         return self.primary_card(item_name).card_count()
 
+    @property
+    def is_displayed(self):
+        """Checks if Total service card is displayed"""
+        return self.primary_card("Total Services").card.is_displayed
+
 
 class SSUIAggregatecard(Widget, ClickableMixin):
     """Represents an aggregate card like Current Services or Retired services."""
@@ -1268,10 +1272,19 @@ class SSUIAggregatecard(Widget, ClickableMixin):
     @ParametrizedView.nested
     class aggregate_card(ParametrizedView):  # noqa
         PARAMETERS = ("item_name",)
-        card = Text(ParametrizedLocator('.//div[@class="card-pf-body"]'
-            '/h2[normalize-space(.)={item_name|quote}]'))
-        count = Text(ParametrizedLocator('.//div[@class="card-pf-body"]'
-            '/p[./preceding-sibling::h2[normalize-space(.)={item_name|quote}]]/span[2]'))
+
+        card = VersionPick({
+            Version.lowest():
+                Text(ParametrizedLocator(
+                    './/div[@class="card-pf-body"]'
+                    '/p[./preceding-sibling::h2[normalize-space(.)={item_name|quote}]]'
+                    '/span[2]/a')),
+            '5.8':
+                Text(ParametrizedLocator(
+                    './/div[@class="card-pf-body"]'
+                    '/p[./preceding-sibling::h2[normalize-space(.)={item_name|quote}]]'
+                    '/span[2]'))
+        })
 
         def card_click(self):
             """Clicks the primary card with this name."""
@@ -1281,7 +1294,7 @@ class SSUIAggregatecard(Widget, ClickableMixin):
         def card_count(self):
             """Gets the count displayed on card"""
 
-            return self.browser.text(self.count)
+            return self.browser.text(self.card)
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)

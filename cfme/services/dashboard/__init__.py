@@ -7,6 +7,7 @@ class Dashboard(Navigatable, sentaku.modeling.ElementMixin):
     """ Dashboard main class for SSUI."""
 
     num_of_rows = sentaku.ContextualMethod()
+    results = sentaku.ContextualMethod()
     total_services = sentaku.ContextualMethod()
     total_requests = sentaku.ContextualMethod()
     retiring_soon = sentaku.ContextualMethod()
