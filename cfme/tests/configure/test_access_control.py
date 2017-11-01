@@ -40,6 +40,11 @@ def user_collection(appliance):
 
 
 @pytest.fixture(scope='module')
+def user_collection(appliance):
+    return appliance.collections.rbac_users
+
+
+@pytest.fixture(scope='module')
 def a_provider(request):
     prov_filter = ProviderFilter(classes=[VMwareProvider])
     return setup_one_or_skip(request, filters=[prov_filter])
@@ -49,17 +54,16 @@ def new_credential():
     return Credential(principal='uid{}'.format(fauxfactory.gen_alphanumeric()), secret='redhat')
 
 
-def new_user(appliance, group=usergrp):
+def new_user(user_collection, group=usergrp):
     from fixtures.blockers import bug
 
     uppercase_username_bug = bug(1487199)
     user_creds = new_credential()
 
     # Version 5.8.2 has a regression blocking logins for usernames w/ uppercase chars
-    if '5.8.2' <= appliance.version < '5.9' and uppercase_username_bug:
+    if '5.8.2' <= user_collection.appliance.version < '5.9' and uppercase_username_bug:
         user_creds.principal = user_creds.principal.lower()
 
-    user_collection = appliance.collections.users
     user = user_collection(appliance).create(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=user_creds,
@@ -102,6 +106,7 @@ def test_user_crud(appliance):
     group = group_collection(appliance).instantiate(description=group_name)
 
     user = new_user(appliance, group)
+
     with update(user):
         user.name = "{}edited".format(user.name)
     copied_user = user.copy()
@@ -112,10 +117,8 @@ def test_user_crud(appliance):
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.tier(2)
 def test_user_login(appliance):
-    group_name = 'EvmGroup-user'
-    group = group_collection(appliance).instantiate(description=group_name)
-
     user = new_user(appliance)
+
     try:
         with user:
             navigate_to(appliance.server, 'Dashboard')
@@ -125,17 +128,16 @@ def test_user_login(appliance):
 
 @pytest.mark.tier(3)
 def test_user_duplicate_name(appliance):
-    group_name = 'EvmGroup-user'
-    group = group_collection.instantiate(description=group_name)
 
-    nu = new_user(appliance, group)
+    nu = new_user(appliance)
+
     with pytest.raises(RBACOperationBlocked):
         user_collection(appliance).create(
             name=nu.name, credential=nu.credential, group=nu.group, email=nu.email)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(nu.appliance.server, 'Dashboard')
+    navigate_to(appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
@@ -161,11 +163,11 @@ def test_userid_required_error_validation(appliance):
             name='user' + fauxfactory.gen_alphanumeric(),
             credential=Credential(principal='', secret='redhat'),
             email='xyz@redhat.com',
-            group=group_user)
+            group=group)
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(appliance.server, 'Dashboard')
+    navigate_to(user_collection.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
@@ -184,7 +186,7 @@ def test_user_password_required_error_validation(appliance):
 
     # Navigating away from this page will create an "Abandon Changes" alert
     # Since group creation failed we need to reset the state of the page
-    navigate_to(appliance.server, 'Dashboard')
+    navigate_to(user_collection.appliance.server, 'Dashboard')
 
 
 @pytest.mark.tier(3)
@@ -207,7 +209,7 @@ def test_user_email_error_validation(user_collection, group_collection):
             name='user' + fauxfactory.gen_alphanumeric(),
             credential=new_credential(),
             email='xyzdhat.com',
-            group=group_user)
+            group=group)
 
 
 @pytest.mark.tier(2)
@@ -235,15 +237,13 @@ def test_user_remove_tag(appliance):
 
 
 @pytest.mark.tier(3)
-def test_delete_default_user(appliance):
+def test_delete_default_user(user_collection):
     """Test for deleting default user Administrator.
 
     Steps:
         * Login as Administrator user
         * Try deleting the user
     """
-    user_collection = appliance.collections.users
-
     user = user_collection.instantiate(name='Administrator')
     with pytest.raises(RBACOperationBlocked):
         user.delete()
@@ -264,7 +264,7 @@ def test_current_user_login_delete(appliance, request):
     group_name = "EvmGroup-super_administrator"
     group = group_collection(appliance).instantiate(description=group_name)
 
-    user = new_user(appliance, group=group_user)
+    user = new_user(appliance, group=group)
     request.addfinalizer(user.delete)
     request.addfinalizer(appliance.server.login_admin)
     with user:
@@ -397,7 +397,7 @@ def test_delete_group_with_assigned_user(appliance):
     """
     role = 'EvmRole-approver'
     group_description = 'grp{}'.format(fauxfactory.gen_alphanumeric())
-    group = group_collection.create(description=group_description, role=role)
+    group = group_collection(appliance).create(description=group_description, role=role)
 
     new_user(appliance, group=group)
     with pytest.raises(RBACOperationBlocked):

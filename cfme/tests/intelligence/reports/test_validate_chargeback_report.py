@@ -81,7 +81,7 @@ def vm_ownership(enable_candu, clean_setup_provider, provider, appliance):
     vm = VM.factory(vm_name, provider)
 
     try:
-        user = UserCollection(appliance).create(name=provider.name + fauxfactory.gen_alphanumeric(),
+        user = UserCollection(appliance).create(name='{}{}'.format(provider.name, fauxfactory.gen_alphanumeric()),
             credential=new_credential(),
             email='abc@example.com',
             group=cb_group,

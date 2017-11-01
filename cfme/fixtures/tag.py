@@ -70,7 +70,7 @@ def user_restricted(group_with_tag, new_credential, appliance):
         Returns restricted user object assigned
         to group with tag filter used in test module
     """
-    user_collection = appliance.collections.users
+    user_collection = appliance.collections.rbac_users
     user = user_collection.create(
         name='user{}'.format(fauxfactory.gen_alphanumeric()),
         credential=new_credential,
