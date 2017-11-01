@@ -6,7 +6,7 @@ from fixtures.pytest_store import store
 from scripts.repo_gen import process_url, build_file
 from cfme.configure.configuration.region_settings import RedHatUpdates
 from cfme.utils.wait import wait_for
-from cfme.utils.version import Version
+from cfme.utils.version import Version, current_version
 from cfme.utils.log import logger
 from cfme.utils import conf
 from cfme.utils import os
@@ -125,7 +125,7 @@ def update_embedded_appliance(enabled_embedded_appliance, appliance):
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.uncollectif(lambda: store.current_appliance.version < "5.8")
+@pytest.mark.uncollectif(lambda: current_version() < "5.8")
 def test_embedded_ansible_update(update_embedded_appliance, appliance, old_version):
     """ Tests updating an appliance which has embedded ansible role enabled, also confirms that the
         role continues to function correctly after the update has completed"""
