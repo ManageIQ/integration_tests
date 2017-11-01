@@ -239,7 +239,10 @@ class ApplianceDB(AppliancePlugin):
 
             status, out = client.run_command(' '.join([base_command, command_options]))
             if status != 0 or 'failed' in out.lower():
-                raise Exception('Could not set up the database:\n{}'.format(out))
+                if 'An internal database already exists' in out:
+                    pass  # This is actually not a problem
+                else:
+                    raise Exception('Could not set up the database:\n{}'.format(out))
         else:
             # no cli, use the enable internal db script
             rbt_repl = {
