@@ -38,6 +38,7 @@ from cfme.utils.wait import wait_for, TimedOutError
 
 from .db import ApplianceDB
 from .implementations.ui import ViaUI
+from .implementations.rest import ViaREST
 from .implementations.ssui import ViaSSUI
 from .services import SystemdService
 
@@ -236,8 +237,9 @@ class IPAppliance(object):
         self._server = None
         self.browser = ViaUI(owner=self)
         self.ssui = ViaSSUI(owner=self)
+        self.rest_context = ViaREST(owner=self)
         self.context = ImplementationContext.from_instances(
-            [self.browser, self.ssui])
+            [self.browser, self.ssui, self.rest_context])
 
         from cfme.modeling.base import ApplianceCollections
         self.collections = ApplianceCollections(self)
