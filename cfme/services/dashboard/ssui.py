@@ -1,3 +1,4 @@
+import re
 from navmazing import NavigateToAttribute, NavigateToSibling
 from widgetastic.widget import Text
 from widgetastic_manageiq import SSUIPrimarycard, SSUIAggregatecard, SSUIlist, SSUIPaginationPane
@@ -10,13 +11,15 @@ from cfme.utils.appliance.implementations.ssui import (
     navigate_to,
     ViaSSUI
 )
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 
 class DashboardView(SSUIBaseLoggedInPage):
-    title = Text(locator='//li[@class="active"]')
     dashboard_card = SSUIPrimarycard()
     aggregate_card = SSUIAggregatecard()
 
+    @property
     def in_dashboard(self):
         return (
             self.logged_in_as_current_user and
@@ -35,8 +38,10 @@ class MyServiceForm(SSUIBaseLoggedInPage):
 
 class MyServicesView(MyServiceForm):
     title = Text(locator='//li[@class="active"]')
+    results = Text(locator='//div[contains(@class, "toolbar-pf-results")]/div/h5')
     paginator = SSUIPaginationPane()
 
+    @property
     def in_myservices(self):
         return (
             self.logged_in_as_current_user and
@@ -44,7 +49,10 @@ class MyServicesView(MyServiceForm):
 
     @property
     def is_displayed(self):
-        return self.in_myservices and self.title.text == "My Services"
+        if current_version() >= '5.8':
+            return self.in_myservices and self.title.text == "My Services"
+        else:
+            return self.in_myservices
 
 
 @Dashboard.num_of_rows.external_implementation_for(ViaSSUI)
@@ -57,6 +65,14 @@ def num_of_rows(self):
     return rows
 
 
+@Dashboard.results.external_implementation_for(ViaSSUI)
+def results(self):
+    view = self.create_view(MyServicesView)
+    result = view.results.text
+    int_result = re.search(r'\d+', result).group()
+    return int_result
+
+
 @Dashboard.total_services.external_implementation_for(ViaSSUI)
 def total_services(self):
     """Returns the total services(Integer) displayed on dashboard"""
@@ -66,6 +82,10 @@ def total_services(self):
     view = navigate_to(self, 'TotalServices')
     view.flash.assert_no_error()
     view = self.create_view(MyServicesView)
+    wait_for(
+        lambda: view.is_displayed, delay=15, num_sec=300,
+        message="waiting for view to be displayed"
+    )
     assert view.is_displayed
     return total_service
 
@@ -123,6 +143,10 @@ def retiring_soon(self):
     view = navigate_to(self, 'RetiringSoon')
     view.flash.assert_no_error()
     view = self.create_view(MyServicesView)
+    wait_for(
+        lambda: view.is_displayed, delay=15, num_sec=300,
+        message="waiting for view to be displayed"
+    )
     assert view.is_displayed
     return retiring_services
 
@@ -136,6 +160,10 @@ def current_services(self):
     view = navigate_to(self, 'CurrentServices')
     view.flash.assert_no_error()
     view = self.create_view(MyServicesView)
+    wait_for(
+        lambda: view.is_displayed, delay=15, num_sec=300,
+        message="waiting for view to be displayed"
+    )
     assert view.is_displayed
     return current_service
 
@@ -149,6 +177,10 @@ def retired_services(self):
     view = navigate_to(self, 'RetiredServices')
     view.flash.assert_no_error()
     view = self.create_view(MyServicesView)
+    wait_for(
+        lambda: view.is_displayed, delay=15, num_sec=300,
+        message="waiting for view to be displayed"
+    )
     assert view.is_displayed
     return retired_service
 

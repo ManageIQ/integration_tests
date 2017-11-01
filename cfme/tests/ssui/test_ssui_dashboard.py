@@ -21,8 +21,7 @@ pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.ignore_stream("upstream", "5.9")
 ]
 
 
@@ -136,7 +135,10 @@ def test_total_services(appliance, setup_provider, context, order_catalog_item_i
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.total_services() == dashboard.num_of_rows()
+        if current_version() >= '5.8':
+            assert dashboard.total_services() == dashboard.num_of_rows()
+        else:
+            assert dashboard.total_services() == dashboard.results()
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
@@ -146,7 +148,10 @@ def test_current_service(appliance, context):
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.current_services() == dashboard.num_of_rows()
+        if current_version() >= '5.8':
+            assert dashboard.current_services() == dashboard.num_of_rows()
+        else:
+            assert dashboard.current_services() == dashboard.results()
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
@@ -156,7 +161,10 @@ def test_retiring_soon(appliance, context):
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.retiring_soon() == dashboard.num_of_rows()
+        if current_version() >= '5.8':
+            assert dashboard.retiring_soon() == dashboard.num_of_rows()
+        else:
+            assert dashboard.retiring_soon() == dashboard.results()
 
 
 @pytest.mark.parametrize('context', [ViaSSUI])
@@ -166,9 +174,13 @@ def test_retired_service(appliance, context):
     with appliance.context.use(context):
         appliance.server.login()
         dashboard = Dashboard(appliance)
-        assert dashboard.retired_services() == dashboard.num_of_rows()
+        if current_version() >= '5.8':
+            assert dashboard.retired_services() == dashboard.num_of_rows()
+        else:
+            assert dashboard.retired_services() == dashboard.results()
 
 
+@pytest.mark.uncollectif(lambda: current_version() < '5.8')
 @pytest.mark.parametrize('context', [ViaSSUI])
 def test_monthly_charges(appliance, setup_provider, context, order_catalog_item_in_ops_ui,
         run_service_chargeback_report):
