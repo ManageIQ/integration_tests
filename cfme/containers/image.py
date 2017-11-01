@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
-from functools import partial
-import random
-import itertools
-from cached_property import cached_property
 
-from navmazing import NavigateToSibling, NavigateToAttribute
+import attr
+import itertools
+import random
+from cached_property import cached_property
+from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
+from cfme.configure import tasks
+from cfme.containers.provider import (Labelable, navigate_and_get_rows,
+        ContainerObjectAllBaseView)
+from cfme.containers.provider import ContainersProvider
+from cfme.fixtures import pytest_selenium as sel
+from cfme.modeling.base import BaseCollection, BaseEntity
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.wait import wait_for, TimedOutError
+from cfme.web_ui import (toolbar as tb, CheckboxTable, match_location, InfoBlock,
+        flash, PagedTable)
+from functools import partial
+from navmazing import NavigateToAttribute
 from widgetastic_patternfly import Dropdown
 from wrapanapi.containers.image import Image as ApiImage
 
-from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
-from cfme.containers.provider import Labelable, navigate_and_get_rows,\
-    ContainerObjectAllBaseView
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, CheckboxTable, match_location, InfoBlock,\
-    flash, PagedTable
-from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import Navigatable
-from cfme.configure import tasks
-from cfme.utils.wait import wait_for, TimedOutError
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -27,15 +29,14 @@ match_page = partial(match_location, controller='container_image',
                      title='Images')
 
 
-class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssignable):
+@attr.s
+class Image(BaseEntity, Taggable, Labelable, SummaryMixin, PolicyProfileAssignable):
 
     PLURAL = 'Container Images'
 
-    def __init__(self, name, image_id, provider, appliance=None):
-        self.name = name
-        self.id = image_id
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    id = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -129,12 +130,38 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
             raise ValueError("{} is not a known state for compliance".format(text))
 
 
+@attr.s
+class ImageCollection(BaseCollection):
+    """Collection object for :py:class:`Image`."""
+
+    ENTITY = Image
+
+    def all(self):
+
+        image_table = self.appliance.db.client['container_images']
+        ems_table = self.appliance.db.client['ext_management_systems']
+        image_query = self.appliance.db.client.session.query(
+            image_table.name, image_table.image_ref, ems_table.name).join(
+            ems_table, image_table.ems_id == ems_table.id)
+        images = []
+
+        for name, id, provider_name in image_query.all():
+            images.append(self.instantiate(name=name, id=id,
+                provider=ContainersProvider(name=provider_name, appliance=self.appliance)))
+        return images
+
+    def get_random_instances(self, count=1):
+
+        return random.sample(self.all(), count)
+
+
 class ImageAllView(ContainerObjectAllBaseView):
     TITLE_TEXT = "Container Images"
     configuration = Dropdown('Configuration')
 
 
 @navigator.register(Image, 'All')
+@navigator.register(ImageCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = ImageAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -142,16 +169,10 @@ class All(CFMENavigateStep):
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Images')
 
-    def resetter(self):
-        from cfme.web_ui import paginator
-        tb.select('Grid View')
-        paginator.check_all()
-        paginator.uncheck_all()
-
 
 @navigator.register(Image, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute("parent", 'All')
 
     def am_i_here(self):
         return match_page(summary='{} (Summary)'.format(self.obj.name))
