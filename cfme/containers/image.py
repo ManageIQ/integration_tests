@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
 from functools import partial
-import random
-import itertools
+import attr
 from cached_property import cached_property
 
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToAttribute
 from widgetastic_patternfly import Dropdown
 from wrapanapi.containers.image import Image as ApiImage
 
 from cfme.common import SummaryMixin, Taggable, PolicyProfileAssignable
-from cfme.containers.provider import Labelable, navigate_and_get_rows,\
-    ContainerObjectAllBaseView
+from cfme.containers.provider import Labelable, ContainerObjectAllBaseView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable, match_location, InfoBlock,\
     flash, PagedTable
 from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from cfme.utils.appliance import Navigatable
+from cfme.utils.log import logger
 from cfme.configure import tasks
 from cfme.utils.wait import wait_for, TimedOutError
+from cfme.modeling.base import BaseCollection, BaseEntity
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
@@ -27,15 +26,14 @@ match_page = partial(match_location, controller='container_image',
                      title='Images')
 
 
-class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssignable):
+@attr.s
+class Image(BaseEntity, Taggable, Labelable, SummaryMixin, PolicyProfileAssignable):
 
     PLURAL = 'Container Images'
 
-    def __init__(self, name, image_id, provider, appliance=None):
-        self.name = name
-        self.id = image_id
-        self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
+    name = attr.ib()
+    id = attr.ib()
+    provider = attr.ib()
 
     @cached_property
     def mgmt(self):
@@ -74,19 +72,6 @@ class Image(Taggable, Labelable, SummaryMixin, Navigatable, PolicyProfileAssigna
             except TimedOutError:
                 raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
                                     .format(timeout))
-
-    @classmethod
-    def get_random_instances(cls, provider, count=1, appliance=None, docker_only=False):
-        """Generating random instances. (docker_only: means for docker images only)"""
-        # Grab the images from the UI since we have no way to calculate the name by API attributes
-        rows = navigate_and_get_rows(provider, cls, count=1000)
-        if docker_only:
-            docker_image_ids = [img.id for img in provider.mgmt.list_docker_image()]
-            rows = filter(lambda r: r.id.text.split('@')[-1] in docker_image_ids,
-                          rows)
-        random.shuffle(rows)
-        return [cls(row.name.text, row.id.text, provider, appliance=appliance)
-                for row in itertools.islice(rows, count)]
 
     def check_compliance(self, wait_for_finish=True, timeout=240):
         """Initiates compliance check and waits for it to finish."""
@@ -134,7 +119,56 @@ class ImageAllView(ContainerObjectAllBaseView):
     configuration = Dropdown('Configuration')
 
 
-@navigator.register(Image, 'All')
+@attr.s
+class ImageCollection(BaseCollection):
+    ENTITY = Image
+
+    # TODO: Benny you have to make this function work with the new structure.
+    # Image rows is not relevant anymore,
+    # you have to select few random rows and than start SSA from the toolbar
+    def perform_smartstate_analysis(self, image_rows, wait_for_finish=False, timeout='20M'):
+        """Performing SmartState Analysis on this Image
+        """
+
+        # task_name change from str to regular expression pattern following Bugzilla Bug 1483590
+        # task name will contain also Image name
+        # the str compile on tasks module
+        task_name = 'Container image.*'
+        task_type = 'container'
+        num_of_tasks = len(image_rows)
+        images_view = navigate_to(self, 'All')
+        images_view.table.sort_by('Name', 'asc')
+        images_view.check_rows(image_rows)
+        images_view.select_configuration('Perform SmartState Analysis', handle_alert=True)
+        for row in image_rows:
+            flash.assert_message_contain('"{}": Analysis successfully initiated'
+                                         .format(row.name.text))
+        if wait_for_finish:
+            try:
+                # check all tasks state finished
+                num_of_finished_tasks = tasks.wait_analysis_finished(task_name,
+                                                                     task_type, num_of_tasks,
+                                                                     timeout=timeout)
+                logger.info('"{}": Images SSA tasks finished.'.format(num_of_finished_tasks))
+
+                # check all task passed successfully with no error
+                if tasks.are_all_analysis_finished(task_name, num_of_tasks, task_type,
+                                                   silent_failure=True,
+                                                   clear_tasks_after_success=False):
+                    logger.info('"{}": Images SSA tasks finished with no error message'
+                                .format(num_of_tasks))
+                    return True
+                else:
+                    logger.error('Some Images SSA tasks finished with error message,'
+                                 ' see logger for more details.')
+                    return False
+
+            except TimedOutError:
+                raise TimedOutError('Timeout exceeded, Waited too much time for SSA to finish ({}).'
+                                    .format(timeout))
+
+
+@navigator.register(ImageCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = ImageAllView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -151,7 +185,7 @@ class All(CFMENavigateStep):
 
 @navigator.register(Image, 'Details')
 class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToAttribute("parent", 'All')
 
     def am_i_here(self):
         return match_page(summary='{} (Summary)'.format(self.obj.name))
