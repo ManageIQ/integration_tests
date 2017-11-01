@@ -24,7 +24,7 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def role_only_user_owned(appliance):
     appliance.server.login_admin()
-    role_collection = appliance.collections.roles
+    role_collection = appliance.collections.rbac_roles
     role = role_collection.create(name='role_only_user_owned_' + fauxfactory.gen_alphanumeric(),
                    vm_restriction='Only User Owned')
     yield role
@@ -45,7 +45,7 @@ def group_only_user_owned(appliance, role_only_user_owned):
 @pytest.yield_fixture(scope="module")
 def role_user_or_group_owned(appliance):
     appliance.server.login_admin()
-    role_collection = appliance.collections.roles
+    role_collection = appliance.collections.rbac_roles
     role = role_collection.create(name='role_user_or_group_owned_' + fauxfactory.gen_alphanumeric(),
                    vm_restriction='Only User or Group Owned')
     yield role

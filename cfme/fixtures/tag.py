@@ -42,7 +42,7 @@ def role(appliance):
     """
         Returns role object used in test module
     """
-    role_collection = appliance.collections.roles
+    role_collection = appliance.collections.rbac_roles
     role = role_collection.create(
         name='role{}'.format(fauxfactory.gen_alphanumeric()),
         vm_restriction='None')

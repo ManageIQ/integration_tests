@@ -34,6 +34,11 @@ pytestmark = test_requirements.rbac
 
 
 @pytest.fixture(scope='module')
+def role_collection(appliance):
+    return appliance.collections.rbac_roles
+
+
+@pytest.fixture(scope='module')
 def a_provider(request):
     prov_filter = ProviderFilter(classes=[VMwareProvider])
     return setup_one_or_skip(request, filters=[prov_filter])
@@ -69,8 +74,7 @@ def new_group(role='EvmRole-approver'):
         role=role)
 
 
-def new_role(appliance):
-    role_collection = appliance.collections.roles
+def new_role(role_collection):
     return role_collection.create(
         name='rol' + fauxfactory.gen_alphanumeric(),
         vm_restriction='None')
@@ -425,8 +429,13 @@ def test_tagvis_group(user_restricted, group_with_tag, check_item_visibility):
 
 # Role test cases
 @pytest.mark.tier(2)
-def test_role_crud(appliance):
-    role = new_role(appliance)
+def test_role_crud(role_collection):
+    ##############################
+    # DELETE
+    import pytest
+    pytest.set_trace()
+    ##############################
+    role = new_role(role_collection)
     with update(role):
         role.name = role.name + "edited"
     copied_role = role.copy()
@@ -435,9 +444,7 @@ def test_role_crud(appliance):
 
 
 @pytest.mark.tier(3)
-def test_rolename_required_error_validation(appliance):
-    role_collection = appliance.collections.roles
-
+def test_rolename_required_error_validation(role_collection):
     with error.expected("Name can't be blank"):
         role_collection.create(
             name=None,
@@ -445,9 +452,8 @@ def test_rolename_required_error_validation(appliance):
 
 
 @pytest.mark.tier(3)
-def test_rolename_duplicate_validation(appliance):
-    role_collection = appliance.collections.roles
-    role = new_role(appliance)
+def test_rolename_duplicate_validation(role_collection):
+    role = new_role(role_collection)
     with pytest.raises(RBACOperationBlocked):
         role_collection.create(
             name=role.name,
@@ -460,7 +466,7 @@ def test_rolename_duplicate_validation(appliance):
 
 
 @pytest.mark.tier(3)
-def test_delete_default_roles(appliance):
+def test_delete_default_roles(role_collection):
     """Test that CFME prevents a user from deleting a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -469,7 +475,6 @@ def test_delete_default_roles(appliance):
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-approver
     """
-    role_collection = appliance.collections.roles
     role = role_collection.instantiate(name='EvmRole-approver')
 
     with pytest.raises(RBACOperationBlocked):
@@ -477,7 +482,7 @@ def test_delete_default_roles(appliance):
 
 
 @pytest.mark.tier(3)
-def test_edit_default_roles(appliance):
+def test_edit_default_roles(role_collection):
     """Test that CFME prevents a user from editing a default role
     when selecting it from the Access Control EVM Role checklist
 
@@ -486,7 +491,6 @@ def test_edit_default_roles(appliance):
         * Navigate to Configuration -> Role
         * Try editing the group EvmRole-auditor
     """
-    role_collection = appliance.collections.roles
     role = role_collection.instantiate(name='EvmRole-auditor')
     newrole_name = "{}-{}".format(role.name, fauxfactory.gen_alphanumeric())
     role_updates = {'name': newrole_name}
@@ -497,7 +501,7 @@ def test_edit_default_roles(appliance):
 
 @pytest.mark.tier(3)
 def test_delete_roles_with_assigned_group(appliance):
-    role = new_role(appliance)
+    role = new_role(role_collection)
 
     group = new_group(role=role.name)
     group.create()
@@ -508,7 +512,7 @@ def test_delete_roles_with_assigned_group(appliance):
 
 @pytest.mark.tier(3)
 def test_assign_user_to_new_group(appliance):
-    role = new_role(appliance)  # call function to get role
+    role = new_role(role_collection)  # call function to get role
     group = new_group(role=role.name)
     group.create()
     user = new_user(group=group)
@@ -559,8 +563,7 @@ def test_permission_edit(appliance, request, product_features, action):
     product_features = version.pick(product_features)
     request.addfinalizer(appliance.server.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
-    role_collection = appliance.collections.roles
-    role = role_collection.create(name=role_name,
+    role = role_collection(appliance).create(name=role_name,
                 vm_restriction=None,
                 product_features=[(['Everything'], False)] +  # role_features
                                  [(k, True) for k in product_features])
@@ -641,8 +644,7 @@ def test_permissions(appliance, role, allowed_actions, disallowed_actions):
             object: [ { "Action Name": function_reference_action }, ...]
     """
     # create a user and role
-    role_collection = appliance.collections.roles
-    role = role_collection.create(**role)
+    role = role_collection(appliance).create(**role)
     group = new_group(role=role.name)
     group.create()
     user = new_user(group=group)
