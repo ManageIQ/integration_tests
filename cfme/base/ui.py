@@ -55,7 +55,7 @@ class LoginPage(View):
     password = Input(name='user_password')
     new_password = Input(name='user_new_password')
     verify_password = Input(name='user_verify_password')
-    login = Button('Login')
+    login = Button(id='login')
 
     def show_update_password(self):
         if not self.new_password.is_displayed:
