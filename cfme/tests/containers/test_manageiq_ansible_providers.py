@@ -31,7 +31,7 @@ def ansible_providers():
 
 @pytest.mark.polarion('CMP-xxx')
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_manageiq_ansible_add_provider_ssl(ansible_providers, provider):
+def test_manageiq_ansible_add_provider_ssl(ansible_providers, provider, appliance):
     """This test checks adding a Containers Provider using Ansible script
     with SSL validation via Manage IQ module
         Steps:
@@ -39,7 +39,7 @@ def test_manageiq_ansible_add_provider_ssl(ansible_providers, provider):
         2. Test navigates to Containers Providers page and verifies the provider was added
         """
     script_name = 'add_provider_ssl'
-    setup_ansible_script(provider, script_type='providers', script=script_name)
+    setup_ansible_script(provider, appliance, script_type='providers', script=script_name)
     run_ansible(script_name)
     view = navigate_to(ContainersProvider, 'All', use_resetter=True)
     assert get_yml_value(script_name, 'name') in view.entities.entity_names
@@ -47,21 +47,21 @@ def test_manageiq_ansible_add_provider_ssl(ansible_providers, provider):
 
 @pytest.mark.polarion('CMP-10290')
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_manageiq_ansible_add_provider(ansible_providers, provider):
+def test_manageiq_ansible_add_provider(ansible_providers, provider, appliance):
     """This test checks adding a Containers Provider using Ansible script via Manage IQ module
         Steps:
         1. 'add_provider.yaml script runs against the appliance and adds a new provider
         2. Test navigates to Containers Providers page and verifies the provider was added
         """
     script_name = 'add_provider'
-    setup_ansible_script(provider, script_type='providers', script=script_name)
+    setup_ansible_script(provider, appliance, script_type='providers', script=script_name)
     run_ansible(script_name)
     view = navigate_to(ContainersProvider, 'All', use_resetter=True)
     assert get_yml_value(script_name, 'name') in view.entities.entity_names
 
 
 @pytest.mark.polarion('CMP-10295')
-def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_assert):
+def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_assert, appliance):
     """This test checks updating a Containers Provider using Ansible script via Manage IQ module
         Steps:
         1. 'update_provider.yaml script runs against the appliance and updates
@@ -69,7 +69,7 @@ def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_asse
         2. Test navigates to Containers Providers page and verifies the provider was updated
         """
     script_name = 'update_provider'
-    setup_ansible_script(provider, script_type='providers',
+    setup_ansible_script(provider, appliance, script_type='providers',
                          values_to_update=providers_values_to_update, script=script_name)
     run_ansible(script_name)
     soft_assert(
@@ -85,7 +85,7 @@ def test_manageiq_ansible_update_provider(ansible_providers, provider, soft_asse
 
 @pytest.mark.polarion('CMP-10292')
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_manageiq_ansible_add_provider_same_name(ansible_providers, provider):
+def test_manageiq_ansible_add_provider_same_name(ansible_providers, provider, appliance):
     """This test checks adding a same name Containers Provider using Ansible script via Manage IQ module
         Steps:
         1. 'add_provider.yaml script runs against the appliance and tries to add a new provider
@@ -94,7 +94,7 @@ def test_manageiq_ansible_add_provider_same_name(ansible_providers, provider):
 
         """
     script_name = 'add_provider'
-    setup_ansible_script(provider, script_type='providers', script=script_name)
+    setup_ansible_script(provider, appliance, script_type='providers', script=script_name)
     run_ansible(script_name)
     run_ansible(script_name)
     view = navigate_to(ContainersProvider, 'All', use_resetter=True)
@@ -102,7 +102,7 @@ def test_manageiq_ansible_add_provider_same_name(ansible_providers, provider):
 
 
 @pytest.mark.polarion('CMP-10298')
-def test_manageiq_ansible_update_provider_incorrect_user(ansible_providers, provider):
+def test_manageiq_ansible_update_provider_incorrect_user(ansible_providers, provider, appliance):
     """This test checks updating a Containers Provider with a wrong user using
         Ansible script via Manage IQ module
         Steps:
@@ -114,8 +114,8 @@ def test_manageiq_ansible_update_provider_incorrect_user(ansible_providers, prov
         """
     # Add provider script is added to verify against it in the end
     script_name = 'update_provider_bad_user'
-    setup_ansible_script(provider, script_type='providers', script='add_provider')
-    setup_ansible_script(provider, script_type='providers',
+    setup_ansible_script(provider, appliance, script_type='providers', script='add_provider')
+    setup_ansible_script(provider, appliance, script_type='providers',
                          values_to_update=providers_values_to_update,
                          script=script_name)
     run_status = run_ansible(script_name)
@@ -126,7 +126,7 @@ def test_manageiq_ansible_update_provider_incorrect_user(ansible_providers, prov
 
 @pytest.mark.polarion('CMP-10298')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_remove_provider(ansible_providers, provider, soft_assert):
+def test_manageiq_ansible_remove_provider(ansible_providers, provider, soft_assert, appliance):
     """This test checks removing a Containers Provider using Ansible script via Manage IQ module
         Steps:
         1. 'remove_provider.yaml script runs against the appliance and removes
@@ -134,7 +134,7 @@ def test_manageiq_ansible_remove_provider(ansible_providers, provider, soft_asse
         2. Test navigates to Containers Providers page and verifies the provider was removed
         """
     script_name = 'remove_provider'
-    setup_ansible_script(provider, script_type='providers', script=script_name)
+    setup_ansible_script(provider, appliance, script_type='providers', script=script_name)
     run_ansible(script_name)
     view = navigate_to(ContainersProvider, 'All', use_resetter=True)
     soft_assert(
@@ -149,7 +149,7 @@ def test_manageiq_ansible_remove_provider(ansible_providers, provider, soft_asse
 
 @pytest.mark.polarion('CMP-10300')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_remove_non_existing_provider(ansible_providers, provider):
+def test_manageiq_ansible_remove_non_existing_provider(ansible_providers, provider, appliance):
     """This test checks removing a non-existing Containers Provider using
         Ansible script via Manage IQ module
         Steps:
@@ -159,8 +159,8 @@ def test_manageiq_ansible_remove_non_existing_provider(ansible_providers, provid
         """
     # Add provider script is added to verify against it in the end
     script_name = 'remove_non_existing_provider'
-    setup_ansible_script(provider, script_type='providers', script='add_provider')
-    setup_ansible_script(provider, script_type='providers', script=script_name)
+    setup_ansible_script(provider, appliance, script_type='providers', script='add_provider')
+    setup_ansible_script(provider, appliance, script_type='providers', script=script_name)
     run_ansible(script_name)
     view = navigate_to(ContainersProvider, 'All', use_resetter=True)
     assert get_yml_value('add_provider', 'name') in view.entities.entity_names
@@ -168,7 +168,7 @@ def test_manageiq_ansible_remove_non_existing_provider(ansible_providers, provid
 
 @pytest.mark.polarion('CMP-10294')
 @pytest.mark.usefixtures('has_no_containers_providers')
-def test_manageiq_ansible_add_provider_incorrect_user(ansible_providers, provider, soft_assert):
+def test_manageiq_ansible_add_provider_incorrect_user(ansible_providers, provider, soft_assert, appliance):
     """This test checks adding a Containers Provider with a wrong user using
         Ansible script via Manage IQ module
         Steps:
@@ -179,7 +179,7 @@ def test_manageiq_ansible_add_provider_incorrect_user(ansible_providers, provide
 
         """
     script_name = 'add_provider_bad_user'
-    setup_ansible_script(provider, script_type='providers', script=script_name)
+    setup_ansible_script(provider, appliance, script_type='providers', script=script_name)
     run_status = run_ansible(script_name)
     assert 'Authentication failed' in run_status
     view = navigate_to(ContainersProvider, 'All', use_resetter=True)
@@ -188,7 +188,7 @@ def test_manageiq_ansible_add_provider_incorrect_user(ansible_providers, provide
 
 @pytest.mark.polarion('CMP-10302')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_remove_provider_incorrect_user(ansible_providers, provider):
+def test_manageiq_ansible_remove_provider_incorrect_user(ansible_providers, provider, appliance):
     """This test checks removing a Containers Provider with a wrong user using
         Ansible script via Manage IQ module
         Steps:
@@ -200,8 +200,8 @@ def test_manageiq_ansible_remove_provider_incorrect_user(ansible_providers, prov
         """
     # Add provider script is added to verify against it in the end
     script_name = 'remove_provider_bad_user'
-    setup_ansible_script(provider, script_type='providers', script='add_provider')
-    setup_ansible_script(provider, script_type='providers',
+    setup_ansible_script(provider, appliance, script_type='providers', script='add_provider')
+    setup_ansible_script(provider, appliance, script_type='providers',
                          values_to_update=providers_values_to_update,
                          script=script_name)
     run_status = run_ansible(script_name)

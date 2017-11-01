@@ -39,7 +39,7 @@ def ansible_custom_attributes():
 
 @pytest.mark.polarion('CMP-10559')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provider):
+def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provider, appliance):
     """This test checks adding a Custom Attribute using Ansible script via Manage IQ module
         Steps:
         1. 'add_custom_attributes.yml script runs against the appliance
@@ -48,7 +48,7 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
          were added under Providers menu
 
         """
-    setup_ansible_script(provider, script='add_custom_attributes',
+    setup_ansible_script(provider, appliance, script='add_custom_attributes',
                          values_to_update=custom_attributes_to_add,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
@@ -60,7 +60,7 @@ def test_manageiq_ansible_add_custom_attributes(ansible_custom_attributes, provi
 
 @pytest.mark.polarion('CMP-10560')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, provider):
+def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, provider, appliance):
     """This test checks editing a Custom Attribute using Ansible script via Manage IQ module
         Steps:
         1. 'add_custom_attributes.yml script runs against the appliance
@@ -69,7 +69,7 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
          were edited under Providers menu
 
         """
-    setup_ansible_script(provider, script='add_custom_attributes',
+    setup_ansible_script(provider, appliance, script='add_custom_attributes',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
@@ -80,7 +80,7 @@ def test_manageiq_ansible_edit_custom_attributes(ansible_custom_attributes, prov
 
 @pytest.mark.polarion('CMP-10561')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attributes, provider):
+def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attributes, provider, appliance):
     """This test checks adding a Custom Attribute with the same name
         using Ansible script via Manage IQ module
         Steps:
@@ -90,7 +90,7 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
          weren't added under Providers menu
 
         """
-    setup_ansible_script(provider, script='add_custom_attributes',
+    setup_ansible_script(provider, appliance, script='add_custom_attributes',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('add_custom_attributes')
@@ -101,7 +101,7 @@ def test_manageiq_ansible_add_custom_attributes_same_name(ansible_custom_attribu
 
 @pytest.mark.polarion('CMP-10562')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attributes, provider):
+def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attributes, provider, appliance):
     """This test checks adding a Custom Attribute with a bad user name
         using Ansible script via Manage IQ module
         Steps:
@@ -112,7 +112,7 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
          weren't added under Providers menu
 
         """
-    setup_ansible_script(provider, script='add_custom_attributes_bad_user',
+    setup_ansible_script(provider, appliance, script='add_custom_attributes_bad_user',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_result = run_ansible('add_custom_attributes_bad_user')
@@ -124,7 +124,7 @@ def test_manageiq_ansible_add_custom_attributes_bad_user(ansible_custom_attribut
 
 @pytest.mark.polarion('CMP-10563')
 @pytest.mark.usefixtures('setup_provider')
-def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, provider):
+def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, provider, appliance):
     """This test checks removing Custom Attribute using Ansible script via Manage IQ module
         Steps:
         1. 'remove_custom_attributes.yml script runs against the appliance
@@ -133,7 +133,7 @@ def test_manageiq_ansible_remove_custom_attributes(ansible_custom_attributes, pr
          were removed under Providers menu
 
         """
-    setup_ansible_script(provider, script='remove_custom_attributes',
+    setup_ansible_script(provider, appliance, script='remove_custom_attributes',
                          values_to_update=custom_attributes_to_edit,
                          script_type='custom_attributes')
     run_ansible('remove_custom_attributes')
