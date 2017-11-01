@@ -20,11 +20,9 @@ already been used, it will die
 
 
 """
-import atexit
 import os
 import subprocess
 
-import diaper
 import pytest
 
 from artifactor import ArtifactorClient
@@ -120,10 +118,10 @@ def pytest_configure(config):
         art_config=env.get('artifactor', {}),
         pytest_config=config)
 
-    # just in case
-    if not store.slave_manager:
-        with diaper:
-            atexit.register(shutdown, config)
+    # just in case; Edit 08/04/2017 commented out to avoid double shutdown
+    # if not store.slave_manager:
+    #     with diaper:
+    #         atexit.register(shutdown, config)
 
     if art_client:
         config._art_proc = spawn_server(config, art_client)
