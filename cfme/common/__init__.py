@@ -209,14 +209,15 @@ class WidgetasticTaggable(object):
 
     def get_tags(self, tenant="My Company Tags"):
         """ Get list of tags assigned to item.
-            Details entities should have smart_management widget
-            For vm, providers, and other like pages 'SummaryTable' widget should be used,
-            for user, group like pages(no tables on details page) use 'SummaryForm'
+
+        Details entities should have smart_management widget
+        For vm, providers, and other like pages 'SummaryTable' widget should be used,
+        for user, group like pages(no tables on details page) use 'SummaryForm'
+
         Args:
             tenant: string, tags tenant, default is "My Company Tags"
 
-        Returns:
-            :py:class:`list' List of Tag objects
+        Returns: :py:class:`list` List of Tag objects
         """
         view = navigate_to(self, 'Details')
         tags = []
