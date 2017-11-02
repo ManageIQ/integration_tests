@@ -18,8 +18,8 @@ RESOURCE_WAR_CONTENT_NEW = 'Original JSP 2'
 
 DEPLOYMENT_URL = 'http://{}:8180/{}'
 WAR_EXT = '.war'
-DELAY = 10
-NUM_SECS = 120
+DELAY = 30
+NUM_SECS = 600
 
 
 def deploy(provider, server, archive_name, runtime_name=None, enabled=True,

@@ -11,7 +11,8 @@ from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.provider import MiddlewareBase, download
 from cfme.middleware.provider import parse_properties, Container
 from cfme.middleware.provider.middleware_views import (ServerGroupDetailsView,
-                                                       ServerGroupServerAllView)
+                                                       ServerGroupServerAllView,
+                                                       AddDeploymentView)
 from cfme.utils import attributize_string
 from cfme.utils.appliance import Navigatable, current_appliance
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -258,3 +259,12 @@ class ServerGroupServers(CFMENavigateStep):
 
     def step(self):
         self.prerequisite_view.entities.relationships.click_at('Middleware Servers')
+
+
+@navigator.register(MiddlewareServerGroup, 'AddDeployment')
+class AddDeployment(CFMENavigateStep):
+    VIEW = AddDeploymentView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        self.prerequisite_view.toolbar.deployments.item_select('Add Deployment')
