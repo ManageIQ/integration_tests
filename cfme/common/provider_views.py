@@ -192,8 +192,8 @@ class ProvidersManagePoliciesView(BaseLoggedInPage):
 
     @View.nested
     class entities(BaseNonInteractiveEntitiesView):  # noqa
-        entity_class = Ignore(VersionPick({Version.lowest(): NonJSProviderEntity,
-                                           '5.9': JSBaseEntity}))
+        entity_class = VersionPick({Version.lowest(): Ignore(NonJSProviderEntity),
+                                    '5.9': Ignore(JSBaseEntity)})
 
     save = Button('Save')
     reset = Button('Reset')
@@ -253,8 +253,8 @@ class ProviderEntitiesView(BaseEntitiesView):
     """
      represents child class of Entities view for Provider entities
     """
-    entity_class = Ignore(VersionPick({Version.lowest(): NonJSProviderEntity,
-                                       '5.9': JSBaseEntity}))
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSProviderEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class ProvidersView(BaseLoggedInPage):

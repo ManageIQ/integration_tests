@@ -78,8 +78,8 @@ class DatastoreEntities(BaseEntitiesView):
     """
     represents central view where all QuadIcons, etc are displayed
     """
-    entity_class = Ignore(VersionPick({Version.lowest(): NonJSDatastoreEntity,
-                                       '5.9': JSBaseEntity}))
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSDatastoreEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class DatastoresView(BaseLoggedInPage):

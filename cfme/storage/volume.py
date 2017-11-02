@@ -65,8 +65,8 @@ class NonJSVolumeEntity(NonJSBaseEntity):
 
 class VolumeEntities(BaseEntitiesView):
     """The entities on the main list of Volume Page"""
-    entity_class = Ignore(VersionPick({Version.lowest(): NonJSVolumeEntity,
-                                       '5.9': JSBaseEntity}))
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSVolumeEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class VolumeDetailsEntities(View):

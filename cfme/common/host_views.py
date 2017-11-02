@@ -225,8 +225,8 @@ class HostSideBar(View):
 
 class HostEntitiesView(BaseEntitiesView):
     """Represents the view with different items like hosts."""
-    entity_class = Ignore(VersionPick({Version.lowest(): NonJSHostEntity,
-                                       '5.9': JSBaseEntity}))
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSHostEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class HostsView(ComputeInfrastructureHostsView):

@@ -122,8 +122,8 @@ class VMEntities(BaseEntitiesView):
     """
     Entities view for vms/instances collection destinations
     """
-    entity_class = Ignore(VersionPick({Version.lowest(): NonJSInstanceEntity,
-                                       '5.9': JSBaseEntity}))
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSInstanceEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
     paginator = PaginationPane()
     adv_search_clear = Text('//div[@id="main-content"]//h1//span[@id="clear_search"]/a')

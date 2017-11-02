@@ -91,8 +91,8 @@ class NonJSDepRoleEntity(NonJSBaseEntity):
 
 class DeploymentRoleEntitiesView(BaseEntitiesView):
     """The entities on the main list Deployment Role page"""
-    entity_class = Ignore(VersionPick({Version.lowest(): NonJSDepRoleEntity,
-                                       '5.9': JSBaseEntity}))
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSDepRoleEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class DeploymentRoleDetailsEntities(View):
