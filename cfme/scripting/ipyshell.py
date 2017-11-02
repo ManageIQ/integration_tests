@@ -19,8 +19,6 @@ def main():
     quickstart.main(quickstart.parser.parse_args(['--mk-virtualenv', sys.prefix]))
     print('Welcome to IPython designed for running CFME QE code.')
     ipython = TerminalInteractiveShell.instance()
-    from cfme.utils import appliance
-    appliance.CREATE_IS_PEDANTIC = False
     for code_import in IMPORTS:
         print('> {}'.format(code_import))
         ipython.run_cell(code_import)

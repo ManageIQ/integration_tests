@@ -1,5 +1,6 @@
 import attr
 import pytest
+import warnings
 
 from fixtures import terminalreporter
 from cfme.utils import conf
@@ -8,7 +9,9 @@ from cfme.utils.path import log_path
 from cfme.utils.appliance import (
     load_appliances_from_config, stack,
     DummyAppliance, IPAppliance,
-)
+    ApplianceSummoningWarning)
+
+warnings.simplefilter('error', ApplianceSummoningWarning)
 
 
 def pytest_addoption(parser):
