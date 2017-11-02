@@ -57,6 +57,11 @@ ui:
                 customization_templates: 10
                 system_image_types: 10
                 iso_datastores: 10
+        physical_infra:
+            providers: 10
+            server_explore:
+                servers: 10
+                server_with_host: 5
         control:
             explorer:
                 policy_profiles: 10

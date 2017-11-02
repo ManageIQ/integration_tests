@@ -14,14 +14,14 @@ from cfme.base.ui import Server
 
 class PhysicalProvider(Pretty, BaseProvider, Fillable):
     """
-    Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
+    Abstract model of a physical infrastructure provider in cfme. See LenovoProvider.
     """
     provider_types = {}
     category = "physical"
     pretty_attrs = ['name']
-    STATS_TO_MATCH = ['num_server']
-    # string_name = "Physical Infrastructure"
-    # page_name = "infrastructure"
+    STATS_TO_MATCH = ['num_server', 'num_server_with_host']
+    string_name = "Physical Infrastructure"
+    page_name = "physical_infra"
     # db_types = ["InfraManager"]
 
     def __init__(
