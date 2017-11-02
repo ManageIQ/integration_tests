@@ -149,7 +149,7 @@ def test_run_datastore_analysis(appliance, request, setup_provider, provider, da
              delay=15, timeout="15m", fail_func=lambda: tb.select('Reload the current display'))
 
     details_view = navigate_to(datastore, 'Details')
-    c_datastore = details_view.contents.properties.get_text_of("Datastores Type")
+    c_datastore = details_view.entities.properties.get_text_of("Datastores Type")
     # Check results of the analysis and the datastore type
     soft_assert(c_datastore == datastore.type.upper(),
                 'Datastore type does not match the type defined in yaml:' +

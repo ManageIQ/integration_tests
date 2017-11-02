@@ -133,7 +133,7 @@ class DatastoreDetailsView(BaseLoggedInPage):
     sidebar = View.nested(DatastoreSideBar)
 
     @View.nested
-    class contents(View):  # noqa
+    class entities(View):  # noqa
         """
         represents Details page when it is switched to Summary aka Tables view
         """
@@ -199,7 +199,7 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
         Returns: List of strings with names or `[]` if no hosts found.
         """
         view = navigate_to(self, 'Details')
-        view.contents.relationships.click_at('Hosts')
+        view.entities.relationships.click_at('Hosts')
         hosts_view = view.browser.create_view(RegisteredHostsView)
         return hosts_view.entities.get_all()
 
@@ -209,17 +209,17 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
         Returns: List of strings with names or `[]` if no vms found.
         """
         view = navigate_to(self, 'Details')
-        if 'VMs' in view.contents.relationships.fields:
-            view.contents.relationships.click_at('VMs')
+        if 'VMs' in view.entities.relationships.fields:
+            view.entities.relationships.click_at('VMs')
         else:
-            view.contents.relationships.click_at('Managed VMs')
+            view.entities.relationships.click_at('Managed VMs')
         # todo: to replace with correct view
         vms_view = view.browser.create_view(DatastoresView)
         return [vm.name for vm in vms_view.entities.get_all()]
 
     def delete_all_attached_vms(self):
         view = navigate_to(self, 'Details')
-        view.contents.relationships.click_at('Managed VMs')
+        view.entities.relationships.click_at('Managed VMs')
         # todo: to replace with correct view
         vms_view = view.browser.create_view(DatastoresView)
         for entity in vms_view.entities.get_all():
@@ -231,7 +231,7 @@ class Datastore(Pretty, BaseEntity, WidgetasticTaggable):
 
     def delete_all_attached_hosts(self):
         view = navigate_to(self, 'Details')
-        view.contents.relationships.click_at('Hosts')
+        view.entities.relationships.click_at('Hosts')
         hosts_view = view.browser.create_view(RegisteredHostsView)
         for entity in hosts_view.entities.get_all():
             entity.check()
@@ -350,7 +350,7 @@ class DetailsFromProvider(CFMENavigateStep):
 
     def step(self):
         prov_view = navigate_to(self.obj.provider, 'Details')
-        prov_view.contents.relationships.click_at('Datastores')
+        prov_view.entities.relationships.click_at('Datastores')
 
 
 def get_all_datastores():
