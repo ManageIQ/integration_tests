@@ -51,9 +51,9 @@ Package Control
 """""""""""""""
 
 Once sublime is up and running, we'll need to install some package management, which we'll be
-using hereafter to bring in sublime extensions. Follow the installation instructions
-`here <https://sublime.wbond.net/installation#st2>`_. Be sure to follow the instructions for
-Sublime Text 2, unless you're beta testing Sublime Text 3.
+using hereafter to bring in sublime extensions. Follow the
+`installation instructions <https://sublime.wbond.net/installation#st2>`_.
+Be sure to follow the instructions for Sublime Text 2, unless you're beta testing Sublime Text 3.
 
 .. note:: When installing packages, it is sometimes necessary to restart sublime for the
    installed packages to initialize. For simplicity, it is probably easiest to restart sublime

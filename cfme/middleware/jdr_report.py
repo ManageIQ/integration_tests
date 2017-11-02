@@ -24,9 +24,10 @@ def _db_select_query(server):
 
 @attr.s
 class JDRReport(BaseEntity):
-    """
+    """ JDRReport class provides actions and details of JDR Reports List
+
     JDRReport class provides actions and details of JDR Reports List
-     on Middleware Server page.
+    on Middleware Server page.
     Class method available to get existing JDR list for provided Server
 
     Args:

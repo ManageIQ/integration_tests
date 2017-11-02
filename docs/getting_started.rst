@@ -28,6 +28,7 @@ Obtaining what you need (Project Setup)
 * Enter the folder where you cloned the repository with your shell and
   execute ``python -m cfme.scripting.quickstart`` which will configure your system,
   the development environment and the default configuration files
+
     * If you chose to use the templates, now is a good time to duplicate the ``conf/*.yaml.template``files
       to ``conf/*.yaml`` files.
 

@@ -128,45 +128,62 @@ class ServerInformationView(ServerView):
 class ServerInformation(Updateable, Pretty, NavigatableMixin):
     """ This class represents the Server tab in Server Settings
 
-    Kwargs:
-        All lower parameters by default set to None
-        BasicInformationForm:
-            company_name: Company name, default value in "My Company"
-            appliance_name: Appliance name.
-            appliance_zone: Appliance Zone.
-            time_zone: Time Zone.
-            locale: Locale used for users UI
-        ServerControlForm (Server Roles):
-            websocket, ems_metrics_coordinator, cockpit_ws, smartproxy,
-            storage_metrics_collector, database_operations, smartstate, event,
-            storage_inventory, storage_metrics_processor, web_services, automate,
-            rhn_mirror, database_synchronization, ems_operations, ems_metrics_collector,
-            reporting, ems_metrics_processor, scheduler, git_owner, user_interface,
-            embedded_ansible, storage_metrics_coordinator, ems_inventory,
-            vmdb_storage_bridge, notifier: set True/False to change the state
-        VWwareConsoleSupportForm:
-            console_type - Server console type
-        NTPServersForm:
-            ntp_server_1, ntp_server_2, ntp_server_3 - Set ntp server
-        SMTPServerForm:
-            host: SMTP Server host name
-            port: SMTP Server port
-            domain: E-mail domain
-            start_tls: Whether use StartTLS
-            ssl_verify: SSL Verification
-            auth: Authentication type
-            username: User name
-            password: User password
-            from_email: E-mail address to be used as the "From:"
-            test_email: Destination of the test-email.
-        WebServicesForm:
-            mode: web services mode
-            security: security type
-        LoggingForm:
-            log_level: log level type
-        CustomSupportURL:
-            url: custom url
-            decryption: url description
+    Different Forms take different values for their operations
+
+    Note: All lower parameters by default set to None
+
+    * BasicInformationForm:
+
+        * company_name: [BasicInformationForm] Company name, default value in "My Company"
+        * appliance_name: [BasicInformationForm] Appliance name.
+        * appliance_zone: [BasicInformationForm] Appliance Zone.
+        * time_zone: [BasicInformationForm] Time Zone.
+        * locale: [BasicInformationForm] Locale used for users UI
+
+    * ServerControlForm (Server Roles):
+
+        * websocket, ems_metrics_coordinator, cockpit_ws, smartproxy,
+        * storage_metrics_collector, database_operations, smartstate, event,
+        * storage_inventory, storage_metrics_processor, web_services, automate,
+        * rhn_mirror, database_synchronization, ems_operations, ems_metrics_collector,
+        * reporting, ems_metrics_processor, scheduler, git_owner, user_interface,
+        * embedded_ansible, storage_metrics_coordinator, ems_inventory,
+        * vmdb_storage_bridge, notifier: set True/False to change the state
+
+    * VWwareConsoleSupportForm:
+
+        * console_type - Server console type
+
+    * NTPServersForm:
+
+        * ntp_server_1, ntp_server_2, ntp_server_3 - Set ntp server
+
+    * SMTPServerForm:
+
+        * host: SMTP Server host name
+        * port: SMTP Server port
+        * domain: E-mail domain
+        * start_tls: Whether use StartTLS
+        * ssl_verify: SSL Verification
+        * auth: Authentication type
+        * username: User name
+        * password: User password
+        * from_email: E-mail address to be used as the "From:"
+        * test_email: Destination of the test-email.
+
+    * WebServicesForm:
+
+        * mode: web services mode
+        * security: security type
+
+    * LoggingForm:
+
+        * log_level: log level type
+
+    * CustomSupportURL:
+
+        * url: custom url
+        * decryption: url description
     """
     CONSOLE_TYPES = ('VNC', 'VMware VMRC Plugin', 'VMware WebMKS')
     SERVER_ROLES = ('embedded_ansible', 'ems_metrics_coordinator', 'ems_operations',
@@ -665,8 +682,8 @@ class AuthenticationSetting(NavigatableMixin, Updateable, Pretty):
         kwargs: A dict of keyword arguments used to initialize auth mode
                 if you want not to use yamls settings,
                 mode='your_mode_type_here' key/value should be a mandatory in your kwargs
-            ex. auth_settings.set_auth_mode(
-            reset= True, mode='Amazon', access_key=key, secret_key=secret_key)
+                ex. auth_settings.set_auth_mode(
+                reset= True, mode='Amazon', access_key=key, secret_key=secret_key)
         """
         form_to_fill = {}
         if kwargs:
