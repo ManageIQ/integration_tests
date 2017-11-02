@@ -53,7 +53,7 @@ def main(tag, old_tag, report_type, line_limit):
     valid_labels = [
         u'fix-locator-or-text', u'infra-related', u'fix-test', u'doc',
         u'other', u'enhancement', u'fix-framework', u'new-test-or-feature', u'tech-debt',
-        u'widgetastic-conversion', u'collections-conversion'
+        u'widgetastic-conversion', u'collections-conversion', u'sprout'
     ]
 
     print('integration_tests {} Released'.format(tag))
