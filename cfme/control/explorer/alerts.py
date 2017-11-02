@@ -31,6 +31,7 @@ class AlertsAllView(ControlExplorerView):
 class AlertFormCommon(ControlExplorerView):
     description = Input(name="description")
     active = Checkbox("enabled_cb")
+    severity = BootstrapSelect("miq_alert_severity")
     based_on = BootstrapSelect("miq_alert_db")
 
     @View.nested
@@ -148,6 +149,7 @@ class Alert(BaseEntity, Updateable, Pretty):
     pretty_attrs = ["description", "evaluate"]
 
     description = attr.ib()
+    severity = attr.ib(default="Info")
     active = attr.ib(default=None)
     based_on = attr.ib(default=None)
     evaluate = attr.ib(default=None)
@@ -234,6 +236,7 @@ class Alert(BaseEntity, Updateable, Pretty):
         fill_details = dict(
             description=self.description,
             active=self.active,
+            severity=self.severity,
             based_on=self.based_on,
             evaluate=self.evaluate,
             driving_event=self.driving_event,
@@ -281,13 +284,14 @@ class AlertCollection(BaseCollection):
 
     ENTITY = Alert
 
-    def create(self, description, active=None, based_on=None, evaluate=None,
+    def create(self, description, severity="Info", active=None, based_on=None, evaluate=None,
             driving_event=None, notification_frequency=None, snmp_trap=None, emails=None,
             timeline_event=None, mgmt_event=None):
-        alert = self.instantiate(description, active=active, based_on=based_on, evaluate=evaluate,
-            driving_event=driving_event, notification_frequency=notification_frequency,
-            snmp_trap=snmp_trap, emails=emails, timeline_event=timeline_event,
-            mgmt_event=mgmt_event)
+        severity = None if self.appliance.version < "5.9" else severity
+        alert = self.instantiate(description, severity=severity, active=active, based_on=based_on,
+            evaluate=evaluate, driving_event=driving_event,
+            notification_frequency=notification_frequency, snmp_trap=snmp_trap, emails=emails,
+            timeline_event=timeline_event, mgmt_event=mgmt_event)
         view = navigate_to(self, "Add")
         alert._fill(view)
         view.add_button.click()
