@@ -16,5 +16,5 @@ if re.findall('^gpg: Good signature', output, re.M):
     if gpg in key_list:
         print("Good sig and match for {}".format(gpg))
         sys.exit(0)
-print("Bad sig")
+print("ERROR: Bad signature. Please sign your commits!")
 sys.exit(127)
