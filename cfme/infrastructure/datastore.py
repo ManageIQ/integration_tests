@@ -3,7 +3,7 @@
 import attr
 
 from navmazing import NavigateToAttribute
-from widgetastic.widget import View, Text
+from widgetastic.widget import View, Text, ParametrizedView
 from cfme.exceptions import ItemNotFound
 from widgetastic_manageiq import (ManageIQTree,
                                   SummaryTable,
@@ -14,9 +14,8 @@ from widgetastic_manageiq import (ManageIQTree,
                                   BaseQuadIconEntity,
                                   BaseTileIconEntity,
                                   JSBaseEntity)
-from widgetastic.widget import ParametrizedView
 from widgetastic_patternfly import Dropdown, Accordion, FlashMessages
-from widgetastic.utils import Version, VersionPick
+from widgetastic.utils import Version, VersionPick, Ignore
 from cfme.base.login import BaseLoggedInPage
 from cfme.common import WidgetasticTaggable
 from cfme.common.host_views import HostsView
@@ -75,22 +74,12 @@ class NonJSDatastoreEntity(NonJSBaseEntity):
     tile_entity = DatastoreTileIconEntity
 
 
-def DatastoreEntity():  # noqa
-    """Temporary wrapper for Datastore Entity during transition to JS based Entity """
-    return VersionPick({
-        Version.lowest(): NonJSDatastoreEntity,
-        '5.9': JSBaseEntity,
-    })
-
-
 class DatastoreEntities(BaseEntitiesView):
     """
     represents central view where all QuadIcons, etc are displayed
     """
-
-    @property
-    def entity_class(self):
-        return DatastoreEntity().pick(self.browser.product_version)
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSDatastoreEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class DatastoresView(BaseLoggedInPage):

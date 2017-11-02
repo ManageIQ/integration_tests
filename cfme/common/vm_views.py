@@ -3,6 +3,7 @@ import os
 from time import sleep
 
 from widgetastic.widget import View, Text, TextInput, Checkbox, ParametrizedView
+from widgetastic.utils import Ignore
 from widgetastic_patternfly import (
     Dropdown, BootstrapSelect, Tab, FlashMessages, Input, CheckableBootstrapTreeview)
 from widgetastic_manageiq import BreadCrumb, PaginationPane
@@ -71,17 +72,6 @@ class NonJSInstanceEntity(NonJSBaseEntity):
     list_entity = InstanceListEntity
     tile_entity = InstanceTileIconEntity
 
-
-def InstanceEntity():  # noqa
-    """ Temporary wrapper for Instance Entity during transition to JS based Entity
-
-    """
-    return VersionPick({
-        Version.lowest(): NonJSInstanceEntity,
-        '5.9': JSBaseEntity,
-    })
-
-
 class SelectTable(Table):
     """Wigdet for non-editable table. used for selecting value"""
     def fill(self, values):
@@ -132,9 +122,8 @@ class VMEntities(BaseEntitiesView):
     """
     Entities view for vms/instances collection destinations
     """
-    @property
-    def entity_class(self):
-        return InstanceEntity().pick(self.browser.product_version)
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSInstanceEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
     paginator = PaginationPane()
     adv_search_clear = Text('//div[@id="main-content"]//h1//span[@id="clear_search"]/a')

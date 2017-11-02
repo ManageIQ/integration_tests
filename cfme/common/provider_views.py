@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from widgetastic.utils import VersionPick, Version
+from widgetastic.utils import VersionPick, Version, Ignore
 from widgetastic.widget import View, Text, ConditionalSwitchableView
 from widgetastic_manageiq import PaginationPane
 from widgetastic_patternfly import Dropdown, BootstrapSelect, FlashMessages
@@ -17,7 +17,8 @@ from widgetastic_manageiq import (BreadCrumb,
                                   BaseEntitiesView,
                                   DynaTree,
                                   BootstrapTreeview,
-                                  ProviderEntity,
+                                  NonJSProviderEntity,
+                                  JSBaseEntity,
                                   BaseNonInteractiveEntitiesView)
 from cfme.common.host_views import HostEntitiesView
 
@@ -193,9 +194,8 @@ class ProvidersManagePoliciesView(BaseLoggedInPage):
 
     @View.nested
     class entities(BaseNonInteractiveEntitiesView):  # noqa
-        @property
-        def entity_class(self):
-            return ProviderEntity().pick(self.browser.product_version)
+        entity_class = VersionPick({Version.lowest(): Ignore(NonJSProviderEntity),
+                                    '5.9': Ignore(JSBaseEntity)})
 
     save = Button('Save')
     reset = Button('Reset')
@@ -255,9 +255,8 @@ class ProviderEntitiesView(BaseEntitiesView):
     """
      represents child class of Entities view for Provider entities
     """
-    @property
-    def entity_class(self):
-        return ProviderEntity().pick(self.browser.product_version)
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSProviderEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class ProvidersView(BaseLoggedInPage):

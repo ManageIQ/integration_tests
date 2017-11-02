@@ -21,6 +21,7 @@ from widgetastic_manageiq import (
 )
 from widgetastic_patternfly import Button, Dropdown, FlashMessages
 from widgetastic.widget import View, Text, ParametrizedView
+from widgetastic.utils import Ignore
 
 from cfme.base.ui import BaseLoggedInPage
 from cfme.exceptions import VolumeNotFound, ItemNotFound
@@ -61,20 +62,10 @@ class NonJSVolumeEntity(NonJSBaseEntity):
     tile_entity = VolumeTileIconEntity
 
 
-def VolumeEntity():  # noqa
-    """Temporary wrapper for Volume Entity during transition to JS based Entity """
-    return VersionPick({
-        Version.lowest(): NonJSVolumeEntity,
-        '5.9': JSBaseEntity,
-    })
-
-
 class VolumeEntities(BaseEntitiesView):
     """The entities on the main list of Volume Page"""
-
-    @property
-    def entity_class(self):
-        return VolumeEntity().pick(self.browser.product_version)
+    entity_class = VersionPick({Version.lowest(): Ignore(NonJSVolumeEntity),
+                                '5.9': Ignore(JSBaseEntity)})
 
 
 class VolumeDetailsEntities(View):
