@@ -2,6 +2,7 @@
 
 """ Module dealing with Configure/Tasks section.
 """
+import re
 from navmazing import NavigateToAttribute
 from widgetastic.utils import Version, VersionPick
 from widgetastic.widget import View
@@ -41,6 +42,12 @@ def delete_all_tasks(destination):
 def is_task_finished(destination, task_name, expected_status, clear_tasks_after_success=True):
     view = navigate_to(Tasks, destination)
     tab_view = getattr(view.tabs, destination.lower())
+
+    # task_name change from str to support also regular expression pattern
+    task_name = re.compile(task_name)
+    # expected_status change from str to support also regular expression pattern
+    expected_status = re.compile(expected_status, re.IGNORECASE)
+
     try:
         row = tab_view.table.row(task_name=task_name, state=expected_status)
     except IndexError:
@@ -128,7 +135,8 @@ class TasksView(BaseLoggedInPage):
 
         @View.nested
         class mytasks(Tab):  # noqa
-            TAB_NAME = "My VM and Container Analysis Tasks"
+            TAB_NAME = VersionPick({Version.lowest(): 'My VM and Container Analysis Tasks',
+                                    '5.9': 'My Tasks'})
             table = Table(table_loc)
 
         @View.nested

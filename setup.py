@@ -119,6 +119,7 @@ setup(
             'object_store_objects = cfme.storage.object_store_object:ObjectStoreObjectCollection',
             ('object_store_containers = '
                 'cfme.storage.object_store_container:ObjectStoreContainerCollection'),
+            'container_images = cfme.containers.image:ImageCollection',
             'zones = cfme.base:ZoneCollection',
             'servers = cfme.base:ServerCollection',
             'regions = cfme.base:RegionCollection',
