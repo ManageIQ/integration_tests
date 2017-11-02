@@ -26,7 +26,7 @@ class ImageAllView(ContainerObjectAllBaseView):
 class ImageDetailsView(ContainerObjectDetailsBaseView):
     @View.nested
     class entities(ContainerObjectDetailsEntities):  # noqa
-        configuration = SummaryTable(title='Compliance')
+        configuration = SummaryTable(title='Configuration')
         compliance = SummaryTable(title='Compliance')
 
 
